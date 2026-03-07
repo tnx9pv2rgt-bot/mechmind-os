@@ -46,3 +46,26 @@ logs/
 .cache/
 temp/
 tmp/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Large files
+*.zip
+*.tar.gz
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
