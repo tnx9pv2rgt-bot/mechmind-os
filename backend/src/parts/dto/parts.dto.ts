@@ -199,6 +199,22 @@ export class TransferStockDto {
 // Purchase Orders
 // ==========================================
 
+export class CreateOrderItemDto {
+  @ApiProperty()
+  @IsUUID()
+  partId: string;
+
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  quantity: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  unitPrice?: number;
+}
+
 export class CreatePurchaseOrderDto {
   @ApiProperty()
   @IsUUID()
@@ -217,22 +233,6 @@ export class CreatePurchaseOrderDto {
   @ApiProperty({ type: [CreateOrderItemDto] })
   @IsArray()
   items: CreateOrderItemDto[];
-}
-
-export class CreateOrderItemDto {
-  @ApiProperty()
-  @IsUUID()
-  partId: string;
-
-  @ApiProperty()
-  @IsInt()
-  @Min(1)
-  quantity: number;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsNumber()
-  unitPrice?: number;
 }
 
 export class ReceiveOrderDto {

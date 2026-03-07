@@ -25,22 +25,22 @@ export enum ObdProtocol {
 
 export interface ObdSensorData {
   timestamp?: Date;
-  rpm?: number;
-  speed?: number;
-  coolantTemp?: number;
-  throttlePos?: number;
-  engineLoad?: number;
-  fuelLevel?: number;
-  fuelRate?: number;
-  intakeTemp?: number;
-  maf?: number;
-  barometric?: number;
-  intakeMap?: number;
-  voltage?: number;
-  runTime?: number;
-  distance?: number;
-  latitude?: number;
-  longitude?: number;
+  rpm?: number | null;
+  speed?: number | null;
+  coolantTemp?: number | null;
+  throttlePos?: number | null;
+  engineLoad?: number | null;
+  fuelLevel?: number | null;
+  fuelRate?: number | null;
+  intakeTemp?: number | null;
+  maf?: number | null;
+  barometric?: number | null;
+  intakeMap?: number | null;
+  voltage?: number | null;
+  runTime?: number | null;
+  distance?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   rawData?: Record<string, any>;
 }
 
@@ -50,20 +50,20 @@ export interface FreezeFrameData {
   dtcCode: string;
   capturedAt: Date;
   data: {
-    rpm?: number;
-    speed?: number;
-    coolantTemp?: number;
-    throttlePos?: number;
-    engineLoad?: number;
-    intakeTemp?: number;
-    mafRate?: number;
+    rpm?: number | null;
+    speed?: number | null;
+    coolantTemp?: number | null;
+    throttlePos?: number | null;
+    engineLoad?: number | null;
+    intakeTemp?: number | null;
+    mafRate?: number | null;
     fuelSystemStatus?: string;
-    calculatedLoad?: number;
-    absolutePressure?: number;
-    timingAdvance?: number;
-    intakeAirTemp?: number;
-    airflowRate?: number;
-    o2SensorVoltage?: number;
+    calculatedLoad?: number | null;
+    absolutePressure?: number | null;
+    timingAdvance?: number | null;
+    intakeAirTemp?: number | null;
+    airflowRate?: number | null;
+    o2SensorVoltage?: number | null;
   };
   storedInDb: boolean;
 }
