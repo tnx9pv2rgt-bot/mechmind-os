@@ -7,8 +7,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import * as twilio from 'twilio';
-import { Twilio } from 'twilio';
+import Twilio from 'twilio';
 import { 
   Notification, 
   NotificationType, 
@@ -71,7 +70,7 @@ export class NotificationV2Service {
     this.isEnabled = this.configService.get<boolean>('ENABLE_SMS_NOTIFICATIONS', true);
 
     if (accountSid && authToken && this.fromPhone && this.isEnabled) {
-      this.twilioClient = twilio(accountSid, authToken);
+      this.twilioClient = new Twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized for Notification v2');
     } else {
       this.logger.warn('Twilio not configured or SMS notifications disabled');

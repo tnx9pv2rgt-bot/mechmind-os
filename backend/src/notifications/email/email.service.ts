@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
+// @ts-ignore
 import * as React from 'react';
 import {
   BookingConfirmationEmail,
@@ -302,7 +303,7 @@ export class EmailService {
 
       return {
         status: data?.last_event || 'unknown',
-        deliveredAt: data?.delivered_at ? new Date(data.delivered_at) : undefined,
+        deliveredAt: (data as any)?.delivered_at ? new Date((data as any).delivered_at) : undefined,
       };
     } catch (error) {
       this.logger.error(`Error getting email status: ${error.message}`);
@@ -326,7 +327,7 @@ export class EmailService {
         return { valid: false };
       }
 
-      return { valid: true, records: data?.records };
+      return { valid: true, records: (data as any)?.records };
     } catch (error) {
       this.logger.error(`Domain verification error: ${error.message}`);
       return { valid: false };
