@@ -5,15 +5,15 @@ services:
     region: frankfurt
     branch: main
     rootDir: backend
-    buildCommand: npm install --legacy-peer-deps && npx prisma generate && npm run build
-    startCommand: npm run start:prod
+    buildCommand: npm install --legacy-peer-deps && npx prisma generate
+    startCommand: node dist/main
     envVars:
       - key: DATABASE_URL
         value: postgresql://postgres:fudpe6-jastuf-nupzeT@db.sezvlnxoafyjxidlpwuy.pooler.supabase.com:5432/postgres?sslmode=require
       - key: JWT_SECRET
-        generateValue: true
+        value: mechmind-super-secret-key-2026-production
       - key: JWT_REFRESH_SECRET
-        generateValue: true
+        value: mechmind-refresh-secret-key-2026-production
       - key: FRONTEND_URL
         value: https://mechmind-os.vercel.app
       - key: CORS_ORIGIN
