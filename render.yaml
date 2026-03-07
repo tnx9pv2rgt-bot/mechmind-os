@@ -5,8 +5,8 @@ services:
     region: frankfurt
     branch: main
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npx nest build
-    startCommand: node dist/main
+    buildCommand: npm install --legacy-peer-deps && npx prisma generate && npm run build
+    startCommand: npm run start:prod
     envVars:
       - key: DATABASE_URL
         value: postgresql://postgres:fudpe6-jastuf-nupzeT@db.sezvlnxoafyjxidlpwuy.pooler.supabase.com:5432/postgres?sslmode=require
