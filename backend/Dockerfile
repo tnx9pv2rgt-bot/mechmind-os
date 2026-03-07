@@ -1,9 +1,6 @@
-FROM node:20-slim
+FROM node:20
 
 WORKDIR /app
-
-# Installa dipendenze necessarie
-RUN apt-get update && apt-get install -y openssl libssl-dev
 
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
@@ -14,4 +11,4 @@ RUN npm run build
 
 EXPOSE 10000
 
-CMD ["node", "dist/main"]
+CMD ["npm", "run", "start:prod"]
