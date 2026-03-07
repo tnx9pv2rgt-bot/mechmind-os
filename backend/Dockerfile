@@ -1,9 +1,12 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
+# Installa dipendenze necessarie
+RUN apt-get update && apt-get install -y openssl libssl-dev
+
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 RUN npx prisma generate
