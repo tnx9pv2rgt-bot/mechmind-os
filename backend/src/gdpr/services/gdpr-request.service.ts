@@ -3,6 +3,27 @@ import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 
 /**
+ * Data Subject Request entity from Prisma
+ */
+interface DataSubjectRequest {
+  id: string;
+  ticketNumber: string;
+  requestType: string;
+  status: string;
+  requesterEmail?: string | null;
+  requesterPhone?: string | null;
+  customerId?: string | null;
+  tenantId: string;
+  receivedAt: Date;
+  deadlineAt: Date;
+  verifiedAt?: Date | null;
+  completedAt?: Date | null;
+  slaMet?: boolean | null;
+  assignedTo?: string | null;
+  rejectionReason?: string | null;
+}
+
+/**
  * Data Subject Request Types
  */
 export type DataSubjectRequestType = 
@@ -258,7 +279,7 @@ export class GdprRequestService {
       });
     });
 
-    return requests.map(r => this.mapToResponse(r));
+    return requests.map((r: DataSubjectRequest) => this.mapToResponse(r));
   }
 
   /**
@@ -561,7 +582,7 @@ export class GdprRequestService {
   /**
    * Map database entity to response DTO
    */
-  private mapToResponse(request: any): DataSubjectRequestResponse {
+  private mapToResponse(request: DataSubjectRequest): DataSubjectRequestResponse {
     return {
       id: request.id,
       ticketNumber: request.ticketNumber,

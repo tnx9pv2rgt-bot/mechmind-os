@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AuditLog } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 
@@ -175,7 +176,7 @@ export class AuditLogService {
     const totalPages = Math.ceil(total / pagination.limit);
 
     return {
-      entries: entries.map(e => this.mapToEntry(e)),
+      entries: entries.map((e: AuditLog) => this.mapToEntry(e)),
       total,
       page: pagination.page,
       totalPages,
@@ -206,7 +207,7 @@ export class AuditLogService {
       });
     });
 
-    return entries.map(e => this.mapToEntry(e));
+    return entries.map((e: AuditLog) => this.mapToEntry(e));
   }
 
   /**
@@ -246,7 +247,7 @@ export class AuditLogService {
       });
     });
 
-    return entries.map(e => this.mapToEntry(e));
+    return entries.map((e: AuditLog) => this.mapToEntry(e));
   }
 
   /**
@@ -294,7 +295,7 @@ export class AuditLogService {
       totalEntries: total,
       entriesByAction,
       entriesByTable,
-      recentActivity: recentActivity.map(e => this.mapToEntry(e)),
+      recentActivity: recentActivity.map((e: AuditLog) => this.mapToEntry(e)),
     };
   }
 

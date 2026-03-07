@@ -283,7 +283,7 @@ export class BookingService {
       await prisma.bookingEvent.create({
         data: {
           eventType: 'booking_created',
-          payload: dto,
+          payload: { ...dto } as any,
           booking: { connect: { id: booking.id } },
         },
       });
@@ -428,7 +428,7 @@ export class BookingService {
       await prisma.bookingEvent.create({
         data: {
           eventType: 'booking_updated',
-          payload: dto,
+          payload: { ...dto } as any,
           booking: { connect: { id: booking.id } },
         },
       });

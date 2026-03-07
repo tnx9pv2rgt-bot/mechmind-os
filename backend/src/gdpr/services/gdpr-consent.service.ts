@@ -3,6 +3,22 @@ import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 
 /**
+ * Consent Audit Log entry from Prisma
+ */
+interface ConsentAuditLog {
+  id: string;
+  consentType: string;
+  granted: boolean;
+  timestamp: Date;
+  ipSource?: string | null;
+  userAgent?: string | null;
+  collectionMethod?: string | null;
+  revokedAt?: Date | null;
+  customerId: string;
+  tenantId: string;
+}
+
+/**
  * Consent tracking record
  */
 export interface ConsentRecord {
@@ -221,7 +237,7 @@ export class GdprConsentService {
       });
     });
 
-    return logs.map(log => ({
+    return logs.map((log: ConsentAuditLog) => ({
       type: log.consentType,
       consent: log.granted,
       timestamp: log.timestamp,

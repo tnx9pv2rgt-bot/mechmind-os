@@ -379,7 +379,7 @@ export class ShopFloorService {
       },
     });
 
-    return bays.map(bay => ({
+    return bays.map((bay: ServiceBay & { currentVehicle?: { id: string; licensePlate: string; make?: string; model?: string }; currentWorkOrder?: { technicians: { technicianId: string }[]; estimatedCompletion?: Date }; currentWorkOrderId?: string; checkInTime?: Date; sensors: Array<{ id: string; type: string; name: string; isActive: boolean; lastReading?: any; batteryLevel?: number; config: any }> }) => ({
       id: bay.id,
       name: bay.name,
       type: bay.type as any,
@@ -596,7 +596,7 @@ export class ShopFloorService {
       );
 
     const averageServiceTime = serviceTimes.length > 0
-      ? serviceTimes.reduce((a, b) => a + b, 0) / serviceTimes.length
+      ? serviceTimes.reduce((a: number, b: number) => a + b, 0) / serviceTimes.length
       : 0;
 
     // Calculate bay utilization
@@ -637,7 +637,7 @@ export class ShopFloorService {
       take: limit,
     });
 
-    return events.map(e => ({
+    return events.map((e: { id: string; type: string; timestamp: Date; bayId?: string | null; vehicleId?: string | null; technicianId?: string | null; workOrderId?: string | null; fromStatus?: string | null; toStatus?: string | null; message?: string | null }) => ({
       id: e.id,
       type: e.type as any,
       timestamp: e.timestamp,

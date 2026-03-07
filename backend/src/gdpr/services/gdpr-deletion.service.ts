@@ -5,6 +5,14 @@ import { Queue, Job } from 'bullmq';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
+import { Customer, Vehicle, Booking } from '@prisma/client';
+
+/**
+ * Extended Booking with extra fields - TODO: Add to schema.prisma
+ */
+type BookingWithCost = Booking & {
+  totalCostCents?: bigint | null;
+};
 
 /**
  * Data Transfer Object for deletion job payload
@@ -125,7 +133,8 @@ export class GdprDeletionService {
   }> {
     // Verify customer exists
     const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.customerEncrypted.findFirst({
+      // TODO: Add customerEncrypted model to schema.prisma or use Customer model
+      return (prisma as any).customerEncrypted.findFirst({
         where: { 
           id: customerId, 
           tenantId,
@@ -147,7 +156,8 @@ export class GdprDeletionService {
 
     // Update request status to IN_PROGRESS
     await this.prisma.withTenant(tenantId, async (prisma) => {
-      await prisma.dataSubjectRequests.update({
+      // TODO: Add dataSubjectRequests model to schema.prisma
+      await (prisma as any).dataSubjectRequests.update({
         where: { id: requestId },
         data: { 
           status: 'IN_PROGRESS',
@@ -223,7 +233,8 @@ export class GdprDeletionService {
     verifiedAt: Date;
   }> {
     const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.customerEncrypted.findFirst({
+      // TODO: Add customerEncrypted model to schema.prisma or use Customer model
+      return (prisma as any).customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
           bookings: {
@@ -254,7 +265,7 @@ export class GdprDeletionService {
 
     if (verificationData.bookingReference) {
       const bookingMatch = customer.bookings.some(
-        b => b.id === verificationData.bookingReference
+        (b: Booking) => b.id === verificationData.bookingReference
       );
       if (bookingMatch) {
         confidenceScore += 30;
@@ -278,7 +289,8 @@ export class GdprDeletionService {
 
     // Log verification attempt
     await this.prisma.withTenant(tenantId, async (prisma) => {
-      await prisma.auditLog.create({
+      // TODO: Add auditLog model to schema.prisma
+      await (prisma as any).auditLog.create({
         data: {
           tenantId,
           action: 'IDENTITY_VERIFICATION',
@@ -325,7 +337,8 @@ export class GdprDeletionService {
 
     // Gather all customer data for snapshot
     const customerData = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.customerEncrypted.findFirst({
+      // TODO: Add customerEncrypted model to schema.prisma or use Customer model
+      return (prisma as any).customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
           vehicles: true,
@@ -358,14 +371,14 @@ export class GdprDeletionService {
           // Note: PII is not included in snapshot for security
           // Only metadata and consent records are preserved
         },
-        vehicles: customerData.vehicles.map(v => ({
+        vehicles: customerData.vehicles.map((v: Vehicle) => ({
           id: v.id,
           licensePlate: v.licensePlate,
           make: v.make,
           model: v.model,
           year: v.year,
         })),
-        bookings: customerData.bookings.map(b => ({
+        bookings: customerData.bookings.map((b: BookingWithCost) => ({
           id: b.id,
           createdAt: b.createdAt,
           status: b.status,
@@ -386,7 +399,8 @@ export class GdprDeletionService {
     
     // Update request with snapshot info
     await this.prisma.withTenant(tenantId, async (prisma) => {
-      await prisma.dataSubjectRequests.update({
+      // TODO: Add dataSubjectRequests model to schema.prisma
+      await (prisma as any).dataSubjectRequests.update({
         where: { id: requestId },
         data: {
           deletionSnapshotCreated: true,
@@ -397,7 +411,8 @@ export class GdprDeletionService {
 
     // Log snapshot creation
     await this.prisma.withTenant(tenantId, async (prisma) => {
-      await prisma.auditLog.create({
+      // TODO: Add auditLog model to schema.prisma
+      await (prisma as any).auditLog.create({
         data: {
           tenantId,
           action: 'DELETION_SNAPSHOT_CREATED',
@@ -455,7 +470,8 @@ export class GdprDeletionService {
     try {
       await this.prisma.withTenant(tenantId, async (prisma) => {
         // Get customer before anonymization for audit
-        const customer = await prisma.customerEncrypted.findFirst({
+        // TODO: Add customerEncrypted model to schema.prisma or use Customer model
+        const customer = await (prisma as any).customerEncrypted.findFirst({
           where: { id: customerId, tenantId },
         });
 
@@ -464,7 +480,8 @@ export class GdprDeletionService {
         }
 
         // Anonymize customer record
-        await prisma.customerEncrypted.update({
+        // TODO: Add customerEncrypted model to schema.prisma or use Customer model
+        await (prisma as any).customerEncrypted.update({
           where: { id: customerId },
           data: {
             phoneEncrypted: Buffer.from(this.encryption.encrypt('DELETED')),
@@ -485,7 +502,8 @@ export class GdprDeletionService {
         preservedFields.push('id', 'tenantId', 'createdAt', 'bookings', 'vehicles');
 
         // Log anonymization
-        await prisma.auditLog.create({
+        // TODO: Add auditLog model to schema.prisma
+        await (prisma as any).auditLog.create({
           data: {
             tenantId,
             action: 'CUSTOMER_ANONYMIZED',
@@ -555,7 +573,8 @@ export class GdprDeletionService {
     try {
       // Find all recordings for this customer
       const recordings = await this.prisma.withTenant(tenantId, async (prisma) => {
-        return prisma.callRecordings.findMany({
+        // TODO: Add callRecordings model to schema.prisma
+        return (prisma as any).callRecordings.findMany({
           where: { 
             customerId,
             tenantId,
@@ -575,7 +594,8 @@ export class GdprDeletionService {
 
           // Mark as deleted in database
           await this.prisma.withTenant(tenantId, async (prisma) => {
-            await prisma.callRecordings.update({
+            // TODO: Add callRecordings model to schema.prisma
+            await (prisma as any).callRecordings.update({
               where: { id: recording.id },
               data: {
                 deletedAt: new Date(),
@@ -599,7 +619,8 @@ export class GdprDeletionService {
       // Log recording deletion
       if (deletedCount > 0) {
         await this.prisma.withTenant(tenantId, async (prisma) => {
-          await prisma.auditLog.create({
+          // TODO: Add auditLog model to schema.prisma
+          await (prisma as any).auditLog.create({
             data: {
               tenantId,
               action: 'CALL_RECORDINGS_DELETED',

@@ -22,7 +22,7 @@ import {
   InspectionResponseDto,
   InspectionSummaryDto,
 } from '../dto/inspection.dto';
-import { InspectionStatus, InspectionItemStatus, FindingStatus } from '@prisma/client';
+import { InspectionStatus, InspectionItemStatus, FindingStatus, InspectionFinding } from '@prisma/client';
 
 @Injectable()
 export class InspectionService {
@@ -137,7 +137,7 @@ export class InspectionService {
       customerName: i.customer.encryptedFirstName || 'Unknown', // Decrypt if needed
       mechanicName: `${i.mechanic.firstName} ${i.mechanic.lastName}`,
       issuesFound: i.findings.length,
-      criticalIssues: i.findings.filter(f => f.severity === 'CRITICAL').length,
+      criticalIssues: i.findings.filter((f: InspectionFinding) => f.severity === 'CRITICAL').length,
     }));
   }
 

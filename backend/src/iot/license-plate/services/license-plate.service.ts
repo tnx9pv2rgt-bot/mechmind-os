@@ -232,7 +232,7 @@ export class LicensePlateService {
 
     return {
       vehicle,
-      recentHistory: recentHistory.map(h => ({
+      recentHistory: recentHistory.map((h: VehicleEntryExit) => ({
         id: h.id,
         type: h.type as EntryExitType,
         licensePlate: h.licensePlate,
@@ -277,7 +277,7 @@ export class LicensePlateService {
       orderBy: { entryTime: 'desc' },
     });
 
-    return sessions.map(s => ({
+    return sessions.map((s: ParkingSession & { entry: VehicleEntryExit }) => ({
       id: s.id,
       licensePlate: s.licensePlate,
       entry: {
@@ -363,7 +363,7 @@ export class LicensePlateService {
       where: { tenantId },
     });
 
-    return cameras.map(c => ({
+    return cameras.map((c: LprCamera) => ({
       id: c.id,
       name: c.name,
       location: c.location,
@@ -416,17 +416,17 @@ export class LicensePlateService {
 
     const totalDetections = detections.length;
     const avgConfidence = totalDetections > 0
-      ? detections.reduce((sum, d) => sum + d.confidence, 0) / totalDetections
+      ? detections.reduce((sum: number, d: { confidence: number }) => sum + d.confidence, 0) / totalDetections
       : 0;
 
     // Group by provider
     const byProvider: Record<OcrProvider, { count: number; avgConfidence: number }> = {} as any;
     for (const provider of Object.values(OcrProvider)) {
-      const providerDetections = detections.filter(d => d.provider === provider);
+      const providerDetections = detections.filter((d: { provider: OcrProvider }) => d.provider === provider);
       byProvider[provider] = {
         count: providerDetections.length,
         avgConfidence: providerDetections.length > 0
-          ? providerDetections.reduce((sum, d) => sum + d.confidence, 0) / providerDetections.length
+          ? providerDetections.reduce((sum: number, d: { confidence: number }) => sum + d.confidence, 0) / providerDetections.length
           : 0,
       };
     }

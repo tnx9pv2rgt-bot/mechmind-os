@@ -50,6 +50,14 @@ model Tenant {
   locations    Location[]
   Notification Notification[]
 
+  // GDPR
+  customerEncrypted          CustomerEncrypted[]
+  auditLogs                  AuditLog[]
+  consentAuditLogs           ConsentAuditLog[]
+  callRecordings             CallRecording[]
+  dataSubjectRequests        DataSubjectRequest[]
+  dataRetentionExecutionLogs DataRetentionExecutionLog[]
+
   @@map("tenants")
 }
 
@@ -167,6 +175,51 @@ model Customer {
   @@map("customers")
 }
 
+// ==========================================
+// CUSTOMER ENCRYPTED MODEL (GDPR Extended)
+// ==========================================
+
+model CustomerEncrypted {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Encrypted PII fields (stored as bytes for encrypted data)
+  phoneEncrypted Bytes? @map("phone_encrypted")
+  emailEncrypted Bytes? @map("email_encrypted")
+  nameEncrypted  Bytes? @map("name_encrypted")
+  phoneHash      String @map("phone_hash") // For lookup without decryption
+
+  // Consent tracking
+  gdprConsent          Boolean   @default(false) @map("gdpr_consent")
+  gdprConsentDate      DateTime? @map("gdpr_consent_date")
+  marketingConsent     Boolean   @default(false) @map("marketing_consent")
+  marketingConsentDate DateTime? @map("marketing_consent_date")
+  callRecordingConsent Boolean   @default(false) @map("call_recording_consent")
+
+  // GDPR deletion/anonymization tracking
+  isDeleted            Boolean   @default(false) @map("is_deleted")
+  deletedAt            DateTime? @map("deleted_at")
+  anonymizedAt         DateTime? @map("anonymized_at")
+  dataSubjectRequestId String?   @map("data_subject_request_id")
+  dataRetentionDays    Int?      @map("data_retention_days")
+
+  // Relations
+  vehicles         Vehicle[]
+  bookings         Booking[]
+  consentAuditLogs ConsentAuditLog[]
+
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  CallRecording CallRecording[]
+
+  @@index([tenantId])
+  @@index([phoneHash])
+  @@index([anonymizedAt])
+  @@index([isDeleted])
+  @@map("customers_encrypted")
+}
+
 model Vehicle {
   id           String   @id @default(uuid())
   licensePlate String   @map("license_plate")
@@ -178,14 +231,22 @@ model Vehicle {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  // Customer relation
-  customerId String   @map("customer_id")
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Customer relation (legacy)
+  customerId String?   @map("customer_id")
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Encrypted customer relation
+  customerEncryptedId String?            @map("customer_encrypted_id")
+  customerEncrypted   CustomerEncrypted? @relation(fields: [customerEncryptedId], references: [id], onDelete: Cascade)
 
   // Relations
   bookings    Booking[]
   inspections Inspection[]
   obdDevices  ObdDevice[]
+
+  // Service tracking
+  lastServiceDate  DateTime? @map("last_service_date")
+  nextServiceDueKm Int?      @map("next_service_due_km")
 
   @@map("vehicles")
 }
@@ -210,22 +271,31 @@ model Booking {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relations
-  customerId String           @map("customer_id")
-  customer   Customer         @relation(fields: [customerId], references: [id])
-  vehicleId  String?          @map("vehicle_id")
-  vehicle    Vehicle?         @relation(fields: [vehicleId], references: [id])
-  slotId     String           @unique @map("slot_id")
-  slot       BookingSlot      @relation(fields: [slotId], references: [id])
-  services   BookingService[]
-  events     BookingEvent[]
-  parts      BookingPart[]
+  customerId          String?            @map("customer_id")
+  customer            Customer?          @relation(fields: [customerId], references: [id])
+  customerEncryptedId String?            @map("customer_encrypted_id")
+  customerEncrypted   CustomerEncrypted? @relation(fields: [customerEncryptedId], references: [id])
+  vehicleId           String?            @map("vehicle_id")
+  vehicle             Vehicle?           @relation(fields: [vehicleId], references: [id])
+  slotId              String             @unique @map("slot_id")
+  slot                BookingSlot        @relation(fields: [slotId], references: [id])
+  services            BookingService[]
+  events              BookingEvent[]
+  parts               BookingPart[]
 
   // Location relation (for multi-location support)
   locationId String?   @map("location_id")
   location   Location? @relation(fields: [locationId], references: [id])
 
+  // Financial tracking for exports
+  totalCostCents           BigInt?   @map("total_cost_cents")
+  paymentStatus            String?   @map("payment_status")
+  estimatedDurationMinutes Int?      @map("estimated_duration_minutes")
+  Invoice                  Invoice[]
+
   @@index([tenantId])
   @@index([customerId])
+  @@index([customerEncryptedId])
   @@index([scheduledDate])
   @@index([locationId])
   @@map("bookings")
@@ -307,6 +377,25 @@ model BookingService {
 }
 
 // ==========================================
+// INVOICE MODELS
+// ==========================================
+
+model Invoice {
+  id        String  @id @default(uuid())
+  bookingId String  @map("booking_id")
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  totalCents  BigInt    @map("total_cents")
+  taxCents    BigInt?   @map("tax_cents")
+  status      String
+  paymentDate DateTime? @map("payment_date")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([bookingId])
+  @@map("invoices")
+}
+
+// ==========================================
 // VOICE WEBHOOK EVENTS
 // ==========================================
 
@@ -327,6 +416,37 @@ model VoiceWebhookEvent {
   @@index([eventType])
   @@index([processed])
   @@map("voice_webhook_events")
+}
+
+// ==========================================
+// CALL RECORDINGS MODEL
+// ==========================================
+
+model CallRecording {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  customerId String?            @map("customer_id")
+  customer   CustomerEncrypted? @relation(fields: [customerId], references: [id])
+
+  // Recording metadata
+  recordingSid    String?  @map("recording_sid") // Twilio recording SID
+  recordingUrl    String?  @map("recording_url")
+  durationSeconds Int      @map("duration_seconds")
+  direction       String
+  recordedAt      DateTime @default(now()) @map("recorded_at")
+
+  // Retention and deletion
+  retentionUntil DateTime? @map("retention_until")
+  deletedAt      DateTime? @map("deleted_at")
+  deletionReason String?   @map("deletion_reason")
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([deletedAt])
+  @@index([retentionUntil])
+  @@map("call_recordings")
 }
 
 // ==========================================
@@ -1428,6 +1548,191 @@ model AuthAuditLog {
   @@index([status])
   @@index([createdAt])
   @@map("auth_audit_logs")
+}
+
+// ============================================
+// GDPR AUDIT LOG MODEL
+// ============================================
+
+model AuditLog {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  action    String // e.g., CUSTOMER_ANONYMIZED, IDENTITY_VERIFICATION, DATA_EXPORT_CREATED
+  tableName String @map("table_name") // Table being audited
+  recordId  String @map("record_id") // UUID of the record
+
+  // Change tracking
+  oldValues String? @map("old_values") // JSON stringified old values
+  newValues String? @map("new_values") // JSON stringified new values
+
+  // Context
+  performedBy String? @map("performed_by") // User who performed the action
+  ipAddress   String? @map("ip_address")
+  userAgent   String? @map("user_agent")
+
+  // Archiving
+  archived   Boolean   @default(false) @map("archived")
+  archivedAt DateTime? @map("archived_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([action])
+  @@index([tableName])
+  @@index([recordId])
+  @@index([createdAt])
+  @@index([archived])
+  @@map("audit_logs")
+}
+
+// ============================================
+// GDPR CONSENT AUDIT LOG MODEL
+// ============================================
+
+model ConsentAuditLog {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  customerId String            @map("customer_id")
+  customer   CustomerEncrypted @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  consentType ConsentType
+  granted     Boolean
+  timestamp   DateTime    @default(now())
+
+  // Context
+  ipSource         String? @map("ip_source")
+  userAgent        String?
+  collectionMethod String? @map("collection_method")
+  collectionPoint  String? @map("collection_point")
+  legalBasis       String? @map("legal_basis")
+  verifiedIdentity Boolean @default(false) @map("verified_identity")
+
+  // Revocation tracking
+  revokedAt        DateTime? @map("revoked_at")
+  revokedBy        String?   @map("revoked_by")
+  revocationReason String?   @map("revocation_reason")
+
+  // Flexible metadata
+  metadata Json? @default("{}")
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([consentType])
+  @@index([timestamp])
+  @@index([revokedAt])
+  @@map("consent_audit_logs")
+}
+
+enum ConsentType {
+  GDPR
+  MARKETING
+  CALL_RECORDING
+  DATA_SHARING
+  THIRD_PARTY
+  ANALYTICS
+}
+
+// ============================================
+// DATA SUBJECT REQUEST MODEL (GDPR Art. 12-22)
+// ============================================
+
+model DataSubjectRequest {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Ticket info
+  ticketNumber String @unique @map("ticket_number")
+  requestType  String @map("request_type") // ACCESS, DELETION, RECTIFICATION, PORTABILITY, RESTRICTION, OBJECTION
+  status       String @default("RECEIVED") // RECEIVED, VERIFICATION_PENDING, VERIFIED, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED
+
+  // Requester info
+  requesterEmail String? @map("requester_email")
+  requesterPhone String? @map("requester_phone")
+  customerId     String? @map("customer_id")
+
+  // SLA tracking
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  deadlineAt  DateTime  @map("deadline_at")
+  verifiedAt  DateTime? @map("verified_at")
+  completedAt DateTime? @map("completed_at")
+  slaMet      Boolean?  @map("sla_met")
+
+  // Source and priority
+  source   String @default("EMAIL") // EMAIL, WEB_FORM, PHONE, MAIL
+  priority String @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+
+  // Assignment
+  assignedTo String? @map("assigned_to")
+
+  // Identity verification
+  identityVerified      Boolean  @default(false) @map("identity_verified")
+  verificationMethod    String?  @map("verification_method")
+  verificationDocuments String[] @default([]) @map("verification_documents")
+
+  // Rejection tracking
+  rejectionReason String? @map("rejection_reason")
+  rejectionBasis  String? @map("rejection_basis")
+
+  // Export format for access requests
+  exportFormat String? @map("export_format") // JSON, CSV, PDF
+
+  // Deletion snapshot
+  deletionSnapshotCreated Boolean @default(false) @map("deletion_snapshot_created")
+  deletionSnapshotUrl     String? @map("deletion_snapshot_url")
+
+  // Notes
+  notes String?
+
+  // Metadata
+  metadata Json? @default("{}")
+
+  @@index([tenantId])
+  @@index([ticketNumber])
+  @@index([status])
+  @@index([receivedAt])
+  @@index([deadlineAt])
+  @@index([customerId])
+  @@map("data_subject_requests")
+}
+
+// ============================================
+// DATA RETENTION EXECUTION LOG MODEL
+// ============================================
+
+model DataRetentionExecutionLog {
+  id       String  @id @default(cuid())
+  tenantId String? @map("tenant_id")
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  // Execution info
+  executionType String @map("execution_type") // RETENTION_POLICY, DEEP_CLEANUP, etc.
+  status        String @default("RUNNING") // RUNNING, COMPLETED, PARTIAL, FAILED
+
+  // Timing
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  // Results
+  customersAnonymized Int @default(0) @map("customers_anonymized")
+  bookingsAnonymized  Int @default(0) @map("bookings_anonymized")
+  recordingsDeleted   Int @default(0) @map("recordings_deleted")
+  logsDeleted         Int @default(0) @map("logs_deleted")
+
+  // Configuration
+  retentionDaysApplied Int @default(2555) @map("retention_days_applied")
+
+  // Error tracking
+  errorMessage String? @map("error_message")
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("data_retention_execution_logs")
 }
 
 // ============================================

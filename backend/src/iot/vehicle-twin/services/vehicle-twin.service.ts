@@ -360,7 +360,7 @@ export class VehicleTwinService {
       orderBy: { recordedAt: 'asc' },
     });
 
-    return history.map(h => ({
+    return history.map((h: { recordedAt: Date; overallHealth: number; componentHealth: any }) => ({
       date: h.recordedAt,
       overallHealth: h.overallHealth,
       componentHealth: h.componentHealth as Record<string, number>,
@@ -407,7 +407,7 @@ export class VehicleTwinService {
       lastUpdated: new Date(),
       components,
       activeAlerts,
-      recentHistory: history.map(h => ({
+      recentHistory: history.map((h: { id: string; componentId: string; eventType: string; date: Date; description?: string | null; technicianId?: string | null; cost?: number | null; partsUsed: any; photos: any; documents: any; odometer?: number | null }) => ({
         id: h.id,
         componentId: h.componentId,
         eventType: h.eventType as any,
@@ -420,7 +420,7 @@ export class VehicleTwinService {
         documents: h.documents as string[],
         odometer: h.odometer || undefined,
       })),
-      damageRecords: damageRecords.map(d => ({
+      damageRecords: damageRecords.map((d: { id: string; componentId: string; type: string; severity: string; description: string; locationX: number; locationY: number; locationZ: number; photos: any; reportedAt: Date; repairedAt?: Date | null; repairCost?: number | null }) => ({
         id: d.id,
         componentId: d.componentId,
         type: d.type as any,
@@ -443,7 +443,7 @@ export class VehicleTwinService {
     });
 
     if (existing.length > 0) {
-      return existing.map(c => ({
+      return existing.map((c: { componentId: string; name: string; category: string; status: string; healthScore: number; lastServiceDate?: Date | null; nextServiceDue?: Date | null; estimatedLifespan?: number | null; positionX: number; positionY: number; positionZ: number; modelPartId?: string | null; metadata: any }) => ({
         id: c.componentId,
         name: c.name,
         category: c.category as any,

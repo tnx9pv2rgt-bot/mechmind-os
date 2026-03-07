@@ -17,6 +17,7 @@ import {
   Request,
   Headers,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -53,6 +54,11 @@ class AdminUpdateSubscriptionDto {
   currentPeriodEnd?: Date;
 }
 
+// Extend Express Request with tenantId
+interface RequestWithTenant extends ExpressRequest {
+  tenantId: string;
+}
+
 @Controller('subscription')
 @UseGuards(JwtAuthGuard)
 export class SubscriptionController {
@@ -66,17 +72,17 @@ export class SubscriptionController {
   // ==========================================
 
   @Get('current')
-  async getCurrentSubscription(@Request() req) {
+  async getCurrentSubscription(@Request() req: RequestWithTenant) {
     return this.subscriptionService.getSubscription(req.tenantId);
   }
 
   @Get('usage')
-  async getUsageStats(@Request() req) {
+  async getUsageStats(@Request() req: RequestWithTenant) {
     return this.featureAccessService.getUsageStats(req.tenantId);
   }
 
   @Get('limits')
-  async checkAllLimits(@Request() req) {
+  async checkAllLimits(@Request() req: RequestWithTenant) {
     return this.featureAccessService.checkAllLimits(req.tenantId);
   }
 
@@ -86,7 +92,7 @@ export class SubscriptionController {
 
   @Get('features/:feature')
   async checkFeatureAccess(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Param('feature') feature: FeatureFlag
   ) {
     return this.featureAccessService.canAccessFeature(req.tenantId, feature);
@@ -94,7 +100,7 @@ export class SubscriptionController {
 
   @Post('features/check')
   async checkMultipleFeatures(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Body() features: FeatureFlag[]
   ) {
     return this.featureAccessService.canAccessFeatures(req.tenantId, features);
@@ -108,7 +114,7 @@ export class SubscriptionController {
   @CheckLimit('apiCall')
   @UseGuards(LimitGuard)
   async upgradeSubscription(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Body() dto: UpgradeSubscriptionDto
   ) {
     const request: UpgradeRequest = {
@@ -122,7 +128,7 @@ export class SubscriptionController {
 
   @Post('downgrade')
   async downgradeSubscription(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Body('newPlan') newPlan: SubscriptionPlan
   ) {
     return this.subscriptionService.downgradeSubscription(req.tenantId, newPlan);
@@ -134,7 +140,7 @@ export class SubscriptionController {
 
   @Post('ai-addon')
   async toggleAiAddon(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Body('enabled') enabled: boolean
   ) {
     return this.subscriptionService.toggleAiAddon(req.tenantId, enabled);
@@ -146,7 +152,7 @@ export class SubscriptionController {
 
   @Post('cancel')
   async cancelSubscription(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Body() dto: CancelSubscriptionDto
   ) {
     return this.subscriptionService.cancelSubscription(
@@ -156,7 +162,7 @@ export class SubscriptionController {
   }
 
   @Post('reactivate')
-  async reactivateSubscription(@Request() req) {
+  async reactivateSubscription(@Request() req: RequestWithTenant) {
     return this.subscriptionService.reactivateSubscription(req.tenantId);
   }
 
@@ -166,7 +172,7 @@ export class SubscriptionController {
 
   @Post('checkout-session')
   async createCheckoutSession(
-    @Request() req,
+    @Request() req: RequestWithTenant,
     @Body() dto: CreateCheckoutSessionDto
   ) {
     return this.subscriptionService.createStripeCheckoutSession(
