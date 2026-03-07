@@ -252,13 +252,11 @@ export class InspectionResponseDto {
   };
   customer: {
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
   mechanic: {
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
   items: InspectionItemResponseDto[];
   findings: InspectionFindingResponseDto[];

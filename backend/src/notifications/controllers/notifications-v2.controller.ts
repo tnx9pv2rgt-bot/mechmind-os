@@ -19,7 +19,7 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
 import { NotificationV2Service, CreateNotificationDTO } from '../services/notification-v2.service';
-import { NotificationType, NotificationChannel } from '@prisma/client';
+import { NotificationType, NotificationChannel, UserRole } from '@prisma/client';
 
 class SendNotificationDto implements CreateNotificationDTO {
   customerId: string;
@@ -56,25 +56,25 @@ export class NotificationsV2Controller {
   }
 
   @Post('send')
-  @Roles('ADMIN', 'MANAGER', 'RECEPTIONIST')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.RECEPTIONIST)
   async send(@Body() dto: SendNotificationDto) {
     return this.notificationService.sendImmediate(dto);
   }
 
   @Post('queue')
-  @Roles('ADMIN', 'MANAGER', 'RECEPTIONIST')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.RECEPTIONIST)
   async queue(@Body() dto: CreateNotificationDTO) {
     return this.notificationService.queueNotification(dto);
   }
 
   @Post('batch')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   async sendBatch(@Body() dto: { notifications: CreateNotificationDTO[] }) {
     return this.notificationService.sendBatch(dto.notifications);
   }
 
   @Post('process-pending')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   async processPending() {
     return this.notificationService.processPending();
   }
@@ -104,7 +104,7 @@ export class NotificationsV2Controller {
   }
 
   @Post('preferences')
-  @Roles('ADMIN', 'MANAGER', 'RECEPTIONIST')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.RECEPTIONIST)
   async updatePreference(@Body() dto: UpdatePreferenceDto) {
     await this.notificationService.updatePreference(dto.customerId, dto.channel, dto.enabled);
     return { success: true };
@@ -117,13 +117,13 @@ export class NotificationsV2Controller {
   }
 
   @Post(':id/retry')
-  @Roles('ADMIN', 'MANAGER', 'RECEPTIONIST')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.RECEPTIONIST)
   async retry(@Param('id') id: string) {
     return this.notificationService.retryNotification(id);
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   async delete(@Param('id') id: string) {
     // Implementation would delete notification
     return { success: true };

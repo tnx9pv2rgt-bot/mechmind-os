@@ -53,8 +53,7 @@ export class EscalationService {
       },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
+        name: true,
       },
     });
 
@@ -64,7 +63,7 @@ export class EscalationService {
 
     return {
       id: agent.id,
-      name: `${agent.firstName} ${agent.lastName}`,
+      name: agent.name,
       phone: '', // Would be fetched from agent profile
       available: true,
     };

@@ -195,8 +195,8 @@ export class SubscriptionController {
       plans: Object.values(SubscriptionPlan)
         .filter(p => p !== SubscriptionPlan.TRIAL)
         .map(plan => ({
-          id: plan,
           ...PLAN_PRICING[plan],
+          id: plan,
           monthlyPriceFormatted: getFormattedPrice(plan, 'monthly'),
           yearlyPriceFormatted: getFormattedPrice(plan, 'yearly'),
         })),

@@ -23,6 +23,7 @@ import { GdprDeletionService } from '../services/gdpr-deletion.service';
 import { DataRetentionService } from '../services/data-retention.service';
 import { GdprConsentService } from '../services/gdpr-consent.service';
 import { GdprExportService, ExportFormat } from '../services/gdpr-export.service';
+import { UserRole } from '@prisma/client';
 import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
 
 // DTOs
@@ -65,7 +66,7 @@ export class GdprController {
    */
   @Post('requests')
   @HttpCode(HttpStatus.CREATED)
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async createRequest(
     @Body() dto: CreateDataSubjectRequestDto,
     @CurrentUser() user: any,
@@ -83,7 +84,7 @@ export class GdprController {
    * @param type Optional type filter
    */
   @Get('requests')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async listRequests(
     @Query('tenantId') tenantId: string,
     @Query('status') status?: string,
@@ -100,7 +101,7 @@ export class GdprController {
    * @param tenantId Optional tenant filter
    */
   @Get('requests/pending')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async getPendingRequests(
     @Query('tenantId') tenantId?: string,
   ) {
@@ -113,7 +114,7 @@ export class GdprController {
    * @param tenantId Tenant ID
    */
   @Get('requests/:requestId')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async getRequest(
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Query('tenantId') tenantId: string,
@@ -128,7 +129,7 @@ export class GdprController {
    * @param dto Status update
    */
   @Patch('requests/:requestId/status')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async updateRequestStatus(
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Query('tenantId') tenantId: string,
@@ -144,7 +145,7 @@ export class GdprController {
    * @param dto Verification data
    */
   @Post('requests/:requestId/verify')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async verifyIdentity(
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Query('tenantId') tenantId: string,
@@ -160,7 +161,7 @@ export class GdprController {
    * @param userId User to assign
    */
   @Post('requests/:requestId/assign')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async assignRequest(
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Query('tenantId') tenantId: string,
@@ -176,7 +177,7 @@ export class GdprController {
    * @param body Rejection details
    */
   @Post('requests/:requestId/reject')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async rejectRequest(
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Query('tenantId') tenantId: string,
@@ -190,7 +191,7 @@ export class GdprController {
    * @param tenantId Optional tenant filter
    */
   @Get('requests/stats')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async getRequestStats(
     @Query('tenantId') tenantId?: string,
   ) {
@@ -209,7 +210,7 @@ export class GdprController {
    * @param requestId Optional associated request ID
    */
   @Get('customers/:customerId/export')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async exportCustomerData(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -225,7 +226,7 @@ export class GdprController {
    * @param tenantId Tenant ID
    */
   @Get('customers/:customerId/portability')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async exportPortableData(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -240,7 +241,7 @@ export class GdprController {
    * @param format Export format
    */
   @Post('customers/:customerId/export')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async generateExport(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -260,7 +261,7 @@ export class GdprController {
    * @param body Deletion details
    */
   @Post('customers/:customerId/delete')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async queueDeletion(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -286,7 +287,7 @@ export class GdprController {
    * @param jobId BullMQ job ID
    */
   @Get('deletion-jobs/:jobId')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async getDeletionJobStatus(
     @Param('jobId') jobId: string,
   ) {
@@ -299,7 +300,7 @@ export class GdprController {
    * @param body Cancellation reason
    */
   @Post('deletion-jobs/:jobId/cancel')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async cancelDeletion(
     @Param('jobId') jobId: string,
     @Body('reason') reason: string,
@@ -311,7 +312,7 @@ export class GdprController {
    * Get deletion queue statistics
    */
   @Get('deletion-jobs/stats')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async getDeletionQueueStats() {
     return this.deletionService.getQueueStats();
   }
@@ -328,7 +329,7 @@ export class GdprController {
    * @param headers Request headers for IP/user agent
    */
   @Post('customers/:customerId/consent')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async recordConsent(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -361,7 +362,7 @@ export class GdprController {
    * @param body Revocation details
    */
   @Delete('customers/:customerId/consent/:consentType')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async revokeConsent(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -383,7 +384,7 @@ export class GdprController {
    * @param tenantId Tenant ID
    */
   @Get('customers/:customerId/consent')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async getConsentStatus(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -397,7 +398,7 @@ export class GdprController {
    * @param tenantId Tenant ID
    */
   @Get('customers/:customerId/consent/history')
-  @Roles('admin', 'secretary')
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async getConsentHistory(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
@@ -413,7 +414,7 @@ export class GdprController {
    * Get retention policy configuration
    */
   @Get('retention/policy')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async getRetentionPolicy() {
     return this.retentionService.getRetentionPolicy();
   }
@@ -423,7 +424,7 @@ export class GdprController {
    * @param tenantId Tenant ID
    */
   @Get('retention/stats')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async getRetentionStats(
     @Query('tenantId') tenantId: string,
   ) {
@@ -436,7 +437,7 @@ export class GdprController {
    * @param body New retention days
    */
   @Patch('retention/policy')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async updateRetentionPolicy(
     @Query('tenantId') tenantId: string,
     @Body('days') days: number,
@@ -449,7 +450,7 @@ export class GdprController {
    * @param tenantId Optional tenant filter
    */
   @Post('retention/enforce')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async enforceRetention(
     @Query('tenantId') tenantId?: string,
   ) {

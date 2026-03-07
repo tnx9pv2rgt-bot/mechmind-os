@@ -317,11 +317,11 @@ export async function sendEmail(
     }
 
     const msg = {
+      ...options,
       from: {
         email: EMAIL_FROM_ADDRESS,
         name: EMAIL_FROM_NAME,
       },
-      ...options,
     };
 
     const [response] = await sgMail.send(msg);

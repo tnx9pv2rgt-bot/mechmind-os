@@ -41,8 +41,7 @@ export interface UserWithMFAStatus extends UserWithTenant {
 export interface UserWithTenant {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   role: string;
   isActive: boolean;
   tenantId: string;
@@ -101,8 +100,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      name: user.name,
       role: user.role,
       isActive: user.isActive,
       tenantId: user.tenantId,
@@ -182,8 +180,7 @@ export class AuthService {
       const userWithTenant: UserWithTenant = {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         role: user.role,
         isActive: user.isActive,
         tenantId: user.tenantId,
@@ -300,8 +297,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      name: user.name,
       role: user.role,
       isActive: user.isActive,
       tenantId: user.tenantId,

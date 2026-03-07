@@ -17,6 +17,7 @@ import {
   AI_ADDON_FEATURES,
   PLAN_LIMITS,
   getFeaturesForPlan,
+  PlanLimits,
 } from '../config/pricing.config';
 
 export interface FeatureAccessCheck {
@@ -133,7 +134,7 @@ export class FeatureAccessService {
     return results.reduce((acc, { feature, check }) => {
       acc[feature] = check;
       return acc;
-    }, {} as Record<FeatureFlag, FeatureAccessCheck>);
+    }, {} as Record<string, FeatureAccessCheck>) as Record<FeatureFlag, FeatureAccessCheck>;
   }
 
   /**
@@ -467,7 +468,7 @@ export class FeatureAccessService {
     };
   }
 
-  private async getCurrentUsage(tenantId: string) {
+  private async getCurrentUsage(tenantId: string): Promise<{ users: number; locations: number; customers: number; inspectionsThisMonth: number }> {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -515,6 +516,6 @@ export class FeatureAccessService {
       maxInspectionsPerMonth: 'inspection',
     };
 
-    return mapping[limitType] || 'resource';
+    return mapping[limitType as string] || 'resource';
   }
 }

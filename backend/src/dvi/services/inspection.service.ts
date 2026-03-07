@@ -72,7 +72,7 @@ export class InspectionService {
       include: {
         vehicle: true,
         customer: true,
-        mechanic: { select: { id: true, firstName: true, lastName: true } },
+        mechanic: { select: { id: true, name: true } },
         items: { include: { templateItem: true, photos: true } },
         findings: true,
         photos: true,
@@ -91,7 +91,7 @@ export class InspectionService {
       include: {
         vehicle: true,
         customer: true,
-        mechanic: { select: { id: true, firstName: true, lastName: true } },
+        mechanic: { select: { id: true, name: true } },
         items: { include: { templateItem: true, photos: true } },
         findings: true,
         photos: true,
@@ -123,7 +123,7 @@ export class InspectionService {
       include: {
         vehicle: true,
         customer: true,
-        mechanic: { select: { firstName: true, lastName: true } },
+        mechanic: { select: { name: true } },
         findings: { select: { severity: true } },
       },
       orderBy: { startedAt: 'desc' },
@@ -135,7 +135,7 @@ export class InspectionService {
       startedAt: i.startedAt,
       vehicleInfo: `${i.vehicle.make} ${i.vehicle.model} (${i.vehicle.licensePlate})`,
       customerName: i.customer.encryptedFirstName || 'Unknown', // Decrypt if needed
-      mechanicName: `${i.mechanic.firstName} ${i.mechanic.lastName}`,
+      mechanicName: i.mechanic.name,
       issuesFound: i.findings.length,
       criticalIssues: i.findings.filter((f: InspectionFinding) => f.severity === 'CRITICAL').length,
     }));
@@ -188,7 +188,7 @@ export class InspectionService {
       include: {
         vehicle: true,
         customer: true,
-        mechanic: { select: { id: true, firstName: true, lastName: true } },
+        mechanic: { select: { id: true, name: true } },
         items: { include: { templateItem: true, photos: true } },
         findings: true,
         photos: true,
@@ -421,13 +421,11 @@ export class InspectionService {
       },
       customer: {
         id: inspection.customer.id,
-        firstName: inspection.customer.encryptedFirstName || '',
-        lastName: inspection.customer.encryptedLastName || '',
+        name: inspection.customer.encryptedName || '',
       },
       mechanic: {
         id: inspection.mechanic.id,
-        firstName: inspection.mechanic.firstName,
-        lastName: inspection.mechanic.lastName,
+        name: inspection.mechanic.name,
       },
       items: inspection.items.map((item: any) => ({
         id: item.id,
