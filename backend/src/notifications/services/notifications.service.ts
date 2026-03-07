@@ -78,6 +78,28 @@ export class NotificationsService {
     });
   }
 
+  async sendToTenant(
+    tenantId: string,
+    notification: {
+      title: string;
+      body: string;
+      priority?: 'low' | 'normal' | 'high';
+      data?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    this.logger.log(`Sending notification to tenant ${tenantId}: ${notification.title}`);
+
+    this.gateway.broadcastToTenant(tenantId, 'tenant:notification', {
+      id: this.generateId(),
+      title: notification.title,
+      message: notification.body,
+      priority: notification.priority || 'normal',
+      data: notification.data,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    });
+  }
+
   private generateId(): string {
     return `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }

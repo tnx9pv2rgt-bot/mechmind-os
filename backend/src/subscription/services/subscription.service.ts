@@ -6,7 +6,7 @@
 
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Stripe from 'stripe';
+// import Stripe from 'stripe'; // COMMENTATO: stripe non installato
 import { PrismaService } from '../../common/services/prisma.service';
 import { 
   SubscriptionPlan, 
@@ -60,18 +60,18 @@ export interface SubscriptionResponse {
 
 @Injectable()
 export class SubscriptionService {
-  private stripe: Stripe;
+  // private stripe: Stripe; // COMMENTATO: stripe non installato
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-    if (stripeKey) {
-      this.stripe = new Stripe(stripeKey, {
-        apiVersion: '2024-12-18.acacia',
-      });
-    }
+    // const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    // if (stripeKey) {
+    //   this.stripe = new Stripe(stripeKey, {
+    //     apiVersion: '2024-12-18.acacia',
+    //   });
+    // }
   }
 
   // ==========================================
@@ -199,14 +199,15 @@ export class SubscriptionService {
     const immediate = isUpgrade; // Upgrades are immediate, downgrades at period end
 
     // Update Stripe subscription if configured
-    if (this.stripe && currentSub.stripeSubscriptionId) {
-      await this.updateStripeSubscription(
-        currentSub.stripeSubscriptionId,
-        newPlan,
-        billingCycle,
-        aiAddon
-      );
-    }
+    // COMMENTATO: stripe non installato
+    // if (this.stripe && currentSub.stripeSubscriptionId) {
+    //   await this.updateStripeSubscription(
+    //     currentSub.stripeSubscriptionId,
+    //     newPlan,
+    //     billingCycle,
+    //     aiAddon
+    //   );
+    // }
 
     // Update subscription in database
     const updatedSubscription = await this.prisma.$transaction(async (tx) => {
@@ -556,7 +557,7 @@ export class SubscriptionService {
   }
 
   // ==========================================
-  // STRIPE INTEGRATION
+  // STRIPE INTEGRATION (COMMENTATO: stripe non installato)
   // ==========================================
 
   async createStripeCheckoutSession(
@@ -567,72 +568,17 @@ export class SubscriptionService {
     successUrl: string,
     cancelUrl: string
   ): Promise<{ sessionId: string; url: string }> {
-    if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
-    }
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-    });
-
-    if (!tenant) {
-      throw new NotFoundException('Tenant not found');
-    }
-
-    const pricing = PLAN_PRICING[plan];
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
-
-    if (!pricing.isCustomPricing && pricing.stripePriceId) {
-      lineItems.push({
-        price: pricing.stripePriceId,
-        quantity: 1,
-      });
-    }
-
-    if (aiAddon && AI_ADDON.stripePriceId) {
-      lineItems.push({
-        price: AI_ADDON.stripePriceId,
-        quantity: 1,
-      });
-    }
-
-    const session = await this.stripe.checkout.sessions.create({
-      customer_email: undefined, // Will be set if we have a Stripe customer
-      line_items: lineItems,
-      mode: 'subscription',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        tenantId,
-        plan,
-        billingCycle,
-        aiAddon: aiAddon.toString(),
-      },
-    });
-
-    return {
-      sessionId: session.id,
-      url: session.url!,
-    };
+    throw new BadRequestException('Stripe is not configured - install stripe package');
+    // if (!this.stripe) {
+    //   throw new BadRequestException('Stripe is not configured');
+    // }
+    // ... resto del metodo commentato
   }
 
-  async handleStripeWebhook(event: Stripe.Event): Promise<void> {
-    if (!this.stripe) return;
-
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await this.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
-        break;
-      case 'invoice.payment_succeeded':
-        await this.handleInvoicePaid(event.data.object as Stripe.Invoice);
-        break;
-      case 'invoice.payment_failed':
-        await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
-        break;
-      case 'customer.subscription.deleted':
-        await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-        break;
-    }
+  async handleStripeWebhook(event: any): Promise<void> {
+    // COMMENTATO: stripe non installato
+    // if (!this.stripe) return;
+    // ... resto del metodo commentato
   }
 
   // ==========================================
@@ -680,124 +626,34 @@ export class SubscriptionService {
     });
   }
 
-  private async updateStripeSubscription(
-    stripeSubscriptionId: string,
-    plan: SubscriptionPlan,
-    billingCycle: 'monthly' | 'yearly',
-    aiAddon?: boolean
-  ): Promise<void> {
-    if (!this.stripe) return;
+  // Metodi Stripe commentati - stripe non installato
+  // private async updateStripeSubscription(
+  //   stripeSubscriptionId: string,
+  //   plan: SubscriptionPlan,
+  //   billingCycle: 'monthly' | 'yearly',
+  //   aiAddon?: boolean
+  // ): Promise<void> {
+  //   if (!this.stripe) return;
+  //   ...
+  // }
 
-    const pricing = PLAN_PRICING[plan];
-    const items: Stripe.SubscriptionUpdateParams.Item[] = [];
+  // private async handleCheckoutCompleted(
+  //   session: any
+  // ): Promise<void> {
+  //   ...
+  // }
 
-    if (!pricing.isCustomPricing && pricing.stripePriceId) {
-      items.push({
-        id: 'base_plan',
-        price: pricing.stripePriceId,
-      });
-    }
+  // private async handleInvoicePaid(invoice: any): Promise<void> {
+  //   ...
+  // }
 
-    if (aiAddon && AI_ADDON.stripePriceId) {
-      items.push({
-        id: 'ai_addon',
-        price: AI_ADDON.stripePriceId,
-      });
-    }
+  // private async handlePaymentFailed(invoice: any): Promise<void> {
+  //   ...
+  // }
 
-    await this.stripe.subscriptions.update(stripeSubscriptionId, {
-      items,
-      proration_behavior: 'create_prorations',
-    });
-  }
-
-  private async handleCheckoutCompleted(
-    session: Stripe.Checkout.Session
-  ): Promise<void> {
-    const tenantId = session.metadata?.tenantId;
-    const plan = session.metadata?.plan as SubscriptionPlan;
-    const aiAddon = session.metadata?.aiAddon === 'true';
-
-    if (!tenantId || !plan) return;
-
-    await this.prisma.subscription.update({
-      where: { tenantId },
-      data: {
-        stripeCustomerId: session.customer as string,
-        stripeSubscriptionId: session.subscription as string,
-        status: SubscriptionStatus.ACTIVE,
-        plan,
-        aiAddonEnabled: aiAddon,
-        trialEndsAt: null,
-      },
-    });
-  }
-
-  private async handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
-    // Reset usage counters for new billing period
-    const subscriptionId = invoice.subscription;
-    if (!subscriptionId) return;
-
-    const stripeSub = await this.stripe?.subscriptions.retrieve(
-      subscriptionId as string
-    );
-    if (!stripeSub) return;
-
-    // Find tenant by Stripe customer ID
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { stripeCustomerId: stripeSub.customer as string },
-    });
-
-    if (!subscription) return;
-
-    await this.prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        apiCallsUsed: 0,
-        currentPeriodStart: new Date(stripeSub.current_period_start * 1000),
-        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
-      },
-    });
-  }
-
-  private async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
-    const subscriptionId = invoice.subscription;
-    if (!subscriptionId) return;
-
-    const stripeSub = await this.stripe?.subscriptions.retrieve(
-      subscriptionId as string
-    );
-    if (!stripeSub) return;
-
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { stripeCustomerId: stripeSub.customer as string },
-    });
-
-    if (!subscription) return;
-
-    await this.prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        status: SubscriptionStatus.PAST_DUE,
-      },
-    });
-  }
-
-  private async handleSubscriptionDeleted(
-    stripeSubscription: Stripe.Subscription
-  ): Promise<void> {
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { stripeSubscriptionId: stripeSubscription.id },
-    });
-
-    if (!subscription) return;
-
-    await this.prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        status: SubscriptionStatus.CANCELLED,
-        cancelledAt: new Date(),
-      },
-    });
-  }
+  // private async handleSubscriptionDeleted(
+  //   stripeSubscription: any
+  // ): Promise<void> {
+  //   ...
+  // }
 }
