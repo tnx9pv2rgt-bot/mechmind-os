@@ -1,0 +1,91 @@
+/**
+ * Portal Global Styles
+ * Additional styles specific to the Customer Portal
+ */
+
+/* Safe area for mobile bottom navigation */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Portal specific transitions */
+.portal-transition {
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Touch-friendly tap targets */
+.portal-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile-optimized forms */
+@media (max-width: 640px) {
+  .portal-form-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 48px;
+  }
+}
+
+/* Loading skeleton animation */
+@keyframes portal-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.portal-skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: portal-shimmer 1.5s infinite;
+}
+
+/* Status badge variants */
+.portal-badge-confirmed {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.portal-badge-completed {
+  @apply bg-green-100 text-green-800;
+}
+
+.portal-badge-cancelled {
+  @apply bg-red-100 text-red-800;
+}
+
+.portal-badge-pending {
+  @apply bg-orange-100 text-orange-800;
+}
+
+/* Card hover effects */
+.portal-card-hover {
+  @apply transition-all duration-300 ease-apple;
+}
+
+.portal-card-hover:hover {
+  @apply shadow-apple-hover -translate-y-0.5;
+}
+
+/* Focus visible for accessibility */
+.portal-focus-visible:focus-visible {
+  @apply outline-none ring-2 ring-apple-blue ring-offset-2;
+}
+
+/* Print styles for documents */
+@media print {
+  .portal-no-print {
+    display: none !important;
+  }
+  
+  .portal-print-only {
+    display: block !important;
+  }
+}

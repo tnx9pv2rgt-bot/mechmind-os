@@ -1,0 +1,79 @@
+{
+  "labels": {
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "email": "Email",
+    "phone": "Telefono",
+    "address": "Indirizzo",
+    "city": "Città",
+    "zipCode": "CAP",
+    "country": "Paese",
+    "companyName": "Ragione Sociale",
+    "vatNumber": "Partita IVA",
+    "fiscalCode": "Codice Fiscale",
+    "password": "Password",
+    "confirmPassword": "Conferma Password",
+    "search": "Cerca...",
+    "select": "Seleziona...",
+    "date": "Data",
+    "time": "Ora",
+    "notes": "Note",
+    "description": "Descrizione",
+    "price": "Prezzo",
+    "quantity": "Quantità",
+    "licensePlate": "Targa",
+    "vin": "VIN",
+    "brand": "Marca",
+    "model": "Modello",
+    "year": "Anno"
+  },
+  "placeholders": {
+    "firstName": "Inserisci il tuo nome",
+    "lastName": "Inserisci il tuo cognome",
+    "email": "esempio@email.it",
+    "phone": "+39 123 456 7890",
+    "search": "Cerca...",
+    "select": "Seleziona un'opzione",
+    "date": "GG/MM/AAAA",
+    "licensePlate": "AB123CD",
+    "vin": "Inserisci il VIN (17 caratteri)"
+  },
+  "aria": {
+    "firstName": "Campo nome, inserisci il tuo nome",
+    "lastName": "Campo cognome, inserisci il tuo cognome",
+    "email": "Campo email, inserisci un indirizzo email valido",
+    "phone": "Campo telefono, inserisci il numero di telefono",
+    "password": "Campo password, inserisci una password sicura",
+    "search": "Campo di ricerca, digita per cercare",
+    "select": "Menu a discesa, seleziona un'opzione",
+    "submit": "Pulsante invio, clicca per inviare il modulo",
+    "close": "Pulsante chiudi, clicca per chiudere"
+  },
+  "errors": {
+    "required": "Il campo {{field}} è obbligatorio",
+    "invalidEmail": "Inserisci un indirizzo email valido",
+    "invalidPhone": "Inserisci un numero di telefono valido",
+    "minLength": "Il campo {{field}} deve avere almeno {{min}} caratteri",
+    "maxLength": "Il campo {{field}} non può superare {{max}} caratteri",
+    "passwordMatch": "Le password non coincidono",
+    "invalidDate": "Data non valida",
+    "invalidVat": "Partita IVA non valida",
+    "invalidFiscalCode": "Codice fiscale non valido"
+  },
+  "hints": {
+    "password": "Minimo 8 caratteri, una maiuscola, un numero",
+    "vatNumber": "11 cifre senza spazi",
+    "fiscalCode": "16 caratteri alfanumerici",
+    "vin": "17 caratteri alfanumerici"
+  },
+  "step": {
+    "title": "Step {{current}} di {{total}}",
+    "personal": "Dati Personali",
+    "company": "Dati Azienda",
+    "vehicle": "Dati Veicolo",
+    "service": "Servizi",
+    "review": "Riepilogo",
+    "next": "Prossimo step: {{step}}",
+    "previous": "Step precedente: {{step}}"
+  }
+}

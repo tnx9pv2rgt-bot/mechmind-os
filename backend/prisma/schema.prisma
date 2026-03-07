@@ -1,0 +1,1435 @@
+// MechMind OS v10 - Prisma Schema with Multi-Tenancy & RLS
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// TENANT MODELS
+// ==========================================
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users        User[]
+  customers    Customer[]
+  bookings     Booking[]
+  bookingSlots BookingSlot[]
+  services     Service[]
+
+  // DVI
+  inspections         Inspection[]
+  inspectionTemplates InspectionTemplate[]
+
+  // OBD
+  obdDevices  ObdDevice[]
+  obdReadings ObdReading[]
+
+  // Parts
+  parts              Part[]
+  suppliers          Supplier[]
+  inventoryItems     InventoryItem[]
+  inventoryMovements InventoryMovement[]
+  purchaseOrders     PurchaseOrder[]
+
+  // Subscription & Pricing
+  subscription Subscription?
+  usageHistory UsageTracking[]
+  locations    Location[]
+  Notification Notification[]
+
+  @@map("tenants")
+}
+
+// ==========================================
+// USER MODELS (Enhanced for NEXO SaaS Auth)
+// ==========================================
+
+model User {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  email         String
+  emailVerified DateTime? @map("email_verified")
+
+  // Password (optional - for non-passkey users)
+  passwordHash      String?   @map("password_hash")
+  passwordChangedAt DateTime? @map("password_changed_at")
+
+  // Profile
+  name     String
+  avatar   String?
+  role     UserRole @default(MECHANIC) // ADMIN, MANAGER, MECHANIC, RECEPTIONIST, VIEWER
+  isActive Boolean  @default(true) @map("is_active")
+
+  // Passkeys (WebAuthn)
+  passkeys Passkey[]
+
+  // Recovery
+  backupCodes   BackupCode[]
+  recoveryEmail String?      @map("recovery_email")
+  recoveryPhone String?      @map("recovery_phone")
+
+  // MFA
+  totpSecret     String?   @map("totp_secret") // encrypted
+  totpEnabled    Boolean   @default(false) @map("totp_enabled")
+  totpVerifiedAt DateTime? @map("totp_verified_at")
+  smsOtpEnabled  Boolean   @default(false) @map("sms_otp_enabled")
+
+  // Session/Device management
+  sessions Session[]
+  devices  Device[]
+
+  // Security
+  lastLoginAt    DateTime? @map("last_login_at")
+  lastLoginIp    String?   @map("last_login_ip")
+  failedAttempts Int       @default(0) @map("failed_attempts")
+  lockedUntil    DateTime? @map("locked_until")
+
+  // Preferences
+  preferences Json? @default("{}")
+
+  // Relations
+  locationId String?   @map("location_id")
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  // Audit
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  deletedAt  DateTime?    @map("deleted_at") // soft delete
+  Inspection Inspection[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@index([createdAt])
+  @@index([locationId])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  MECHANIC
+  RECEPTIONIST
+  VIEWER
+}
+
+// ==========================================
+// CUSTOMER MODELS (with PII encryption)
+// ==========================================
+
+model Customer {
+  id                 String    @id @default(uuid())
+  encryptedPhone     String    @map("encrypted_phone")
+  encryptedEmail     String?   @map("encrypted_email")
+  encryptedFirstName String?   @map("encrypted_first_name")
+  encryptedLastName  String?   @map("encrypted_last_name")
+  phoneHash          String    @map("phone_hash") // For lookup without decryption
+  gdprConsent        Boolean   @default(false) @map("gdpr_consent")
+  gdprConsentAt      DateTime? @map("gdpr_consent_at")
+  marketingConsent   Boolean   @default(false) @map("marketing_consent")
+  notes              String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Tenant relation
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Location relation (for multi-location support)
+  locationId String?   @map("location_id")
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  // Relations
+  bookings                       Booking[]
+  vehicles                       Vehicle[]
+  Inspection                     Inspection[]
+  Notification                   Notification[]
+  CustomerNotificationPreference CustomerNotificationPreference[]
+
+  @@index([phoneHash])
+  @@index([tenantId])
+  @@index([locationId])
+  @@map("customers")
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  licensePlate String   @map("license_plate")
+  make         String
+  model        String
+  year         Int?
+  vin          String?
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Customer relation
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Relations
+  bookings    Booking[]
+  inspections Inspection[]
+  obdDevices  ObdDevice[]
+
+  @@map("vehicles")
+}
+
+// ==========================================
+// BOOKING MODELS
+// ==========================================
+
+model Booking {
+  id              String        @id @default(uuid())
+  status          BookingStatus @default(PENDING)
+  scheduledDate   DateTime      @map("scheduled_date")
+  durationMinutes Int           @default(60) @map("duration_minutes")
+  notes           String?
+  source          BookingSource @default(WEB)
+  vapiCallId      String?       @map("vapi_call_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Tenant relation
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relations
+  customerId String           @map("customer_id")
+  customer   Customer         @relation(fields: [customerId], references: [id])
+  vehicleId  String?          @map("vehicle_id")
+  vehicle    Vehicle?         @relation(fields: [vehicleId], references: [id])
+  slotId     String           @unique @map("slot_id")
+  slot       BookingSlot      @relation(fields: [slotId], references: [id])
+  services   BookingService[]
+  events     BookingEvent[]
+  parts      BookingPart[]
+
+  // Location relation (for multi-location support)
+  locationId String?   @map("location_id")
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([scheduledDate])
+  @@index([locationId])
+  @@map("bookings")
+}
+
+model BookingSlot {
+  id        String     @id @default(uuid())
+  startTime DateTime   @map("start_time")
+  endTime   DateTime   @map("end_time")
+  status    SlotStatus @default(AVAILABLE)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  // Tenant relation
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relations
+  booking Booking?
+
+  @@index([tenantId])
+  @@index([startTime])
+  @@index([status])
+  @@map("booking_slots")
+}
+
+model BookingEvent {
+  id        String   @id @default(uuid())
+  eventType String   @map("event_type")
+  payload   Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Booking relation
+  bookingId String  @map("booking_id")
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([eventType])
+  @@map("booking_events")
+}
+
+// ==========================================
+// SERVICE MODELS
+// ==========================================
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  duration    Int      @default(60) // minutes
+  price       Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Tenant relation
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relations
+  bookings BookingService[]
+
+  @@map("services")
+}
+
+model BookingService {
+  id        String   @id @default(uuid())
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  bookingId String  @map("booking_id")
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId String  @map("service_id")
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([bookingId, serviceId])
+  @@map("booking_services")
+}
+
+// ==========================================
+// VOICE WEBHOOK EVENTS
+// ==========================================
+
+model VoiceWebhookEvent {
+  id            String    @id @default(uuid())
+  callId        String    @map("call_id")
+  eventType     String    @map("event_type")
+  tenantId      String    @map("tenant_id")
+  customerPhone String?   @map("customer_phone")
+  payload       Json
+  processed     Boolean   @default(false)
+  processedAt   DateTime? @map("processed_at")
+  errorMessage  String?   @map("error_message")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([callId])
+  @@index([tenantId])
+  @@index([eventType])
+  @@index([processed])
+  @@map("voice_webhook_events")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+  RESERVED
+}
+
+enum BookingSource {
+  WEB
+  VOICE
+  PHONE
+  WALK_IN
+  APP
+}
+
+// ==========================================
+// DVI (Digital Vehicle Inspection)
+// ==========================================
+
+model Inspection {
+  id         String           @id @default(uuid())
+  status     InspectionStatus @default(IN_PROGRESS)
+  templateId String           @map("template_id")
+  vehicleId  String           @map("vehicle_id")
+  customerId String           @map("customer_id")
+  mechanicId String           @map("mechanic_id")
+  tenantId   String           @map("tenant_id")
+
+  // Metadata
+  startedAt   DateTime   @default(now()) @map("started_at")
+  completedAt DateTime?  @map("completed_at")
+  mileage     Int?
+  fuelLevel   FuelLevel? @map("fuel_level")
+
+  // Customer interaction
+  customerNotified Boolean   @default(false) @map("customer_notified")
+  customerViewed   Boolean   @default(false) @map("customer_viewed")
+  approvedAt       DateTime? @map("approved_at")
+  approvedBy       String?   @map("approved_by") // customer signature/email
+
+  // Relations
+  tenant   Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle            @relation(fields: [vehicleId], references: [id])
+  customer Customer           @relation(fields: [customerId], references: [id])
+  mechanic User               @relation(fields: [mechanicId], references: [id])
+  template InspectionTemplate @relation(fields: [templateId], references: [id])
+
+  items           InspectionItem[]
+  photos          InspectionPhoto[]
+  findings        InspectionFinding[]
+  obdTroubleCodes ObdTroubleCode[]
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@index([customerId])
+  @@index([mechanicId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("inspections")
+}
+
+model InspectionTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String // e.g., "PRE_PURCHASE", "ROUTINE", "SAFETY"
+  isActive    Boolean  @default(true) @map("is_active")
+  tenantId    String   @map("tenant_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant      Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items       InspectionTemplateItem[]
+  inspections Inspection[]
+
+  @@index([tenantId])
+  @@index([category])
+  @@map("inspection_templates")
+}
+
+model InspectionTemplateItem {
+  id          String  @id @default(uuid())
+  templateId  String  @map("template_id")
+  category    String // e.g., "ENGINE", "BRAKES", "TIRES"
+  name        String // e.g., "Engine Oil Level"
+  description String?
+  position    Int // Display order
+  isRequired  Boolean @default(false) @map("is_required")
+
+  // Relations
+  template        InspectionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  inspectionItems InspectionItem[]
+
+  @@index([templateId])
+  @@map("inspection_template_items")
+}
+
+model InspectionItem {
+  id             String @id @default(uuid())
+  inspectionId   String @map("inspection_id")
+  templateItemId String @map("template_item_id")
+
+  // Status
+  status InspectionItemStatus @default(PENDING)
+
+  // Details
+  notes    String?
+  severity FindingSeverity? // CRITICAL, WARNING, OK
+
+  // Relations
+  inspection   Inspection             @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  templateItem InspectionTemplateItem @relation(fields: [templateItemId], references: [id])
+  photos       InspectionPhoto[]
+
+  @@index([inspectionId])
+  @@map("inspection_items")
+}
+
+model InspectionPhoto {
+  id           String  @id @default(uuid())
+  inspectionId String  @map("inspection_id")
+  itemId       String? @map("item_id") // Optional: associated with specific item
+
+  // Storage
+  s3Key        String  @map("s3_key")
+  s3Bucket     String  @map("s3_bucket")
+  url          String
+  thumbnailUrl String? @map("thumbnail_url")
+
+  // Metadata
+  category    String? // e.g., "DAMAGE", "GENERAL", "ODOMETER"
+  description String?
+  takenAt     DateTime @default(now()) @map("taken_at")
+  takenBy     String   @map("taken_by")
+
+  // Relations
+  inspection Inspection      @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  item       InspectionItem? @relation(fields: [itemId], references: [id])
+
+  @@index([inspectionId])
+  @@index([itemId])
+  @@map("inspection_photos")
+}
+
+model InspectionFinding {
+  id           String @id @default(uuid())
+  inspectionId String @map("inspection_id")
+
+  // Finding details
+  category    String // e.g., "ENGINE", "BRAKES"
+  title       String
+  description String
+  severity    FindingSeverity
+
+  // Recommended action
+  recommendation String?
+  estimatedCost  Decimal? @map("estimated_cost") @db.Decimal(10, 2)
+
+  // Status tracking
+  status             FindingStatus @default(REPORTED)
+  approvedByCustomer Boolean       @default(false) @map("approved_by_customer")
+  approvedAt         DateTime?     @map("approved_at")
+
+  // Relations
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  @@index([inspectionId])
+  @@index([severity])
+  @@index([status])
+  @@map("inspection_findings")
+}
+
+// ==========================================
+// DVI ENUMS
+// ==========================================
+
+enum InspectionStatus {
+  IN_PROGRESS
+  PENDING_REVIEW
+  READY_FOR_CUSTOMER
+  CUSTOMER_REVIEWING
+  APPROVED
+  DECLINED
+  ARCHIVED
+}
+
+enum InspectionItemStatus {
+  PENDING
+  CHECKED
+  ISSUE_FOUND
+  NOT_APPLICABLE
+}
+
+enum FindingSeverity {
+  CRITICAL // Immediate attention required
+  HIGH // Should be addressed soon
+  MEDIUM // Monitor and address when possible
+  LOW // Minor issue
+  OK // No issue
+}
+
+enum FindingStatus {
+  REPORTED
+  PENDING_APPROVAL
+  APPROVED
+  DECLINED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum FuelLevel {
+  EMPTY
+  QUARTER
+  HALF
+  THREE_QUARTERS
+  FULL
+}
+
+// ==========================================
+// OBD (On-Board Diagnostics)
+// ==========================================
+
+model ObdDevice {
+  id           String  @id @default(uuid())
+  serialNumber String  @unique @map("serial_number")
+  name         String?
+  model        String // e.g., "ELM327", "BlueDriver"
+  firmware     String?
+
+  // Connection
+  macAddress    String? @map("mac_address")
+  bluetoothName String? @map("bluetooth_name")
+
+  // Status
+  isActive      Boolean   @default(true) @map("is_active")
+  lastConnected DateTime? @map("last_connected")
+  batteryLevel  Int?      @map("battery_level")
+
+  // Relations
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicleId String?  @map("vehicle_id")
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  readings ObdReading[]
+  dtcs     ObdTroubleCode[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@map("obd_devices")
+}
+
+model ObdReading {
+  id       String    @id @default(uuid())
+  deviceId String    @map("device_id")
+  device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  // Timestamp
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  // Engine data
+  rpm         Int? // Engine RPM
+  speed       Int? // Vehicle speed (km/h)
+  coolantTemp Int?   @map("coolant_temp") // Coolant temperature (°C)
+  engineLoad  Float? @map("engine_load") // Engine load (%)
+
+  // Fuel data
+  fuelLevel Float? @map("fuel_level") // Fuel level (%)
+  fuelRate  Float? @map("fuel_rate") // Fuel consumption rate (L/h)
+
+  // Intake data
+  intakeTemp Int?   @map("intake_temp") // Intake air temperature (°C)
+  maf        Float? @map("maf") // Mass air flow (g/s)
+
+  // Pressure data
+  barometric Float? // Barometric pressure (kPa)
+  intakeMap  Float? @map("intake_map") // Intake manifold pressure (kPa)
+
+  // Other
+  throttlePos Float? @map("throttle_pos") // Throttle position (%)
+  voltage     Float? // Control module voltage (V)
+  runTime     Int?   @map("run_time") // Engine run time (seconds)
+  distance    Int? // Distance traveled since codes cleared (km)
+
+  // Raw data (optional)
+  rawData Json? @map("raw_data")
+
+  // Geolocation (if available)
+  latitude  Float?
+  longitude Float?
+  Tenant    Tenant? @relation(fields: [tenantId], references: [id])
+  tenantId  String?
+
+  @@index([deviceId])
+  @@index([recordedAt])
+  @@map("obd_readings")
+}
+
+model ObdTroubleCode {
+  id       String    @id @default(uuid())
+  deviceId String    @map("device_id")
+  device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  // DTC info
+  code     String // e.g., "P0301"
+  category String // e.g., "POWERTRAIN", "CHASSIS", "BODY", "NETWORK"
+  severity TroubleCodeSeverity
+
+  // Description
+  description String
+  symptoms    String?
+  causes      String?
+
+  // Status
+  isActive    Boolean @default(true) @map("is_active")
+  isPending   Boolean @default(false) @map("is_pending")
+  isPermanent Boolean @default(false) @map("is_permanent")
+
+  // Timestamps
+  firstSeenAt DateTime  @default(now()) @map("first_seen_at")
+  lastSeenAt  DateTime  @default(now()) @map("last_seen_at")
+  clearedAt   DateTime? @map("cleared_at")
+  clearedBy   String?   @map("cleared_by")
+
+  // Associated reading snapshot
+  readingSnapshot Json? @map("reading_snapshot")
+
+  // Relations
+  inspection   Inspection? @relation(fields: [inspectionId], references: [id])
+  inspectionId String?     @map("inspection_id")
+
+  @@index([deviceId])
+  @@index([code])
+  @@index([isActive])
+  @@index([firstSeenAt])
+  @@map("obd_trouble_codes")
+}
+
+enum TroubleCodeSeverity {
+  INFO // Informational only
+  LOW // Minor issue
+  MEDIUM // Should be addressed
+  HIGH // Serious issue
+  CRITICAL // Safety critical
+}
+
+// ==========================================
+// PARTS CATALOG & INVENTORY
+// ==========================================
+
+model Part {
+  id          String  @id @default(uuid())
+  sku         String  @unique
+  name        String
+  description String?
+  category    String // e.g., "BRAKES", "ENGINE", "ELECTRICAL"
+  subcategory String? @map("subcategory")
+
+  // Specifications
+  brand        String?
+  manufacturer String?
+  partNumber   String? @map("part_number") // OEM number
+
+  // Dimensions
+  weight     Float? // kg
+  dimensions Json? // { length, width, height }
+
+  // Compatibility
+  compatibleMakes  String[] @default([]) @map("compatible_makes")
+  compatibleModels String[] @default([]) @map("compatible_models")
+  yearFrom         Int?     @map("year_from")
+  yearTo           Int?     @map("year_to")
+
+  // Pricing
+  costPrice   Decimal @map("cost_price") @db.Decimal(10, 2)
+  retailPrice Decimal @map("retail_price") @db.Decimal(10, 2)
+  vatRate     Decimal @default(22.00) @map("vat_rate") @db.Decimal(5, 2)
+
+  // Inventory
+  minStockLevel Int  @default(5) @map("min_stock_level")
+  maxStockLevel Int? @map("max_stock_level")
+  reorderPoint  Int  @default(10) @map("reorder_point")
+
+  // Relations
+  tenantId   String    @map("tenant_id")
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplierId String?   @map("supplier_id")
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
+  inventory    InventoryItem[]
+  movements    InventoryMovement[]
+  orderItems   PurchaseOrderItem[]
+  bookingParts BookingPart[]
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([category])
+  @@index([sku])
+  @@index([supplierId])
+  @@map("parts")
+}
+
+model Supplier {
+  id          String  @id @default(uuid())
+  name        String
+  code        String  @unique
+  contactName String? @map("contact_name")
+  email       String?
+  phone       String?
+
+  // Address
+  address    String?
+  city       String?
+  postalCode String? @map("postal_code")
+  country    String?
+
+  // Business
+  vatNumber    String? @map("vat_number")
+  paymentTerms String? @map("payment_terms") // e.g., "NET_30"
+
+  // Relations
+  tenantId String          @map("tenant_id")
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parts    Part[]
+  orders   PurchaseOrder[]
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("suppliers")
+}
+
+model InventoryItem {
+  id     String @id @default(uuid())
+  partId String @map("part_id")
+  part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  // Storage Location (legacy string field)
+  storageLocation String? @map("storage_location") // e.g., "SHELF-A1", "WAREHOUSE-2"
+  bin             String? // e.g., "BIN-12"
+
+  // Stock
+  quantity  Int @default(0)
+  reserved  Int @default(0) // Reserved for orders
+  available Int @default(0) // Calculated: quantity - reserved
+
+  // Tracking
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Location relation (for multi-location support)
+  locationId String?   @map("location_id")
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  lastCounted DateTime? @map("last_counted")
+
+  @@unique([partId, storageLocation])
+  @@index([tenantId])
+  @@index([locationId])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id     String @id @default(uuid())
+  partId String @map("part_id")
+  part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  // Movement details
+  type     MovementType
+  quantity Int
+
+  // Reference
+  referenceId   String? @map("reference_id") // e.g., booking ID, order ID
+  referenceType String? @map("reference_type")
+  notes         String?
+
+  // User
+  performedBy String @map("performed_by")
+
+  // Tenant
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([partId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+model PurchaseOrder {
+  id          String @id @default(uuid())
+  orderNumber String @unique @map("order_number") // PO-2024-001
+
+  // Supplier
+  supplierId String   @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Status
+  status OrderStatus @default(DRAFT)
+
+  // Financial
+  subtotal  Decimal @db.Decimal(10, 2)
+  vatAmount Decimal @map("vat_amount") @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+
+  // Dates
+  orderDate    DateTime  @default(now()) @map("order_date")
+  expectedDate DateTime? @map("expected_date")
+  receivedAt   DateTime? @map("received_at")
+
+  // Relations
+  tenantId String              @map("tenant_id")
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items    PurchaseOrderItem[]
+
+  notes     String?
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id      String        @id @default(uuid())
+  orderId String        @map("order_id")
+  order   PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  partId String @map("part_id")
+  part   Part   @relation(fields: [partId], references: [id])
+
+  quantity    Int
+  receivedQty Int     @default(0) @map("received_qty")
+  unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
+  vatRate     Decimal @map("vat_rate") @db.Decimal(5, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  @@index([orderId])
+  @@index([partId])
+  @@map("purchase_order_items")
+}
+
+model BookingPart {
+  id        String  @id @default(uuid())
+  bookingId String  @map("booking_id")
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  partId String @map("part_id")
+  part   Part   @relation(fields: [partId], references: [id])
+
+  quantity  Int
+  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+
+  isInstalled Boolean   @default(false) @map("is_installed")
+  installedAt DateTime? @map("installed_at")
+  installedBy String?   @map("installed_by")
+
+  @@unique([bookingId, partId])
+  @@index([bookingId])
+  @@index([partId])
+  @@map("booking_parts")
+}
+
+// ==========================================
+// PARTS ENUMS
+// ==========================================
+
+enum MovementType {
+  IN // Stock received
+  OUT // Stock used/sold
+  ADJUSTMENT // Inventory adjustment
+  RETURN // Return to supplier
+  TRANSFER // Location transfer
+}
+
+enum OrderStatus {
+  DRAFT
+  SENT
+  ACKNOWLEDGED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+// ==========================================
+// PIVA CACHE MODEL
+// Cache per risultati verifica Partita IVA
+// ==========================================
+
+model PivaCache {
+  id        String   @id @default(uuid())
+  piva      String   @unique // Partita IVA (11 cifre)
+  data      Json // Dati anagrafici (risultato API)
+  cachedAt  DateTime @default(now()) @map("cached_at")
+  expiresAt DateTime @map("expires_at") // TTL 30 giorni
+
+  @@index([piva])
+  @@index([expiresAt])
+  @@map("piva_cache")
+}
+
+// ==========================================
+// NOTIFICATION SYSTEM
+// SMS, WhatsApp, Email notifications
+// ==========================================
+
+model Notification {
+  id         String @id @default(uuid())
+  customerId String @map("customer_id")
+  tenantId   String @map("tenant_id")
+
+  type    NotificationType
+  channel NotificationChannel
+  status  NotificationStatus  @default(PENDING)
+
+  message   String
+  messageId String? @map("message_id") // Twilio message ID
+
+  sentAt      DateTime? @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  failedAt    DateTime? @map("failed_at")
+  error       String?
+
+  retries    Int @default(0)
+  maxRetries Int @default(3) @map("max_retries")
+
+  metadata Json? // bookingId, invoiceId, etc.
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([type])
+  @@index([channel])
+  @@index([status, retries, maxRetries])
+  @@map("notifications")
+}
+
+model CustomerNotificationPreference {
+  id         String              @id @default(uuid())
+  customerId String              @map("customer_id")
+  channel    NotificationChannel
+  enabled    Boolean             @default(true)
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, channel])
+  @@index([customerId])
+  @@map("customer_notification_preferences")
+}
+
+enum NotificationType {
+  BOOKING_REMINDER
+  BOOKING_CONFIRMATION
+  STATUS_UPDATE
+  INVOICE_READY
+  MAINTENANCE_DUE
+  INSPECTION_COMPLETE
+  PAYMENT_REMINDER
+}
+
+enum NotificationChannel {
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+// ==========================================
+// SUBSCRIPTION & PRICING SYSTEM
+// ==========================================
+
+model Subscription {
+  id       String @id @default(uuid())
+  tenantId String @unique @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Plan & Status
+  plan   SubscriptionPlan   @default(TRIAL)
+  status SubscriptionStatus @default(TRIAL)
+
+  // Stripe Integration
+  stripeCustomerId     String? @map("stripe_customer_id")
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+  stripePriceId        String? @map("stripe_price_id")
+
+  // Billing Period
+  currentPeriodStart DateTime  @map("current_period_start")
+  currentPeriodEnd   DateTime  @map("current_period_end")
+  trialEndsAt        DateTime? @map("trial_ends_at")
+  cancelAtPeriodEnd  Boolean   @default(false) @map("cancel_at_period_end")
+  cancelledAt        DateTime? @map("cancelled_at")
+
+  // AI Add-on
+  aiAddonEnabled Boolean  @default(false) @map("ai_addon_enabled")
+  aiAddonPrice   Decimal? @map("ai_addon_price") @db.Decimal(10, 2)
+
+  // Usage Tracking (current period)
+  apiCallsUsed      Int     @default(0) @map("api_calls_used")
+  apiCallsLimit     Int?    @map("api_calls_limit")
+  storageUsedBytes  BigInt  @default(0) @map("storage_used_bytes")
+  storageLimitBytes BigInt? @map("storage_limit_bytes")
+
+  // Plan Limits
+  maxUsers     Int @default(1) @map("max_users")
+  maxLocations Int @default(1) @map("max_locations")
+
+  // Relations
+  features     SubscriptionFeature[]
+  changes      SubscriptionChange[]
+  usageHistory UsageTracking[]
+
+  // Metadata
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+model SubscriptionFeature {
+  id             String       @id @default(uuid())
+  subscriptionId String       @map("subscription_id")
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  feature        FeatureFlag
+  enabled        Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([subscriptionId, feature])
+  @@index([subscriptionId])
+  @@map("subscription_features")
+}
+
+model UsageTracking {
+  id             String        @id @default(uuid())
+  tenantId       String        @map("tenant_id")
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscriptionId String?       @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  year  Int
+  month Int
+
+  // API Usage
+  apiCallsTotal     Int   @default(0) @map("api_calls_total")
+  apiCallsBreakdown Json? @map("api_calls_breakdown")
+
+  // Storage Usage
+  storageBytes     BigInt @default(0) @map("storage_bytes")
+  storageBreakdown Json?  @map("storage_breakdown")
+
+  // Resource Usage
+  usersCount       Int @default(0) @map("users_count")
+  locationsCount   Int @default(0) @map("locations_count")
+  customersCount   Int @default(0) @map("customers_count")
+  inspectionsCount Int @default(0) @map("inspections_count")
+
+  // AI Usage
+  aiInspectionsCount Int @default(0) @map("ai_inspections_count")
+  aiApiCalls         Int @default(0) @map("ai_api_calls")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, year, month])
+  @@index([tenantId])
+  @@index([year, month])
+  @@map("usage_tracking")
+}
+
+model SubscriptionChange {
+  id             String       @id @default(uuid())
+  subscriptionId String       @map("subscription_id")
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  tenantId       String       @map("tenant_id")
+
+  changeType     String              @map("change_type") // UPGRADE, DOWNGRADE, CANCEL, REACTIVATE, AI_ADDON_TOGGLE
+  oldPlan        SubscriptionPlan?   @map("old_plan")
+  newPlan        SubscriptionPlan?   @map("new_plan")
+  oldStatus      SubscriptionStatus? @map("old_status")
+  newStatus      SubscriptionStatus? @map("new_status")
+  proratedAmount Decimal?            @map("prorated_amount") @db.Decimal(10, 2)
+
+  metadata    Json?    @default("{}")
+  performedBy String?  @map("performed_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([subscriptionId])
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("subscription_changes")
+}
+
+model PromoCode {
+  id              String             @id @default(uuid())
+  code            String             @unique
+  description     String?
+  discountType    String             @map("discount_type") // PERCENTAGE, FIXED_AMOUNT
+  discountValue   Decimal            @map("discount_value") @db.Decimal(10, 2)
+  applicablePlans SubscriptionPlan[] @map("applicable_plans")
+  maxUses         Int?               @map("max_uses")
+  usesCount       Int                @default(0) @map("uses_count")
+  validFrom       DateTime           @default(now()) @map("valid_from")
+  validUntil      DateTime?          @map("valid_until")
+  isActive        Boolean            @default(true) @map("is_active")
+  createdAt       DateTime           @default(now()) @map("created_at")
+
+  @@index([code])
+  @@index([isActive, validFrom, validUntil])
+  @@map("promo_codes")
+}
+
+// ==========================================
+// LOCATION MODEL
+// ==========================================
+
+model Location {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name       String
+  address    String?
+  city       String?
+  postalCode String? @map("postal_code")
+  country    String  @default("IT")
+  phone      String?
+  email      String?
+
+  isMain   Boolean @default(false) @map("is_main")
+  isActive Boolean @default(true) @map("is_active")
+
+  // Relations
+  users          User[]
+  customers      Customer[]
+  bookings       Booking[]
+  inventoryItems InventoryItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, isMain])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("locations")
+}
+
+// ==========================================
+// SUBSCRIPTION ENUMS
+// ==========================================
+
+enum SubscriptionPlan {
+  SMALL // Piccole: €100/mese (1-3 dipendenti, 1 sede)
+  MEDIUM // Medie: €390.90/mese (4-10 dipendenti, 1-2 sedi)
+  ENTERPRISE // Grandi: Custom pricing (10+ dipendenti, 3+ sedi)
+  TRIAL // 14-day trial
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  UNPAID
+  CANCELLED
+  SUSPENDED
+  EXPIRED
+}
+
+enum FeatureFlag {
+  AI_INSPECTIONS
+  MULTI_LOCATION
+  API_ACCESS
+  ADVANCED_REPORTS
+  CUSTOM_BRANDING
+  PRIORITY_SUPPORT
+  WHITE_LABEL
+  BLOCKCHAIN_VERIFICATION
+  VOICE_ASSISTANT
+  OBD_INTEGRATION
+  INVENTORY_MANAGEMENT
+  CUSTOM_INTEGRATIONS
+  DEDICATED_MANAGER
+  SLA_GUARANTEE
+}
+
+// ============================================
+// AUTHENTICATION MODELS (NEXO SaaS)
+// ============================================
+
+model Passkey {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // WebAuthn fields
+  credentialId String   @unique @map("credential_id")
+  publicKey    String   @map("public_key") // base64url encoded
+  counter      Int      @default(0) // for cloned device detection
+  transports   String[] @default([]) // ['usb', 'ble', 'internal', 'nfc']
+
+  // Device info
+  deviceName String? @map("device_name") // "iPhone 15 Pro"
+  deviceType String  @map("device_type") // phone, tablet, desktop, biometric_reader
+
+  // Usage
+  registeredAt DateTime  @default(now()) @map("registered_at")
+  lastUsedAt   DateTime? @map("last_used_at")
+  isBackupKey  Boolean   @default(false) @map("is_backup_key")
+
+  @@index([userId])
+  @@index([credentialId])
+  @@map("passkeys")
+}
+
+model Session {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jwtToken     String  @unique @map("jwt_token")
+  refreshToken String? @unique @map("refresh_token")
+
+  // Device context
+  deviceId  String? @map("device_id")
+  device    Device? @relation(fields: [deviceId], references: [id])
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  // Session life
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+
+  isActive      Boolean   @default(true) @map("is_active")
+  revokedAt     DateTime? @map("revoked_at")
+  revokedReason String?   @map("revoked_reason")
+
+  @@index([userId])
+  @@index([deviceId])
+  @@index([jwtToken])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Device {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceName  String  @map("device_name") // "Giovanni's iPhone"
+  deviceType  String  @map("device_type") // phone, tablet, desktop
+  osType      String  @map("os_type") // iOS, Android, Windows, macOS
+  osVersion   String? @map("os_version")
+  browserType String? @map("browser_type") // Chrome, Safari, Firefox
+
+  // Device recognition
+  fingerprint  String    @map("fingerprint") // hash of userAgent + screen + etc
+  trustedUntil DateTime? @map("trusted_until") // "Remember this device"
+
+  // Context
+  lastIpAddress       String?   @map("last_ip_address")
+  lastLocationCity    String?   @map("last_location_city")
+  lastLocationCountry String?   @map("last_location_country")
+  lastLoginAt         DateTime? @map("last_login_at")
+
+  // Security
+  isCompromised   Boolean @default(false) @map("is_compromised")
+  requiresMfaNext Boolean @default(false) @map("requires_mfa_next")
+
+  sessions Session[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, fingerprint])
+  @@index([userId])
+  @@index([fingerprint])
+  @@map("devices")
+}
+
+model BackupCode {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  codeHash String    @map("code_hash") // hashed
+  usedAt   DateTime? @map("used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("backup_codes")
+}
+
+model MagicLink {
+  id       String  @id @default(cuid())
+  email    String
+  token    String  @unique
+  tenantId String? @map("tenant_id")
+
+  expiresAt DateTime  @map("expires_at") // 15 minutes
+  usedAt    DateTime? @map("used_at")
+  ipAddress String?   @map("ip_address")
+  userAgent String?   @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("magic_links")
+}
+
+model SmsOtp {
+  id       String @id @default(cuid())
+  phone    String
+  codeHash String @map("code_hash") // hashed
+
+  expiresAt DateTime  @map("expires_at") // 10 minutes
+  usedAt    DateTime? @map("used_at")
+  attempts  Int       @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone])
+  @@index([expiresAt])
+  @@map("sms_otps")
+}
+
+model AuthAuditLog {
+  id       String  @id @default(cuid())
+  tenantId String  @map("tenant_id")
+  userId   String? @map("user_id")
+
+  action    String // login_success, login_failed, passkey_registered, mfa_enabled, etc
+  status    String // success, failed, blocked
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  details Json? // {failureReason: 'invalid_passkey', attempts: 3}
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([status])
+  @@index([createdAt])
+  @@map("auth_audit_logs")
+}
+
+// ============================================
+// AUTHENTICATION MODELS END
+// ============================================

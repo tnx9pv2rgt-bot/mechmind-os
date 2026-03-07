@@ -1,0 +1,167 @@
+/**
+ * Grace Period Management Service
+ * Handles suspension after failed payments
+ */
+
+import { prisma } from '@/lib/prisma'
+
+const GRACE_PERIOD_DAYS = 3
+
+/**
+ * Check if tenant is in grace period
+ */
+export async function isInGracePeriod(tenantId: string): Promise<boolean> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      gracePeriodEnd: true,
+      subscriptionStatus: true,
+    },
+  })
+
+  if (!tenant?.gracePeriodEnd) return false
+  
+  return (
+    tenant.gracePeriodEnd > new Date() &&
+    (tenant.subscriptionStatus === 'past_due' || tenant.subscriptionStatus === 'unpaid')
+  )
+}
+
+/**
+ * Check if tenant should be suspended (grace period expired)
+ */
+export async function shouldSuspendTenant(tenantId: string): Promise<boolean> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      gracePeriodEnd: true,
+      subscriptionStatus: true,
+      isSuspended: true,
+    },
+  })
+
+  if (!tenant?.gracePeriodEnd) return false
+  if (tenant.isSuspended) return false
+  
+  return (
+    tenant.gracePeriodEnd <= new Date() &&
+    (tenant.subscriptionStatus === 'past_due' || tenant.subscriptionStatus === 'unpaid')
+  )
+}
+
+/**
+ * Start grace period for tenant
+ */
+export async function startGracePeriod(tenantId: string): Promise<void> {
+  const gracePeriodEnd = new Date()
+  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS)
+
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: {
+      gracePeriodEnd,
+      subscriptionStatus: 'past_due',
+    },
+  })
+
+  // TODO: Send email notification about grace period
+  console.log(`⏰ Grace period started for tenant ${tenantId}, ends ${gracePeriodEnd.toISOString()}`)
+}
+
+/**
+ * Suspend tenant (grace period expired)
+ */
+export async function suspendTenant(tenantId: string): Promise<void> {
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: {
+      isSuspended: true,
+      subscriptionStatus: 'suspended',
+    },
+  })
+
+  // TODO: Send suspension notification
+  console.log(`🚫 Tenant ${tenantId} suspended due to non-payment`)
+}
+
+/**
+ * Reactivate tenant after payment
+ */
+export async function reactivateTenant(tenantId: string): Promise<void> {
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: {
+      isSuspended: false,
+      gracePeriodEnd: null,
+      subscriptionStatus: 'active',
+    },
+  })
+
+  console.log(`✅ Tenant ${tenantId} reactivated`)
+}
+
+/**
+ * Get days remaining in grace period
+ */
+export async function getGracePeriodDaysRemaining(tenantId: string): Promise<number | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { gracePeriodEnd: true },
+  })
+
+  if (!tenant?.gracePeriodEnd) return null
+
+  const now = new Date()
+  const diffTime = tenant.gracePeriodEnd.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  return Math.max(0, diffDays)
+}
+
+/**
+ * Process all tenants for grace period checks
+ * Should be run as a cron job
+ */
+export async function processGracePeriods(): Promise<void> {
+  console.log('🔄 Processing grace periods...')
+
+  // Find tenants with expired grace periods
+  const tenantsToSuspend = await prisma.tenant.findMany({
+    where: {
+      gracePeriodEnd: {
+        lte: new Date(),
+      },
+      isSuspended: false,
+      subscriptionStatus: {
+        in: ['past_due', 'unpaid'],
+      },
+    },
+  })
+
+  console.log(`Found ${tenantsToSuspend.length} tenants to suspend`)
+
+  for (const tenant of tenantsToSuspend) {
+    await suspendTenant(tenant.id)
+  }
+
+  // Find tenants approaching grace period end (send warnings)
+  const warningThreshold = new Date()
+  warningThreshold.setDate(warningThreshold.getDate() + 1) // 1 day before
+
+  const tenantsToWarn = await prisma.tenant.findMany({
+    where: {
+      gracePeriodEnd: {
+        lte: warningThreshold,
+        gt: new Date(),
+      },
+      isSuspended: false,
+    },
+  })
+
+  console.log(`Found ${tenantsToWarn.length} tenants to warn`)
+
+  for (const tenant of tenantsToWarn) {
+    // TODO: Send warning email
+    console.log(`⚠️ Warning: Tenant ${tenant.id} grace period ending soon`)
+  }
+}

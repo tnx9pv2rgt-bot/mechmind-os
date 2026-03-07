@@ -1,0 +1,164 @@
+# ============================================================================
+# Metabase BI Dashboard - Docker Compose Configuration
+# MechMind OS v10 - Multi-tenant Analytics
+# ============================================================================
+# Usage:
+#   docker-compose -f docker-compose.metabase.yml up -d
+#   docker-compose -f docker-compose.metabase.yml logs -f metabase
+#
+# Initial Setup:
+#   1. Access http://localhost:3001
+#   2. Complete the setup wizard
+#   3. Connect to the main application database
+#   4. Create dashboards with row-level security
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Metabase Application Server
+  # ============================================================================
+  metabase:
+    image: metabase/metabase:v0.50
+    container_name: mechmind-metabase
+    hostname: metabase
+    ports:
+      - "3001:3000"
+    environment:
+      # Database Configuration (PostgreSQL for Metabase internal DB)
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: metabase
+      MB_DB_PASS: ${METABASE_DB_PASSWORD:-metabase_secure_password}
+      MB_DB_HOST: postgres-metabase
+      
+      # Security Configuration
+      MB_ENCRYPTION_SECRET_KEY: ${METABASE_SECRET_KEY:-change_this_to_a_32_char_secret_key}
+      
+      # Application Settings
+      MB_JETTY_HOST: 0.0.0.0
+      MB_JETTY_PORT: 3000
+      
+      # Embedding Configuration
+      MB_EMBEDDING_APP_ORIGIN: ${FRONTEND_URL:-http://localhost:3000}
+      MB_ENABLE_EMBEDDING: "true"
+      MB_ENABLE_PUBLIC_SHARING: "false"
+      
+      # Email Configuration (optional, for alerts)
+      MB_EMAIL_FROM_ADDRESS: ${EMAIL_FROM:-noreply@mechmind.local}
+      MB_EMAIL_SMTP_HOST: ${SMTP_HOST:-}
+      MB_EMAIL_SMTP_PORT: ${SMTP_PORT:-587}
+      MB_EMAIL_SMTP_USERNAME: ${SMTP_USER:-}
+      MB_EMAIL_SMTP_PASSWORD: ${SMTP_PASS:-}
+      MB_EMAIL_SMTP_SECURITY: ${SMTP_SECURITY:-starttls}
+      
+      # Session Configuration
+      MB_SESSION_COOKIES: "true"
+      MB_SESSION_TIMEOUT: "8h"
+      
+      # Feature Flags
+      MB_PREMIUM_EMBEDDING_TOKEN: ${METABASE_PREMIUM_TOKEN:-}
+      
+    volumes:
+      - metabase_data:/metabase-data
+      - ./metabase/plugins:/plugins:ro
+    depends_on:
+      postgres-metabase:
+        condition: service_healthy
+    networks:
+      - mechmind-analytics
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # ============================================================================
+  # Metabase Internal Database (PostgreSQL)
+  # ============================================================================
+  postgres-metabase:
+    image: postgres:15-alpine
+    container_name: mechmind-metabase-db
+    hostname: postgres-metabase
+    environment:
+      POSTGRES_DB: metabase
+      POSTGRES_USER: metabase
+      POSTGRES_PASSWORD: ${METABASE_DB_PASSWORD:-metabase_secure_password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - metabase_postgres_data:/var/lib/postgresql/data
+      - ./metabase/init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - mechmind-analytics
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U metabase -d metabase"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # ============================================================================
+  # Analytics Data Refresh Service
+  # Refreshes materialized views periodically
+  # ============================================================================
+  analytics-refresh:
+    image: postgres:15-alpine
+    container_name: mechmind-analytics-refresh
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-postgres}
+      PGHOST: ${DB_HOST:-postgres}
+      PGPORT: ${DB_PORT:-5432}
+      PGUSER: ${DB_USER:-postgres}
+      PGDATABASE: ${DB_NAME:-mechmind}
+    command: >
+      sh -c "
+        echo 'Setting up analytics refresh cron...' &&
+        echo '*/15 * * * * PGPASSWORD=$${PGPASSWORD} psql -h $${PGHOST} -U $${PGUSER} -d $${PGDATABASE} -c \"SELECT analytics.refresh_all_views();\" 2>/dev/null || true' | crontab - &&
+        crond -f -l 8
+      "
+    networks:
+      - mechmind-analytics
+      - mechmind-backend
+    restart: unless-stopped
+    profiles:
+      - analytics-refresh
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  metabase_data:
+    driver: local
+  metabase_postgres_data:
+    driver: local
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  mechmind-analytics:
+    driver: bridge
+    name: mechmind-analytics
+  mechmind-backend:
+    external: true
+    name: mechmind-backend

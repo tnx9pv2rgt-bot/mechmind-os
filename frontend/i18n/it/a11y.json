@@ -1,0 +1,74 @@
+{
+  "announcer": {
+    "pageLoaded": "Pagina caricata: {{page}}",
+    "formSubmitted": "Modulo inviato con successo",
+    "formError": "Errore nell'invio del modulo. Correggi gli errori evidenziati.",
+    "loading": "Caricamento in corso...",
+    "loadingComplete": "Caricamento completato",
+    "saving": "Salvataggio in corso...",
+    "saved": "Salvato con successo",
+    "deleting": "Eliminazione in corso...",
+    "deleted": "Eliminato con successo",
+    "searching": "Ricerca in corso...",
+    "searchComplete": "Ricerca completata, {{count}} risultati trovati",
+    "noResults": "Nessun risultato trovato",
+    "error": "Si è verificato un errore: {{message}}"
+  },
+  "navigation": {
+    "menuOpened": "Menu aperto",
+    "menuClosed": "Menu chiuso",
+    "modalOpened": "Finestra modale aperta",
+    "modalClosed": "Finestra modale chiusa",
+    "dropdownOpened": "Menu a discesa aperto",
+    "dropdownClosed": "Menu a discesa chiuso",
+    "tabChanged": "Scheda {{tab}} di {{total}} selezionata",
+    "stepChanged": "Step {{current}} di {{total}}, {{title}}",
+    "pageChanged": "Pagina {{page}} di {{total}}",
+    "skipLink": "Salta al contenuto principale"
+  },
+  "form": {
+    "fieldCompleted": "Campo {{field}} completato correttamente",
+    "fieldError": "Errore nel campo {{field}}: {{error}}",
+    "fieldRequired": "Campo {{field}} obbligatorio",
+    "fieldInvalid": "Valore non valido per il campo {{field}}",
+    "sectionCompleted": "Sezione {{section}} completata",
+    "autoSaved": "Salvataggio automatico effettuato"
+  },
+  "language": {
+    "selector": "Seleziona la lingua",
+    "changed": "Lingua cambiata in {{lang}}",
+    "current": "Lingua attuale: {{lang}}"
+  },
+  "screenReader": {
+    "instructions": {
+      "formNavigation": "Usa Tab per navigare tra i campi, Enter per inviare, Escape per annullare",
+      "modalNavigation": "Usa Tab per navigare nella finestra, Escape per chiudere",
+      "tableNavigation": "Usa le frecce per navigare nella tabella",
+      "selectNavigation": "Usa frecce su/giù per selezionare, Enter per confermare"
+    },
+    "help": {
+      "required": "Campo obbligatorio",
+      "optional": "Campo facoltativo",
+      "hasError": "Campo con errore",
+      "hasHint": "Campo con suggerimento",
+      "modified": "Campo modificato",
+      "autocomplete": "Campo con completamento automatico"
+    }
+  },
+  "highContrast": {
+    "enabled": "Modalità alto contrasto attivata",
+    "disabled": "Modalità alto contrasto disattivata"
+  },
+  "reducedMotion": {
+    "enabled": "Animazioni ridotte attivate",
+    "disabled": "Animazioni ridotte disattivate"
+  },
+  "errors": {
+    "generic": "Si è verificato un errore",
+    "network": "Errore di connessione. Controlla la tua connessione internet.",
+    "timeout": "Tempo di attesa scaduto. Riprova.",
+    "notFound": "Elemento non trovato",
+    "forbidden": "Accesso negato",
+    "unauthorized": "Sessione scaduta. Effettua nuovamente il login."
+  }
+}

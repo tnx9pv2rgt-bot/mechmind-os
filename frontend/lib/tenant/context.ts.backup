@@ -1,0 +1,485 @@
+/**
+ * Multi-Tenant Context Management
+ * 
+ * Provides tenant isolation at the application level.
+ * All database queries should be filtered by tenantId from this context.
+ * 
+ * @module lib/tenant/context
+ * @version 1.0.0
+ */
+
+import { cache } from 'react'
+
+// Dynamic import for server-side only
+const getServerHeaders = async () => {
+  if (typeof window === 'undefined') {
+    const { headers } = await import('next/headers')
+    return headers()
+  }
+  return null
+}
+
+const getServerCookies = async () => {
+  if (typeof window === 'undefined') {
+    const { cookies } = await import('next/headers')
+    return cookies()
+  }
+  return null
+}
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface TenantContext {
+  tenantId: string
+  tenantSlug: string
+  subdomain?: string
+  customDomain?: string
+  userId?: string
+  userRole?: string
+  permissions: string[]
+  subscriptionTier: string
+  subscriptionStatus: string
+  features: string[]
+}
+
+export interface TenantInfo {
+  id: string
+  name: string
+  slug: string
+  subdomain?: string | null
+  customDomain?: string | null
+  status: string
+  subscriptionTier: string
+  subscriptionStatus: string
+  features: string[]
+  settings?: Record<string, unknown> | null
+  maxUsers: number
+  maxVehicles: number
+  maxCustomers: number
+}
+
+// =============================================================================
+// Error Classes
+// =============================================================================
+
+export class TenantNotFoundError extends Error {
+  constructor(identifier: string) {
+    super(`Tenant not found: ${identifier}`)
+    this.name = 'TenantNotFoundError'
+  }
+}
+
+export class TenantSuspendedError extends Error {
+  constructor(tenantId: string) {
+    super(`Tenant ${tenantId} is suspended`)
+    this.name = 'TenantSuspendedError'
+  }
+}
+
+export class TenantExpiredError extends Error {
+  constructor(tenantId: string) {
+    super(`Tenant ${tenantId} subscription has expired`)
+    this.name = 'TenantExpiredError'
+  }
+}
+
+export class NoTenantContextError extends Error {
+  constructor() {
+    super('No tenant context available. Ensure this is called within a tenant-scoped request.')
+    this.name = 'NoTenantContextError'
+  }
+}
+
+// =============================================================================
+// Context Management Functions (Edge-compatible)
+// =============================================================================
+
+// Use a module-level cache for Edge runtime compatibility
+const contextCache = new Map<string, TenantContext>()
+
+/**
+ * Set tenant context for current request
+ */
+export function setTenantContext(context: TenantContext): void {
+  const requestId = generateRequestId()
+  contextCache.set(requestId, context)
+  // Set a cookie with request ID for subsequent lookups
+  if (typeof document !== 'undefined') {
+    document.cookie = `_req_id=${requestId};path=/;SameSite=Strict`
+  }
+}
+
+/**
+ * Get current tenant context from cache
+ * @throws {NoTenantContextError} If no context is available
+ */
+export function getTenantContext(): TenantContext {
+  const requestId = getCurrentRequestId()
+  if (!requestId) {
+    throw new NoTenantContextError()
+  }
+  const context = contextCache.get(requestId)
+  if (!context) {
+    throw new NoTenantContextError()
+  }
+  return context
+}
+
+/**
+ * Try to get tenant context without throwing
+ */
+export function tryGetTenantContext(): TenantContext | null {
+  const requestId = getCurrentRequestId()
+  if (!requestId) return null
+  return contextCache.get(requestId) || null
+}
+
+/**
+ * Check if tenant context is available
+ */
+export function hasTenantContext(): boolean {
+  return !!tryGetTenantContext()
+}
+
+/**
+ * Clear tenant context
+ */
+export function clearTenantContext(): void {
+  const requestId = getCurrentRequestId()
+  if (requestId) {
+    contextCache.delete(requestId)
+  }
+}
+
+function generateRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+function getCurrentRequestId(): string | null {
+  // Server-side: check headers/cookies
+  if (typeof document === 'undefined') {
+    return null
+  }
+  // Client-side: get from cookie
+  const match = document.cookie.match(/_req_id=([^;]+)/)
+  return match ? match[1] : null
+}
+
+// =============================================================================
+// Tenant Resolution from Request
+// =============================================================================
+
+/**
+ * Extract tenant identifier from request
+ * Priority: custom domain > subdomain > header > cookie > query param
+ */
+export async function extractTenantFromRequest(
+  request: Request
+): Promise<{ type: 'subdomain' | 'domain' | 'header' | 'cookie' | 'param'; value: string } | null> {
+  const url = new URL(request.url)
+  const hostname = url.hostname
+  
+  // 1. Check for custom domain (production domains)
+  const hostHeader = request.headers.get('host') || hostname
+  
+  // Skip localhost and IP addresses
+  const isLocalhost = hostHeader.includes('localhost') || 
+                      hostHeader.includes('127.0.0.1') ||
+                      /^\d+\.\d+\.\d+\.\d+/.test(hostHeader)
+  
+  if (!isLocalhost && !hostHeader.endsWith('.vercel.app')) {
+    // Could be a custom domain - check against database
+    return { type: 'domain', value: hostHeader }
+  }
+  
+  // 2. Check for subdomain (e.g., shop1.mechmind.com)
+  const hostParts = hostHeader.split('.')
+  if (hostParts.length >= 3 && !isLocalhost) {
+    const subdomain = hostParts[0]
+    // Exclude www and other common subdomains
+    const reservedSubdomains = ['www', 'api', 'app', 'admin', 'staging', 'demo']
+    if (!reservedSubdomains.includes(subdomain)) {
+      return { type: 'subdomain', value: subdomain }
+    }
+  }
+  
+  // 3. Check header
+  const tenantHeader = request.headers.get('x-tenant-id') || 
+                       request.headers.get('x-tenant-slug')
+  if (tenantHeader) {
+    return { type: 'header', value: tenantHeader }
+  }
+  
+  // 4. Check cookie (for SSR)
+  const cookieHeader = request.headers.get('cookie')
+  if (cookieHeader) {
+    const tenantMatch = cookieHeader.match(/tenant_id=([^;]+)/)
+    if (tenantMatch) {
+      return { type: 'cookie', value: tenantMatch[1] }
+    }
+    const slugMatch = cookieHeader.match(/tenant_slug=([^;]+)/)
+    if (slugMatch) {
+      return { type: 'cookie', value: slugMatch[1] }
+    }
+  }
+  
+  // 5. Check query param
+  const tenantParam = url.searchParams.get('tenantId') || 
+                      url.searchParams.get('tenant')
+  if (tenantParam) {
+    return { type: 'param', value: tenantParam }
+  }
+  
+  return null
+}
+
+/**
+ * Server-side tenant resolution (for Next.js App Router)
+ */
+export const getTenantFromRequest = cache(async (): Promise<TenantInfo | null> => {
+  try {
+    // Try headers first (works in both Server Components and Route Handlers)
+    const headersList = await headers()
+    const host = headersList.get('host') || ''
+    
+    // Check for tenant header
+    const tenantId = headersList.get('x-tenant-id')
+    const tenantSlug = headersList.get('x-tenant-slug')
+    
+    if (tenantId) {
+      return fetchTenantById(tenantId)
+    }
+    
+    if (tenantSlug) {
+      return fetchTenantBySlug(tenantSlug)
+    }
+    
+    // Try cookie
+    const cookieStore = await cookies()
+    const tenantCookie = cookieStore.get('tenant_id')?.value ||
+                         cookieStore.get('tenant_slug')?.value
+    
+    if (tenantCookie) {
+      return fetchTenantById(tenantCookie)
+    }
+    
+    // Try subdomain/domain from host
+    const tenantFromHost = await resolveTenantFromHost(host)
+    if (tenantFromHost) {
+      return tenantFromHost
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error resolving tenant:', error)
+    return null
+  }
+})
+
+/**
+ * Resolve tenant from hostname
+ */
+async function resolveTenantFromHost(host: string): Promise<TenantInfo | null> {
+  // Skip common hosts
+  if (!host || host.includes('localhost') || host.includes('127.0.0.1')) {
+    return null
+  }
+  
+  const parts = host.split(':')[0].split('.')
+  
+  // Check for subdomain pattern: shop.mechmind.com
+  if (parts.length >= 3) {
+    const subdomain = parts[0]
+    const domain = parts.slice(1).join('.')
+    
+    // Only check subdomains for our domain
+    if (domain === 'mechmind.com' || domain.endsWith('.vercel.app')) {
+      return fetchTenantBySubdomain(subdomain)
+    }
+  }
+  
+  // Check for custom domain
+  return fetchTenantByDomain(host)
+}
+
+// =============================================================================
+// Database Queries
+// =============================================================================
+
+async function fetchTenantById(id: string): Promise<TenantInfo | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id, deletedAt: null },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      subdomain: true,
+      customDomain: true,
+      status: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+      features: true,
+      settings: true,
+      maxUsers: true,
+      maxVehicles: true,
+      maxCustomers: true,
+    }
+  })
+  
+  return tenant as TenantInfo | null
+}
+
+async function fetchTenantBySlug(slug: string): Promise<TenantInfo | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { slug, deletedAt: null },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      subdomain: true,
+      customDomain: true,
+      status: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+      features: true,
+      settings: true,
+      maxUsers: true,
+      maxVehicles: true,
+      maxCustomers: true,
+    }
+  })
+  
+  return tenant as TenantInfo | null
+}
+
+async function fetchTenantBySubdomain(subdomain: string): Promise<TenantInfo | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { subdomain, deletedAt: null },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      subdomain: true,
+      customDomain: true,
+      status: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+      features: true,
+      settings: true,
+      maxUsers: true,
+      maxVehicles: true,
+      maxCustomers: true,
+    }
+  })
+  
+  return tenant as TenantInfo | null
+}
+
+async function fetchTenantByDomain(domain: string): Promise<TenantInfo | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { customDomain: domain, deletedAt: null },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      subdomain: true,
+      customDomain: true,
+      status: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+      features: true,
+      settings: true,
+      maxUsers: true,
+      maxVehicles: true,
+      maxCustomers: true,
+    }
+  })
+  
+  return tenant as TenantInfo | null
+}
+
+// =============================================================================
+// Subscription Validation
+// =============================================================================
+
+export function validateTenantSubscription(tenant: TenantInfo): void {
+  // Check status
+  if (tenant.status === 'SUSPENDED') {
+    throw new TenantSuspendedError(tenant.id)
+  }
+  
+  if (tenant.status === 'CANCELLED') {
+    throw new TenantNotFoundError(tenant.id)
+  }
+  
+  // Check subscription
+  if (tenant.subscriptionStatus === 'EXPIRED') {
+    throw new TenantExpiredError(tenant.id)
+  }
+  
+  if (tenant.subscriptionStatus === 'SUSPENDED') {
+    throw new TenantSuspendedError(tenant.id)
+  }
+}
+
+export function hasFeature(tenant: TenantInfo, feature: string): boolean {
+  return tenant.features.includes(feature) || 
+         tenant.features.includes('*') // Wildcard for enterprise
+}
+
+export function checkFeatureAccess(tenant: TenantInfo, feature: string): void {
+  if (!hasFeature(tenant, feature)) {
+    throw new Error(`Feature '${feature}' is not available in your subscription tier`)
+  }
+}
+
+// =============================================================================
+// Prisma Helper Functions
+// =============================================================================
+
+/**
+ * Add tenant filter to Prisma query
+ * This should be used in all service functions
+ */
+export function withTenantFilter<T extends Record<string, unknown>>(
+  where: T,
+  tenantId: string
+): T & { tenantId: string } {
+  return {
+    ...where,
+    tenantId,
+  }
+}
+
+/**
+ * Get tenant-scoped where clause
+ */
+export function tenantWhere(tenantId: string): { tenantId: string } {
+  return { tenantId }
+}
+
+/**
+ * Build tenant-scoped query
+ */
+export function buildTenantQuery<T extends Record<string, unknown>>(
+  tenantId: string,
+  additionalFilters?: T
+): { tenantId: string } & Partial<T> {
+  return {
+    tenantId,
+    ...additionalFilters,
+  }
+}
+
+/**
+ * Get tenant ID from context or throw
+ */
+export function requireTenantId(): string {
+  const context = tryGetTenantContext()
+  if (!context) {
+    throw new NoTenantContextError()
+  }
+  return context.tenantId
+}

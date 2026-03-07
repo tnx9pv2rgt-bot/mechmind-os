@@ -1,0 +1,879 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum InspectionType {
+  PRE_PURCHASE
+  PERIODIC
+  PRE_SALE
+  ACCIDENT
+  WARRANTY
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum WarrantyStatus {
+  ACTIVE
+  EXPIRED
+  EXPIRING_SOON
+  PENDING
+  CLAIMED
+  VOID
+}
+
+enum ClaimStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum OrderStatus {
+  PENDING
+  ORDERED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  BACKORDERED
+}
+
+enum AlertLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  EXPORT
+  APPROVE
+  REJECT
+}
+
+enum SyncAction {
+  CREATE_INSPECTION
+  UPDATE_INSPECTION
+  CREATE_CLAIM
+  UPDATE_CLAIM
+  CREATE_ORDER
+  UPDATE_ORDER
+}
+
+enum MaintenanceType {
+  OIL_CHANGE
+  TIRE_ROTATION
+  BRAKE_CHECK
+  FILTER
+  INSPECTION
+  BELTS
+  BATTERY
+}
+
+enum NotificationLevel {
+  ALERT
+  WARNING
+  CRITICAL
+}
+
+enum SubscriptionTier {
+  TRIAL
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+  SUSPENDED
+}
+
+enum TenantStatus {
+  PENDING_SETUP
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+// ============================================
+// TENANT MODEL (Core of multi-tenancy)
+// ============================================
+
+model Tenant {
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique
+  subdomain    String? @unique
+  customDomain String? @unique
+
+  // Branding
+  logoUrl      String?
+  primaryColor String?
+  accentColor  String?
+
+  // Contact
+  email      String
+  phone      String?
+  address    String?
+  city       String?
+  postalCode String?
+  country    String  @default("IT")
+  vatNumber  String?
+
+  // Subscription
+  subscriptionTier   SubscriptionTier   @default(TRIAL)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  trialEndsAt        DateTime?
+  subscriptionEndsAt DateTime?
+  maxUsers           Int                @default(5)
+  maxVehicles        Int                @default(100)
+  maxCustomers       Int                @default(500)
+  maxStorageGB       Int                @default(10)
+  features           String[] // Enabled feature flags
+
+  // Billing - Stripe Integration
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  billingEmail         String?
+
+  // Stripe Billing Fields
+  subscriptionPlan   String    @default("piccole") // piccole, medie, enterprise
+  aiAddon            Boolean   @default(false)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  gracePeriodEnd     DateTime?
+  isSuspended        Boolean   @default(false)
+
+  // Usage Tracking
+  aiCallsThisMonth Int      @default(0)
+  storageUsed      Int      @default(0) // in bytes
+  lastUsageReset   DateTime @default(now())
+
+  // Settings
+  settings Json? // Flexible settings object
+  timezone String @default("Europe/Rome")
+  currency String @default("EUR")
+  language String @default("it")
+
+  // Status
+  status     TenantStatus @default(PENDING_SETUP)
+  isVerified Boolean      @default(false)
+  verifiedAt DateTime?
+
+  // Relations
+  users                TenantUser[]
+  vehicles             Vehicle[]
+  inspections          Inspection[]
+  warranties           Warranty[]
+  warrantyClaims       WarrantyClaim[]
+  maintenanceSchedules MaintenanceSchedule[]
+  partsOrders          PartsOrder[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  offlineSyncQueue     OfflineSyncQueue[]
+  customers            Customer[]
+  bookings             Booking[]
+
+  // Timestamps
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+  Inspector          Inspector[]
+  InspectorEquipment InspectorEquipment[]
+
+  @@index([subdomain])
+  @@index([customDomain])
+  @@index([subscriptionStatus])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TenantUser {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String // External auth provider user ID
+  email  String
+  role   String @default("MECHANIC") // ADMIN, MANAGER, MECHANIC, VIEWER
+
+  permissions String[] // Granular permissions
+
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([email])
+}
+
+model Customer {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  externalId String? // For portal customer linking
+
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+
+  address    String?
+  city       String?
+  postalCode String?
+  country    String  @default("IT")
+
+  // GDPR
+  gdprConsent        Boolean   @default(false)
+  gdprConsentAt      DateTime?
+  marketingConsent   Boolean   @default(false)
+  marketingConsentAt DateTime?
+
+  // Relations
+  vehicles      Vehicle[]
+  bookings      Booking[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, externalId])
+  @@index([email])
+}
+
+model Booking {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  serviceType   String
+  scheduledDate DateTime
+  scheduledTime String?
+  duration      Int      @default(60) // minutes
+
+  status String  @default("PENDING") // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, customerId])
+  @@index([tenantId, vehicleId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+model Notification {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  type    String // BOOKING_REMINDER, MAINTENANCE_DUE, WARRANTY_EXPIRING, etc.
+  channel String // EMAIL, SMS, WHATSAPP, PUSH
+
+  title   String
+  message String
+
+  status      String    @default("PENDING") // PENDING, SENT, DELIVERED, FAILED, READ
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+
+  errorMessage String?
+  retryCount   Int     @default(0)
+
+  metadata Json? // Additional data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, customerId])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([createdAt])
+}
+
+// ============================================
+// EXISTING MODELS (Updated with tenantId)
+// ============================================
+
+model Vehicle {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vin              String
+  licensePlate     String?
+  make             String
+  model            String
+  year             Int
+  mileage          Int?
+  color            String?
+  engineType       String?
+  transmission     String?
+  fuelType         String?
+  registrationDate DateTime?
+  ownerName        String?
+  ownerEmail       String?
+  ownerPhone       String?
+  insuranceNumber  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  customerId           String?
+  customer             Customer?             @relation(fields: [customerId], references: [id])
+  inspections          Inspection[]
+  maintenanceSchedules MaintenanceSchedule[]
+  warranties           Warranty[]
+  bookings             Booking[]
+
+  @@unique([tenantId, vin])
+  @@unique([tenantId, licensePlate])
+  @@index([tenantId])
+  @@index([tenantId, vin])
+  @@index([tenantId, licensePlate])
+}
+
+model Inspector {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  email             String
+  firstName         String
+  lastName          String
+  phone             String?
+  licenseNumber     String?
+  certificationDate DateTime?
+  isActive          Boolean   @default(true)
+  avatarUrl         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  inspections Inspection[]
+  equipment   InspectorEquipment[]
+  auditLogs   AuditLog[]
+
+  @@unique([tenantId, email])
+  @@unique([tenantId, licenseNumber])
+  @@index([tenantId])
+  @@index([tenantId, email])
+}
+
+model Inspection {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  inspectionNumber String
+  type             InspectionType
+  status           InspectionStatus @default(SCHEDULED)
+  scheduledDate    DateTime
+  completedDate    DateTime?
+  location         String?
+  notes            String?
+  overallScore     Float?
+  isPassed         Boolean?
+
+  // Relations
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  inspectorId String
+  inspector   Inspector @relation(fields: [inspectorId], references: [id])
+
+  // Related inspection data
+  sensoryInspection SensoryInspection?
+  aiAnalysis        AIAnalysis?
+  videoInspection   VideoInspection?
+  customerApproval  CustomerApproval?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, inspectionNumber])
+  @@index([tenantId])
+  @@index([tenantId, vehicleId])
+  @@index([tenantId, inspectorId])
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([tenantId, scheduledDate])
+}
+
+model SensoryInspection {
+  id String @id @default(cuid())
+
+  // Moisture detection
+  interiorHumidity  Float?
+  carpetMoisture    Float?
+  headlinerMoisture Float?
+  doorPanelMoisture Float?
+  trunkMoisture     Float?
+
+  // Odor detection
+  smokeDetected    Boolean @default(false)
+  moldDetected     Boolean @default(false)
+  mustyDetected    Boolean @default(false)
+  chemicalDetected Boolean @default(false)
+  petDetected      Boolean @default(false)
+
+  // Mold risk assessment
+  moldRiskLevel   AlertLevel?
+  moistureSources String[]
+  recommendations String?
+
+  // Relation
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+}
+
+model Warranty {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  warrantyNumber String
+
+  // Blockchain & IPFS
+  blockchainHash String? @unique
+  ipfsCID        String? @unique
+
+  // Coverage details
+  coverageType     String
+  startDate        DateTime
+  expirationDate   DateTime
+  mileageLimit     Int?
+  deductibleAmount Float?
+  maxClaimAmount   Float?
+
+  // Alert settings
+  alertDaysBeforeExpiry Int     @default(30)
+  alertEmailEnabled     Boolean @default(true)
+  alertSmsEnabled       Boolean @default(false)
+
+  // Status
+  status WarrantyStatus @default(ACTIVE)
+
+  // Relations
+  vehicleId  String
+  vehicle    Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleVin String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Related claims
+  claims WarrantyClaim[]
+
+  // Alerts tracking
+  alertsSent DateTime[] @default([])
+
+  @@unique([tenantId, warrantyNumber])
+  @@index([tenantId])
+  @@index([tenantId, vehicleId])
+  @@index([tenantId, status])
+  @@index([tenantId, expirationDate])
+  @@index([blockchainHash])
+}
+
+model WarrantyClaim {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  claimNumber String
+
+  // Claim details
+  description String
+  amount      Float
+  laborHours  Float?
+  partsCost   Float?
+  laborCost   Float?
+
+  // Status
+  status        ClaimStatus @default(SUBMITTED)
+  submittedDate DateTime    @default(now())
+  reviewedDate  DateTime?
+  resolvedDate  DateTime?
+
+  // Evidence
+  evidencePhotos String[] // Array of photo URLs
+  documents      String[] // Array of document URLs
+
+  // Relation
+  warrantyId String
+  warranty   Warranty @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+
+  // Parts order relation (optional)
+  partsOrder PartsOrder?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, claimNumber])
+  @@index([tenantId])
+  @@index([tenantId, warrantyId])
+  @@index([tenantId, status])
+  @@index([tenantId, submittedDate])
+}
+
+model InspectorEquipment {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Equipment details
+  name         String
+  type         String
+  serialNumber String?
+  manufacturer String?
+  model        String?
+
+  // Calibration tracking
+  lastCalibration     DateTime?
+  nextCalibration     DateTime?
+  calibrationInterval Int       @default(365) // days
+  calibrationCertUrl  String?
+
+  // Status
+  isActive     Boolean @default(true)
+  isCalibrated Boolean @default(false)
+
+  // Relation
+  inspectorId String
+  inspector   Inspector @relation(fields: [inspectorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, serialNumber])
+  @@index([tenantId])
+  @@index([tenantId, inspectorId])
+}
+
+model AuditLog {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // GDPR compliant audit trail
+  action     AuditAction
+  entityType String // e.g., "Inspection", "Warranty", "Vehicle"
+  entityId   String // ID of the affected entity
+
+  // Data snapshot (for compliance)
+  previousData Json? // Previous state
+  newData      Json? // New state
+
+  // User context
+  inspectorId String?
+  inspector   Inspector? @relation(fields: [inspectorId], references: [id])
+
+  // Request context
+  ipAddress String?
+  userAgent String?
+  sessionId String?
+
+  // Data processing info (GDPR)
+  dataSubjectId     String? // For GDPR data subject requests
+  processingPurpose String?
+  legalBasis        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, inspectorId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, dataSubjectId])
+}
+
+model AIAnalysis {
+  id String @id @default(cuid())
+
+  // Computer vision results
+  damageDetected Boolean @default(false)
+  damageAreas    Json // Array of damage area objects: [{type, severity, location, coordinates}]
+
+  // Tire analysis
+  tireWearPercent Float?
+  tireWearDetails Json? // Per-tire analysis
+
+  // Cost estimation
+  estimatedRepairCost Float?
+  costConfidence      Float? // AI confidence score 0-1
+
+  // Urgency assessment
+  urgencyScore      Float? // 0-100
+  urgencyLevel      AlertLevel?
+  recommendedAction String?
+
+  // Image analysis metadata
+  analyzedImages   Int     @default(0)
+  processingTimeMs Int?
+  modelVersion     String?
+
+  // Relation
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+}
+
+model VideoInspection {
+  id String @id @default(cuid())
+
+  // HLS video streaming
+  videoUrl     String // Master playlist URL
+  thumbnailUrl String?
+  duration     Int // Duration in seconds
+
+  // HLS segments
+  segments    Json // Array of segment objects: [{url, duration, resolution}]
+  resolutions String[] // Available resolutions ["720p", "1080p"]
+
+  // Interactive hotspots
+  hotspots Json // Array of hotspot objects: [{time, x, y, title, description}]
+
+  // Video metadata
+  recordedAt DateTime @default(now())
+  fileSize   Int? // in bytes
+  codec      String?
+  frameRate  Float?
+
+  // Processing status
+  processingStatus String @default("PROCESSING") // PROCESSING, READY, ERROR
+
+  // Relation
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+}
+
+model CustomerApproval {
+  id String @id @default(cuid())
+
+  // Digital signature
+  signatureData String // Base64 encoded signature image or SVG path
+  signatureType String   @default("DRAWN") // DRAWN, TYPED, UPLOADED
+  signedBy      String // Customer name
+  signedAt      DateTime @default(now())
+
+  // Approved services
+  approvedServices Json // Array of approved services: [{serviceId, name, price, approved}]
+  totalAmount      Float?
+
+  // Payment integration
+  stripePaymentId String?   @unique
+  paymentStatus   String? // pending, completed, failed
+  paymentAmount   Float?
+  paidAt          DateTime?
+
+  // Contact info
+  customerEmail String?
+  customerPhone String?
+
+  // IP and device info for legal validity
+  ipAddress   String?
+  userAgent   String?
+  geolocation Json? // {lat, lng, accuracy}
+
+  // Relation
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+  @@index([stripePaymentId])
+}
+
+model PartsOrder {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Order details
+  orderNumber String
+  parts       Json // Array of parts: [{partNumber, name, quantity, unitPrice, supplier}]
+  totalCost   Float?
+
+  // Supplier info
+  supplier        String?
+  supplierOrderId String?
+
+  // Status tracking
+  orderStatus      OrderStatus @default(PENDING)
+  orderedAt        DateTime?
+  expectedDelivery DateTime?
+  deliveredAt      DateTime?
+
+  // Shipping
+  trackingNumber  String?
+  shippingAddress Json? // {street, city, state, zip, country}
+
+  // Relations
+  warrantyClaimId String?        @unique
+  warrantyClaim   WarrantyClaim? @relation(fields: [warrantyClaimId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId])
+  @@index([tenantId, orderStatus])
+}
+
+model OfflineSyncQueue {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Action details
+  action     SyncAction
+  entityType String
+  entityId   String? // Local ID if not yet synced
+  serverId   String? // Server ID after sync
+
+  // Data payload
+  data     Json // Full entity data
+  checksum String? // For integrity verification
+
+  // Sync status
+  synced       Boolean @default(false)
+  syncAttempts Int     @default(0)
+  retryCount   Int     @default(0)
+  maxRetries   Int     @default(5)
+
+  // Error tracking
+  lastError     String?
+  lastAttemptAt DateTime?
+
+  // Timing
+  createdAt DateTime  @default(now())
+  syncedAt  DateTime?
+
+  // Device info
+  deviceId   String?
+  appVersion String?
+
+  @@index([tenantId])
+  @@index([tenantId, synced])
+  @@index([tenantId, entityType])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, deviceId])
+}
+
+model MaintenanceSchedule {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  type           MaintenanceType
+  intervalKm     Int
+  intervalMonths Int
+
+  lastServiceDate DateTime
+  lastServiceKm   Int
+  nextDueDate     DateTime
+  nextDueKm       Int
+
+  isOverdue    Boolean @default(false)
+  daysUntilDue Int
+  kmUntilDue   Int
+
+  alertSentAt       DateTime?
+  notificationLevel NotificationLevel @default(ALERT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, vehicleId])
+  @@index([tenantId, nextDueDate])
+  @@index([tenantId, isOverdue])
+  @@index([tenantId, type])
+}
+
+// ============================================
+// RLS POLICY HELPER TABLE
+// ============================================
+
+model TenantContext {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  tenantId    String
+  userId      String?
+  permissions String[]
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([sessionId])
+  @@index([tenantId])
+}

@@ -1,0 +1,61 @@
+{
+  "messages": {
+    "required": "Questo campo è obbligatorio",
+    "email": "Inserisci un indirizzo email valido",
+    "url": "Inserisci un URL valido",
+    "number": "Inserisci un numero valido",
+    "integer": "Inserisci un numero intero",
+    "decimal": "Inserisci un numero decimale",
+    "date": "Inserisci una data valida",
+    "time": "Inserisci un orario valido",
+    "alphanumeric": "Solo caratteri alfanumerici",
+    "pattern": "Formato non valido"
+  },
+  "constraints": {
+    "min": "Il valore minimo è {{min}}",
+    "max": "Il valore massimo è {{max}}",
+    "minLength": "Minimo {{min}} caratteri",
+    "maxLength": "Massimo {{max}} caratteri",
+    "exactLength": "Deve essere esattamente {{length}} caratteri",
+    "minItems": "Seleziona almeno {{min}} elementi",
+    "maxItems": "Puoi selezionare massimo {{max}} elementi",
+    "minDate": "La data deve essere successiva a {{date}}",
+    "maxDate": "La data deve essere precedente a {{date}}"
+  },
+  "formats": {
+    "vatIt": "Partita IVA italiana non valida (11 cifre)",
+    "fiscalCodeIt": "Codice fiscale non valido (16 caratteri)",
+    "licensePlateIt": "Targa italiana non valida",
+    "phoneIt": "Numero di telefono italiano non valido",
+    "zipCodeIt": "CAP italiano non valido (5 cifre)",
+    "iban": "IBAN non valido",
+    "swift": "SWIFT/BIC non valido"
+  },
+  "password": {
+    "minLength": "La password deve avere almeno {{min}} caratteri",
+    "uppercase": "Deve contenere almeno una lettera maiuscola",
+    "lowercase": "Deve contenere almeno una lettera minuscola",
+    "number": "Deve contenere almeno un numero",
+    "special": "Deve contenere almeno un carattere speciale",
+    "match": "Le password non coincidono",
+    "common": "Password troppo comune",
+    "strength": {
+      "weak": "Password debole",
+      "fair": "Password discreta",
+      "good": "Password buona",
+      "strong": "Password forte"
+    }
+  },
+  "async": {
+    "checking": "Verifica in corso...",
+    "available": "Disponibile",
+    "unavailable": "Non disponibile",
+    "error": "Errore durante la verifica"
+  },
+  "summary": {
+    "title": "Correggi i seguenti errori:",
+    "count_one": "Trovato {{count}} errore",
+    "count_other": "Trovati {{count}} errori",
+    "field": "Campo {{field}}: {{message}}"
+  }
+}

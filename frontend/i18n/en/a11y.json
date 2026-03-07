@@ -1,0 +1,74 @@
+{
+  "announcer": {
+    "pageLoaded": "Page loaded: {{page}}",
+    "formSubmitted": "Form submitted successfully",
+    "formError": "Error submitting form. Please correct the highlighted errors.",
+    "loading": "Loading...",
+    "loadingComplete": "Loading complete",
+    "saving": "Saving...",
+    "saved": "Saved successfully",
+    "deleting": "Deleting...",
+    "deleted": "Deleted successfully",
+    "searching": "Searching...",
+    "searchComplete": "Search complete, {{count}} results found",
+    "noResults": "No results found",
+    "error": "An error occurred: {{message}}"
+  },
+  "navigation": {
+    "menuOpened": "Menu opened",
+    "menuClosed": "Menu closed",
+    "modalOpened": "Modal dialog opened",
+    "modalClosed": "Modal dialog closed",
+    "dropdownOpened": "Dropdown opened",
+    "dropdownClosed": "Dropdown closed",
+    "tabChanged": "Tab {{tab}} of {{total}} selected",
+    "stepChanged": "Step {{current}} of {{total}}, {{title}}",
+    "pageChanged": "Page {{page}} of {{total}}",
+    "skipLink": "Skip to main content"
+  },
+  "form": {
+    "fieldCompleted": "Field {{field}} completed correctly",
+    "fieldError": "Error in field {{field}}: {{error}}",
+    "fieldRequired": "Field {{field}} is required",
+    "fieldInvalid": "Invalid value for field {{field}}",
+    "sectionCompleted": "Section {{section}} completed",
+    "autoSaved": "Auto-save completed"
+  },
+  "language": {
+    "selector": "Select language",
+    "changed": "Language changed to {{lang}}",
+    "current": "Current language: {{lang}}"
+  },
+  "screenReader": {
+    "instructions": {
+      "formNavigation": "Use Tab to navigate fields, Enter to submit, Escape to cancel",
+      "modalNavigation": "Use Tab to navigate dialog, Escape to close",
+      "tableNavigation": "Use arrow keys to navigate table",
+      "selectNavigation": "Use up/down arrows to select, Enter to confirm"
+    },
+    "help": {
+      "required": "Required field",
+      "optional": "Optional field",
+      "hasError": "Field with error",
+      "hasHint": "Field with hint",
+      "modified": "Field modified",
+      "autocomplete": "Field with autocomplete"
+    }
+  },
+  "highContrast": {
+    "enabled": "High contrast mode enabled",
+    "disabled": "High contrast mode disabled"
+  },
+  "reducedMotion": {
+    "enabled": "Reduced motion enabled",
+    "disabled": "Reduced motion disabled"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "network": "Connection error. Please check your internet connection.",
+    "timeout": "Request timeout. Please try again.",
+    "notFound": "Item not found",
+    "forbidden": "Access denied",
+    "unauthorized": "Session expired. Please log in again."
+  }
+}

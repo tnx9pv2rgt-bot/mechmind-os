@@ -1,0 +1,85 @@
+# =============================================================================
+# MechMind OS v10 - Docker Ignore
+# =============================================================================
+
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist
+build
+coverage
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CHANGELOG.md
+docs
+*.md
+
+# Tests
+test
+*.spec.ts
+*.test.ts
+__tests__
+__mocks__
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Terraform
+infrastructure/terraform/.terraform
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.*
+infrastructure/terraform/*.tfvars
+infrastructure/terraform/*.tfplan
+
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Serverless
+.serverless
+
+# AWS
+.aws
+
+# Misc
+.editorconfig
+.prettierrc
+.eslintrc
+.eslintignore
+jest.config.js
+.docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore

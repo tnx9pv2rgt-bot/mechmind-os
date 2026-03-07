@@ -1,0 +1,132 @@
+"use client"
+
+import * as React from "react"
+import { useRouter } from "next/navigation"
+import { FileText, Plus } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { ClaimsList } from "@/components/warranty"
+import { warrantyService, WarrantyClaim } from "@/lib/services/warrantyService"
+
+export default function ClaimsPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [claims, setClaims] = React.useState<(WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    loadClaims()
+  }, [])
+
+  const loadClaims = async () => {
+    try {
+      setIsLoading(true)
+      const data = await warrantyService.getClaims()
+      setClaims(data)
+    } catch (error) {
+      toast({
+        title: "Error loading claims",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "error",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleReviewClaim = (claim: WarrantyClaim) => {
+    // Navigate to claim detail page for review
+    router.push(`/dashboard/warranty/claims/${claim.id}?action=review`)
+  }
+
+  const handlePayClaim = async (claim: WarrantyClaim) => {
+    try {
+      await warrantyService.markClaimPaid(claim.id)
+      toast({
+        title: "Claim marked as paid",
+        description: "The claim has been marked as paid successfully",
+      })
+      loadClaims()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "error",
+      })
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Warranty Claims</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage and review all warranty claims
+          </p>
+        </div>
+        <Button onClick={() => router.push('/dashboard/warranty')}>
+          <Plus className="h-4 w-4 mr-2" />
+          File New Claim
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {[
+          { label: "Total Claims", count: claims.length, color: "bg-blue-50 text-blue-700" },
+          { label: "Submitted", count: claims.filter(c => c.status === 'SUBMITTED').length, color: "bg-blue-50 text-blue-700" },
+          { label: "Under Review", count: claims.filter(c => c.status === 'UNDER_REVIEW').length, color: "bg-amber-50 text-amber-700" },
+          { label: "Approved", count: claims.filter(c => c.status === 'APPROVED').length, color: "bg-green-50 text-green-700" },
+          { label: "Paid", count: claims.filter(c => c.status === 'PAID').length, color: "bg-purple-50 text-purple-700" },
+        ].map((stat) => (
+          <Card key={stat.label}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-gray-600">
+                {stat.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={cn("text-2xl font-bold", stat.color.split(' ')[1])}>
+                {stat.count}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Claims List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            All Claims
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ClaimsList
+            claims={claims}
+            showVehicle
+            onClaimClick={(claim) => router.push(`/dashboard/warranty/claims/${claim.id}`)}
+            onReviewClaim={handleReviewClaim}
+            onPayClaim={handlePayClaim}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// Need to import cn
+import { cn } from "@/lib/utils"

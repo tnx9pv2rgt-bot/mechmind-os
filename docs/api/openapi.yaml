@@ -1,0 +1,1861 @@
+openapi: 3.0.3
+info:
+  title: MechMind OS API
+  description: |
+    MechMind OS v10 - Multi-tenant SaaS for automotive repair shops with AI voice booking.
+    
+    ## Features
+    - AI-powered voice booking via Vapi integration
+    - Multi-tenant architecture with row-level security
+    - Real-time slot availability with advisory locks
+    - Webhook-based voice call handling
+    - GDPR-compliant data management
+    
+    ## Authentication
+    All API endpoints require Bearer token authentication. Obtain tokens via the `/v1/auth/login` endpoint.
+    
+    ## Rate Limiting
+    - Standard tier: 100 requests/minute
+    - Premium tier: 500 requests/minute
+    - Enterprise tier: 2000 requests/minute
+    
+    ## Base URL
+    - Production: `https://api.mechmind.io`
+    - Staging: `https://api-staging.mechmind.io`
+    - Sandbox: `https://api-sandbox.mechmind.io`
+  version: 1.0.0
+  contact:
+    name: MechMind Support
+    email: api-support@mechmind.io
+    url: https://docs.mechmind.io
+  license:
+    name: Proprietary
+    url: https://mechmind.io/terms
+
+servers:
+  - url: https://api.mechmind.io/v1
+    description: Production server
+  - url: https://api-staging.mechmind.io/v1
+    description: Staging server
+  - url: https://api-sandbox.mechmind.io/v1
+    description: Sandbox server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and token management
+  - name: Bookings
+    description: Appointment booking management
+  - name: Slots
+    description: Time slot availability and management
+  - name: Mechanics
+    description: Mechanic profiles and availability
+  - name: Customers
+    description: Customer management
+  - name: Shops
+    description: Shop configuration and settings
+  - name: Voice
+    description: Voice AI integration webhooks
+  - name: Webhooks
+    description: Webhook event handling
+  - name: Admin
+    description: Administrative operations
+
+paths:
+  # ==================== AUTHENTICATION ====================
+  /v1/auth/login:
+    post:
+      summary: Authenticate user and obtain access token
+      description: |
+        Authenticate using email/password or API key. Returns JWT access token
+        and refresh token for session management.
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/PasswordLoginRequest'
+                - $ref: '#/components/schemas/ApiKeyLoginRequest'
+            examples:
+              password:
+                summary: Password authentication
+                value:
+                  email: "admin@autoshop.com"
+                  password: "securePassword123"
+              apiKey:
+                summary: API key authentication
+                value:
+                  api_key: "mk_live_abc123xyz789"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /v1/auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Obtain a new access token using a refresh token
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid refresh token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/auth/logout:
+    post:
+      summary: Invalidate access token
+      description: Log out and invalidate the current access token
+      tags:
+        - Authentication
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # ==================== BOOKINGS ====================
+  /v1/bookings:
+    get:
+      summary: List bookings
+      description: |
+        Retrieve a paginated list of bookings. Supports filtering by date range,
+        mechanic, customer, and status. Results are scoped to the authenticated
+        tenant (shop).
+      tags:
+        - Bookings
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter bookings from this date (inclusive)
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter bookings until this date (inclusive)
+        - name: mechanic_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by assigned mechanic
+        - name: customer_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by customer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, in_progress, completed, cancelled, no_show]
+          description: Filter by booking status
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      summary: Create booking
+      description: |
+        Create a new booking. The system will validate slot availability
+        and assign to the specified mechanic. Requires `bookings:write` scope.
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Slot unavailable or conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: SLOT_UNAVAILABLE
+                  message: "The requested time slot is no longer available"
+                  details:
+                    slot_id: "550e8400-e29b-41d4-a716-446655440000"
+                    suggested_alternatives:
+                      - slot_id: "550e8400-e29b-41d4-a716-446655440001"
+                        start_time: "2024-01-15T10:00:00Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /v1/bookings/reserve:
+    post:
+      summary: Reserve slot with advisory lock
+      description: |
+        Reserve a time slot using PostgreSQL advisory locks for concurrency control.
+        This endpoint is used by the voice booking system to prevent double-booking
+        during the conversation flow. Lock is held for 5 minutes.
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - slot_id
+                - mechanic_id
+                - customer_phone
+              properties:
+                slot_id:
+                  type: string
+                  format: uuid
+                  description: ID of the time slot to reserve
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                mechanic_id:
+                  type: string
+                  format: uuid
+                  description: ID of the mechanic
+                  example: "550e8400-e29b-41d4-a716-446655440001"
+                customer_phone:
+                  type: string
+                  description: Customer phone number (E.164 format)
+                  example: "+14155551234"
+                reservation_duration:
+                  type: integer
+                  default: 300
+                  description: Lock duration in seconds (max 600)
+      responses:
+        '201':
+          description: Slot reserved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation_id:
+                    type: string
+                    format: uuid
+                  expires_at:
+                    type: string
+                    format: date-time
+                  slot:
+                    $ref: '#/components/schemas/TimeSlot'
+        '409':
+          description: Slot already reserved or booked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: SLOT_LOCKED
+                  message: "Slot is currently reserved by another process"
+                  details:
+                    reserved_until: "2024-01-15T09:05:00Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/bookings/{booking_id}:
+    parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique booking identifier
+
+    get:
+      summary: Get booking details
+      description: Retrieve detailed information about a specific booking
+      tags:
+        - Bookings
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    patch:
+      summary: Update booking
+      description: |
+        Update booking details. Cannot modify completed or cancelled bookings.
+        Status changes trigger appropriate notifications.
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingRequest'
+      responses:
+        '200':
+          description: Booking updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Cancel booking
+      description: |
+        Cancel a booking. Sends cancellation notification to customer.
+        Completed bookings cannot be cancelled.
+      tags:
+        - Bookings
+      parameters:
+        - name: reason
+          in: query
+          schema:
+            type: string
+          description: Cancellation reason
+      responses:
+        '204':
+          description: Booking cancelled successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Cannot cancel completed booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/bookings/{booking_id}/confirm:
+    post:
+      summary: Confirm pending booking
+      description: Convert a reserved slot to confirmed booking
+      tags:
+        - Bookings
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_name:
+                  type: string
+                vehicle_info:
+                  $ref: '#/components/schemas/VehicleInfo'
+                service_type:
+                  type: string
+      responses:
+        '200':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Reservation expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== SLOTS ====================
+  /v1/slots:
+    get:
+      summary: List available time slots
+      description: |
+        Get available time slots for booking. Returns slots filtered by
+        date range, mechanic, and service type. Includes real-time availability.
+      tags:
+        - Slots
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date to query (YYYY-MM-DD)
+        - name: mechanic_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific mechanic
+        - name: service_type
+          in: query
+          schema:
+            type: string
+          description: Filter by service type duration requirements
+        - name: duration_minutes
+          in: query
+          schema:
+            type: integer
+            minimum: 15
+            maximum: 480
+          description: Required slot duration in minutes
+      responses:
+        '200':
+          description: Available time slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  slots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimeSlot'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/slots/availability:
+    get:
+      summary: Check slot availability
+      description: |
+        Check real-time availability for multiple slots. Used by voice system
+        to validate slots during conversation.
+      tags:
+        - Slots
+      parameters:
+        - name: slot_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          style: form
+          explode: false
+          description: Comma-separated list of slot IDs to check
+      responses:
+        '200':
+          description: Availability status for requested slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  availability:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        slot_id:
+                          type: string
+                          format: uuid
+                        available:
+                          type: boolean
+                        reserved_until:
+                          type: string
+                          format: date-time
+
+  # ==================== MECHANICS ====================
+  /v1/mechanics:
+    get:
+      summary: List mechanics
+      description: Get all mechanics for the current shop/tenant
+      tags:
+        - Mechanics
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: List of mechanics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Mechanic'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Create mechanic
+      description: Add a new mechanic to the shop
+      tags:
+        - Mechanics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMechanicRequest'
+      responses:
+        '201':
+          description: Mechanic created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mechanic'
+
+  /v1/mechanics/{mechanic_id}:
+    parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get mechanic details
+      tags:
+        - Mechanics
+      responses:
+        '200':
+          description: Mechanic details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mechanic'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    patch:
+      summary: Update mechanic
+      tags:
+        - Mechanics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMechanicRequest'
+      responses:
+        '200':
+          description: Mechanic updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mechanic'
+
+    delete:
+      summary: Deactivate mechanic
+      description: Soft-delete mechanic (marks as inactive)
+      tags:
+        - Mechanics
+      responses:
+        '204':
+          description: Mechanic deactivated
+
+  /v1/mechanics/{mechanic_id}/schedule:
+    get:
+      summary: Get mechanic schedule
+      description: Get weekly schedule for a mechanic
+      tags:
+        - Mechanics
+      parameters:
+        - name: week_start
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Weekly schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MechanicSchedule'
+
+  # ==================== CUSTOMERS ====================
+  /v1/customers:
+    get:
+      summary: List customers
+      description: Get customers for the current tenant
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name, phone, or email
+      responses:
+        '200':
+          description: Customer list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Create customer
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+  /v1/customers/{customer_id}:
+    parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get customer details
+      tags:
+        - Customers
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+    patch:
+      summary: Update customer
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+    delete:
+      summary: Delete customer (GDPR)
+      description: |
+        Permanently delete customer data. This is a GDPR-compliant deletion
+        that removes all PII while preserving anonymized booking records.
+      tags:
+        - Customers
+      responses:
+        '204':
+          description: Customer deleted
+
+  /v1/customers/{customer_id}/bookings:
+    get:
+      summary: Get customer booking history
+      tags:
+        - Customers
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Customer bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BookingResponse'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /v1/customers/lookup:
+    get:
+      summary: Lookup customer by phone
+      description: |
+        Find customer by phone number. Used by voice system to identify
+        returning customers during calls.
+      tags:
+        - Customers
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Phone number in E.164 format
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          description: Customer not found
+
+  # ==================== SHOPS ====================
+  /v1/shops/profile:
+    get:
+      summary: Get shop profile
+      description: Get current shop/tenant configuration
+      tags:
+        - Shops
+      responses:
+        '200':
+          description: Shop profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopProfile'
+
+    patch:
+      summary: Update shop profile
+      tags:
+        - Shops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateShopRequest'
+      responses:
+        '200':
+          description: Shop updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopProfile'
+
+  /v1/shops/hours:
+    get:
+      summary: Get shop operating hours
+      tags:
+        - Shops
+      responses:
+        '200':
+          description: Operating hours
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatingHours'
+
+    put:
+      summary: Update operating hours
+      tags:
+        - Shops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperatingHours'
+      responses:
+        '200':
+          description: Hours updated
+
+  /v1/shops/services:
+    get:
+      summary: List shop services
+      tags:
+        - Shops
+      responses:
+        '200':
+          description: Available services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceType'
+
+  # ==================== VOICE WEBHOOKS ====================
+  /webhooks/vapi/call-event:
+    post:
+      summary: Voice webhook from Vapi
+      description: |
+        Webhook endpoint for Vapi voice AI events. Handles call status updates,
+        booking confirmations, and conversation data. Validates webhook signature
+        for security.
+      tags:
+        - Voice
+        - Webhooks
+      security:
+        - VapiWebhookAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VapiWebhookEvent'
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "processed"
+        '400':
+          description: Invalid webhook payload
+        '401':
+          description: Invalid webhook signature
+
+  /webhooks/vapi/booking-intent:
+    post:
+      summary: Process booking intent from voice
+      description: |
+        Handle booking intent extracted from voice conversation.
+        Creates reservation and returns confirmation details.
+      tags:
+        - Voice
+        - Webhooks
+      security:
+        - VapiWebhookAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - call_id
+                - customer_phone
+                - requested_date
+                - service_type
+              properties:
+                call_id:
+                  type: string
+                customer_phone:
+                  type: string
+                requested_date:
+                  type: string
+                  format: date
+                service_type:
+                  type: string
+                preferred_time:
+                  type: string
+                customer_name:
+                  type: string
+      responses:
+        '200':
+          description: Booking intent processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation_id:
+                    type: string
+                    format: uuid
+                  available_slots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimeSlot'
+                  confirmation_required:
+                    type: boolean
+
+  # ==================== ADMIN ====================
+  /v1/admin/tenants:
+    get:
+      summary: List all tenants (Super Admin)
+      description: Get all tenants in the system. Requires super admin role.
+      tags:
+        - Admin
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Tenant list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /v1/admin/tenants/{tenant_id}/gdpr-export:
+    post:
+      summary: Export tenant data (GDPR)
+      description: |
+        Generate GDPR data export for a tenant. Creates downloadable archive
+        containing all customer data.
+      tags:
+        - Admin
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Export job started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  export_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                  download_url:
+                    type: string
+                    format: uri
+
+  /v1/admin/health:
+    get:
+      summary: System health check
+      description: |
+        Comprehensive health check for monitoring systems.
+        Returns component status and metrics.
+      tags:
+        - Admin
+      security: []
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /v1/admin/metrics:
+    get:
+      summary: System metrics
+      description: Prometheus-compatible metrics endpoint
+      tags:
+        - Admin
+      security:
+        - MetricsAuth: []
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  # ==================== SECURITY SCHEMES ====================
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /v1/auth/login
+    
+    VapiWebhookAuth:
+      type: apiKey
+      in: header
+      name: X-Vapi-Signature
+      description: HMAC-SHA256 signature of webhook payload
+    
+    MetricsAuth:
+      type: http
+      scheme: bearer
+      description: Metrics API key for Prometheus scraping
+
+  # ==================== PARAMETERS ====================
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number for pagination
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Items per page
+
+  # ==================== RESPONSES ====================
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: "Valid authentication credentials required"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: FORBIDDEN
+              message: "Insufficient permissions for this operation"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: NOT_FOUND
+              message: "Requested resource not found"
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+    RateLimitError:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in window
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Unix timestamp when limit resets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: RATE_LIMIT_EXCEEDED
+              message: "API rate limit exceeded. Try again in 60 seconds."
+
+  # ==================== SCHEMAS ====================
+  schemas:
+    # ----- Auth Schemas -----
+    PasswordLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    ApiKeyLoginRequest:
+      type: object
+      required:
+        - api_key
+      properties:
+        api_key:
+          type: string
+          pattern: '^mk_(live|test)_[a-zA-Z0-9]{20,}$'
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Token expiration in seconds
+        user:
+          $ref: '#/components/schemas/User'
+
+    TokenRefreshResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+
+    # ----- User Schemas -----
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, mechanic, receptionist, readonly]
+        shop_id:
+          type: string
+          format: uuid
+        permissions:
+          type: array
+          items:
+            type: string
+
+    # ----- Booking Schemas -----
+    CreateBookingRequest:
+      type: object
+      required:
+        - slot_id
+        - mechanic_id
+        - customer_phone
+      properties:
+        slot_id:
+          type: string
+          format: uuid
+        mechanic_id:
+          type: string
+          format: uuid
+        customer_phone:
+          type: string
+        customer_name:
+          type: string
+        customer_email:
+          type: string
+          format: email
+        vehicle_info:
+          $ref: '#/components/schemas/VehicleInfo'
+        service_type:
+          type: string
+        notes:
+          type: string
+        source:
+          type: string
+          enum: [web, voice, phone, walkin, api]
+          default: api
+
+    UpdateBookingRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled, no_show]
+        mechanic_id:
+          type: string
+          format: uuid
+        service_type:
+          type: string
+        notes:
+          type: string
+        vehicle_info:
+          $ref: '#/components/schemas/VehicleInfo'
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        shop_id:
+          type: string
+          format: uuid
+        slot_id:
+          type: string
+          format: uuid
+        mechanic_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        customer:
+          $ref: '#/components/schemas/CustomerBrief'
+        mechanic:
+          $ref: '#/components/schemas/MechanicBrief'
+        slot:
+          $ref: '#/components/schemas/TimeSlot'
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled, no_show]
+        service_type:
+          type: string
+        vehicle_info:
+          $ref: '#/components/schemas/VehicleInfo'
+        notes:
+          type: string
+        source:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        confirmed_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    BookingListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ----- Slot Schemas -----
+    TimeSlot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        shop_id:
+          type: string
+          format: uuid
+        mechanic_id:
+          type: string
+          format: uuid
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+        is_available:
+          type: boolean
+        is_reserved:
+          type: boolean
+        reserved_until:
+          type: string
+          format: date-time
+        booking_id:
+          type: string
+          format: uuid
+
+    # ----- Mechanic Schemas -----
+    Mechanic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        shop_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        specialties:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    MechanicBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        specialties:
+          type: array
+          items:
+            type: string
+
+    CreateMechanicRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        specialties:
+          type: array
+          items:
+            type: string
+
+    UpdateMechanicRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        specialties:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+
+    MechanicSchedule:
+      type: object
+      properties:
+        mechanic_id:
+          type: string
+          format: uuid
+        week_start:
+          type: string
+          format: date
+        shifts:
+          type: array
+          items:
+            type: object
+            properties:
+              day_of_week:
+                type: integer
+                minimum: 0
+                maximum: 6
+              start_time:
+                type: string
+              end_time:
+                type: string
+              is_working:
+                type: boolean
+
+    # ----- Customer Schemas -----
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        shop_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        vehicles:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehicleInfo'
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        booking_count:
+          type: integer
+        last_booking_date:
+          type: string
+          format: date-time
+
+    CustomerBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - phone
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        vehicles:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehicleInfo'
+        notes:
+          type: string
+
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        vehicles:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehicleInfo'
+        notes:
+          type: string
+
+    # ----- Vehicle Schema -----
+    VehicleInfo:
+      type: object
+      properties:
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        vin:
+          type: string
+        license_plate:
+          type: string
+        color:
+          type: string
+
+    # ----- Shop Schemas -----
+    ShopProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        timezone:
+          type: string
+        subscription_tier:
+          type: string
+          enum: [basic, standard, premium, enterprise]
+        settings:
+          type: object
+          properties:
+            booking_lead_time_minutes:
+              type: integer
+            cancellation_policy_hours:
+              type: integer
+            reminder_hours_before:
+              type: integer
+            auto_confirm_voice_bookings:
+              type: boolean
+
+    UpdateShopRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        timezone:
+          type: string
+        settings:
+          type: object
+
+    OperatingHours:
+      type: object
+      properties:
+        timezone:
+          type: string
+        regular_hours:
+          type: array
+          items:
+            type: object
+            properties:
+              day_of_week:
+                type: integer
+              open:
+                type: string
+              close:
+                type: string
+              is_closed:
+                type: boolean
+        special_hours:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              open:
+                type: string
+              close:
+                type: string
+              is_closed:
+                type: boolean
+              reason:
+                type: string
+
+    ServiceType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        duration_minutes:
+          type: integer
+        price_range:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+        is_active:
+          type: boolean
+
+    # ----- Voice Webhook Schemas -----
+    VapiWebhookEvent:
+      type: object
+      required:
+        - event_type
+        - call_id
+        - timestamp
+      properties:
+        event_type:
+          type: string
+          enum: [call.started, call.ended, call.transcript, booking.intent, booking.confirmed]
+        call_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+
+    # ----- Admin Schemas -----
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        subdomain:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, cancelled]
+        subscription_tier:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        stats:
+          type: object
+          properties:
+            total_bookings:
+              type: integer
+            total_customers:
+              type: integer
+            total_mechanics:
+              type: integer
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        components:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                latency_ms:
+                  type: number
+            cache:
+              type: object
+              properties:
+                status:
+                  type: string
+                latency_ms:
+                  type: number
+            voice_provider:
+              type: object
+              properties:
+                status:
+                  type: string
+                latency_ms:
+                  type: number
+
+    # ----- Common Schemas -----
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                validation_errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field:
+                        type: string
+                      message:
+                        type: string
+                      code:
+                        type: string

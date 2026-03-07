@@ -1,0 +1,79 @@
+{
+  "labels": {
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "zipCode": "Postal Code",
+    "country": "Country",
+    "companyName": "Company Name",
+    "vatNumber": "VAT Number",
+    "fiscalCode": "Tax ID",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "search": "Search...",
+    "select": "Select...",
+    "date": "Date",
+    "time": "Time",
+    "notes": "Notes",
+    "description": "Description",
+    "price": "Price",
+    "quantity": "Quantity",
+    "licensePlate": "License Plate",
+    "vin": "VIN",
+    "brand": "Brand",
+    "model": "Model",
+    "year": "Year"
+  },
+  "placeholders": {
+    "firstName": "Enter your first name",
+    "lastName": "Enter your last name",
+    "email": "example@email.com",
+    "phone": "+1 234 567 8900",
+    "search": "Search...",
+    "select": "Select an option",
+    "date": "MM/DD/YYYY",
+    "licensePlate": "ABC123",
+    "vin": "Enter VIN (17 characters)"
+  },
+  "aria": {
+    "firstName": "First name field, enter your first name",
+    "lastName": "Last name field, enter your last name",
+    "email": "Email field, enter a valid email address",
+    "phone": "Phone field, enter your phone number",
+    "password": "Password field, enter a secure password",
+    "search": "Search field, type to search",
+    "select": "Dropdown menu, select an option",
+    "submit": "Submit button, click to submit the form",
+    "close": "Close button, click to close"
+  },
+  "errors": {
+    "required": "The {{field}} field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPhone": "Please enter a valid phone number",
+    "minLength": "The {{field}} field must be at least {{min}} characters",
+    "maxLength": "The {{field}} field cannot exceed {{max}} characters",
+    "passwordMatch": "Passwords do not match",
+    "invalidDate": "Invalid date",
+    "invalidVat": "Invalid VAT number",
+    "invalidFiscalCode": "Invalid tax ID"
+  },
+  "hints": {
+    "password": "Minimum 8 characters, one uppercase, one number",
+    "vatNumber": "Digits only, no spaces",
+    "fiscalCode": "Alphanumeric characters",
+    "vin": "17 alphanumeric characters"
+  },
+  "step": {
+    "title": "Step {{current}} of {{total}}",
+    "personal": "Personal Data",
+    "company": "Company Data",
+    "vehicle": "Vehicle Data",
+    "service": "Services",
+    "review": "Review",
+    "next": "Next step: {{step}}",
+    "previous": "Previous step: {{step}}"
+  }
+}

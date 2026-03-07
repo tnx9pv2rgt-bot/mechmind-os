@@ -1,0 +1,30 @@
+{
+  "name": "nexo-frontend-a11y",
+  "version": "1.0.0",
+  "description": "Accessibility package for Nexo Gestionale",
+  "dependencies": {
+    "i18next": "^23.7.0",
+    "i18next-browser-languagedetector": "^7.2.0",
+    "react-i18next": "^13.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-axe": "^8.0.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "@testing-library/react": "^14.1.0",
+    "@testing-library/jest-dom": "^6.1.0",
+    "@testing-library/user-event": "^14.5.0",
+    "ts-jest": "^29.1.0",
+    "@types/jest": "^29.5.0",
+    "@types/jest-axe": "^3.5.0"
+  },
+  "scripts": {
+    "test:a11y": "jest --config jest.config.js --testPathPattern=accessibility",
+    "test:a11y:watch": "jest --config jest.config.js --testPathPattern=accessibility --watch",
+    "test:a11y:coverage": "jest --config jest.config.js --testPathPattern=accessibility --coverage",
+    "test:contrast": "jest --config jest.config.js contrast.test",
+    "test:validation": "jest --config jest.config.js validation.test"
+  }
+}

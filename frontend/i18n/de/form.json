@@ -1,0 +1,79 @@
+{
+  "labels": {
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "zipCode": "Postleitzahl",
+    "country": "Land",
+    "companyName": "Firmenname",
+    "vatNumber": "USt-IdNr.",
+    "fiscalCode": "Steuer-ID",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "search": "Suchen...",
+    "select": "Auswählen...",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "notes": "Notizen",
+    "description": "Beschreibung",
+    "price": "Preis",
+    "quantity": "Menge",
+    "licensePlate": "Kennzeichen",
+    "vin": "VIN",
+    "brand": "Marke",
+    "model": "Modell",
+    "year": "Jahr"
+  },
+  "placeholders": {
+    "firstName": "Geben Sie Ihren Vornamen ein",
+    "lastName": "Geben Sie Ihren Nachnamen ein",
+    "email": "beispiel@email.de",
+    "phone": "+49 123 4567890",
+    "search": "Suchen...",
+    "select": "Option auswählen",
+    "date": "TT.MM.JJJJ",
+    "licensePlate": "AB CD 123",
+    "vin": "VIN eingeben (17 Zeichen)"
+  },
+  "aria": {
+    "firstName": "Vorname-Feld, geben Sie Ihren Vornamen ein",
+    "lastName": "Nachname-Feld, geben Sie Ihren Nachnamen ein",
+    "email": "E-Mail-Feld, geben Sie eine gültige E-Mail-Adresse ein",
+    "phone": "Telefon-Feld, geben Sie Ihre Telefonnummer ein",
+    "password": "Passwort-Feld, geben Sie ein sicheres Passwort ein",
+    "search": "Suchfeld, tippen Sie zum Suchen",
+    "select": "Dropdown-Menü, wählen Sie eine Option",
+    "submit": "Absenden-Button, klicken Sie zum Absenden",
+    "close": "Schließen-Button, klicken Sie zum Schließen"
+  },
+  "errors": {
+    "required": "Das Feld {{field}} ist erforderlich",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "minLength": "Das Feld {{field}} muss mindestens {{min}} Zeichen haben",
+    "maxLength": "Das Feld {{field}} darf maximal {{max}} Zeichen haben",
+    "passwordMatch": "Die Passwörter stimmen nicht überein",
+    "invalidDate": "Ungültiges Datum",
+    "invalidVat": "Ungültige USt-IdNr.",
+    "invalidFiscalCode": "Ungültige Steuer-ID"
+  },
+  "hints": {
+    "password": "Mindestens 8 Zeichen, ein Großbuchstabe, eine Zahl",
+    "vatNumber": "Nur Ziffern, keine Leerzeichen",
+    "fiscalCode": "Alphanumerische Zeichen",
+    "vin": "17 alphanumerische Zeichen"
+  },
+  "step": {
+    "title": "Schritt {{current}} von {{total}}",
+    "personal": "Persönliche Daten",
+    "company": "Firmendaten",
+    "vehicle": "Fahrzeugdaten",
+    "service": "Dienstleistungen",
+    "review": "Überprüfung",
+    "next": "Nächster Schritt: {{step}}",
+    "previous": "Vorheriger Schritt: {{step}}"
+  }
+}

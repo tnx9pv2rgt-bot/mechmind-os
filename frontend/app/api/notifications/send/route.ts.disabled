@@ -1,0 +1,139 @@
+/**
+ * Send Notification API Route
+ * POST: Send immediate notification
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { z } from 'zod';
+
+// Validation schema
+const sendSchema = z.object({
+  customerId: z.string().uuid(),
+  type: z.enum([
+    'BOOKING_REMINDER',
+    'BOOKING_CONFIRMATION',
+    'STATUS_UPDATE',
+    'INVOICE_READY',
+    'MAINTENANCE_DUE',
+    'INSPECTION_COMPLETE',
+    'PAYMENT_REMINDER',
+  ]),
+  channel: z.enum(['SMS', 'WHATSAPP', 'EMAIL']),
+  message: z.string().optional(),
+  metadata: z.record(z.any()).optional(),
+  variables: z.record(z.string()).optional(),
+  template: z.string().optional(),
+});
+
+/**
+ * POST /api/notifications/send
+ * Send notification immediately
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies });
+    
+    // Check authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Parse and validate body
+    const body = await request.json();
+    const data = sendSchema.parse(body);
+
+    // Get tenant ID from session
+    const tenantId = session.user.user_metadata.tenant_id;
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 400 }
+      );
+    }
+
+    // Get customer details
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('encrypted_phone, encrypted_first_name, encrypted_last_name')
+      .eq('id', data.customerId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (customerError || !customer) {
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check notification preferences
+    const { data: preferences } = await supabase
+      .from('customer_notification_preferences')
+      .select('enabled')
+      .eq('customer_id', data.customerId)
+      .eq('channel', data.channel)
+      .single();
+
+    if (preferences && !preferences.enabled) {
+      return NextResponse.json(
+        { error: 'Notification channel disabled by customer preference' },
+        { status: 400 }
+      );
+    }
+
+    // Call backend API to send notification
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/api/notifications/v2/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        ...data,
+        tenantId,
+        customerPhone: customer.encrypted_phone,
+        customerName: customer.encrypted_first_name || 'Cliente',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return NextResponse.json(
+        { error: error.message || 'Failed to send notification' },
+        { status: response.status }
+      );
+    }
+
+    const result = await response.json();
+    
+    // Log the notification attempt
+    await supabase.from('notification_logs').insert({
+      notification_id: result.notificationId,
+      customer_id: data.customerId,
+      tenant_id: tenantId,
+      type: data.type,
+      channel: data.channel,
+      status: result.success ? 'sent' : 'failed',
+      error: result.error || null,
+      sent_by: session.user.id,
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error in send notification POST:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: error.errors },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

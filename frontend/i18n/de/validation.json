@@ -1,0 +1,61 @@
+{
+  "messages": {
+    "required": "Dieses Feld ist erforderlich",
+    "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "url": "Bitte geben Sie eine gültige URL ein",
+    "number": "Bitte geben Sie eine gültige Zahl ein",
+    "integer": "Bitte geben Sie eine ganze Zahl ein",
+    "decimal": "Bitte geben Sie eine Dezimalzahl ein",
+    "date": "Bitte geben Sie ein gültiges Datum ein",
+    "time": "Bitte geben Sie eine gültige Uhrzeit ein",
+    "alphanumeric": "Nur alphanumerische Zeichen",
+    "pattern": "Ungültiges Format"
+  },
+  "constraints": {
+    "min": "Mindestwert ist {{min}}",
+    "max": "Höchstwert ist {{max}}",
+    "minLength": "Mindestens {{min}} Zeichen",
+    "maxLength": "Höchstens {{max}} Zeichen",
+    "exactLength": "Muss genau {{length}} Zeichen haben",
+    "minItems": "Wählen Sie mindestens {{min}} Elemente",
+    "maxItems": "Sie können maximal {{max}} Elemente wählen",
+    "minDate": "Datum muss nach {{date}} liegen",
+    "maxDate": "Datum muss vor {{date}} liegen"
+  },
+  "formats": {
+    "vatIt": "Ungültige italienische USt-IdNr. (11 Ziffern)",
+    "fiscalCodeIt": "Ungültige Steuer-ID (16 Zeichen)",
+    "licensePlateIt": "Ungültiges italienisches Kennzeichen",
+    "phoneIt": "Ungültige italienische Telefonnummer",
+    "zipCodeIt": "Ungültige italienische PLZ (5 Ziffern)",
+    "iban": "Ungültige IBAN",
+    "swift": "Ungültiger SWIFT/BIC"
+  },
+  "password": {
+    "minLength": "Passwort muss mindestens {{min}} Zeichen haben",
+    "uppercase": "Muss mindestens einen Großbuchstaben enthalten",
+    "lowercase": "Muss mindestens einen Kleinbuchstaben enthalten",
+    "number": "Muss mindestens eine Zahl enthalten",
+    "special": "Muss mindestens ein Sonderzeichen enthalten",
+    "match": "Die Passwörter stimmen nicht überein",
+    "common": "Passwort ist zu häufig",
+    "strength": {
+      "weak": "Schwaches Passwort",
+      "fair": "Akzeptables Passwort",
+      "good": "Gutes Passwort",
+      "strong": "Starkes Passwort"
+    }
+  },
+  "async": {
+    "checking": "Wird überprüft...",
+    "available": "Verfügbar",
+    "unavailable": "Nicht verfügbar",
+    "error": "Fehler bei der Überprüfung"
+  },
+  "summary": {
+    "title": "Bitte korrigieren Sie die folgenden Fehler:",
+    "count_one": "{{count}} Fehler gefunden",
+    "count_other": "{{count}} Fehler gefunden",
+    "field": "Feld {{field}}: {{message}}"
+  }
+}

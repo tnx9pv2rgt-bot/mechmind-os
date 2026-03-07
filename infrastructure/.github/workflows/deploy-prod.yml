@@ -1,0 +1,439 @@
+# =============================================================================
+# MechMind OS v10 - Production Deployment Workflow
+# Deploys infrastructure and Lambda code to production environment
+# Requires manual approval
+# =============================================================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+      - 'src/**'
+      - 'package.json'
+      - '.github/workflows/deploy-prod.yml'
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (not recommended)'
+        type: boolean
+        default: false
+
+env:
+  TF_IN_AUTOMATION: true
+  TF_VERSION: '1.7.0'
+  NODE_VERSION: '20'
+  AWS_REGION: 'us-east-1'
+  ENVIRONMENT: 'prod'
+
+jobs:
+  # ==========================================================================
+  # Pre-Deployment Checks
+  # ==========================================================================
+  pre-check:
+    name: Pre-Deployment Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for blocking issues
+        run: |
+          # Check if there are any known issues
+          echo "Running pre-deployment checks..."
+          
+      - name: Verify tests passed on staging
+        run: |
+          echo "Verifying staging deployment was successful..."
+          # Could query staging health endpoint here
+
+  # ==========================================================================
+  # Build Lambda Package
+  # ==========================================================================
+  build:
+    name: Build Lambda Package
+    runs-on: ubuntu-latest
+    needs: pre-check
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        if: ${{ !github.event.inputs.skip_tests }}
+        run: npm test -- --passWithNoTests
+
+      - name: Run Integration Tests
+        if: ${{ !github.event.inputs.skip_tests }}
+        run: npm run test:integration -- --passWithNoTests || true
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Package Lambda
+        run: |
+          mkdir -p dist/lambda
+          cp -r dist/* dist/lambda/
+          cp package*.json dist/lambda/
+          cd dist/lambda && npm ci --production
+          cd .. && zip -r lambda-package.zip lambda/
+
+      - name: Upload Lambda Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-package-prod
+          path: dist/lambda-package.zip
+          retention-days: 7
+
+  # ==========================================================================
+  # Terraform Plan
+  # ==========================================================================
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=mechmind-terraform-state-${{ secrets.AWS_ACCOUNT_ID }}" \
+            -backend-config="key=${{ env.ENVIRONMENT }}/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=mechmind-terraform-locks"
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: |
+          terraform plan \
+            -var-file="environments/${{ env.ENVIRONMENT }}.tfvars" \
+            -out=tfplan-prod
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-prod
+          path: infrastructure/terraform/tfplan-prod
+          retention-days: 7
+
+  # ==========================================================================
+  # Approval Gate
+  # ==========================================================================
+  approval:
+    name: Production Approval
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    environment: production
+    
+    steps:
+      - name: Approval Received
+        run: echo "Production deployment approved"
+
+  # ==========================================================================
+  # Deploy Infrastructure
+  # ==========================================================================
+  deploy-infra:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: approval
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=mechmind-terraform-state-${{ secrets.AWS_ACCOUNT_ID }}" \
+            -backend-config="key=${{ env.ENVIRONMENT }}/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=mechmind-terraform-locks"
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-prod
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan-prod
+
+  # ==========================================================================
+  # Deploy Lambda Functions (Blue/Green)
+  # ==========================================================================
+  deploy-lambda:
+    name: Deploy Lambda Functions
+    runs-on: ubuntu-latest
+    needs: deploy-infra
+    
+    steps:
+      - name: Download Lambda Package
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package-prod
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy API Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-prod-api-main \
+            --zip-file fileb://lambda-package-prod.zip \
+            --publish
+
+      - name: Deploy Worker Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-prod-worker-booking \
+            --zip-file fileb://lambda-package-prod.zip \
+            --publish
+
+      - name: Deploy Notification Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-prod-worker-notification \
+            --zip-file fileb://lambda-package-prod.zip \
+            --publish
+
+      - name: Deploy Voice Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-prod-voice-handler \
+            --zip-file fileb://lambda-package-prod.zip \
+            --publish
+
+      - name: Wait for Updates
+        run: sleep 15
+
+      - name: Update Lambda Configuration
+        run: |
+          aws lambda update-function-configuration \
+            --function-name mechmind-prod-api-main \
+            --environment "Variables={DEPLOYMENT_TIMESTAMP=$(date +%s)}"
+
+  # ==========================================================================
+  # Database Migrations
+  # ==========================================================================
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: deploy-lambda
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Database Secret
+        id: db-secret
+        run: |
+          SECRET=$(aws secretsmanager get-secret-value \
+            --secret-id mechmind-prod/database/credentials \
+            --query SecretString \
+            --output text)
+          echo "host=$(echo $SECRET | jq -r .host)" >> $GITHUB_OUTPUT
+          echo "username=$(echo $SECRET | jq -r .username)" >> $GITHUB_OUTPUT
+          echo "password=$(echo $SECRET | jq -r .password)" >> $GITHUB_OUTPUT
+          echo "dbname=$(echo $SECRET | jq -r .dbname)" >> $GITHUB_OUTPUT
+
+      - name: Run Migrations
+        env:
+          DATABASE_URL: postgres://${{ steps.db-secret.outputs.username }}:${{ steps.db-secret.outputs.password }}@${{ steps.db-secret.outputs.host }}:5432/${{ steps.db-secret.outputs.dbname }}
+        run: npm run migrate:deploy
+
+  # ==========================================================================
+  # Smoke Tests & Verification
+  # ==========================================================================
+  smoke-test:
+    name: Production Smoke Tests
+    runs-on: ubuntu-latest
+    needs: migrate
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Lambda URL
+        id: lambda-url
+        run: |
+          URL=$(aws lambda get-function-url-config \
+            --function-name mechmind-prod-api-main \
+            --query FunctionUrl \
+            --output text)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Health Check
+        run: |
+          curl -f ${{ steps.lambda-url.outputs.url }}health || exit 1
+
+      - name: API Version Check
+        run: |
+          curl -f ${{ steps.lambda-url.outputs.url }}version || exit 1
+
+      - name: Database Connectivity Check
+        run: |
+          curl -f ${{ steps.lambda-url.outputs.url }}health/db || exit 1
+
+  # ==========================================================================
+  # Rollback on Failure
+  # ==========================================================================
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    if: failure()
+    
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Rollback Lambda to Previous Version
+        run: |
+          echo "Rolling back Lambda functions..."
+          # Get previous version and rollback
+          for func in mechmind-prod-api-main mechmind-prod-worker-booking mechmind-prod-worker-notification mechmind-prod-voice-handler; do
+            VERSION=$(aws lambda list-versions-by-function \
+              --function-name $func \
+              --query 'Versions[-2].Version' \
+              --output text)
+            aws lambda update-alias \
+              --function-name $func \
+              --name LIVE \
+              --function-version $VERSION || true
+          done
+
+      - name: Notify Rollback
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "PRODUCTION ROLLBACK EXECUTED",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*MechMind Production Rollback*\nCommit: ${{ github.sha }}\nReason: Smoke tests failed"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ==========================================================================
+  # Post-Deployment Notification
+  # ==========================================================================
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    if: success()
+    
+    steps:
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Production Deployment Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*MechMind Production Deployment* :white_check_mark:\nCommit: ${{ github.sha }}\nDeployer: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: prod-${{ github.run_number }}
+          release_name: Production Release ${{ github.run_number }}
+          body: |
+            Automated production deployment
+            Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false

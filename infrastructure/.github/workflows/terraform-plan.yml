@@ -1,0 +1,145 @@
+# =============================================================================
+# MechMind OS v10 - Terraform Plan Workflow
+# Runs on PR to validate infrastructure changes
+# =============================================================================
+
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform*.yml'
+    branches:
+      - main
+      - develop
+
+env:
+  TF_IN_AUTOMATION: true
+  TF_VERSION: '1.7.0'
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    strategy:
+      matrix:
+        environment: [dev, staging]
+    
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Setup Terraform
+      # -----------------------------------------------------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      # -----------------------------------------------------------------------
+      # Configure AWS Credentials
+      # -----------------------------------------------------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # -----------------------------------------------------------------------
+      # Terraform Init
+      # -----------------------------------------------------------------------
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=mechmind-terraform-state-${{ secrets.AWS_ACCOUNT_ID }}" \
+            -backend-config="key=${{ matrix.environment }}/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="dynamodb_table=mechmind-terraform-locks"
+
+      # -----------------------------------------------------------------------
+      # Terraform Format Check
+      # -----------------------------------------------------------------------
+      - name: Terraform Format
+        working-directory: infrastructure/terraform
+        run: terraform fmt -check -recursive
+
+      # -----------------------------------------------------------------------
+      # Terraform Validate
+      # -----------------------------------------------------------------------
+      - name: Terraform Validate
+        working-directory: infrastructure/terraform
+        run: terraform validate
+
+      # -----------------------------------------------------------------------
+      # Terraform Plan
+      # -----------------------------------------------------------------------
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        id: plan
+        run: |
+          terraform plan \
+            -var-file="environments/${{ matrix.environment }}.tfvars" \
+            -out=tfplan \
+            -no-color 2>&1 | tee plan_output.txt
+        continue-on-error: true
+
+      # -----------------------------------------------------------------------
+      # Post Plan to PR
+      # -----------------------------------------------------------------------
+      - name: Post Plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('infrastructure/terraform/plan_output.txt', 'utf8');
+            
+            const output = `### Terraform Plan for ${{ matrix.environment }} Environment
+            
+            <details>
+            <summary>Click to expand plan</summary>
+            
+            \`\`\`terraform
+            ${planOutput.substring(0, 60000)}
+            \`\`\`
+            
+            </details>
+            
+            **Plan Status:** ${{ steps.plan.outcome }}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      # -----------------------------------------------------------------------
+      # Check Plan Status
+      # -----------------------------------------------------------------------
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      # -----------------------------------------------------------------------
+      # Save Plan Artifact
+      # -----------------------------------------------------------------------
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.environment }}
+          path: infrastructure/terraform/tfplan
+          retention-days: 5

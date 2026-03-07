@@ -1,0 +1,194 @@
+# ==========================================
+# MechMind OS v10 - Production Docker Compose
+# ==========================================
+
+version: '3.8'
+
+services:
+  # ------------------------------------------
+  # Backend API Service
+  # ------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: mechmind-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_IV=${ENCRYPTION_IV}
+      - VAPI_WEBHOOK_SECRET=${VAPI_WEBHOOK_SECRET}
+      - VAPI_API_KEY=${VAPI_API_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_WEBHOOK_SECRET=${RESEND_WEBHOOK_SECRET}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-noreply@mechmind.io}
+      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-MechMind}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - ENABLE_VOICE_BOOKING=${ENABLE_VOICE_BOOKING:-true}
+      - ENABLE_SMS_NOTIFICATIONS=${ENABLE_SMS_NOTIFICATIONS:-true}
+      - ENABLE_EMAIL_NOTIFICATIONS=${ENABLE_EMAIL_NOTIFICATIONS:-true}
+      - FRONTEND_URL=${FRONTEND_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mechmind-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # ------------------------------------------
+  # PostgreSQL Database
+  # ------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: mechmind-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-mechmind}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-mechmind_os}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - mechmind-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mechmind} -d ${POSTGRES_DB:-mechmind_os}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # ------------------------------------------
+  # Redis Cache & Queue
+  # ------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: mechmind-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis-data:/data
+    networks:
+      - mechmind-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ------------------------------------------
+  # Nginx Reverse Proxy (Optional)
+  # ------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: mechmind-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - backend
+    networks:
+      - mechmind-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+# ------------------------------------------
+# Networks
+# ------------------------------------------
+networks:
+  mechmind-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ------------------------------------------
+# Volumes
+# ------------------------------------------
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  nginx-logs:
+    driver: local

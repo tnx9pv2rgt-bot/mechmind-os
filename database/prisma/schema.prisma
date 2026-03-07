@@ -1,0 +1,461 @@
+// ============================================================================
+// MechMind OS v10 - Database Schema
+// Multi-tenant SaaS for Automotive Repair Shops with AI Voice Booking
+// ============================================================================
+// Architecture: Bridge Model (Schema-per-tenant + RLS fallback)
+// Data Consistency: CQRS + Event Sourcing (booking/payment path only)
+// PII Encryption: pgcrypto AES-256
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [pgcrypto(map: "pgcrypto")]
+}
+
+// ============================================================================
+// IDENTITY & TENANCY
+// ============================================================================
+
+model Tenant {
+  id                String   @id @default(uuid()) @db.Uuid
+  name              String   @db.VarChar(255)
+  subscriptionTier  String   @default("starter") @map("subscription_tier") @db.VarChar(50)
+  encryptionKeyId   String   @map("encryption_key_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  users             TenantUser[]
+  appUsers          User[]
+  bookingSlots      BookingSlot[]
+  bookingEvents     BookingEvent[]
+  bookings          Booking[]
+  customers         CustomerEncrypted[]
+  vehicles          Vehicle[]
+  invoices          Invoice[]
+  dailyMetrics      DailyMetric[]
+  auditLogs         AuditLog[]
+  mfaAuditLogs      MFAAuditLog[]
+  
+  @@index([subscriptionTier])
+  @@index([createdAt])
+  @@map("tenants")
+}
+
+model TenantUser {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  email       String   @db.VarChar(255)
+  role        String   @db.VarChar(50) // admin, mechanic, secretary
+  auth0Sub    String?  @unique @map("auth0_sub") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Audit relations
+  auditLogs   AuditLog[]
+  
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([role])
+  @@index([auth0Sub])
+  @@map("tenant_users")
+}
+
+// ============================================================================
+// USER & MFA (Extended User Model for Authentication)
+// ============================================================================
+
+model User {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  email             String    @db.VarChar(255)
+  password          String    @db.VarChar(255) // bcrypt hashed
+  firstName         String    @map("first_name") @db.VarChar(100)
+  lastName          String    @map("last_name") @db.VarChar(100)
+  role              String    @db.VarChar(50) // admin, manager, mechanic, secretary
+  isActive          Boolean   @default(true) @map("is_active")
+  
+  // MFA Fields
+  totpSecret        String?   @map("totp_secret")
+  totpEnabled       Boolean   @default(false) @map("totp_enabled")
+  totpVerifiedAt    DateTime? @map("totp_verified_at") @db.Timestamptz(6)
+  backupCodes       String[]  @default([]) @map("backup_codes") // Hashed
+  
+  // Security
+  failedLogins      Int       @default(0) @map("failed_logins")
+  lockedUntil       DateTime? @map("locked_until") @db.Timestamptz(6)
+  lastLoginAt       DateTime? @map("last_login_at") @db.Timestamptz(6)
+  lastLoginIp       String?   @map("last_login_ip") @db.VarChar(45)
+  
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  // Relations
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mfa               UserMFA?
+  mfaAuditLogs      MFAAuditLog[]
+  
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([totpEnabled])
+  @@map("users")
+}
+
+model UserMFA {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @unique @map("user_id") @db.Uuid
+  secret            String    // Encrypted TOTP secret (base32)
+  enabled           Boolean   @default(false)
+  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz(6)
+  backupCodes       String[]  @default([]) @map("backup_codes") // Hashed
+  verifyAttempts    Int       @default(0) @map("verify_attempts")
+  lastVerifyAttempt DateTime? @map("last_verify_attempt") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([enabled])
+  @@map("user_mfa")
+}
+
+model MFAAuditLog {
+  id          BigInt    @id @default(autoincrement())
+  userId      String    @map("user_id") @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  eventType   String    @map("event_type") @db.VarChar(50) // enroll, verify, disable, backup_used, failed_attempt, admin_action
+  eventData   Json?     @map("event_data")
+  ipAddress   String?   @map("ip_address") @db.Inet
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([tenantId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("mfa_audit_log")
+}
+
+// ============================================================================
+// BOOKING ENGINE (EVENT SOURCED)
+// ============================================================================
+
+model BookingSlot {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  mechanicId  String   @map("mechanic_id") @db.Uuid
+  slotDate    DateTime @map("slot_date") @db.Date
+  slotStart   DateTime @map("slot_start") @db.Time(0)
+  slotEnd     DateTime @map("slot_end") @db.Time(0)
+  slotType    String   @default("30min") @map("slot_type") @db.VarChar(50)
+  status      String   @default("available") @db.VarChar(50)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  bookings    Booking[]
+  bookingEvents BookingEvent[]
+  
+  // Indexes for performance
+  @@index([tenantId, mechanicId, slotDate])
+  @@index([tenantId, status])
+  @@index([slotDate, slotStart])
+  @@map("booking_slots")
+  
+  // RLS Policy Note: 
+  // CREATE POLICY tenant_isolation ON booking_slots 
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+model BookingEvent {
+  id            BigInt   @id @default(autoincrement())
+  tenantId      String   @map("tenant_id") @db.Uuid
+  slotId        String   @map("slot_id") @db.Uuid
+  eventType     String   @map("event_type") @db.VarChar(50)
+  eventData     Json     @map("event_data") @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  isAnonymized  Boolean  @default(false) @map("is_anonymized")
+  
+  // Relations - Events reference slots but NOT PII directly
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  slot          BookingSlot @relation(fields: [slotId], references: [id])
+  
+  // Indexes for event sourcing queries
+  @@index([tenantId, slotId])
+  @@index([tenantId, eventType, createdAt])
+  @@index([createdAt])
+  @@index([tenantId, isAnonymized])
+  @@map("booking_events")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON booking_events
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+model Booking {
+  id                      String    @id @default(uuid()) @db.Uuid
+  tenantId                String    @map("tenant_id") @db.Uuid
+  slotId                  String    @map("slot_id") @db.Uuid
+  customerId              String    @map("customer_id") @db.Uuid
+  vehicleId               String?   @map("vehicle_id") @db.Uuid
+  estimatedDurationMinutes Int      @default(60) @map("estimated_duration_minutes")
+  status                  String    @default("pending") @db.VarChar(50)
+  totalCostCents          BigInt?   @map("total_cost_cents")
+  paymentMethod           String?   @map("payment_method") @db.VarChar(50)
+  paymentStatus           String    @default("unpaid") @map("payment_status") @db.VarChar(50)
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  slot        BookingSlot @relation(fields: [slotId], references: [id])
+  customer    CustomerEncrypted @relation(fields: [customerId], references: [id])
+  vehicle     Vehicle? @relation(fields: [vehicleId], references: [id])
+  invoices    Invoice[]
+  
+  // Indexes for common queries
+  @@index([tenantId, customerId])
+  @@index([tenantId, status])
+  @@index([tenantId, paymentStatus])
+  @@index([slotId])
+  @@index([createdAt])
+  @@map("bookings")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON bookings
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+// ============================================================================
+// CUSTOMER DATA (ENCRYPTED, PII SEPARATED)
+// ============================================================================
+// PII is encrypted using pgcrypto AES-256
+// Events contain REFERENCES to customers, not PII directly
+
+model CustomerEncrypted {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  phoneEncrypted    Bytes     @map("phone_encrypted")
+  emailEncrypted    Bytes     @map("email_encrypted")
+  nameEncrypted     Bytes     @map("name_encrypted")
+  gdprConsent       Boolean   @default(false) @map("gdpr_consent")
+  gdprConsentDate   DateTime? @map("gdpr_consent_date") @db.Timestamp(6)
+  dataRetentionDays Int       @default(365) @map("data_retention_days")
+  isDeleted         Boolean   @default(false) @map("is_deleted")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamp(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  bookings    Booking[]
+  vehicles    Vehicle[]
+  invoices    Invoice[]
+  
+  // Indexes for GDPR compliance queries
+  @@index([tenantId, isDeleted])
+  @@index([tenantId, gdprConsent])
+  @@index([createdAt])
+  @@index([dataRetentionDays])
+  @@map("customers_encrypted")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON customers_encrypted
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+// ============================================================================
+// VEHICLES
+// ============================================================================
+
+model Vehicle {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  customerId        String    @map("customer_id") @db.Uuid
+  licensePlate      String    @map("license_plate") @db.VarChar(10)
+  make              String?   @db.VarChar(100)
+  model             String?   @db.VarChar(100)
+  year              Int?
+  lastServiceDate   DateTime? @map("last_service_date") @db.Date
+  nextServiceDueKm  Int?      @map("next_service_due_km")
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  customer    CustomerEncrypted @relation(fields: [customerId], references: [id])
+  bookings    Booking[]
+  
+  @@unique([tenantId, licensePlate])
+  @@index([tenantId, customerId])
+  @@index([licensePlate])
+  @@map("vehicles")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON vehicles
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+// ============================================================================
+// INVOICES
+// ============================================================================
+
+model Invoice {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  bookingId     String?   @map("booking_id") @db.Uuid
+  customerId    String    @map("customer_id") @db.Uuid
+  totalCents    BigInt    @map("total_cents")
+  taxCents      BigInt?   @map("tax_cents")
+  status        String    @default("draft") @db.VarChar(50)
+  paymentDate   DateTime? @map("payment_date") @db.Timestamp(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+  customer    CustomerEncrypted @relation(fields: [customerId], references: [id])
+  
+  @@index([tenantId, status])
+  @@index([tenantId, customerId])
+  @@index([bookingId])
+  @@index([createdAt])
+  @@map("invoices")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON invoices
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+// ============================================================================
+// ANALYTICS
+// ============================================================================
+
+model DailyMetric {
+  id                BigInt    @id @default(autoincrement())
+  tenantId          String    @map("tenant_id") @db.Uuid
+  metricDate        DateTime  @map("metric_date") @db.Date
+  bookingsCount     Int       @default(0) @map("bookings_count")
+  revenueCents      BigInt    @default(0) @map("revenue_cents")
+  avgDurationMinutes Int?     @map("avg_duration_minutes")
+  mechanicsActive   Int?      @map("mechanics_active")
+  partsUsed         Int?      @map("parts_used")
+  refreshedAt       DateTime  @default(now()) @map("refreshed_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  
+  @@unique([tenantId, metricDate])
+  @@index([tenantId, metricDate])
+  @@index([metricDate])
+  @@map("daily_metrics")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON daily_metrics
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+// ============================================================================
+// AUDIT LOG
+// ============================================================================
+
+model AuditLog {
+  id          BigInt    @id @default(autoincrement())
+  tenantId    String    @map("tenant_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  action      String    @db.VarChar(100)
+  tableName   String    @map("table_name") @db.VarChar(100)
+  recordId    String?   @map("record_id") @db.Uuid
+  oldValues   Json?     @map("old_values") @db.JsonB
+  newValues   Json?     @map("new_values") @db.JsonB
+  ipAddress   String?   @map("ip_address") @db.Inet
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  user        TenantUser? @relation(fields: [userId], references: [id])
+  
+  @@index([tenantId, createdAt])
+  @@index([tenantId, action])
+  @@index([tenantId, tableName])
+  @@index([createdAt])
+  @@map("audit_log")
+  
+  // RLS Policy Note:
+  // CREATE POLICY tenant_isolation ON audit_log
+  // USING (tenant_id = current_setting('app.current_tenant')::UUID);
+}
+
+// ============================================================================
+// VIEWS (for read-optimized queries)
+// ============================================================================
+// These are created via raw SQL migrations, not Prisma models
+
+// VIEW: available_slots - Pre-filtered available booking slots
+// VIEW: customer_summary - Decrypted customer info with booking stats
+// VIEW: revenue_by_day - Aggregated revenue metrics
+
+// ============================================================================
+// RLS POLICY SUMMARY
+// ============================================================================
+// All tables have tenant isolation via:
+// SET app.current_tenant = 'tenant-uuid';
+// CREATE POLICY tenant_isolation ON <table>
+//   USING (tenant_id = current_setting('app.current_tenant')::UUID);
+//
+// For cross-tenant admin queries:
+// SET app.bypass_rls = 'true';
+//
+// Advisory Lock Pattern for Booking:
+// SELECT pg_advisory_lock(tenant_id::int || slot_id::int);
+// -- perform booking operation
+// SELECT pg_advisory_unlock(tenant_id::int || slot_id::int);
+// ============================================================================
+
+// ============================================================================
+// FORM DRAFTS (REALTIME SAVE)
+// ============================================================================
+// Tabella per il salvataggio real-time dei form con versioning
+// e conflict resolution (Notion/Linear style)
+
+model FormDraft {
+  id          String   @id
+  userId      String   @map("user_id") @db.Uuid
+  formType    String   @map("form_type")
+  formId      String   @map("form_id")
+  data        Json     @map("data") @db.JsonB
+  version     Int      @default(1)
+  deviceInfo  String?  @map("device_info")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  // Indexes
+  @@unique([userId, formType, formId])
+  @@index([userId])
+  @@index([formType])
+  @@index([updatedAt])
+  @@index([userId, formType])
+  @@map("form_drafts")
+  
+  // RLS Policy Note:
+  // CREATE POLICY "Users can only access their own drafts"
+  //   ON form_drafts FOR ALL
+  //   USING (auth.uid() = user_id);
+}
+
+// ============================================================================
+// END OF SCHEMA
+// ============================================================================

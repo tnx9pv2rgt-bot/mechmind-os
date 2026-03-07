@@ -1,0 +1,55 @@
+{
+  "app": {
+    "name": "Nexo Gestionale",
+    "tagline": "Gestione officina intelligente",
+    "version": "Versione {{version}}"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "customers": "Clienti",
+    "vehicles": "Veicoli",
+    "bookings": "Appuntamenti",
+    "invoices": "Fatture",
+    "settings": "Impostazioni",
+    "logout": "Esci",
+    "profile": "Profilo",
+    "help": "Aiuto"
+  },
+  "actions": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "create": "Crea",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "sort": "Ordina",
+    "close": "Chiudi",
+    "open": "Apri",
+    "back": "Indietro",
+    "next": "Avanti",
+    "submit": "Invia",
+    "confirm": "Conferma",
+    "loading": "Caricamento...",
+    "retry": "Riprova",
+    "skip": "Salta",
+    "continue": "Continua"
+  },
+  "status": {
+    "active": "Attivo",
+    "inactive": "Inattivo",
+    "pending": "In attesa",
+    "completed": "Completato",
+    "error": "Errore",
+    "success": "Successo",
+    "warning": "Attenzione",
+    "info": "Informazione"
+  },
+  "meta": {
+    "skipToContent": "Salta al contenuto principale",
+    "mainNavigation": "Navigazione principale",
+    "footer": "Piè di pagina",
+    "languageSelector": "Selettore lingua"
+  }
+}

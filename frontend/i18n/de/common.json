@@ -1,0 +1,55 @@
+{
+  "app": {
+    "name": "Nexo Management",
+    "tagline": "Intelligente Werkstattverwaltung",
+    "version": "Version {{version}}"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "dashboard": "Dashboard",
+    "customers": "Kunden",
+    "vehicles": "Fahrzeuge",
+    "bookings": "Termine",
+    "invoices": "Rechnungen",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "profile": "Profil",
+    "help": "Hilfe"
+  },
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "close": "Schließen",
+    "open": "Öffnen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "confirm": "Bestätigen",
+    "loading": "Wird geladen...",
+    "retry": "Wiederholen",
+    "skip": "Überspringen",
+    "continue": "Fortfahren"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pending": "Ausstehend",
+    "completed": "Abgeschlossen",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "info": "Information"
+  },
+  "meta": {
+    "skipToContent": "Zum Hauptinhalt springen",
+    "mainNavigation": "Hauptnavigation",
+    "footer": "Fußzeile",
+    "languageSelector": "Sprachauswahl"
+  }
+}

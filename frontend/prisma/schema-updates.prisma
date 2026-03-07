@@ -1,0 +1,112 @@
+// Add these models and updates to your main schema.prisma file
+
+// ============================================
+// TENANT MODEL (for Stripe Billing)
+// ============================================
+
+model Tenant {
+  id                String    @id @default(cuid())
+  name              String
+  email             String?
+  phone             String?
+  address           String?
+  vatNumber         String?
+  
+  // Stripe Integration
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?   @unique
+  subscriptionStatus    String    @default("inactive") // active, canceled, past_due, unpaid, trialing, inactive
+  subscriptionPlan      String    @default("piccole")   // piccole, medie, enterprise
+  aiAddon               Boolean   @default(false)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean   @default(false)
+  gracePeriodEnd        DateTime?
+  isSuspended           Boolean   @default(false)
+  
+  // Usage Tracking
+  aiCallsThisMonth  Int       @default(0)
+  storageUsed       Int       @default(0) // in bytes
+  lastUsageReset    DateTime  @default(now())
+  
+  // Relations
+  vehicles      Vehicle[]
+  inspections   Inspection[]
+  inspectors    Inspector[]
+  warranties    Warranty[]
+  
+  // Metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([subscriptionStatus])
+}
+
+// ============================================
+// UPDATES TO EXISTING MODELS
+// ============================================
+
+// Add to existing Vehicle model:
+// model Vehicle {
+//   ... existing fields ...
+//   tenantId      String?
+//   tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+//   
+//   @@index([tenantId])
+// }
+
+// Add to existing Inspection model:
+// model Inspection {
+//   ... existing fields ...
+//   tenantId      String?
+//   tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+//   
+//   @@index([tenantId])
+// }
+
+// Add to existing Inspector model:
+// model Inspector {
+//   ... existing fields ...
+//   tenantId      String?
+//   tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+//   
+//   @@index([tenantId])
+// }
+
+// Add to existing Warranty model:
+// model Warranty {
+//   ... existing fields ...
+//   tenantId      String?
+//   tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+//   
+//   @@index([tenantId])
+// }
+
+// ============================================
+// SUBSCRIPTION EVENT LOG (for audit)
+// ============================================
+
+model SubscriptionEvent {
+  id                String    @id @default(cuid())
+  tenantId          String
+  
+  // Event details
+  eventType         String    // checkout.completed, subscription.updated, etc.
+  stripeEventId     String?   @unique
+  
+  // Data snapshot
+  previousStatus    String?
+  newStatus         String?
+  previousPlan      String?
+  newPlan           String?
+  metadata          Json?     // Additional event data
+  
+  // Timing
+  createdAt         DateTime  @default(now())
+  
+  @@index([tenantId])
+  @@index([eventType])
+  @@index([createdAt])
+}

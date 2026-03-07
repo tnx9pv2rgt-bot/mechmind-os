@@ -1,0 +1,74 @@
+{
+  "announcer": {
+    "pageLoaded": "Seite geladen: {{page}}",
+    "formSubmitted": "Formular erfolgreich abgesendet",
+    "formError": "Fehler beim Absenden des Formulars. Bitte korrigieren Sie die markierten Fehler.",
+    "loading": "Wird geladen...",
+    "loadingComplete": "Laden abgeschlossen",
+    "saving": "Wird gespeichert...",
+    "saved": "Erfolgreich gespeichert",
+    "deleting": "Wird gelöscht...",
+    "deleted": "Erfolgreich gelöscht",
+    "searching": "Suche läuft...",
+    "searchComplete": "Suche abgeschlossen, {{count}} Ergebnisse gefunden",
+    "noResults": "Keine Ergebnisse gefunden",
+    "error": "Ein Fehler ist aufgetreten: {{message}}"
+  },
+  "navigation": {
+    "menuOpened": "Menü geöffnet",
+    "menuClosed": "Menü geschlossen",
+    "modalOpened": "Dialogfenster geöffnet",
+    "modalClosed": "Dialogfenster geschlossen",
+    "dropdownOpened": "Dropdown geöffnet",
+    "dropdownClosed": "Dropdown geschlossen",
+    "tabChanged": "Tab {{tab}} von {{total}} ausgewählt",
+    "stepChanged": "Schritt {{current}} von {{total}}, {{title}}",
+    "pageChanged": "Seite {{page}} von {{total}}",
+    "skipLink": "Zum Hauptinhalt springen"
+  },
+  "form": {
+    "fieldCompleted": "Feld {{field}} korrekt ausgefüllt",
+    "fieldError": "Fehler im Feld {{field}}: {{error}}",
+    "fieldRequired": "Feld {{field}} ist erforderlich",
+    "fieldInvalid": "Ungültiger Wert für Feld {{field}}",
+    "sectionCompleted": "Abschnitt {{section}} abgeschlossen",
+    "autoSaved": "Automatisch gespeichert"
+  },
+  "language": {
+    "selector": "Sprache auswählen",
+    "changed": "Sprache geändert zu {{lang}}",
+    "current": "Aktuelle Sprache: {{lang}}"
+  },
+  "screenReader": {
+    "instructions": {
+      "formNavigation": "Tab zum Navigieren, Enter zum Absenden, Escape zum Abbrechen",
+      "modalNavigation": "Tab zum Navigieren im Dialog, Escape zum Schließen",
+      "tableNavigation": "Pfeiltasten zum Navigieren in der Tabelle",
+      "selectNavigation": "Hoch/Runter zum Auswählen, Enter zum Bestätigen"
+    },
+    "help": {
+      "required": "Erforderliches Feld",
+      "optional": "Optionales Feld",
+      "hasError": "Feld mit Fehler",
+      "hasHint": "Feld mit Hinweis",
+      "modified": "Feld geändert",
+      "autocomplete": "Feld mit Autovervollständigung"
+    }
+  },
+  "highContrast": {
+    "enabled": "Hochkontrastmodus aktiviert",
+    "disabled": "Hochkontrastmodus deaktiviert"
+  },
+  "reducedMotion": {
+    "enabled": "Reduzierte Bewegung aktiviert",
+    "disabled": "Reduzierte Bewegung deaktiviert"
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "network": "Verbindungsfehler. Bitte überprüfen Sie Ihre Internetverbindung.",
+    "timeout": "Zeitüberschreitung. Bitte versuchen Sie es erneut.",
+    "notFound": "Element nicht gefunden",
+    "forbidden": "Zugriff verweigert",
+    "unauthorized": "Sitzung abgelaufen. Bitte melden Sie sich erneut an."
+  }
+}

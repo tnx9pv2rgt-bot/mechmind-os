@@ -1,0 +1,276 @@
+# =============================================================================
+# MechMind OS v10 - Development Deployment Workflow
+# Deploys infrastructure and Lambda code to dev environment
+# =============================================================================
+
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'infrastructure/terraform/**'
+      - 'src/**'
+      - 'package.json'
+      - '.github/workflows/deploy-dev.yml'
+  workflow_dispatch:
+
+env:
+  TF_IN_AUTOMATION: true
+  TF_VERSION: '1.7.0'
+  NODE_VERSION: '20'
+  AWS_REGION: 'us-east-1'
+  ENVIRONMENT: 'dev'
+
+jobs:
+  # ==========================================================================
+  # Build Lambda Package
+  # ==========================================================================
+  build:
+    name: Build Lambda Package
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Run Tests
+        run: npm test -- --passWithNoTests
+
+      - name: Package Lambda
+        run: |
+          mkdir -p dist/lambda
+          cp -r dist/* dist/lambda/
+          cp package*.json dist/lambda/
+          cd dist/lambda && npm ci --production
+          cd .. && zip -r lambda-package.zip lambda/
+
+      - name: Upload Lambda Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-package
+          path: dist/lambda-package.zip
+          retention-days: 1
+
+  # ==========================================================================
+  # Deploy Infrastructure
+  # ==========================================================================
+  deploy-infra:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: build
+    environment: development
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=mechmind-terraform-state-${{ secrets.AWS_ACCOUNT_ID }}" \
+            -backend-config="key=${{ env.ENVIRONMENT }}/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=mechmind-terraform-locks"
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: |
+          terraform plan \
+            -var-file="environments/${{ env.ENVIRONMENT }}.tfvars" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Capture Terraform Outputs
+        working-directory: infrastructure/terraform
+        id: tf-outputs
+        run: |
+          echo "lambda_api_name=$(terraform output -raw lambda_api_function_name)" >> $GITHUB_OUTPUT
+          echo "lambda_worker_name=$(terraform output -raw lambda_worker_function_name)" >> $GITHUB_OUTPUT
+          echo "lambda_voice_name=$(terraform output -raw lambda_voice_handler_function_name)" >> $GITHUB_OUTPUT
+
+  # ==========================================================================
+  # Deploy Lambda Functions
+  # ==========================================================================
+  deploy-lambda:
+    name: Deploy Lambda Functions
+    runs-on: ubuntu-latest
+    needs: [build, deploy-infra]
+    environment: development
+    
+    steps:
+      - name: Download Lambda Package
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy API Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-dev-api-main \
+            --zip-file fileb://lambda-package.zip \
+            --publish
+
+      - name: Deploy Worker Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-dev-worker-booking \
+            --zip-file fileb://lambda-package.zip \
+            --publish
+
+      - name: Deploy Notification Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-dev-worker-notification \
+            --zip-file fileb://lambda-package.zip \
+            --publish
+
+      - name: Deploy Voice Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name mechmind-dev-voice-handler \
+            --zip-file fileb://lambda-package.zip \
+            --publish
+
+      - name: Wait for Updates
+        run: sleep 10
+
+      - name: Update API Lambda Configuration
+        run: |
+          aws lambda update-function-configuration \
+            --function-name mechmind-dev-api-main \
+            --environment "Variables={DEPLOYMENT_TIMESTAMP=$(date +%s)}"
+
+  # ==========================================================================
+  # Run Database Migrations
+  # ==========================================================================
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: deploy-lambda
+    environment: development
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Database Secret
+        id: db-secret
+        run: |
+          SECRET=$(aws secretsmanager get-secret-value \
+            --secret-id mechmind-dev/database/credentials \
+            --query SecretString \
+            --output text)
+          echo "host=$(echo $SECRET | jq -r .host)" >> $GITHUB_OUTPUT
+          echo "username=$(echo $SECRET | jq -r .username)" >> $GITHUB_OUTPUT
+          echo "password=$(echo $SECRET | jq -r .password)" >> $GITHUB_OUTPUT
+          echo "dbname=$(echo $SECRET | jq -r .dbname)" >> $GITHUB_OUTPUT
+
+      - name: Run Migrations
+        env:
+          DATABASE_URL: postgres://${{ steps.db-secret.outputs.username }}:${{ steps.db-secret.outputs.password }}@${{ steps.db-secret.outputs.host }}:5432/${{ steps.db-secret.outputs.dbname }}
+        run: npm run migrate:deploy
+
+  # ==========================================================================
+  # Smoke Tests
+  # ==========================================================================
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: migrate
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Lambda URL
+        id: lambda-url
+        run: |
+          URL=$(aws lambda get-function-url-config \
+            --function-name mechmind-dev-api-main \
+            --query FunctionUrl \
+            --output text)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Health Check
+        run: |
+          curl -f ${{ steps.lambda-url.outputs.url }}health || exit 1
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Dev Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*MechMind Dev Deployment*\nStatus: ${{ job.status }}\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

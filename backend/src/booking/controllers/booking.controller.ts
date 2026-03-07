@@ -1,0 +1,302 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  ConflictException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { BookingService } from '../services/booking.service';
+import { BookingSlotService } from '../services/booking-slot.service';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
+import { Roles } from '@auth/decorators/roles.decorator';
+import { CurrentUser, CurrentTenant } from '@auth/decorators/current-user.decorator';
+import {
+  CreateBookingDto,
+  ReserveSlotDto,
+  UpdateBookingDto,
+  BookingResponseDto,
+  ConflictResponseDto,
+} from '../dto/create-booking.dto';
+import {
+  FindAvailableSlotsDto,
+  CreateSlotDto,
+  BookingSlotResponseDto,
+  SlotAvailabilityResponseDto,
+} from '../dto/booking-slot.dto';
+
+@ApiTags('Bookings')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('v1/bookings')
+export class BookingController {
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly slotService: BookingSlotService,
+  ) {}
+
+  // ==================== BOOKING ENDPOINTS ====================
+
+  @Post('reserve')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Reserve a booking slot',
+    description: 'Creates a booking with advisory lock for race condition prevention',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Booking created successfully',
+    type: BookingResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Slot conflict - queued for retry',
+    type: ConflictResponseDto,
+  })
+  async reserveSlot(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: ReserveSlotDto,
+  ) {
+    const result = await this.bookingService.reserveSlot(tenantId, dto);
+
+    if (!result.success && result.conflict) {
+      throw new ConflictException({
+        message: result.message,
+        retryInfo: {
+          retryAfter: result.retryAfter,
+          queuePosition: result.queuePosition,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      data: result.booking,
+    };
+  }
+
+  @Post()
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create a new booking' })
+  @ApiResponse({
+    status: 201,
+    description: 'Booking created successfully',
+    type: BookingResponseDto,
+  })
+  async createBooking(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: CreateBookingDto,
+  ) {
+    const booking = await this.bookingService.createBooking(tenantId, dto);
+    return {
+      success: true,
+      data: booking,
+    };
+  }
+
+  @Get()
+  @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get all bookings' })
+  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] })
+  @ApiQuery({ name: 'customerId', required: false })
+  @ApiQuery({ name: 'fromDate', required: false })
+  @ApiQuery({ name: 'toDate', required: false })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  async getBookings(
+    @CurrentTenant() tenantId: string,
+    @Query('status') status?: string,
+    @Query('customerId') customerId?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const result = await this.bookingService.findAll(tenantId, {
+      status: status as any,
+      customerId,
+      fromDate: fromDate ? new Date(fromDate) : undefined,
+      toDate: toDate ? new Date(toDate) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      offset: offset ? parseInt(offset) : undefined,
+    });
+
+    return {
+      success: true,
+      data: result.bookings,
+      meta: {
+        total: result.total,
+        limit: limit ? parseInt(limit) : 50,
+        offset: offset ? parseInt(offset) : 0,
+      },
+    };
+  }
+
+  @Get(':id')
+  @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get booking by ID' })
+  @ApiParam({ name: 'id', description: 'Booking ID' })
+  async getBooking(
+    @CurrentTenant() tenantId: string,
+    @Param('id') bookingId: string,
+  ) {
+    const booking = await this.bookingService.findById(tenantId, bookingId);
+    return {
+      success: true,
+      data: booking,
+    };
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update booking' })
+  @ApiParam({ name: 'id', description: 'Booking ID' })
+  async updateBooking(
+    @CurrentTenant() tenantId: string,
+    @Param('id') bookingId: string,
+    @Body() dto: UpdateBookingDto,
+  ) {
+    const booking = await this.bookingService.updateBooking(tenantId, bookingId, dto);
+    return {
+      success: true,
+      data: booking,
+    };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Cancel booking' })
+  @ApiParam({ name: 'id', description: 'Booking ID' })
+  async cancelBooking(
+    @CurrentTenant() tenantId: string,
+    @Param('id') bookingId: string,
+    @Query('reason') reason?: string,
+  ) {
+    const booking = await this.bookingService.cancelBooking(tenantId, bookingId, reason);
+    return {
+      success: true,
+      data: booking,
+      message: 'Booking cancelled successfully',
+    };
+  }
+
+  @Get('stats/overview')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get booking statistics' })
+  @ApiQuery({ name: 'fromDate', required: false })
+  @ApiQuery({ name: 'toDate', required: false })
+  async getStats(
+    @CurrentTenant() tenantId: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+  ) {
+    const stats = await this.bookingService.getStats(
+      tenantId,
+      fromDate ? new Date(fromDate) : undefined,
+      toDate ? new Date(toDate) : undefined,
+    );
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  // ==================== SLOT ENDPOINTS ====================
+
+  @Get('slots/available')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get available slots for a date' })
+  async getAvailableSlots(
+    @CurrentTenant() tenantId: string,
+    @Query() query: FindAvailableSlotsDto,
+  ) {
+    const slots = await this.slotService.findAvailableSlots(
+      tenantId,
+      query.date,
+      query.duration,
+    );
+
+    return {
+      success: true,
+      data: slots,
+      meta: {
+        date: query.date,
+        availableCount: slots.length,
+      },
+    };
+  }
+
+  @Post('slots')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create a new booking slot' })
+  async createSlot(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: CreateSlotDto,
+  ) {
+    const slot = await this.slotService.createSlot(tenantId, dto);
+    return {
+      success: true,
+      data: slot,
+    };
+  }
+
+  @Get('slots/:id')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get slot by ID' })
+  async getSlot(
+    @CurrentTenant() tenantId: string,
+    @Param('id') slotId: string,
+  ) {
+    const slot = await this.slotService.findById(tenantId, slotId);
+    return {
+      success: true,
+      data: slot,
+    };
+  }
+
+  @Patch('slots/:id/block')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Block a slot' })
+  async blockSlot(
+    @CurrentTenant() tenantId: string,
+    @Param('id') slotId: string,
+    @Query('reason') reason?: string,
+  ) {
+    const slot = await this.slotService.blockSlot(tenantId, slotId, reason);
+    return {
+      success: true,
+      data: slot,
+      message: 'Slot blocked successfully',
+    };
+  }
+
+  @Delete('slots/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a slot' })
+  async deleteSlot(
+    @CurrentTenant() tenantId: string,
+    @Param('id') slotId: string,
+  ) {
+    await this.slotService.deleteSlot(tenantId, slotId);
+    return {
+      success: true,
+      message: 'Slot deleted successfully',
+    };
+  }
+}

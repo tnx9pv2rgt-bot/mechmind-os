@@ -1,0 +1,277 @@
+{
+  "assistant": {
+    "name": "MechSecretary",
+    "model": {
+      "provider": "groq",
+      "model": "llama-3.1-70b-versatile",
+      "temperature": 0.7,
+      "maxTokens": 150,
+      "apiKey": "{{GROQ_API_KEY}}",
+      "systemPrompt": "Tu sei MechSecretary, segretaria IA per officine meccaniche italiane.\n\nCARATTERE: Professionale ma caldo, come una segretaria di paese che conosce i clienti.\n\nOBIETTIVI PRIMARI (in ordine):\n1. Identificare il cliente → Usa lookup_customer_by_phone con il numero chiamante\n2. Capire il problema → Estrai urgenza, tipo di lavoro, veicolo\n3. Prenotare slot disponibile → Query calendario, proponi orari, conferma\n4. Escalation intelligente → Se non capisce, chiedi umano\n\nFLUSSI PRINCIPALI:\n\n[BOOKING REQUEST]\n- \"Ciao, ho bisogno di una revisione\"\n- TU: \"Perfetto! Quale macchina? Mi dai targa o modello?\"\n- CLIENTE: \"Opel Astra, targa AB123CD\"\n- TU: [LOOKUP: vehicle + last_service + next_due]\n  \"Bella, ho in sistema la tua Astra. La revisione ti era dovuta a [X km]. Quando preferisci?\"\n- TU: [QUERY: available slots next 14 days]\n  \"Ho questi slot disponibili: Lunedì 14:00-14:30...\"\n- CLIENTE: \"Lunedì pomeriggio\"\n- TU: \"Perfetto, ti aspettiamo lunedì 14:00-14:30. Ti invio SMS di conferma tra poco. Ciao!\"\n- [WEBHOOK: booking.create event → backend]\n\n[DAMAGE ASSESSMENT]\n- \"Fumo dal motore, aiuto!\"\n- TU: (URGENCY = high) \"Non ti preoccupare, capita. Ti prenoto ASAP entro 2 ore...\"\n\n[COMPLAINT]\n- \"Voi l'avete rovinata! La fattura è sbagliata!\"\n- TU: (SENTIMENT = negative, TONE = de-escalation)\n  \"Mi scuso, capisco la frustrazione...\"\n- [ESCALATE: transfer to manager]\n\n[STATUS CHECK]\n- \"Quando è pronta la mia macchina?\"\n- TU: [LOOKUP: customer_id → last booking → work_status]\n  \"La tua Fiat è in officina... Dovrebbe essere pronta attorno alle 17:00\"\n\nFAIL-SAFE RULES:\n- Se AI non capisce dopo 2 turns → \"Aspetta un momento, ti passo a un collega umano\"\n- Se booking fallisce → \"Purtroppo non ho slot, ma ti nota in lista d'attesa\"\n- Se AI timeout >5s → Fallback a numero umano\n- Se call drop → SMS di recap auto\n\nCOMPLIANCE:\n- Non salvare dati per > 30 giorni se NO GDPR consent\n- Se cliente chiede diritto all'oblio → \"OK, cancello tutto domani\"",
+      "functions": [
+        {
+          "name": "lookup_customer_by_phone",
+          "description": "Cerca cliente nel database per numero telefonico",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "phone_number": {
+                "type": "string",
+                "description": "Numero telefonico del chiamante in formato E.164"
+              }
+            },
+            "required": ["phone_number"]
+          }
+        },
+        {
+          "name": "get_vehicle_history",
+          "description": "Recupera storico veicolo e ultimi interventi",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "customer_id": {
+                "type": "string",
+                "description": "ID del cliente"
+              },
+              "license_plate": {
+                "type": "string",
+                "description": "Targa del veicolo (opzionale)"
+              }
+            },
+            "required": ["customer_id"]
+          }
+        },
+        {
+          "name": "get_available_slots",
+          "description": "Ottiene slot disponibili per prenotazione",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "shop_id": {
+                "type": "string",
+                "description": "ID dell'officina"
+              },
+              "service_type": {
+                "type": "string",
+                "description": "Tipo di servizio (revisione, tagliando, riparazione, emergenza)"
+              },
+              "days_ahead": {
+                "type": "integer",
+                "description": "Giorni da guardare in avanti (default 14)",
+                "default": 14
+              },
+              "urgency": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "emergency"],
+                "description": "Livello di urgenza"
+              }
+            },
+            "required": ["shop_id", "service_type"]
+          }
+        },
+        {
+          "name": "create_booking",
+          "description": "Crea una nuova prenotazione",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "customer_id": {
+                "type": "string",
+                "description": "ID del cliente"
+              },
+              "shop_id": {
+                "type": "string",
+                "description": "ID dell'officina"
+              },
+              "vehicle_id": {
+                "type": "string",
+                "description": "ID del veicolo"
+              },
+              "service_type": {
+                "type": "string",
+                "description": "Tipo di servizio"
+              },
+              "scheduled_at": {
+                "type": "string",
+                "description": "Data e ora ISO 8601"
+              },
+              "duration_minutes": {
+                "type": "integer",
+                "description": "Durata stimata in minuti",
+                "default": 60
+              },
+              "notes": {
+                "type": "string",
+                "description": "Note aggiuntive"
+              },
+              "urgency": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "emergency"]
+              }
+            },
+            "required": ["customer_id", "shop_id", "vehicle_id", "service_type", "scheduled_at"]
+          }
+        },
+        {
+          "name": "check_booking_status",
+          "description": "Verifica stato lavorazione veicolo",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "customer_id": {
+                "type": "string",
+                "description": "ID del cliente"
+              },
+              "license_plate": {
+                "type": "string",
+                "description": "Targa del veicolo (opzionale)"
+              }
+            },
+            "required": ["customer_id"]
+          }
+        },
+        {
+          "name": "escalate_to_human",
+          "description": "Trasferisce chiamata a operatore umano",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "description": "Motivo escalation"
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "normal", "high", "urgent"],
+                "default": "normal"
+              },
+              "context": {
+                "type": "string",
+                "description": "Contesto della conversazione"
+              }
+            },
+            "required": ["reason"]
+          }
+        },
+        {
+          "name": "send_sms_confirmation",
+          "description": "Invia SMS di conferma prenotazione",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "phone_number": {
+                "type": "string",
+                "description": "Numero destinatario"
+              },
+              "booking_id": {
+                "type": "string",
+                "description": "ID della prenotazione"
+              },
+              "message_type": {
+                "type": "string",
+                "enum": ["confirmation", "reminder", "cancellation", "ready"],
+                "default": "confirmation"
+              }
+            },
+            "required": ["phone_number", "booking_id"]
+          }
+        }
+      ]
+    },
+    "voice": {
+      "provider": "11labs",
+      "voiceId": "alice",
+      "model": "eleven_turbo_v2_5",
+      "stability": 0.5,
+      "similarityBoost": 0.75,
+      "speed": 1.1,
+      "fillerInjectionEnabled": true,
+      "punctuationBoundaries": [".", ",", "?", "!", ";", ":"],
+      "optimizeStreamingLatency": 3
+    },
+    "streaming": {
+      "enabled": true,
+      "provider": "deepgram",
+      "model": "nova-2",
+      "language": "it",
+      "smartFormat": true,
+      "interimResults": true
+    },
+    "firstMessage": "Pronto, sono MechSecretary, la segretaria digitale dell'officina. Come posso aiutarti oggi?",
+    "transcriber": {
+      "provider": "deepgram",
+      "model": "nova-2",
+      "language": "it",
+      "smartFormat": true,
+      "endpointing": 250,
+      "vad": {
+        "mode": "aggressive",
+        "silenceThreshold": 300,
+        "speechThreshold": 150
+      }
+    },
+    "responseDelay": {
+      "min": 0,
+      "max": 100,
+      "adaptive": true
+    },
+    "llmRequestDelay": {
+      "min": 0,
+      "max": 50
+    },
+    "recordingEnabled": true,
+    "hipaaEnabled": false,
+    "silenceTimeoutSeconds": 30,
+    "maxDurationSeconds": 600,
+    "backgroundSound": "office",
+    "backoffPlan": {
+      "maxRetries": 2,
+      "retryDelaySeconds": 1
+    },
+    "server": {
+      "url": "https://api.mechmind-os.com/webhooks/vapi/call-event",
+      "secret": "{{VAPI_WEBHOOK_SECRET}}",
+      "headers": {
+        "X-Shop-ID": "{{shop_id}}",
+        "X-Tenant-ID": "{{tenant_id}}"
+      }
+    },
+    "endCallPhrases": [
+      "arrivederci",
+      "a presto",
+      "buona giornata",
+      "ciao ciao"
+    ],
+    "metadata": {
+      "version": "10.0.0",
+      "platform": "mechmind-os",
+      "language": "it-IT",
+      "region": "IT"
+    }
+  },
+  "phoneNumbers": [
+    {
+      "provider": "twilio",
+      "number": "+39XXXXXXXXXX",
+      "fallbackNumber": "+39YYYYYYYYYY",
+      "transferNumber": "+39ZZZZZZZZZZ"
+    }
+  ],
+  "fallback": {
+    "enabled": true,
+    "timeoutSeconds": 2.5,
+    "maxTurnsWithoutUnderstanding": 2,
+    "transferMessage": "Aspetta un momento, ti passo a un collega umano.",
+    "smsOnDrop": true,
+    "smsMessage": "Grazie per aver chiamato l'officina. Ti richiamiamo al più presto.",
+    "ivrFallbackUrl": "https://api.mechmind-os.com/webhooks/ivr-menu",
+    "latencyThreshold": 2500,
+    "fallbackStrategy": "IVR_THEN_HUMAN"
+  },
+  "compliance": {
+    "gdprEnabled": true,
+    "dataRetentionDays": 30,
+    "recordingConsent": "implicit",
+    "rightToBeForgotten": true
+  }
+}

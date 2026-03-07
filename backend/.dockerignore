@@ -1,0 +1,65 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build output
+dist
+build
+*.tsbuildinfo
+
+# Coverage
+coverage
+.nyc_output
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Test
+test
+*.spec.ts
+*.test.ts
+jest.config.js
+jest.integration.config.js
+
+# Documentation
+README.md
+CHANGELOG.md
+*.md
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Prisma (keep schema, ignore migrations in production if needed)
+# prisma/migrations
+
+# Misc
+.eslintrc.js
+.prettierrc
+.editorconfig
+.github

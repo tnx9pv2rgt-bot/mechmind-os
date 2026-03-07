@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: MechMind OS - Lambda Web Adapter Configuration (2026 Standard)
+
+# AWS Lambda Web Adapter Template
+# https://github.com/awslabs/aws-lambda-web-adapter
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Architectures:
+      - arm64  # Graviton2 for 20% cost savings
+    Environment:
+      Variables:
+        # Lambda Web Adapter configuration
+        AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+        PORT: 3000
+        NODE_ENV: production
+        # AWS_LAMBDA_WEB_ADAPTER_MODE: proxy  # (default)
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment environment
+
+  MemorySize:
+    Type: Number
+    Default: 512
+    Description: Lambda memory size (dev: 256, prod: 512)
+
+Resources:
+  # Main API Function with Lambda Web Adapter
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'mechmind-${Environment}'
+      CodeUri: dist/
+      Handler: lambda.handler
+      Runtime: nodejs20.x
+      MemorySize: !Ref MemorySize
+      Layers:
+        # AWS Lambda Web Adapter Layer (ARM64)
+        # Check for latest version: https://github.com/awslabs/aws-lambda-web-adapter/releases
+        - !Sub 'arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerArm64:23'
+      Policies:
+        - VPCAccessPolicy: {}
+        - SecretsManagerReadWrite:
+            SecretArn: !Ref DatabaseSecret
+        - AWSLambdaBasicExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      Environment:
+        Variables:
+          DATABASE_SECRET_ARN: !Ref DatabaseSecret
+          STAGE: !Ref Environment
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            ApiId: !Ref HttpApi
+
+  # HTTP API Gateway
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - '*'
+        AllowCredentials: true
+        MaxAge: 86400
+
+  # Database Secret (placeholder - should be created by Terraform)
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub 'mechmind/${Environment}/database/credentials'
+      Description: RDS database credentials
+
+  # Security Group for Lambda
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda functions
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+
+  # VPC Parameters (should be passed from Terraform)
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private subnet 1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private subnet 2
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/'
+
+  LambdaFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt ApiFunction.Arn
+
+  LambdaFunctionName:
+    Description: Lambda function name
+    Value: !Ref ApiFunction

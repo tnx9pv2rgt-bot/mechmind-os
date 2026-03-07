@@ -1,0 +1,15 @@
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+e2e/.auth/
+
+# Test artifacts
+*.png
+*.jpg
+*.mp4
+*.zip
+traces/
+
+# Keep test data
+!e2e/**/test-data.ts

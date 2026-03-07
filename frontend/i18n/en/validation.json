@@ -1,0 +1,61 @@
+{
+  "messages": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "url": "Please enter a valid URL",
+    "number": "Please enter a valid number",
+    "integer": "Please enter a whole number",
+    "decimal": "Please enter a decimal number",
+    "date": "Please enter a valid date",
+    "time": "Please enter a valid time",
+    "alphanumeric": "Alphanumeric characters only",
+    "pattern": "Invalid format"
+  },
+  "constraints": {
+    "min": "Minimum value is {{min}}",
+    "max": "Maximum value is {{max}}",
+    "minLength": "Minimum {{min}} characters",
+    "maxLength": "Maximum {{max}} characters",
+    "exactLength": "Must be exactly {{length}} characters",
+    "minItems": "Select at least {{min}} items",
+    "maxItems": "You can select up to {{max}} items",
+    "minDate": "Date must be after {{date}}",
+    "maxDate": "Date must be before {{date}}"
+  },
+  "formats": {
+    "vatIt": "Invalid Italian VAT number (11 digits)",
+    "fiscalCodeIt": "Invalid tax ID (16 characters)",
+    "licensePlateIt": "Invalid Italian license plate",
+    "phoneIt": "Invalid Italian phone number",
+    "zipCodeIt": "Invalid Italian ZIP code (5 digits)",
+    "iban": "Invalid IBAN",
+    "swift": "Invalid SWIFT/BIC"
+  },
+  "password": {
+    "minLength": "Password must be at least {{min}} characters",
+    "uppercase": "Must contain at least one uppercase letter",
+    "lowercase": "Must contain at least one lowercase letter",
+    "number": "Must contain at least one number",
+    "special": "Must contain at least one special character",
+    "match": "Passwords do not match",
+    "common": "Password is too common",
+    "strength": {
+      "weak": "Weak password",
+      "fair": "Fair password",
+      "good": "Good password",
+      "strong": "Strong password"
+    }
+  },
+  "async": {
+    "checking": "Checking...",
+    "available": "Available",
+    "unavailable": "Not available",
+    "error": "Error during verification"
+  },
+  "summary": {
+    "title": "Please correct the following errors:",
+    "count_one": "Found {{count}} error",
+    "count_other": "Found {{count}} errors",
+    "field": "Field {{field}}: {{message}}"
+  }
+}

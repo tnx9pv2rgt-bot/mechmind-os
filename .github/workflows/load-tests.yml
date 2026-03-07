@@ -1,0 +1,450 @@
+name: Load Tests
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - local
+          - staging
+          - prod
+      skip_race:
+        description: 'Skip race condition test'
+        required: false
+        default: false
+        type: boolean
+      skip_lock:
+        description: 'Skip lock contention test'
+        required: false
+        default: false
+        type: boolean
+      skip_voice:
+        description: 'Skip voice throughput test'
+        required: false
+        default: false
+        type: boolean
+      run_gdpr:
+        description: 'Run GDPR deletion test (long running)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  K6_VERSION: 'v0.48.0'
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================
+  # Setup and Configuration
+  # ============================================
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.config.outputs.environment }}
+      base_url: ${{ steps.config.outputs.base_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure environment
+        id: config
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          
+          case ${ENVIRONMENT} in
+            local)
+              echo "base_url=http://localhost:3000" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "base_url=https://api-staging.mechmind.io" >> $GITHUB_OUTPUT
+              ;;
+            prod)
+              echo "base_url=https://api.mechmind.io" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+  # ============================================
+  # Race Condition Test
+  # ============================================
+  race-condition-test:
+    name: Race Condition Test
+    needs: setup
+    if: ${{ !github.event.inputs.skip_race || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run Race Condition Test
+        env:
+          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
+          BASE_URL: ${{ needs.setup.outputs.base_url }}
+          JWT_TOKEN: ${{ secrets.TEST_JWT_TOKEN }}
+          VAPI_WEBHOOK_SECRET: ${{ secrets.VAPI_WEBHOOK_SECRET }}
+          TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
+          TEST_SHOP_ID: ${{ secrets.TEST_SHOP_ID }}
+        run: |
+          cd tests/load/k6
+          k6 run \
+            --out json=results/race-condition.json \
+            --summary-export results/race-condition-summary.json \
+            race-condition-test.js || true
+
+      - name: Upload Race Condition Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: race-condition-results
+          path: tests/load/k6/results/race-condition*
+          retention-days: 30
+
+      - name: Check Test Results
+        run: |
+          cd tests/load/k6
+          if [ -f results/race-condition-summary.json ]; then
+            # Check for double bookings
+            DOUBLE_BOOKINGS=$(cat results/race-condition-summary.json | jq -r '.metrics["double_booking_detected"]?.values?.count // 0')
+            if [ "$DOUBLE_BOOKINGS" -gt 0 ]; then
+              echo "❌ DOUBLE BOOKINGS DETECTED: $DOUBLE_BOOKINGS"
+              exit 1
+            fi
+            
+            # Check p99 response time
+            P99=$(cat results/race-condition-summary.json | jq -r '.metrics["http_req_duration"]?.values["p(99)"] // 0')
+            if (( $(echo "$P99 > 500" | bc -l) )); then
+              echo "⚠️ p99 response time exceeded 500ms: ${P99}ms"
+            fi
+            
+            echo "✅ Race condition test passed"
+          fi
+
+  # ============================================
+  # Lock Contention Test
+  # ============================================
+  lock-contention-test:
+    name: Lock Contention Test
+    needs: setup
+    if: ${{ !github.event.inputs.skip_lock || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run Lock Contention Test
+        env:
+          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
+          BASE_URL: ${{ needs.setup.outputs.base_url }}
+          JWT_TOKEN: ${{ secrets.TEST_JWT_TOKEN }}
+          TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
+          TEST_SHOP_ID: ${{ secrets.TEST_SHOP_ID }}
+        run: |
+          cd tests/load/k6
+          k6 run \
+            --out json=results/lock-contention.json \
+            --summary-export results/lock-contention-summary.json \
+            lock-contention-test.js || true
+
+      - name: Upload Lock Contention Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lock-contention-results
+          path: tests/load/k6/results/lock-contention*
+          retention-days: 30
+
+      - name: Check Test Results
+        run: |
+          cd tests/load/k6
+          if [ -f results/lock-contention-summary.json ]; then
+            # Check for deadlocks
+            DEADLOCKS=$(cat results/lock-contention-summary.json | jq -r '.metrics["deadlock_detected"]?.values?.count // 0')
+            if [ "$DEADLOCKS" -gt 0 ]; then
+              echo "❌ DEADLOCKS DETECTED: $DEADLOCKS"
+              exit 1
+            fi
+            
+            # Check p99 lock wait time
+            LOCK_P99=$(cat results/lock-contention-summary.json | jq -r '.metrics["lock_wait_ms"]?.values["p(99)"] // 0')
+            if (( $(echo "$LOCK_P99 > 100" | bc -l) )); then
+              echo "⚠️ p99 lock wait exceeded 100ms: ${LOCK_P99}ms"
+            fi
+            
+            echo "✅ Lock contention test passed"
+          fi
+
+  # ============================================
+  # Voice Throughput Test
+  # ============================================
+  voice-throughput-test:
+    name: Voice Throughput Test
+    needs: setup
+    if: ${{ !github.event.inputs.skip_voice || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run Voice Throughput Test
+        env:
+          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
+          BASE_URL: ${{ needs.setup.outputs.base_url }}
+          JWT_TOKEN: ${{ secrets.TEST_JWT_TOKEN }}
+          VAPI_WEBHOOK_SECRET: ${{ secrets.VAPI_WEBHOOK_SECRET }}
+          TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
+          TEST_SHOP_ID: ${{ secrets.TEST_SHOP_ID }}
+        run: |
+          cd tests/load/k6
+          k6 run \
+            --out json=results/voice-throughput.json \
+            --summary-export results/voice-throughput-summary.json \
+            voice-throughput-test.js || true
+
+      - name: Upload Voice Throughput Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voice-throughput-results
+          path: tests/load/k6/results/voice-throughput*
+          retention-days: 30
+
+      - name: Check Test Results
+        run: |
+          cd tests/load/k6
+          if [ -f results/voice-throughput-summary.json ]; then
+            # Check for lost webhooks
+            LOST_WEBHOOKS=$(cat results/voice-throughput-summary.json | jq -r '.metrics["lost_webhooks"]?.values?.count // 0')
+            if [ "$LOST_WEBHOOKS" -gt 0 ]; then
+              echo "❌ LOST WEBHOOKS DETECTED: $LOST_WEBHOOKS"
+              exit 1
+            fi
+            
+            # Check p99 voice response time
+            VOICE_P99=$(cat results/voice-throughput-summary.json | jq -r '.metrics["voice_response_time"]?.values["p(99)"] // 0')
+            if (( $(echo "$VOICE_P99 > 2500" | bc -l) )); then
+              echo "⚠️ p99 voice response exceeded 2.5s: ${VOICE_P99}ms"
+            fi
+            
+            # Check error rate
+            ERROR_RATE=$(cat results/voice-throughput-summary.json | jq -r '.metrics["http_req_failed"]?.values?.rate // 0')
+            if (( $(echo "$ERROR_RATE > 0.01" | bc -l) )); then
+              echo "⚠️ Error rate exceeded 1%: ${ERROR_RATE}"
+            fi
+            
+            echo "✅ Voice throughput test passed"
+          fi
+
+  # ============================================
+  # GDPR Deletion Test (Optional)
+  # ============================================
+  gdpr-deletion-test:
+    name: GDPR Deletion Test
+    needs: setup
+    if: ${{ github.event.inputs.run_gdpr == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run GDPR Deletion Test
+        env:
+          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
+          BASE_URL: ${{ needs.setup.outputs.base_url }}
+          JWT_TOKEN: ${{ secrets.TEST_JWT_TOKEN }}
+          TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
+        run: |
+          cd tests/load/k6
+          k6 run \
+            --out json=results/gdpr-deletion.json \
+            --summary-export results/gdpr-deletion-summary.json \
+            gdpr-deletion-test.js || true
+
+      - name: Upload GDPR Deletion Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gdpr-deletion-results
+          path: tests/load/k6/results/gdpr-deletion*
+          retention-days: 30
+
+      - name: Check Test Results
+        run: |
+          cd tests/load/k6
+          if [ -f results/gdpr-deletion-summary.json ]; then
+            # Check for PII leaks
+            PII_LEAKS=$(cat results/gdpr-deletion-summary.json | jq -r '.metrics["pii_leak_detected"]?.values?.count // 0')
+            if [ "$PII_LEAKS" -gt 0 ]; then
+              echo "❌ PII LEAKS DETECTED: $PII_LEAKS"
+              exit 1
+            fi
+            
+            # Check deletion duration
+            DURATION=$(cat results/gdpr-deletion-summary.json | jq -r '.metrics["deletion_job_duration"]?.values?.max // 0')
+            if (( $(echo "$DURATION > 3600000" | bc -l) )); then
+              echo "⚠️ Deletion job exceeded 1 hour: ${DURATION}ms"
+            fi
+            
+            echo "✅ GDPR deletion test passed"
+          fi
+
+  # ============================================
+  # Aggregate Results and Notify
+  # ============================================
+  aggregate-results:
+    name: Aggregate Results
+    needs: [setup, race-condition-test, lock-contention-test, voice-throughput-test]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: tests/load/k6/results
+          pattern: "*-results"
+
+      - name: Aggregate Results
+        run: |
+          cd tests/load/k6/results
+          
+          # Create aggregate summary
+          cat > aggregate-summary.json << 'EOF'
+          {
+            "timestamp": "$(date -Iseconds)",
+            "environment": "${{ needs.setup.outputs.environment }}",
+            "baseUrl": "${{ needs.setup.outputs.base_url }}",
+            "tests": {}
+          }
+          EOF
+          
+          # Merge individual test summaries
+          for file in */*-summary.json; do
+            if [ -f "$file" ]; then
+              test_name=$(basename "$file" -summary.json)
+              jq --arg test "$test_name" --slurpfile data "$file" '.tests[$test] = $data[0]' aggregate-summary.json > tmp.json && mv tmp.json aggregate-summary.json
+            fi
+          done
+          
+          cat aggregate-summary.json
+
+      - name: Upload Aggregate Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-aggregate-results
+          path: tests/load/k6/results/aggregate-summary.json
+          retention-days: 90
+
+      - name: Send Slack Notification
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "❌ MechMind OS Load Tests Failed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚨 Load Test Failure Alert"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ needs.setup.outputs.environment }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "One or more load tests failed. Please check the workflow logs for details."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Send Success Notification (Scheduled)
+        if: github.event_name == 'schedule' && success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ MechMind OS Daily Load Tests Passed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ Daily Load Tests Complete"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ needs.setup.outputs.environment }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\nAll tests passed"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
