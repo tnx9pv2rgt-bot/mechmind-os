@@ -154,7 +154,7 @@ export class GdprRequestService {
 
     // Create the request
     const request = await this.prisma.withTenant(dto.tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.create({
+      return prisma.dataSubjectRequest.create({
         data: {
           tenantId: dto.tenantId,
           ticketNumber,
@@ -208,7 +208,7 @@ export class GdprRequestService {
    */
   async getRequest(requestId: string, tenantId: string): Promise<DataSubjectRequestResponse> {
     const request = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.findFirst({
+      return prisma.dataSubjectRequest.findFirst({
         where: { id: requestId, tenantId },
       });
     });
@@ -229,7 +229,7 @@ export class GdprRequestService {
    */
   async getRequestByTicket(ticketNumber: string, tenantId: string): Promise<DataSubjectRequestResponse> {
     const request = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.findFirst({
+      return prisma.dataSubjectRequest.findFirst({
         where: { ticketNumber, tenantId },
       });
     });
@@ -273,7 +273,7 @@ export class GdprRequestService {
     }
 
     const requests = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.findMany({
+      return prisma.dataSubjectRequest.findMany({
         where,
         orderBy: { receivedAt: 'desc' },
       });
@@ -317,7 +317,7 @@ export class GdprRequestService {
     }
 
     const updated = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.update({
+      return prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: updateData,
       });
@@ -357,7 +357,7 @@ export class GdprRequestService {
     const verifiedAt = new Date();
 
     await this.prisma.withTenant(tenantId, async (prisma) => {
-      await prisma.dataSubjectRequests.update({
+      await prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: {
           status: 'VERIFIED',
@@ -397,7 +397,7 @@ export class GdprRequestService {
     userId: string,
   ): Promise<DataSubjectRequestResponse> {
     const updated = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.update({
+      return prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: {
           assignedTo: userId,
@@ -436,7 +436,7 @@ export class GdprRequestService {
     }
 
     const updated = await this.prisma.withTenant(tenantId, async (prisma) => {
-      return prisma.dataSubjectRequests.update({
+      return prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: {
           status: 'REJECTED',
@@ -480,7 +480,7 @@ export class GdprRequestService {
       where.tenantId = tenantId;
     }
 
-    const requests = await this.prisma.dataSubjectRequests.findMany({
+    const requests = await this.prisma.dataSubjectRequest.findMany({
       where,
       orderBy: { deadlineAt: 'asc' },
     });
@@ -517,25 +517,25 @@ export class GdprRequestService {
     }
 
     const [total, byType, byStatus, overdue, slaStats] = await Promise.all([
-      this.prisma.dataSubjectRequests.count({ where }),
-      this.prisma.dataSubjectRequests.groupBy({
+      this.prisma.dataSubjectRequest.count({ where }),
+      this.prisma.dataSubjectRequest.groupBy({
         by: ['requestType'],
         where,
         _count: { requestType: true },
       }),
-      this.prisma.dataSubjectRequests.groupBy({
+      this.prisma.dataSubjectRequest.groupBy({
         by: ['status'],
         where,
         _count: { status: true },
       }),
-      this.prisma.dataSubjectRequests.count({
+      this.prisma.dataSubjectRequest.count({
         where: {
           ...where,
           status: { notIn: ['COMPLETED', 'REJECTED', 'CANCELLED'] },
           deadlineAt: { lt: new Date() },
         },
       }),
-      this.prisma.dataSubjectRequests.aggregate({
+      this.prisma.dataSubjectRequest.aggregate({
         where: {
           ...where,
           status: 'COMPLETED',
@@ -568,7 +568,7 @@ export class GdprRequestService {
    * Get next ticket sequence number
    */
   private async getNextTicketSequence(tenantId: string, year: number): Promise<number> {
-    const count = await this.prisma.dataSubjectRequests.count({
+    const count = await this.prisma.dataSubjectRequest.count({
       where: {
         tenantId,
         ticketNumber: {

@@ -16,6 +16,7 @@ export class InitializeShopFloorDto {
   bays: {
     name: string;
     type: 'LIFT' | 'PIT' | 'HOIST' | 'DYNO' | 'ALIGNMENT' | 'DETAIL';
+    status?: BayStatus;
     location: { x: number; y: number; floor: number };
     capabilities: string[];
     maxVehicleWeight: number;

@@ -57,7 +57,7 @@ export interface FreezeFrameData {
     engineLoad?: number | null;
     intakeTemp?: number | null;
     mafRate?: number | null;
-    fuelSystemStatus?: string;
+    fuelSystemStatus?: number | null;
     calculatedLoad?: number | null;
     absolutePressure?: number | null;
     timingAdvance?: number | null;

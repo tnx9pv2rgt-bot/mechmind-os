@@ -58,6 +58,10 @@ model Tenant {
   dataSubjectRequests        DataSubjectRequest[]
   dataRetentionExecutionLogs DataRetentionExecutionLog[]
 
+  // LPR (License Plate Recognition)
+  lprCameras            LprCamera[]
+  licensePlateDetections LicensePlateDetection[]
+
   @@map("tenants")
 }
 
@@ -247,6 +251,10 @@ model Vehicle {
   // Service tracking
   lastServiceDate  DateTime? @map("last_service_date")
   nextServiceDueKm Int?      @map("next_service_due_km")
+
+  // LPR relations
+  entryExits      VehicleEntryExit[]
+  parkingSessions ParkingSession[]
 
   @@map("vehicles")
 }
@@ -1733,6 +1741,161 @@ model DataRetentionExecutionLog {
   @@index([status])
   @@index([startedAt])
   @@map("data_retention_execution_logs")
+}
+
+// ============================================
+// LPR (License Plate Recognition) MODELS
+// ============================================
+
+model LicensePlateDetection {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Detection details
+  imageUrl      String   @map("image_url")
+  detectedText  String   @map("detected_text")
+  confidence    Float
+  country       String?
+  region        String?
+  vehicleType   String?  @map("vehicle_type")
+  boundingBox   Json?    @map("bounding_box")
+  
+  // Provider info
+  provider      String
+  rawResponse   Json?    @map("raw_response")
+  
+  // Camera reference
+  cameraId      String?  @map("camera_id")
+  camera        LprCamera? @relation(fields: [cameraId], references: [id])
+  
+  // Relations
+  entryExits    VehicleEntryExit[]
+  
+  // Timestamps
+  processedAt   DateTime @default(now()) @map("processed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([detectedText])
+  @@index([cameraId])
+  @@index([processedAt])
+  @@map("license_plate_detections")
+}
+
+model VehicleEntryExit {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+
+  // Entry/Exit details
+  type          EntryExitType @map("type")
+  licensePlate  String        @map("license_plate")
+  
+  // Detection reference
+  detectionId   String        @map("detection_id")
+  detection     LicensePlateDetection @relation(fields: [detectionId], references: [id])
+  
+  // Image and confidence
+  imageUrl      String        @map("image_url")
+  confidence    Float
+  
+  // Location
+  location      String?
+  cameraId      String?       @map("camera_id")
+  
+  // Vehicle relation (if known)
+  vehicleId     String?       @map("vehicle_id")
+  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
+  
+  // Authorization
+  isAuthorized  Boolean       @default(false) @map("is_authorized")
+  
+  // Parking session relations
+  parkingEntrySessions  ParkingSession[] @relation("EntrySession")
+  parkingExitSessions   ParkingSession[] @relation("ExitSession")
+  
+  // Timestamp
+  timestamp     DateTime      @default(now())
+
+  @@index([tenantId])
+  @@index([licensePlate])
+  @@index([vehicleId])
+  @@index([timestamp])
+  @@map("vehicle_entry_exits")
+}
+
+model ParkingSession {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+
+  // Vehicle info
+  licensePlate  String    @map("license_plate")
+  vehicleId     String?   @map("vehicle_id")
+  vehicle       Vehicle?  @relation(fields: [vehicleId], references: [id])
+  
+  // Entry/Exit references
+  entryId       String    @unique @map("entry_id")
+  entry         VehicleEntryExit @relation("EntrySession", fields: [entryId], references: [id])
+  exitId        String?   @unique @map("exit_id")
+  exit          VehicleEntryExit? @relation("ExitSession", fields: [exitId], references: [id])
+  
+  // Session status
+  status        ParkingSessionStatus @default(ACTIVE)
+  
+  // Timestamps
+  entryTime     DateTime  @default(now()) @map("entry_time")
+  exitTime      DateTime? @map("exit_time")
+  durationMinutes Int?    @map("duration_minutes")
+  
+  // Parking spot
+  parkingSpotId String?   @map("parking_spot_id")
+
+  @@index([tenantId])
+  @@index([licensePlate])
+  @@index([status])
+  @@index([entryTime])
+  @@map("parking_sessions")
+}
+
+model LprCamera {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Camera details
+  name        String
+  location    String
+  direction   EntryExitType // ENTRY or EXIT
+  
+  // Provider config
+  provider    String
+  config      Json?    @default("{}")
+  
+  // Status
+  isActive    Boolean  @default(true) @map("is_active")
+  lastCapture DateTime? @map("last_capture")
+  
+  // Relations
+  detections  LicensePlateDetection[]
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("lpr_cameras")
+}
+
+enum EntryExitType {
+  ENTRY
+  EXIT
+}
+
+enum ParkingSessionStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
 }
 
 // ============================================

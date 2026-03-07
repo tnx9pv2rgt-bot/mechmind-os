@@ -45,6 +45,7 @@ export class LicensePlateService {
       cameraId?: string;
       provider?: OcrProvider;
       minConfidence?: number;
+      tenantId?: string;
     } = {},
   ): Promise<LicensePlateDetection> {
     const provider = options.provider || OcrProvider.GOOGLE_VISION;
@@ -53,7 +54,7 @@ export class LicensePlateService {
     // Upload image to S3
     const imageKey = `lpr/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
     await this.s3Service.uploadBuffer(imageBuffer, imageKey, 'image/jpeg');
-    const imageUrl = await this.s3Service.getSignedUrl(imageKey, 3600);
+    const imageUrl = await this.s3Service.getSignedUrlForKey(imageKey, 3600);
 
     // Perform OCR based on provider
     let detection: LicensePlateDetection;
@@ -79,6 +80,7 @@ export class LicensePlateService {
     await this.prisma.licensePlateDetection.create({
       data: {
         id: detection.id,
+        tenantId: options.tenantId || 'default',
         imageUrl: detection.imageUrl,
         detectedText: detection.detectedText,
         confidence: detection.confidence,
@@ -117,6 +119,7 @@ export class LicensePlateService {
       cameraId?: string;
       location?: string;
       isAuthorized?: boolean;
+      tenantId?: string;
     } = {},
   ): Promise<VehicleEntryExit> {
     // Validate and normalize plate
@@ -132,6 +135,7 @@ export class LicensePlateService {
     // Create entry/exit record
     const record = await this.prisma.vehicleEntryExit.create({
       data: {
+        tenantId: options.tenantId || 'default',
         type,
         licensePlate: normalizedPlate,
         detectionId: detection.id,
@@ -147,7 +151,7 @@ export class LicensePlateService {
 
     // Handle parking session
     if (type === EntryExitType.ENTRY) {
-      await this.createParkingSession(record.id, normalizedPlate, detection);
+      await this.createParkingSession(record.id, normalizedPlate, detection, options.tenantId);
     } else {
       await this.closeParkingSession(normalizedPlate, record.id);
     }
@@ -208,8 +212,8 @@ export class LicensePlateService {
       where: { licensePlate: normalizedPlate },
       include: {
         customer: true,
-        workOrders: {
-          orderBy: { createdAt: 'desc' },
+        inspections: {
+          orderBy: { startedAt: 'desc' },
           take: 5,
         },
       },
@@ -220,7 +224,7 @@ export class LicensePlateService {
       where: { licensePlate: normalizedPlate },
       orderBy: { timestamp: 'desc' },
       take: 10,
-    });
+    }) as any[];
 
     // Get active parking session
     const activeSession = await this.prisma.parkingSession.findFirst({
@@ -228,11 +232,11 @@ export class LicensePlateService {
         licensePlate: normalizedPlate,
         status: 'ACTIVE',
       },
-    });
+    }) as any;
 
     return {
       vehicle,
-      recentHistory: recentHistory.map((h: VehicleEntryExit) => ({
+      recentHistory: recentHistory.map((h: any) => ({
         id: h.id,
         type: h.type as EntryExitType,
         licensePlate: h.licensePlate,
@@ -277,7 +281,7 @@ export class LicensePlateService {
       orderBy: { entryTime: 'desc' },
     });
 
-    return sessions.map((s: ParkingSession & { entry: VehicleEntryExit }) => ({
+    return sessions.map((s: any) => ({
       id: s.id,
       licensePlate: s.licensePlate,
       entry: {
@@ -363,7 +367,7 @@ export class LicensePlateService {
       where: { tenantId },
     });
 
-    return cameras.map((c: LprCamera) => ({
+    return cameras.map((c: any) => ({
       id: c.id,
       name: c.name,
       location: c.location,
@@ -412,21 +416,21 @@ export class LicensePlateService {
         camera: { tenantId },
         processedAt: { gte: from, lte: to },
       },
-    });
+    }) as any[];
 
     const totalDetections = detections.length;
     const avgConfidence = totalDetections > 0
-      ? detections.reduce((sum: number, d: { confidence: number }) => sum + d.confidence, 0) / totalDetections
+      ? detections.reduce((sum: number, d: any) => sum + d.confidence, 0) / totalDetections
       : 0;
 
     // Group by provider
     const byProvider: Record<OcrProvider, { count: number; avgConfidence: number }> = {} as any;
     for (const provider of Object.values(OcrProvider)) {
-      const providerDetections = detections.filter((d: { provider: OcrProvider }) => d.provider === provider);
+      const providerDetections = detections.filter((d: any) => d.provider === provider);
       byProvider[provider] = {
         count: providerDetections.length,
         avgConfidence: providerDetections.length > 0
-          ? providerDetections.reduce((sum: number, d: { confidence: number }) => sum + d.confidence, 0) / providerDetections.length
+          ? providerDetections.reduce((sum: number, d: any) => sum + d.confidence, 0) / providerDetections.length
           : 0,
       };
     }
@@ -564,9 +568,11 @@ export class LicensePlateService {
     entryId: string,
     licensePlate: string,
     detection: LicensePlateDetection,
+    tenantId?: string,
   ): Promise<void> {
     await this.prisma.parkingSession.create({
       data: {
+        tenantId: tenantId || 'default',
         licensePlate,
         entryId,
         status: 'ACTIVE',
