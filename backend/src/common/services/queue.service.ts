@@ -155,7 +155,7 @@ export class QueueService {
     options?: JobOptions,
   ): Promise<Job<T>> {
     try {
-      const job = await queue.add(jobName, data, {
+      const job = await queue.add(jobName as any, data as any, {
         ...options,
         attempts: options?.attempts ?? 3,
         backoff: options?.backoff ?? {

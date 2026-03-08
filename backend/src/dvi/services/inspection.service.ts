@@ -360,11 +360,12 @@ export class InspectionService {
     });
 
     // Notify mechanic/shop
-    await this.notifications.sendToUser({
+    await this.notifications.sendNotification({
       tenantId,
       userId: inspection.mechanicId,
+      type: 'inspection_completed',
       title: 'Inspection Approved',
-      body: `Customer has approved the inspection findings`,
+      message: `Customer has approved the inspection findings`,
       data: { inspectionId, type: 'INSPECTION_APPROVED' },
     });
   }
@@ -385,16 +386,28 @@ export class InspectionService {
 
   private async notifyCustomer(inspection: any): Promise<void> {
     // Send email/SMS notification to customer
-    await this.notifications.sendEmail({
+    await this.notifications.sendNotification({
       tenantId: inspection.tenantId,
-      to: inspection.customer.encryptedEmail,
-      subject: 'Your Vehicle Inspection is Ready',
-      template: 'inspection-ready',
+      userId: inspection.mechanicId,
+      type: 'inspection_completed',
+      title: 'Your Vehicle Inspection is Ready',
+      message: 'Your vehicle inspection has been completed and is ready for review.',
       data: {
         customerName: inspection.customer.encryptedFirstName,
         vehicleInfo: `${inspection.vehicle.make} ${inspection.vehicle.model}`,
         inspectionUrl: `${this.config.get('FRONTEND_URL')}/inspections/${inspection.id}`,
         findingsCount: inspection.findings.length,
+      },
+      email: {
+        to: inspection.customer.encryptedEmail,
+        subject: 'Your Vehicle Inspection is Ready',
+        template: 'inspection-ready',
+        variables: {
+          customerName: inspection.customer.encryptedFirstName,
+          vehicleInfo: `${inspection.vehicle.make} ${inspection.vehicle.model}`,
+          inspectionUrl: `${this.config.get('FRONTEND_URL')}/inspections/${inspection.id}`,
+          findingsCount: inspection.findings.length,
+        },
       },
     });
 

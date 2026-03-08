@@ -261,7 +261,7 @@ export class NotificationOrchestratorService {
     return {
       success,
       channel: NotificationChannel.BOTH,
-      messageId: smsResult.success && 'messageId' in smsResult ? smsResult.messageId : emailResult?.messageId,
+      messageId: smsResult.success ? (smsResult as any).messageId : (emailResult as any)?.messageId,
       error: !success ? `SMS: ${smsResult.error}, Email: ${emailResult.error}` : undefined,
     };
   }

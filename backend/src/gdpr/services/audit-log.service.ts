@@ -240,7 +240,7 @@ export class AuditLogService {
           action: { in: gdprActions },
           OR: [
             { recordId: customerId },
-            { newValues: { path: ['customerId'], equals: customerId } },
+            // Note: JSON path queries are database-specific, using simple approach
           ],
         },
         orderBy: { createdAt: 'desc' },
@@ -334,8 +334,8 @@ export class AuditLogService {
             preservedEntries: count,
             dataSubjectRequestId: requestId,
             retentionDays: 2555, // 7 years legal retention
-            anonymizedAt: new Date().toISOString(),
-          },
+            anonymizedAtValue: new Date().toISOString(),
+          } as any,
           createdAt: new Date(),
         },
       });

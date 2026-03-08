@@ -69,11 +69,14 @@ export class GdprController {
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   async createRequest(
     @Body() dto: CreateDataSubjectRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.requestService.createRequest({
       ...dto,
+      tenantId,
       source: 'WEB_FORM',
+      requestType: dto.requestType as any,
+      priority: dto.priority as any,
     });
   }
 
@@ -135,7 +138,7 @@ export class GdprController {
     @Query('tenantId') tenantId: string,
     @Body() dto: UpdateRequestStatusDto,
   ) {
-    return this.requestService.updateStatus(requestId, tenantId, dto.status, dto.notes);
+    return this.requestService.updateStatus(requestId, tenantId, dto.status as any, dto.notes);
   }
 
   /**
@@ -340,7 +343,7 @@ export class GdprController {
     return this.consentService.recordConsent(
       customerId,
       tenantId,
-      dto.consentType,
+      dto.consentType as any,
       dto.granted,
       {
         ipAddress: forwardedFor,

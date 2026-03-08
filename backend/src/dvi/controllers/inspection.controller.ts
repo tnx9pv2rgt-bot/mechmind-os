@@ -144,7 +144,7 @@ export class InspectionController {
     @CurrentUser('tenantId') tenantId: string,
     @CurrentUser('userId') userId: string,
     @Param('id') inspectionId: string,
-    @UploadedFile() file: Express.Request['file'],
+    @UploadedFile() file: any,
     @Body('itemId') itemId?: string,
     @Body('category') category?: string,
     @Body('description') description?: string,

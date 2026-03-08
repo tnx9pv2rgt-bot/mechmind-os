@@ -12,6 +12,10 @@ import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { SseService } from '../services/sse.service';
 import { Request } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user: any;
+}
 import { v4 as uuidv4 } from 'uuid';
 
 @Controller('notifications/sse')
@@ -35,11 +39,16 @@ export class SseController {
    */
   @Sse('stream')
   notificationsStream(
-    @Req() req: Request,
+    @Req() req: AuthenticatedRequest,
     @Headers('last-event-id') lastEventId?: string,
     @Query('userOnly') userOnly?: string,
   ): Observable<MessageEvent> {
-    const { id: userId, tenantId } = req.user;
+    const userId = req.user?.id;
+    const tenantId = req.user?.tenantId;
+    
+    if (!userId || !tenantId) {
+      throw new Error('User not authenticated');
+    }
     const clientId = uuidv4();
 
     this.logger.log(
@@ -62,10 +71,15 @@ export class SseController {
    */
   @Sse('stream/personal')
   personalNotificationsStream(
-    @Req() req: Request,
+    @Req() req: AuthenticatedRequest,
     @Headers('last-event-id') lastEventId?: string,
   ): Observable<MessageEvent> {
-    const { id: userId, tenantId } = req.user;
+    const userId = req.user?.id;
+    const tenantId = req.user?.tenantId;
+    
+    if (!userId || !tenantId) {
+      throw new Error('User not authenticated');
+    }
     const clientId = uuidv4();
 
     this.logger.log(
