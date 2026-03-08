@@ -1,0 +1,30 @@
+{
+  "name": "MechMind OS - Full Stack",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    }
+  },
+  "forwardPorts": [3000, 3001, 8080, 5432, 6379],
+  "portsAttributes": {
+    "3000": {
+      "label": "Backend API",
+      "visibility": "public",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "Frontend",
+      "visibility": "public",
+      "onAutoForward": "openBrowser"
+    },
+    "8080": {
+      "label": "Adminer DB",
+      "visibility": "public"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "remoteUser": "node"
+}
