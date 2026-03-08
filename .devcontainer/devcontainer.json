@@ -1,30 +1,44 @@
 {
   "name": "MechMind OS - Full Stack",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "dockerComposeFile": "docker-compose.codespaces.yml",
+  "service": "backend",
+  "workspaceFolder": "/workspaces/mechmind-os",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest",
       "moby": true
-    }
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "forwardPorts": [3000, 3001, 8080, 5432, 6379],
+  "forwardPorts": [3000, 3001, 8080, 8081, 5432, 6379],
   "portsAttributes": {
     "3000": {
       "label": "Backend API",
-      "visibility": "public",
-      "onAutoForward": "notify"
+      "visibility": "public"
     },
     "3001": {
       "label": "Frontend",
-      "visibility": "public",
-      "onAutoForward": "openBrowser"
+      "visibility": "public"
     },
     "8080": {
       "label": "Adminer DB",
+      "visibility": "public"
+    },
+    "8081": {
+      "label": "Redis UI",
       "visibility": "public"
     }
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "postStartCommand": "bash .devcontainer/start.sh",
-  "remoteUser": "node"
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Prisma.prisma",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "remoteUser": "root"
 }
