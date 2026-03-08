@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies + prisma
-RUN npm install --omit=dev --legacy-peer-deps && \
+# Install dependencies (ignore postinstall for now)
+RUN npm install --omit=dev --legacy-peer-deps --ignore-scripts && \
     npm install prisma --legacy-peer-deps
 
 # Generate Prisma client
