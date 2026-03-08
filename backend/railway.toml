@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "echo 'Using pre-built dist folder'"
+
+[deploy]
+startCommand = "node dist/main"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
