@@ -55,7 +55,7 @@ import { Redis } from 'ioredis';
               limit: 300, // 300 requests per minute (for high-traffic endpoints)
             },
           ],
-          storage: new ThrottlerStorageRedisService(redisClient),
+          storage: new ThrottlerStorageRedisService(redisClient) as any,
           errorMessage: 'Rate limit exceeded. Please try again later.',
         };
       },

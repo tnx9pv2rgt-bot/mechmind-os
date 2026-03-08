@@ -131,7 +131,7 @@ The returned URL expires in 10 minutes by default.
   @ApiResponse({ status: 503, description: 'Metabase not configured' })
   async getDashboardUrl(
     @CurrentUser('tenantId') tenantId: string,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('userId') userId: string,
     @Query('dashboard') dashboardType: string,
     @Query('expiryMinutes') expiryMinutes?: string,
   ): Promise<DashboardUrlResponse> {

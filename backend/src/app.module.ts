@@ -72,7 +72,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
               limit: 1000,
             },
           ],
-          storage: new ThrottlerStorageRedisService(new Redis(redisOptions)),
+          storage: new ThrottlerStorageRedisService(new Redis(redisOptions)) as any,
         };
       },
     }),

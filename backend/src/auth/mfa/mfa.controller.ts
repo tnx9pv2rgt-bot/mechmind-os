@@ -24,7 +24,7 @@ import { Roles } from '../decorators/roles.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { MfaService } from './mfa.service';
 import { AuthService } from '../services/auth.service';
-import { PrismaService } from '../../../common/services/prisma.service';
+import { PrismaService } from '@common/services/prisma.service';
 import {
   EnrollMfaDto,
   VerifyMfaDto,
@@ -152,11 +152,11 @@ export class MfaController {
   })
   @ApiResponse({ status: 200, description: 'New backup codes generated', type: BackupCodesResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid MFA code' })
-  async generateBackupCodes(
+  async createBackupCodes(
     @CurrentUser('userId') userId: string,
     @Body() dto: VerifyMfaDto,
   ): Promise<BackupCodesResponseDto> {
-    const backupCodes = await this.mfaService.generateBackupCodes(userId, dto.token);
+    const backupCodes = await this.mfaService.regenerateBackupCodes(userId, dto.token);
     return {
       backupCodes,
       warning: 'Save these codes immediately. They will not be shown again.',
@@ -205,7 +205,7 @@ export class MfaController {
       where: {
         tenantId,
         role: { in: [UserRole.ADMIN, UserRole.MANAGER] },
-        mfa: { enabled: false },
+        totpEnabled: false,
       },
       select: { id: true, email: true, role: true },
     });

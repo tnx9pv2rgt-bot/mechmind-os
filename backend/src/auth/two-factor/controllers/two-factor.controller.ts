@@ -21,7 +21,7 @@ import { Roles } from '../../decorators/roles.decorator';
 import { CurrentUser } from '../../decorators/current-user.decorator';
 import { TwoFactorService } from '../services/two-factor.service';
 import { AuthService } from '../../services/auth.service';
-import { PrismaService } from '../../../common/services/prisma.service';
+import { PrismaService } from '@common/services/prisma.service';
 import {
   SetupTwoFactorResponseDto,
   VerifyTwoFactorDto,
@@ -61,9 +61,13 @@ export class TwoFactorController {
   async setup(
     @CurrentUser('userId') userId: string,
     @CurrentUser('email') email: string,
-    @CurrentUser('tenantName') tenantName: string,
+    @CurrentUser('tenantId') tenantId: string,
   ): Promise<SetupTwoFactorResponseDto> {
-    return this.twoFactorService.generateSecret(userId, email, tenantName);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+    return this.twoFactorService.generateSecret(userId, email, tenant?.name || 'MechMind');
   }
 
   @Post('verify')

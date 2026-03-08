@@ -12,8 +12,8 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import * as QRCode from 'qrcode';
-import { PrismaService } from '../../../common/services/prisma.service';
-import { EncryptionService } from '../../../common/services/encryption.service';
+import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 
 @Injectable()
 export class TwoFactorService {
@@ -49,14 +49,21 @@ export class TwoFactorService {
     // Encrypt secret for storage
     const encryptedSecret = await this.encryption.encrypt(secret);
 
-    // Store encrypted secret and backup codes (but don't enable yet)
+    // Store encrypted secret (but don't enable yet)
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         totpSecret: encryptedSecret,
-        backupCodes: hashedBackupCodes,
         totpEnabled: false, // Will be enabled after verification
       },
+    });
+
+    // Store backup codes in separate model
+    await this.prisma.backupCode.createMany({
+      data: hashedBackupCodes.map(codeHash => ({
+        userId,
+        codeHash,
+      })),
     });
 
     // Generate QR code URI (otpauth format)
@@ -125,7 +132,6 @@ export class TwoFactorService {
       select: { 
         totpSecret: true, 
         totpEnabled: true,
-        backupCodes: true,
       },
     });
 
@@ -135,7 +141,7 @@ export class TwoFactorService {
 
     // Check if it's a backup code (8 digits)
     if (code.length === 8) {
-      return this.verifyBackupCode(userId, code, user.backupCodes);
+      return this.verifyBackupCode(userId, code);
     }
 
     // Verify TOTP code
@@ -157,8 +163,7 @@ export class TwoFactorService {
       select: { 
         totpSecret: true, 
         totpEnabled: true, 
-        password: true,
-        backupCodes: true,
+        passwordHash: true,
       },
     });
 
@@ -167,7 +172,7 @@ export class TwoFactorService {
     }
 
     // Verify password
-    const isPasswordValid = await passwordVerify(user.password);
+    const isPasswordValid = await passwordVerify(user.passwordHash || '');
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid password');
     }
@@ -176,7 +181,7 @@ export class TwoFactorService {
     let isCodeValid = false;
     
     if (code.length === 8) {
-      isCodeValid = await this.verifyBackupCode(userId, code, user.backupCodes);
+      isCodeValid = await this.verifyBackupCode(userId, code);
     } else {
       const secret = await this.encryption.decrypt(user.totpSecret!);
       isCodeValid = this.verifyTotp(secret, code);
@@ -186,16 +191,20 @@ export class TwoFactorService {
       throw new UnauthorizedException('Invalid authentication code');
     }
 
-    // Disable 2FA
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        totpSecret: null,
-        totpEnabled: false,
-        totpVerifiedAt: null,
-        backupCodes: [],
-      },
-    });
+    // Disable 2FA and delete backup codes
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: null,
+          totpEnabled: false,
+          totpVerifiedAt: null,
+        },
+      }),
+      this.prisma.backupCode.deleteMany({
+        where: { userId },
+      }),
+    ]);
   }
 
   /**
@@ -204,7 +213,7 @@ export class TwoFactorService {
   async regenerateBackupCodes(userId: string, code: string): Promise<string[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { totpSecret: true, totpEnabled: true, backupCodes: true },
+      select: { totpSecret: true, totpEnabled: true },
     });
 
     if (!user || !user.totpEnabled) {
@@ -221,10 +230,16 @@ export class TwoFactorService {
     const backupCodes = this.generateBackupCodes();
     const hashedBackupCodes = backupCodes.map(c => this.hashBackupCode(c));
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { backupCodes: hashedBackupCodes },
-    });
+    // Delete old backup codes and create new ones
+    await this.prisma.$transaction([
+      this.prisma.backupCode.deleteMany({ where: { userId } }),
+      this.prisma.backupCode.createMany({
+        data: hashedBackupCodes.map(codeHash => ({
+          userId,
+          codeHash,
+        })),
+      }),
+    ]);
 
     return backupCodes;
   }
@@ -233,15 +248,19 @@ export class TwoFactorService {
    * Admin disable 2FA (emergency reset)
    */
   async adminDisable(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        totpSecret: null,
-        totpEnabled: false,
-        totpVerifiedAt: null,
-        backupCodes: [],
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: null,
+          totpEnabled: false,
+          totpVerifiedAt: null,
+        },
+      }),
+      this.prisma.backupCode.deleteMany({
+        where: { userId },
+      }),
+    ]);
   }
 
   /**
@@ -265,7 +284,7 @@ export class TwoFactorService {
   }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { totpEnabled: true, totpVerifiedAt: true, backupCodes: true },
+      select: { totpEnabled: true, totpVerifiedAt: true, _count: { select: { backupCodes: true } } },
     });
 
     if (!user) {
@@ -275,7 +294,7 @@ export class TwoFactorService {
     return {
       enabled: user.totpEnabled,
       verifiedAt: user.totpVerifiedAt ?? undefined,
-      backupCodesCount: user.backupCodes.length,
+      backupCodesCount: user._count.backupCodes,
     };
   }
 
@@ -337,21 +356,21 @@ export class TwoFactorService {
   /**
    * Verify backup code
    */
-  private async verifyBackupCode(userId: string, code: string, hashedCodes: string[]): Promise<boolean> {
+  private async verifyBackupCode(userId: string, code: string): Promise<boolean> {
     const hashedInput = this.hashBackupCode(code.toUpperCase());
-    const index = hashedCodes.indexOf(hashedInput);
     
-    if (index === -1) {
+    // Find the backup code
+    const backupCode = await this.prisma.backupCode.findFirst({
+      where: { userId, codeHash: hashedInput },
+    });
+    
+    if (!backupCode) {
       return false;
     }
 
     // Remove used backup code
-    const newCodes = [...hashedCodes];
-    newCodes.splice(index, 1);
-    
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { backupCodes: newCodes },
+    await this.prisma.backupCode.delete({
+      where: { id: backupCode.id },
     });
 
     return true;

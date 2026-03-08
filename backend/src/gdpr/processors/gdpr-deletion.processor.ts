@@ -1,4 +1,4 @@
-import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { GdprDeletionService, DeletionJobPayload } from '../services/gdpr-deletion.service';
@@ -26,20 +26,21 @@ import { LoggerService } from '@common/services/logger.service';
     duration: 60000, // per minute
   },
 })
-export class GdprDeletionProcessor {
+export class GdprDeletionProcessor extends WorkerHost {
   private readonly logger = new Logger(GdprDeletionProcessor.name);
 
   constructor(
     private readonly gdprDeletionService: GdprDeletionService,
     private readonly prisma: PrismaService,
     private readonly loggerService: LoggerService,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Process customer deletion job
    */
-  @Process('customer-deletion')
-  async handleCustomerDeletion(job: Job<DeletionJobPayload>): Promise<{
+  async process(job: Job<DeletionJobPayload>): Promise<{
     success: boolean;
     customerId: string;
     processingTimeMs: number;
@@ -86,7 +87,7 @@ export class GdprDeletionProcessor {
 
       // Step 4: Mark request as complete (100% progress)
       await this.prisma.withTenant(tenantId, async (prisma) => {
-        await prisma.dataSubjectRequests.update({
+        await prisma.dataSubjectRequest.update({
           where: { id: requestId },
           data: {
             status: 'COMPLETED',
@@ -119,7 +120,7 @@ export class GdprDeletionProcessor {
       
       // Update request status to failed
       await this.prisma.withTenant(tenantId, async (prisma) => {
-        await prisma.dataSubjectRequests.update({
+        await prisma.dataSubjectRequest.update({
           where: { id: requestId },
           data: {
             status: 'RECEIVED', // Reset to allow retry
@@ -129,44 +130,6 @@ export class GdprDeletionProcessor {
       });
 
       throw error; // Re-throw to trigger BullMQ retry
-    }
-  }
-
-  /**
-   * Handle job started event
-   */
-  @OnQueueActive()
-  onActive(job: Job<DeletionJobPayload>): void {
-    this.logger.log(`Deletion job ${job.id} started for customer ${job.data.customerId}`);
-  }
-
-  /**
-   * Handle job completed event
-   */
-  @OnQueueCompleted()
-  onCompleted(job: Job<DeletionJobPayload>, result: any): void {
-    this.logger.log(
-      `Deletion job ${job.id} completed for customer ${job.data.customerId}. ` +
-      `Processing time: ${result.processingTimeMs}ms`,
-    );
-  }
-
-  /**
-   * Handle job failed event
-   */
-  @OnQueueFailed()
-  onFailed(job: Job<DeletionJobPayload>, error: Error): void {
-    this.logger.error(
-      `Deletion job ${job.id} failed for customer ${job.data.customerId}: ${error.message}`,
-    );
-
-    // Alert on-call if this is the final attempt
-    if (job.attemptsMade >= (job.opts.attempts || 3)) {
-      this.loggerService.log(
-        `CRITICAL: Deletion job ${job.id} exhausted all retries. Manual intervention required.`,
-        'GdprDeletionProcessor',
-      );
-      // In production: Send alert to PagerDuty/Opsgenie
     }
   }
 }

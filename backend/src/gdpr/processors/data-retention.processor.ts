@@ -1,4 +1,4 @@
-import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { DataRetentionService } from '../services/data-retention.service';
@@ -21,19 +21,20 @@ interface RetentionJobPayload {
 @Processor('gdpr-retention', {
   concurrency: 1, // Process one retention job at a time to avoid overload
 })
-export class DataRetentionProcessor {
+export class DataRetentionProcessor extends WorkerHost {
   private readonly logger = new Logger(DataRetentionProcessor.name);
 
   constructor(
     private readonly dataRetentionService: DataRetentionService,
     private readonly loggerService: LoggerService,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Process retention enforcement job
    */
-  @Process('enforce-retention')
-  async handleRetentionEnforcement(job: Job<RetentionJobPayload>): Promise<{
+  async process(job: Job<RetentionJobPayload>): Promise<{
     success: boolean;
     executionId: string;
     customersAnonymized: number;
@@ -85,39 +86,4 @@ export class DataRetentionProcessor {
     }
   }
 
-  /**
-   * Handle job started event
-   */
-  @OnQueueActive()
-  onActive(job: Job<RetentionJobPayload>): void {
-    this.logger.log(`Retention job ${job.id} started`);
-  }
-
-  /**
-   * Handle job completed event
-   */
-  @OnQueueCompleted()
-  onCompleted(job: Job<RetentionJobPayload>, result: any): void {
-    this.logger.log(
-      `Retention job ${job.id} completed. ` +
-      `Anonymized: ${result.customersAnonymized}, ` +
-      `Recordings: ${result.recordingsDeleted}`,
-    );
-  }
-
-  /**
-   * Handle job failed event
-   */
-  @OnQueueFailed()
-  onFailed(job: Job<RetentionJobPayload>, error: Error): void {
-    this.logger.error(`Retention job ${job.id} failed: ${error.message}`);
-
-    // Alert on final failure
-    if (job.attemptsMade >= (job.opts.attempts || 3)) {
-      this.loggerService.log(
-        `CRITICAL: Retention job ${job.id} exhausted all retries`,
-        'DataRetentionProcessor',
-      );
-    }
-  }
 }

@@ -23,6 +23,7 @@ export interface MFARequest {
   };
   mfaVerified?: boolean;
   mfaVerifiedAt?: Date;
+  headers: Record<string, string | string[]>;
 }
 
 /**

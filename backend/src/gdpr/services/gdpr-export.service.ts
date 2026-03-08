@@ -368,7 +368,7 @@ export class GdprExportService {
     if (requestId) {
       await this.prisma.withTenant(tenantId, async (prisma) => {
         // TODO: Add dataSubjectRequests model to schema.prisma
-        await (prisma as any).dataSubjectRequests.update({
+        await (prisma as any).dataSubjectRequest.update({
           where: { id: requestId },
           data: {
             exportFormat: format,

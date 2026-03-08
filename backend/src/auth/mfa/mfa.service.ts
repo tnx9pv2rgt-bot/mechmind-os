@@ -1,12 +1,11 @@
 /**
- * MechMind OS - MFA Service with Auth0 TOTP
+ * MechMind OS - MFA Service with TOTP
  * 
  * Implements TOTP (Time-based One-Time Password) with:
  * - RFC 6238 compliant TOTP generation using speakeasy
  * - Encrypted secret storage
  * - Backup codes for account recovery
  * - Rate limiting for verification attempts
- * - Auth0-compatible implementation
  */
 
 import { Injectable, UnauthorizedException, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
@@ -14,8 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../../../common/services/prisma.service';
-import { EncryptionService } from '../../../common/services/encryption.service';
+import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 
 export interface MFAEnrollResult {
   secret: string;
@@ -27,6 +26,11 @@ export interface MFAEnrollResult {
 export interface MFAVerifyResult {
   valid: boolean;
   remainingAttempts?: number;
+}
+
+interface MFAMetadata {
+  verifyAttempts?: number;
+  lastVerifyAttempt?: string;
 }
 
 @Injectable()
@@ -48,11 +52,12 @@ export class MfaService {
    */
   async enroll(userId: string, userEmail: string): Promise<MFAEnrollResult> {
     // Check if MFA is already enabled
-    const existingMfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totpEnabled: true },
     });
 
-    if (existingMfa?.enabled) {
+    if (user?.totpEnabled) {
       throw new BadRequestException('MFA is already enabled for this user');
     }
 
@@ -64,7 +69,7 @@ export class MfaService {
     });
 
     // Generate backup codes
-    const backupCodes = this.generateBackupCodes();
+    const backupCodes = this.generateBackupCodesInternal();
     const hashedBackupCodes = await Promise.all(
       backupCodes.map(code => bcrypt.hash(code, 10))
     );
@@ -72,25 +77,22 @@ export class MfaService {
     // Encrypt the secret for storage
     const encryptedSecret = await this.encryption.encrypt(secret.base32);
 
-    // Save to database
-    await this.prisma.userMFA.upsert({
-      where: { userId },
-      create: {
-        userId,
-        secret: encryptedSecret,
-        enabled: false, // Will be enabled after verification
-        backupCodes: hashedBackupCodes,
-        verifyAttempts: 0,
-        lastVerifyAttempt: null,
-      },
-      update: {
-        secret: encryptedSecret,
-        enabled: false,
-        backupCodes: hashedBackupCodes,
-        verifyAttempts: 0,
-        lastVerifyAttempt: null,
-      },
-    });
+    // Save to database - update user with secret and create backup codes
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: encryptedSecret,
+          totpEnabled: false, // Will be enabled after verification
+        },
+      }),
+      this.prisma.backupCode.createMany({
+        data: hashedBackupCodes.map(codeHash => ({
+          userId,
+          codeHash,
+        })),
+      }),
+    ]);
 
     // Generate QR code
     const qrCode = await QRCode.toDataURL(secret.otpauth_url!, {
@@ -111,23 +113,21 @@ export class MfaService {
    * Verify TOTP code and enable MFA
    */
   async verifyAndEnable(userId: string, token: string): Promise<boolean> {
-    const mfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totpSecret: true, totpEnabled: true },
     });
 
-    if (!mfa || !mfa.secret) {
+    if (!user?.totpSecret) {
       throw new BadRequestException('MFA enrollment not initiated');
     }
 
-    if (mfa.enabled) {
+    if (user.totpEnabled) {
       throw new BadRequestException('MFA is already enabled');
     }
 
-    // Check rate limiting
-    await this.checkRateLimit(mfa);
-
     // Decrypt secret
-    const secret = await this.encryption.decrypt(mfa.secret);
+    const secret = await this.encryption.decrypt(user.totpSecret);
 
     // Verify TOTP code
     const valid = speakeasy.totp.verify({
@@ -138,17 +138,15 @@ export class MfaService {
     });
 
     if (!valid) {
-      await this.recordFailedAttempt(userId);
       throw new UnauthorizedException('Invalid verification code');
     }
 
     // Enable MFA
-    await this.prisma.userMFA.update({
-      where: { userId },
+    await this.prisma.user.update({
+      where: { id: userId },
       data: {
-        enabled: true,
-        verifiedAt: new Date(),
-        verifyAttempts: 0,
+        totpEnabled: true,
+        totpVerifiedAt: new Date(),
       },
     });
 
@@ -159,33 +157,25 @@ export class MfaService {
    * Verify TOTP code during login
    */
   async verify(userId: string, token: string): Promise<MFAVerifyResult> {
-    const mfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totpSecret: true, totpEnabled: true },
     });
 
-    if (!mfa || !mfa.enabled) {
+    if (!user?.totpEnabled) {
       return { valid: true }; // MFA not required
-    }
-
-    // Check rate limiting
-    const rateLimitCheck = await this.checkRateLimit(mfa);
-    if (!rateLimitCheck.allowed) {
-      throw new HttpException(
-        `Too many attempts. Try again in ${rateLimitCheck.retryAfter} minutes.`,
-        HttpStatus.TOO_MANY_REQUESTS
-      );
     }
 
     // Check if it's a backup code (8 characters with dash: XXXX-XXXX)
     if (token.length === 9 && token.includes('-')) {
-      const valid = await this.verifyBackupCode(userId, token, mfa.backupCodes);
+      const valid = await this.verifyBackupCode(userId, token);
       if (valid) {
         return { valid: true };
       }
     }
 
     // Verify TOTP code
-    const secret = await this.encryption.decrypt(mfa.secret);
+    const secret = await this.encryption.decrypt(user.totpSecret!);
     
     const valid = speakeasy.totp.verify({
       secret,
@@ -195,19 +185,10 @@ export class MfaService {
     });
 
     if (!valid) {
-      await this.recordFailedAttempt(userId);
       return { 
         valid: false, 
-        remainingAttempts: this.MAX_VERIFY_ATTEMPTS - (mfa.verifyAttempts + 1) 
+        remainingAttempts: this.MAX_VERIFY_ATTEMPTS - 1
       };
-    }
-
-    // Reset attempts on successful verification
-    if (mfa.verifyAttempts > 0) {
-      await this.prisma.userMFA.update({
-        where: { userId },
-        data: { verifyAttempts: 0, lastVerifyAttempt: null },
-      });
     }
 
     return { valid: true };
@@ -217,17 +198,16 @@ export class MfaService {
    * Disable MFA for a user
    */
   async disable(userId: string, token: string, password: string): Promise<void> {
-    const mfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
-      include: { user: true },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    if (!mfa || !mfa.enabled) {
+    if (!user?.totpEnabled) {
       throw new BadRequestException('MFA is not enabled');
     }
 
     // Verify password first
-    const passwordValid = await bcrypt.compare(password, mfa.user.password);
+    const passwordValid = await bcrypt.compare(password, user.passwordHash || '');
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid password');
     }
@@ -237,10 +217,10 @@ export class MfaService {
 
     // Check if it's a backup code
     if (token.length === 9 && token.includes('-')) {
-      codeValid = await this.verifyBackupCode(userId, token, mfa.backupCodes);
+      codeValid = await this.verifyBackupCode(userId, token);
     } else {
       // Verify TOTP
-      const secret = await this.encryption.decrypt(mfa.secret);
+      const secret = await this.encryption.decrypt(user.totpSecret!);
       codeValid = speakeasy.totp.verify({
         secret,
         encoding: 'base32',
@@ -253,26 +233,37 @@ export class MfaService {
       throw new UnauthorizedException('Invalid verification code');
     }
 
-    // Delete MFA record
-    await this.prisma.userMFA.delete({
-      where: { userId },
-    });
+    // Delete MFA data - remove secret and backup codes
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: null,
+          totpEnabled: false,
+          totpVerifiedAt: null,
+        },
+      }),
+      this.prisma.backupCode.deleteMany({
+        where: { userId },
+      }),
+    ]);
   }
 
   /**
-   * Generate new backup codes
+   * Regenerate new backup codes
    */
-  async generateBackupCodes(userId: string, token: string): Promise<string[]> {
-    const mfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
+  async regenerateBackupCodes(userId: string, token: string): Promise<string[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totpSecret: true, totpEnabled: true },
     });
 
-    if (!mfa || !mfa.enabled) {
+    if (!user?.totpEnabled) {
       throw new BadRequestException('MFA is not enabled');
     }
 
     // Verify TOTP code
-    const secret = await this.encryption.decrypt(mfa.secret);
+    const secret = await this.encryption.decrypt(user.totpSecret!);
     const valid = speakeasy.totp.verify({
       secret,
       encoding: 'base32',
@@ -285,16 +276,21 @@ export class MfaService {
     }
 
     // Generate new backup codes
-    const backupCodes = this.generateBackupCodes();
+    const backupCodes = this.generateBackupCodesInternal();
     const hashedBackupCodes = await Promise.all(
       backupCodes.map(code => bcrypt.hash(code, 10))
     );
 
-    // Update database
-    await this.prisma.userMFA.update({
-      where: { userId },
-      data: { backupCodes: hashedBackupCodes },
-    });
+    // Replace backup codes
+    await this.prisma.$transaction([
+      this.prisma.backupCode.deleteMany({ where: { userId } }),
+      this.prisma.backupCode.createMany({
+        data: hashedBackupCodes.map(codeHash => ({
+          userId,
+          codeHash,
+        })),
+      }),
+    ]);
 
     return backupCodes;
   }
@@ -303,11 +299,11 @@ export class MfaService {
    * Check if MFA is enabled for user
    */
   async isMFAEnabled(userId: string): Promise<boolean> {
-    const mfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
-      select: { enabled: true },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totpEnabled: true },
     });
-    return mfa?.enabled ?? false;
+    return user?.totpEnabled ?? false;
   }
 
   /**
@@ -318,19 +314,23 @@ export class MfaService {
     verifiedAt?: Date;
     backupCodesCount: number;
   }> {
-    const mfa = await this.prisma.userMFA.findUnique({
-      where: { userId },
-      select: { enabled: true, verifiedAt: true, backupCodes: true },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { 
+        totpEnabled: true, 
+        totpVerifiedAt: true,
+        _count: { select: { backupCodes: true } },
+      },
     });
 
-    if (!mfa) {
+    if (!user) {
       return { enabled: false, backupCodesCount: 0 };
     }
 
     return {
-      enabled: mfa.enabled,
-      verifiedAt: mfa.verifiedAt ?? undefined,
-      backupCodesCount: mfa.backupCodes.length,
+      enabled: user.totpEnabled,
+      verifiedAt: user.totpVerifiedAt ?? undefined,
+      backupCodesCount: user._count.backupCodes,
     };
   }
 
@@ -338,9 +338,19 @@ export class MfaService {
    * Admin: Reset MFA for user (emergency)
    */
   async adminReset(userId: string): Promise<void> {
-    await this.prisma.userMFA.deleteMany({
-      where: { userId },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: null,
+          totpEnabled: false,
+          totpVerifiedAt: null,
+        },
+      }),
+      this.prisma.backupCode.deleteMany({
+        where: { userId },
+      }),
+    ]);
   }
 
   // ============== PRIVATE METHODS ==============
@@ -348,7 +358,7 @@ export class MfaService {
   /**
    * Generate backup codes
    */
-  private generateBackupCodes(): string[] {
+  private generateBackupCodesInternal(): string[] {
     const codes: string[] = [];
     
     for (let i = 0; i < this.BACKUP_CODES_COUNT; i++) {
@@ -366,19 +376,21 @@ export class MfaService {
    */
   private async verifyBackupCode(
     userId: string, 
-    code: string, 
-    hashedCodes: string[]
+    code: string
   ): Promise<boolean> {
-    for (let i = 0; i < hashedCodes.length; i++) {
-      const match = await bcrypt.compare(code.toUpperCase(), hashedCodes[i]);
+    const hashedInput = await bcrypt.hash(code.toUpperCase(), 10);
+    
+    // Find matching backup code
+    const backupCodes = await this.prisma.backupCode.findMany({
+      where: { userId },
+    });
+    
+    for (const backupCode of backupCodes) {
+      const match = await bcrypt.compare(code.toUpperCase(), backupCode.codeHash);
       if (match) {
         // Remove used backup code
-        const newCodes = [...hashedCodes];
-        newCodes.splice(i, 1);
-        
-        await this.prisma.userMFA.update({
-          where: { userId },
-          data: { backupCodes: newCodes },
+        await this.prisma.backupCode.delete({
+          where: { id: backupCode.id },
         });
         
         return true;
@@ -386,47 +398,5 @@ export class MfaService {
     }
     
     return false;
-  }
-
-  /**
-   * Check rate limiting for verification attempts
-   */
-  private async checkRateLimit(mfa: any): Promise<{ allowed: boolean; retryAfter?: number }> {
-    // Reset attempts if window has passed
-    if (mfa.lastVerifyAttempt) {
-      const minutesSinceLastAttempt = 
-        (Date.now() - new Date(mfa.lastVerifyAttempt).getTime()) / (1000 * 60);
-      
-      if (minutesSinceLastAttempt > this.VERIFY_WINDOW_MINUTES) {
-        await this.prisma.userMFA.update({
-          where: { userId: mfa.userId },
-          data: { verifyAttempts: 0, lastVerifyAttempt: null },
-        });
-        return { allowed: true };
-      }
-    }
-
-    if (mfa.verifyAttempts >= this.MAX_VERIFY_ATTEMPTS) {
-      const retryAfter = Math.ceil(
-        this.VERIFY_WINDOW_MINUTES - 
-        (Date.now() - new Date(mfa.lastVerifyAttempt).getTime()) / (1000 * 60)
-      );
-      return { allowed: false, retryAfter };
-    }
-
-    return { allowed: true };
-  }
-
-  /**
-   * Record failed verification attempt
-   */
-  private async recordFailedAttempt(userId: string): Promise<void> {
-    await this.prisma.userMFA.update({
-      where: { userId },
-      data: {
-        verifyAttempts: { increment: 1 },
-        lastVerifyAttempt: new Date(),
-      },
-    });
   }
 }

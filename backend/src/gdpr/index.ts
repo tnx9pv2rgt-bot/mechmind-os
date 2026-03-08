@@ -65,8 +65,7 @@ export { GdprDeletionProcessor } from './processors/gdpr-deletion.processor';
 export { DataRetentionProcessor } from './processors/data-retention.processor';
 
 // DTOs
-export {
-  CreateDataSubjectRequestDto,
+export type {
   UpdateRequestStatusDto,
   VerifyIdentityDto,
   CreateConsentDto,
@@ -76,3 +75,4 @@ export {
   DataRectificationDto,
   GdprWebhookPayloadDto,
 } from './dto/gdpr.dto';
+// Note: CreateDataSubjectRequestDto is already exported from gdpr-request.service

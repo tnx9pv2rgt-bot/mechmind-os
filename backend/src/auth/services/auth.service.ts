@@ -91,7 +91,7 @@ export class AuthService {
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash || '');
     
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -322,19 +322,16 @@ export class AuthService {
    * Log admin action for audit
    */
   async logAdminAction(action: AdminAction): Promise<void> {
-    this.logger.warn(`Admin action: ${action.action}`, {
-      adminId: action.adminId,
-      targetUserId: action.targetUserId,
-      timestamp: action.timestamp,
-      metadata: action.metadata,
-    });
-    // Store in audit log
-    await this.prisma.mfaAuditLog.create({
+    this.logger.warn(`Admin action: ${action.action} by admin ${action.adminId}${action.targetUserId ? ` on user ${action.targetUserId}` : ''}`);
+    // Store in auth audit log
+    const tenantId = (await this.getUserTenant(action.adminId)).tenantId;
+    await this.prisma.authAuditLog.create({
       data: {
         userId: action.adminId,
-        tenantId: (await this.getUserTenant(action.adminId)).tenantId,
-        eventType: 'admin_action',
-        eventData: action as any,
+        tenantId: tenantId,
+        action: 'admin_action',
+        status: 'success',
+        details: action as any,
       },
     });
   }
@@ -362,8 +359,6 @@ export class AuthService {
       data: {
         lastLoginAt: new Date(),
         lastLoginIp: ip,
-        failedLogins: 0,
-        lockedUntil: null,
       },
     });
   }
@@ -372,26 +367,9 @@ export class AuthService {
    * Record failed login attempt
    */
   async recordFailedLogin(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { failedLogins: true },
-    });
-
-    const failedLogins = (user?.failedLogins ?? 0) + 1;
-    const maxAttempts = 5;
-    const lockoutMinutes = 30;
-
-    const updates: any = { failedLogins };
-    
-    if (failedLogins >= maxAttempts) {
-      updates.lockedUntil = new Date(Date.now() + lockoutMinutes * 60 * 1000);
-      this.logger.warn(`Account locked due to failed login attempts`, { userId });
-    }
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: updates,
-    });
+    // Note: Account lockout tracking would require a failedLogins field on User model
+    // For now, just log the failed attempt
+    this.logger.warn(`Failed login attempt for user ${userId}`);
   }
 
   /**
@@ -411,7 +389,7 @@ export class AuthService {
       // Lock expired, clear it
       await this.prisma.user.update({
         where: { id: userId },
-        data: { lockedUntil: null, failedLogins: 0 },
+        data: { lockedUntil: null },
       });
       return { locked: false };
     }

@@ -157,7 +157,7 @@ export class GdprDeletionService {
     // Update request status to IN_PROGRESS
     await this.prisma.withTenant(tenantId, async (prisma) => {
       // TODO: Add dataSubjectRequests model to schema.prisma
-      await (prisma as any).dataSubjectRequests.update({
+      await (prisma as any).dataSubjectRequest.update({
         where: { id: requestId },
         data: { 
           status: 'IN_PROGRESS',
@@ -400,7 +400,7 @@ export class GdprDeletionService {
     // Update request with snapshot info
     await this.prisma.withTenant(tenantId, async (prisma) => {
       // TODO: Add dataSubjectRequests model to schema.prisma
-      await (prisma as any).dataSubjectRequests.update({
+      await (prisma as any).dataSubjectRequest.update({
         where: { id: requestId },
         data: {
           deletionSnapshotCreated: true,
