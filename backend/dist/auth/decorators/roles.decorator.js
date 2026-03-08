@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AllRoles = exports.ManagerAndAbove = exports.AdminOnly = exports.Roles = void 0;
+const common_1 = require("@nestjs/common");
+const roles_guard_1 = require("../guards/roles.guard");
+const Roles = (...roles) => (0, common_1.SetMetadata)(roles_guard_1.ROLES_KEY, roles);
+exports.Roles = Roles;
+const AdminOnly = () => (0, exports.Roles)(roles_guard_1.UserRole.ADMIN);
+exports.AdminOnly = AdminOnly;
+const ManagerAndAbove = () => (0, exports.Roles)(roles_guard_1.UserRole.ADMIN, roles_guard_1.UserRole.MANAGER);
+exports.ManagerAndAbove = ManagerAndAbove;
+const AllRoles = () => (0, exports.Roles)(roles_guard_1.UserRole.ADMIN, roles_guard_1.UserRole.MANAGER, roles_guard_1.UserRole.MECHANIC, roles_guard_1.UserRole.RECEPTIONIST);
+exports.AllRoles = AllRoles;
