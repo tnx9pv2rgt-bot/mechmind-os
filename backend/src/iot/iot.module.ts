@@ -29,7 +29,10 @@ import { AuthModule } from '../auth/auth.module';
     CommonModule,
     AuthModule,
     NotificationsModule,
-    RedisModule,
+    RedisModule.forRoot({
+      type: 'single',
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+    }),
   ],
   controllers: [
     ObdStreamingController,

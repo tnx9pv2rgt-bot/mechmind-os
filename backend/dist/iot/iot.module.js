@@ -31,7 +31,10 @@ exports.IotModule = IotModule = __decorate([
             common_module_1.CommonModule,
             auth_module_1.AuthModule,
             notifications_module_1.NotificationsModule,
-            ioredis_1.RedisModule,
+            ioredis_1.RedisModule.forRoot({
+                type: 'single',
+                url: process.env.REDIS_URL || 'redis://localhost:6379',
+            }),
         ],
         controllers: [
             obd_streaming_controller_1.ObdStreamingController,
