@@ -98,7 +98,7 @@ export class SmsService {
         `📍 {{workshopName}}\n` +
         `🔢 Codice: {{bookingCode}}\n` +
         `Grazie per averci scelto!`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     return this.sendSmsWithRetry(phone, message, 'booking_confirmation');
@@ -116,7 +116,7 @@ export class SmsService {
         `Domani {{date}} alle {{time}} hai un appuntamento per {{service}}.\n` +
         `🔢 Codice: {{bookingCode}}\n` +
         `Per modifiche, chiamaci o rispondi a questo messaggio.`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     return this.sendSmsWithRetry(phone, message, 'booking_reminder');
@@ -133,7 +133,7 @@ export class SmsService {
       `⏰ Oggi alle {{time}} il tuo appuntamento per {{service}} da {{workshopName}}.\n` +
         `🔢 Codice: {{bookingCode}}\n` +
         `Ti aspettiamo!`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     return this.sendSmsWithRetry(phone, message, 'same_day_reminder');
@@ -150,7 +150,7 @@ export class SmsService {
       `🧾 {{workshopName}}: La tua fattura {{invoiceNumber}} di €{{amount}} è pronta.\n` +
         `Scaricala qui: {{downloadUrl}}\n` +
         `Grazie per la fiducia!`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     return this.sendSmsWithRetry(phone, message, 'invoice_ready');
@@ -166,7 +166,7 @@ export class SmsService {
     let message = this.formatMessage(
       `❌ {{workshopName}}: La tua prenotazione del {{date}} per {{service}} è stata annullata.\n` +
         `🔢 Codice: {{bookingCode}}`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     if (data.cancellationReason) {
@@ -190,7 +190,7 @@ export class SmsService {
         `Link: {{downloadUrl}}\n` +
         `Scade il: {{expiryDate}}\n` +
         `Per sicurezza, il link è valido 7 giorni.`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     return this.sendSmsWithRetry(phone, message, 'gdpr_export');
@@ -207,7 +207,7 @@ export class SmsService {
       `🔐 Codice di ripristino password MechMind: {{resetCode}}\n` +
         `Valido per {{expiryMinutes}} minuti.\n` +
         `Non condividere questo codice.`,
-      data as Record<string, unknown>,
+      data as unknown as Record<string, unknown>,
     );
 
     return this.sendSmsWithRetry(phone, message, 'password_reset');
@@ -291,7 +291,7 @@ export class SmsService {
       return {
         valid: true,
         formatted: lookup.phoneNumber,
-        carrier: lookup.lineTypeIntelligence?.carrier_name,
+        carrier: lookup.lineTypeIntelligence?.carrierName,
         type: lookup.lineTypeIntelligence?.type,
       };
     } catch (error) {

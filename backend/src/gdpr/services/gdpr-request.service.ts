@@ -83,6 +83,7 @@ export interface DataSubjectRequestResponse {
   completedAt?: Date;
   slaMet?: boolean;
   assignedTo?: string;
+  notes?: string;
 }
 
 /**
@@ -190,7 +191,7 @@ export class GdprRequestService {
             ticketNumber,
             requestType: dto.requestType,
             requesterEmail: dto.requesterEmail,
-          },
+          } as unknown as string,
           createdAt: receivedAt,
         },
       });

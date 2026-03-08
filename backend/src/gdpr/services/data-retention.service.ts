@@ -737,11 +737,15 @@ export class DataRetentionService {
       throw new Error(`Retention days must be between ${minDays} and ${maxDays}`);
     }
 
-    // @ts-expect-error - dataRetentionDays may need to be stored in settings JSON
+    // Store dataRetentionDays in tenant settings JSON field
     await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        dataRetentionDays: days,
+        settings: {
+          set: {
+            dataRetentionDays: days,
+          },
+        },
       },
     });
 

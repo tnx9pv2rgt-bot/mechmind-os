@@ -14,15 +14,6 @@ import { SseService } from '../services/sse.service';
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    tenantId: string;
-    email: string;
-    role: string;
-  };
-}
-
 @Controller('notifications/sse')
 @UseGuards(JwtAuthGuard)
 export class SseController {
@@ -44,7 +35,7 @@ export class SseController {
    */
   @Sse('stream')
   notificationsStream(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: Request,
     @Headers('last-event-id') lastEventId?: string,
     @Query('userOnly') userOnly?: string,
   ): Observable<MessageEvent> {
@@ -71,7 +62,7 @@ export class SseController {
    */
   @Sse('stream/personal')
   personalNotificationsStream(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: Request,
     @Headers('last-event-id') lastEventId?: string,
   ): Observable<MessageEvent> {
     const { id: userId, tenantId } = req.user;
