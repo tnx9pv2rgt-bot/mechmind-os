@@ -1,18 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
-import { render } from '@react-email/render';
-// @ts-ignore
-import * as React from 'react';
-import {
-  BookingConfirmationEmail,
-  BookingReminderEmail,
-  InvoiceReadyEmail,
-  GdprDataExportEmail,
-  WelcomeEmail,
-  PasswordResetEmail,
-  BookingCancelledEmail,
-} from '../templates/email-templates';
 
 export interface BookingConfirmationData {
   customerName: string;
@@ -115,22 +103,14 @@ export class EmailService {
    */
   async sendBookingConfirmation(data: BookingConfirmationData): Promise<EmailResult> {
     const subject = `✅ Prenotazione Confermata - ${data.bookingCode}`;
+    const html = this.getBookingConfirmationHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(BookingConfirmationEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'booking_confirmation' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send booking confirmation: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'booking_confirmation' }],
+    });
   }
 
   /**
@@ -138,22 +118,14 @@ export class EmailService {
    */
   async sendBookingReminder(data: BookingReminderData): Promise<EmailResult> {
     const subject = `⏰ Promemoria Appuntamento - ${data.bookingCode}`;
+    const html = this.getBookingReminderHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(BookingReminderEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'booking_reminder' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send booking reminder: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'booking_reminder' }],
+    });
   }
 
   /**
@@ -161,22 +133,14 @@ export class EmailService {
    */
   async sendInvoiceReady(data: InvoiceReadyData): Promise<EmailResult> {
     const subject = `🧾 Fattura Disponibile - ${data.invoiceNumber}`;
+    const html = this.getInvoiceReadyHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(InvoiceReadyEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'invoice_ready' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send invoice notification: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'invoice_ready' }],
+    });
   }
 
   /**
@@ -184,22 +148,14 @@ export class EmailService {
    */
   async sendGdprDataExport(data: GdprDataExportData): Promise<EmailResult> {
     const subject = `📥 Esportazione Dati Personale - Richiesta ${data.requestId}`;
+    const html = this.getGdprExportHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(GdprDataExportEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'gdpr_export' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send GDPR export notification: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'gdpr_export' }],
+    });
   }
 
   /**
@@ -207,22 +163,14 @@ export class EmailService {
    */
   async sendWelcome(data: WelcomeData): Promise<EmailResult> {
     const subject = `👋 Benvenuto su ${data.workshopName}`;
+    const html = this.getWelcomeHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(WelcomeEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'welcome' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send welcome email: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'welcome' }],
+    });
   }
 
   /**
@@ -230,22 +178,14 @@ export class EmailService {
    */
   async sendPasswordReset(data: PasswordResetData): Promise<EmailResult> {
     const subject = '🔐 Reimposta la tua password';
+    const html = this.getPasswordResetHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(PasswordResetEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'password_reset' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send password reset email: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'password_reset' }],
+    });
   }
 
   /**
@@ -253,22 +193,14 @@ export class EmailService {
    */
   async sendBookingCancelled(data: BookingCancelledData): Promise<EmailResult> {
     const subject = `❌ Prenotazione Annullata - ${data.bookingCode}`;
+    const html = this.getBookingCancelledHtml(data);
     
-    try {
-      const html = await render(
-        React.createElement(BookingCancelledEmail, data)
-      );
-
-      return await this.sendEmail({
-        to: data.customerEmail,
-        subject,
-        html,
-        tags: [{ name: 'category', value: 'booking_cancelled' }],
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send cancellation email: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'booking_cancelled' }],
+    });
   }
 
   /**
@@ -343,9 +275,120 @@ export class EmailService {
     bounced: number;
     complained: number;
   } | null> {
-    // Resend doesn't provide aggregated stats API yet
-    // This would typically be fetched from your database
     return null;
+  }
+
+  // HTML Templates
+  private getBookingConfirmationHtml(data: BookingConfirmationData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0071e3;">✅ Prenotazione Confermata</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>La tua prenotazione è stata confermata!</p>
+        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Codice:</strong> ${data.bookingCode}</p>
+          <p><strong>Servizio:</strong> ${data.service}</p>
+          <p><strong>Data:</strong> ${data.date}</p>
+          <p><strong>Ora:</strong> ${data.time}</p>
+          <p><strong>Veicolo:</strong> ${data.vehicle}</p>
+        </div>
+        <p><strong>${data.workshopName}</strong><br>${data.workshopAddress}<br>Tel: ${data.workshopPhone}</p>
+        ${data.notes ? `<p><strong>Note:</strong> ${data.notes}</p>` : ''}
+      </div>
+    `;
+  }
+
+  private getBookingReminderHtml(data: BookingReminderData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #f59e0b;">⏰ Promemoria Appuntamento</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>Ti ricordiamo il tuo appuntamento di domani:</p>
+        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Codice:</strong> ${data.bookingCode}</p>
+          <p><strong>Servizio:</strong> ${data.service}</p>
+          <p><strong>Data:</strong> ${data.date}</p>
+          <p><strong>Ora:</strong> ${data.time}</p>
+          <p><strong>Veicolo:</strong> ${data.vehicle}</p>
+        </div>
+        <p><strong>${data.workshopName}</strong><br>${data.workshopAddress}</p>
+      </div>
+    `;
+  }
+
+  private getInvoiceReadyHtml(data: InvoiceReadyData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #22c55e;">🧾 Fattura Disponibile</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>La tua fattura è pronta per il download:</p>
+        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Fattura N.:</strong> ${data.invoiceNumber}</p>
+          <p><strong>Data:</strong> ${data.invoiceDate}</p>
+          <p><strong>Importo:</strong> ${data.amount}</p>
+        </div>
+        <a href="${data.downloadUrl}" style="background: #0071e3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Scarica Fattura</a>
+        <p style="margin-top: 20px;"><strong>${data.workshopName}</strong></p>
+      </div>
+    `;
+  }
+
+  private getGdprExportHtml(data: GdprDataExportData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0071e3;">📥 Esportazione Dati Personale</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>I tuoi dati sono pronti per il download:</p>
+        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Richiesta ID:</strong> ${data.requestId}</p>
+          <p><strong>Scadenza:</strong> ${data.expiryDate}</p>
+        </div>
+        <a href="${data.downloadUrl}" style="background: #0071e3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Scarica Dati</a>
+        <p style="margin-top: 20px; font-size: 12px; color: #666;">Il link scadrà il ${data.expiryDate}</p>
+      </div>
+    `;
+  }
+
+  private getWelcomeHtml(data: WelcomeData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0071e3;">👋 Benvenuto su ${data.workshopName}</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>Grazie per esserti registrato!</p>
+        <p>Da ora puoi prenotare i tuoi appuntamenti online e tenere traccia della tua auto.</p>
+        <a href="${data.loginUrl}" style="background: #0071e3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px;">Accedi al Portale</a>
+      </div>
+    `;
+  }
+
+  private getPasswordResetHtml(data: PasswordResetData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0071e3;">🔐 Reimposta la tua password</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>Hai richiesto di reimpostare la password.</p>
+        <p>Clicca il pulsante qui sotto per procedere:</p>
+        <a href="${data.resetUrl}" style="background: #0071e3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0;">Reimposta Password</a>
+        <p style="font-size: 12px; color: #666;">Il link scade tra ${data.expiryHours} ore.</p>
+      </div>
+    `;
+  }
+
+  private getBookingCancelledHtml(data: BookingCancelledData): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #ef4444;">❌ Prenotazione Annullata</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>La tua prenotazione è stata annullata:</p>
+        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Codice:</strong> ${data.bookingCode}</p>
+          <p><strong>Servizio:</strong> ${data.service}</p>
+          <p><strong>Data:</strong> ${data.date}</p>
+        </div>
+        ${data.cancellationReason ? `<p><strong>Motivo:</strong> ${data.cancellationReason}</p>` : ''}
+        <p><strong>${data.workshopName}</strong></p>
+      </div>
+    `;
   }
 
   private async sendEmail(options: {
@@ -361,7 +404,6 @@ export class EmailService {
       return { success: true, messageId: 'mock-email-id' };
     }
 
-    // Validate email format
     if (!this.isValidEmail(options.to)) {
       return { success: false, error: 'Invalid email format' };
     }
