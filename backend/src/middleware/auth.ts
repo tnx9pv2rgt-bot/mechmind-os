@@ -15,17 +15,8 @@ import {
   DecodedToken,
 } from '../services/jwtService';
 
-// Estensione tipi Express
-declare global {
-  namespace Express {
-    interface Request {
-      user?: DecodedToken;
-      token?: string;
-      tenantId?: string;
-      userId?: string;
-    }
-  }
-}
+// Import express types to ensure global augmentations are loaded
+import '../types/express';
 
 // Interfacce
 export interface AuthMiddlewareOptions {
