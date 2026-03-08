@@ -9,6 +9,7 @@
  */
 
 import { Module } from '@nestjs/common';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { ObdStreamingService } from './obd/services/obd-streaming.service';
 import { ObdStreamingController } from './obd/controllers/obd-streaming.controller';
 import { ObdStreamingGateway } from './obd/gateways/obd-streaming.gateway';
@@ -24,7 +25,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { S3Service } from '../common/services/s3.service';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [
+    NotificationsModule,
+    RedisModule.forRoot({
+      type: 'single',
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+    }),
+  ],
   controllers: [
     ObdStreamingController,
     VehicleTwinController,

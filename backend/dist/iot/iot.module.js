@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IotModule = void 0;
 const common_1 = require("@nestjs/common");
+const ioredis_1 = require("@nestjs-modules/ioredis");
 const obd_streaming_service_1 = require("./obd/services/obd-streaming.service");
 const obd_streaming_controller_1 = require("./obd/controllers/obd-streaming.controller");
 const obd_streaming_gateway_1 = require("./obd/gateways/obd-streaming.gateway");
@@ -26,7 +27,13 @@ let IotModule = class IotModule {
 exports.IotModule = IotModule;
 exports.IotModule = IotModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule],
+        imports: [
+            notifications_module_1.NotificationsModule,
+            ioredis_1.RedisModule.forRoot({
+                type: 'single',
+                url: process.env.REDIS_URL || 'redis://localhost:6379',
+            }),
+        ],
         controllers: [
             obd_streaming_controller_1.ObdStreamingController,
             vehicle_twin_controller_1.VehicleTwinController,
