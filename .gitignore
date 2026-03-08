@@ -12,7 +12,7 @@ out/
 
 # Production
 build/
-dist/
+# dist/ - keep for backend pre-built deploys
 
 # Environment variables
 .env
