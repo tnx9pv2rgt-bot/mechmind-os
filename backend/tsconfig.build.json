@@ -5,7 +5,11 @@
     "declaration": true,
     "removeComments": true,
     "outDir": "./dist",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false
   },
   "exclude": [
     "node_modules",
