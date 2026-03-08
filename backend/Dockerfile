@@ -10,8 +10,9 @@ COPY prisma ./prisma/
 RUN npm install --omit=dev --legacy-peer-deps --ignore-scripts && \
     npm install prisma --legacy-peer-deps
 
-# Generate Prisma client
-RUN npx prisma generate
+# Rebuild bcrypt and generate Prisma
+RUN npm rebuild bcrypt && \
+    npx prisma generate
 
 # Copy pre-built dist folder
 COPY dist ./dist
