@@ -7,7 +7,6 @@ import { MetricsController } from './controllers/metrics.controller';
 import { ReportingController } from './controllers/reporting.controller';
 import { MetabaseController } from './controllers/metabase.controller';
 import { CommonModule } from '@common/common.module';
-import { PrismaService } from '@common/services/prisma.service';
 
 /**
  * MechMind OS Analytics Module
@@ -29,7 +28,7 @@ import { PrismaService } from '@common/services/prisma.service';
     ScheduleModule.forRoot(),
   ],
   controllers: [MetricsController, ReportingController, MetabaseController],
-  providers: [UnitEconomicsService, ReportingService, PrismaService],
+  providers: [UnitEconomicsService, ReportingService],
   exports: [UnitEconomicsService, ReportingService],
 })
 export class AnalyticsModule {}

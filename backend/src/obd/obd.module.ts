@@ -5,15 +5,15 @@
 import { Module } from '@nestjs/common';
 import { ObdController } from './controllers/obd.controller';
 import { ObdService } from './services/obd.service';
-import { PrismaService } from '../common/services/prisma.service';
+import { CommonModule } from '../common/common.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [CommonModule, NotificationsModule, AuthModule],
   controllers: [ObdController],
   providers: [
     ObdService,
-    PrismaService,
   ],
   exports: [ObdService],
 })

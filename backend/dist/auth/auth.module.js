@@ -17,13 +17,11 @@ const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const roles_guard_1 = require("./guards/roles.guard");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const tenant_context_middleware_1 = require("./middleware/tenant-context.middleware");
-const prisma_service_1 = require("../common/services/prisma.service");
-const logger_service_1 = require("../common/services/logger.service");
+const common_module_1 = require("../common/common.module");
 const two_factor_service_1 = require("./two-factor/services/two-factor.service");
 const two_factor_controller_1 = require("./two-factor/controllers/two-factor.controller");
 const mfa_service_1 = require("./mfa/mfa.service");
 const mfa_controller_1 = require("./mfa/mfa.controller");
-const encryption_service_1 = require("../common/services/encryption.service");
 let AuthModule = class AuthModule {
     configure(consumer) {
         consumer
@@ -35,6 +33,7 @@ exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            common_module_1.CommonModule,
             config_1.ConfigModule,
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             jwt_1.JwtModule.registerAsync({
@@ -56,9 +55,6 @@ exports.AuthModule = AuthModule = __decorate([
             jwt_strategy_1.JwtStrategy,
             jwt_auth_guard_1.JwtAuthGuard,
             roles_guard_1.RolesGuard,
-            prisma_service_1.PrismaService,
-            logger_service_1.LoggerService,
-            encryption_service_1.EncryptionService,
         ],
         exports: [auth_service_1.AuthService, two_factor_service_1.TwoFactorService, mfa_service_1.MfaService, jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard, jwt_1.JwtModule],
     })

@@ -5,17 +5,19 @@
 import { Module } from '@nestjs/common';
 import { InspectionController } from './controllers/inspection.controller';
 import { InspectionService } from './services/inspection.service';
-import { PrismaService } from '../common/services/prisma.service';
-import { S3Service } from '../common/services/s3.service';
+import { CommonModule } from '../common/common.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [
+    CommonModule,
+    AuthModule,
+    NotificationsModule,
+  ],
   controllers: [InspectionController],
   providers: [
     InspectionService,
-    PrismaService,
-    S3Service,
   ],
   exports: [InspectionService],
 })

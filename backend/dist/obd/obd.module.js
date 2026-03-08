@@ -10,18 +10,18 @@ exports.ObdModule = void 0;
 const common_1 = require("@nestjs/common");
 const obd_controller_1 = require("./controllers/obd.controller");
 const obd_service_1 = require("./services/obd.service");
-const prisma_service_1 = require("../common/services/prisma.service");
+const common_module_1 = require("../common/common.module");
 const notifications_module_1 = require("../notifications/notifications.module");
+const auth_module_1 = require("../auth/auth.module");
 let ObdModule = class ObdModule {
 };
 exports.ObdModule = ObdModule;
 exports.ObdModule = ObdModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule],
+        imports: [common_module_1.CommonModule, notifications_module_1.NotificationsModule, auth_module_1.AuthModule],
         controllers: [obd_controller_1.ObdController],
         providers: [
             obd_service_1.ObdService,
-            prisma_service_1.PrismaService,
         ],
         exports: [obd_service_1.ObdService],
     })

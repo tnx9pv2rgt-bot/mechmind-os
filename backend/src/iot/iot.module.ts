@@ -9,7 +9,6 @@
  */
 
 import { Module } from '@nestjs/common';
-import { RedisModule } from '@nestjs-modules/ioredis';
 import { ObdStreamingService } from './obd/services/obd-streaming.service';
 import { ObdStreamingController } from './obd/controllers/obd-streaming.controller';
 import { ObdStreamingGateway } from './obd/gateways/obd-streaming.gateway';
@@ -20,17 +19,15 @@ import { ShopFloorController } from './shop-floor/controllers/shop-floor.control
 import { ShopFloorGateway } from './shop-floor/gateways/shop-floor.gateway';
 import { LicensePlateService } from './license-plate/services/license-plate.service';
 import { LicensePlateController } from './license-plate/controllers/license-plate.controller';
-import { PrismaService } from '../common/services/prisma.service';
+import { CommonModule } from '../common/common.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { S3Service } from '../common/services/s3.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    CommonModule,
+    AuthModule,
     NotificationsModule,
-    RedisModule.forRoot({
-      type: 'single',
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-    }),
   ],
   controllers: [
     ObdStreamingController,
@@ -45,8 +42,6 @@ import { S3Service } from '../common/services/s3.service';
     ShopFloorService,
     ShopFloorGateway,
     LicensePlateService,
-    PrismaService,
-    S3Service,
   ],
   exports: [
     ObdStreamingService,

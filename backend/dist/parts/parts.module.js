@@ -10,18 +10,18 @@ exports.PartsModule = void 0;
 const common_1 = require("@nestjs/common");
 const parts_controller_1 = require("./controllers/parts.controller");
 const parts_service_1 = require("./services/parts.service");
-const prisma_service_1 = require("../common/services/prisma.service");
+const common_module_1 = require("../common/common.module");
 const notifications_module_1 = require("../notifications/notifications.module");
+const auth_module_1 = require("../auth/auth.module");
 let PartsModule = class PartsModule {
 };
 exports.PartsModule = PartsModule;
 exports.PartsModule = PartsModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule],
+        imports: [common_module_1.CommonModule, notifications_module_1.NotificationsModule, auth_module_1.AuthModule],
         controllers: [parts_controller_1.PartsController],
         providers: [
             parts_service_1.PartsService,
-            prisma_service_1.PrismaService,
         ],
         exports: [parts_service_1.PartsService],
     })

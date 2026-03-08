@@ -8,16 +8,15 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { TenantContextMiddleware } from './middleware/tenant-context.middleware';
-import { PrismaService } from '@common/services/prisma.service';
-import { LoggerService } from '@common/services/logger.service';
+import { CommonModule } from '@common/common.module';
 import { TwoFactorService } from './two-factor/services/two-factor.service';
 import { TwoFactorController } from './two-factor/controllers/two-factor.controller';
 import { MfaService } from './mfa/mfa.service';
 import { MfaController } from './mfa/mfa.controller';
-import { EncryptionService } from '@common/services/encryption.service';
 
 @Module({
   imports: [
+    CommonModule,
     ConfigModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
@@ -39,9 +38,6 @@ import { EncryptionService } from '@common/services/encryption.service';
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
-    PrismaService,
-    LoggerService,
-    EncryptionService,
   ],
   exports: [AuthService, TwoFactorService, MfaService, JwtAuthGuard, RolesGuard, JwtModule],
 })
