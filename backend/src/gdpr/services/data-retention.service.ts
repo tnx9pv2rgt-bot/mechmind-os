@@ -566,7 +566,7 @@ export class DataRetentionService {
     cutoffDate.setDate(cutoffDate.getDate() - snapshotRetentionDays);
 
     // Find requests with expired snapshots
-    const expiredRequests = await this.prisma.dataSubjectRequests.findMany({
+    const expiredRequests = await this.prisma.dataSubjectRequest.findMany({
       where: {
         completedAt: {
           lt: cutoffDate,
@@ -589,7 +589,7 @@ export class DataRetentionService {
         // In production: delete from S3
         // await this.s3Client.deleteObject({ Bucket: 'snapshots', Key: request.deletionSnapshotUrl });
 
-        await this.prisma.dataSubjectRequests.update({
+        await this.prisma.dataSubjectRequest.update({
           where: { id: request.id },
           data: {
             deletionSnapshotUrl: null,
