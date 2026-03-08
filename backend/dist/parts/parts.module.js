@@ -11,17 +11,17 @@ const common_1 = require("@nestjs/common");
 const parts_controller_1 = require("./controllers/parts.controller");
 const parts_service_1 = require("./services/parts.service");
 const prisma_service_1 = require("../common/services/prisma.service");
-const notifications_service_1 = require("../notifications/services/notifications.service");
+const notifications_module_1 = require("../notifications/notifications.module");
 let PartsModule = class PartsModule {
 };
 exports.PartsModule = PartsModule;
 exports.PartsModule = PartsModule = __decorate([
     (0, common_1.Module)({
+        imports: [notifications_module_1.NotificationsModule],
         controllers: [parts_controller_1.PartsController],
         providers: [
             parts_service_1.PartsService,
             prisma_service_1.PrismaService,
-            notifications_service_1.NotificationsService,
         ],
         exports: [parts_service_1.PartsService],
     })

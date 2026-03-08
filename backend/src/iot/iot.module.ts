@@ -20,10 +20,11 @@ import { ShopFloorGateway } from './shop-floor/gateways/shop-floor.gateway';
 import { LicensePlateService } from './license-plate/services/license-plate.service';
 import { LicensePlateController } from './license-plate/controllers/license-plate.controller';
 import { PrismaService } from '../common/services/prisma.service';
-import { NotificationsService } from '../notifications/services/notifications.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { S3Service } from '../common/services/s3.service';
 
 @Module({
+  imports: [NotificationsModule],
   controllers: [
     ObdStreamingController,
     VehicleTwinController,
@@ -38,7 +39,6 @@ import { S3Service } from '../common/services/s3.service';
     ShopFloorGateway,
     LicensePlateService,
     PrismaService,
-    NotificationsService,
     S3Service,
   ],
   exports: [

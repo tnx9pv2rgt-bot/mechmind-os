@@ -19,13 +19,14 @@ const shop_floor_gateway_1 = require("./shop-floor/gateways/shop-floor.gateway")
 const license_plate_service_1 = require("./license-plate/services/license-plate.service");
 const license_plate_controller_1 = require("./license-plate/controllers/license-plate.controller");
 const prisma_service_1 = require("../common/services/prisma.service");
-const notifications_service_1 = require("../notifications/services/notifications.service");
+const notifications_module_1 = require("../notifications/notifications.module");
 const s3_service_1 = require("../common/services/s3.service");
 let IotModule = class IotModule {
 };
 exports.IotModule = IotModule;
 exports.IotModule = IotModule = __decorate([
     (0, common_1.Module)({
+        imports: [notifications_module_1.NotificationsModule],
         controllers: [
             obd_streaming_controller_1.ObdStreamingController,
             vehicle_twin_controller_1.VehicleTwinController,
@@ -40,7 +41,6 @@ exports.IotModule = IotModule = __decorate([
             shop_floor_gateway_1.ShopFloorGateway,
             license_plate_service_1.LicensePlateService,
             prisma_service_1.PrismaService,
-            notifications_service_1.NotificationsService,
             s3_service_1.S3Service,
         ],
         exports: [
