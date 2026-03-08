@@ -2,14 +2,15 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "sourceMap": false,
-    "declaration": true,
+    "declaration": false,
     "removeComments": true,
     "outDir": "./dist",
     "jsx": "react-jsx",
     "skipLibCheck": true,
     "strict": false,
     "noImplicitAny": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "noEmitOnError": false
   },
   "exclude": [
     "node_modules",
