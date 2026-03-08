@@ -136,7 +136,8 @@ export class ObdStreamingController {
   async getMode06Tests(
     @Param('id') deviceId: string,
   ): Promise<Mode06TestResponseDto[]> {
-    return await this.streamingService.getMode06Tests(deviceId);
+    const results = await this.streamingService.getMode06Tests(deviceId);
+    return results as Mode06TestResponseDto[];
   }
 
   @Post('evap-test')

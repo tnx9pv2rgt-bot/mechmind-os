@@ -50,7 +50,7 @@ interface WorkshopInfo {
   phone: string;
 }
 
-interface NotificationResult {
+export interface NotificationResult {
   success: boolean;
   channel: NotificationChannel;
   messageId?: string;

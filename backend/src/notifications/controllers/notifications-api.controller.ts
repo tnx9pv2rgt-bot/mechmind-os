@@ -10,7 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { NotificationOrchestratorService } from '../services/notification.service';
+import { NotificationOrchestratorService, NotificationResult } from '../services/notification.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
 import {
@@ -182,7 +182,12 @@ export class NotificationsApiController {
   @Post('bulk')
   @ApiOperation({ summary: 'Send notifications to multiple customers' })
   @ApiResponse({ status: 200, description: 'Bulk notifications processed' })
-  async sendBulkNotifications(@Body() dto: BulkNotificationDto) {
+  async sendBulkNotifications(@Body() dto: BulkNotificationDto): Promise<{
+    total: number;
+    successful: number;
+    failed: number;
+    results: NotificationResult[];
+  }> {
     const results = await this.notificationService.sendBulkNotifications(
       dto.notifications,
       dto.options,

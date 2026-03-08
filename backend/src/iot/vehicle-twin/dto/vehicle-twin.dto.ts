@@ -34,6 +34,11 @@ export class RecordHistoryDto {
   @IsString()
   description: string;
 
+  @ApiProperty({ required: false, description: 'Event date (defaults to now)' })
+  @IsOptional()
+  @IsString()
+  date?: string;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsUUID()
@@ -55,6 +60,12 @@ export class RecordHistoryDto {
   @IsArray()
   @IsString({ each: true })
   photos?: string[];
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  documents?: string[];
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -79,11 +90,20 @@ export class RecordDamageDto {
   @IsString()
   description: string;
 
+  @ApiProperty({ required: false, type: 'object', description: '3D location coordinates' })
+  @IsOptional()
+  location?: { x: number; y: number; z: number };
+
   @ApiProperty({ required: false, type: [String] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   photos?: string[];
+
+  @ApiProperty({ required: false, description: 'When damage was reported (defaults to now)' })
+  @IsOptional()
+  @IsString()
+  reportedAt?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

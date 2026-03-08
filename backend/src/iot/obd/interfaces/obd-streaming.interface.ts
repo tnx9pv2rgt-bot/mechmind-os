@@ -70,7 +70,7 @@ export interface FreezeFrameData {
 
 export interface Mode06TestResult {
   testId: number;
-  componentId: number;
+  componentId?: number;
   testName: string;
   value: number;
   minValue?: number;

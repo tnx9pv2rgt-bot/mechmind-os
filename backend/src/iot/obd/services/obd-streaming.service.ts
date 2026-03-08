@@ -270,8 +270,8 @@ export class ObdStreamingService {
       await this.prisma.obdMode06Result.createMany({
         data: results.map(r => ({
           deviceId,
-          testId: r.testId,
-          componentId: r.componentId,
+          testId: r.testId.toString(),
+          componentId: r.componentId?.toString(),
           testName: r.testName,
           value: r.value,
           minValue: r.minValue,

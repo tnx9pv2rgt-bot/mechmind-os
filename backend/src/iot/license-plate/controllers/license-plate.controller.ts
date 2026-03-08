@@ -50,7 +50,8 @@ export class LicensePlateController {
   @ApiOperation({ summary: 'Detect license plate from image' })
   @ApiResponse({ status: 201, type: LicensePlateDetectionDto })
   async detectLicensePlate(
-    @UploadedFile() file: Express.Request['file'],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    @UploadedFile() file: any,
     @Body() dto: DetectLicensePlateDto,
   ): Promise<LicensePlateDetectionDto> {
     return await this.licensePlateService.detectLicensePlate(file.buffer, {

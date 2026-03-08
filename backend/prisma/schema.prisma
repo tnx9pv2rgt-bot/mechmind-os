@@ -62,6 +62,19 @@ model Tenant {
   lprCameras            LprCamera[]
   licensePlateDetections LicensePlateDetection[]
 
+  // Shop Floor
+  shopFloors      ShopFloor[]
+  shopFloorEvents ShopFloorEvent[]
+  workOrders      WorkOrder[]
+  technicians     Technician[]
+  
+  // Vehicle Twin
+  vehicleTwinConfigs VehicleTwinConfig[]
+  vehicleTwinComponents VehicleTwinComponent[]
+  componentHistories ComponentHistory[]
+  vehicleHealthHistories VehicleHealthHistory[]
+  vehicleDamages VehicleDamage[]
+
   @@map("tenants")
 }
 
@@ -256,6 +269,17 @@ model Vehicle {
   entryExits      VehicleEntryExit[]
   parkingSessions ParkingSession[]
 
+  // Shop Floor
+  workOrders WorkOrder[]
+  currentBay ServiceBay[]
+  rfidTag    String?    @map("rfid_tag") @unique
+  
+  // Vehicle Twin
+  twinConfig    VehicleTwinConfig?
+  twinComponents VehicleTwinComponent[]
+  healthHistory VehicleHealthHistory[]
+  damages       VehicleDamage[]
+
   @@map("vehicles")
 }
 
@@ -365,6 +389,7 @@ model Service {
 
   // Relations
   bookings BookingService[]
+  workOrderServices WorkOrderService[]
 
   @@map("services")
 }
@@ -870,6 +895,7 @@ model Part {
   movements    InventoryMovement[]
   orderItems   PurchaseOrderItem[]
   bookingParts BookingPart[]
+  workOrderParts WorkOrderPart[]
 
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
@@ -1956,6 +1982,414 @@ model ObdEvapTest {
   @@index([deviceId, startedAt])
   @@index([status])
   @@map("obd_evap_tests")
+}
+
+// ============================================
+// SHOP FLOOR MODELS
+// ============================================
+
+model ShopFloor {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name   String
+  status String @default("ACTIVE")
+
+  // Relations
+  bays         ServiceBay[]
+  parkingSpots ParkingSpot[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("shop_floors")
+}
+
+model ServiceBay {
+  id          String   @id @default(uuid())
+  shopFloorId String   @map("shop_floor_id")
+  shopFloor   ShopFloor @relation(fields: [shopFloorId], references: [id], onDelete: Cascade)
+
+  name   String
+  type   String // LIFT, PIT, HOIST, DYNO, ALIGNMENT, DETAIL
+  status String @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED, MAINTENANCE, CLEANING
+
+  // Location
+  locationX Float @map("location_x")
+  locationY Float @map("location_y")
+  floor     Int   @default(1)
+
+  // Capabilities
+  capabilities    String[]
+  maxVehicleWeight Float    @map("max_vehicle_weight")
+  liftCapacity    Float?    @map("lift_capacity")
+
+  // Current state
+  currentVehicleId   String?   @map("current_vehicle_id")
+  currentVehicle     Vehicle?  @relation(fields: [currentVehicleId], references: [id])
+  currentWorkOrderId String?   @map("current_work_order_id")
+  currentWorkOrder   WorkOrder? @relation(fields: [currentWorkOrderId], references: [id])
+  checkInTime        DateTime? @map("check_in_time")
+
+  // Relations
+  sensors Sensor[]
+
+  @@index([shopFloorId])
+  @@index([status])
+  @@map("service_bays")
+}
+
+model ParkingSpot {
+  id          String @id @default(uuid())
+  shopFloorId String @map("shop_floor_id")
+  shopFloor   ShopFloor @relation(fields: [shopFloorId], references: [id], onDelete: Cascade)
+
+  name   String
+  type   String // WAITING, COMPLETED, CUSTOMER, STAFF
+  status String @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED
+
+  // Location
+  locationX Float @map("location_x")
+  locationY Float @map("location_y")
+
+  vehicleId     String? @map("vehicle_id")
+  licensePlate  String? @map("license_plate")
+
+  @@index([shopFloorId])
+  @@index([status])
+  @@map("parking_spots")
+}
+
+model Sensor {
+  id     String @id @default(uuid())
+  bayId  String @map("bay_id")
+  bay    ServiceBay @relation(fields: [bayId], references: [id], onDelete: Cascade)
+
+  type   String // RFID, BLUETOOTH_BEACON, ULTRASONIC, PIR, CAMERA, PRESSURE, MAGNETIC
+  name   String
+  isActive Boolean @default(true) @map("is_active")
+
+  lastReading DateTime? @map("last_reading")
+  batteryLevel Int?     @map("battery_level")
+  config      Json?
+
+  @@index([bayId])
+  @@index([type])
+  @@map("sensors")
+}
+
+model SensorReading {
+  id        String   @id @default(uuid())
+  sensorId  String   @map("sensor_id")
+  bayId     String   @map("bay_id")
+
+  type   String // RFID, BLUETOOTH_BEACON, ULTRASONIC, PIR, CAMERA, PRESSURE, MAGNETIC
+  data   Json
+
+  timestamp DateTime @default(now())
+
+  @@index([sensorId])
+  @@index([bayId])
+  @@index([timestamp])
+  @@map("sensor_readings")
+}
+
+model ShopFloorEvent {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type      String // VEHICLE_ENTRY, VEHICLE_EXIT, BAY_ASSIGNMENT, STATUS_CHANGE, TECHNICIAN_MOVE
+  timestamp DateTime @default(now())
+
+  bayId        String? @map("bay_id")
+  vehicleId    String? @map("vehicle_id")
+  technicianId String? @map("technician_id")
+  workOrderId  String? @map("work_order_id")
+  fromStatus   String? @map("from_status")
+  toStatus     String? @map("to_status")
+  message      String?
+
+  metadata Json?
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([timestamp])
+  @@map("shop_floor_events")
+}
+
+model WorkOrder {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  status String @default("PENDING") // PENDING, CHECKED_IN, IN_PROGRESS, WAITING_PARTS, QUALITY_CHECK, COMPLETED
+
+  // Relations
+  vehicleId String  @map("vehicle_id")
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  assignedBayId String? @map("assigned_bay_id")
+  
+  actualStartTime      DateTime? @map("actual_start_time")
+  estimatedCompletion  DateTime? @map("estimated_completion")
+  actualCompletionTime DateTime? @map("actual_completion_time")
+
+  technicians WorkOrderTechnician[]
+  services    WorkOrderService[]
+  assignedBay ServiceBay[]
+  parts       WorkOrderPart[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@index([status])
+  @@map("work_orders")
+}
+
+model WorkOrderTechnician {
+  id        String   @id @default(uuid())
+  workOrderId String @map("work_order_id")
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  technicianId String @map("technician_id")
+  
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@unique([workOrderId, technicianId])
+  @@index([workOrderId])
+  @@index([technicianId])
+  @@map("work_order_technicians")
+}
+
+model WorkOrderService {
+  id        String   @id @default(uuid())
+  workOrderId String @map("work_order_id")
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  serviceId String @map("service_id")
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  status String @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+
+  estimatedMinutes Int @map("estimated_minutes")
+  actualMinutes    Int? @map("actual_minutes")
+  technicianId     String? @map("technician_id")
+  relatedComponentId String? @map("related_component_id")
+
+  @@unique([workOrderId, serviceId])
+  @@index([workOrderId])
+  @@index([serviceId])
+  @@map("work_order_services")
+}
+
+model WorkOrderPart {
+  id        String   @id @default(uuid())
+  workOrderId String @map("work_order_id")
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  partId String @map("part_id")
+  part   Part @relation(fields: [partId], references: [id])
+
+  quantity Int
+  status   String @default("PENDING") // PENDING, INSTALLED
+
+  @@unique([workOrderId, partId])
+  @@index([workOrderId])
+  @@index([partId])
+  @@map("work_order_parts")
+}
+
+model Technician {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name     String
+  email    String?
+  phone    String?
+  beaconId String? @map("beacon_id")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([beaconId])
+  @@map("technicians")
+}
+
+// ============================================
+// VEHICLE TWIN MODELS
+// ============================================
+
+model VehicleTwinConfig {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vehicleId String  @unique @map("vehicle_id")
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Configuration
+  isEnabled        Boolean @default(true) @map("is_enabled")
+  syncInterval     Int     @default(300) @map("sync_interval") // seconds
+  dataRetentionDays Int    @default(365) @map("data_retention_days")
+  
+  // Features
+  trackLocation    Boolean @default(true) @map("track_location")
+  trackHealth      Boolean @default(true) @map("track_health")
+  trackComponents  Boolean @default(true) @map("track_components")
+  
+  // Metadata
+  lastSyncedAt DateTime? @map("last_synced_at")
+  config       Json?     @default("{}")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@map("vehicle_twin_configs")
+}
+
+model VehicleTwinComponent {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vehicleId String  @map("vehicle_id")
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Component details
+  name        String
+  category    String // ENGINE, TRANSMISSION, BRAKES, SUSPENSION, ELECTRICAL, etc
+  position    String? // Front, Rear, Left, Right, etc
+  partNumber  String? @map("part_number")
+  
+  // Lifecycle
+  installedAt DateTime @default(now()) @map("installed_at")
+  expectedLifespanKm Int? @map("expected_lifespan_km")
+  expectedLifespanMonths Int? @map("expected_lifespan_months")
+  
+  // Current state
+  status      String @default("ACTIVE") // ACTIVE, WARNING, CRITICAL, REPLACED
+  condition   Float @default(100.0) // 0-100 percentage
+  wearLevel   Float @default(0.0) // 0-100 percentage
+  currentMileage Int? @map("current_mileage")
+  estimatedRemainingKm Int? @map("estimated_remaining_km")
+  
+  // Relations
+  history ComponentHistory[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@index([category])
+  @@index([status])
+  @@map("vehicle_twin_components")
+}
+
+model ComponentHistory {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  componentId String @map("component_id")
+  component   VehicleTwinComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  // Event details
+  eventType   String @map("event_type") // INSTALLED, INSPECTED, REPLACED, REPAIRED, CONDITION_CHANGED
+  mileage     Int?
+  condition   Float? // 0-100
+  wearLevel   Float? @map("wear_level") // 0-100
+  notes       String?
+  
+  // Relations
+  workOrderId String? @map("work_order_id")
+  inspectionId String? @map("inspection_id")
+  
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  @@index([tenantId])
+  @@index([componentId])
+  @@index([eventType])
+  @@index([recordedAt])
+  @@map("component_histories")
+}
+
+model VehicleHealthHistory {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vehicleId String  @map("vehicle_id")
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Health metrics
+  overallScore   Int @map("overall_score") // 0-100
+  engineScore    Int @map("engine_score") // 0-100
+  transmissionScore Int @map("transmission_score") // 0-100
+  brakesScore    Int @map("brakes_score") // 0-100
+  suspensionScore Int @map("suspension_score") // 0-100
+  electricalScore Int @map("electrical_score") // 0-100
+  
+  // OBD data
+  hasErrorCodes Boolean @default(false) @map("has_error_codes")
+  errorCodes    String[] @default([]) @map("error_codes")
+  
+  // Metadata
+  mileage       Int?
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+  source        String @default("OBD") // OBD, INSPECTION, MANUAL
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@index([recordedAt])
+  @@map("vehicle_health_histories")
+}
+
+model VehicleDamage {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vehicleId String  @map("vehicle_id")
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Damage details
+  type        String // SCRATCH, DENT, CRACK, TEAR, CORROSION, etc
+  severity    String // MINOR, MODERATE, SEVERE
+  category    String // EXTERIOR, INTERIOR, MECHANICAL, ELECTRICAL
+  position    String? // Front bumper, Rear left door, etc
+  description String?
+  
+  // Images
+  images      String[] // Array of image URLs
+  
+  // Status
+  status      String @default("ACTIVE") // ACTIVE, REPAIRED, DOCUMENTED
+  
+  // Relations
+  inspectionId String? @map("inspection_id")
+  
+  // Timestamps
+  discoveredAt DateTime @default(now()) @map("discovered_at")
+  repairedAt   DateTime? @map("repaired_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@index([status])
+  @@map("vehicle_damages")
 }
 
 // ============================================

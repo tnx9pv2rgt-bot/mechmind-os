@@ -412,11 +412,11 @@ export class FeatureAccessService {
   // ==========================================
 
   private isSubscriptionActive(status: SubscriptionStatus): boolean {
-    return [
+    return ([
       SubscriptionStatus.ACTIVE,
       SubscriptionStatus.TRIAL,
       SubscriptionStatus.PAST_DUE,
-    ].includes(status);
+    ] as SubscriptionStatus[]).includes(status);
   }
 
   private getMinimumPlanForFeature(feature: FeatureFlag): SubscriptionPlan {
