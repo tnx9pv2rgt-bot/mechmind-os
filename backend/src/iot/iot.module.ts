@@ -9,6 +9,7 @@
  */
 
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { ObdStreamingService } from './obd/services/obd-streaming.service';
 import { ObdStreamingController } from './obd/controllers/obd-streaming.controller';
 import { ObdStreamingGateway } from './obd/gateways/obd-streaming.gateway';
@@ -28,6 +29,10 @@ import { AuthModule } from '../auth/auth.module';
     CommonModule,
     AuthModule,
     NotificationsModule,
+    BullModule.registerQueue(
+      { name: 'obd' },
+      { name: 'shop-floor' },
+    ),
   ],
   controllers: [
     ObdStreamingController,

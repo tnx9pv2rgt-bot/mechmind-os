@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IotModule = void 0;
 const common_1 = require("@nestjs/common");
+const bullmq_1 = require("@nestjs/bullmq");
 const obd_streaming_service_1 = require("./obd/services/obd-streaming.service");
 const obd_streaming_controller_1 = require("./obd/controllers/obd-streaming.controller");
 const obd_streaming_gateway_1 = require("./obd/gateways/obd-streaming.gateway");
@@ -30,6 +31,7 @@ exports.IotModule = IotModule = __decorate([
             common_module_1.CommonModule,
             auth_module_1.AuthModule,
             notifications_module_1.NotificationsModule,
+            bullmq_1.BullModule.registerQueue({ name: 'obd' }, { name: 'shop-floor' }),
         ],
         controllers: [
             obd_streaming_controller_1.ObdStreamingController,
