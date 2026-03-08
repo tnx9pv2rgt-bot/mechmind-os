@@ -32,7 +32,7 @@ import {
   ShopFloorEventDto,
   ShopFloorAnalyticsDto,
 } from '../dto/shop-floor.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('Shop Floor')
 @Controller('v1/shop-floor')

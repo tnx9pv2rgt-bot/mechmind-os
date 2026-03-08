@@ -19,7 +19,8 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
 import { NotificationV2Service, CreateNotificationDTO } from '../services/notification-v2.service';
-import { NotificationType, NotificationChannel, UserRole } from '@prisma/client';
+import { NotificationType, NotificationChannel } from '@prisma/client';
+import { UserRole } from '@auth/guards/roles.guard';
 
 class SendNotificationDto implements CreateNotificationDTO {
   customerId: string;

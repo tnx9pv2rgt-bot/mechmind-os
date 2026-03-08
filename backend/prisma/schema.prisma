@@ -715,8 +715,11 @@ model ObdDevice {
   vehicleId String?  @map("vehicle_id")
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
 
-  readings ObdReading[]
-  dtcs     ObdTroubleCode[]
+  readings      ObdReading[]
+  dtcs          ObdTroubleCode[]
+  freezeFrames  ObdFreezeFrame[]
+  mode06Results ObdMode06Result[]
+  evapTests     ObdEvapTest[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -1896,6 +1899,63 @@ enum ParkingSessionStatus {
   ACTIVE
   COMPLETED
   EXPIRED
+}
+
+// ============================================
+// OBD ADVANCED MODELS
+// ============================================
+
+model ObdFreezeFrame {
+  id       String    @id @default(uuid())
+  deviceId String    @map("device_id")
+  device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  dtcCode    String   @map("dtc_code")
+  data       Json     // Freeze frame data as JSON
+  capturedAt DateTime @default(now()) @map("captured_at")
+
+  @@index([deviceId])
+  @@index([deviceId, capturedAt])
+  @@index([dtcCode])
+  @@map("obd_freeze_frames")
+}
+
+model ObdMode06Result {
+  id       String    @id @default(uuid())
+  deviceId String    @map("device_id")
+  device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  testId      String  @map("test_id")
+  componentId String? @map("component_id")
+  testName    String  @map("test_name")
+  value       Float?
+  minValue    Float?  @map("min_value")
+  maxValue    Float?  @map("max_value")
+  status      String  // PASS, FAIL, PENDING
+  unit        String?
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  @@index([deviceId])
+  @@index([deviceId, recordedAt])
+  @@index([testId])
+  @@map("obd_mode06_results")
+}
+
+model ObdEvapTest {
+  id       String    @id @default(uuid())
+  deviceId String    @map("device_id")
+  device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  testType    String   @map("test_type") // LEAK, PRESSURE, VACUUM
+  status      String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  results     Json?    // Test results as JSON
+  startedAt   DateTime @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([deviceId])
+  @@index([deviceId, startedAt])
+  @@index([status])
+  @@map("obd_evap_tests")
 }
 
 // ============================================

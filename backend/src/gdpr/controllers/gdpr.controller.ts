@@ -23,7 +23,7 @@ import { GdprDeletionService } from '../services/gdpr-deletion.service';
 import { DataRetentionService } from '../services/data-retention.service';
 import { GdprConsentService } from '../services/gdpr-consent.service';
 import { GdprExportService, ExportFormat } from '../services/gdpr-export.service';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@auth/guards/roles.guard';
 import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
 
 // DTOs

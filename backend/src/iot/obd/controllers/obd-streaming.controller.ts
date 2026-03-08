@@ -30,7 +30,7 @@ import {
   Mode06TestResponseDto,
   EvapTestResponseDto,
 } from '../dto/obd-streaming.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('OBD Streaming')
 @Controller('v1/obd-streaming')

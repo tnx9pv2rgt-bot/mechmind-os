@@ -220,17 +220,17 @@ export class ObdStreamingService {
       storedInDb: false,
     };
 
-    // Store freeze frame (TEMPORARILY COMMENTED - Prisma model obdFreezeFrame not defined)
-    // await this.prisma.obdFreezeFrame.create({
-    //   data: {
-    //     deviceId,
-    //     dtcCode,
-    //     data: freezeFrame.data as any,
-    //     capturedAt: freezeFrame.capturedAt,
-    //   },
-    // });
+    // Store freeze frame
+    await this.prisma.obdFreezeFrame.create({
+      data: {
+        deviceId,
+        dtcCode,
+        data: freezeFrame.data as any,
+        capturedAt: freezeFrame.capturedAt,
+      },
+    });
 
-    // freezeFrame.storedInDb = true;
+    freezeFrame.storedInDb = true;
 
     this.logger.log(`Captured freeze frame for ${dtcCode} on device ${deviceId}`);
     
@@ -250,7 +250,8 @@ export class ObdStreamingService {
     }
 
     // Query supported tests
-    const supportedTests = await this.queryPid(deviceId, this.PIDS.MODE_06_REQUEST);
+    const supportedTestsNum = await this.queryPid(deviceId, this.PIDS.MODE_06_REQUEST);
+    const supportedTests = supportedTestsNum !== null ? supportedTestsNum.toString(16) : null;
     
     const results: Mode06TestResult[] = [];
     
@@ -264,21 +265,23 @@ export class ObdStreamingService {
       }
     }
 
-    // Store results (TEMPORARILY COMMENTED - Prisma model obdMode06Result not defined)
-    // await this.prisma.obdMode06Result.createMany({
-    //   data: results.map(r => ({
-    //     deviceId,
-    //     testId: r.testId,
-    //     componentId: r.componentId,
-    //     testName: r.testName,
-    //     value: r.value,
-    //     minValue: r.minValue,
-    //     maxValue: r.maxValue,
-    //     status: r.status,
-    //     unit: r.unit,
-    //     recordedAt: new Date(),
-    //   })),
-    // });
+    // Store results
+    if (results.length > 0) {
+      await this.prisma.obdMode06Result.createMany({
+        data: results.map(r => ({
+          deviceId,
+          testId: r.testId,
+          componentId: r.componentId,
+          testName: r.testName,
+          value: r.value,
+          minValue: r.minValue,
+          maxValue: r.maxValue,
+          status: r.status,
+          unit: r.unit,
+          recordedAt: new Date(),
+        })),
+      });
+    }
 
     return results;
   }
@@ -310,17 +313,17 @@ export class ObdStreamingService {
       results: [],
     };
 
-    // Store test record (TEMPORARILY COMMENTED - Prisma model obdEvapTest not defined)
-    // const dbTest = await this.prisma.obdEvapTest.create({
-    //   data: {
-    //     deviceId,
-    //     testType,
-    //     status: 'RUNNING',
-    //     startedAt: test.startedAt,
-    //   },
-    // });
+    // Store test record
+    const dbTest = await this.prisma.obdEvapTest.create({
+      data: {
+        deviceId,
+        testType,
+        status: 'RUNNING',
+        startedAt: test.startedAt,
+      },
+    });
 
-    // test.id = dbTest.id;
+    test.id = dbTest.id;
 
     // In real implementation, this would trigger the actual EVAP test
     // and monitor results via OBD commands

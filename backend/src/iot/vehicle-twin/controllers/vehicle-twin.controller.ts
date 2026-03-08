@@ -28,7 +28,7 @@ import {
   PredictiveAlertDto,
   WearPredictionDto,
 } from '../dto/vehicle-twin.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('Vehicle Twin')
 @Controller('v1/vehicle-twin')

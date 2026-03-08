@@ -31,7 +31,7 @@ import {
   TroubleCodeResponseDto,
   VehicleHealthReportDto,
 } from '../dto/obd.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../auth/guards/roles.guard';
 
 @ApiTags('OBD Diagnostics')
 @Controller('v1/obd')

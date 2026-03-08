@@ -32,6 +32,11 @@ export class RecordEntryExitDto {
   @IsEnum(EntryExitType)
   type: EntryExitType;
 
+  @ApiProperty({ required: false, description: 'Camera ID' })
+  @IsOptional()
+  @IsString()
+  cameraId?: string;
+
   @ApiProperty({ required: false, description: 'Location' })
   @IsOptional()
   @IsString()

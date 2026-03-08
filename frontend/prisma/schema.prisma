@@ -203,6 +203,12 @@ model Tenant {
   offlineSyncQueue     OfflineSyncQueue[]
   customers            Customer[]
   bookings             Booking[]
+  dataSubjectRequests  DataSubjectRequest[]
+  lprCameras           LprCamera[]
+  licensePlateDetections LicensePlateDetection[]
+  vehicleEntryExits    VehicleEntryExit[]
+  parkingSessions      ParkingSession[]
+  obdDevices           ObdDevice[]
 
   // Timestamps
   createdAt          DateTime             @default(now())
@@ -268,6 +274,7 @@ model Customer {
   vehicles      Vehicle[]
   bookings      Booking[]
   notifications Notification[]
+  dataSubjectRequests DataSubjectRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -375,6 +382,9 @@ model Vehicle {
   maintenanceSchedules MaintenanceSchedule[]
   warranties           Warranty[]
   bookings             Booking[]
+  vehicleEntryExits    VehicleEntryExit[]
+  parkingSessions      ParkingSession[]
+  obdDevices           ObdDevice[]
 
   @@unique([tenantId, vin])
   @@unique([tenantId, licensePlate])
@@ -420,6 +430,7 @@ model Inspection {
   status           InspectionStatus @default(SCHEDULED)
   scheduledDate    DateTime
   completedDate    DateTime?
+  startedAt        DateTime?
   location         String?
   notes            String?
   overallScore     Float?
@@ -859,6 +870,300 @@ model MaintenanceSchedule {
   @@index([tenantId, nextDueDate])
   @@index([tenantId, isOverdue])
   @@index([tenantId, type])
+}
+
+// ============================================
+// GDPR MODELS
+// ============================================
+
+model DataSubjectRequest {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  ticketNumber String
+  requestType  String   // ACCESS, DELETION, RECTIFICATION, PORTABILITY, RESTRICTION, OBJECTION
+  status       String   @default("RECEIVED") // RECEIVED, VERIFICATION_PENDING, VERIFIED, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED
+  priority     String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  
+  // Requester info
+  requesterEmail String?
+  requesterPhone String?
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id])
+  
+  // Source and metadata
+  source   String  @default("EMAIL") // EMAIL, WEB_FORM, PHONE, MAIL
+  notes    String?
+  metadata String? // JSON string
+  
+  // Timeline tracking
+  receivedAt       DateTime @default(now())
+  deadlineAt       DateTime
+  verifiedAt       DateTime?
+  completedAt      DateTime?
+  
+  // SLA tracking
+  slaMet Boolean?
+  
+  // Assignment
+  assignedTo String?
+  
+  // Verification
+  identityVerified        Boolean @default(false)
+  verificationMethod      String?
+  verificationDocuments   String? // JSON array of document URLs
+  
+  // Rejection (if applicable)
+  rejectionReason String?
+  rejectionBasis  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, ticketNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, requestType])
+  @@index([tenantId, customerId])
+  @@index([tenantId, receivedAt])
+  @@index([tenantId, deadlineAt])
+}
+
+// ============================================
+// IOT - LICENSE PLATE RECOGNITION MODELS
+// ============================================
+
+model LprCamera {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name      String
+  location  String?
+  direction String   @default("ENTRY") // ENTRY, EXIT
+  provider  String   @default("GOOGLE_VISION") // GOOGLE_VISION, AZURE_COMPUTER_VISION, AWS_REKOGNITION, OPENALPR
+  config    Json?    // Camera-specific configuration
+  isActive  Boolean  @default(true)
+  lastCapture DateTime?
+
+  // Relations
+  detections LicensePlateDetection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+}
+
+model LicensePlateDetection {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Detection results
+  imageUrl     String
+  detectedText String
+  confidence   Float
+  country      String?
+  region       String?
+  vehicleType  String?
+  boundingBox  Json?   // {x, y, width, height}
+  
+  // Provider info
+  provider     String
+  rawResponse  Json?   // Raw OCR response
+  processedAt  DateTime @default(now())
+  
+  // Camera reference
+  cameraId     String?
+  camera       LprCamera? @relation(fields: [cameraId], references: [id])
+
+  // Relations
+  entryExits   VehicleEntryExit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, detectedText])
+  @@index([tenantId, processedAt])
+  @@index([cameraId])
+}
+
+model VehicleEntryExit {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type          String   // ENTRY, EXIT
+  licensePlate  String
+  timestamp     DateTime @default(now())
+  location      String?
+  isAuthorized  Boolean  @default(false)
+  
+  // Relations
+  detectionId   String
+  detection     LicensePlateDetection @relation(fields: [detectionId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle? @relation(fields: [vehicleId], references: [id])
+  cameraId      String?
+  
+  // Parking relation
+  parkingSessionsAsEntry ParkingSession[] @relation("EntrySession")
+  parkingSessionsAsExit  ParkingSession[] @relation("ExitSession")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, licensePlate])
+  @@index([tenantId, timestamp])
+  @@index([tenantId, type])
+  @@index([detectionId])
+  @@index([vehicleId])
+}
+
+model ParkingSession {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  licensePlate    String
+  status          String   @default("ACTIVE") // ACTIVE, COMPLETED
+  entryTime       DateTime @default(now())
+  exitTime        DateTime?
+  durationMinutes Int?
+  parkingSpotId   String?
+  
+  // Relations
+  entryId String
+  entry   VehicleEntryExit @relation("EntrySession", fields: [entryId], references: [id])
+  exitId  String?
+  exit    VehicleEntryExit? @relation("ExitSession", fields: [exitId], references: [id])
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, licensePlate])
+  @@index([tenantId, status])
+  @@index([tenantId, entryTime])
+  @@index([vehicleId])
+}
+
+// ============================================
+// IOT - OBD MODELS
+// ============================================
+
+model ObdDevice {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  macAddress  String?  @unique
+  serialNumber String? @unique
+  adapterType String   @default("ELM327") // ELM327, OBDLink, etc.
+  protocol    String?  // CAN, ISO, KWP, etc.
+  
+  // Status
+  isConnected Boolean @default(false)
+  lastSeenAt  DateTime?
+  
+  // Relations
+  vehicleId   String?
+  vehicle     Vehicle? @relation(fields: [vehicleId], references: [id])
+  
+  // Data relations
+  readings      ObdReading[]
+  freezeFrames  ObdFreezeFrame[]
+  mode06Results ObdMode06Result[]
+  evapTests     ObdEvapTest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, vehicleId])
+  @@index([tenantId, isConnected])
+}
+
+model ObdReading {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  // Sensor values
+  rpm         Float?
+  speed       Float?
+  coolantTemp Float?
+  engineLoad  Float?
+  fuelLevel   Float?
+  throttlePos Float?
+  voltage     Float?
+  
+  // Additional sensor data as JSON
+  additionalData Json?
+  
+  recordedAt DateTime @default(now())
+
+  @@index([deviceId])
+  @@index([deviceId, recordedAt])
+  @@index([recordedAt])
+}
+
+model ObdFreezeFrame {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  dtcCode    String   // Diagnostic Trouble Code
+  data       Json     // Freeze frame data as JSON
+  capturedAt DateTime @default(now())
+
+  @@index([deviceId])
+  @@index([deviceId, capturedAt])
+  @@index([dtcCode])
+}
+
+model ObdMode06Result {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  testId      String
+  componentId String?
+  testName    String
+  value       Float?
+  minValue    Float?
+  maxValue    Float?
+  status      String   // PASS, FAIL, PENDING
+  unit        String?
+  recordedAt  DateTime @default(now())
+
+  @@index([deviceId])
+  @@index([deviceId, recordedAt])
+  @@index([testId])
+}
+
+model ObdEvapTest {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  testType   String   // LEAK, PRESSURE, VACUUM
+  status     String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  results    Json?    // Test results as JSON
+  startedAt  DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([deviceId])
+  @@index([deviceId, startedAt])
+  @@index([status])
 }
 
 // ============================================

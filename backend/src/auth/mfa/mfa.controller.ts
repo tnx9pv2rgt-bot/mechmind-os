@@ -34,7 +34,7 @@ import {
   BackupCodesResponseDto,
   VerifyLoginMfaDto,
 } from './dto/mfa.dto';
-import { UserRole } from '../../../../prisma/generated/client';
+import { UserRole } from '../guards/roles.guard';
 import { Request } from 'express';
 
 @ApiTags('MFA')

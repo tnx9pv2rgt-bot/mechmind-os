@@ -31,7 +31,8 @@ import {
   LowStockAlertDto,
   InventoryMovementResponseDto,
 } from '../dto/parts.dto';
-import { UserRole, OrderStatus } from '@prisma/client';
+import { UserRole } from '../../auth/guards/roles.guard';
+import { OrderStatus } from '@prisma/client';
 
 @ApiTags('Parts Catalog')
 @Controller('v1/parts')

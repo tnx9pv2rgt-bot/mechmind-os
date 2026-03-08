@@ -18,7 +18,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { ReportingService } from '../services/reporting.service';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../auth/guards/roles.guard';
 import { Response } from 'express';
 
 @ApiTags('Business Intelligence')

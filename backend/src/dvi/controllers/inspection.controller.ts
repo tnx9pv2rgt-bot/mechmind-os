@@ -33,7 +33,7 @@ import {
   InspectionResponseDto,
   InspectionSummaryDto,
 } from '../dto/inspection.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../auth/guards/roles.guard';
 
 @ApiTags('Digital Vehicle Inspection')
 @Controller('v1/inspections')
@@ -144,7 +144,7 @@ export class InspectionController {
     @CurrentUser('tenantId') tenantId: string,
     @CurrentUser('userId') userId: string,
     @Param('id') inspectionId: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Request['file'],
     @Body('itemId') itemId?: string,
     @Body('category') category?: string,
     @Body('description') description?: string,

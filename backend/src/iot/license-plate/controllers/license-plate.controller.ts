@@ -35,7 +35,7 @@ import {
   LprStatsDto,
   VehicleLookupResponseDto,
 } from '../dto/license-plate.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('License Plate Recognition')
 @Controller('v1/lpr')
@@ -50,7 +50,7 @@ export class LicensePlateController {
   @ApiOperation({ summary: 'Detect license plate from image' })
   @ApiResponse({ status: 201, type: LicensePlateDetectionDto })
   async detectLicensePlate(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Request['file'],
     @Body() dto: DetectLicensePlateDto,
   ): Promise<LicensePlateDetectionDto> {
     return await this.licensePlateService.detectLicensePlate(file.buffer, {

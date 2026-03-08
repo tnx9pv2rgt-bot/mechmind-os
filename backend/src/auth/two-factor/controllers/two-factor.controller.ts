@@ -29,7 +29,7 @@ import {
   TwoFactorStatusDto,
   RegenerateBackupCodesResponseDto,
 } from '../dto/two-factor.dto';
-import { UserRole } from '../../../../prisma/generated/client';
+import { UserRole } from '../../guards/roles.guard';
 
 @ApiTags('Two-Factor Authentication')
 @Controller('auth/2fa')

@@ -25,6 +25,7 @@ import {
   WorkOrderProgress,
   ParkingSpot,
 } from '../interfaces/shop-floor.interface';
+import { InitializeShopFloorDto } from '../dto/shop-floor.dto';
 
 @Injectable()
 export class ShopFloorService {
@@ -42,11 +43,7 @@ export class ShopFloorService {
    */
   async initializeShopFloor(
     tenantId: string,
-    config: {
-      name: string;
-      bays: Omit<ServiceBay, 'id' | 'sensors'>[];
-      parkingSpots?: Omit<ParkingSpot, 'id'>[];
-    },
+    config: InitializeShopFloorDto,
   ): Promise<ServiceBay[]> {
     const floor = await this.prisma.shopFloor.create({
       data: {
