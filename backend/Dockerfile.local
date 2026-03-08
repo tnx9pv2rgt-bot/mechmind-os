@@ -1,0 +1,22 @@
+FROM node:20
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+# Install Prisma CLI globally for migrations
+RUN npm install -g prisma
+
+# Copy prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Expose port
+EXPOSE 3000
+
+# Default command (overridden in docker-compose)
+CMD ["npm", "run", "start:dev"]
