@@ -100,6 +100,20 @@ services:
     depends_on:
       - redis
 
+  # Ngrok (Espone app su internet)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: mechmind-ngrok
+    command: http frontend:3000 --domain=${NGROK_DOMAIN:-} --log=stdout
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - frontend
+    profiles:
+      - share  # Solo quando vuoi condividere
+
 volumes:
   postgres_data:
   redis_data:

@@ -1,0 +1,12 @@
+version: "2"
+authtoken: ""  # Inserisci qui il tuo token (opzionale per base)
+
+# Tunnels configurazione
+tunnels:
+  frontend:
+    addr: 3001
+    proto: http
+    
+  backend:
+    addr: 3000
+    proto: http
