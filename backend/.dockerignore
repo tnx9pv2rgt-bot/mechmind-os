@@ -4,8 +4,8 @@ npm-debug.log
 yarn-debug.log
 yarn-error.log
 
-# Build output
-dist
+# Build output (keep dist for pre-built deploys)
+# dist
 build
 *.tsbuildinfo
 
