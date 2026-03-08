@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as twilio from 'twilio';
 import { Twilio } from 'twilio';
 
 export interface BookingReminderSmsData {
@@ -79,7 +78,7 @@ export class SmsService {
     this.isEnabled = this.configService.get<boolean>('ENABLE_SMS_NOTIFICATIONS', true);
 
     if (accountSid && authToken && this.fromPhone && this.isEnabled) {
-      this.twilioClient = twilio(accountSid, authToken);
+      this.twilioClient = new Twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized');
     } else {
       this.logger.warn('Twilio not configured or SMS notifications disabled');
@@ -257,7 +256,7 @@ export class SmsService {
       return {
         status: message.status,
         deliveredAt: message.dateSent ? new Date(message.dateSent) : undefined,
-        errorCode: message.errorCode || undefined,
+        errorCode: message.errorCode ? String(message.errorCode) : undefined,
         errorMessage: message.errorMessage || undefined,
       };
     } catch (error) {
@@ -290,8 +289,8 @@ export class SmsService {
       return {
         valid: true,
         formatted: lookup.phoneNumber,
-        carrier: lookup.callingCarrierName,
-        type: lookup.type,
+        carrier: lookup.carrier?.name,
+        type: lookup.carrier?.type,
       };
     } catch (error) {
       this.logger.warn(`Phone validation failed for ${phone}: ${error.message}`);
@@ -439,9 +438,9 @@ export class SmsService {
     }
   }
 
-  private formatMessage(template: string, data: Record<string, string>): string {
+  private formatMessage(template: string, data: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return data[key] !== undefined ? data[key] : match;
+      return data[key] !== undefined ? String(data[key]) : match;
     });
   }
 

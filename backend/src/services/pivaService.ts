@@ -34,6 +34,26 @@ export interface CachedPivaData {
   expiresAt: Date;
 }
 
+// Type guard to validate cached data shape
+function isPivaAnagraficaData(data: unknown): data is PivaAnagraficaData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'isValid' in data &&
+    typeof (data as Record<string, unknown>).isValid === 'boolean' &&
+    'ragioneSociale' in data &&
+    typeof (data as Record<string, unknown>).ragioneSociale === 'string' &&
+    'indirizzo' in data &&
+    typeof (data as Record<string, unknown>).indirizzo === 'string' &&
+    'cap' in data &&
+    typeof (data as Record<string, unknown>).cap === 'string' &&
+    'città' in data &&
+    typeof (data as Record<string, unknown>).città === 'string' &&
+    'provincia' in data &&
+    typeof (data as Record<string, unknown>).provincia === 'string'
+  );
+}
+
 // Codici provincia italiane (prime 2 cifre P.IVA)
 const PROVINCE_CODES: Record<string, string> = {
   '01': 'Torino',
@@ -360,9 +380,14 @@ async function getCachedPivaData(piva: string): Promise<CachedPivaData | null> {
       return null;
     }
 
+    if (!isPivaAnagraficaData(cached.data)) {
+      await prisma.pivaCache.delete({ where: { piva: cleaned } });
+      return null;
+    }
+
     return {
       piva: cached.piva,
-      data: cached.data as PivaAnagraficaData,
+      data: cached.data,
       cachedAt: cached.cachedAt,
       expiresAt: cached.expiresAt,
     };

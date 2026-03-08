@@ -25,7 +25,7 @@ export interface JwtPayload {
   email: string;      // Email utente
   role: string;       // Ruolo utente
   tenantId: string;   // ID tenant (multi-tenant)
-  type?: 'access' | 'refresh';  // Tipo di token
+  type?: 'access' | 'refresh' | '2fa_pending' | 'email_verification' | 'password_reset';  // Tipo di token
   iat?: number;       // Issued at
   exp?: number;       // Expiration
 }

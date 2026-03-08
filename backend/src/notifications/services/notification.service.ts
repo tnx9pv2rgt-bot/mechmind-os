@@ -261,7 +261,7 @@ export class NotificationOrchestratorService {
     return {
       success,
       channel: NotificationChannel.BOTH,
-      messageId: smsResult.success ? smsResult.messageId : emailResult.messageId,
+      messageId: smsResult.success ? smsResult.messageId : emailResult?.messageId,
       error: !success ? `SMS: ${smsResult.error}, Email: ${emailResult.error}` : undefined,
     };
   }
@@ -591,9 +591,10 @@ export class NotificationOrchestratorService {
           where: { id: customerId },
           select: {
             id: true,
-            name: true,
-            email: true,
-            phone: true,
+            encryptedFirstName: true,
+            encryptedLastName: true,
+            encryptedEmail: true,
+            encryptedPhone: true,
           },
         });
       });
@@ -602,9 +603,9 @@ export class NotificationOrchestratorService {
 
       return {
         id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone || undefined,
+        name: `${customer.encryptedFirstName || ''} ${customer.encryptedLastName || ''}`.trim() || 'Customer',
+        email: customer.encryptedEmail || '',
+        phone: customer.encryptedPhone || undefined,
       };
     } catch (error) {
       this.logger.error(`Error fetching customer: ${error.message}`);
