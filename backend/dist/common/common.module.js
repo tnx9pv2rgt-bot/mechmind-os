@@ -14,6 +14,7 @@ const prisma_service_1 = require("./services/prisma.service");
 const encryption_service_1 = require("./services/encryption.service");
 const queue_service_1 = require("./services/queue.service");
 const logger_service_1 = require("./services/logger.service");
+const s3_service_1 = require("./services/s3.service");
 const tenant_guard_1 = require("./guard/tenant.guard");
 let CommonModule = class CommonModule {
 };
@@ -42,7 +43,7 @@ exports.CommonModule = CommonModule = __decorate([
             }),
             bullmq_1.BullModule.registerQueue({ name: 'booking' }, { name: 'voice' }, { name: 'notification' }),
         ],
-        providers: [prisma_service_1.PrismaService, encryption_service_1.EncryptionService, queue_service_1.QueueService, logger_service_1.LoggerService, tenant_guard_1.TenantGuard],
-        exports: [prisma_service_1.PrismaService, encryption_service_1.EncryptionService, queue_service_1.QueueService, logger_service_1.LoggerService, bullmq_1.BullModule, tenant_guard_1.TenantGuard],
+        providers: [prisma_service_1.PrismaService, encryption_service_1.EncryptionService, queue_service_1.QueueService, logger_service_1.LoggerService, s3_service_1.S3Service, tenant_guard_1.TenantGuard],
+        exports: [prisma_service_1.PrismaService, encryption_service_1.EncryptionService, queue_service_1.QueueService, logger_service_1.LoggerService, s3_service_1.S3Service, bullmq_1.BullModule, tenant_guard_1.TenantGuard],
     })
 ], CommonModule);

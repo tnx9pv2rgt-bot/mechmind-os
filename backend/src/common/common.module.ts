@@ -5,6 +5,7 @@ import { PrismaService } from './services/prisma.service';
 import { EncryptionService } from './services/encryption.service';
 import { QueueService } from './services/queue.service';
 import { LoggerService } from './services/logger.service';
+import { S3Service } from './services/s3.service';
 import { TenantGuard } from './guard/tenant.guard';
 
 @Global()
@@ -34,7 +35,7 @@ import { TenantGuard } from './guard/tenant.guard';
       { name: 'notification' },
     ),
   ],
-  providers: [PrismaService, EncryptionService, QueueService, LoggerService, TenantGuard],
-  exports: [PrismaService, EncryptionService, QueueService, LoggerService, BullModule, TenantGuard],
+  providers: [PrismaService, EncryptionService, QueueService, LoggerService, S3Service, TenantGuard],
+  exports: [PrismaService, EncryptionService, QueueService, LoggerService, S3Service, BullModule, TenantGuard],
 })
 export class CommonModule {}
