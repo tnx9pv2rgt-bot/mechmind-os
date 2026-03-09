@@ -17,6 +17,7 @@
     "**/*.test.ts",
     "**/__tests__/**",
     "**/coverage/**",
-    "**/templates/**"
+    "**/templates/**",
+    "src/config/**"
   ]
 }

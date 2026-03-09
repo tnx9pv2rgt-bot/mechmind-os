@@ -15,11 +15,24 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
   ) {
+    const databaseUrl = configService.get<string>('DATABASE_URL') || '';
+    const connectionLimit = configService.get<number>('DATABASE_CONNECTION_LIMIT', 10);
+
+    // Append connection_limit if not already in the URL
+    const separator = databaseUrl.includes('?') ? '&' : '?';
+    const urlWithPooling = databaseUrl.includes('connection_limit')
+      ? databaseUrl
+      : `${databaseUrl}${separator}connection_limit=${connectionLimit}`;
+
     super({
       datasources: {
         db: {
-          url: configService.get<string>('DATABASE_URL'),
+          url: urlWithPooling,
         },
+      },
+      transactionOptions: {
+        maxWait: 5000,
+        timeout: 15000,
       },
       log: [
         { emit: 'event', level: 'query' },

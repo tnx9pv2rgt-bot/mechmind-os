@@ -4,24 +4,30 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { LoggerService } from '../services/logger.service';
 
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {
-  constructor(private readonly logger: LoggerService) {}
+  private readonly isProduction: boolean;
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  constructor(
+    private readonly logger: LoggerService,
+    private readonly configService: ConfigService,
+  ) {
+    this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+  }
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
-    const { method, url, body, headers } = request;
+    const { method, url } = request;
     const controller = context.getClass().name;
     const handler = context.getHandler().name;
 
     const startTime = Date.now();
 
-    // Log request (exclude sensitive data)
-    const sanitizedBody = this.sanitizeBody(body);
     this.logger.log(
       `[REQUEST] ${method} ${url} - ${controller}.${handler}`,
       'LoggerInterceptor',
@@ -29,18 +35,22 @@ export class LoggerInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: (data) => {
+        next: () => {
           const duration = Date.now() - startTime;
           this.logger.log(
             `[RESPONSE] ${method} ${url} - ${duration}ms`,
             'LoggerInterceptor',
           );
         },
-        error: (error) => {
+        error: (error: Error) => {
           const duration = Date.now() - startTime;
+          // In production, do not log stack traces to avoid leaking internal details
+          const errorDetail = this.isProduction
+            ? error.message
+            : `${error.message}\n${error.stack}`;
           this.logger.error(
-            `[ERROR] ${method} ${url} - ${duration}ms - ${error.message}`,
-            error.stack,
+            `[ERROR] ${method} ${url} - ${duration}ms - ${errorDetail}`,
+            undefined,
             'LoggerInterceptor',
           );
         },

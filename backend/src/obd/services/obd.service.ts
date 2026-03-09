@@ -57,7 +57,7 @@ export class ObdService {
         tenantId,
         serialNumber: dto.serialNumber,
         name: dto.name,
-        model: dto.model,
+        model: dto.model ?? '',
         vehicleId: dto.vehicleId,
         isActive: true,
       },
@@ -119,9 +119,10 @@ export class ObdService {
   /**
    * Record OBD reading
    */
-  async recordReading(dto: ObdReadingDto): Promise<ObdReadingResponseDto> {
+  async recordReading(dto: ObdReadingDto, tenantId: string): Promise<ObdReadingResponseDto> {
     const reading = await this.prisma.obdReading.create({
       data: {
+        tenantId,
         deviceId: dto.deviceId,
         rpm: dto.rpm,
         speed: dto.speed,
@@ -192,7 +193,7 @@ export class ObdService {
   /**
    * Record trouble codes
    */
-  async recordTroubleCodes(deviceId: string, codes: TroubleCodeDto[]): Promise<void> {
+  async recordTroubleCodes(deviceId: string, codes: TroubleCodeDto[], tenantId: string): Promise<void> {
     const device = await this.prisma.obdDevice.findUnique({
       where: { id: deviceId },
       include: { tenant: true, vehicle: true },
@@ -236,7 +237,7 @@ export class ObdService {
             causes: code.causes,
             isPending: code.isPending ?? false,
             isPermanent: code.isPermanent ?? false,
-            readingSnapshot: latestReading?.rawData,
+            readingSnapshot: latestReading?.rawData ?? undefined,
           },
         });
 

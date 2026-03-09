@@ -507,9 +507,16 @@ export class ObdStreamingService {
 
     const batch = stream.buffer.splice(0, stream.buffer.length);
 
+    const device = await this.prisma.obdDevice.findUnique({
+      where: { id: stream.deviceId },
+      select: { tenantId: true },
+    });
+    if (!device) return;
+
     // Batch insert to database
     await this.prisma.obdReading.createMany({
       data: batch.map(data => ({
+        tenantId: device.tenantId,
         deviceId: stream.deviceId,
         rpm: data.rpm,
         speed: data.speed,

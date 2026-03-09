@@ -13,6 +13,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
@@ -265,6 +266,7 @@ export class GdprController {
    */
   @Post('customers/:customerId/delete')
   @Roles(UserRole.ADMIN)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async queueDeletion(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,

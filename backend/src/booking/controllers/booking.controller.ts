@@ -39,6 +39,7 @@ import {
   BookingSlotResponseDto,
   SlotAvailabilityResponseDto,
 } from '../dto/booking-slot.dto';
+import { BookingStatus } from '@prisma/client';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
@@ -127,13 +128,15 @@ export class BookingController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
     const result = await this.bookingService.findAll(tenantId, {
-      status: status as any,
+      status: status as BookingStatus | undefined,
       customerId,
       fromDate: fromDate ? new Date(fromDate) : undefined,
       toDate: toDate ? new Date(toDate) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      offset: offset ? parseInt(offset) : undefined,
+      limit: Number.isNaN(parsedLimit) ? 50 : parsedLimit,
+      offset: Number.isNaN(parsedOffset) ? 0 : parsedOffset,
     });
 
     return {
@@ -141,8 +144,8 @@ export class BookingController {
       data: result.bookings,
       meta: {
         total: result.total,
-        limit: limit ? parseInt(limit) : 50,
-        offset: offset ? parseInt(offset) : 0,
+        limit: Number.isNaN(parsedLimit) ? 50 : parsedLimit,
+        offset: Number.isNaN(parsedOffset) ? 0 : parsedOffset,
       },
     };
   }

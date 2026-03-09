@@ -123,10 +123,10 @@ export class VoiceWebhookController {
     timestamp?: string,
   ): boolean {
     const secret = this.configService.get<string>('VAPI_WEBHOOK_SECRET');
-    
+
     if (!secret) {
-      console.warn('VAPI_WEBHOOK_SECRET not configured, skipping signature verification');
-      return true;
+      console.error('VAPI_WEBHOOK_SECRET not configured - rejecting all webhooks');
+      return false;
     }
 
     if (!signature) {

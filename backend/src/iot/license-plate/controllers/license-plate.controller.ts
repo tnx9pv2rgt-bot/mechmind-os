@@ -16,6 +16,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import 'multer';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
@@ -50,8 +51,7 @@ export class LicensePlateController {
   @ApiOperation({ summary: 'Detect license plate from image' })
   @ApiResponse({ status: 201, type: LicensePlateDetectionDto })
   async detectLicensePlate(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    @UploadedFile() file: any,
+    @UploadedFile() file: Express.Multer.File,
     @Body() dto: DetectLicensePlateDto,
   ): Promise<LicensePlateDetectionDto> {
     return await this.licensePlateService.detectLicensePlate(file.buffer, {
@@ -120,9 +120,11 @@ export class LicensePlateController {
   }
 
   @Get('lookup/:plate')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC, UserRole.RECEPTIONIST)
   @ApiOperation({ summary: 'Lookup vehicle by license plate' })
   @ApiResponse({ status: 200, type: VehicleLookupResponseDto })
   async lookupVehicle(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('plate') plate: string,
   ): Promise<VehicleLookupResponseDto> {
     return await this.licensePlateService.lookupVehicle(plate);

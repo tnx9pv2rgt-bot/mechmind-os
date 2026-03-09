@@ -235,12 +235,31 @@ export class AuthService {
 
   /**
    * Validate API key for voice webhooks
+   * API keys are stored hashed in the tenant record.
    */
   async validateApiKey(apiKey: string): Promise<{ tenantId: string; valid: boolean }> {
-    // Implementation depends on your API key storage strategy
-    // This is a placeholder - implement based on your requirements
-    this.logger.warn('API key validation not fully implemented');
-    return { tenantId: '', valid: false };
+    if (!apiKey) {
+      return { tenantId: '', valid: false };
+    }
+
+    // API key format: prefix_tenantId_secret
+    const parts = apiKey.split('_');
+    if (parts.length < 3 || parts[0] !== 'mk') {
+      return { tenantId: '', valid: false };
+    }
+
+    const tenantId = parts[1];
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, isActive: true, apiKeyHash: true },
+    });
+
+    if (!tenant || !tenant.isActive || !tenant.apiKeyHash) {
+      return { tenantId: '', valid: false };
+    }
+
+    const isValid = await bcrypt.compare(apiKey, tenant.apiKeyHash);
+    return { tenantId: isValid ? tenant.id : '', valid: isValid };
   }
 
   // ============== 2FA SUPPORT METHODS ==============
@@ -363,13 +382,39 @@ export class AuthService {
     });
   }
 
+  private readonly MAX_FAILED_ATTEMPTS = 5;
+  private readonly LOCKOUT_DURATION_MINUTES = 15;
+
   /**
-   * Record failed login attempt
+   * Record failed login attempt and lock account if threshold exceeded
    */
   async recordFailedLogin(userId: string): Promise<void> {
-    // Note: Account lockout tracking would require a failedLogins field on User model
-    // For now, just log the failed attempt
-    this.logger.warn(`Failed login attempt for user ${userId}`);
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedAttempts: { increment: 1 } },
+      select: { failedAttempts: true },
+    });
+
+    this.logger.warn(`Failed login attempt for user ${userId} (attempt ${user.failedAttempts}/${this.MAX_FAILED_ATTEMPTS})`);
+
+    if (user.failedAttempts >= this.MAX_FAILED_ATTEMPTS) {
+      const lockedUntil = new Date(Date.now() + this.LOCKOUT_DURATION_MINUTES * 60 * 1000);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { lockedUntil },
+      });
+      this.logger.warn(`Account locked for user ${userId} until ${lockedUntil.toISOString()}`);
+    }
+  }
+
+  /**
+   * Reset failed login attempts on successful login
+   */
+  async resetFailedAttempts(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedAttempts: 0, lockedUntil: null },
+    });
   }
 
   /**

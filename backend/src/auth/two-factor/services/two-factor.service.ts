@@ -11,6 +11,7 @@
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
@@ -44,7 +45,9 @@ export class TwoFactorService {
     
     // Generate backup codes
     const backupCodes = this.generateBackupCodes();
-    const hashedBackupCodes = backupCodes.map(code => this.hashBackupCode(code));
+    const hashedBackupCodes = await Promise.all(
+      backupCodes.map(code => bcrypt.hash(code, 10))
+    );
 
     // Encrypt secret for storage
     const encryptedSecret = await this.encryption.encrypt(secret);
@@ -228,7 +231,9 @@ export class TwoFactorService {
 
     // Generate new backup codes
     const backupCodes = this.generateBackupCodes();
-    const hashedBackupCodes = backupCodes.map(c => this.hashBackupCode(c));
+    const hashedBackupCodes = await Promise.all(
+      backupCodes.map(c => bcrypt.hash(c, 10))
+    );
 
     // Delete old backup codes and create new ones
     await this.prisma.$transaction([
@@ -347,33 +352,25 @@ export class TwoFactorService {
   }
 
   /**
-   * Hash backup code for storage
-   */
-  private hashBackupCode(code: string): string {
-    return crypto.createHash('sha256').update(code).digest('hex');
-  }
-
-  /**
-   * Verify backup code
+   * Verify backup code using bcrypt comparison
    */
   private async verifyBackupCode(userId: string, code: string): Promise<boolean> {
-    const hashedInput = this.hashBackupCode(code.toUpperCase());
-    
-    // Find the backup code
-    const backupCode = await this.prisma.backupCode.findFirst({
-      where: { userId, codeHash: hashedInput },
+    const backupCodes = await this.prisma.backupCode.findMany({
+      where: { userId },
     });
-    
-    if (!backupCode) {
-      return false;
+
+    for (const backupCode of backupCodes) {
+      const match = await bcrypt.compare(code.toUpperCase(), backupCode.codeHash);
+      if (match) {
+        // Remove used backup code
+        await this.prisma.backupCode.delete({
+          where: { id: backupCode.id },
+        });
+        return true;
+      }
     }
 
-    // Remove used backup code
-    await this.prisma.backupCode.delete({
-      where: { id: backupCode.id },
-    });
-
-    return true;
+    return false;
   }
 
   /**

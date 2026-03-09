@@ -88,8 +88,8 @@ export const AI_ADDON = {
 // ==========================================
 
 export interface PlanLimits {
-  maxUsers: number;
-  maxLocations: number;
+  maxUsers: number | null;
+  maxLocations: number | null;
   maxApiCallsPerMonth: number | null; // null = unlimited
   maxStorageBytes: number | null; // null = unlimited
   maxCustomers: number | null;

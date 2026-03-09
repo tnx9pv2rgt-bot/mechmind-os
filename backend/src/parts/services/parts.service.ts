@@ -37,7 +37,7 @@ export class PartsService {
 
   async createPart(tenantId: string, dto: CreatePartDto): Promise<PartResponseDto> {
     const existing = await this.prisma.part.findUnique({
-      where: { sku: dto.sku },
+      where: { tenantId_sku: { tenantId, sku: dto.sku } },
     });
     
     if (existing) {

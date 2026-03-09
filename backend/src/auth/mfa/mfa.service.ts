@@ -10,6 +10,7 @@
 
 import { Injectable, UnauthorizedException, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
@@ -360,14 +361,14 @@ export class MfaService {
    */
   private generateBackupCodesInternal(): string[] {
     const codes: string[] = [];
-    
+
     for (let i = 0; i < this.BACKUP_CODES_COUNT; i++) {
-      // Generate 8-character code: XXXX-XXXX format (alphanumeric)
-      const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-      const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+      // Generate 8-character code: XXXX-XXXX format using crypto.randomBytes
+      const part1 = crypto.randomBytes(2).toString('hex').toUpperCase();
+      const part2 = crypto.randomBytes(2).toString('hex').toUpperCase();
       codes.push(`${part1}-${part2}`);
     }
-    
+
     return codes;
   }
 

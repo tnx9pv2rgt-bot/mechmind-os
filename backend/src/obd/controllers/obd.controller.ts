@@ -88,24 +88,28 @@ export class ObdController {
   // ============== DATA COLLECTION (from devices) ==============
 
   @Post('readings')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @Throttle({ default: { ttl: 60000, limit: 1000 } }) // High limit for device data
   @ApiOperation({ summary: 'Record OBD reading (from device)' })
   @ApiResponse({ status: 201, type: ObdReadingResponseDto })
   async recordReading(
+    @CurrentUser('tenantId') tenantId: string,
     @Body() dto: ObdReadingDto,
   ): Promise<ObdReadingResponseDto> {
-    return this.obdService.recordReading(dto);
+    return this.obdService.recordReading(dto, tenantId);
   }
 
   @Post('devices/:id/codes')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @Throttle({ default: { ttl: 60000, limit: 100 } })
   @ApiOperation({ summary: 'Record trouble codes (from device)' })
   @ApiResponse({ status: 201 })
   async recordTroubleCodes(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id') deviceId: string,
     @Body() codes: TroubleCodeDto[],
   ): Promise<void> {
-    return this.obdService.recordTroubleCodes(deviceId, codes);
+    return this.obdService.recordTroubleCodes(deviceId, codes, tenantId);
   }
 
   // ============== DATA RETRIEVAL ==============
