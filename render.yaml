@@ -7,7 +7,7 @@ services:
     numInstances: 1
     branch: main
     rootDir: backend
-    buildCommand: npm install --legacy-peer-deps && npx prisma generate && npm run build
+    buildCommand: npm install --legacy-peer-deps && npx --yes prisma@5.22.0 generate && npx --yes prisma@5.22.0 migrate deploy && npm run build
     startCommand: npm run start:prod
     preDeployCommand: npx prisma migrate deploy
     healthCheckPath: /health
