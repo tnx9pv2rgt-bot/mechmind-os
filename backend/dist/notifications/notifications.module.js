@@ -21,6 +21,9 @@ const notifications_api_controller_1 = require("./controllers/notifications-api.
 const notifications_v2_controller_1 = require("./controllers/notifications-v2.controller");
 const webhook_controller_1 = require("./controllers/webhook.controller");
 const ses_webhook_controller_1 = require("./controllers/ses-webhook.controller");
+const sse_controller_1 = require("./controllers/sse.controller");
+const sse_service_1 = require("./services/sse.service");
+const redis_pubsub_service_1 = require("./services/redis-pubsub.service");
 const notifications_gateway_1 = require("./gateways/notifications.gateway");
 const email_processor_1 = require("./processors/email.processor");
 const notification_processor_1 = require("./processors/notification.processor");
@@ -61,6 +64,7 @@ exports.NotificationsModule = NotificationsModule = __decorate([
             notifications_v2_controller_1.NotificationsV2Controller,
             webhook_controller_1.NotificationWebhookController,
             ses_webhook_controller_1.SesWebhookController,
+            sse_controller_1.SseController,
         ],
         providers: [
             notifications_service_1.NotificationsService,
@@ -69,6 +73,8 @@ exports.NotificationsModule = NotificationsModule = __decorate([
             notification_triggers_service_1.NotificationTriggersService,
             email_service_1.EmailService,
             sms_service_1.SmsService,
+            sse_service_1.SseService,
+            redis_pubsub_service_1.RedisPubSubService,
             notifications_gateway_1.NotificationsGateway,
             email_processor_1.EmailProcessor,
             notification_processor_1.NotificationProcessor,
@@ -80,6 +86,7 @@ exports.NotificationsModule = NotificationsModule = __decorate([
             notification_triggers_service_1.NotificationTriggersService,
             email_service_1.EmailService,
             sms_service_1.SmsService,
+            sse_service_1.SseService,
         ],
     })
 ], NotificationsModule);

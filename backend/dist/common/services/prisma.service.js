@@ -16,11 +16,21 @@ const client_1 = require("@prisma/client");
 const logger_service_1 = require("./logger.service");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor(configService, logger) {
+        const databaseUrl = configService.get('DATABASE_URL') || '';
+        const connectionLimit = configService.get('DATABASE_CONNECTION_LIMIT', 10);
+        const separator = databaseUrl.includes('?') ? '&' : '?';
+        const urlWithPooling = databaseUrl.includes('connection_limit')
+            ? databaseUrl
+            : `${databaseUrl}${separator}connection_limit=${connectionLimit}`;
         super({
             datasources: {
                 db: {
-                    url: configService.get('DATABASE_URL'),
+                    url: urlWithPooling,
                 },
+            },
+            transactionOptions: {
+                maxWait: 5000,
+                timeout: 15000,
             },
             log: [
                 { emit: 'event', level: 'query' },

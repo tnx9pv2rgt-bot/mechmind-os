@@ -37,7 +37,7 @@ import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from '../dto/v
 @ApiTags('Customers')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('v1/customers')
+@Controller('customers')
 export class CustomerController {
   constructor(
     private readonly customerService: CustomerService,

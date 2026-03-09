@@ -390,7 +390,7 @@ exports.MetricsController = MetricsController = __decorate([
     (0, swagger_1.ApiTags)('Analytics - Unit Economics'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, common_1.Controller)('v1/analytics'),
+    (0, common_1.Controller)('analytics'),
     __metadata("design:paramtypes", [unit_economics_service_1.UnitEconomicsService,
         prisma_service_1.PrismaService])
 ], MetricsController);

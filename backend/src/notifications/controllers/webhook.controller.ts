@@ -57,6 +57,10 @@ export class NotificationWebhookController {
     @Headers('resend-signature') signature: string,
     @Headers('resend-timestamp') timestamp: string,
   ): Promise<{ received: boolean }> {
+    if (!payload?.type || !payload?.data) {
+      throw new BadRequestException('Invalid webhook payload: missing type or data');
+    }
+
     // Verify webhook signature
     if (!this.verifyResendSignature(payload, signature, timestamp)) {
       this.logger.warn('Invalid Resend webhook signature');
@@ -111,6 +115,10 @@ export class NotificationWebhookController {
     @Body() payload: TwilioWebhookPayload,
     @Headers('x-twilio-signature') signature: string,
   ): Promise<{ received: boolean }> {
+    if (!payload?.MessageSid || !payload?.MessageStatus) {
+      return { received: true };
+    }
+
     this.logger.log(`Twilio webhook received: ${payload.MessageStatus} for message ${payload.MessageSid}`);
 
     try {
@@ -156,6 +164,10 @@ export class NotificationWebhookController {
       MessageSid: string;
     },
   ): Promise<string> {
+    if (!payload?.From || !payload?.Body) {
+      return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
+    }
+
     this.logger.log(`Incoming SMS from ${payload.From}: ${payload.Body}`);
 
     try {

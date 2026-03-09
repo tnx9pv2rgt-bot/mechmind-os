@@ -362,7 +362,7 @@ __decorate([
 ], NotificationsApiController.prototype, "updateCustomerPreferences", null);
 exports.NotificationsApiController = NotificationsApiController = NotificationsApiController_1 = __decorate([
     (0, swagger_1.ApiTags)('Notifications'),
-    (0, common_1.Controller)('api/v1/notifications'),
+    (0, common_1.Controller)('notifications/api'),
     __metadata("design:paramtypes", [notification_service_1.NotificationOrchestratorService,
         email_service_1.EmailService,
         sms_service_1.SmsService])

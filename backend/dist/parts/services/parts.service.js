@@ -21,7 +21,7 @@ let PartsService = class PartsService {
     }
     async createPart(tenantId, dto) {
         const existing = await this.prisma.part.findUnique({
-            where: { sku: dto.sku },
+            where: { tenantId_sku: { tenantId, sku: dto.sku } },
         });
         if (existing) {
             throw new common_1.BadRequestException(`Part with SKU ${dto.sku} already exists`);

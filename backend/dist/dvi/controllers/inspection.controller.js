@@ -195,7 +195,7 @@ __decorate([
 ], InspectionController.prototype, "generateReport", null);
 exports.InspectionController = InspectionController = __decorate([
     (0, swagger_1.ApiTags)('Digital Vehicle Inspection'),
-    (0, common_1.Controller)('v1/inspections'),
+    (0, common_1.Controller)('inspections'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [inspection_service_1.InspectionService])

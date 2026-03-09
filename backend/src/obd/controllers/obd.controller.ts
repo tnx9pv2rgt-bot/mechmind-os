@@ -34,7 +34,7 @@ import {
 import { UserRole } from '../../auth/guards/roles.guard';
 
 @ApiTags('OBD Diagnostics')
-@Controller('v1/obd')
+@Controller('obd')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ObdController {

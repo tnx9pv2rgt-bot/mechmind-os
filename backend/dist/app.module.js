@@ -42,44 +42,36 @@ exports.AppModule = AppModule = __decorate([
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
                 useFactory: (config) => {
-                    const redisHost = config.get('REDIS_HOST', 'localhost');
-                    const redisPort = config.get('REDIS_PORT', 6379);
-                    const redisPassword = config.get('REDIS_PASSWORD');
-                    const redisTls = config.get('REDIS_TLS') === 'true';
-                    const redisOptions = {
-                        host: redisHost,
-                        port: redisPort,
-                        password: redisPassword,
-                        db: config.get('REDIS_THROTTLE_DB', 1),
-                    };
-                    if (redisTls) {
-                        redisOptions.tls = {};
+                    const throttlers = [
+                        { name: 'default', ttl: 60000, limit: 100 },
+                        { name: 'auth', ttl: 60000, limit: 5 },
+                        { name: 'api', ttl: 60000, limit: 200 },
+                        { name: 'webhook', ttl: 60000, limit: 1000 },
+                    ];
+                    const redisHost = config.get('REDIS_HOST');
+                    if (!redisHost) {
+                        console.warn('[Throttler] REDIS_HOST not configured - using in-memory storage');
+                        return { throttlers };
                     }
-                    return {
-                        throttlers: [
-                            {
-                                name: 'default',
-                                ttl: 60000,
-                                limit: 100,
-                            },
-                            {
-                                name: 'auth',
-                                ttl: 60000,
-                                limit: 5,
-                            },
-                            {
-                                name: 'api',
-                                ttl: 60000,
-                                limit: 200,
-                            },
-                            {
-                                name: 'webhook',
-                                ttl: 60000,
-                                limit: 1000,
-                            },
-                        ],
-                        storage: new throttler_storage_redis_1.ThrottlerStorageRedisService(new ioredis_1.Redis(redisOptions)),
-                    };
+                    try {
+                        const redisOptions = {
+                            host: redisHost,
+                            port: config.get('REDIS_PORT', 6379),
+                            password: config.get('REDIS_PASSWORD'),
+                            db: config.get('REDIS_THROTTLE_DB', 1),
+                            lazyConnect: true,
+                            maxRetriesPerRequest: 3,
+                        };
+                        if (config.get('REDIS_TLS') === 'true') {
+                            redisOptions.tls = {};
+                        }
+                        const storage = new throttler_storage_redis_1.ThrottlerStorageRedisService(new ioredis_1.Redis(redisOptions));
+                        return { throttlers, storage: storage };
+                    }
+                    catch (error) {
+                        console.warn('[Throttler] Failed to connect to Redis, using in-memory storage:', error);
+                        return { throttlers };
+                    }
                 },
             }),
             common_module_1.CommonModule,

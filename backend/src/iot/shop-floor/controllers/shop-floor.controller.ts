@@ -35,7 +35,7 @@ import {
 import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('Shop Floor')
-@Controller('v1/shop-floor')
+@Controller('shop-floor')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ShopFloorController {

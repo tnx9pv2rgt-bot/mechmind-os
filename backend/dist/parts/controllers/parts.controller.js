@@ -199,7 +199,7 @@ __decorate([
 ], PartsController.prototype, "receiveOrder", null);
 exports.PartsController = PartsController = __decorate([
     (0, swagger_1.ApiTags)('Parts Catalog'),
-    (0, common_1.Controller)('v1/parts'),
+    (0, common_1.Controller)('parts'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [parts_service_1.PartsService])

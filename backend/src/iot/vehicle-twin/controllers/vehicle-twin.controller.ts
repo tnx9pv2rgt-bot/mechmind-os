@@ -32,7 +32,7 @@ import { ComponentHistory, DamageRecord } from '../interfaces/vehicle-twin.inter
 import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('Vehicle Twin')
-@Controller('v1/vehicle-twin')
+@Controller('vehicle-twin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class VehicleTwinController {

@@ -46,6 +46,7 @@ exports.TwoFactorService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const crypto = __importStar(require("crypto"));
+const bcrypt = __importStar(require("bcrypt"));
 const QRCode = __importStar(require("qrcode"));
 const prisma_service_1 = require("../../../common/services/prisma.service");
 const encryption_service_1 = require("../../../common/services/encryption.service");
@@ -63,7 +64,7 @@ let TwoFactorService = class TwoFactorService {
     async generateSecret(userId, email, tenantName) {
         const secret = this.generateBase32Secret(32);
         const backupCodes = this.generateBackupCodes();
-        const hashedBackupCodes = backupCodes.map(code => this.hashBackupCode(code));
+        const hashedBackupCodes = await Promise.all(backupCodes.map(code => bcrypt.hash(code, 10)));
         const encryptedSecret = await this.encryption.encrypt(secret);
         await this.prisma.user.update({
             where: { id: userId },
@@ -73,7 +74,7 @@ let TwoFactorService = class TwoFactorService {
             },
         });
         await this.prisma.backupCode.createMany({
-            data: hashedBackupCodes.map(codeHash => ({
+            data: hashedBackupCodes.map((codeHash) => ({
                 userId,
                 codeHash,
             })),
@@ -191,11 +192,11 @@ let TwoFactorService = class TwoFactorService {
             throw new common_1.UnauthorizedException('Invalid authentication code');
         }
         const backupCodes = this.generateBackupCodes();
-        const hashedBackupCodes = backupCodes.map(c => this.hashBackupCode(c));
+        const hashedBackupCodes = await Promise.all(backupCodes.map(c => bcrypt.hash(c, 10)));
         await this.prisma.$transaction([
             this.prisma.backupCode.deleteMany({ where: { userId } }),
             this.prisma.backupCode.createMany({
-                data: hashedBackupCodes.map(codeHash => ({
+                data: hashedBackupCodes.map((codeHash) => ({
                     userId,
                     codeHash,
                 })),
@@ -267,21 +268,20 @@ let TwoFactorService = class TwoFactorService {
         }
         return codes;
     }
-    hashBackupCode(code) {
-        return crypto.createHash('sha256').update(code).digest('hex');
-    }
     async verifyBackupCode(userId, code) {
-        const hashedInput = this.hashBackupCode(code.toUpperCase());
-        const backupCode = await this.prisma.backupCode.findFirst({
-            where: { userId, codeHash: hashedInput },
+        const backupCodes = await this.prisma.backupCode.findMany({
+            where: { userId },
         });
-        if (!backupCode) {
-            return false;
+        for (const backupCode of backupCodes) {
+            const match = await bcrypt.compare(code.toUpperCase(), backupCode.codeHash);
+            if (match) {
+                await this.prisma.backupCode.delete({
+                    where: { id: backupCode.id },
+                });
+                return true;
+            }
         }
-        await this.prisma.backupCode.delete({
-            where: { id: backupCode.id },
-        });
-        return true;
+        return false;
     }
     verifyTotp(secret, code) {
         const secretBuffer = this.base32Decode(secret);

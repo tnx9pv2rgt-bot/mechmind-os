@@ -35,7 +35,7 @@ import { UserRole } from '../../auth/guards/roles.guard';
 import { OrderStatus } from '@prisma/client';
 
 @ApiTags('Parts Catalog')
-@Controller('v1/parts')
+@Controller('parts')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class PartsController {

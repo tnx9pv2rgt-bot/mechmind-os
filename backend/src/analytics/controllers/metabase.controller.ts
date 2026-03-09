@@ -47,7 +47,7 @@ interface DashboardUrlResponse {
 @ApiTags('Analytics - Metabase BI')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('v1/analytics/metabase')
+@Controller('analytics/metabase')
 export class MetabaseController {
   private readonly logger = new Logger(MetabaseController.name);
   private readonly metabaseUrl: string;

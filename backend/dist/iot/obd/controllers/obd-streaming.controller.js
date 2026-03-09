@@ -195,7 +195,7 @@ __decorate([
 ], ObdStreamingController.prototype, "applyRetentionPolicy", null);
 exports.ObdStreamingController = ObdStreamingController = __decorate([
     (0, swagger_1.ApiTags)('OBD Streaming'),
-    (0, common_1.Controller)('v1/obd-streaming'),
+    (0, common_1.Controller)('obd-streaming'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [obd_streaming_service_1.ObdStreamingService])

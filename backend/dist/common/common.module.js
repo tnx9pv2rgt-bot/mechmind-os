@@ -25,21 +25,33 @@ exports.CommonModule = CommonModule = __decorate([
         imports: [
             config_1.ConfigModule,
             bullmq_1.BullModule.forRootAsync({
-                useFactory: () => ({
-                    connection: {
-                        host: process.env.REDIS_HOST || 'localhost',
+                useFactory: () => {
+                    const redisHost = process.env.REDIS_HOST;
+                    if (!redisHost) {
+                        console.warn('[BullMQ] REDIS_HOST not configured - queues will not process jobs');
+                    }
+                    const connection = {
+                        host: redisHost || 'localhost',
                         port: parseInt(process.env.REDIS_PORT || '6379'),
                         password: process.env.REDIS_PASSWORD || undefined,
                         db: parseInt(process.env.REDIS_DB || '0'),
-                    },
-                    defaultJobOptions: {
-                        attempts: 3,
-                        backoff: {
-                            type: 'exponential',
-                            delay: 1000,
+                        lazyConnect: true,
+                        maxRetriesPerRequest: 3,
+                    };
+                    if (process.env.REDIS_TLS === 'true') {
+                        connection.tls = {};
+                    }
+                    return {
+                        connection,
+                        defaultJobOptions: {
+                            attempts: 3,
+                            backoff: {
+                                type: 'exponential',
+                                delay: 1000,
+                            },
                         },
-                    },
-                }),
+                    };
+                },
             }),
             bullmq_1.BullModule.registerQueue({ name: 'booking' }, { name: 'voice' }, { name: 'notification' }),
         ],

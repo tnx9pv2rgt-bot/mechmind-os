@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MfaService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const crypto = __importStar(require("crypto"));
 const speakeasy = __importStar(require("speakeasy"));
 const QRCode = __importStar(require("qrcode"));
 const bcrypt = __importStar(require("bcrypt"));
@@ -85,7 +86,7 @@ let MfaService = class MfaService {
                 },
             }),
             this.prisma.backupCode.createMany({
-                data: hashedBackupCodes.map(codeHash => ({
+                data: hashedBackupCodes.map((codeHash) => ({
                     userId,
                     codeHash,
                 })),
@@ -226,7 +227,7 @@ let MfaService = class MfaService {
         await this.prisma.$transaction([
             this.prisma.backupCode.deleteMany({ where: { userId } }),
             this.prisma.backupCode.createMany({
-                data: hashedBackupCodes.map(codeHash => ({
+                data: hashedBackupCodes.map((codeHash) => ({
                     userId,
                     codeHash,
                 })),
@@ -277,8 +278,8 @@ let MfaService = class MfaService {
     generateBackupCodesInternal() {
         const codes = [];
         for (let i = 0; i < this.BACKUP_CODES_COUNT; i++) {
-            const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-            const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const part1 = crypto.randomBytes(2).toString('hex').toUpperCase();
+            const part2 = crypto.randomBytes(2).toString('hex').toUpperCase();
             codes.push(`${part1}-${part2}`);
         }
         return codes;

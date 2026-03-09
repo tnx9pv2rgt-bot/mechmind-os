@@ -39,7 +39,7 @@ let ObdService = class ObdService {
                 tenantId,
                 serialNumber: dto.serialNumber,
                 name: dto.name,
-                model: dto.model,
+                model: dto.model ?? '',
                 vehicleId: dto.vehicleId,
                 isActive: true,
             },
@@ -76,9 +76,10 @@ let ObdService = class ObdService {
         });
         return this.mapDeviceToDto(device);
     }
-    async recordReading(dto) {
+    async recordReading(dto, tenantId) {
         const reading = await this.prisma.obdReading.create({
             data: {
+                tenantId,
                 deviceId: dto.deviceId,
                 rpm: dto.rpm,
                 speed: dto.speed,
@@ -127,7 +128,7 @@ let ObdService = class ObdService {
         });
         return reading ? this.mapReadingToDto(reading) : null;
     }
-    async recordTroubleCodes(deviceId, codes) {
+    async recordTroubleCodes(deviceId, codes, tenantId) {
         const device = await this.prisma.obdDevice.findUnique({
             where: { id: deviceId },
             include: { tenant: true, vehicle: true },
@@ -162,7 +163,7 @@ let ObdService = class ObdService {
                         causes: code.causes,
                         isPending: code.isPending ?? false,
                         isPermanent: code.isPermanent ?? false,
-                        readingSnapshot: latestReading?.rawData,
+                        readingSnapshot: latestReading?.rawData ?? undefined,
                     },
                 });
                 if (severity === client_1.TroubleCodeSeverity.CRITICAL || severity === client_1.TroubleCodeSeverity.HIGH) {

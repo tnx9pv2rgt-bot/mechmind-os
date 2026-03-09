@@ -16,6 +16,11 @@ import { NotificationsApiController } from './controllers/notifications-api.cont
 import { NotificationsV2Controller } from './controllers/notifications-v2.controller';
 import { NotificationWebhookController } from './controllers/webhook.controller';
 import { SesWebhookController } from './controllers/ses-webhook.controller';
+import { SseController } from './controllers/sse.controller';
+
+// Services (SSE)
+import { SseService } from './services/sse.service';
+import { RedisPubSubService } from './services/redis-pubsub.service';
 
 // Gateways
 import { NotificationsGateway } from './gateways/notifications.gateway';
@@ -60,6 +65,7 @@ import { NotificationProcessor } from './processors/notification.processor';
     NotificationsV2Controller,
     NotificationWebhookController,
     SesWebhookController,
+    SseController,
   ],
   providers: [
     // Services
@@ -69,7 +75,9 @@ import { NotificationProcessor } from './processors/notification.processor';
     NotificationTriggersService,
     EmailService,
     SmsService,
-    
+    SseService,
+    RedisPubSubService,
+
     // Gateways
     NotificationsGateway,
     
@@ -84,6 +92,7 @@ import { NotificationProcessor } from './processors/notification.processor';
     NotificationTriggersService,
     EmailService,
     SmsService,
+    SseService,
   ],
 })
 export class NotificationsModule {}

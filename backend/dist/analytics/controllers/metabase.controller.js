@@ -272,6 +272,6 @@ exports.MetabaseController = MetabaseController = MetabaseController_1 = __decor
     (0, swagger_1.ApiTags)('Analytics - Metabase BI'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, common_1.Controller)('v1/analytics/metabase'),
+    (0, common_1.Controller)('analytics/metabase'),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], MetabaseController);

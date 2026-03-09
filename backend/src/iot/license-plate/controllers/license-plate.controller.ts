@@ -39,7 +39,7 @@ import {
 import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('License Plate Recognition')
-@Controller('v1/lpr')
+@Controller('lpr')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class LicensePlateController {

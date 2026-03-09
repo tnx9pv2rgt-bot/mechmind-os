@@ -161,7 +161,7 @@ __decorate([
 ], VehicleTwinController.prototype, "getHealthTrend", null);
 exports.VehicleTwinController = VehicleTwinController = __decorate([
     (0, swagger_1.ApiTags)('Vehicle Twin'),
-    (0, common_1.Controller)('v1/vehicle-twin'),
+    (0, common_1.Controller)('vehicle-twin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [vehicle_twin_service_1.VehicleTwinService])

@@ -22,6 +22,9 @@ let GdprWebhookController = class GdprWebhookController {
         this.loggerService = loggerService;
     }
     async handleDataSubjectRequest(body, signature) {
+        if (!body?.tenantId || !body?.requestType || !body?.source) {
+            throw new common_1.BadRequestException('Missing required fields: tenantId, requestType, source');
+        }
         this.loggerService.log(`Received data subject request webhook from ${body.source}`, 'GdprWebhookController');
         const request = await this.requestService.createRequest({
             tenantId: body.tenantId,
@@ -39,10 +42,16 @@ let GdprWebhookController = class GdprWebhookController {
         };
     }
     async handleConsentUpdate(body) {
+        if (!body?.tenantId || !body?.customerId || !body?.consentType) {
+            throw new common_1.BadRequestException('Missing required fields: tenantId, customerId, consentType');
+        }
         this.loggerService.log(`Received consent update webhook: customer=${body.customerId}, type=${body.consentType}, granted=${body.granted}`, 'GdprWebhookController');
         return { processed: true };
     }
     async handleDeletionConfirmation(body) {
+        if (!body?.subProcessor || !body?.confirmationId) {
+            throw new common_1.BadRequestException('Missing required fields: subProcessor, confirmationId');
+        }
         this.loggerService.log(`Received deletion confirmation from ${body.subProcessor}: ${body.confirmationId}`, 'GdprWebhookController');
         return { acknowledged: true };
     }

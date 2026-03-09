@@ -46,7 +46,7 @@ let GdprRequestService = class GdprRequestService {
                     priority: dto.priority || 'NORMAL',
                     source: dto.source || 'EMAIL',
                     notes: dto.notes,
-                    metadata: dto.metadata ? JSON.stringify(dto.metadata) : null,
+                    metadata: dto.metadata ? JSON.stringify(dto.metadata) : undefined,
                 },
             });
         });

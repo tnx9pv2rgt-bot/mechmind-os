@@ -55,6 +55,8 @@ let AuthService = class AuthService {
         this.prisma = prisma;
         this.configService = configService;
         this.logger = logger;
+        this.MAX_FAILED_ATTEMPTS = 5;
+        this.LOCKOUT_DURATION_MINUTES = 15;
     }
     async validateUser(email, password, tenantSlug) {
         const tenant = await this.prisma.tenant.findUnique({
@@ -178,8 +180,23 @@ let AuthService = class AuthService {
         return bcrypt.hash(password, saltRounds);
     }
     async validateApiKey(apiKey) {
-        this.logger.warn('API key validation not fully implemented');
-        return { tenantId: '', valid: false };
+        if (!apiKey) {
+            return { tenantId: '', valid: false };
+        }
+        const parts = apiKey.split('_');
+        if (parts.length < 3 || parts[0] !== 'mk') {
+            return { tenantId: '', valid: false };
+        }
+        const tenantId = parts[1];
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { id: true, isActive: true, apiKeyHash: true },
+        });
+        if (!tenant || !tenant.isActive || !tenant.apiKeyHash) {
+            return { tenantId: '', valid: false };
+        }
+        const isValid = await bcrypt.compare(apiKey, tenant.apiKeyHash);
+        return { tenantId: isValid ? tenant.id : '', valid: isValid };
     }
     async generateTwoFactorTempToken(userId) {
         const payload = {
@@ -266,7 +283,26 @@ let AuthService = class AuthService {
         });
     }
     async recordFailedLogin(userId) {
-        this.logger.warn(`Failed login attempt for user ${userId}`);
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { failedAttempts: { increment: 1 } },
+            select: { failedAttempts: true },
+        });
+        this.logger.warn(`Failed login attempt for user ${userId} (attempt ${user.failedAttempts}/${this.MAX_FAILED_ATTEMPTS})`);
+        if (user.failedAttempts >= this.MAX_FAILED_ATTEMPTS) {
+            const lockedUntil = new Date(Date.now() + this.LOCKOUT_DURATION_MINUTES * 60 * 1000);
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { lockedUntil },
+            });
+            this.logger.warn(`Account locked for user ${userId} until ${lockedUntil.toISOString()}`);
+        }
+    }
+    async resetFailedAttempts(userId) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { failedAttempts: 0, lockedUntil: null },
+        });
     }
     async isAccountLocked(userId) {
         const user = await this.prisma.user.findUnique({

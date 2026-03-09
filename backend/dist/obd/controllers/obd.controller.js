@@ -39,11 +39,11 @@ let ObdController = class ObdController {
     async updateDevice(tenantId, id, dto) {
         return this.obdService.updateDevice(tenantId, id, dto);
     }
-    async recordReading(dto) {
-        return this.obdService.recordReading(dto);
+    async recordReading(tenantId, dto) {
+        return this.obdService.recordReading(dto, tenantId);
     }
-    async recordTroubleCodes(deviceId, codes) {
-        return this.obdService.recordTroubleCodes(deviceId, codes);
+    async recordTroubleCodes(tenantId, deviceId, codes) {
+        return this.obdService.recordTroubleCodes(deviceId, codes, tenantId);
     }
     async getReadings(tenantId, query) {
         return this.obdService.getReadings(tenantId, {
@@ -120,23 +120,27 @@ __decorate([
 ], ObdController.prototype, "updateDevice", null);
 __decorate([
     (0, common_1.Post)('readings'),
+    (0, roles_decorator_1.Roles)(roles_guard_2.UserRole.ADMIN, roles_guard_2.UserRole.MANAGER, roles_guard_2.UserRole.MECHANIC),
     (0, throttler_1.Throttle)({ default: { ttl: 60000, limit: 1000 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Record OBD reading (from device)' }),
     (0, swagger_1.ApiResponse)({ status: 201, type: obd_dto_1.ObdReadingResponseDto }),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('tenantId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [obd_dto_1.ObdReadingDto]),
+    __metadata("design:paramtypes", [String, obd_dto_1.ObdReadingDto]),
     __metadata("design:returntype", Promise)
 ], ObdController.prototype, "recordReading", null);
 __decorate([
     (0, common_1.Post)('devices/:id/codes'),
+    (0, roles_decorator_1.Roles)(roles_guard_2.UserRole.ADMIN, roles_guard_2.UserRole.MANAGER, roles_guard_2.UserRole.MECHANIC),
     (0, throttler_1.Throttle)({ default: { ttl: 60000, limit: 100 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Record trouble codes (from device)' }),
     (0, swagger_1.ApiResponse)({ status: 201 }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('tenantId')),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Array]),
+    __metadata("design:paramtypes", [String, String, Array]),
     __metadata("design:returntype", Promise)
 ], ObdController.prototype, "recordTroubleCodes", null);
 __decorate([
@@ -196,7 +200,7 @@ __decorate([
 ], ObdController.prototype, "getHealthReport", null);
 exports.ObdController = ObdController = __decorate([
     (0, swagger_1.ApiTags)('OBD Diagnostics'),
-    (0, common_1.Controller)('v1/obd'),
+    (0, common_1.Controller)('obd'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [obd_service_1.ObdService])

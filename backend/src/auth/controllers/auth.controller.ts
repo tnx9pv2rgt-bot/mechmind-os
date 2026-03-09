@@ -14,28 +14,46 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { AuthService, AuthTokens } from '../services/auth.service';
 import { TwoFactorService } from '../two-factor/services/two-factor.service';
 import { TwoFactorRequiredResponseDto } from '../two-factor/dto/two-factor.dto';
 
 class LoginDto {
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
   tenantSlug: string;
+
+  @IsOptional()
+  @IsString()
   totpCode?: string;
 }
 
 class RefreshTokenDto {
+  @IsString()
+  @IsNotEmpty()
   refreshToken: string;
 }
 
 class Verify2FADto {
+  @IsString()
+  @IsNotEmpty()
   tempToken: string;
+
+  @IsString()
+  @IsNotEmpty()
   totpCode: string;
 }
 
 @ApiTags('Authentication')
-@Controller('v1/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

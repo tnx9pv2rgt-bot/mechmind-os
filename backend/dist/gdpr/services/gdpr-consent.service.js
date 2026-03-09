@@ -41,7 +41,7 @@ let GdprConsentService = class GdprConsentService {
                     collectionPoint: context?.collectionPoint,
                     legalBasis: context?.legalBasis,
                     verifiedIdentity: context?.verifiedIdentity ?? false,
-                    metadata: context?.metadata ? JSON.stringify(context.metadata) : null,
+                    metadata: context?.metadata ? JSON.stringify(context.metadata) : undefined,
                 },
             });
         });

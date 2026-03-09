@@ -8,6 +8,7 @@ const config_1 = require("@nestjs/config");
 const swagger_1 = require("@nestjs/swagger");
 const helmet_1 = __importDefault(require("helmet"));
 const compression_1 = __importDefault(require("compression"));
+const express_1 = require("express");
 const app_module_1 = require("./app.module");
 const logger_service_1 = require("./common/services/logger.service");
 async function bootstrap() {
@@ -27,9 +28,16 @@ async function bootstrap() {
         },
         crossOriginEmbedderPolicy: false,
     }));
+    app.use((0, express_1.json)({ limit: '1mb' }));
     app.use((0, compression_1.default)());
+    const corsOrigin = configService.get('CORS_ORIGIN');
+    if (!corsOrigin) {
+        logger.warn('CORS_ORIGIN not configured - defaulting to localhost only');
+    }
     app.enableCors({
-        origin: configService.get('CORS_ORIGIN', '*'),
+        origin: corsOrigin
+            ? corsOrigin.split(',').map(o => o.trim())
+            : ['http://localhost:3001'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
@@ -60,6 +68,10 @@ async function bootstrap() {
             filter: true,
             showRequestDuration: true,
         },
+    });
+    const httpAdapter = app.getHttpAdapter();
+    httpAdapter.get('/health', (_req, res) => {
+        res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });
     const port = configService.get('PORT', 3000);
     await app.listen(port);

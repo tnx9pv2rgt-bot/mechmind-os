@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StripeWebhookController = exports.AdminSubscriptionController = exports.SubscriptionController = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const jwt_auth_guard_1 = require("../../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../../auth/guards/roles.guard");
 const roles_decorator_1 = require("../../auth/decorators/roles.decorator");
@@ -313,6 +314,12 @@ let StripeWebhookController = class StripeWebhookController {
         this.configService = configService;
     }
     async handleWebhook(signature, payload) {
+        if (!signature) {
+            throw new common_1.BadRequestException('Missing stripe-signature header');
+        }
+        if (!payload || Object.keys(payload).length === 0) {
+            throw new common_1.BadRequestException('Missing webhook payload');
+        }
         return { received: true };
     }
 };
@@ -327,5 +334,6 @@ __decorate([
 ], StripeWebhookController.prototype, "handleWebhook", null);
 exports.StripeWebhookController = StripeWebhookController = __decorate([
     (0, common_1.Controller)('webhooks/stripe'),
-    __metadata("design:paramtypes", [subscription_service_1.SubscriptionService, Object])
+    __metadata("design:paramtypes", [subscription_service_1.SubscriptionService,
+        config_1.ConfigService])
 ], StripeWebhookController);

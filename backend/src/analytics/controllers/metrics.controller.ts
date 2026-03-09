@@ -110,7 +110,7 @@ class BreakEvenResponseDto {
 @ApiTags('Analytics - Unit Economics')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('v1/analytics')
+@Controller('analytics')
 export class MetricsController {
   constructor(
     private readonly unitEconomicsService: UnitEconomicsService,

@@ -33,7 +33,7 @@ import {
 import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('OBD Streaming')
-@Controller('v1/obd-streaming')
+@Controller('obd-streaming')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ObdStreamingController {

@@ -12,11 +12,13 @@ var WsJwtGuard_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WsJwtGuard = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const jwt_1 = require("@nestjs/jwt");
 const websockets_1 = require("@nestjs/websockets");
 let WsJwtGuard = WsJwtGuard_1 = class WsJwtGuard {
-    constructor(jwtService) {
+    constructor(jwtService, configService) {
         this.jwtService = jwtService;
+        this.configService = configService;
         this.logger = new common_1.Logger(WsJwtGuard_1.name);
     }
     async canActivate(context) {
@@ -27,7 +29,7 @@ let WsJwtGuard = WsJwtGuard_1 = class WsJwtGuard {
                 throw new websockets_1.WsException('Unauthorized: No token provided');
             }
             const payload = await this.jwtService.verifyAsync(token, {
-                secret: process.env.JWT_SECRET,
+                secret: this.configService.get('JWT_SECRET'),
             });
             client.data.user = payload;
             return true;
@@ -57,5 +59,6 @@ let WsJwtGuard = WsJwtGuard_1 = class WsJwtGuard {
 exports.WsJwtGuard = WsJwtGuard;
 exports.WsJwtGuard = WsJwtGuard = WsJwtGuard_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [jwt_1.JwtService])
+    __metadata("design:paramtypes", [jwt_1.JwtService,
+        config_1.ConfigService])
 ], WsJwtGuard);

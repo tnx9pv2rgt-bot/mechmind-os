@@ -11,28 +11,33 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoggerInterceptor = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const operators_1 = require("rxjs/operators");
 const logger_service_1 = require("../services/logger.service");
 let LoggerInterceptor = class LoggerInterceptor {
-    constructor(logger) {
+    constructor(logger, configService) {
         this.logger = logger;
+        this.configService = configService;
+        this.isProduction = this.configService.get('NODE_ENV') === 'production';
     }
     intercept(context, next) {
         const request = context.switchToHttp().getRequest();
-        const { method, url, body, headers } = request;
+        const { method, url } = request;
         const controller = context.getClass().name;
         const handler = context.getHandler().name;
         const startTime = Date.now();
-        const sanitizedBody = this.sanitizeBody(body);
         this.logger.log(`[REQUEST] ${method} ${url} - ${controller}.${handler}`, 'LoggerInterceptor');
         return next.handle().pipe((0, operators_1.tap)({
-            next: (data) => {
+            next: () => {
                 const duration = Date.now() - startTime;
                 this.logger.log(`[RESPONSE] ${method} ${url} - ${duration}ms`, 'LoggerInterceptor');
             },
             error: (error) => {
                 const duration = Date.now() - startTime;
-                this.logger.error(`[ERROR] ${method} ${url} - ${duration}ms - ${error.message}`, error.stack, 'LoggerInterceptor');
+                const errorDetail = this.isProduction
+                    ? error.message
+                    : `${error.message}\n${error.stack}`;
+                this.logger.error(`[ERROR] ${method} ${url} - ${duration}ms - ${errorDetail}`, undefined, 'LoggerInterceptor');
             },
         }));
     }
@@ -53,5 +58,6 @@ let LoggerInterceptor = class LoggerInterceptor {
 exports.LoggerInterceptor = LoggerInterceptor;
 exports.LoggerInterceptor = LoggerInterceptor = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [logger_service_1.LoggerService])
+    __metadata("design:paramtypes", [logger_service_1.LoggerService,
+        config_1.ConfigService])
 ], LoggerInterceptor);

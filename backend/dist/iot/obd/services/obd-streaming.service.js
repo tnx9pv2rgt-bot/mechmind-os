@@ -333,8 +333,15 @@ let ObdStreamingService = ObdStreamingService_1 = class ObdStreamingService {
         if (!stream || stream.buffer.length === 0)
             return;
         const batch = stream.buffer.splice(0, stream.buffer.length);
+        const device = await this.prisma.obdDevice.findUnique({
+            where: { id: stream.deviceId },
+            select: { tenantId: true },
+        });
+        if (!device)
+            return;
         await this.prisma.obdReading.createMany({
             data: batch.map(data => ({
+                tenantId: device.tenantId,
                 deviceId: stream.deviceId,
                 rpm: data.rpm,
                 speed: data.speed,

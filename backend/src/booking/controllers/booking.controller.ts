@@ -44,7 +44,7 @@ import { BookingStatus } from '@prisma/client';
 @ApiTags('Bookings')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('v1/bookings')
+@Controller('bookings')
 export class BookingController {
   constructor(
     private readonly bookingService: BookingService,

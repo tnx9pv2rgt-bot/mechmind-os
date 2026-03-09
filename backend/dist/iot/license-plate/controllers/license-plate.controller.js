@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LicensePlateController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
+require("multer");
 const swagger_1 = require("@nestjs/swagger");
 const jwt_auth_guard_1 = require("../../../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../../../auth/guards/roles.guard");
@@ -53,7 +54,7 @@ let LicensePlateController = class LicensePlateController {
     async updateCameraStatus(cameraId, isActive) {
         return await this.licensePlateService.updateCameraStatus(cameraId, isActive);
     }
-    async lookupVehicle(plate) {
+    async lookupVehicle(tenantId, plate) {
         return await this.licensePlateService.lookupVehicle(plate);
     }
     async getActiveSessions(tenantId) {
@@ -127,11 +128,13 @@ __decorate([
 ], LicensePlateController.prototype, "updateCameraStatus", null);
 __decorate([
     (0, common_1.Get)('lookup/:plate'),
+    (0, roles_decorator_1.Roles)(roles_guard_2.UserRole.ADMIN, roles_guard_2.UserRole.MANAGER, roles_guard_2.UserRole.MECHANIC, roles_guard_2.UserRole.RECEPTIONIST),
     (0, swagger_1.ApiOperation)({ summary: 'Lookup vehicle by license plate' }),
     (0, swagger_1.ApiResponse)({ status: 200, type: license_plate_dto_1.VehicleLookupResponseDto }),
-    __param(0, (0, common_1.Param)('plate')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('tenantId')),
+    __param(1, (0, common_1.Param)('plate')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], LicensePlateController.prototype, "lookupVehicle", null);
 __decorate([
@@ -156,7 +159,7 @@ __decorate([
 ], LicensePlateController.prototype, "getStats", null);
 exports.LicensePlateController = LicensePlateController = __decorate([
     (0, swagger_1.ApiTags)('License Plate Recognition'),
-    (0, common_1.Controller)('v1/lpr'),
+    (0, common_1.Controller)('lpr'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [license_plate_service_1.LicensePlateService])

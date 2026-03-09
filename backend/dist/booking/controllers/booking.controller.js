@@ -52,21 +52,23 @@ let BookingController = class BookingController {
         };
     }
     async getBookings(tenantId, status, customerId, fromDate, toDate, limit, offset) {
+        const parsedLimit = limit ? parseInt(limit, 10) : 50;
+        const parsedOffset = offset ? parseInt(offset, 10) : 0;
         const result = await this.bookingService.findAll(tenantId, {
             status: status,
             customerId,
             fromDate: fromDate ? new Date(fromDate) : undefined,
             toDate: toDate ? new Date(toDate) : undefined,
-            limit: limit ? parseInt(limit) : undefined,
-            offset: offset ? parseInt(offset) : undefined,
+            limit: Number.isNaN(parsedLimit) ? 50 : parsedLimit,
+            offset: Number.isNaN(parsedOffset) ? 0 : parsedOffset,
         });
         return {
             success: true,
             data: result.bookings,
             meta: {
                 total: result.total,
-                limit: limit ? parseInt(limit) : 50,
-                offset: offset ? parseInt(offset) : 0,
+                limit: Number.isNaN(parsedLimit) ? 50 : parsedLimit,
+                offset: Number.isNaN(parsedOffset) ? 0 : parsedOffset,
             },
         };
     }
@@ -304,7 +306,7 @@ exports.BookingController = BookingController = __decorate([
     (0, swagger_1.ApiTags)('Bookings'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, common_1.Controller)('v1/bookings'),
+    (0, common_1.Controller)('bookings'),
     __metadata("design:paramtypes", [booking_service_1.BookingService,
         booking_slot_service_1.BookingSlotService])
 ], BookingController);

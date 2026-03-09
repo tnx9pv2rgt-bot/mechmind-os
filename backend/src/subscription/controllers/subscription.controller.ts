@@ -16,6 +16,7 @@ import {
   UseGuards,
   Request,
   Headers,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request as ExpressRequest } from 'express';
@@ -309,8 +310,15 @@ export class StripeWebhookController {
   @Post()
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
-    @Body() payload: any
+    @Body() payload: Record<string, unknown>,
   ) {
+    if (!signature) {
+      throw new BadRequestException('Missing stripe-signature header');
+    }
+    if (!payload || Object.keys(payload).length === 0) {
+      throw new BadRequestException('Missing webhook payload');
+    }
+
     // In a real implementation, verify the webhook signature
     // const event = this.stripe.webhooks.constructEvent(
     //   payload,

@@ -16,14 +16,49 @@ exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
+const class_validator_1 = require("class-validator");
 const auth_service_1 = require("../services/auth.service");
 const two_factor_service_1 = require("../two-factor/services/two-factor.service");
 class LoginDto {
 }
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "tenantSlug", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "totpCode", void 0);
 class RefreshTokenDto {
 }
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RefreshTokenDto.prototype, "refreshToken", void 0);
 class Verify2FADto {
 }
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], Verify2FADto.prototype, "tempToken", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], Verify2FADto.prototype, "totpCode", void 0);
 let AuthController = class AuthController {
     constructor(authService, twoFactorService) {
         this.authService = authService;
@@ -181,7 +216,7 @@ __decorate([
 ], AuthController.prototype, "refreshToken", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Authentication'),
-    (0, common_1.Controller)('v1/auth'),
+    (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
         two_factor_service_1.TwoFactorService])
 ], AuthController);

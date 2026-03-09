@@ -232,7 +232,7 @@ __decorate([
 ], ReportingController.prototype, "refreshViews", null);
 exports.ReportingController = ReportingController = __decorate([
     (0, swagger_1.ApiTags)('Business Intelligence'),
-    (0, common_1.Controller)('v1/analytics'),
+    (0, common_1.Controller)('analytics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [reporting_service_1.ReportingService])

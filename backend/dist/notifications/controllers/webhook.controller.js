@@ -57,6 +57,9 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
         this.logger = new common_1.Logger(NotificationWebhookController_1.name);
     }
     async handleResendWebhook(payload, signature, timestamp) {
+        if (!payload?.type || !payload?.data) {
+            throw new common_1.BadRequestException('Invalid webhook payload: missing type or data');
+        }
         if (!this.verifyResendSignature(payload, signature, timestamp)) {
             this.logger.warn('Invalid Resend webhook signature');
             throw new common_1.UnauthorizedException('Invalid signature');
@@ -96,6 +99,9 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
         }
     }
     async handleTwilioWebhook(payload, signature) {
+        if (!payload?.MessageSid || !payload?.MessageStatus) {
+            return { received: true };
+        }
         this.logger.log(`Twilio webhook received: ${payload.MessageStatus} for message ${payload.MessageSid}`);
         try {
             switch (payload.MessageStatus) {
@@ -125,6 +131,9 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
         }
     }
     async handleTwilioIncoming(payload) {
+        if (!payload?.From || !payload?.Body) {
+            return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
+        }
         this.logger.log(`Incoming SMS from ${payload.From}: ${payload.Body}`);
         try {
             await this.processIncomingSms(payload.From, payload.Body, payload.MessageSid);

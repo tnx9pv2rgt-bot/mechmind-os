@@ -210,7 +210,7 @@ __decorate([
 ], ShopFloorController.prototype, "getRecentEvents", null);
 exports.ShopFloorController = ShopFloorController = __decorate([
     (0, swagger_1.ApiTags)('Shop Floor'),
-    (0, common_1.Controller)('v1/shop-floor'),
+    (0, common_1.Controller)('shop-floor'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [shop_floor_service_1.ShopFloorService])

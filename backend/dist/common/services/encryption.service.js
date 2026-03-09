@@ -50,34 +50,53 @@ let EncryptionService = class EncryptionService {
     constructor(configService) {
         this.configService = configService;
         this.algorithm = 'aes-256-cbc';
+        this.IV_LENGTH = 16;
         const encryptionKey = this.configService.get('ENCRYPTION_KEY');
-        const encryptionIv = this.configService.get('ENCRYPTION_IV');
         if (!encryptionKey || encryptionKey.length < 32) {
             throw new Error('ENCRYPTION_KEY must be at least 32 characters');
         }
         this.key = Buffer.from(encryptionKey.slice(0, 32));
-        this.iv = Buffer.from((encryptionIv || encryptionKey.slice(0, 16)).slice(0, 16));
     }
     encrypt(data) {
         if (!data)
             return data;
-        const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
+        const iv = crypto.randomBytes(this.IV_LENGTH);
+        const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
         let encrypted = cipher.update(data, 'utf8', 'hex');
         encrypted += cipher.final('hex');
-        return encrypted;
+        return iv.toString('hex') + encrypted;
     }
     decrypt(encryptedData) {
         if (!encryptedData)
             return encryptedData;
         try {
-            const decipher = crypto.createDecipheriv(this.algorithm, this.key, this.iv);
-            let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-            decrypted += decipher.final('utf8');
-            return decrypted;
+            if (encryptedData.length > 32) {
+                const iv = Buffer.from(encryptedData.slice(0, 32), 'hex');
+                const ciphertext = encryptedData.slice(32);
+                const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
+                let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
+                decrypted += decipher.final('utf8');
+                return decrypted;
+            }
+            throw new Error('Ciphertext too short');
         }
-        catch (error) {
-            throw new Error('Failed to decrypt data: invalid encryption key or corrupted data');
+        catch {
+            try {
+                const legacyIv = this.getLegacyIv();
+                const decipher = crypto.createDecipheriv(this.algorithm, this.key, legacyIv);
+                let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+                decrypted += decipher.final('utf8');
+                return decrypted;
+            }
+            catch {
+                throw new Error('Failed to decrypt data: invalid encryption key or corrupted data');
+            }
         }
+    }
+    getLegacyIv() {
+        const encryptionKey = this.configService.get('ENCRYPTION_KEY');
+        const encryptionIv = this.configService.get('ENCRYPTION_IV');
+        return Buffer.from((encryptionIv || encryptionKey.slice(0, 16)).slice(0, 16));
     }
     hash(data) {
         if (!data)

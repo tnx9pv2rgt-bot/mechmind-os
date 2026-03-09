@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import { GdprRequestService } from '../services/gdpr-request.service';
 import { LoggerService } from '@common/services/logger.service';
 
@@ -38,15 +38,14 @@ export class GdprWebhookController {
     },
     @Headers('x-webhook-signature') signature?: string,
   ) {
+    if (!body?.tenantId || !body?.requestType || !body?.source) {
+      throw new BadRequestException('Missing required fields: tenantId, requestType, source');
+    }
+
     this.loggerService.log(
       `Received data subject request webhook from ${body.source}`,
       'GdprWebhookController',
     );
-
-    // Verify webhook signature (in production)
-    // if (!this.verifyWebhookSignature(body, signature)) {
-    //   throw new UnauthorizedException('Invalid webhook signature');
-    // }
 
     // Create the request
     const request = await this.requestService.createRequest({
@@ -83,6 +82,10 @@ export class GdprWebhookController {
       source: string;
     },
   ) {
+    if (!body?.tenantId || !body?.customerId || !body?.consentType) {
+      throw new BadRequestException('Missing required fields: tenantId, customerId, consentType');
+    }
+
     this.loggerService.log(
       `Received consent update webhook: customer=${body.customerId}, type=${body.consentType}, granted=${body.granted}`,
       'GdprWebhookController',
@@ -110,6 +113,10 @@ export class GdprWebhookController {
       confirmationId: string;
     },
   ) {
+    if (!body?.subProcessor || !body?.confirmationId) {
+      throw new BadRequestException('Missing required fields: subProcessor, confirmationId');
+    }
+
     this.loggerService.log(
       `Received deletion confirmation from ${body.subProcessor}: ${body.confirmationId}`,
       'GdprWebhookController',

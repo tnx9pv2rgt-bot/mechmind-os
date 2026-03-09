@@ -36,7 +36,7 @@ import {
 import { UserRole } from '../../auth/guards/roles.guard';
 
 @ApiTags('Digital Vehicle Inspection')
-@Controller('v1/inspections')
+@Controller('inspections')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class InspectionController {

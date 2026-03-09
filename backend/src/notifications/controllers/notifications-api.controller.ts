@@ -27,7 +27,7 @@ import {
 } from '../dto/send-notification.dto';
 
 @ApiTags('Notifications')
-@Controller('api/v1/notifications')
+@Controller('notifications/api')
 export class NotificationsApiController {
   private readonly logger = new Logger(NotificationsApiController.name);
 

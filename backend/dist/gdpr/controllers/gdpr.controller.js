@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GdprController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const jwt_auth_guard_1 = require("../../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../../auth/guards/roles.guard");
 const roles_decorator_1 = require("../../auth/decorators/roles.decorator");
@@ -244,6 +245,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('customers/:customerId/delete'),
     (0, roles_decorator_1.Roles)(roles_guard_2.UserRole.ADMIN),
+    (0, throttler_1.Throttle)({ default: { ttl: 60000, limit: 5 } }),
     __param(0, (0, common_1.Param)('customerId', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Query)('tenantId')),
     __param(2, (0, common_1.Body)()),

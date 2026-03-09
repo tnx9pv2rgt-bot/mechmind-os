@@ -22,7 +22,7 @@ import { UserRole } from '../../auth/guards/roles.guard';
 import { Response } from 'express';
 
 @ApiTags('Business Intelligence')
-@Controller('v1/analytics')
+@Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ReportingController {
