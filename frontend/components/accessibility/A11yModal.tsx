@@ -71,7 +71,7 @@ export function A11yModal({
 
   const { containerRef } = useFocusTrap({
     isActive: isOpen,
-    onEscape: closeOnEscape ? onClose : undefined,
+    onEscapeFocus: closeOnEscape ? onClose : undefined,
   });
 
   // Salva elemento attivo precedente
