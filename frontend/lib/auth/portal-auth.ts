@@ -59,6 +59,8 @@ export interface RegistrationData {
   lastName: string
   phone?: string
   tenantId: string
+  gdprConsent?: boolean
+  marketingConsent?: boolean
 }
 
 // =============================================================================
