@@ -38,7 +38,6 @@
     "migrate:reset": "prisma migrate reset",
     "generate": "prisma generate",
     "postinstall": "prisma generate || true",
-    "prestart:prod": "prisma migrate deploy",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
