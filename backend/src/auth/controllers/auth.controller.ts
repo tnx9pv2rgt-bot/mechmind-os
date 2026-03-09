@@ -62,7 +62,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ auth: { ttl: 60000, limit: 5 } }) // 5 attempts per minute
+  @Throttle({ strict: { ttl: 60000, limit: 5 } }) // 5 attempts per minute
   @ApiOperation({ 
     summary: 'User login',
     description: 'Login with email/password. If 2FA is enabled, returns tempToken for verification.'
@@ -157,7 +157,7 @@ export class AuthController {
 
   @Post('verify-2fa')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ auth: { ttl: 60000, limit: 10 } }) // 10 attempts per minute
+  @Throttle({ strict: { ttl: 60000, limit: 10 } }) // 10 attempts per minute
   @ApiOperation({ 
     summary: 'Verify 2FA code',
     description: 'Complete login with TOTP code or backup code after receiving tempToken'

@@ -112,7 +112,7 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, throttler_1.Throttle)({ auth: { ttl: 60000, limit: 5 } }),
+    (0, throttler_1.Throttle)({ strict: { ttl: 60000, limit: 5 } }),
     (0, swagger_1.ApiOperation)({
         summary: 'User login',
         description: 'Login with email/password. If 2FA is enabled, returns tempToken for verification.'
@@ -163,7 +163,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('verify-2fa'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, throttler_1.Throttle)({ auth: { ttl: 60000, limit: 10 } }),
+    (0, throttler_1.Throttle)({ strict: { ttl: 60000, limit: 10 } }),
     (0, swagger_1.ApiOperation)({
         summary: 'Verify 2FA code',
         description: 'Complete login with TOTP code or backup code after receiving tempToken'
