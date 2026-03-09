@@ -17,6 +17,7 @@ import {
   Request,
   Headers,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -302,7 +303,7 @@ export class AdminSubscriptionController {
 export class StripeWebhookController {
   constructor(
     private readonly subscriptionService: SubscriptionService,
-    private readonly configService: { get: (key: string) => string | undefined },
+    private readonly configService: ConfigService,
   ) {}
 
   @Post()
