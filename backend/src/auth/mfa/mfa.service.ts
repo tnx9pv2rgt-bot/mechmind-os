@@ -88,7 +88,7 @@ export class MfaService {
         },
       }),
       this.prisma.backupCode.createMany({
-        data: hashedBackupCodes.map(codeHash => ({
+        data: hashedBackupCodes.map((codeHash: string) => ({
           userId,
           codeHash,
         })),
@@ -286,7 +286,7 @@ export class MfaService {
     await this.prisma.$transaction([
       this.prisma.backupCode.deleteMany({ where: { userId } }),
       this.prisma.backupCode.createMany({
-        data: hashedBackupCodes.map(codeHash => ({
+        data: hashedBackupCodes.map((codeHash: string) => ({
           userId,
           codeHash,
         })),

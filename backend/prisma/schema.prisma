@@ -18,9 +18,10 @@ model Tenant {
   name      String
   slug      String   @unique
   settings  Json     @default("{}")
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive   Boolean  @default(true) @map("is_active")
+  apiKeyHash String?  @map("api_key_hash")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
   users        User[]
@@ -349,7 +350,7 @@ model BookingSlot {
   booking Booking?
 
   @@index([tenantId])
-  @@index([startTime])
+  @@index([tenantId, startTime, endTime])
   @@index([status])
   @@map("booking_slots")
 }
@@ -391,6 +392,8 @@ model Service {
   bookings BookingService[]
   workOrderServices WorkOrderService[]
 
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("services")
 }
 
@@ -792,10 +795,12 @@ model ObdReading {
   // Geolocation (if available)
   latitude  Float?
   longitude Float?
-  Tenant    Tenant? @relation(fields: [tenantId], references: [id])
-  tenantId  String?
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String @map("tenant_id")
 
+  @@index([tenantId])
   @@index([deviceId])
+  @@index([deviceId, recordedAt])
   @@index([recordedAt])
   @@map("obd_readings")
 }
@@ -854,7 +859,7 @@ enum TroubleCodeSeverity {
 
 model Part {
   id          String  @id @default(uuid())
-  sku         String  @unique
+  sku         String
   name        String
   description String?
   category    String // e.g., "BRAKES", "ENGINE", "ELECTRICAL"
@@ -901,9 +906,9 @@ model Part {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([tenantId])
+  @@unique([tenantId, sku])
+  @@index([tenantId, isActive])
   @@index([category])
-  @@index([sku])
   @@index([supplierId])
   @@map("parts")
 }
@@ -1096,6 +1101,23 @@ enum OrderStatus {
   PARTIALLY_RECEIVED
   RECEIVED
   CANCELLED
+}
+
+enum WorkOrderStatus {
+  PENDING
+  CHECKED_IN
+  IN_PROGRESS
+  WAITING_PARTS
+  QUALITY_CHECK
+  COMPLETED
+}
+
+enum ServiceBayStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+  CLEANING
 }
 
 // ==========================================
@@ -2014,7 +2036,7 @@ model ServiceBay {
 
   name   String
   type   String // LIFT, PIT, HOIST, DYNO, ALIGNMENT, DETAIL
-  status String @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED, MAINTENANCE, CLEANING
+  status ServiceBayStatus @default(AVAILABLE)
 
   // Location
   locationX Float @map("location_x")
@@ -2036,6 +2058,9 @@ model ServiceBay {
   // Relations
   sensors Sensor[]
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   @@index([shopFloorId])
   @@index([status])
   @@map("service_bays")
@@ -2056,6 +2081,9 @@ model ParkingSpot {
 
   vehicleId     String? @map("vehicle_id")
   licensePlate  String? @map("license_plate")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([shopFloorId])
   @@index([status])
@@ -2125,7 +2153,7 @@ model WorkOrder {
   tenantId  String   @map("tenant_id")
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  status String @default("PENDING") // PENDING, CHECKED_IN, IN_PROGRESS, WAITING_PARTS, QUALITY_CHECK, COMPLETED
+  status WorkOrderStatus @default(PENDING)
 
   // Relations
   vehicleId String  @map("vehicle_id")

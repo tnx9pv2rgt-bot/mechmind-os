@@ -63,7 +63,7 @@ export class TwoFactorService {
 
     // Store backup codes in separate model
     await this.prisma.backupCode.createMany({
-      data: hashedBackupCodes.map(codeHash => ({
+      data: hashedBackupCodes.map((codeHash: string) => ({
         userId,
         codeHash,
       })),
@@ -239,7 +239,7 @@ export class TwoFactorService {
     await this.prisma.$transaction([
       this.prisma.backupCode.deleteMany({ where: { userId } }),
       this.prisma.backupCode.createMany({
-        data: hashedBackupCodes.map(codeHash => ({
+        data: hashedBackupCodes.map((codeHash: string) => ({
           userId,
           codeHash,
         })),
