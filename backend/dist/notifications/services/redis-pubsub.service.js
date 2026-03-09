@@ -36,7 +36,7 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
             host: this.configService.get('REDIS_HOST', 'localhost'),
             port: this.configService.get('REDIS_PORT', 6379),
             password: this.configService.get('REDIS_PASSWORD'),
-            db: this.configService.get('REDIS_PUBSUB_DB', 2),
+            db: this.configService.get('REDIS_PUBSUB_DB', 0),
             tls: this.configService.get('REDIS_TLS') === 'true',
         };
     }

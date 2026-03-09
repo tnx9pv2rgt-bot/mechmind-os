@@ -1,15 +1,13 @@
 /**
  * MechMind OS - Rate Limiting Module
- * 
- * Distributed rate limiting with Redis storage
+ *
+ * Rate limiting with in-memory storage (compatible with all Redis providers)
  * Protects against DDoS and brute force attacks
  */
 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
-import { Redis } from 'ioredis';
 
 @Module({
   imports: [
@@ -17,26 +15,6 @@ import { Redis } from 'ioredis';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService): ThrottlerModuleOptions => {
-        const redisHost = config.get<string>('REDIS_HOST', 'localhost');
-        const redisPort = config.get<number>('REDIS_PORT', 6379);
-        const redisPassword = config.get<string>('REDIS_PASSWORD');
-        const redisTls = config.get<string>('REDIS_TLS') === 'true';
-        
-        // Create Redis client for throttler storage
-        const redisOptions: any = {
-          host: redisHost,
-          port: redisPort,
-          password: redisPassword,
-          db: config.get<number>('REDIS_THROTTLE_DB', 1), // Separate DB for rate limiting
-          retryStrategy: (times: number) => Math.min(times * 50, 2000),
-        };
-        
-        if (redisTls) {
-          redisOptions.tls = {};
-        }
-        
-        const redisClient = new Redis(redisOptions);
-        
         return {
           throttlers: [
             {
@@ -55,7 +33,6 @@ import { Redis } from 'ioredis';
               limit: 300, // 300 requests per minute (for high-traffic endpoints)
             },
           ],
-          storage: new ThrottlerStorageRedisService(redisClient) as any,
           errorMessage: 'Rate limit exceeded. Please try again later.',
         };
       },

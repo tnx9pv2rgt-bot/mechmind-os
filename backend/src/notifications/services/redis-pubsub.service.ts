@@ -35,7 +35,7 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
       host: this.configService.get<string>('REDIS_HOST', 'localhost'),
       port: this.configService.get<number>('REDIS_PORT', 6379),
       password: this.configService.get<string>('REDIS_PASSWORD'),
-      db: this.configService.get<number>('REDIS_PUBSUB_DB', 2),
+      db: this.configService.get<number>('REDIS_PUBSUB_DB', 0),
       tls: this.configService.get<string>('REDIS_TLS') === 'true',
     };
   }

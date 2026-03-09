@@ -10,8 +10,6 @@ exports.RateLimitingModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const throttler_1 = require("@nestjs/throttler");
-const throttler_storage_redis_1 = require("@nest-lab/throttler-storage-redis");
-const ioredis_1 = require("ioredis");
 let RateLimitingModule = class RateLimitingModule {
 };
 exports.RateLimitingModule = RateLimitingModule;
@@ -22,21 +20,6 @@ exports.RateLimitingModule = RateLimitingModule = __decorate([
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
                 useFactory: (config) => {
-                    const redisHost = config.get('REDIS_HOST', 'localhost');
-                    const redisPort = config.get('REDIS_PORT', 6379);
-                    const redisPassword = config.get('REDIS_PASSWORD');
-                    const redisTls = config.get('REDIS_TLS') === 'true';
-                    const redisOptions = {
-                        host: redisHost,
-                        port: redisPort,
-                        password: redisPassword,
-                        db: config.get('REDIS_THROTTLE_DB', 1),
-                        retryStrategy: (times) => Math.min(times * 50, 2000),
-                    };
-                    if (redisTls) {
-                        redisOptions.tls = {};
-                    }
-                    const redisClient = new ioredis_1.Redis(redisOptions);
                     return {
                         throttlers: [
                             {
@@ -55,7 +38,6 @@ exports.RateLimitingModule = RateLimitingModule = __decorate([
                                 limit: 300,
                             },
                         ],
-                        storage: new throttler_storage_redis_1.ThrottlerStorageRedisService(redisClient),
                         errorMessage: 'Rate limit exceeded. Please try again later.',
                     };
                 },
