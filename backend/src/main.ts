@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
+import { json } from 'express';
 import { AppModule } from './app.module';
 import { LoggerService } from './common/services/logger.service';
 
@@ -27,12 +28,21 @@ async function bootstrap() {
     crossOriginEmbedderPolicy: false,
   }));
 
+  // Body size limit
+  app.use(json({ limit: '1mb' }));
+
   // Compression
   app.use(compression());
 
-  // CORS
+  // CORS - require explicit origin, no wildcard with credentials
+  const corsOrigin = configService.get<string>('CORS_ORIGIN');
+  if (!corsOrigin) {
+    logger.warn('CORS_ORIGIN not configured - defaulting to localhost only');
+  }
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', '*'),
+    origin: corsOrigin
+      ? corsOrigin.split(',').map(o => o.trim())
+      : ['http://localhost:3001'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
@@ -73,9 +83,15 @@ async function bootstrap() {
     },
   });
 
+  // Health check endpoint (before global prefix, no auth required)
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/health', (_req: unknown, res: { json: (body: Record<string, unknown>) => void }) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // Start server
   const port = configService.get<number>('PORT', 3000);
-  
+
   await app.listen(port);
 
   logger.log(`🚀 MechMind OS v10 API running on port ${port}`);

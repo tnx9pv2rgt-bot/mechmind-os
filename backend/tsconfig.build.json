@@ -7,9 +7,6 @@
     "outDir": "./dist",
     "jsx": "react-jsx",
     "skipLibCheck": true,
-    "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
     "noEmitOnError": false
   },
   "exclude": [
