@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2, AlertCircle, Loader2, Shield, Mail } from 'lucide-react';
 import Link from 'next/link';
 
-export default function MagicLinkVerifyPage() {
+function MagicLinkVerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -50,6 +50,60 @@ export default function MagicLinkVerifyPage() {
   }, [token, router]);
 
   return (
+    <div className="relative text-center">
+      {/* Logo */}
+      <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
+        <Shield className="h-8 w-8" />
+      </div>
+
+      {status === 'verifying' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-blue-500" />
+          <h2 className="mb-2 text-xl font-semibold text-gray-900">Verifica in corso...</h2>
+          <p className="text-sm text-gray-500">Stiamo verificando il tuo link di accesso</p>
+        </motion.div>
+      )}
+
+      {status === 'success' && (
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+          <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
+          <h2 className="mb-2 text-xl font-semibold text-gray-900">Accesso effettuato!</h2>
+          <p className="text-sm text-gray-500">Reindirizzamento alla dashboard...</p>
+        </motion.div>
+      )}
+
+      {status === 'error' && (
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+          <h2 className="mb-2 text-xl font-semibold text-gray-900">Link non valido</h2>
+          <p className="mb-6 text-sm text-gray-500">{error}</p>
+          <Link
+            href="/auth"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-500 px-6 py-3 font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-600"
+          >
+            <Mail className="h-5 w-5" />
+            Richiedi nuovo link
+          </Link>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="relative text-center">
+      <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
+        <Shield className="h-8 w-8" />
+      </div>
+      <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-blue-500" />
+      <h2 className="mb-2 text-xl font-semibold text-gray-900">Caricamento...</h2>
+    </div>
+  );
+}
+
+export default function MagicLinkVerifyPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50/50 via-white to-purple-50/30 p-8">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.96 }}
@@ -59,44 +113,9 @@ export default function MagicLinkVerifyPage() {
       >
         <div className="relative overflow-hidden rounded-[32px] bg-white/70 p-10 shadow-2xl backdrop-blur-3xl ring-1 ring-white/50">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent" />
-
-          <div className="relative text-center">
-            {/* Logo */}
-            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-              <Shield className="h-8 w-8" />
-            </div>
-
-            {status === 'verifying' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-blue-500" />
-                <h2 className="mb-2 text-xl font-semibold text-gray-900">Verifica in corso...</h2>
-                <p className="text-sm text-gray-500">Stiamo verificando il tuo link di accesso</p>
-              </motion.div>
-            )}
-
-            {status === 'success' && (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
-                <h2 className="mb-2 text-xl font-semibold text-gray-900">Accesso effettuato!</h2>
-                <p className="text-sm text-gray-500">Reindirizzamento alla dashboard...</p>
-              </motion.div>
-            )}
-
-            {status === 'error' && (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-                <h2 className="mb-2 text-xl font-semibold text-gray-900">Link non valido</h2>
-                <p className="mb-6 text-sm text-gray-500">{error}</p>
-                <Link
-                  href="/auth"
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-500 px-6 py-3 font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-600"
-                >
-                  <Mail className="h-5 w-5" />
-                  Richiedi nuovo link
-                </Link>
-              </motion.div>
-            )}
-          </div>
+          <Suspense fallback={<LoadingFallback />}>
+            <MagicLinkVerifyContent />
+          </Suspense>
         </div>
       </motion.div>
     </div>
