@@ -78,7 +78,7 @@ export default function PortalSettingsPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      const currentCustomer: { firstName: string; lastName: string; email: string; phone: string } | null = null // TODO: Get from auth context
+      const currentCustomer = null as Customer | null // TODO: Get from auth context
       setCustomer(currentCustomer)
 
       if (currentCustomer) {
