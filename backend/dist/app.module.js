@@ -11,8 +11,6 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
-const throttler_storage_redis_1 = require("@nest-lab/throttler-storage-redis");
-const ioredis_1 = require("ioredis");
 const common_module_1 = require("./common/common.module");
 const auth_module_1 = require("./auth/auth.module");
 const booking_module_1 = require("./booking/booking.module");
@@ -38,41 +36,14 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: ['.env', '.env.local'],
             }),
-            throttler_1.ThrottlerModule.forRootAsync({
-                imports: [config_1.ConfigModule],
-                inject: [config_1.ConfigService],
-                useFactory: (config) => {
-                    const throttlers = [
-                        { name: 'default', ttl: 60000, limit: 100 },
-                        { name: 'auth', ttl: 60000, limit: 5 },
-                        { name: 'api', ttl: 60000, limit: 200 },
-                        { name: 'webhook', ttl: 60000, limit: 1000 },
-                    ];
-                    const redisHost = config.get('REDIS_HOST');
-                    if (!redisHost) {
-                        console.warn('[Throttler] REDIS_HOST not configured - using in-memory storage');
-                        return { throttlers };
-                    }
-                    try {
-                        const redisOptions = {
-                            host: redisHost,
-                            port: config.get('REDIS_PORT', 6379),
-                            password: config.get('REDIS_PASSWORD'),
-                            db: config.get('REDIS_THROTTLE_DB', 1),
-                            lazyConnect: true,
-                            maxRetriesPerRequest: 3,
-                        };
-                        if (config.get('REDIS_TLS') === 'true') {
-                            redisOptions.tls = {};
-                        }
-                        const storage = new throttler_storage_redis_1.ThrottlerStorageRedisService(new ioredis_1.Redis(redisOptions));
-                        return { throttlers, storage: storage };
-                    }
-                    catch (error) {
-                        console.warn('[Throttler] Failed to connect to Redis, using in-memory storage:', error);
-                        return { throttlers };
-                    }
-                },
+            throttler_1.ThrottlerModule.forRoot({
+                throttlers: [
+                    { name: 'default', ttl: 60000, limit: 100 },
+                    { name: 'strict', ttl: 60000, limit: 5 },
+                    { name: 'api', ttl: 60000, limit: 200 },
+                    { name: 'webhook', ttl: 60000, limit: 1000 },
+                ],
+                errorMessage: 'Rate limit exceeded. Please try again later.',
             }),
             common_module_1.CommonModule,
             auth_module_1.AuthModule,
