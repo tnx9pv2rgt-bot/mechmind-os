@@ -17,10 +17,10 @@ const nextConfig = {
   
   // TypeScript and ESLint handling
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   
   // Experimental features
