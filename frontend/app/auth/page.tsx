@@ -96,13 +96,18 @@ function IOSInput({ label, icon, error, className, type = 'text', ...props }: IO
 }
 
 // Apple Button
-interface AppleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface AppleButtonProps {
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'passkey';
   size?: 'default' | 'lg' | 'xl';
   isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
 }
 
-function AppleButton({ children, variant = 'primary', size = 'default', isLoading, disabled, className, ...props }: AppleButtonProps) {
+function AppleButton({ children, variant = 'primary', size = 'default', isLoading, disabled, className, onClick, type }: AppleButtonProps) {
   const variants = {
     primary: 'bg-apple-blue text-white hover:bg-apple-blue-hover shadow-lg shadow-apple-blue/25',
     secondary: 'bg-white/80 text-apple-dark hover:bg-white shadow-md backdrop-blur-sm',
@@ -129,7 +134,8 @@ function AppleButton({ children, variant = 'primary', size = 'default', isLoadin
         className
       )}
       disabled={disabled || isLoading}
-      {...props}
+      onClick={onClick}
+      type={type}
     >
       {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : children}
     </motion.button>
