@@ -418,6 +418,64 @@ export class AuthService {
   }
 
   /**
+   * Log auth event to audit log
+   */
+  async logAuthEvent(params: {
+    userId?: string;
+    tenantId: string;
+    action: string;
+    status: 'success' | 'failed' | 'blocked';
+    ipAddress?: string;
+    userAgent?: string;
+    details?: Record<string, unknown>;
+  }): Promise<void> {
+    try {
+      await this.prisma.authAuditLog.create({
+        data: {
+          userId: params.userId,
+          tenantId: params.tenantId,
+          action: params.action,
+          status: params.status,
+          ipAddress: params.ipAddress,
+          userAgent: params.userAgent,
+          details: (params.details ?? {}) as Record<string, string>,
+        },
+      });
+    } catch (error) {
+      this.logger.error('Failed to log auth event', error.stack);
+    }
+  }
+
+  /**
+   * Find user by email and tenant ID (for passkey/magic-link flows)
+   */
+  async findUserByEmailAndTenant(email: string, tenantId: string): Promise<UserWithTenant | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { email, tenantId, isActive: true },
+      include: { tenant: true },
+    });
+
+    if (!user || !user.tenant.isActive) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive,
+      tenantId: user.tenantId,
+      tenant: {
+        id: user.tenant.id,
+        name: user.tenant.name,
+        slug: user.tenant.slug,
+        isActive: user.tenant.isActive,
+      },
+    };
+  }
+
+  /**
    * Check if account is locked
    */
   async isAccountLocked(userId: string): Promise<{ locked: boolean; until?: Date }> {

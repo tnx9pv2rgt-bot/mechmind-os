@@ -9,15 +9,19 @@ import { RolesGuard } from './guards/roles.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { TenantContextMiddleware } from './middleware/tenant-context.middleware';
 import { CommonModule } from '@common/common.module';
-import { TwoFactorService } from './two-factor/services/two-factor.service';
-import { TwoFactorController } from './two-factor/controllers/two-factor.controller';
 import { MfaService } from './mfa/mfa.service';
 import { MfaController } from './mfa/mfa.controller';
+import { PasskeyService } from './passkey/passkey.service';
+import { PasskeyController } from './passkey/passkey.controller';
+import { MagicLinkService } from './magic-link/magic-link.service';
+import { MagicLinkController } from './magic-link/magic-link.controller';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     CommonModule,
     ConfigModule,
+    NotificationsModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -30,16 +34,17 @@ import { MfaController } from './mfa/mfa.controller';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, TwoFactorController, MfaController],
+  controllers: [AuthController, MfaController, PasskeyController, MagicLinkController],
   providers: [
     AuthService,
-    TwoFactorService,
     MfaService,
+    PasskeyService,
+    MagicLinkService,
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [AuthService, TwoFactorService, MfaService, JwtAuthGuard, RolesGuard, JwtModule],
+  exports: [AuthService, MfaService, PasskeyService, MagicLinkService, JwtAuthGuard, RolesGuard, JwtModule],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

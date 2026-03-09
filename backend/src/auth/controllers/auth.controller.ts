@@ -16,8 +16,8 @@ import {
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { AuthService, AuthTokens } from '../services/auth.service';
-import { TwoFactorService } from '../two-factor/services/two-factor.service';
-import { TwoFactorRequiredResponseDto } from '../two-factor/dto/two-factor.dto';
+import { MfaService } from '../mfa/mfa.service';
+import { MfaRequiredResponseDto } from '../mfa/dto/mfa.dto';
 
 class LoginDto {
   @IsEmail()
@@ -57,7 +57,7 @@ class Verify2FADto {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly twoFactorService: TwoFactorService,
+    private readonly mfaService: MfaService,
   ) {}
 
   @Post('login')
@@ -107,7 +107,7 @@ export class AuthController {
   async login(
     @Body() dto: LoginDto,
     @Ip() ip: string,
-  ): Promise<AuthTokens | TwoFactorRequiredResponseDto> {
+  ): Promise<AuthTokens | MfaRequiredResponseDto> {
     // Validate credentials
     const user = await this.authService.validateUser(
       dto.email,
@@ -127,23 +127,23 @@ export class AuthController {
       );
     }
 
-    // Check if 2FA is enabled
-    const twoFactorStatus = await this.twoFactorService.getStatus(user.id);
-    
-    if (twoFactorStatus.enabled) {
+    // Check if MFA is enabled
+    const mfaStatus = await this.mfaService.getStatus(user.id);
+
+    if (mfaStatus.enabled) {
       // If TOTP code provided, verify it
       if (dto.totpCode) {
-        const verified = await this.twoFactorService.verifyLogin(user.id, dto.totpCode);
-        if (!verified) {
+        const result = await this.mfaService.verify(user.id, dto.totpCode);
+        if (!result.valid) {
           await this.authService.recordFailedLogin(user.id);
           throw new UnauthorizedException('Invalid 2FA code');
         }
       } else {
-        // Return temp token for 2FA verification
+        // Return temp token for MFA verification
         const tempToken = await this.authService.generateTwoFactorTempToken(user.id);
         return {
           tempToken,
-          requiresTwoFactor: true,
+          requiresMfa: true,
           methods: ['totp', 'backup'],
         };
       }
@@ -191,9 +191,9 @@ export class AuthController {
     // Verify temp token and get userId
     const userId = await this.authService.verifyTwoFactorTempToken(dto.tempToken);
     
-    // Verify 2FA code
-    const verified = await this.twoFactorService.verifyLogin(userId, dto.totpCode);
-    if (!verified) {
+    // Verify MFA code
+    const result = await this.mfaService.verify(userId, dto.totpCode);
+    if (!result.valid) {
       throw new UnauthorizedException('Invalid 2FA code');
     }
 

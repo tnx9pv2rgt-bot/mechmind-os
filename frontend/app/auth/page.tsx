@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, 
+import {
+  Mail, Lock, Eye, EyeOff, ArrowRight, Loader2,
   CheckCircle2, AlertCircle, Fingerprint, Shield,
-  KeyRound, Car, Wrench, Users, BarChart3, Clock, ShieldCheck
+  KeyRound, Car, Wrench, Users, BarChart3, Clock, ShieldCheck,
+  Building2
 } from 'lucide-react';
 import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser';
 import { clsx, type ClassValue } from 'clsx';
@@ -35,7 +36,13 @@ const cardVariants = {
 };
 
 // iOS Input Component
-function IOSInput({ label, icon, error, className, type = 'text', ...props }: any) {
+interface IOSInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  icon?: React.ReactNode;
+  error?: string;
+}
+
+function IOSInput({ label, icon, error, className, type = 'text', ...props }: IOSInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
@@ -89,7 +96,13 @@ function IOSInput({ label, icon, error, className, type = 'text', ...props }: an
 }
 
 // Apple Button
-function AppleButton({ children, variant = 'primary', size = 'default', isLoading, disabled, className, ...props }: any) {
+interface AppleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'passkey';
+  size?: 'default' | 'lg' | 'xl';
+  isLoading?: boolean;
+}
+
+function AppleButton({ children, variant = 'primary', size = 'default', isLoading, disabled, className, ...props }: AppleButtonProps) {
   const variants = {
     primary: 'bg-apple-blue text-white hover:bg-apple-blue-hover shadow-lg shadow-apple-blue/25',
     secondary: 'bg-white/80 text-apple-dark hover:bg-white shadow-md backdrop-blur-sm',
@@ -170,6 +183,7 @@ function PasskeyButton({ onClick, isLoading }: { onClick: () => void; isLoading:
 // Magic Link Form
 function MagicLinkForm() {
   const [email, setEmail] = useState('');
+  const [tenantSlug, setTenantSlug] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState('');
@@ -179,17 +193,21 @@ function MagicLinkForm() {
       setError('Inserisci la tua email');
       return;
     }
-    
+    if (!tenantSlug) {
+      setError('Inserisci lo slug dell\'officina');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
-    
+
     try {
       const res = await fetch('/api/auth/magic-link/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, tenantSlug }),
       });
-      
+
       if (res.ok) {
         setIsSent(true);
       } else {
@@ -216,15 +234,23 @@ function MagicLinkForm() {
   return (
     <div className="space-y-4">
       <IOSInput
+        label="Slug officina"
+        type="text"
+        placeholder="garage-roma"
+        icon={<Building2 className="h-5 w-5" />}
+        value={tenantSlug}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTenantSlug(e.target.value)}
+      />
+      <IOSInput
         label="Email"
         type="email"
         placeholder="tu@officina.it"
         icon={<Mail className="h-5 w-5" />}
         value={email}
-        onChange={(e: any) => setEmail(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
         error={error}
       />
-      <AppleButton onClick={handleSend} isLoading={isLoading} disabled={!email} className="w-full">
+      <AppleButton onClick={handleSend} isLoading={isLoading} disabled={!email || !tenantSlug} className="w-full">
         Invia link di accesso <ArrowRight className="ml-2 h-5 w-5" />
       </AppleButton>
     </div>
@@ -233,6 +259,7 @@ function MagicLinkForm() {
 
 // Password Form
 function PasswordForm() {
+  const [tenantSlug, setTenantSlug] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -249,7 +276,7 @@ function PasswordForm() {
       const res = await fetch('/api/auth/password/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, rememberMe }),
+        body: JSON.stringify({ email, password, tenantSlug }),
       });
 
       const data = await res.json();
@@ -273,12 +300,20 @@ function PasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <IOSInput
+        label="Slug officina"
+        type="text"
+        placeholder="garage-roma"
+        icon={<Building2 className="h-5 w-5" />}
+        value={tenantSlug}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTenantSlug(e.target.value)}
+      />
+      <IOSInput
         label="Email"
         type="email"
         placeholder="tu@officina.it"
         icon={<Mail className="h-5 w-5" />}
         value={email}
-        onChange={(e: any) => setEmail(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
       />
       <IOSInput
         label="Password"
@@ -286,7 +321,7 @@ function PasswordForm() {
         placeholder="••••••••"
         icon={<Lock className="h-5 w-5" />}
         value={password}
-        onChange={(e: any) => setPassword(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
       />
       
       <div className="flex items-center justify-between">
@@ -431,13 +466,21 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 // Auth Form Component - Purely client-side
-function AuthForm({ 
-  activeMethod, 
-  setActiveMethod, 
-  isLoadingPasskey, 
-  passkeyError, 
-  handlePasskeyLogin 
-}: any) {
+interface AuthFormProps {
+  activeMethod: 'passkey' | 'magic' | 'password';
+  setActiveMethod: (method: 'passkey' | 'magic' | 'password') => void;
+  isLoadingPasskey: boolean;
+  passkeyError: string;
+  handlePasskeyLogin: () => void;
+}
+
+function AuthForm({
+  activeMethod,
+  setActiveMethod,
+  isLoadingPasskey,
+  passkeyError,
+  handlePasskeyLogin
+}: AuthFormProps) {
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible" className="w-full max-w-[420px]">
       <div className="relative overflow-hidden rounded-[32px] bg-white/70 p-8 shadow-2xl shadow-apple-dark/5 backdrop-blur-3xl ring-1 ring-white/50 sm:p-10">
@@ -471,7 +514,7 @@ function AuthForm({
               ].map((method) => (
                 <button
                   key={method.id}
-                  onClick={() => setActiveMethod(method.id as any)}
+                  onClick={() => setActiveMethod(method.id as 'magic' | 'password')}
                   className={cn(
                     'flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all',
                     activeMethod === method.id
@@ -572,8 +615,8 @@ export default function AuthPage() {
       } else {
         setPasskeyError(data.error || 'Autenticazione fallita');
       }
-    } catch (err: any) {
-      if (err.name === 'NotAllowedError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'NotAllowedError') {
         setPasskeyError('Autenticazione annullata. Riprova.');
       } else {
         setPasskeyError('Errore durante l\'accesso. Riprova.');

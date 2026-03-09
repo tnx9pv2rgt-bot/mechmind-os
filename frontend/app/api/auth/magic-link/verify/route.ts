@@ -3,10 +3,10 @@ import { proxyAuthToBackend } from '@/lib/auth/backend-proxy';
 
 export async function POST(request: NextRequest): Promise<Response> {
   const body = await request.json();
-  const { assertion, sessionId } = body;
+  const { token } = body;
 
-  return proxyAuthToBackend('auth/passkey/authenticate-verify', {
+  return proxyAuthToBackend('auth/magic-link/verify', {
     method: 'POST',
-    body: { assertion, sessionId },
+    body: { token },
   });
 }
