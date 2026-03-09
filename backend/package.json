@@ -37,7 +37,7 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:reset": "prisma migrate reset",
     "generate": "prisma generate",
-    "postinstall": "node_modules/.bin/prisma generate",
+    "postinstall": "prisma generate || true",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
