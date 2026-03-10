@@ -18,14 +18,15 @@ terraform {
     }
   }
 
-  # Backend configuration - uncomment and configure for production
-  # backend "s3" {
-  #   bucket         = "mechmind-terraform-state"
-  #   key            = "infrastructure/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   encrypt        = true
-  #   dynamodb_table = "mechmind-terraform-locks"
-  # }
+  # Backend configuration - configure for production via -backend-config or .tfbackend files
+  # Usage: terraform init -backend-config=environments/prod.tfbackend
+  backend "s3" {
+    bucket         = "mechmind-terraform-state"
+    key            = "infrastructure/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "mechmind-terraform-locks"
+  }
 }
 
 # =============================================================================

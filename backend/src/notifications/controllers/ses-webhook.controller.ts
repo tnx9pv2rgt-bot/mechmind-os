@@ -42,11 +42,11 @@ export class SesWebhookController {
 
     try {
       const message: SesEvent = JSON.parse(payload.Message);
-      
+
       if (message.eventType === 'Bounce' && message.bounce) {
         for (const recipient of message.bounce.bouncedRecipients) {
           this.logger.warn(`Bounce received for ${recipient.emailAddress}: ${recipient.status}`);
-          
+
           // Update email log status
           await this.updateEmailStatus(message.mail.messageId, 'bounced', {
             reason: message.bounce.bounceType,
@@ -73,11 +73,11 @@ export class SesWebhookController {
 
     try {
       const message: SesEvent = JSON.parse(payload.Message);
-      
+
       if (message.eventType === 'Complaint' && message.complaint) {
         for (const recipient of message.complaint.complainedRecipients) {
           this.logger.warn(`Complaint received from ${recipient.emailAddress}`);
-          
+
           // Update email log status
           await this.updateEmailStatus(message.mail.messageId, 'complained', {
             subType: message.complaint.complaintSubType,
@@ -93,15 +93,13 @@ export class SesWebhookController {
   }
 
   @Post('delivery')
-  async handleDelivery(
-    @Body() payload: { Message: string },
-  ): Promise<void> {
+  async handleDelivery(@Body() payload: { Message: string }): Promise<void> {
     try {
       const message: SesEvent = JSON.parse(payload.Message);
-      
+
       if (message.eventType === 'Delivery' && message.delivery) {
         this.logger.log(`Email delivered: ${message.mail.messageId}`);
-        
+
         await this.updateEmailStatus(message.mail.messageId, 'delivered', {
           deliveredAt: message.delivery.timestamp,
         });

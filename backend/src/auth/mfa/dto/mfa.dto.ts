@@ -1,6 +1,6 @@
 /**
  * MechMind OS - MFA Data Transfer Objects
- * 
+ *
  * DTOs for Multi-Factor Authentication with TOTP
  */
 
@@ -31,11 +31,11 @@ export class EnrollMfaResponseDto {
 }
 
 export class VerifyMfaDto {
-  @ApiProperty({ 
-    description: 'TOTP code from authenticator app or backup code', 
+  @ApiProperty({
+    description: 'TOTP code from authenticator app or backup code',
     example: '123456',
     minLength: 6,
-    maxLength: 9
+    maxLength: 9,
   })
   @IsString()
   @Length(6, 9)
@@ -47,9 +47,9 @@ export class VerifyLoginMfaDto {
   @IsString()
   tempToken: string;
 
-  @ApiProperty({ 
-    description: 'TOTP code from authenticator app or backup code', 
-    example: '123456' 
+  @ApiProperty({
+    description: 'TOTP code from authenticator app or backup code',
+    example: '123456',
   })
   @IsString()
   @Length(6, 9)
@@ -57,9 +57,9 @@ export class VerifyLoginMfaDto {
 }
 
 export class DisableMfaDto {
-  @ApiProperty({ 
-    description: 'TOTP code or backup code', 
-    example: '123456' 
+  @ApiProperty({
+    description: 'TOTP code or backup code',
+    example: '123456',
   })
   @IsString()
   token: string;

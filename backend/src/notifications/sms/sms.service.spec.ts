@@ -10,10 +10,7 @@ const mockAccountsList = jest.fn();
 
 jest.mock('twilio', () => ({
   Twilio: jest.fn().mockImplementation(() => ({
-    messages: Object.assign(
-      (sid: string) => ({ fetch: mockFetch }),
-      { create: mockCreate },
-    ),
+    messages: Object.assign((sid: string) => ({ fetch: mockFetch }), { create: mockCreate }),
     lookups: {
       v2: {
         phoneNumbers: (phone: string) => ({
@@ -52,8 +49,7 @@ describe('SmsService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn(
-              (key: string, defaultValue?: string | boolean) =>
-                config[key] ?? defaultValue,
+              (key: string, defaultValue?: string | boolean) => config[key] ?? defaultValue,
             ),
           },
         },
@@ -379,10 +375,7 @@ describe('SmsService', () => {
     it('should accept E.164 formatted numbers', async () => {
       mockCreate.mockResolvedValue({ sid: 'SM900', numSegments: '1' });
 
-      const result = await service.sendCustom(
-        '+393331234567',
-        'Test',
-      );
+      const result = await service.sendCustom('+393331234567', 'Test');
 
       expect(result.success).toBe(true);
       expect(mockCreate.mock.calls[0][0].to).toBe('+393331234567');
@@ -519,7 +512,7 @@ describe('SmsService', () => {
       const templates = service.getTemplates();
 
       expect(templates).toHaveLength(4);
-      expect(templates.map((t) => t.id)).toEqual(
+      expect(templates.map(t => t.id)).toEqual(
         expect.arrayContaining([
           'booking_confirmation',
           'booking_reminder',
@@ -531,9 +524,7 @@ describe('SmsService', () => {
 
     it('should include variables for each template', () => {
       const templates = service.getTemplates();
-      const confirmationTemplate = templates.find(
-        (t) => t.id === 'booking_confirmation',
-      );
+      const confirmationTemplate = templates.find(t => t.id === 'booking_confirmation');
 
       expect(confirmationTemplate).toBeDefined();
       expect(confirmationTemplate!.variables).toContain('service');
@@ -582,22 +573,20 @@ describe('SmsService', () => {
     });
 
     it('should return mock success for SMS sending', async () => {
-      const result =
-        await uninitializedService.sendBookingConfirmation('+393331234567', {
-          date: '2024-03-15',
-          time: '14:30',
-          service: 'Tagliando',
-          workshopName: 'Officina',
-          bookingCode: 'BK-001',
-        });
+      const result = await uninitializedService.sendBookingConfirmation('+393331234567', {
+        date: '2024-03-15',
+        time: '14:30',
+        service: 'Tagliando',
+        workshopName: 'Officina',
+        bookingCode: 'BK-001',
+      });
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('mock-sms-id');
     });
 
     it('should return null for getMessageStatus', async () => {
-      const result =
-        await uninitializedService.getMessageStatus('SM123');
+      const result = await uninitializedService.getMessageStatus('SM123');
 
       expect(result).toBeNull();
     });
@@ -610,13 +599,11 @@ describe('SmsService', () => {
     });
 
     it('should do basic phone validation without Twilio', async () => {
-      const validResult =
-        await uninitializedService.validatePhoneNumber('+393331234567');
+      const validResult = await uninitializedService.validatePhoneNumber('+393331234567');
       expect(validResult.valid).toBe(true);
       expect(validResult.formatted).toBe('+393331234567');
 
-      const invalidResult =
-        await uninitializedService.validatePhoneNumber('invalid');
+      const invalidResult = await uninitializedService.validatePhoneNumber('invalid');
       expect(invalidResult.valid).toBe(false);
     });
   });

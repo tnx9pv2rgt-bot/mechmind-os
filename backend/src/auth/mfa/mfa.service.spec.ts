@@ -43,7 +43,8 @@ describe('MfaService', () => {
   const userEmail = 'test@mechmind.io';
   const mockTotpSecret = {
     base32: 'JBSWY3DPEHPK3PXP',
-    otpauth_url: 'otpauth://totp/MechMind:test@mechmind.io?secret=JBSWY3DPEHPK3PXP&issuer=MechMind%20OS',
+    otpauth_url:
+      'otpauth://totp/MechMind:test@mechmind.io?secret=JBSWY3DPEHPK3PXP&issuer=MechMind%20OS',
   };
   const mockEncryptedSecret = 'encrypted-totp-secret-hex';
   const mockQrDataUrl = 'data:image/png;base64,iVBOR...';
@@ -66,8 +67,8 @@ describe('MfaService', () => {
     // Default mock implementations
     (speakeasy.generateSecret as jest.Mock).mockReturnValue(mockTotpSecret);
     (QRCode.toDataURL as jest.Mock).mockResolvedValue(mockQrDataUrl);
-    (bcrypt.hash as jest.Mock).mockImplementation(
-      (data: string) => Promise.resolve(`hashed-${data}`),
+    (bcrypt.hash as jest.Mock).mockImplementation((data: string) =>
+      Promise.resolve(`hashed-${data}`),
     );
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
     mockEncryption.encrypt.mockReturnValue(mockEncryptedSecret);
@@ -102,14 +103,11 @@ describe('MfaService', () => {
     it('should generate a QR code data URL', async () => {
       const result = await service.enroll(userId, userEmail);
 
-      expect(QRCode.toDataURL).toHaveBeenCalledWith(
-        mockTotpSecret.otpauth_url,
-        {
-          errorCorrectionLevel: 'H',
-          margin: 2,
-          width: 300,
-        },
-      );
+      expect(QRCode.toDataURL).toHaveBeenCalledWith(mockTotpSecret.otpauth_url, {
+        errorCorrectionLevel: 'H',
+        margin: 2,
+        width: 300,
+      });
       expect(result.qrCode).toBe(mockQrDataUrl);
     });
 
@@ -179,9 +177,7 @@ describe('MfaService', () => {
     it('should throw BadRequestException if MFA is already enabled', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ totpEnabled: true });
 
-      await expect(service.enroll(userId, userEmail)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.enroll(userId, userEmail)).rejects.toThrow(BadRequestException);
       await expect(service.enroll(userId, userEmail)).rejects.toThrow(
         'MFA is already enabled for this user',
       );
@@ -252,12 +248,12 @@ describe('MfaService', () => {
     it('should throw UnauthorizedException on invalid code', async () => {
       (speakeasy.totp.verify as jest.Mock).mockReturnValue(false);
 
-      await expect(
-        service.verifyAndEnable(userId, '000000'),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        service.verifyAndEnable(userId, '000000'),
-      ).rejects.toThrow('Invalid verification code');
+      await expect(service.verifyAndEnable(userId, '000000')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.verifyAndEnable(userId, '000000')).rejects.toThrow(
+        'Invalid verification code',
+      );
     });
 
     it('should throw BadRequestException if enrollment not initiated (no secret)', async () => {
@@ -266,12 +262,12 @@ describe('MfaService', () => {
         totpEnabled: false,
       });
 
-      await expect(
-        service.verifyAndEnable(userId, validToken),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.verifyAndEnable(userId, validToken),
-      ).rejects.toThrow('MFA enrollment not initiated');
+      await expect(service.verifyAndEnable(userId, validToken)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.verifyAndEnable(userId, validToken)).rejects.toThrow(
+        'MFA enrollment not initiated',
+      );
     });
 
     it('should throw BadRequestException if MFA is already enabled', async () => {
@@ -280,20 +276,18 @@ describe('MfaService', () => {
         totpEnabled: true,
       });
 
-      await expect(
-        service.verifyAndEnable(userId, validToken),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.verifyAndEnable(userId, validToken),
-      ).rejects.toThrow('MFA is already enabled');
+      await expect(service.verifyAndEnable(userId, validToken)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.verifyAndEnable(userId, validToken)).rejects.toThrow(
+        'MFA is already enabled',
+      );
     });
 
     it('should not enable MFA if verification fails', async () => {
       (speakeasy.totp.verify as jest.Mock).mockReturnValue(false);
 
-      await expect(
-        service.verifyAndEnable(userId, '000000'),
-      ).rejects.toThrow();
+      await expect(service.verifyAndEnable(userId, '000000')).rejects.toThrow();
 
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
@@ -373,10 +367,7 @@ describe('MfaService', () => {
 
         await service.verify(userId, lowerBackupCode);
 
-        expect(bcrypt.compare).toHaveBeenCalledWith(
-          lowerBackupCode.toUpperCase(),
-          'hashed-code',
-        );
+        expect(bcrypt.compare).toHaveBeenCalledWith(lowerBackupCode.toUpperCase(), 'hashed-code');
       });
 
       it('should delete used backup code after successful match', async () => {
@@ -452,12 +443,12 @@ describe('MfaService', () => {
         totpEnabled: false,
       });
 
-      await expect(
-        service.disable(userId, validToken, password),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.disable(userId, validToken, password),
-      ).rejects.toThrow('MFA is not enabled');
+      await expect(service.disable(userId, validToken, password)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.disable(userId, validToken, password)).rejects.toThrow(
+        'MFA is not enabled',
+      );
     });
 
     it('should verify password first via bcrypt.compare', async () => {
@@ -469,12 +460,12 @@ describe('MfaService', () => {
     it('should throw UnauthorizedException on invalid password', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.disable(userId, validToken, 'wrong-password'),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        service.disable(userId, validToken, 'wrong-password'),
-      ).rejects.toThrow('Invalid password');
+      await expect(service.disable(userId, validToken, 'wrong-password')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.disable(userId, validToken, 'wrong-password')).rejects.toThrow(
+        'Invalid password',
+      );
     });
 
     it('should verify TOTP code after password verification', async () => {
@@ -493,12 +484,12 @@ describe('MfaService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       (speakeasy.totp.verify as jest.Mock).mockReturnValue(false);
 
-      await expect(
-        service.disable(userId, '000000', password),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        service.disable(userId, '000000', password),
-      ).rejects.toThrow('Invalid verification code');
+      await expect(service.disable(userId, '000000', password)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.disable(userId, '000000', password)).rejects.toThrow(
+        'Invalid verification code',
+      );
     });
 
     it('should accept backup code for disable (XXXX-XXXX format)', async () => {
@@ -508,7 +499,7 @@ describe('MfaService', () => {
       ]);
       // First compare call is for password, subsequent for backup codes
       (bcrypt.compare as jest.Mock)
-        .mockResolvedValueOnce(true)  // password check
+        .mockResolvedValueOnce(true) // password check
         .mockResolvedValueOnce(true); // backup code check
 
       await service.disable(userId, backupCode, password);
@@ -545,9 +536,9 @@ describe('MfaService', () => {
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.disable(userId, validToken, password),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.disable(userId, validToken, password)).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       expect(bcrypt.compare).toHaveBeenCalledWith(password, '');
     });
@@ -571,12 +562,12 @@ describe('MfaService', () => {
         totpEnabled: false,
       });
 
-      await expect(
-        service.regenerateBackupCodes(userId, validToken),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.regenerateBackupCodes(userId, validToken),
-      ).rejects.toThrow('MFA is not enabled');
+      await expect(service.regenerateBackupCodes(userId, validToken)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.regenerateBackupCodes(userId, validToken)).rejects.toThrow(
+        'MFA is not enabled',
+      );
     });
 
     it('should require TOTP verification before regeneration', async () => {
@@ -594,12 +585,12 @@ describe('MfaService', () => {
     it('should throw UnauthorizedException on invalid TOTP', async () => {
       (speakeasy.totp.verify as jest.Mock).mockReturnValue(false);
 
-      await expect(
-        service.regenerateBackupCodes(userId, '000000'),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        service.regenerateBackupCodes(userId, '000000'),
-      ).rejects.toThrow('Invalid verification code');
+      await expect(service.regenerateBackupCodes(userId, '000000')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.regenerateBackupCodes(userId, '000000')).rejects.toThrow(
+        'Invalid verification code',
+      );
     });
 
     it('should return 10 new backup codes in XXXX-XXXX format', async () => {

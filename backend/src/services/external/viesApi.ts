@@ -27,7 +27,8 @@ export interface ViesError {
 export class ViesApiService {
   private readonly logger = new Logger(ViesApiService.name);
   private readonly redis: Redis;
-  private readonly viesEndpoint = 'https://ec.europa.eu/taxation_customs/vies/services/checkVatService';
+  private readonly viesEndpoint =
+    'https://ec.europa.eu/taxation_customs/vies/services/checkVatService';
   private readonly cacheTtlSeconds = 30 * 24 * 60 * 60; // 30 giorni
   private readonly isDevelopment: boolean;
   private requestTimestamps: number[] = [];
@@ -36,16 +37,16 @@ export class ViesApiService {
 
   constructor(private readonly configService: ConfigService) {
     this.isDevelopment = this.configService.get('NODE_ENV') === 'development';
-    
+
     // Initialize Redis connection
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
       db: parseInt(this.configService.get('REDIS_DB') || '0'),
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: times => Math.min(times * 50, 2000),
     });
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', err => {
       this.logger.error('Redis connection error:', err.message);
     });
   }
@@ -56,7 +57,7 @@ export class ViesApiService {
    */
   async verifyVatNumber(vatNumber: string): Promise<ViesVerificationResult> {
     const cleanVat = this.normalizeVatNumber(vatNumber);
-    
+
     if (!this.isValidVatFormat(cleanVat)) {
       return {
         valid: false,
@@ -84,21 +85,21 @@ export class ViesApiService {
 
     try {
       const result = await this.callViesApi(countryCode, number);
-      
+
       // Cache successful results
       if (result.valid) {
         await this.cacheResult(cleanVat, result);
       }
-      
+
       return result;
     } catch (error) {
       this.logger.error(`VIES API error for ${cleanVat}:`, error.message);
-      
+
       // Fallback to mock in development
       if (this.isDevelopment) {
         return this.getMockResult(countryCode, number);
       }
-      
+
       throw error;
     }
   }
@@ -106,17 +107,17 @@ export class ViesApiService {
   /**
    * Verifica multipla partite IVA
    */
-  async verifyMultipleVatNumbers(vatNumbers: string[]): Promise<Map<string, ViesVerificationResult>> {
+  async verifyMultipleVatNumbers(
+    vatNumbers: string[],
+  ): Promise<Map<string, ViesVerificationResult>> {
     const results = new Map<string, ViesVerificationResult>();
-    
+
     // Process in batches to respect rate limits
     const batchSize = 5;
     for (let i = 0; i < vatNumbers.length; i += batchSize) {
       const batch = vatNumbers.slice(i, i + batchSize);
-      const batchResults = await Promise.allSettled(
-        batch.map(vat => this.verifyVatNumber(vat))
-      );
-      
+      const batchResults = await Promise.allSettled(batch.map(vat => this.verifyVatNumber(vat)));
+
       batch.forEach((vat, index) => {
         const result = batchResults[index];
         if (result.status === 'fulfilled') {
@@ -128,27 +129,30 @@ export class ViesApiService {
           });
         }
       });
-      
+
       // Small delay between batches
       if (i + batchSize < vatNumbers.length) {
         await this.delay(1000);
       }
     }
-    
+
     return results;
   }
 
   /**
    * Chiama l'API VIES via SOAP
    */
-  private async callViesApi(countryCode: string, vatNumber: string): Promise<ViesVerificationResult> {
+  private async callViesApi(
+    countryCode: string,
+    vatNumber: string,
+  ): Promise<ViesVerificationResult> {
     const soapEnvelope = this.buildSoapRequest(countryCode, vatNumber);
-    
+
     const response = await fetch(this.viesEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/xml;charset=UTF-8',
-        'SOAPAction': '',
+        SOAPAction: '',
       },
       body: soapEnvelope,
     });
@@ -239,7 +243,7 @@ export class ViesApiService {
       await this.redis.setex(
         `vat:verification:${vatNumber}`,
         this.cacheTtlSeconds,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     } catch (error) {
       this.logger.warn('Cache storage error:', error.message);
@@ -252,13 +256,13 @@ export class ViesApiService {
   private checkRateLimit(): boolean {
     const now = Date.now();
     this.requestTimestamps = this.requestTimestamps.filter(
-      timestamp => now - timestamp < this.rateLimitWindow
+      timestamp => now - timestamp < this.rateLimitWindow,
     );
-    
+
     if (this.requestTimestamps.length >= this.rateLimitMax) {
       return false;
     }
-    
+
     this.requestTimestamps.push(now);
     return true;
   }
@@ -268,13 +272,13 @@ export class ViesApiService {
    */
   private getMockResult(countryCode: string, vatNumber: string): ViesVerificationResult {
     this.logger.debug(`Using mock VIES result for ${countryCode}${vatNumber}`);
-    
+
     const mockCompanies: Record<string, { name: string; address: string }> = {
-      'IT': { name: 'AZIENDA DEMO SRL', address: 'Via Roma 1, 00100 Roma (RM)' },
-      'DE': { name: 'Muster GmbH', address: 'Musterstraße 1, 10115 Berlin' },
-      'FR': { name: 'SARL Exemple', address: '1 Rue de la Paix, 75001 Paris' },
-      'ES': { name: 'Ejemplo SL', address: 'Calle Mayor 1, 28013 Madrid' },
-      'GB': { name: 'Example Ltd', address: '1 High Street, London SW1A 1AA' },
+      IT: { name: 'AZIENDA DEMO SRL', address: 'Via Roma 1, 00100 Roma (RM)' },
+      DE: { name: 'Muster GmbH', address: 'Musterstraße 1, 10115 Berlin' },
+      FR: { name: 'SARL Exemple', address: '1 Rue de la Paix, 75001 Paris' },
+      ES: { name: 'Ejemplo SL', address: 'Calle Mayor 1, 28013 Madrid' },
+      GB: { name: 'Example Ltd', address: '1 High Street, London SW1A 1AA' },
     };
 
     const mock = mockCompanies[countryCode] || { name: 'Test Company', address: 'Test Address' };
@@ -303,16 +307,16 @@ export class ViesApiService {
   private isValidVatFormat(vatNumber: string): boolean {
     // Minimo 3 caratteri (2 per country code + 1 per numero)
     if (vatNumber.length < 3) return false;
-    
+
     const countryCode = vatNumber.substring(0, 2);
     const number = vatNumber.substring(2);
-    
+
     // Country code deve essere alfabetico
     if (!/^[A-Z]{2}$/.test(countryCode)) return false;
-    
+
     // Numero deve contenere solo numeri e lettere
     if (!/^[A-Z0-9]+$/.test(number)) return false;
-    
+
     return true;
   }
 
@@ -341,7 +345,7 @@ export class ViesApiService {
 // Standalone function for non-NestJS usage
 export async function verifyVatNumber(
   vatNumber: string,
-  config?: { redisUrl?: string; isDevelopment?: boolean }
+  config?: { redisUrl?: string; isDevelopment?: boolean },
 ): Promise<ViesVerificationResult> {
   const service = new ViesApiService({
     get: (key: string) => {

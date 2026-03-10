@@ -1,16 +1,11 @@
 /**
  * MechMind OS - MFA Verification Guard
- * 
+ *
  * Guard that requires MFA verification for sensitive operations
  * Can be used on endpoints that need additional security beyond JWT
  */
 
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MfaService } from '../mfa/mfa.service';
 
@@ -66,7 +61,7 @@ export class MfaGuard implements CanActivate {
 
     // Check if MFA is enabled for user
     const mfaStatus = await this.mfaService.getStatus(user.userId);
-    
+
     if (!mfaStatus.enabled) {
       // MFA not enabled, allow access
       return true;
@@ -99,7 +94,7 @@ export class MfaSessionMiddleware {
 
   async use(req: MFARequest, res: any, next: () => void) {
     const mfaVerified = req.headers['x-mfa-verified'] as string;
-    
+
     if (mfaVerified) {
       req.mfaVerified = true;
       req.mfaVerifiedAt = new Date(parseInt(mfaVerified, 10));

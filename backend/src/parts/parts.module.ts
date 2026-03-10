@@ -12,9 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [CommonModule, NotificationsModule, AuthModule],
   controllers: [PartsController],
-  providers: [
-    PartsService,
-  ],
+  providers: [PartsService],
   exports: [PartsService],
 })
 export class PartsModule {}

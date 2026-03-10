@@ -5,8 +5,12 @@ import { NotificationV2Service } from './notification-v2.service';
 // Mock Prisma enums and PrismaClient (needed because PrismaService extends PrismaClient)
 jest.mock('@prisma/client', () => {
   class PrismaClient {
-    $connect(): Promise<void> { return Promise.resolve(); }
-    $disconnect(): Promise<void> { return Promise.resolve(); }
+    $connect(): Promise<void> {
+      return Promise.resolve();
+    }
+    $disconnect(): Promise<void> {
+      return Promise.resolve();
+    }
   }
   return {
     PrismaClient,
@@ -57,12 +61,8 @@ describe('NotificationTriggersService', () => {
       ],
     }).compile();
 
-    service = module.get<NotificationTriggersService>(
-      NotificationTriggersService,
-    );
-    notificationService = module.get<NotificationV2Service>(
-      NotificationV2Service,
-    );
+    service = module.get<NotificationTriggersService>(NotificationTriggersService);
+    notificationService = module.get<NotificationV2Service>(NotificationV2Service);
   });
 
   afterEach(() => {
@@ -111,8 +111,7 @@ describe('NotificationTriggersService', () => {
 
       await service.onBookingCreated(event);
 
-      const metadata = (notificationService.sendImmediate as jest.Mock).mock
-        .calls[0][0].metadata;
+      const metadata = (notificationService.sendImmediate as jest.Mock).mock.calls[0][0].metadata;
       expect(metadata.date).toBeDefined();
       expect(metadata.time).toBeDefined();
     });
@@ -128,12 +127,9 @@ describe('NotificationTriggersService', () => {
 
       await service.onBookingCreated(event);
 
-      const metadata = (notificationService.sendImmediate as jest.Mock).mock
-        .calls[0][0].metadata;
+      const metadata = (notificationService.sendImmediate as jest.Mock).mock.calls[0][0].metadata;
       expect(metadata.bookingCode).toHaveLength(6);
-      expect(metadata.bookingCode).toBe(
-        'booking-abcdef123456'.slice(-6).toUpperCase(),
-      );
+      expect(metadata.bookingCode).toBe('booking-abcdef123456'.slice(-6).toUpperCase());
     });
 
     it('should not throw when notification service fails', async () => {
@@ -231,16 +227,13 @@ describe('NotificationTriggersService', () => {
           changes: { status },
         });
 
-        const metadata = (notificationService.sendImmediate as jest.Mock).mock
-          .calls[0][0].metadata;
+        const metadata = (notificationService.sendImmediate as jest.Mock).mock.calls[0][0].metadata;
         expect(metadata.status).toBe(expectedLabel);
       }
     });
 
     it('should not throw when notification service fails', async () => {
-      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(
-        new Error('Failed'),
-      );
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
 
       await expect(
         service.onBookingUpdated({
@@ -280,9 +273,7 @@ describe('NotificationTriggersService', () => {
     });
 
     it('should not throw on service failure', async () => {
-      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(
-        new Error('Failed'),
-      );
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
 
       await expect(
         service.onBookingCancelled({
@@ -323,9 +314,7 @@ describe('NotificationTriggersService', () => {
     });
 
     it('should not throw on service failure', async () => {
-      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(
-        new Error('Failed'),
-      );
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
 
       await expect(
         service.onInspectionCompleted({
@@ -392,9 +381,7 @@ describe('NotificationTriggersService', () => {
     });
 
     it('should not throw on service failure', async () => {
-      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(
-        new Error('Failed'),
-      );
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
 
       await expect(
         service.onInvoiceGenerated({
@@ -465,9 +452,7 @@ describe('NotificationTriggersService', () => {
     });
 
     it('should not throw on service failure', async () => {
-      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(
-        new Error('Failed'),
-      );
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
 
       await expect(
         service.onMaintenanceDue({
@@ -537,11 +522,8 @@ describe('NotificationTriggersService', () => {
         await (service as Record<string, Function>)[handler](event);
 
         if ((notificationService.sendImmediate as jest.Mock).mock.calls.length > 0) {
-          const sentDto = (notificationService.sendImmediate as jest.Mock).mock
-            .calls[0][0];
-          expect(sentDto.tenantId).toBe(
-            (event as Record<string, string>).tenantId,
-          );
+          const sentDto = (notificationService.sendImmediate as jest.Mock).mock.calls[0][0];
+          expect(sentDto.tenantId).toBe((event as Record<string, string>).tenantId);
         }
       }
     });

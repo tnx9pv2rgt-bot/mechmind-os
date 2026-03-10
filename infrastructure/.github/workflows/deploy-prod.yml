@@ -22,6 +22,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  id-token: write
+  contents: write
+
 env:
   TF_IN_AUTOMATION: true
   TF_VERSION: '1.7.0'
@@ -36,7 +40,7 @@ jobs:
   pre-check:
     name: Pre-Deployment Checks
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,13 +49,42 @@ jobs:
 
       - name: Check for blocking issues
         run: |
-          # Check if there are any known issues
           echo "Running pre-deployment checks..."
-          
+
       - name: Verify tests passed on staging
         run: |
           echo "Verifying staging deployment was successful..."
-          # Could query staging health endpoint here
+
+  # ==========================================================================
+  # Security Scanning
+  # ==========================================================================
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: pre-check
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: NPM Audit
+        run: npm audit --production --audit-level=high
+
+      - name: Checkov - Terraform Security Scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infrastructure/terraform
+          framework: terraform
+          soft_fail: false
 
   # ==========================================================================
   # Build Lambda Package
@@ -59,7 +92,7 @@ jobs:
   build:
     name: Build Lambda Package
     runs-on: ubuntu-latest
-    needs: pre-check
+    needs: security-scan
     
     steps:
       - name: Checkout
@@ -117,11 +150,10 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
@@ -177,11 +209,10 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
@@ -216,11 +247,10 @@ jobs:
         with:
           name: lambda-package-prod
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy API Lambda
@@ -281,11 +311,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Get Database Secret
@@ -295,10 +324,16 @@ jobs:
             --secret-id mechmind-prod/database/credentials \
             --query SecretString \
             --output text)
-          echo "host=$(echo $SECRET | jq -r .host)" >> $GITHUB_OUTPUT
-          echo "username=$(echo $SECRET | jq -r .username)" >> $GITHUB_OUTPUT
-          echo "password=$(echo $SECRET | jq -r .password)" >> $GITHUB_OUTPUT
-          echo "dbname=$(echo $SECRET | jq -r .dbname)" >> $GITHUB_OUTPUT
+          DB_HOST=$(echo $SECRET | jq -r .host)
+          DB_USER=$(echo $SECRET | jq -r .username)
+          DB_PASS=$(echo $SECRET | jq -r .password)
+          DB_NAME=$(echo $SECRET | jq -r .dbname)
+          echo "::add-mask::$DB_PASS"
+          echo "::add-mask::$DB_HOST"
+          echo "host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "username=$DB_USER" >> $GITHUB_OUTPUT
+          echo "password=$DB_PASS" >> $GITHUB_OUTPUT
+          echo "dbname=$DB_NAME" >> $GITHUB_OUTPUT
 
       - name: Run Migrations
         env:
@@ -317,11 +352,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Get Lambda URL
@@ -355,11 +389,10 @@ jobs:
     if: failure()
     
     steps:
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Rollback Lambda to Previous Version

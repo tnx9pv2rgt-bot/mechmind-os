@@ -1,6 +1,11 @@
 /**
- * Notification Triggers Service
- * Integrates notifications with business events
+ * NotificationTriggersService
+ *
+ * Event-driven notification dispatcher. Listens to domain events
+ * (booking.created, inspection.completed, payment.received, etc.)
+ * via EventEmitter2 and creates the appropriate notifications through
+ * NotificationV2Service. Acts as the bridge between business logic and
+ * notification delivery.
  */
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -37,7 +42,10 @@ export class NotificationTriggersService {
         metadata: {
           bookingId: event.bookingId,
           date: event.scheduledDate.toLocaleDateString('it-IT'),
-          time: event.scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+          time: event.scheduledDate.toLocaleTimeString('it-IT', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
           bookingCode: event.bookingId.slice(-6).toUpperCase(),
         },
       });

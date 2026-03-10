@@ -23,18 +23,16 @@ export const redisFallback = {
     }
     return item.value;
   },
-  
+
   async set(key: string, value: string, options?: { ex?: number }): Promise<void> {
-    const expiresAt = options?.ex 
-      ? Date.now() + options.ex * 1000 
-      : Number.MAX_SAFE_INTEGER;
+    const expiresAt = options?.ex ? Date.now() + options.ex * 1000 : Number.MAX_SAFE_INTEGER;
     memoryStore.set(key, { value, expiresAt });
   },
-  
+
   async del(key: string): Promise<void> {
     memoryStore.delete(key);
   },
-  
+
   async expire(key: string, seconds: number): Promise<void> {
     const item = memoryStore.get(key);
     if (item) {

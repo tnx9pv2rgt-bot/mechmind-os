@@ -86,15 +86,15 @@ export class PasskeyController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List user passkeys' })
   @ApiResponse({ status: 200, description: 'Passkeys list returned' })
-  async list(
-    @CurrentUser('userId') userId: string,
-  ): Promise<Array<{
-    id: string;
-    deviceName: string | null;
-    deviceType: string;
-    lastUsedAt: Date | null;
-    registeredAt: Date;
-  }>> {
+  async list(@CurrentUser('userId') userId: string): Promise<
+    Array<{
+      id: string;
+      deviceName: string | null;
+      deviceType: string;
+      lastUsedAt: Date | null;
+      registeredAt: Date;
+    }>
+  > {
     return this.passkeyService.listPasskeys(userId);
   }
 

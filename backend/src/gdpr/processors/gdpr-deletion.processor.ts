@@ -7,7 +7,7 @@ import { LoggerService } from '@common/services/logger.service';
 
 /**
  * GDPR Deletion Job Processor
- * 
+ *
  * Handles the actual execution of data deletion jobs queued by GdprDeletionService.
  * Implements the 6-step deletion process:
  * 1. Verify identity (already done before queuing)
@@ -16,13 +16,13 @@ import { LoggerService } from '@common/services/logger.service';
  * 4. Delete call recordings
  * 5. Update audit log
  * 6. Mark request as complete
- * 
+ *
  * SLA Target: 24 hours from request to completion
  */
 @Processor('gdpr-deletion', {
   concurrency: 3, // Process up to 3 deletions concurrently
   limiter: {
-    max: 10,        // Max 10 jobs
+    max: 10, // Max 10 jobs
     duration: 60000, // per minute
   },
 })
@@ -71,7 +71,7 @@ export class GdprDeletionProcessor extends WorkerHost {
         tenantId,
         requestId,
       );
-      
+
       if (!anonymizationResult.success) {
         throw new Error(`Anonymization failed: ${anonymizationResult.errors?.join(', ')}`);
       }
@@ -86,7 +86,7 @@ export class GdprDeletionProcessor extends WorkerHost {
       await job.updateProgress(80);
 
       // Step 4: Mark request as complete (100% progress)
-      await this.prisma.withTenant(tenantId, async (prisma) => {
+      await this.prisma.withTenant(tenantId, async prisma => {
         await prisma.dataSubjectRequest.update({
           where: { id: requestId },
           data: {
@@ -102,7 +102,7 @@ export class GdprDeletionProcessor extends WorkerHost {
 
       this.loggerService.log(
         `Deletion job ${job.id} completed for customer ${customerId} in ${processingTimeMs}ms. ` +
-        `Snapshot: ${snapshot.snapshotId}, Recordings deleted: ${recordingResult.deletedCount}`,
+          `Snapshot: ${snapshot.snapshotId}, Recordings deleted: ${recordingResult.deletedCount}`,
         'GdprDeletionProcessor',
       );
 
@@ -114,12 +114,11 @@ export class GdprDeletionProcessor extends WorkerHost {
         anonymized: true,
         recordingsDeleted: recordingResult.deletedCount,
       };
-
     } catch (error) {
       this.logger.error(`Deletion job ${job.id} failed: ${error.message}`);
-      
+
       // Update request status to failed
-      await this.prisma.withTenant(tenantId, async (prisma) => {
+      await this.prisma.withTenant(tenantId, async prisma => {
         await prisma.dataSubjectRequest.update({
           where: { id: requestId },
           data: {

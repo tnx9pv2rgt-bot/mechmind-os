@@ -44,12 +44,18 @@ import { NotificationsModule } from '../notifications/notifications.module';
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [AuthService, MfaService, PasskeyService, MagicLinkService, JwtAuthGuard, RolesGuard, JwtModule],
+  exports: [
+    AuthService,
+    MfaService,
+    PasskeyService,
+    MagicLinkService,
+    JwtAuthGuard,
+    RolesGuard,
+    JwtModule,
+  ],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantContextMiddleware)
-      .forRoutes('*');
+    consumer.apply(TenantContextMiddleware).forRoutes('*');
   }
 }

@@ -178,12 +178,7 @@ describe('IntentHandlerService', () => {
 
     it('should look up vehicle by license plate and customer', async () => {
       // Arrange & Act
-      await service.handleBookingIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        extractedData,
-        VAPI_CALL_ID,
-      );
+      await service.handleBookingIntent(TENANT_ID, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
       // Assert
       expect(prisma.vehicle.findFirst).toHaveBeenCalledWith({
@@ -219,12 +214,7 @@ describe('IntentHandlerService', () => {
 
     it('should look up service by type with case-insensitive matching', async () => {
       // Arrange & Act
-      await service.handleBookingIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        extractedData,
-        VAPI_CALL_ID,
-      );
+      await service.handleBookingIntent(TENANT_ID, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
       // Assert
       expect(prisma.service.findFirst).toHaveBeenCalledWith({
@@ -240,12 +230,7 @@ describe('IntentHandlerService', () => {
 
     it('should create booking with correct parameters including VOICE source', async () => {
       // Arrange & Act
-      await service.handleBookingIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        extractedData,
-        VAPI_CALL_ID,
-      );
+      await service.handleBookingIntent(TENANT_ID, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
       // Assert
       expect(bookingService.createBooking).toHaveBeenCalledWith(TENANT_ID, {
@@ -262,26 +247,18 @@ describe('IntentHandlerService', () => {
 
     it('should queue SMS confirmation after booking creation', async () => {
       // Arrange & Act
-      await service.handleBookingIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        extractedData,
-        VAPI_CALL_ID,
-      );
+      await service.handleBookingIntent(TENANT_ID, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
       // Assert
-      expect(queueService.addNotificationJob).toHaveBeenCalledWith(
-        'send-sms-confirmation',
-        {
-          type: 'sms-confirmation',
-          payload: {
-            customerId: mockCustomer.id,
-            bookingId: mockBooking.id,
-            scheduledDate: mockSlot.startTime,
-          },
-          tenantId: TENANT_ID,
+      expect(queueService.addNotificationJob).toHaveBeenCalledWith('send-sms-confirmation', {
+        type: 'sms-confirmation',
+        payload: {
+          customerId: mockCustomer.id,
+          bookingId: mockBooking.id,
+          scheduledDate: mockSlot.startTime,
         },
-      );
+        tenantId: TENANT_ID,
+      });
     });
 
     it('should queue for callback when no slots are available', async () => {
@@ -299,19 +276,16 @@ describe('IntentHandlerService', () => {
       // Assert
       expect(result.success).toBe(false);
       expect(result.message).toBe('No slots available, queued for callback');
-      expect(queueService.addBookingJob).toHaveBeenCalledWith(
-        'schedule-callback',
-        {
-          type: 'schedule-callback',
-          payload: {
-            customerId: mockCustomer.id,
-            preferredDate: '2024-06-15',
-            preferredTime: '09:00',
-            serviceType: 'Oil Change',
-          },
-          tenantId: TENANT_ID,
+      expect(queueService.addBookingJob).toHaveBeenCalledWith('schedule-callback', {
+        type: 'schedule-callback',
+        payload: {
+          customerId: mockCustomer.id,
+          preferredDate: '2024-06-15',
+          preferredTime: '09:00',
+          serviceType: 'Oil Change',
         },
-      );
+        tenantId: TENANT_ID,
+      });
       expect(bookingService.createBooking).not.toHaveBeenCalled();
     });
 
@@ -387,9 +361,7 @@ describe('IntentHandlerService', () => {
 
     it('should return error result when an exception is thrown', async () => {
       // Arrange
-      customerService.findByPhone.mockRejectedValue(
-        new Error('Database connection lost'),
-      );
+      customerService.findByPhone.mockRejectedValue(new Error('Database connection lost'));
 
       // Act
       const result = await service.handleBookingIntent(
@@ -406,9 +378,7 @@ describe('IntentHandlerService', () => {
 
     it('should return error when bookingService.createBooking throws', async () => {
       // Arrange
-      bookingService.createBooking.mockRejectedValue(
-        new Error('Slot already booked'),
-      );
+      bookingService.createBooking.mockRejectedValue(new Error('Slot already booked'));
 
       // Act
       const result = await service.handleBookingIntent(
@@ -429,18 +399,10 @@ describe('IntentHandlerService', () => {
         const tenantA = 'tenant-aaa';
 
         // Act
-        await service.handleBookingIntent(
-          tenantA,
-          CUSTOMER_PHONE,
-          extractedData,
-          VAPI_CALL_ID,
-        );
+        await service.handleBookingIntent(tenantA, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
         // Assert
-        expect(customerService.findByPhone).toHaveBeenCalledWith(
-          tenantA,
-          CUSTOMER_PHONE,
-        );
+        expect(customerService.findByPhone).toHaveBeenCalledWith(tenantA, CUSTOMER_PHONE);
       });
 
       it('should pass correct tenantId to slot lookup', async () => {
@@ -448,12 +410,7 @@ describe('IntentHandlerService', () => {
         const tenantB = 'tenant-bbb';
 
         // Act
-        await service.handleBookingIntent(
-          tenantB,
-          CUSTOMER_PHONE,
-          extractedData,
-          VAPI_CALL_ID,
-        );
+        await service.handleBookingIntent(tenantB, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
         // Assert
         expect(prisma.bookingSlot.findMany).toHaveBeenCalledWith(
@@ -468,30 +425,17 @@ describe('IntentHandlerService', () => {
         const tenantC = 'tenant-ccc';
 
         // Act
-        await service.handleBookingIntent(
-          tenantC,
-          CUSTOMER_PHONE,
-          extractedData,
-          VAPI_CALL_ID,
-        );
+        await service.handleBookingIntent(tenantC, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
         // Assert
-        expect(bookingService.createBooking).toHaveBeenCalledWith(
-          tenantC,
-          expect.any(Object),
-        );
+        expect(bookingService.createBooking).toHaveBeenCalledWith(tenantC, expect.any(Object));
       });
     });
 
     describe('slot finding logic', () => {
       it('should search for slots within 3 days of preferred date', async () => {
         // Arrange & Act
-        await service.handleBookingIntent(
-          TENANT_ID,
-          CUSTOMER_PHONE,
-          extractedData,
-          VAPI_CALL_ID,
-        );
+        await service.handleBookingIntent(TENANT_ID, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
         // Assert
         const findManyCall = prisma.bookingSlot.findMany.mock.calls[0][0];
@@ -533,12 +477,7 @@ describe('IntentHandlerService', () => {
         prisma.bookingSlot.findMany.mockResolvedValue([earlySlot, idealSlot, lateSlot]);
 
         // Act
-        await service.handleBookingIntent(
-          TENANT_ID,
-          CUSTOMER_PHONE,
-          extractedData,
-          VAPI_CALL_ID,
-        );
+        await service.handleBookingIntent(TENANT_ID, CUSTOMER_PHONE, extractedData, VAPI_CALL_ID);
 
         // Assert - should use the ideal slot (closest to preferred time)
         expect(bookingService.createBooking).toHaveBeenCalledWith(
@@ -629,38 +568,25 @@ describe('IntentHandlerService', () => {
 
     it('should queue a complaint-review voice job', async () => {
       // Arrange & Act
-      await service.handleComplaintIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        transcript,
-        extractedData,
-      );
+      await service.handleComplaintIntent(TENANT_ID, CUSTOMER_PHONE, transcript, extractedData);
 
       // Assert
-      expect(queueService.addVoiceJob).toHaveBeenCalledWith(
-        'complaint-review',
-        {
-          type: 'complaint-review',
-          payload: {
-            customerId: mockCustomer.id,
-            customerPhone: CUSTOMER_PHONE,
-            transcript,
-            issueDescription: 'Brakes still squeaking',
-            licensePlate: 'AB123CD',
-          },
-          tenantId: TENANT_ID,
+      expect(queueService.addVoiceJob).toHaveBeenCalledWith('complaint-review', {
+        type: 'complaint-review',
+        payload: {
+          customerId: mockCustomer.id,
+          customerPhone: CUSTOMER_PHONE,
+          transcript,
+          issueDescription: 'Brakes still squeaking',
+          licensePlate: 'AB123CD',
         },
-      );
+        tenantId: TENANT_ID,
+      });
     });
 
     it('should send complaint acknowledgment when customer is found', async () => {
       // Arrange & Act
-      await service.handleComplaintIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        transcript,
-        extractedData,
-      );
+      await service.handleComplaintIntent(TENANT_ID, CUSTOMER_PHONE, transcript, extractedData);
 
       // Assert
       expect(queueService.addNotificationJob).toHaveBeenCalledWith(
@@ -680,12 +606,7 @@ describe('IntentHandlerService', () => {
       customerService.findByPhone.mockResolvedValue(null);
 
       // Act
-      await service.handleComplaintIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        transcript,
-        extractedData,
-      );
+      await service.handleComplaintIntent(TENANT_ID, CUSTOMER_PHONE, transcript, extractedData);
 
       // Assert
       expect(queueService.addNotificationJob).not.toHaveBeenCalled();
@@ -696,12 +617,7 @@ describe('IntentHandlerService', () => {
       customerService.findByPhone.mockResolvedValue(null);
 
       // Act
-      await service.handleComplaintIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        transcript,
-        extractedData,
-      );
+      await service.handleComplaintIntent(TENANT_ID, CUSTOMER_PHONE, transcript, extractedData);
 
       // Assert
       expect(queueService.addVoiceJob).toHaveBeenCalledWith(
@@ -717,12 +633,7 @@ describe('IntentHandlerService', () => {
 
     it('should handle undefined transcript', async () => {
       // Arrange & Act
-      await service.handleComplaintIntent(
-        TENANT_ID,
-        CUSTOMER_PHONE,
-        undefined,
-        extractedData,
-      );
+      await service.handleComplaintIntent(TENANT_ID, CUSTOMER_PHONE, undefined, extractedData);
 
       // Assert
       expect(queueService.addVoiceJob).toHaveBeenCalledWith(
@@ -740,12 +651,7 @@ describe('IntentHandlerService', () => {
       const tenantY = 'tenant-yyy';
 
       // Act
-      await service.handleComplaintIntent(
-        tenantY,
-        CUSTOMER_PHONE,
-        transcript,
-        extractedData,
-      );
+      await service.handleComplaintIntent(tenantY, CUSTOMER_PHONE, transcript, extractedData);
 
       // Assert
       expect(customerService.findByPhone).toHaveBeenCalledWith(tenantY, CUSTOMER_PHONE);
@@ -759,9 +665,7 @@ describe('IntentHandlerService', () => {
   describe('extractIntentFromTranscript', () => {
     it('should detect booking intent from keyword "book"', () => {
       // Arrange & Act
-      const result = service.extractIntentFromTranscript(
-        'I would like to book an appointment',
-      );
+      const result = service.extractIntentFromTranscript('I would like to book an appointment');
 
       // Assert
       expect(result.intent).toBe('booking');
@@ -780,9 +684,7 @@ describe('IntentHandlerService', () => {
 
     it('should detect booking intent from keyword "repair"', () => {
       // Arrange & Act
-      const result = service.extractIntentFromTranscript(
-        'My car needs a repair',
-      );
+      const result = service.extractIntentFromTranscript('My car needs a repair');
 
       // Assert
       expect(result.intent).toBe('booking');
@@ -815,9 +717,7 @@ describe('IntentHandlerService', () => {
 
     it('should detect status_check intent', () => {
       // Arrange & Act
-      const result = service.extractIntentFromTranscript(
-        'When will my car be ready?',
-      );
+      const result = service.extractIntentFromTranscript('When will my car be ready?');
 
       // Assert
       expect(result.intent).toBe('status_check');
@@ -825,9 +725,7 @@ describe('IntentHandlerService', () => {
 
     it('should detect status_check from "status" keyword', () => {
       // Arrange - avoid booking keywords like "repair", "service", "fix"
-      const result = service.extractIntentFromTranscript(
-        'Can I check the status of my car?',
-      );
+      const result = service.extractIntentFromTranscript('Can I check the status of my car?');
 
       // Assert
       expect(result.intent).toBe('status_check');
@@ -845,9 +743,7 @@ describe('IntentHandlerService', () => {
 
     it('should detect complaint from "unhappy" keyword', () => {
       // Arrange - avoid status_check keywords like "done", "ready", "complete"
-      const result = service.extractIntentFromTranscript(
-        'I am very unhappy with the work',
-      );
+      const result = service.extractIntentFromTranscript('I am very unhappy with the work');
 
       // Assert
       expect(result.intent).toBe('complaint');
@@ -855,9 +751,7 @@ describe('IntentHandlerService', () => {
 
     it('should detect complaint from "disappointed" keyword', () => {
       // Arrange & Act
-      const result = service.extractIntentFromTranscript(
-        'I am disappointed with the result',
-      );
+      const result = service.extractIntentFromTranscript('I am disappointed with the result');
 
       // Assert
       expect(result.intent).toBe('complaint');
@@ -865,9 +759,7 @@ describe('IntentHandlerService', () => {
 
     it('should return "other" for unrecognized transcripts', () => {
       // Arrange & Act
-      const result = service.extractIntentFromTranscript(
-        'Hello, just calling to say hello',
-      );
+      const result = service.extractIntentFromTranscript('Hello, just calling to say hello');
 
       // Assert
       expect(result.intent).toBe('other');
@@ -876,9 +768,7 @@ describe('IntentHandlerService', () => {
 
     it('should be case insensitive', () => {
       // Arrange & Act
-      const result = service.extractIntentFromTranscript(
-        'I WANT TO BOOK AN APPOINTMENT',
-      );
+      const result = service.extractIntentFromTranscript('I WANT TO BOOK AN APPOINTMENT');
 
       // Assert
       expect(result.intent).toBe('booking');

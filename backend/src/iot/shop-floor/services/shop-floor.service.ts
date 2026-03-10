@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Shop Floor Service
- * 
+ *
  * Real-time shop floor tracking with IoT sensors
  * - Bay occupancy detection
  * - Technician location tracking
@@ -72,7 +72,7 @@ export class ShopFloorService {
   ): Promise<ServiceBay[]> {
     // TODO: Add ShopFloor, ServiceBay, ParkingSpot models to Prisma schema
     this.logger.warn(`Shop floor initialization for tenant ${tenantId} - models not in schema yet`);
-    
+
     // Return mock bays for now
     return config.bays.map((bayConfig, index) => ({
       ...bayConfig,
@@ -86,12 +86,9 @@ export class ShopFloorService {
    * Add sensor to bay
    * Note: BaySensor model needs to be added to Prisma schema
    */
-  async addBaySensor(
-    bayId: string,
-    sensor: Omit<BaySensor, 'id'>,
-  ): Promise<BaySensor> {
+  async addBaySensor(bayId: string, sensor: Omit<BaySensor, 'id'>): Promise<BaySensor> {
     this.logger.warn(`Adding sensor to bay ${bayId} - BaySensor model not in schema yet`);
-    
+
     return {
       id: `sensor-${Date.now()}`,
       type: sensor.type,
@@ -130,10 +127,7 @@ export class ShopFloorService {
     }
 
     // Publish to real-time subscribers
-    await this.redis.publish(
-      `shopfloor:sensor:${reading.bayId}`,
-      JSON.stringify(reading),
-    );
+    await this.redis.publish(`shopfloor:sensor:${reading.bayId}`, JSON.stringify(reading));
   }
 
   /**
@@ -213,7 +207,9 @@ export class ShopFloorService {
    * Get all bays
    */
   async getAllBays(tenantId: string): Promise<ServiceBay[]> {
-    this.logger.warn(`Getting all bays for tenant ${tenantId} - Shop floor models not in schema yet`);
+    this.logger.warn(
+      `Getting all bays for tenant ${tenantId} - Shop floor models not in schema yet`,
+    );
     return [];
   }
 
@@ -258,10 +254,7 @@ export class ShopFloorService {
     );
 
     // Publish location update
-    await this.redis.publish(
-      'shopfloor:technicians',
-      JSON.stringify(techLocation),
-    );
+    await this.redis.publish('shopfloor:technicians', JSON.stringify(techLocation));
 
     return techLocation;
   }
@@ -275,7 +268,7 @@ export class ShopFloorService {
     });
 
     const locations: TechnicianLocation[] = [];
-    
+
     for (const user of users) {
       const cached = await this.redis.get(`technician:${user.id}:location`);
       if (cached) {
@@ -291,18 +284,19 @@ export class ShopFloorService {
    * Note: WorkOrder model needs service tracking fields in Prisma schema
    */
   async getWorkOrderProgress(workOrderId: string): Promise<WorkOrderProgress> {
-    this.logger.warn(`Getting work order progress for ${workOrderId} - WorkOrder services not in schema yet`);
+    this.logger.warn(
+      `Getting work order progress for ${workOrderId} - WorkOrder services not in schema yet`,
+    );
 
-    throw new NotFoundException('Work order progress tracking not implemented - models not in schema');
+    throw new NotFoundException(
+      'Work order progress tracking not implemented - models not in schema',
+    );
   }
 
   /**
    * Update job status
    */
-  async updateJobStatus(
-    workOrderId: string,
-    status: JobStatus,
-  ): Promise<WorkOrderProgress> {
+  async updateJobStatus(workOrderId: string, status: JobStatus): Promise<WorkOrderProgress> {
     this.logger.warn(`Updating job status for ${workOrderId} - WorkOrder status not in schema yet`);
 
     // Create status change event
@@ -329,7 +323,9 @@ export class ShopFloorService {
     bayUtilization: Record<string, number>;
     technicianEfficiency: Record<string, number>;
   }> {
-    this.logger.warn(`Getting shop floor analytics for tenant ${tenantId} - Shop floor models not in schema yet`);
+    this.logger.warn(
+      `Getting shop floor analytics for tenant ${tenantId} - Shop floor models not in schema yet`,
+    );
 
     return {
       totalVehicles: 0,
@@ -343,11 +339,10 @@ export class ShopFloorService {
    * Get recent events
    * Note: ShopFloorEvent model needs to be added to Prisma schema
    */
-  async getRecentEvents(
-    tenantId: string,
-    limit: number = 50,
-  ): Promise<ShopFloorEvent[]> {
-    this.logger.warn(`Getting recent events for tenant ${tenantId} - ShopFloorEvent model not in schema yet`);
+  async getRecentEvents(tenantId: string, limit: number = 50): Promise<ShopFloorEvent[]> {
+    this.logger.warn(
+      `Getting recent events for tenant ${tenantId} - ShopFloorEvent model not in schema yet`,
+    );
     return [];
   }
 
@@ -355,8 +350,9 @@ export class ShopFloorService {
 
   private async processOccupancySensor(reading: SensorReading): Promise<void> {
     this.logger.debug(`Processing occupancy sensor reading for bay ${reading.bayId}`);
-    
-    const isOccupied = reading.data.presence || (reading.data.distance && reading.data.distance < 50);
+
+    const isOccupied =
+      reading.data.presence || (reading.data.distance && reading.data.distance < 50);
 
     if (isOccupied) {
       await this.createEvent({
@@ -412,7 +408,7 @@ export class ShopFloorService {
   private async processPressureReading(reading: SensorReading): Promise<void> {
     // Pressure sensors detect vehicle weight on lifts
     const hasWeight = reading.data.pressure && reading.data.pressure > 100;
-    
+
     if (hasWeight) {
       await this.createEvent({
         type: 'VEHICLE_ENTRY',
@@ -427,9 +423,6 @@ export class ShopFloorService {
     this.logger.debug(`Creating shop floor event: ${event.type}`);
 
     // Publish event
-    await this.redis.publish(
-      'shopfloor:events',
-      JSON.stringify(event),
-    );
+    await this.redis.publish('shopfloor:events', JSON.stringify(event));
   }
 }

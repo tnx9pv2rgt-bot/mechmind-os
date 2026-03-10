@@ -50,18 +50,18 @@ class RedisRateLimitStore implements RateLimitStore {
 
     // Remove old entries
     multi.zremrangebyscore(key, 0, windowStart);
-    
+
     // Add current request
     multi.zadd(key, now, `${now}-${Math.random()}`);
-    
+
     // Count current requests
     multi.zcard(key);
-    
+
     // Set expiry on the key
     multi.pexpire(key, this.windowMs);
 
     const results = await multi.exec();
-    const current = results?.[2]?.[1] as number || 1;
+    const current = (results?.[2]?.[1] as number) || 1;
 
     return {
       limit: 0, // Will be set by middleware
@@ -106,7 +106,7 @@ class RedisRateLimitStore implements RateLimitStore {
       end
     `;
 
-    const result = await this.redis.eval(
+    const result = (await this.redis.eval(
       script,
       1,
       key,
@@ -114,8 +114,8 @@ class RedisRateLimitStore implements RateLimitStore {
       limit,
       now,
       `${now}-${Math.random()}`,
-      this.windowMs
-    ) as [number, number];
+      this.windowMs,
+    )) as [number, number];
 
     const current = result[0];
     const retryAfter = result[1];
@@ -143,12 +143,12 @@ class FixedWindowStore implements RateLimitStore {
 
   async increment(key: string): Promise<RateLimitInfo> {
     const multi = this.redis.multi();
-    
+
     multi.incr(key);
     multi.pexpire(key, this.windowMs);
-    
+
     const results = await multi.exec();
-    const current = results?.[0]?.[1] as number || 1;
+    const current = (results?.[0]?.[1] as number) || 1;
     const ttl = await this.redis.pttl(key);
 
     return {
@@ -219,11 +219,11 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
       db: parseInt(this.configService.get('REDIS_DB') || '0'),
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: times => Math.min(times * 50, 2000),
       enableOfflineQueue: false,
     });
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', err => {
       this.logger.error('Redis connection error:', err.message);
     });
   }
@@ -237,7 +237,9 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
   /**
    * Create middleware with specific config
    */
-  createMiddleware(config: RateLimitConfig): (req: Request, res: Response, next: NextFunction) => void {
+  createMiddleware(
+    config: RateLimitConfig,
+  ): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       this.applyRateLimit(req, res, next, config);
     };
@@ -247,7 +249,7 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
     req: Request,
     res: Response,
     next: NextFunction,
-    config: RateLimitConfig
+    config: RateLimitConfig,
   ): Promise<void> {
     const key = this.generateKey(req, config);
     const store = new RedisRateLimitStore(this.redis, config.windowMs);
@@ -306,8 +308,10 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
 
   private getClientIp(req: Request): string {
     const forwarded = req.headers['x-forwarded-for'];
-    const ip = forwarded 
-      ? (typeof forwarded === 'string' ? forwarded.split(',')[0] : forwarded[0])
+    const ip = forwarded
+      ? typeof forwarded === 'string'
+        ? forwarded.split(',')[0]
+        : forwarded[0]
       : req.socket?.remoteAddress;
     return ip || 'unknown';
   }
@@ -318,7 +322,7 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
     body: any,
     store: RateLimitStore,
     key: string,
-    config: RateLimitConfig
+    config: RateLimitConfig,
   ): Promise<void> {
     const statusCode = res.statusCode;
     const isSuccess = statusCode < 400;
@@ -346,11 +350,11 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
   async getLimitStatus(key: string, config: RateLimitConfig): Promise<RateLimitInfo | null> {
     const fullKey = `${config.keyPrefix}:${key}`;
     const store = new RedisRateLimitStore(this.redis, config.windowMs);
-    
+
     try {
       const count = await this.redis.zcount(fullKey, Date.now() - config.windowMs, Date.now());
       const ttl = await this.redis.pttl(fullKey);
-      
+
       return {
         limit: config.maxRequests,
         current: count,
@@ -373,24 +377,22 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
  */
 export function ApplyRateLimit(config: RateLimitConfig | string): MethodDecorator & ClassDecorator {
   return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-    const limiterConfig = typeof config === 'string' 
-      ? getPresetConfig(config)
-      : config;
+    const limiterConfig = typeof config === 'string' ? getPresetConfig(config) : config;
 
     Reflect.defineMetadata('RATE_LIMIT_CONFIG', limiterConfig, target, propertyKey || '');
-    
+
     return descriptor || target;
   } as MethodDecorator & ClassDecorator;
 }
 
 function getPresetConfig(name: string): RateLimitConfig {
   const presets: Record<string, RateLimitConfig> = {
-    'registration': RedisRateLimiterMiddleware.REGISTRATION_LIMIT,
-    'vat': RedisRateLimiterMiddleware.VAT_VERIFICATION_LIMIT,
-    'email': RedisRateLimiterMiddleware.EMAIL_CHECK_LIMIT,
-    'phone': RedisRateLimiterMiddleware.PHONE_CHECK_LIMIT,
-    'login': RedisRateLimiterMiddleware.LOGIN_LIMIT,
-    'api': RedisRateLimiterMiddleware.API_GENERAL_LIMIT,
+    registration: RedisRateLimiterMiddleware.REGISTRATION_LIMIT,
+    vat: RedisRateLimiterMiddleware.VAT_VERIFICATION_LIMIT,
+    email: RedisRateLimiterMiddleware.EMAIL_CHECK_LIMIT,
+    phone: RedisRateLimiterMiddleware.PHONE_CHECK_LIMIT,
+    login: RedisRateLimiterMiddleware.LOGIN_LIMIT,
+    api: RedisRateLimiterMiddleware.API_GENERAL_LIMIT,
   };
 
   return presets[name] || RedisRateLimiterMiddleware.API_GENERAL_LIMIT;
@@ -401,16 +403,18 @@ function getPresetConfig(name: string): RateLimitConfig {
  */
 export function createRateLimiter(
   redisUrl: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   const redis = new Redis(redisUrl);
   const logger = new Logger('RateLimiter');
   const store = new RedisRateLimitStore(redis, config.windowMs);
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const keyGenerator = config.keyGenerator || ((req: Request) => {
-      return req.ip || req.socket?.remoteAddress || 'unknown';
-    });
+    const keyGenerator =
+      config.keyGenerator ||
+      ((req: Request) => {
+        return req.ip || req.socket?.remoteAddress || 'unknown';
+      });
 
     const key = `${config.keyPrefix || 'ratelimit'}:${keyGenerator(req)}`;
 
@@ -446,7 +450,7 @@ export function createRateLimiter(
 export async function checkRateLimit(
   redisUrl: string,
   key: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): Promise<{ allowed: boolean; info: RateLimitInfo }> {
   const redis = new Redis(redisUrl);
   const store = new RedisRateLimitStore(redis, config.windowMs);
@@ -454,7 +458,7 @@ export async function checkRateLimit(
   try {
     const fullKey = `${config.keyPrefix}:${key}`;
     const info = await store.incrementSlidingWindow(fullKey, config.maxRequests);
-    
+
     return {
       allowed: info.current <= info.limit,
       info,

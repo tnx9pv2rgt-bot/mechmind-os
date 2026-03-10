@@ -13,3 +13,4 @@ traces/
 
 # Keep test data
 !e2e/**/test-data.ts
+.vercel

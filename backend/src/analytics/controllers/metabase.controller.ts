@@ -1,9 +1,9 @@
 /**
  * MechMind OS - Metabase Embedding Controller
- * 
+ *
  * Provides secure signed URLs for Metabase dashboard embedding.
  * Uses JWT signing for embedding authentication with tenant isolation.
- * 
+ *
  * @see https://www.metabase.com/docs/latest/embedding/introduction
  */
 
@@ -16,13 +16,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
@@ -56,12 +50,12 @@ export class MetabaseController {
 
   // Dashboard IDs mapping - configured per tenant or global
   private readonly dashboardIds = {
-    overview: 1,        // Booking Overview Dashboard
-    revenue: 2,         // Revenue Analytics Dashboard
-    customers: 3,       // Customer Insights Dashboard
-    mechanics: 4,       // Mechanic Performance Dashboard
-    vehicles: 5,        // Vehicle Analytics Dashboard
-    executive: 6,       // Executive Summary Dashboard
+    overview: 1, // Booking Overview Dashboard
+    revenue: 2, // Revenue Analytics Dashboard
+    customers: 3, // Customer Insights Dashboard
+    mechanics: 4, // Mechanic Performance Dashboard
+    vehicles: 5, // Vehicle Analytics Dashboard
+    executive: 6, // Executive Summary Dashboard
   };
 
   constructor(private readonly configService: ConfigService) {
@@ -118,7 +112,10 @@ The returned URL expires in 10 minutes by default.
         data: {
           type: 'object',
           properties: {
-            url: { type: 'string', example: 'http://localhost:3001/embed/dashboard/eyJhbGciOiJIUzI1NiIs...' },
+            url: {
+              type: 'string',
+              example: 'http://localhost:3001/embed/dashboard/eyJhbGciOiJIUzI1NiIs...',
+            },
             expiresAt: { type: 'string', format: 'date-time' },
             dashboardId: { type: 'number', example: 1 },
           },
@@ -137,10 +134,7 @@ The returned URL expires in 10 minutes by default.
   ): Promise<DashboardUrlResponse> {
     // Validate embedding is enabled
     if (!this.embeddingEnabled) {
-      throw new HttpException(
-        'Metabase embedding is disabled',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      throw new HttpException('Metabase embedding is disabled', HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     // Validate secret key is configured
@@ -168,10 +162,7 @@ The returned URL expires in 10 minutes by default.
       60, // Max 60 minutes
     );
     if (isNaN(expiry) || expiry < 1) {
-      throw new HttpException(
-        'Invalid expiryMinutes parameter',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Invalid expiryMinutes parameter', HttpStatus.BAD_REQUEST);
     }
 
     try {
@@ -193,9 +184,7 @@ The returned URL expires in 10 minutes by default.
       // Construct the embed URL
       const embedUrl = `${this.metabaseUrl}/embed/dashboard/${token}#bordered=true&titled=true`;
 
-      this.logger.debug(
-        `Generated embed URL for tenant ${tenantId}, dashboard ${dashboardType}`,
-      );
+      this.logger.debug(`Generated embed URL for tenant ${tenantId}, dashboard ${dashboardType}`);
 
       return {
         success: true,
@@ -207,10 +196,7 @@ The returned URL expires in 10 minutes by default.
       };
     } catch (error) {
       this.logger.error('Failed to generate embed URL:', error);
-      throw new HttpException(
-        'Failed to generate dashboard URL',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to generate dashboard URL', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -243,10 +229,7 @@ The returned URL expires in 10 minutes by default.
     @Query('expiryMinutes') expiryMinutes?: string,
   ): Promise<DashboardUrlResponse> {
     if (!this.embeddingEnabled || !this.secretKey) {
-      throw new HttpException(
-        'Metabase embedding not configured',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      throw new HttpException('Metabase embedding not configured', HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     const qId = parseInt(questionId, 10);
@@ -276,10 +259,7 @@ The returned URL expires in 10 minutes by default.
       };
     } catch (error) {
       this.logger.error('Failed to generate question URL:', error);
-      throw new HttpException(
-        'Failed to generate question URL',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to generate question URL', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -352,7 +332,7 @@ The returned URL expires in 10 minutes by default.
     };
   }> {
     const configured = !!this.secretKey && !!this.metabaseUrl;
-    
+
     return {
       success: true,
       data: {

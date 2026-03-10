@@ -60,16 +60,16 @@ export interface TenantRetentionStats {
 
 /**
  * Data Retention Service
- * 
+ *
  * Implements automated data retention policies per GDPR requirements:
  * - Bookings: 30 days after completion (configurable)
  * - PII after opt-out: 30 days
  * - Call recordings: 30 days (configurable)
  * - Audit logs: 365 days
  * - Consent logs: 7 years (legal requirement)
- * 
+ *
  * Runs scheduled jobs to enforce policies and maintains audit trail.
- * 
+ *
  * @see GDPR Article 5(1)(e) - Storage limitation principle
  */
 @Injectable()
@@ -78,13 +78,13 @@ export class DataRetentionService {
 
   // Default retention periods (in days)
   private readonly DEFAULT_RETENTION: RetentionPolicy = {
-    customerDataDays: 2555,      // 7 years
-    bookingDataDays: 30,         // 30 days
-    optOutDataDays: 30,          // 30 days after opt-out
-    callRecordingDays: 30,       // 30 days
-    auditLogDays: 365,           // 1 year
-    webhookEventDays: 90,        // 90 days
-    consentAuditLogDays: 2555,   // 7 years (legal requirement)
+    customerDataDays: 2555, // 7 years
+    bookingDataDays: 30, // 30 days
+    optOutDataDays: 30, // 30 days after opt-out
+    callRecordingDays: 30, // 30 days
+    auditLogDays: 365, // 1 year
+    webhookEventDays: 90, // 90 days
+    consentAuditLogDays: 2555, // 7 years (legal requirement)
   };
 
   constructor(
@@ -101,16 +101,28 @@ export class DataRetentionService {
   getRetentionPolicy(): RetentionPolicy {
     return {
       customerDataDays: parseInt(
-        this.config.get('GDPR_CUSTOMER_RETENTION_DAYS', String(this.DEFAULT_RETENTION.customerDataDays)),
+        this.config.get(
+          'GDPR_CUSTOMER_RETENTION_DAYS',
+          String(this.DEFAULT_RETENTION.customerDataDays),
+        ),
       ),
       bookingDataDays: parseInt(
-        this.config.get('GDPR_BOOKING_RETENTION_DAYS', String(this.DEFAULT_RETENTION.bookingDataDays)),
+        this.config.get(
+          'GDPR_BOOKING_RETENTION_DAYS',
+          String(this.DEFAULT_RETENTION.bookingDataDays),
+        ),
       ),
       optOutDataDays: parseInt(
-        this.config.get('GDPR_OPTOUT_RETENTION_DAYS', String(this.DEFAULT_RETENTION.optOutDataDays)),
+        this.config.get(
+          'GDPR_OPTOUT_RETENTION_DAYS',
+          String(this.DEFAULT_RETENTION.optOutDataDays),
+        ),
       ),
       callRecordingDays: parseInt(
-        this.config.get('GDPR_RECORDING_RETENTION_DAYS', String(this.DEFAULT_RETENTION.callRecordingDays)),
+        this.config.get(
+          'GDPR_RECORDING_RETENTION_DAYS',
+          String(this.DEFAULT_RETENTION.callRecordingDays),
+        ),
       ),
       auditLogDays: parseInt(
         this.config.get('GDPR_AUDIT_LOG_DAYS', String(this.DEFAULT_RETENTION.auditLogDays)),
@@ -119,7 +131,10 @@ export class DataRetentionService {
         this.config.get('GDPR_WEBHOOK_EVENT_DAYS', String(this.DEFAULT_RETENTION.webhookEventDays)),
       ),
       consentAuditLogDays: parseInt(
-        this.config.get('GDPR_CONSENT_LOG_DAYS', String(this.DEFAULT_RETENTION.consentAuditLogDays)),
+        this.config.get(
+          'GDPR_CONSENT_LOG_DAYS',
+          String(this.DEFAULT_RETENTION.consentAuditLogDays),
+        ),
       ),
     };
   }
@@ -137,7 +152,7 @@ export class DataRetentionService {
 
     try {
       const result = await this.enforceRetentionPolicy();
-      
+
       this.loggerService.log(
         `Daily retention enforcement completed: ${JSON.stringify({
           customersAnonymized: result.customersAnonymized,
@@ -167,10 +182,10 @@ export class DataRetentionService {
     try {
       // Clean expired deletion snapshots
       await this.cleanExpiredSnapshots();
-      
+
       // Archive old consent audit logs (move to cold storage)
       await this.archiveOldConsentLogs();
-      
+
       // Purge soft-deleted records
       await this.purgeSoftDeletedRecords();
 
@@ -182,7 +197,7 @@ export class DataRetentionService {
 
   /**
    * Enforce retention policy across all tenants
-   * 
+   *
    * @param tenantId - Optional: enforce for specific tenant only
    * @returns Execution result summary
    */
@@ -234,7 +249,6 @@ export class DataRetentionService {
       // 6. Process opt-out customers (30-day grace period)
       const optOutResult = await this.processOptOutCustomers(tenantId);
       customersAnonymized += optOutResult.count;
-
     } catch (error) {
       this.logger.error(`Retention enforcement error: ${error.message}`);
       errors.push(error.message);
@@ -262,7 +276,7 @@ export class DataRetentionService {
 
     this.logger.log(
       `Retention enforcement completed [${executionId}]: ` +
-      `${customersAnonymized} customers, ${recordingsDeleted} recordings deleted`,
+        `${customersAnonymized} customers, ${recordingsDeleted} recordings deleted`,
     );
 
     return {
@@ -318,7 +332,7 @@ export class DataRetentionService {
 
     for (const customer of customersToAnonymize) {
       try {
-        await this.prisma.withTenant(customer.tenantId, async (prisma) => {
+        await this.prisma.withTenant(customer.tenantId, async prisma => {
           await prisma.customerEncrypted.update({
             where: { id: customer.id },
             data: {
@@ -388,7 +402,7 @@ export class DataRetentionService {
       if (!log.customer) continue;
 
       try {
-        await this.prisma.withTenant(log.customer.tenantId, async (prisma) => {
+        await this.prisma.withTenant(log.customer.tenantId, async prisma => {
           await prisma.customerEncrypted.update({
             where: { id: log.customer!.id },
             data: {
@@ -404,7 +418,9 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to process opt-out for customer ${log.customer.id}: ${error.message}`);
+        this.logger.error(
+          `Failed to process opt-out for customer ${log.customer.id}: ${error.message}`,
+        );
       }
     }
 
@@ -472,7 +488,7 @@ export class DataRetentionService {
 
     for (const recording of recordingsToDelete) {
       try {
-        await this.prisma.withTenant(recording.tenantId, async (prisma) => {
+        await this.prisma.withTenant(recording.tenantId, async prisma => {
           // @ts-expect-error - callRecordings model name may differ in schema
           await prisma.callRecordings.update({
             where: { id: recording.id },
@@ -491,10 +507,7 @@ export class DataRetentionService {
     }
 
     if (count > 0) {
-      this.loggerService.log(
-        `Deleted ${count} expired call recordings`,
-        'DataRetentionService',
-      );
+      this.loggerService.log(`Deleted ${count} expired call recordings`, 'DataRetentionService');
     }
 
     return { count };
@@ -523,10 +536,7 @@ export class DataRetentionService {
     });
 
     if (result.count > 0) {
-      this.loggerService.log(
-        `Deleted ${result.count} old audit logs`,
-        'DataRetentionService',
-      );
+      this.loggerService.log(`Deleted ${result.count} old audit logs`, 'DataRetentionService');
     }
 
     return { count: result.count };
@@ -604,10 +614,7 @@ export class DataRetentionService {
     }
 
     if (count > 0) {
-      this.loggerService.log(
-        `Cleaned ${count} expired deletion snapshots`,
-        'DataRetentionService',
-      );
+      this.loggerService.log(`Cleaned ${count} expired deletion snapshots`, 'DataRetentionService');
     }
 
     return { count };
@@ -675,11 +682,7 @@ export class DataRetentionService {
     const retentionCutoff = new Date();
     retentionCutoff.setDate(retentionCutoff.getDate() - policy.customerDataDays);
 
-    const [
-      activeCustomers,
-      pendingAnonymization,
-      expiredRecordings,
-    ] = await Promise.all([
+    const [activeCustomers, pendingAnonymization, expiredRecordings] = await Promise.all([
       this.prisma.customerEncrypted.count({
         where: {
           tenantId,
@@ -725,10 +728,7 @@ export class DataRetentionService {
   /**
    * Update retention policy for a tenant
    */
-  async updateTenantRetentionPolicy(
-    tenantId: string,
-    days: number,
-  ): Promise<void> {
+  async updateTenantRetentionPolicy(tenantId: string, days: number): Promise<void> {
     const minDays = 30;
     const maxDays = 3650; // 10 years
 

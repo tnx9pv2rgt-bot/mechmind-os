@@ -1,6 +1,6 @@
 /**
  * MechMind OS - MFA Service with TOTP
- * 
+ *
  * Implements TOTP (Time-based One-Time Password) with:
  * - RFC 6238 compliant TOTP generation using speakeasy
  * - Encrypted secret storage
@@ -8,7 +8,13 @@
  * - Rate limiting for verification attempts
  */
 
-import { Injectable, UnauthorizedException, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import * as speakeasy from 'speakeasy';
@@ -71,9 +77,7 @@ export class MfaService {
 
     // Generate backup codes
     const backupCodes = this.generateBackupCodesInternal();
-    const hashedBackupCodes = await Promise.all(
-      backupCodes.map(code => bcrypt.hash(code, 10))
-    );
+    const hashedBackupCodes = await Promise.all(backupCodes.map(code => bcrypt.hash(code, 10)));
 
     // Encrypt the secret for storage
     const encryptedSecret = await this.encryption.encrypt(secret.base32);
@@ -177,7 +181,7 @@ export class MfaService {
 
     // Verify TOTP code
     const secret = await this.encryption.decrypt(user.totpSecret!);
-    
+
     const valid = speakeasy.totp.verify({
       secret,
       encoding: 'base32',
@@ -186,9 +190,9 @@ export class MfaService {
     });
 
     if (!valid) {
-      return { 
-        valid: false, 
-        remainingAttempts: this.MAX_VERIFY_ATTEMPTS - 1
+      return {
+        valid: false,
+        remainingAttempts: this.MAX_VERIFY_ATTEMPTS - 1,
       };
     }
 
@@ -278,9 +282,7 @@ export class MfaService {
 
     // Generate new backup codes
     const backupCodes = this.generateBackupCodesInternal();
-    const hashedBackupCodes = await Promise.all(
-      backupCodes.map(code => bcrypt.hash(code, 10))
-    );
+    const hashedBackupCodes = await Promise.all(backupCodes.map(code => bcrypt.hash(code, 10)));
 
     // Replace backup codes
     await this.prisma.$transaction([
@@ -317,8 +319,8 @@ export class MfaService {
   }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { 
-        totpEnabled: true, 
+      select: {
+        totpEnabled: true,
         totpVerifiedAt: true,
         _count: { select: { backupCodes: true } },
       },
@@ -375,17 +377,14 @@ export class MfaService {
   /**
    * Verify backup code
    */
-  private async verifyBackupCode(
-    userId: string, 
-    code: string
-  ): Promise<boolean> {
+  private async verifyBackupCode(userId: string, code: string): Promise<boolean> {
     const hashedInput = await bcrypt.hash(code.toUpperCase(), 10);
-    
+
     // Find matching backup code
     const backupCodes = await this.prisma.backupCode.findMany({
       where: { userId },
     });
-    
+
     for (const backupCode of backupCodes) {
       const match = await bcrypt.compare(code.toUpperCase(), backupCode.codeHash);
       if (match) {
@@ -393,11 +392,11 @@ export class MfaService {
         await this.prisma.backupCode.delete({
           where: { id: backupCode.id },
         });
-        
+
         return true;
       }
     }
-    
+
     return false;
   }
 }

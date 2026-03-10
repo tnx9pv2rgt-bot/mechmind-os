@@ -23,7 +23,7 @@ import { DataRetentionProcessor } from './processors/data-retention.processor';
 
 /**
  * GDPR Compliance Module for MechMind OS v10
- * 
+ *
  * This module provides comprehensive GDPR compliance functionality:
  * - Data subject request handling (Access, Deletion, Rectification, Portability)
  * - Automated data retention enforcement
@@ -31,7 +31,7 @@ import { DataRetentionProcessor } from './processors/data-retention.processor';
  * - Right to erasure (Art. 17) with BullMQ job processing
  * - Data export capabilities (Art. 15, 20)
  * - Breach notification workflows
- * 
+ *
  * @module GdprModule
  */
 @Module({
@@ -79,10 +79,7 @@ import { DataRetentionProcessor } from './processors/data-retention.processor';
       },
     ),
   ],
-  controllers: [
-    GdprController,
-    GdprWebhookController,
-  ],
+  controllers: [GdprController, GdprWebhookController],
   providers: [
     // Core GDPR Services
     GdprDeletionService,
@@ -91,7 +88,7 @@ import { DataRetentionProcessor } from './processors/data-retention.processor';
     GdprExportService,
     GdprRequestService,
     AuditLogService,
-    
+
     // BullMQ Job Processors
     GdprDeletionProcessor,
     DataRetentionProcessor,

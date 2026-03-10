@@ -1,6 +1,6 @@
 /**
  * MechMind OS - MFA Controller
- * 
+ *
  * REST API endpoints for MFA management with TOTP
  */
 
@@ -51,16 +51,14 @@ export class MfaController {
   @Get('status')
   @ApiOperation({ summary: 'Get MFA status for current user' })
   @ApiResponse({ status: 200, description: 'MFA status retrieved', type: MfaStatusResponseDto })
-  async getStatus(
-    @CurrentUser('userId') userId: string,
-  ): Promise<MfaStatusResponseDto> {
+  async getStatus(@CurrentUser('userId') userId: string): Promise<MfaStatusResponseDto> {
     return this.mfaService.getStatus(userId);
   }
 
   @Post('enroll')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Enroll in MFA',
-    description: 'Generates TOTP secret and QR code. Returns backup codes - SAVE THEM NOW!'
+    description: 'Generates TOTP secret and QR code. Returns backup codes - SAVE THEM NOW!',
   })
   @ApiResponse({ status: 201, description: 'MFA enrollment initiated', type: EnrollMfaResponseDto })
   @ApiResponse({ status: 400, description: 'MFA already enabled' })
@@ -69,7 +67,7 @@ export class MfaController {
     @CurrentUser('email') email: string,
   ): Promise<EnrollMfaResponseDto> {
     const result = await this.mfaService.enroll(userId, email);
-    
+
     return {
       secret: result.secret,
       qrCode: result.qrCode,
@@ -81,9 +79,9 @@ export class MfaController {
 
   @Post('verify')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Verify and enable MFA',
-    description: 'Verifies the TOTP code and enables MFA permanently'
+    description: 'Verifies the TOTP code and enables MFA permanently',
   })
   @ApiResponse({ status: 200, description: 'MFA enabled successfully' })
   @ApiResponse({ status: 401, description: 'Invalid verification code' })
@@ -98,9 +96,9 @@ export class MfaController {
   @Post('verify-login')
   @HttpCode(HttpStatus.OK)
   @UseGuards() // No JWT required - uses temp token
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Verify MFA during login',
-    description: 'Completes login with MFA code after receiving tempToken from login'
+    description: 'Completes login with MFA code after receiving tempToken from login',
   })
   @ApiResponse({ status: 200, description: 'MFA verified, tokens issued' })
   @ApiResponse({ status: 401, description: 'Invalid temp token or MFA code' })
@@ -110,18 +108,18 @@ export class MfaController {
   ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     // Verify temp token
     const userId = await this.authService.verifyTwoFactorTempToken(dto.tempToken);
-    
+
     // Verify MFA code
     const result = await this.mfaService.verify(userId, dto.token);
     if (!result.valid) {
       throw new UnauthorizedException(
-        `Invalid code. ${result.remainingAttempts} attempts remaining.`
+        `Invalid code. ${result.remainingAttempts} attempts remaining.`,
       );
     }
 
     // Get user and generate tokens
     const user = await this.authService.getUserWithTwoFactorStatus(userId);
-    
+
     // Update last login
     await this.authService.updateLastLogin(userId, req.ip);
 
@@ -130,9 +128,9 @@ export class MfaController {
 
   @Delete('disable')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Disable MFA',
-    description: 'Disables MFA for the current user. Requires password and current MFA code.'
+    description: 'Disables MFA for the current user. Requires password and current MFA code.',
   })
   @ApiResponse({ status: 200, description: 'MFA disabled successfully' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
@@ -146,11 +144,15 @@ export class MfaController {
 
   @Post('backup-codes')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Generate new backup codes',
-    description: 'Generates new backup codes. Old codes become invalid immediately.'
+    description: 'Generates new backup codes. Old codes become invalid immediately.',
   })
-  @ApiResponse({ status: 200, description: 'New backup codes generated', type: BackupCodesResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'New backup codes generated',
+    type: BackupCodesResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Invalid MFA code' })
   async createBackupCodes(
     @CurrentUser('userId') userId: string,
@@ -167,9 +169,9 @@ export class MfaController {
 
   @Post('admin/reset')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Admin: Reset MFA for user (emergency)',
-    description: 'Administrators can reset MFA for users who lost access. Requires admin role.'
+    description: 'Administrators can reset MFA for users who lost access. Requires admin role.',
   })
   @ApiResponse({ status: 200, description: 'MFA reset successfully' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
@@ -187,15 +189,15 @@ export class MfaController {
 
     // Reset MFA
     await this.mfaService.adminReset(targetUserId);
-    
+
     return { message: 'Two-factor authentication has been reset. User must set up MFA again.' };
   }
 
   @Get('admin/required-users')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Admin: List users requiring MFA',
-    description: 'Lists all admin/manager users without MFA enabled'
+    description: 'Lists all admin/manager users without MFA enabled',
   })
   @ApiResponse({ status: 200, description: 'List retrieved' })
   async getUsersWithoutMFA(

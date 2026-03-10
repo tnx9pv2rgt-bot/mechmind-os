@@ -6,13 +6,7 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiHeader,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
 import { VapiWebhookService } from '../services/vapi-webhook.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
@@ -117,11 +111,7 @@ export class VoiceWebhookController {
   /**
    * Verify HMAC-SHA256 signature
    */
-  private verifySignature(
-    payload: any,
-    signature: string,
-    timestamp?: string,
-  ): boolean {
+  private verifySignature(payload: any, signature: string, timestamp?: string): boolean {
     const secret = this.configService.get<string>('VAPI_WEBHOOK_SECRET');
 
     if (!secret) {
@@ -146,10 +136,7 @@ export class VoiceWebhookController {
 
     // Use timing-safe comparison
     try {
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature),
-      );
+      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     } catch {
       return false;
     }

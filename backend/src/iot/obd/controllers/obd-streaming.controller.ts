@@ -1,19 +1,10 @@
 /**
  * MechMind OS - OBD Streaming Controller
- * 
+ *
  * REST API endpoints for OBD streaming operations
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
@@ -43,9 +34,7 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Start OBD streaming session' })
   @ApiResponse({ status: 201, type: StreamResponseDto })
-  async startStreaming(
-    @Body() dto: StartStreamingDto,
-  ): Promise<StreamResponseDto> {
+  async startStreaming(@Body() dto: StartStreamingDto): Promise<StreamResponseDto> {
     const stream = await this.streamingService.startStreaming(dto.deviceId, {
       adapterType: dto.adapterType,
       protocol: dto.protocol,
@@ -91,9 +80,7 @@ export class ObdStreamingController {
   @Get('devices/:id/stream')
   @ApiOperation({ summary: 'Get active stream for device' })
   @ApiResponse({ status: 200, type: StreamResponseDto })
-  async getDeviceStream(
-    @Param('id') deviceId: string,
-  ): Promise<StreamResponseDto | null> {
+  async getDeviceStream(@Param('id') deviceId: string): Promise<StreamResponseDto | null> {
     const stream = this.streamingService.getActiveStream(deviceId);
     if (!stream) return null;
 
@@ -112,13 +99,8 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Capture freeze frame data' })
   @ApiResponse({ status: 201, type: FreezeFrameResponseDto })
-  async captureFreezeFrame(
-    @Body() dto: FreezeFrameRequestDto,
-  ): Promise<FreezeFrameResponseDto> {
-    const freezeFrame = await this.streamingService.captureFreezeFrame(
-      dto.deviceId,
-      dto.dtcCode,
-    );
+  async captureFreezeFrame(@Body() dto: FreezeFrameRequestDto): Promise<FreezeFrameResponseDto> {
+    const freezeFrame = await this.streamingService.captureFreezeFrame(dto.deviceId, dto.dtcCode);
 
     return {
       id: freezeFrame.id,
@@ -133,9 +115,7 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Get Mode $06 test results' })
   @ApiResponse({ status: 200, type: [Mode06TestResponseDto] })
-  async getMode06Tests(
-    @Param('id') deviceId: string,
-  ): Promise<Mode06TestResponseDto[]> {
+  async getMode06Tests(@Param('id') deviceId: string): Promise<Mode06TestResponseDto[]> {
     const results = await this.streamingService.getMode06Tests(deviceId);
     return results as Mode06TestResponseDto[];
   }
@@ -144,13 +124,8 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Execute Mode $08 EVAP test' })
   @ApiResponse({ status: 201, type: EvapTestResponseDto })
-  async executeEvapTest(
-    @Body() dto: EvapTestRequestDto,
-  ): Promise<EvapTestResponseDto> {
-    const test = await this.streamingService.executeEvapTest(
-      dto.deviceId,
-      dto.testType,
-    );
+  async executeEvapTest(@Body() dto: EvapTestRequestDto): Promise<EvapTestResponseDto> {
+    const test = await this.streamingService.executeEvapTest(dto.deviceId, dto.testType);
 
     return {
       id: test.id,

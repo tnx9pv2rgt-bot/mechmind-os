@@ -45,13 +45,26 @@ import { TenantGuard } from './guard/tenant.guard';
         };
       },
     }),
-    BullModule.registerQueue(
-      { name: 'booking' },
-      { name: 'voice' },
-      { name: 'notification' },
-    ),
+    BullModule.registerQueue({ name: 'booking' }, { name: 'voice' }, { name: 'notification' }),
   ],
-  providers: [PrismaService, EncryptionService, QueueService, LoggerService, S3Service, RedisService, TenantGuard],
-  exports: [PrismaService, EncryptionService, QueueService, LoggerService, S3Service, RedisService, BullModule, TenantGuard],
+  providers: [
+    PrismaService,
+    EncryptionService,
+    QueueService,
+    LoggerService,
+    S3Service,
+    RedisService,
+    TenantGuard,
+  ],
+  exports: [
+    PrismaService,
+    EncryptionService,
+    QueueService,
+    LoggerService,
+    S3Service,
+    RedisService,
+    BullModule,
+    TenantGuard,
+  ],
 })
 export class CommonModule {}

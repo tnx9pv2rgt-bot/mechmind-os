@@ -304,6 +304,47 @@ let AuthService = class AuthService {
             data: { failedAttempts: 0, lockedUntil: null },
         });
     }
+    async logAuthEvent(params) {
+        try {
+            await this.prisma.authAuditLog.create({
+                data: {
+                    userId: params.userId,
+                    tenantId: params.tenantId,
+                    action: params.action,
+                    status: params.status,
+                    ipAddress: params.ipAddress,
+                    userAgent: params.userAgent,
+                    details: (params.details ?? {}),
+                },
+            });
+        }
+        catch (error) {
+            this.logger.error('Failed to log auth event', error.stack);
+        }
+    }
+    async findUserByEmailAndTenant(email, tenantId) {
+        const user = await this.prisma.user.findFirst({
+            where: { email, tenantId, isActive: true },
+            include: { tenant: true },
+        });
+        if (!user || !user.tenant.isActive) {
+            return null;
+        }
+        return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            isActive: user.isActive,
+            tenantId: user.tenantId,
+            tenant: {
+                id: user.tenant.id,
+                name: user.tenant.name,
+                slug: user.tenant.slug,
+                isActive: user.tenant.isActive,
+            },
+        };
+    }
     async isAccountLocked(userId) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },

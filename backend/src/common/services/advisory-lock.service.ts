@@ -55,7 +55,7 @@ export class AdvisoryLockService {
   /**
    * Attempt to acquire an advisory lock with retry logic and exponential backoff.
    * Uses pg_try_advisory_lock for non-blocking lock attempts.
-   * 
+   *
    * @param tenantId - Tenant UUID
    * @param slotId - Slot UUID
    * @param options - Lock acquisition options
@@ -90,7 +90,7 @@ export class AdvisoryLockService {
 
         if (acquired) {
           const waitTimeMs = Date.now() - startTime;
-          
+
           this.logger.debug(
             `Lock ${lockId} acquired after ${attempts} attempt(s), waited ${waitTimeMs}ms`,
             'AdvisoryLockService',
@@ -131,7 +131,7 @@ export class AdvisoryLockService {
 
     // All attempts exhausted
     const totalWaitTimeMs = Date.now() - startTime;
-    
+
     this.logger.error(
       `Failed to acquire lock ${lockId} after ${attempts} attempts (${totalWaitTimeMs}ms)`,
       undefined,
@@ -152,7 +152,7 @@ export class AdvisoryLockService {
   /**
    * Release an advisory lock
    * Always call this in a finally block to prevent lock leaks
-   * 
+   *
    * @param tenantId - Tenant UUID
    * @param slotId - Slot UUID
    * @returns true if lock was released, false if not held
@@ -170,10 +170,7 @@ export class AdvisoryLockService {
       if (released) {
         this.logger.debug(`Lock ${lockId} released`, 'AdvisoryLockService');
       } else {
-        this.logger.warn(
-          `Lock ${lockId} was not held by this session`,
-          'AdvisoryLockService',
-        );
+        this.logger.warn(`Lock ${lockId} was not held by this session`, 'AdvisoryLockService');
       }
 
       return released;
@@ -190,7 +187,7 @@ export class AdvisoryLockService {
   /**
    * Check if a lock is currently held by any session
    * Note: This checks if ANY session holds the lock, not just current session
-   * 
+   *
    * @param tenantId - Tenant UUID
    * @param slotId - Slot UUID
    * @returns Object with isHeld status and holder info if available
@@ -207,11 +204,13 @@ export class AdvisoryLockService {
     const lockId = this.computeLockId(tenantId, slotId);
 
     try {
-      const result = await this.prisma.$queryRaw<{
-        pid: number | null;
-        mode: string | null;
-        granted: boolean | null;
-      }[]>`
+      const result = await this.prisma.$queryRaw<
+        {
+          pid: number | null;
+          mode: string | null;
+          granted: boolean | null;
+        }[]
+      >`
         SELECT 
           l.pid,
           l.mode,
@@ -245,7 +244,7 @@ export class AdvisoryLockService {
   /**
    * Acquire multiple locks in consistent order to prevent deadlocks.
    * Always acquires locks in order: tenant_id ASC, slot_id ASC
-   * 
+   *
    * @param locks - Array of lock identifiers
    * @param options - Lock acquisition options
    * @returns MultiLockResult with details of acquired/failed locks
@@ -271,19 +270,19 @@ export class AdvisoryLockService {
       for (const { tenantId, slotId } of sortedLocks) {
         try {
           const result = await this.acquireLockWithRetry(tenantId, slotId, options);
-          
+
           if (result.success) {
             acquiredLocks.push(result.lockId);
           } else {
             failedLocks.push(result.lockId);
           }
-          
+
           results.push(result);
         } catch (error) {
           // If we fail to acquire one lock, we need to release all acquired locks
           // to maintain atomicity
           failedLocks.push(this.computeLockId(tenantId, slotId));
-          
+
           this.logger.warn(
             `Failed to acquire lock for tenant ${tenantId}, slot ${slotId}, releasing all acquired locks`,
             'AdvisoryLockService',
@@ -311,7 +310,7 @@ export class AdvisoryLockService {
       if (error instanceof LockOrderViolationError) {
         throw error;
       }
-      
+
       return {
         success: false,
         acquiredLocks,
@@ -342,7 +341,7 @@ export class AdvisoryLockService {
 
   /**
    * Execute a function with an advisory lock, ensuring lock is always released
-   * 
+   *
    * @param tenantId - Tenant UUID
    * @param slotId - Slot UUID
    * @param fn - Function to execute while holding the lock
@@ -368,7 +367,7 @@ export class AdvisoryLockService {
   /**
    * Execute a function with multiple advisory locks, ensuring locks are always released
    * Locks are acquired in consistent order to prevent deadlocks
-   * 
+   *
    * @param locks - Array of lock identifiers
    * @param fn - Function to execute while holding the locks
    * @param options - Lock acquisition options
@@ -401,7 +400,7 @@ export class AdvisoryLockService {
   /**
    * Try to acquire a lock immediately without retry
    * Uses pg_try_advisory_lock for non-blocking check
-   * 
+   *
    * @param lockId - Computed lock ID
    * @returns true if lock acquired, false otherwise
    */

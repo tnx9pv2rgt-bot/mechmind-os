@@ -2,7 +2,17 @@
  * MechMind OS - Shop Floor DTOs
  */
 
-import { IsString, IsOptional, IsEnum, IsInt, IsNumber, IsArray, IsUUID, IsJSON, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsArray,
+  IsUUID,
+  IsJSON,
+  IsObject,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BayStatus, SensorType, JobStatus } from '../interfaces/shop-floor.interface';
 

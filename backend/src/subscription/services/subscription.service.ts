@@ -1,6 +1,6 @@
 /**
  * SUBSCRIPTION SERVICE
- * 
+ *
  * Handles subscription management, upgrades, downgrades, and Stripe integration
  */
 
@@ -8,16 +8,11 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 // import Stripe from 'stripe'; // COMMENTATO: stripe non installato
 import { PrismaService } from '../../common/services/prisma.service';
-import { 
-  SubscriptionPlan, 
-  SubscriptionStatus, 
-  FeatureFlag,
-  Prisma,
-} from '@prisma/client';
-import { 
-  PLAN_PRICING, 
-  AI_ADDON, 
-  PLAN_LIMITS, 
+import { SubscriptionPlan, SubscriptionStatus, FeatureFlag, Prisma } from '@prisma/client';
+import {
+  PLAN_PRICING,
+  AI_ADDON,
+  PLAN_LIMITS,
   PLAN_FEATURES,
   calculateProratedAmount,
 } from '../config/pricing.config';
@@ -109,19 +104,15 @@ export class SubscriptionService {
       stripe: {
         customerId: subscription.stripeCustomerId || undefined,
         subscriptionId: subscription.stripeSubscriptionId || undefined,
-        paymentMethodRequired: 
-          subscription.status === SubscriptionStatus.TRIAL && 
-          !subscription.stripeCustomerId,
+        paymentMethodRequired:
+          subscription.status === SubscriptionStatus.TRIAL && !subscription.stripeCustomerId,
       },
     };
   }
 
-  async getAllSubscriptions(filters?: {
-    status?: SubscriptionStatus;
-    plan?: SubscriptionPlan;
-  }) {
+  async getAllSubscriptions(filters?: { status?: SubscriptionStatus; plan?: SubscriptionPlan }) {
     const where: Prisma.SubscriptionWhereInput = {};
-    
+
     if (filters?.status) {
       where.status = filters.status;
     }
@@ -154,9 +145,9 @@ export class SubscriptionService {
 
   async upgradeSubscription(
     tenantId: string,
-    request: UpgradeRequest
-  ): Promise<{ 
-    subscription: SubscriptionResponse; 
+    request: UpgradeRequest,
+  ): Promise<{
+    subscription: SubscriptionResponse;
     proratedAmount: number;
     immediate: boolean;
   }> {
@@ -176,13 +167,16 @@ export class SubscriptionService {
       throw new BadRequestException('Cannot upgrade to trial plan');
     }
 
-    if (currentSub.plan === newPlan && currentSub.aiAddonEnabled === (aiAddon ?? currentSub.aiAddonEnabled)) {
+    if (
+      currentSub.plan === newPlan &&
+      currentSub.aiAddonEnabled === (aiAddon ?? currentSub.aiAddonEnabled)
+    ) {
       throw new BadRequestException('Already on this plan configuration');
     }
 
     // Calculate prorated amount
     const daysRemaining = Math.ceil(
-      (currentSub.currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      (currentSub.currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     const daysInPeriod = 30;
 
@@ -191,7 +185,7 @@ export class SubscriptionService {
       newPlan,
       billingCycle,
       daysRemaining,
-      daysInPeriod
+      daysInPeriod,
     );
 
     // Determine if change is immediate or at period end
@@ -210,7 +204,7 @@ export class SubscriptionService {
     // }
 
     // Update subscription in database
-    const updatedSubscription = await this.prisma.$transaction(async (tx) => {
+    const updatedSubscription = await this.prisma.$transaction(async tx => {
       // Log the change
       await tx.subscriptionChange.create({
         data: {
@@ -244,7 +238,12 @@ export class SubscriptionService {
       });
 
       // Update features based on new plan
-      await this.syncPlanFeatures(tx, subscription.id, newPlan, aiAddon ?? currentSub.aiAddonEnabled);
+      await this.syncPlanFeatures(
+        tx,
+        subscription.id,
+        newPlan,
+        aiAddon ?? currentSub.aiAddonEnabled,
+      );
 
       return subscription;
     });
@@ -258,8 +257,8 @@ export class SubscriptionService {
 
   async downgradeSubscription(
     tenantId: string,
-    newPlan: SubscriptionPlan
-  ): Promise<{ 
+    newPlan: SubscriptionPlan,
+  ): Promise<{
     subscription: SubscriptionResponse;
     effectiveDate: Date;
   }> {
@@ -310,10 +309,7 @@ export class SubscriptionService {
   // AI ADD-ON MANAGEMENT
   // ==========================================
 
-  async toggleAiAddon(
-    tenantId: string,
-    enabled: boolean
-  ): Promise<SubscriptionResponse> {
+  async toggleAiAddon(tenantId: string, enabled: boolean): Promise<SubscriptionResponse> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { tenantId },
     });
@@ -326,7 +322,7 @@ export class SubscriptionService {
       throw new BadRequestException('AI Add-on requires Medium plan or higher');
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async tx => {
       await tx.subscription.update({
         where: { tenantId },
         data: {
@@ -358,8 +354,8 @@ export class SubscriptionService {
 
   async cancelSubscription(
     tenantId: string,
-    immediate: boolean = false
-  ): Promise<{ 
+    immediate: boolean = false,
+  ): Promise<{
     subscription: SubscriptionResponse;
     dataRetentionDate: Date;
   }> {
@@ -418,12 +414,14 @@ export class SubscriptionService {
       throw new NotFoundException('Subscription not found');
     }
 
-    if (subscription.status !== SubscriptionStatus.CANCELLED && 
-        subscription.status !== SubscriptionStatus.EXPIRED) {
+    if (
+      subscription.status !== SubscriptionStatus.CANCELLED &&
+      subscription.status !== SubscriptionStatus.EXPIRED
+    ) {
       throw new BadRequestException('Subscription is not cancelled');
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async tx => {
       await tx.subscription.update({
         where: { tenantId },
         data: {
@@ -460,7 +458,7 @@ export class SubscriptionService {
       status?: SubscriptionStatus;
       aiAddonEnabled?: boolean;
       currentPeriodEnd?: Date;
-    }
+    },
   ): Promise<SubscriptionResponse> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { tenantId },
@@ -505,7 +503,7 @@ export class SubscriptionService {
         this.prisma,
         subscription.id,
         updates.plan ?? subscription.plan,
-        updates.aiAddonEnabled ?? subscription.aiAddonEnabled
+        updates.aiAddonEnabled ?? subscription.aiAddonEnabled,
       );
     }
 
@@ -513,44 +511,45 @@ export class SubscriptionService {
   }
 
   async getSubscriptionAnalytics() {
-    const [
-      totalSubscriptions,
-      byPlan,
-      byStatus,
-      trialConversions,
-      revenueEstimate,
-    ] = await Promise.all([
-      this.prisma.subscription.count(),
-      this.prisma.subscription.groupBy({
-        by: ['plan'],
-        _count: { plan: true },
-      }),
-      this.prisma.subscription.groupBy({
-        by: ['status'],
-        _count: { status: true },
-      }),
-      this.prisma.subscription.count({
-        where: {
-          plan: { not: SubscriptionPlan.TRIAL },
-        },
-      }),
-      this.prisma.subscription.aggregate({
-        _sum: {
-          aiAddonPrice: true,
-        },
-      }),
-    ]);
+    const [totalSubscriptions, byPlan, byStatus, trialConversions, revenueEstimate] =
+      await Promise.all([
+        this.prisma.subscription.count(),
+        this.prisma.subscription.groupBy({
+          by: ['plan'],
+          _count: { plan: true },
+        }),
+        this.prisma.subscription.groupBy({
+          by: ['status'],
+          _count: { status: true },
+        }),
+        this.prisma.subscription.count({
+          where: {
+            plan: { not: SubscriptionPlan.TRIAL },
+          },
+        }),
+        this.prisma.subscription.aggregate({
+          _sum: {
+            aiAddonPrice: true,
+          },
+        }),
+      ]);
 
     return {
       totalSubscriptions,
-      byPlan: byPlan.reduce((acc, item) => {
-        acc[item.plan] = item._count.plan;
-        return acc;
-      }, {} as Record<SubscriptionPlan, number>),
-      byStatus: byStatus.reduce((acc, item) => {
-        acc[item.status] = item._count.status;
-        return acc;
-      }, {} as Record<SubscriptionStatus, number>),
+      byPlan: byPlan.reduce(
+        (acc, item) => {
+          acc[item.plan] = item._count.plan;
+          return acc;
+        },
+        {} as Record<SubscriptionPlan, number>,
+      ),
+      byStatus: byStatus.reduce(
+        (acc, item) => {
+          acc[item.status] = item._count.status;
+          return acc;
+        },
+        {} as Record<SubscriptionStatus, number>,
+      ),
       trialConversions,
       aiAddonRevenue: revenueEstimate._sum.aiAddonPrice || 0,
     };
@@ -566,7 +565,7 @@ export class SubscriptionService {
     billingCycle: 'monthly' | 'yearly',
     aiAddon: boolean,
     successUrl: string,
-    cancelUrl: string
+    cancelUrl: string,
   ): Promise<{ sessionId: string; url: string }> {
     throw new BadRequestException('Stripe is not configured - install stripe package');
     // if (!this.stripe) {
@@ -603,7 +602,7 @@ export class SubscriptionService {
     tx: Prisma.TransactionClient,
     subscriptionId: string,
     plan: SubscriptionPlan,
-    hasAiAddon: boolean
+    hasAiAddon: boolean,
   ): Promise<void> {
     // Get features for this plan
     const planFeatures = [...PLAN_FEATURES[plan]];

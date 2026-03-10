@@ -38,28 +38,19 @@ export class CustomerService {
   /**
    * Create a new customer with encrypted PII
    */
-  async create(
-    tenantId: string,
-    dto: CreateCustomerDto,
-  ): Promise<CustomerWithDecryptedData> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async create(tenantId: string, dto: CreateCustomerDto): Promise<CustomerWithDecryptedData> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       // Check if customer with this phone already exists
       const existing = await this.findByPhone(tenantId, dto.phone);
       if (existing) {
-        throw new ConflictException(
-          `Customer with phone ${dto.phone} already exists`,
-        );
+        throw new ConflictException(`Customer with phone ${dto.phone} already exists`);
       }
 
       // Encrypt PII fields
       const encryptedPhone = this.encryption.encrypt(dto.phone);
       const encryptedEmail = dto.email ? this.encryption.encrypt(dto.email) : null;
-      const encryptedFirstName = dto.firstName
-        ? this.encryption.encrypt(dto.firstName)
-        : null;
-      const encryptedLastName = dto.lastName
-        ? this.encryption.encrypt(dto.lastName)
-        : null;
+      const encryptedFirstName = dto.firstName ? this.encryption.encrypt(dto.firstName) : null;
+      const encryptedLastName = dto.lastName ? this.encryption.encrypt(dto.lastName) : null;
 
       // Create hash for phone lookup
       const phoneHash = this.encryption.hash(dto.phone);
@@ -103,11 +94,8 @@ export class CustomerService {
   /**
    * Find customer by ID with decrypted data
    */
-  async findById(
-    tenantId: string,
-    customerId: string,
-  ): Promise<CustomerWithDecryptedData> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async findById(tenantId: string, customerId: string): Promise<CustomerWithDecryptedData> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const customer = await prisma.customer.findFirst({
         where: {
           id: customerId,
@@ -133,11 +121,8 @@ export class CustomerService {
   /**
    * Find customer by phone number (using hash for lookup)
    */
-  async findByPhone(
-    tenantId: string,
-    phone: string,
-  ): Promise<CustomerWithDecryptedData | null> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async findByPhone(tenantId: string, phone: string): Promise<CustomerWithDecryptedData | null> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const phoneHash = this.encryption.hash(phone);
 
       const customer = await prisma.customer.findFirst({
@@ -170,7 +155,7 @@ export class CustomerService {
       offset?: number;
     },
   ): Promise<{ customers: CustomerWithDecryptedData[]; total: number }> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       // Note: Searching encrypted fields requires decrypting all records
       // For production, consider using searchable encrypted fields or
       // maintaining separate search indexes
@@ -189,14 +174,14 @@ export class CustomerService {
       });
 
       // Decrypt and filter in memory
-      const decryptedCustomers = customers.map((c) => this.decryptCustomer(c));
+      const decryptedCustomers = customers.map(c => this.decryptCustomer(c));
 
       let filtered = decryptedCustomers;
 
       if (query.name) {
         const nameLower = query.name.toLowerCase();
         filtered = filtered.filter(
-          (c) =>
+          c =>
             c.firstName?.toLowerCase().includes(nameLower) ||
             c.lastName?.toLowerCase().includes(nameLower),
         );
@@ -204,9 +189,7 @@ export class CustomerService {
 
       if (query.email) {
         const emailLower = query.email.toLowerCase();
-        filtered = filtered.filter((c) =>
-          c.email?.toLowerCase().includes(emailLower),
-        );
+        filtered = filtered.filter(c => c.email?.toLowerCase().includes(emailLower));
       }
 
       return { customers: filtered, total };
@@ -221,7 +204,7 @@ export class CustomerService {
     customerId: string,
     dto: UpdateCustomerDto,
   ): Promise<CustomerWithDecryptedData> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const existing = await prisma.customer.findFirst({
         where: { id: customerId, tenantId },
       });
@@ -238,9 +221,7 @@ export class CustomerService {
       }
 
       if (dto.email !== undefined) {
-        updateData.encryptedEmail = dto.email
-          ? this.encryption.encrypt(dto.email)
-          : null;
+        updateData.encryptedEmail = dto.email ? this.encryption.encrypt(dto.email) : null;
       }
 
       if (dto.firstName !== undefined) {
@@ -250,9 +231,7 @@ export class CustomerService {
       }
 
       if (dto.lastName !== undefined) {
-        updateData.encryptedLastName = dto.lastName
-          ? this.encryption.encrypt(dto.lastName)
-          : null;
+        updateData.encryptedLastName = dto.lastName ? this.encryption.encrypt(dto.lastName) : null;
       }
 
       if (dto.notes !== undefined) {
@@ -274,7 +253,7 @@ export class CustomerService {
    * Delete customer (GDPR right to erasure)
    */
   async delete(tenantId: string, customerId: string): Promise<void> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const customer = await prisma.customer.findFirst({
         where: { id: customerId, tenantId },
       });
@@ -308,7 +287,7 @@ export class CustomerService {
     tenantId: string,
     options?: { limit?: number; offset?: number },
   ): Promise<{ customers: CustomerWithDecryptedData[]; total: number }> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const [customers, total] = await Promise.all([
         prisma.customer.findMany({
           where: { tenantId },
@@ -320,7 +299,7 @@ export class CustomerService {
       ]);
 
       return {
-        customers: customers.map((c) => this.decryptCustomer(c)),
+        customers: customers.map(c => this.decryptCustomer(c)),
         total,
       };
     });
@@ -332,12 +311,8 @@ export class CustomerService {
   private decryptCustomer(customer: any): CustomerWithDecryptedData {
     return {
       id: customer.id,
-      phone: customer.encryptedPhone
-        ? this.encryption.decrypt(customer.encryptedPhone)
-        : '',
-      email: customer.encryptedEmail
-        ? this.encryption.decrypt(customer.encryptedEmail)
-        : undefined,
+      phone: customer.encryptedPhone ? this.encryption.decrypt(customer.encryptedPhone) : '',
+      email: customer.encryptedEmail ? this.encryption.decrypt(customer.encryptedEmail) : undefined,
       firstName: customer.encryptedFirstName
         ? this.encryption.decrypt(customer.encryptedFirstName)
         : undefined,

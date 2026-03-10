@@ -90,7 +90,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   /**
    * Execute a query within a specific tenant context
    */
-  async withTenant<T>(tenantId: string, callback: (prisma: PrismaService) => Promise<T>): Promise<T> {
+  async withTenant<T>(
+    tenantId: string,
+    callback: (prisma: PrismaService) => Promise<T>,
+  ): Promise<T> {
     const previousContext = this.currentTenantContext;
     try {
       await this.setTenantContext(tenantId);
@@ -118,7 +121,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await this.$transaction(
-          async (tx) => {
+          async tx => {
             // Cast to PrismaService for compatibility
             return await callback(tx as unknown as PrismaService);
           },
@@ -130,7 +133,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         );
       } catch (error) {
         lastError = error as Error;
-        
+
         // Check if it's a serialization failure
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           if (error.code === 'P2034') {
@@ -141,7 +144,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             }
           }
         }
-        
+
         throw error;
       }
     }
@@ -156,11 +159,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async acquireAdvisoryLock(tenantId: string, resourceId: string): Promise<boolean> {
     // Create a unique lock ID from tenantId and resourceId
     const lockId = this.generateLockId(tenantId, resourceId);
-    
+
     const result = await this.$queryRaw<{ acquired: boolean }[]>`
       SELECT pg_try_advisory_lock(${lockId}::bigint) as acquired
     `;
-    
+
     return result?.[0]?.acquired ?? false;
   }
 
@@ -169,7 +172,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    */
   async releaseAdvisoryLock(tenantId: string, resourceId: string): Promise<void> {
     const lockId = this.generateLockId(tenantId, resourceId);
-    
+
     await this.$queryRaw`SELECT pg_advisory_unlock(${lockId}::bigint)`;
   }
 
@@ -182,12 +185,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     // Convert UUID strings to numeric hashes
     const tenantHash = this.hashUUID(tenantId);
     const resourceHash = this.hashUUID(resourceId);
-    
+
     // Combine using bit-shifting: (tenant << 32) | resource
     // This creates a unique 64-bit identifier
-    const lockId = (BigInt.asUintN(64, BigInt(tenantHash) << BigInt(32)) | 
-                    BigInt.asUintN(64, BigInt(resourceHash)));
-    
+    const lockId =
+      BigInt.asUintN(64, BigInt(tenantHash) << BigInt(32)) |
+      BigInt.asUintN(64, BigInt(resourceHash));
+
     return lockId.toString();
   }
 
@@ -200,8 +204,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     let hash = 0;
     for (let i = 0; i < clean.length; i++) {
       const char = clean.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & 0xFFFFFFFF; // Keep 32-bit
+      hash = (hash << 5) - hash + char;
+      hash = hash & 0xffffffff; // Keep 32-bit
     }
     return Math.abs(hash);
   }
@@ -211,14 +215,77 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    */
   private async setupRLS(): Promise<void> {
     // Enable RLS on tenant-scoped tables
-    const tables = ['users', 'customers', 'vehicles', 'bookings', 'booking_slots', 'services'];
-    
+    const tables = [
+      // Core
+      'users',
+      'customers',
+      'vehicles',
+      'bookings',
+      'booking_slots',
+      'services',
+      // DVI
+      'inspections',
+      'inspection_templates',
+      // OBD
+      'obd_devices',
+      'obd_readings',
+      // Parts & Inventory
+      'parts',
+      'suppliers',
+      'inventory_items',
+      'inventory_movements',
+      'purchase_orders',
+      // Notifications
+      'notifications',
+      // Subscription & Pricing
+      'subscriptions',
+      'usage_tracking',
+      'subscription_changes',
+      'locations',
+      // Voice
+      'voice_webhook_events',
+      'call_recordings',
+      // GDPR
+      'customers_encrypted',
+      'audit_logs',
+      'consent_audit_logs',
+      'data_subject_requests',
+      'data_retention_execution_logs',
+      // LPR
+      'license_plate_detections',
+      'vehicle_entry_exits',
+      'parking_sessions',
+      'lpr_cameras',
+      // Shop Floor
+      'shop_floors',
+      'shop_floor_events',
+      'work_orders',
+      'technicians',
+      // Vehicle Twin
+      'vehicle_twin_configs',
+      'vehicle_twin_components',
+      'component_histories',
+      'vehicle_health_histories',
+      'vehicle_damages',
+      // Auth
+      'auth_audit_logs',
+      // New modules
+      'fleets',
+      'fleet_vehicles',
+      'tire_sets',
+      'estimates',
+      'estimate_lines',
+      'labor_guides',
+      'labor_guide_entries',
+      'accounting_syncs',
+    ];
+
     for (const table of tables) {
       try {
         await this.$executeRawUnsafe(`
           ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
         `);
-        
+
         // Create policy if not exists
         await this.$executeRawUnsafe(`
           DO $$

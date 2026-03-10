@@ -2,7 +2,16 @@
  * MechMind OS - OBD Data Transfer Objects
  */
 
-import { IsString, IsOptional, IsEnum, IsInt, IsNumber, IsBoolean, IsUUID, IsJSON } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsBoolean,
+  IsUUID,
+  IsJSON,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TroubleCodeSeverity } from '@prisma/client';
 

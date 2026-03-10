@@ -27,13 +27,13 @@ export class SseController {
 
   /**
    * SSE endpoint for real-time notifications
-   * 
+   *
    * Client connects to: /api/notifications/sse/stream
-   * 
+   *
    * Headers:
    * - Authorization: Bearer <jwt_token>
    * - Last-Event-ID: <last_event_id> (optional, for reconnection)
-   * 
+   *
    * Query params:
    * - userOnly: boolean (optional, filter to user-specific notifications only)
    */
@@ -45,7 +45,7 @@ export class SseController {
   ): Observable<MessageEvent> {
     const userId = req.user?.id;
     const tenantId = req.user?.tenantId;
-    
+
     if (!userId || !tenantId) {
       throw new Error('User not authenticated');
     }
@@ -76,15 +76,13 @@ export class SseController {
   ): Observable<MessageEvent> {
     const userId = req.user?.id;
     const tenantId = req.user?.tenantId;
-    
+
     if (!userId || !tenantId) {
       throw new Error('User not authenticated');
     }
     const clientId = uuidv4();
 
-    this.logger.log(
-      `Personal SSE connection request from user ${userId} (tenant: ${tenantId})`,
-    );
+    this.logger.log(`Personal SSE connection request from user ${userId} (tenant: ${tenantId})`);
 
     return this.sseService.createEventStream(
       clientId,

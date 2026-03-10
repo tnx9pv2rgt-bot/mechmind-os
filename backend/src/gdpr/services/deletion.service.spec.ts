@@ -28,7 +28,7 @@ interface MockPrismaModels {
   auditLog: {
     create: jest.Mock;
   };
-  callRecordings: {
+  callRecording: {
     findMany: jest.Mock;
     update: jest.Mock;
   };
@@ -158,7 +158,7 @@ describe('GdprDeletionService', () => {
       auditLog: {
         create: jest.fn().mockResolvedValue({ id: 'audit-001' }),
       },
-      callRecordings: {
+      callRecording: {
         findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(),
       },
@@ -249,8 +249,7 @@ describe('GdprDeletionService', () => {
       expect(result.slaDeadline).toBeInstanceOf(Date);
 
       // SLA deadline should be ~24 hours in the future
-      const hoursUntilSla =
-        (result.slaDeadline.getTime() - Date.now()) / (1000 * 60 * 60);
+      const hoursUntilSla = (result.slaDeadline.getTime() - Date.now()) / (1000 * 60 * 60);
       expect(hoursUntilSla).toBeGreaterThan(23);
       expect(hoursUntilSla).toBeLessThanOrEqual(24);
     });
@@ -370,12 +369,7 @@ describe('GdprDeletionService', () => {
       queue.getJob.mockResolvedValue(completedJob);
 
       // Act
-      const result = await service.queueDeletion(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-        'reason',
-      );
+      const result = await service.queueDeletion(CUSTOMER_ID, TENANT_ID, REQUEST_ID, 'reason');
 
       // Assert
       expect(result.status).toBe('QUEUED');
@@ -580,26 +574,17 @@ describe('GdprDeletionService', () => {
 
     it('should set snapshot expiry to 30 days from creation', async () => {
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       const diffDays =
-        (snapshot.expiresAt.getTime() - snapshot.createdAt.getTime()) /
-        (1000 * 60 * 60 * 24);
+        (snapshot.expiresAt.getTime() - snapshot.createdAt.getTime()) / (1000 * 60 * 60 * 24);
       expect(Math.round(diffDays)).toBe(30);
     });
 
     it('should include correct data categories', async () => {
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(snapshot.dataCategories).toEqual(
@@ -621,11 +606,7 @@ describe('GdprDeletionService', () => {
 
     it('should generate a SHA-256 checksum', async () => {
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert - SHA-256 hex is 64 chars
       expect(snapshot.checksum).toMatch(/^[a-f0-9]{64}$/);
@@ -633,11 +614,7 @@ describe('GdprDeletionService', () => {
 
     it('should store snapshot location under tenant namespace', async () => {
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(snapshot.storageLocation).toContain(TENANT_ID);
@@ -701,11 +678,7 @@ describe('GdprDeletionService', () => {
 
     it('should have positive fileSize in snapshot result', async () => {
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(snapshot.fileSize).toBeGreaterThan(0);
@@ -718,7 +691,8 @@ describe('GdprDeletionService', () => {
       // Assert - audit newValues should contain recordCount
       const auditCalls = prisma.auditLog.create.mock.calls;
       const snapshotAuditCall = auditCalls.find(
-        (call: [{ data: { action: string } }]) => call[0].data.action === 'DELETION_SNAPSHOT_CREATED',
+        (call: [{ data: { action: string } }]) =>
+          call[0].data.action === 'DELETION_SNAPSHOT_CREATED',
       );
       expect(snapshotAuditCall).toBeDefined();
       const newValues = snapshotAuditCall![0].data.newValues as {
@@ -776,9 +750,7 @@ describe('GdprDeletionService', () => {
       );
 
       // Verify encrypt was called with 'DELETED' for each PII field
-      const encryptCalls = encryption.encrypt.mock.calls.map(
-        (call: [string]) => call[0],
-      );
+      const encryptCalls = encryption.encrypt.mock.calls.map((call: [string]) => call[0]);
       expect(encryptCalls.filter((arg: string) => arg === 'DELETED')).toHaveLength(3);
     });
 
@@ -811,9 +783,7 @@ describe('GdprDeletionService', () => {
       };
       expect(updateCall.data.isDeleted).toBe(true);
       expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
-      expect(updateCall.data.deletedAt.getTime()).toBeGreaterThanOrEqual(
-        beforeCall.getTime(),
-      );
+      expect(updateCall.data.deletedAt.getTime()).toBeGreaterThanOrEqual(beforeCall.getTime());
       expect(updateCall.data.anonymizedAt).toEqual(updateCall.data.deletedAt);
     });
 
@@ -847,11 +817,7 @@ describe('GdprDeletionService', () => {
 
     it('should report which fields were anonymized vs preserved', async () => {
       // Act
-      const result = await service.anonymizeCustomer(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const result = await service.anonymizeCustomer(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(result.anonymizedFields).toContain('phoneEncrypted');
@@ -890,11 +856,7 @@ describe('GdprDeletionService', () => {
       prisma.customerEncrypted.findFirst.mockResolvedValue(null);
 
       // Act
-      const result = await service.anonymizeCustomer(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const result = await service.anonymizeCustomer(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(result.success).toBe(false);
@@ -905,16 +867,10 @@ describe('GdprDeletionService', () => {
     it('should return success=false with error details on database failure', async () => {
       // Arrange
       prisma.customerEncrypted.findFirst.mockResolvedValue(MOCK_CUSTOMER);
-      prisma.customerEncrypted.update.mockRejectedValue(
-        new Error('Database connection lost'),
-      );
+      prisma.customerEncrypted.update.mockRejectedValue(new Error('Database connection lost'));
 
       // Act
-      const result = await service.anonymizeCustomer(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const result = await service.anonymizeCustomer(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(result.success).toBe(false);
@@ -950,8 +906,8 @@ describe('GdprDeletionService', () => {
 
   describe('deleteCallRecordings', () => {
     beforeEach(() => {
-      prisma.callRecordings.findMany.mockResolvedValue(MOCK_RECORDINGS);
-      prisma.callRecordings.update.mockResolvedValue({ id: 'rec-001' });
+      prisma.callRecording.findMany.mockResolvedValue(MOCK_RECORDINGS);
+      prisma.callRecording.update.mockResolvedValue({ id: 'rec-001' });
     });
 
     it('should delete all call recordings for a customer', async () => {
@@ -972,7 +928,7 @@ describe('GdprDeletionService', () => {
       await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
 
       // Assert
-      expect(prisma.callRecordings.findMany).toHaveBeenCalledWith(
+      expect(prisma.callRecording.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             customerId: CUSTOMER_ID,
@@ -988,8 +944,8 @@ describe('GdprDeletionService', () => {
       await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
 
       // Assert
-      expect(prisma.callRecordings.update).toHaveBeenCalledTimes(2);
-      for (const call of prisma.callRecordings.update.mock.calls) {
+      expect(prisma.callRecording.update).toHaveBeenCalledTimes(2);
+      for (const call of prisma.callRecording.update.mock.calls) {
         const updateArg = call[0] as {
           data: { deletionReason: string; recordingUrl: null };
         };
@@ -1028,7 +984,7 @@ describe('GdprDeletionService', () => {
 
     it('should not create audit log when no recordings exist', async () => {
       // Arrange
-      prisma.callRecordings.findMany.mockResolvedValue([]);
+      prisma.callRecording.findMany.mockResolvedValue([]);
 
       // Act
       const result = await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
@@ -1040,7 +996,7 @@ describe('GdprDeletionService', () => {
 
     it('should handle partial failures gracefully', async () => {
       // Arrange - first update succeeds, second fails
-      prisma.callRecordings.update
+      prisma.callRecording.update
         .mockResolvedValueOnce({ id: 'rec-001' })
         .mockRejectedValueOnce(new Error('Storage service unavailable'));
 
@@ -1057,9 +1013,7 @@ describe('GdprDeletionService', () => {
 
     it('should return success=false on complete failure', async () => {
       // Arrange
-      prisma.callRecordings.findMany.mockRejectedValue(
-        new Error('Database timeout'),
-      );
+      prisma.callRecording.findMany.mockRejectedValue(new Error('Database timeout'));
 
       // Act
       const result = await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
@@ -1165,9 +1119,7 @@ describe('GdprDeletionService', () => {
 
       // Assert
       expect(result.state).toBe('failed');
-      expect(result.failedReason).toBe(
-        'Anonymization step failed: database lock timeout',
-      );
+      expect(result.failedReason).toBe('Anonymization step failed: database lock timeout');
     });
 
     it('should throw NotFoundException when job does not exist', async () => {
@@ -1175,9 +1127,7 @@ describe('GdprDeletionService', () => {
       queue.getJob.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.getJobStatus('non-existent-job')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getJobStatus('non-existent-job')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -1331,8 +1281,8 @@ describe('GdprDeletionService', () => {
         isDeleted: true,
       });
       prisma.dataSubjectRequest.update.mockResolvedValue({ id: REQUEST_ID });
-      prisma.callRecordings.findMany.mockResolvedValue(MOCK_RECORDINGS);
-      prisma.callRecordings.update.mockResolvedValue({ id: 'rec-001' });
+      prisma.callRecording.findMany.mockResolvedValue(MOCK_RECORDINGS);
+      prisma.callRecording.update.mockResolvedValue({ id: 'rec-001' });
       queue.getJob.mockResolvedValue(null);
     });
 
@@ -1347,11 +1297,7 @@ describe('GdprDeletionService', () => {
       expect(queueResult.status).toBe('QUEUED');
 
       // Step 2: Create deletion snapshot
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
       expect(snapshot.snapshotId).toBeDefined();
       expect(snapshot.dataCategories).toContain('customer');
 
@@ -1367,21 +1313,14 @@ describe('GdprDeletionService', () => {
       expect(anonymizationResult.anonymizedFields).toContain('nameEncrypted');
 
       // Step 4: Delete call recordings
-      const recordingResult = await service.deleteCallRecordings(
-        CUSTOMER_ID,
-        TENANT_ID,
-      );
+      const recordingResult = await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
       expect(recordingResult.success).toBe(true);
       expect(recordingResult.deletedCount).toBe(2);
     });
 
     it('should preserve referential integrity after full deletion', async () => {
       // Execute anonymization
-      const result = await service.anonymizeCustomer(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const result = await service.anonymizeCustomer(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Preserved fields (bookings, vehicles) allow historical reporting
       expect(result.preservedFields).toContain('bookings');
@@ -1397,9 +1336,7 @@ describe('GdprDeletionService', () => {
 
       // Verify audit entries: snapshot + anonymization + recording deletion
       const auditCalls = prisma.auditLog.create.mock.calls;
-      const actions = auditCalls.map(
-        (call: [{ data: { action: string } }]) => call[0].data.action,
-      );
+      const actions = auditCalls.map((call: [{ data: { action: string } }]) => call[0].data.action);
 
       expect(actions).toContain('DELETION_SNAPSHOT_CREATED');
       expect(actions).toContain('CUSTOMER_ANONYMIZED');
@@ -1422,10 +1359,7 @@ describe('GdprDeletionService', () => {
       ).rejects.toThrow(NotFoundException);
 
       // Assert - withTenant was called with OTHER_TENANT_ID (not the customer's tenant)
-      expect(prisma.withTenant).toHaveBeenCalledWith(
-        OTHER_TENANT_ID,
-        expect.any(Function),
-      );
+      expect(prisma.withTenant).toHaveBeenCalledWith(OTHER_TENANT_ID, expect.any(Function));
     });
 
     it('should pass tenantId consistently through snapshot creation', async () => {
@@ -1437,9 +1371,7 @@ describe('GdprDeletionService', () => {
       await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert - all withTenant calls use correct tenantId
-      const tenantIds = prisma.withTenant.mock.calls.map(
-        (call: [string, unknown]) => call[0],
-      );
+      const tenantIds = prisma.withTenant.mock.calls.map((call: [string, unknown]) => call[0]);
       expect(tenantIds.every((id: string) => id === TENANT_ID)).toBe(true);
     });
 
@@ -1475,11 +1407,7 @@ describe('GdprDeletionService', () => {
       prisma.customerEncrypted.update.mockResolvedValue({ id: CUSTOMER_ID });
 
       // Act
-      const result = await service.anonymizeCustomer(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const result = await service.anonymizeCustomer(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert - data is anonymized, not hard-deleted
       expect(result.anonymizedFields.length).toBeGreaterThan(0);
@@ -1494,11 +1422,7 @@ describe('GdprDeletionService', () => {
       prisma.dataSubjectRequest.update.mockResolvedValue({ id: REQUEST_ID });
 
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(snapshot.snapshotId).toBeDefined();
@@ -1524,8 +1448,7 @@ describe('GdprDeletionService', () => {
       );
 
       // Assert
-      const hoursToSla =
-        (result.slaDeadline.getTime() - Date.now()) / (1000 * 60 * 60);
+      const hoursToSla = (result.slaDeadline.getTime() - Date.now()) / (1000 * 60 * 60);
       expect(hoursToSla).toBeLessThanOrEqual(24);
       expect(hoursToSla).toBeGreaterThan(23);
     });
@@ -1536,16 +1459,11 @@ describe('GdprDeletionService', () => {
       prisma.dataSubjectRequest.update.mockResolvedValue({ id: REQUEST_ID });
 
       // Act
-      const snapshot = await service.createDeletionSnapshot(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const snapshot = await service.createDeletionSnapshot(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       const retentionDays =
-        (snapshot.expiresAt.getTime() - snapshot.createdAt.getTime()) /
-        (1000 * 60 * 60 * 24);
+        (snapshot.expiresAt.getTime() - snapshot.createdAt.getTime()) / (1000 * 60 * 60 * 24);
       expect(Math.round(retentionDays)).toBe(30);
     });
 
@@ -1607,14 +1525,14 @@ describe('GdprDeletionService', () => {
 
     it('should soft-delete recordings with GDPR deletion reason marker', async () => {
       // Arrange
-      prisma.callRecordings.findMany.mockResolvedValue([MOCK_RECORDINGS[0]]);
-      prisma.callRecordings.update.mockResolvedValue({ id: 'rec-001' });
+      prisma.callRecording.findMany.mockResolvedValue([MOCK_RECORDINGS[0]]);
+      prisma.callRecording.update.mockResolvedValue({ id: 'rec-001' });
 
       // Act
       await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
 
       // Assert
-      expect(prisma.callRecordings.update).toHaveBeenCalledWith(
+      expect(prisma.callRecording.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             deletionReason: 'GDPR_DELETION_REQUEST',
@@ -1656,11 +1574,7 @@ describe('GdprDeletionService', () => {
       });
 
       // Act
-      const result = await service.anonymizeCustomer(
-        CUSTOMER_ID,
-        TENANT_ID,
-        REQUEST_ID,
-      );
+      const result = await service.anonymizeCustomer(CUSTOMER_ID, TENANT_ID, REQUEST_ID);
 
       // Assert
       expect(result.success).toBe(false);

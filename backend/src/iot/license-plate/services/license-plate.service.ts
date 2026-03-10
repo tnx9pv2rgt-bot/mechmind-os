@@ -1,6 +1,6 @@
 /**
  * MechMind OS - License Plate Recognition Service
- * 
+ *
  * OCR-based license plate detection and recognition
  * - Multi-provider support (Google Vision, Azure, AWS, OpenALPR)
  * - Entry/exit logging
@@ -58,7 +58,7 @@ export class LicensePlateService {
 
     // Perform OCR based on provider
     let detection: LicensePlateDetection;
-    
+
     switch (provider) {
       case OcrProvider.GOOGLE_VISION:
         detection = await this.detectWithGoogleVision(imageBuffer, imageUrl, provider);
@@ -104,7 +104,9 @@ export class LicensePlateService {
     // Update stats
     await this.updateStats(provider, detection.confidence);
 
-    this.logger.log(`Detected plate: ${detection.detectedText} (${detection.confidence.toFixed(2)} confidence)`);
+    this.logger.log(
+      `Detected plate: ${detection.detectedText} (${detection.confidence.toFixed(2)} confidence)`,
+    );
 
     return detection;
   }
@@ -220,19 +222,19 @@ export class LicensePlateService {
     });
 
     // Get recent entry/exit history
-    const recentHistory = await this.prisma.vehicleEntryExit.findMany({
+    const recentHistory = (await this.prisma.vehicleEntryExit.findMany({
       where: { licensePlate: normalizedPlate },
       orderBy: { timestamp: 'desc' },
       take: 10,
-    }) as any[];
+    })) as any[];
 
     // Get active parking session
-    const activeSession = await this.prisma.parkingSession.findFirst({
+    const activeSession = (await this.prisma.parkingSession.findFirst({
       where: {
         licensePlate: normalizedPlate,
         status: 'ACTIVE',
       },
-    }) as any;
+    })) as any;
 
     return {
       vehicle,
@@ -249,14 +251,16 @@ export class LicensePlateService {
         vehicleId: h.vehicleId || undefined,
         isAuthorized: h.isAuthorized,
       })),
-      activeSession: activeSession ? {
-        id: activeSession.id,
-        licensePlate: activeSession.licensePlate,
-        entry: {} as any, // Would populate from relation
-        status: activeSession.status as any,
-        entryTime: activeSession.entryTime,
-        parkingSpotId: activeSession.parkingSpotId || undefined,
-      } : undefined,
+      activeSession: activeSession
+        ? {
+            id: activeSession.id,
+            licensePlate: activeSession.licensePlate,
+            entry: {} as any, // Would populate from relation
+            status: activeSession.status as any,
+            entryTime: activeSession.entryTime,
+            parkingSpotId: activeSession.parkingSpotId || undefined,
+          }
+        : undefined,
     };
   }
 
@@ -265,7 +269,7 @@ export class LicensePlateService {
    */
   async getActiveSessions(tenantId?: string): Promise<ParkingSession[]> {
     const where: any = { status: 'ACTIVE' };
-    
+
     if (tenantId) {
       where.vehicle = { customer: { tenantId } };
     }
@@ -382,10 +386,7 @@ export class LicensePlateService {
   /**
    * Update camera status
    */
-  async updateCameraStatus(
-    cameraId: string,
-    isActive: boolean,
-  ): Promise<LprCamera> {
+  async updateCameraStatus(cameraId: string, isActive: boolean): Promise<LprCamera> {
     const camera = await this.prisma.lprCamera.update({
       where: { id: cameraId },
       data: { isActive },
@@ -406,22 +407,19 @@ export class LicensePlateService {
   /**
    * Get LPR statistics
    */
-  async getStats(
-    tenantId: string,
-    from: Date,
-    to: Date,
-  ): Promise<LprStats> {
-    const detections = await this.prisma.licensePlateDetection.findMany({
+  async getStats(tenantId: string, from: Date, to: Date): Promise<LprStats> {
+    const detections = (await this.prisma.licensePlateDetection.findMany({
       where: {
         camera: { tenantId },
         processedAt: { gte: from, lte: to },
       },
-    }) as any[];
+    })) as any[];
 
     const totalDetections = detections.length;
-    const avgConfidence = totalDetections > 0
-      ? detections.reduce((sum: number, d: any) => sum + d.confidence, 0) / totalDetections
-      : 0;
+    const avgConfidence =
+      totalDetections > 0
+        ? detections.reduce((sum: number, d: any) => sum + d.confidence, 0) / totalDetections
+        : 0;
 
     // Group by provider
     const byProvider: Record<OcrProvider, { count: number; avgConfidence: number }> = {} as any;
@@ -429,9 +427,11 @@ export class LicensePlateService {
       const providerDetections = detections.filter((d: any) => d.provider === provider);
       byProvider[provider] = {
         count: providerDetections.length,
-        avgConfidence: providerDetections.length > 0
-          ? providerDetections.reduce((sum: number, d: any) => sum + d.confidence, 0) / providerDetections.length
-          : 0,
+        avgConfidence:
+          providerDetections.length > 0
+            ? providerDetections.reduce((sum: number, d: any) => sum + d.confidence, 0) /
+              providerDetections.length
+            : 0,
       };
     }
 
@@ -581,10 +581,7 @@ export class LicensePlateService {
     });
   }
 
-  private async closeParkingSession(
-    licensePlate: string,
-    exitId: string,
-  ): Promise<void> {
+  private async closeParkingSession(licensePlate: string, exitId: string): Promise<void> {
     const session = await this.prisma.parkingSession.findFirst({
       where: {
         licensePlate,
@@ -595,7 +592,7 @@ export class LicensePlateService {
     if (session) {
       const exitTime = new Date();
       const durationMinutes = Math.floor(
-        (exitTime.getTime() - session.entryTime.getTime()) / (1000 * 60)
+        (exitTime.getTime() - session.entryTime.getTime()) / (1000 * 60),
       );
 
       await this.prisma.parkingSession.update({
@@ -613,13 +610,13 @@ export class LicensePlateService {
   private async updateStats(provider: OcrProvider, confidence: number): Promise<void> {
     const key = `lpr:stats:${provider}`;
     const today = new Date().toISOString().split('T')[0];
-    
+
     const pipeline = this.redis.pipeline();
     pipeline.hincrby(`${key}:count`, today, 1);
     pipeline.hincrbyfloat(`${key}:confidence`, today, confidence);
     pipeline.expire(`${key}:count`, 86400 * 30); // 30 days
     pipeline.expire(`${key}:confidence`, 86400 * 30);
-    
+
     await pipeline.exec();
   }
 }

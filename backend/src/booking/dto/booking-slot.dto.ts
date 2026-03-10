@@ -1,11 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsOptional,
-  IsUUID,
-  IsInt,
-  Min,
-} from 'class-validator';
+import { IsDateString, IsOptional, IsUUID, IsInt, Min } from 'class-validator';
 
 export class FindAvailableSlotsDto {
   @ApiProperty({

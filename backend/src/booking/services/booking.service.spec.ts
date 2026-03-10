@@ -33,7 +33,7 @@ describe('BookingService', () => {
     prisma = {
       acquireAdvisoryLock: jest.fn().mockResolvedValue(true),
       releaseAdvisoryLock: jest.fn().mockResolvedValue(undefined),
-      withSerializableTransaction: jest.fn((cb) => cb(prisma)),
+      withSerializableTransaction: jest.fn(cb => cb(prisma)),
       withTenant: jest.fn((_, cb) => cb(prisma)),
       bookingSlot: {
         findFirst: jest.fn().mockResolvedValue(mockSlot),
@@ -136,9 +136,7 @@ describe('BookingService', () => {
     it('should throw NotFoundException when slot does not exist', async () => {
       (prisma.bookingSlot.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ConflictException when slot is not available', async () => {
@@ -147,17 +145,13 @@ describe('BookingService', () => {
         status: 'BOOKED',
       });
 
-      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(ConflictException);
     });
 
     it('should throw NotFoundException when customer does not exist', async () => {
       (prisma.customer.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(NotFoundException);
     });
 
     it('should always release advisory lock even on failure', async () => {
@@ -180,9 +174,7 @@ describe('BookingService', () => {
     it('should throw NotFoundException when booking not found', async () => {
       (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.findById(TENANT_ID, 'nonexistent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findById(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 });

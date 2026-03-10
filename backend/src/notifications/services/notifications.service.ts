@@ -18,6 +18,13 @@ export interface NotificationPayload {
   };
 }
 
+/**
+ * NotificationsService (v1)
+ *
+ * WebSocket-based notification dispatcher using NotificationsGateway.
+ * Queues email delivery via BullMQ email-queue. Used by legacy code
+ * paths (DVI, voice) that haven't migrated to the v2 Twilio-based flow.
+ */
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -71,7 +78,10 @@ export class NotificationsService {
     this.logger.log(`Email queued for ${emailData.to}`);
   }
 
-  async broadcastToMechanics(tenantId: string, payload: Omit<NotificationPayload, 'userId'>): Promise<void> {
+  async broadcastToMechanics(
+    tenantId: string,
+    payload: Omit<NotificationPayload, 'userId'>,
+  ): Promise<void> {
     this.gateway.broadcastToTenant(tenantId, 'mechanic:notification', {
       ...payload,
       timestamp: new Date().toISOString(),

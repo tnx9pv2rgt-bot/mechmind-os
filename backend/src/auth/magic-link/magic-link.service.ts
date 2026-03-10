@@ -87,7 +87,7 @@ export class MagicLinkService {
     }
 
     if (magicLink.usedAt) {
-      throw new MagicLinkError('Link gia\' utilizzato');
+      throw new MagicLinkError("Link gia' utilizzato");
     }
 
     if (magicLink.expiresAt < new Date()) {

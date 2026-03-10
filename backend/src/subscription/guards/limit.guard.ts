@@ -1,14 +1,14 @@
 /**
  * LIMIT GUARD
- * 
+ *
  * Enforces plan limits on resource creation
  * Usage: @UseGuards(LimitGuard('user')) to check user limit before creating
  */
 
-import { 
-  Injectable, 
-  CanActivate, 
-  ExecutionContext, 
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
   ForbiddenException,
   Type,
 } from '@nestjs/common';
@@ -21,11 +21,7 @@ export const LIMIT_CHECK_KEY = 'limitCheck';
 export type LimitCheckType = 'user' | 'location' | 'customer' | 'apiCall' | 'storage';
 
 export function CheckLimit(limitType: LimitCheckType) {
-  return function (
-    target: any,
-    propertyKey: string | symbol,
-    descriptor: PropertyDescriptor
-  ) {
+  return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     Reflect.defineMetadata(LIMIT_CHECK_KEY, limitType, descriptor.value);
   };
 }
@@ -38,10 +34,10 @@ export class LimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const limitType = this.reflector.getAllAndOverride<LimitCheckType>(
-      LIMIT_CHECK_KEY,
-      [context.getHandler(), context.getClass()]
-    );
+    const limitType = this.reflector.getAllAndOverride<LimitCheckType>(LIMIT_CHECK_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!limitType) {
       return true;
@@ -66,7 +62,7 @@ export class LimitGuard implements CanActivate {
       // These are usage-based, check if within limit
       const check = await this.featureAccessService.checkSpecificLimit(
         tenantId,
-        limitTypeMap[limitType]
+        limitTypeMap[limitType],
       );
 
       if (!check.withinLimit) {
@@ -81,12 +77,12 @@ export class LimitGuard implements CanActivate {
       // These are resource-based, check if we can add one more
       const check = await this.featureAccessService.canAddResource(
         tenantId,
-        limitType as 'user' | 'location' | 'customer'
+        limitType as 'user' | 'location' | 'customer',
       );
 
       if (!check.withinLimit) {
-        const resourceName = limitType === 'user' ? 'users' : 
-                            limitType === 'location' ? 'locations' : 'customers';
+        const resourceName =
+          limitType === 'user' ? 'users' : limitType === 'location' ? 'locations' : 'customers';
         throw new ForbiddenException({
           message: `You have reached your ${resourceName} limit. Please upgrade your plan to add more.`,
           limit: check.limit,
@@ -105,20 +101,14 @@ export class LimitGuard implements CanActivate {
  */
 @Injectable()
 export class ApiUsageMiddleware {
-  constructor(
-    private featureAccessService: FeatureAccessService,
-  ) {}
+  constructor(private featureAccessService: FeatureAccessService) {}
 
   async use(req: any, res: any, next: () => void) {
     const tenantId = req.tenantId;
-    
+
     if (tenantId) {
       // Track API call asynchronously (don't wait)
-      this.featureAccessService.recordApiCall(
-        tenantId,
-        req.path,
-        0
-      ).catch(() => {
+      this.featureAccessService.recordApiCall(tenantId, req.path, 0).catch(() => {
         // Silently fail tracking errors
       });
     }
@@ -130,12 +120,12 @@ export class ApiUsageMiddleware {
 /**
  * Factory function to create a limit guard for specific resource types
  */
-export function createLimitGuard(resourceType: 'user' | 'location' | 'customer'): Type<CanActivate> {
+export function createLimitGuard(
+  resourceType: 'user' | 'location' | 'customer',
+): Type<CanActivate> {
   @Injectable()
   class DynamicLimitGuard implements CanActivate {
-    constructor(
-      private featureAccessService: FeatureAccessService,
-    ) {}
+    constructor(private featureAccessService: FeatureAccessService) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest();
@@ -145,14 +135,15 @@ export function createLimitGuard(resourceType: 'user' | 'location' | 'customer')
         throw new ForbiddenException('Tenant ID not found in request');
       }
 
-      const check = await this.featureAccessService.canAddResource(
-        tenantId,
-        resourceType
-      );
+      const check = await this.featureAccessService.canAddResource(tenantId, resourceType);
 
       if (!check.withinLimit) {
-        const resourceName = resourceType === 'user' ? 'users' : 
-                            resourceType === 'location' ? 'locations' : 'customers';
+        const resourceName =
+          resourceType === 'user'
+            ? 'users'
+            : resourceType === 'location'
+              ? 'locations'
+              : 'customers';
         throw new ForbiddenException({
           message: `You have reached your ${resourceName} limit. Please upgrade your plan to add more.`,
           limit: check.limit,

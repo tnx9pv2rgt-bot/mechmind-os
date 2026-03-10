@@ -1,10 +1,10 @@
-import { 
-  IsString, 
-  IsUUID, 
-  IsOptional, 
-  IsBoolean, 
-  IsEnum, 
-  IsEmail, 
+import {
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsEmail,
   IsObject,
   IsDateString,
 } from 'class-validator';
@@ -48,7 +48,15 @@ export class CreateDataSubjectRequestDto {
  * Update Request Status DTO
  */
 export class UpdateRequestStatusDto {
-  @IsEnum(['RECEIVED', 'VERIFICATION_PENDING', 'VERIFIED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'CANCELLED'])
+  @IsEnum([
+    'RECEIVED',
+    'VERIFICATION_PENDING',
+    'VERIFIED',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'REJECTED',
+    'CANCELLED',
+  ])
   status: string;
 
   @IsOptional()

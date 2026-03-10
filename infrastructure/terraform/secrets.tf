@@ -77,11 +77,6 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   # Use KMS key in production, AWS managed key in dev
   kms_key_id = local.is_production ? aws_kms_key.mechmind_secrets[0].arn : null
 
-  # Automatic rotation (enable in production)
-  # rotation_rules {
-  #   automatically_after_days = 30
-  # }
-
   recovery_window_in_days = var.environment == "prod" ? 30 : 7
 
   tags = merge(local.common_tags, {

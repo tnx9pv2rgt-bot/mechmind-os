@@ -5,7 +5,16 @@
 export interface VehicleComponent {
   id: string;
   name: string;
-  category: 'ENGINE' | 'TRANSMISSION' | 'BRAKES' | 'SUSPENSION' | 'ELECTRICAL' | 'BODY' | 'HVAC' | 'FUEL' | 'EXHAUST';
+  category:
+    | 'ENGINE'
+    | 'TRANSMISSION'
+    | 'BRAKES'
+    | 'SUSPENSION'
+    | 'ELECTRICAL'
+    | 'BODY'
+    | 'HVAC'
+    | 'FUEL'
+    | 'EXHAUST';
   status: 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'REPLACED' | 'REPAIRING';
   healthScore: number;
   lastServiceDate?: Date;

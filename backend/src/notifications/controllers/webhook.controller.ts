@@ -15,7 +15,14 @@ import * as crypto from 'crypto';
 
 // Resend webhook event types
 interface ResendWebhookEvent {
-  type: 'email.sent' | 'email.delivered' | 'email.delivery_delayed' | 'email.complained' | 'email.bounced' | 'email.opened' | 'email.clicked';
+  type:
+    | 'email.sent'
+    | 'email.delivered'
+    | 'email.delivery_delayed'
+    | 'email.complained'
+    | 'email.bounced'
+    | 'email.opened'
+    | 'email.clicked';
   created_at: string;
   data: {
     email_id: string;
@@ -30,7 +37,17 @@ interface ResendWebhookEvent {
 // Twilio webhook payload
 interface TwilioWebhookPayload {
   MessageSid: string;
-  MessageStatus: 'accepted' | 'queued' | 'sending' | 'sent' | 'failed' | 'delivered' | 'undelivered' | 'receiving' | 'received' | 'read';
+  MessageStatus:
+    | 'accepted'
+    | 'queued'
+    | 'sending'
+    | 'sent'
+    | 'failed'
+    | 'delivered'
+    | 'undelivered'
+    | 'receiving'
+    | 'received'
+    | 'read';
   To: string;
   From: string;
   ErrorCode?: string;
@@ -119,7 +136,9 @@ export class NotificationWebhookController {
       return { received: true };
     }
 
-    this.logger.log(`Twilio webhook received: ${payload.MessageStatus} for message ${payload.MessageSid}`);
+    this.logger.log(
+      `Twilio webhook received: ${payload.MessageStatus} for message ${payload.MessageSid}`,
+    );
 
     try {
       switch (payload.MessageStatus) {
@@ -139,7 +158,9 @@ export class NotificationWebhookController {
           await this.handleSmsRead(payload);
           break;
         default:
-          this.logger.debug(`Twilio status update: ${payload.MessageStatus} for ${payload.MessageSid}`);
+          this.logger.debug(
+            `Twilio status update: ${payload.MessageStatus} for ${payload.MessageSid}`,
+          );
       }
 
       return { received: true };
@@ -157,12 +178,7 @@ export class NotificationWebhookController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle incoming SMS replies' })
   async handleTwilioIncoming(
-    @Body() payload: {
-      From: string;
-      To: string;
-      Body: string;
-      MessageSid: string;
-    },
+    @Body() payload: { From: string; To: string; Body: string; MessageSid: string },
   ): Promise<string> {
     if (!payload?.From || !payload?.Body) {
       return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
@@ -204,17 +220,17 @@ export class NotificationWebhookController {
 
   private async handleEmailBounced(data: ResendWebhookEvent['data']): Promise<void> {
     this.logger.error(`Email ${data.email_id} bounced from ${data.to.join(', ')}`);
-    
+
     // Mark email as bounced in database
     // await this.updateNotificationStatus(data.email_id, 'bounced');
-    
+
     // Potentially update customer record with invalid email flag
     // Potentially trigger fallback to SMS if available
   }
 
   private async handleEmailComplained(data: ResendWebhookEvent['data']): Promise<void> {
     this.logger.error(`Email ${data.email_id} marked as spam by ${data.to.join(', ')}`);
-    
+
     // Log complaint
     // Update customer preferences to disable email
     // Alert admin
@@ -246,8 +262,10 @@ export class NotificationWebhookController {
   }
 
   private async handleSmsFailed(payload: TwilioWebhookPayload): Promise<void> {
-    this.logger.error(`SMS ${payload.MessageSid} failed: ${payload.ErrorCode} - ${payload.ErrorMessage}`);
-    
+    this.logger.error(
+      `SMS ${payload.MessageSid} failed: ${payload.ErrorCode} - ${payload.ErrorMessage}`,
+    );
+
     // Update notification status
     // Trigger email fallback if appropriate
     // Alert if persistent failures
@@ -255,7 +273,7 @@ export class NotificationWebhookController {
 
   private async handleSmsUndelivered(payload: TwilioWebhookPayload): Promise<void> {
     this.logger.warn(`SMS ${payload.MessageSid} undelivered: ${payload.ErrorCode}`);
-    
+
     // Similar to failed but temporary
     // May retry or fallback
   }
@@ -265,11 +283,7 @@ export class NotificationWebhookController {
     // Track engagement (WhatsApp only)
   }
 
-  private async processIncomingSms(
-    from: string,
-    body: string,
-    messageSid: string,
-  ): Promise<void> {
+  private async processIncomingSms(from: string, body: string, messageSid: string): Promise<void> {
     const normalizedBody = body.trim().toUpperCase();
 
     switch (normalizedBody) {
@@ -320,7 +334,7 @@ export class NotificationWebhookController {
     // Resend webhook verification
     // In production, implement proper signature verification
     // See: https://resend.com/docs/dashboard/webhooks
-    
+
     const webhookSecret = this.configService.get<string>('RESEND_WEBHOOK_SECRET');
     if (!webhookSecret) {
       this.logger.warn('RESEND_WEBHOOK_SECRET not configured, skipping verification');
@@ -334,10 +348,7 @@ export class NotificationWebhookController {
         .update(signedContent)
         .digest('hex');
 
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature),
-      );
+      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     } catch (error) {
       this.logger.error(`Signature verification failed: ${error.message}`);
       return false;

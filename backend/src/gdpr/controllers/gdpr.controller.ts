@@ -28,16 +28,16 @@ import { UserRole } from '@auth/guards/roles.guard';
 import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
 
 // DTOs
-import { 
-  CreateConsentDto, 
-  CreateDataSubjectRequestDto, 
+import {
+  CreateConsentDto,
+  CreateDataSubjectRequestDto,
   VerifyIdentityDto,
   UpdateRequestStatusDto,
 } from '../dto/gdpr.dto';
 
 /**
  * GDPR Controller
- * 
+ *
  * REST API endpoints for GDPR compliance operations:
  * - Data subject requests (CRUD)
  * - Consent management
@@ -106,9 +106,7 @@ export class GdprController {
    */
   @Get('requests/pending')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
-  async getPendingRequests(
-    @Query('tenantId') tenantId?: string,
-  ) {
+  async getPendingRequests(@Query('tenantId') tenantId?: string) {
     return this.requestService.getPendingRequests(tenantId);
   }
 
@@ -196,9 +194,7 @@ export class GdprController {
    */
   @Get('requests/stats')
   @Roles(UserRole.ADMIN)
-  async getRequestStats(
-    @Query('tenantId') tenantId?: string,
-  ) {
+  async getRequestStats(@Query('tenantId') tenantId?: string) {
     return this.requestService.getStatistics(tenantId);
   }
 
@@ -270,21 +266,16 @@ export class GdprController {
   async queueDeletion(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query('tenantId') tenantId: string,
-    @Body() body: {
+    @Body()
+    body: {
       requestId: string;
       reason: string;
       verificationMethod?: string;
     },
   ) {
-    return this.deletionService.queueDeletion(
-      customerId,
-      tenantId,
-      body.requestId,
-      body.reason,
-      {
-        identityVerificationMethod: body.verificationMethod,
-      },
-    );
+    return this.deletionService.queueDeletion(customerId, tenantId, body.requestId, body.reason, {
+      identityVerificationMethod: body.verificationMethod,
+    });
   }
 
   /**
@@ -293,9 +284,7 @@ export class GdprController {
    */
   @Get('deletion-jobs/:jobId')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
-  async getDeletionJobStatus(
-    @Param('jobId') jobId: string,
-  ) {
+  async getDeletionJobStatus(@Param('jobId') jobId: string) {
     return this.deletionService.getJobStatus(jobId);
   }
 
@@ -306,10 +295,7 @@ export class GdprController {
    */
   @Post('deletion-jobs/:jobId/cancel')
   @Roles(UserRole.ADMIN)
-  async cancelDeletion(
-    @Param('jobId') jobId: string,
-    @Body('reason') reason: string,
-  ) {
+  async cancelDeletion(@Param('jobId') jobId: string, @Body('reason') reason: string) {
     return this.deletionService.cancelDeletion(jobId, reason);
   }
 
@@ -430,9 +416,7 @@ export class GdprController {
    */
   @Get('retention/stats')
   @Roles(UserRole.ADMIN)
-  async getRetentionStats(
-    @Query('tenantId') tenantId: string,
-  ) {
+  async getRetentionStats(@Query('tenantId') tenantId: string) {
     return this.retentionService.getTenantRetentionStats(tenantId);
   }
 
@@ -443,10 +427,7 @@ export class GdprController {
    */
   @Patch('retention/policy')
   @Roles(UserRole.ADMIN)
-  async updateRetentionPolicy(
-    @Query('tenantId') tenantId: string,
-    @Body('days') days: number,
-  ) {
+  async updateRetentionPolicy(@Query('tenantId') tenantId: string, @Body('days') days: number) {
     return this.retentionService.updateTenantRetentionPolicy(tenantId, days);
   }
 
@@ -456,9 +437,7 @@ export class GdprController {
    */
   @Post('retention/enforce')
   @Roles(UserRole.ADMIN)
-  async enforceRetention(
-    @Query('tenantId') tenantId?: string,
-  ) {
+  async enforceRetention(@Query('tenantId') tenantId?: string) {
     return this.retentionService.queueRetentionEnforcement(tenantId);
   }
 }

@@ -59,7 +59,7 @@ export class ValidationController {
   private readonly redis: Redis;
   private readonly isDevelopment: boolean;
   private readonly rateLimits: Map<string, RateLimitEntry> = new Map();
-  
+
   // Rate limit config
   private readonly RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
   private readonly RATE_LIMIT_MAX_REQUESTS = 10; // 10 richieste per minuto per IP
@@ -71,15 +71,15 @@ export class ValidationController {
     private readonly googlePlacesService: GooglePlacesService,
   ) {
     this.isDevelopment = this.configService.get('NODE_ENV') === 'development';
-    
+
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
       db: parseInt(this.configService.get('REDIS_DB') || '0'),
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: times => Math.min(times * 50, 2000),
     });
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', err => {
       this.logger.error('Redis connection error:', err.message);
     });
   }
@@ -106,7 +106,7 @@ export class ValidationController {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    
+
     // Basic regex validation first
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
@@ -141,7 +141,7 @@ export class ValidationController {
 
     try {
       const result = await this.zeroBounceService.verifyEmail(normalizedEmail);
-      
+
       // Check for typos and add suggestion
       const suggestion = this.getTypoSuggestion(normalizedEmail);
       const resultWithSuggestion: EmailValidationResultWithSuggestion = {
@@ -160,7 +160,7 @@ export class ValidationController {
       return resultWithSuggestion;
     } catch (error) {
       this.logger.error(`Email validation error for ${normalizedEmail}:`, error.message);
-      
+
       // Fallback response
       return {
         email: normalizedEmail,
@@ -201,7 +201,8 @@ export class ValidationController {
     }
 
     const vatNumber = this.normalizeVatNumber(dto.vatNumber);
-    const countryCode = dto.countryCode?.toUpperCase() || this.extractCountryCode(vatNumber) || 'IT';
+    const countryCode =
+      dto.countryCode?.toUpperCase() || this.extractCountryCode(vatNumber) || 'IT';
     const cleanVat = this.extractVatNumber(vatNumber, countryCode);
     const fullVat = `${countryCode}${cleanVat}`;
 
@@ -235,7 +236,7 @@ export class ValidationController {
 
     try {
       const result = await this.viesApiService.verifyVatNumber(fullVat);
-      
+
       const response = {
         ...result,
         isValidFormat,
@@ -252,7 +253,7 @@ export class ValidationController {
       return response;
     } catch (error) {
       this.logger.error(`VAT validation error for ${fullVat}:`, error.message);
-      
+
       return {
         valid: luhnValid, // Trust Luhn if API fails
         countryCode,
@@ -362,10 +363,7 @@ export class ValidationController {
       return result;
     } catch (error) {
       this.logger.error('Address details error:', error.message);
-      throw new HttpException(
-        'Failed to fetch address details',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to fetch address details', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -458,7 +456,7 @@ export class ValidationController {
 
     const domain = parts[1].toLowerCase();
     const correctedDomain = commonTypos[domain];
-    
+
     if (correctedDomain) {
       return `${parts[0]}@${correctedDomain}`;
     }
@@ -468,12 +466,24 @@ export class ValidationController {
 
   private isFreeEmailProvider(email: string): boolean {
     const freeDomains = [
-      'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
-      'libero.it', 'virgilio.it', 'tiscali.it', 'alice.it',
-      'live.com', 'icloud.com', 'me.com', 'mac.com',
-      'protonmail.com', 'zoho.com', 'yandex.com', 'mail.com',
+      'gmail.com',
+      'yahoo.com',
+      'hotmail.com',
+      'outlook.com',
+      'libero.it',
+      'virgilio.it',
+      'tiscali.it',
+      'alice.it',
+      'live.com',
+      'icloud.com',
+      'me.com',
+      'mac.com',
+      'protonmail.com',
+      'zoho.com',
+      'yandex.com',
+      'mail.com',
     ];
-    
+
     const domain = email.split('@')[1]?.toLowerCase();
     return domain ? freeDomains.includes(domain) : false;
   }
@@ -497,16 +507,16 @@ export class ValidationController {
 
   private isValidVatFormat(countryCode: string, vatNumber: string): boolean {
     const patterns: Record<string, RegExp> = {
-      'IT': /^\d{11}$/, // 11 cifre per Italia
-      'DE': /^\d{9}$/,  // 9 cifre per Germania
-      'FR': /^[A-Z0-9]{2}\d{9}$/, // FR + 9 cifre
-      'ES': /^[A-Z]\d{8}$|^\d{8}[A-Z]$/, // Spagna
-      'GB': /^\d{9}$|^\d{12}$|^GD\d{3}$|^HA\d{3}$/, // UK
+      IT: /^\d{11}$/, // 11 cifre per Italia
+      DE: /^\d{9}$/, // 9 cifre per Germania
+      FR: /^[A-Z0-9]{2}\d{9}$/, // FR + 9 cifre
+      ES: /^[A-Z]\d{8}$|^\d{8}[A-Z]$/, // Spagna
+      GB: /^\d{9}$|^\d{12}$|^GD\d{3}$|^HA\d{3}$/, // UK
     };
 
     const pattern = patterns[countryCode];
     if (!pattern) return /^[A-Z0-9]{8,12}$/.test(vatNumber); // Generic pattern
-    
+
     return pattern.test(vatNumber);
   }
 

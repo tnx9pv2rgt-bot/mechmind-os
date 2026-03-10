@@ -10,19 +10,9 @@ import { CustomerModule } from '@customer/customer.module';
 import { BookingModule } from '@booking/booking.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    CommonModule,
-    CustomerModule,
-    BookingModule,
-  ],
+  imports: [ConfigModule, CommonModule, CustomerModule, BookingModule],
   controllers: [VoiceWebhookController],
-  providers: [
-    VapiWebhookService,
-    IntentHandlerService,
-    EscalationService,
-    VoiceEventListener,
-  ],
+  providers: [VapiWebhookService, IntentHandlerService, EscalationService, VoiceEventListener],
   exports: [VapiWebhookService, IntentHandlerService, EscalationService],
 })
 export class VoiceModule {}

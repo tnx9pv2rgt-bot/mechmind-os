@@ -104,7 +104,7 @@ export class EmailService {
   async sendBookingConfirmation(data: BookingConfirmationData): Promise<EmailResult> {
     const subject = `✅ Prenotazione Confermata - ${data.bookingCode}`;
     const html = this.getBookingConfirmationHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -119,7 +119,7 @@ export class EmailService {
   async sendBookingReminder(data: BookingReminderData): Promise<EmailResult> {
     const subject = `⏰ Promemoria Appuntamento - ${data.bookingCode}`;
     const html = this.getBookingReminderHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -134,7 +134,7 @@ export class EmailService {
   async sendInvoiceReady(data: InvoiceReadyData): Promise<EmailResult> {
     const subject = `🧾 Fattura Disponibile - ${data.invoiceNumber}`;
     const html = this.getInvoiceReadyHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -149,7 +149,7 @@ export class EmailService {
   async sendGdprDataExport(data: GdprDataExportData): Promise<EmailResult> {
     const subject = `📥 Esportazione Dati Personale - Richiesta ${data.requestId}`;
     const html = this.getGdprExportHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -164,7 +164,7 @@ export class EmailService {
   async sendWelcome(data: WelcomeData): Promise<EmailResult> {
     const subject = `👋 Benvenuto su ${data.workshopName}`;
     const html = this.getWelcomeHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -179,7 +179,7 @@ export class EmailService {
   async sendPasswordReset(data: PasswordResetData): Promise<EmailResult> {
     const subject = '🔐 Reimposta la tua password';
     const html = this.getPasswordResetHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -194,7 +194,7 @@ export class EmailService {
   async sendBookingCancelled(data: BookingCancelledData): Promise<EmailResult> {
     const subject = `❌ Prenotazione Annullata - ${data.bookingCode}`;
     const html = this.getBookingCancelledHtml(data);
-    
+
     return await this.sendEmail({
       to: data.customerEmail,
       subject,
@@ -227,7 +227,7 @@ export class EmailService {
 
     try {
       const { data, error } = await this.resend.emails.get(emailId);
-      
+
       if (error) {
         this.logger.error(`Failed to get email status: ${error.message}`);
         return null;
@@ -253,7 +253,7 @@ export class EmailService {
 
     try {
       const { data, error } = await this.resend.domains.verify(domain);
-      
+
       if (error) {
         this.logger.error(`Domain verification failed: ${error.message}`);
         return { valid: false };

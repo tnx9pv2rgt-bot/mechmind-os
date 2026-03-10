@@ -81,12 +81,9 @@ export class EncryptionService {
    */
   hash(data: string): string {
     if (!data) return '';
-    
+
     const normalized = this.normalizeForHash(data);
-    return crypto
-      .createHmac('sha256', this.key)
-      .update(normalized)
-      .digest('hex');
+    return crypto.createHmac('sha256', this.key).update(normalized).digest('hex');
   }
 
   /**
@@ -99,36 +96,30 @@ export class EncryptionService {
   /**
    * Encrypt an object fields selectively
    */
-  encryptFields<T extends Record<string, any>>(
-    data: T,
-    fieldsToEncrypt: (keyof T)[],
-  ): T {
+  encryptFields<T extends Record<string, any>>(data: T, fieldsToEncrypt: (keyof T)[]): T {
     const encrypted = { ...data };
-    
+
     for (const field of fieldsToEncrypt) {
       if (typeof encrypted[field] === 'string') {
         (encrypted as any)[field] = this.encrypt(encrypted[field] as string);
       }
     }
-    
+
     return encrypted;
   }
 
   /**
    * Decrypt an object fields selectively
    */
-  decryptFields<T extends Record<string, any>>(
-    data: T,
-    fieldsToDecrypt: (keyof T)[],
-  ): T {
+  decryptFields<T extends Record<string, any>>(data: T, fieldsToDecrypt: (keyof T)[]): T {
     const decrypted = { ...data };
-    
+
     for (const field of fieldsToDecrypt) {
       if (typeof decrypted[field] === 'string') {
         (decrypted as any)[field] = this.decrypt(decrypted[field] as string);
       }
     }
-    
+
     return decrypted;
   }
 

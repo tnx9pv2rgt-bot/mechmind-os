@@ -38,29 +38,31 @@ export class EmailProcessor extends WorkerHost {
       const htmlBody = this.renderTemplate(template, variables);
 
       // Send via AWS SES
-      const result = await this.ses.sendEmail({
-        Source: process.env.SES_FROM_EMAIL || 'noreply@mechmind.io',
-        Destination: {
-          ToAddresses: [to],
-        },
-        Message: {
-          Subject: {
-            Data: subject,
-            Charset: 'UTF-8',
+      const result = await this.ses
+        .sendEmail({
+          Source: process.env.SES_FROM_EMAIL || 'noreply@mechmind.io',
+          Destination: {
+            ToAddresses: [to],
           },
-          Body: {
-            Html: {
-              Data: htmlBody,
+          Message: {
+            Subject: {
+              Data: subject,
               Charset: 'UTF-8',
             },
-            Text: {
-              Data: this.stripHtml(htmlBody),
-              Charset: 'UTF-8',
+            Body: {
+              Html: {
+                Data: htmlBody,
+                Charset: 'UTF-8',
+              },
+              Text: {
+                Data: this.stripHtml(htmlBody),
+                Charset: 'UTF-8',
+              },
             },
           },
-        },
-        ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
-      }).promise();
+          ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
+        })
+        .promise();
 
       this.logger.log(`Email sent successfully: ${result.MessageId}`);
     } catch (error) {
@@ -120,7 +122,7 @@ export class EmailProcessor extends WorkerHost {
     };
 
     let html = templates[template] || templates.booking_confirmation;
-    
+
     // Replace variables
     Object.entries(variables).forEach(([key, value]) => {
       html = html.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
@@ -130,6 +132,9 @@ export class EmailProcessor extends WorkerHost {
   }
 
   private stripHtml(html: string): string {
-    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

@@ -1,21 +1,8 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-  DefaultValuePipe,
-  ParseIntPipe,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { UnitEconomicsService } from '../services/unit-economics.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
-  import { RolesGuard } from '@auth/guards/roles.guard';
+import { RolesGuard } from '@auth/guards/roles.guard';
 import { AdminOnly } from '@auth/decorators/roles.decorator';
 import { PrismaService } from '@common/services/prisma.service';
 
@@ -153,7 +140,7 @@ Benchmark: <€150 for Year 1, <€80 for Year 2`,
   ): Promise<{ success: boolean; data: CACResponseDto }> {
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const end = endDate ? new Date(endDate) : new Date();
-    
+
     const cac = await this.unitEconomicsService.calculateCAC(start, end);
 
     return {
@@ -299,18 +286,18 @@ Target: 62% Year 1 → 80% at scale`,
   ): Promise<{ success: boolean; data: GrossMarginResponseDto }> {
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const end = endDate ? new Date(endDate) : new Date();
-    
-    const segments = await this.unitEconomicsService.calculateGrossMarginBySegment(
-      start,
-      end,
-    );
 
-    const overall = segments.length > 0
-      ? segments.reduce((sum, s) => sum + s.revenue, 0) > 0
-        ? ((segments.reduce((sum, s) => sum + s.revenue, 0) - segments.reduce((sum, s) => sum + s.cogs, 0)) /
-            segments.reduce((sum, s) => sum + s.revenue, 0)) * 100
-        : 0
-      : 0;
+    const segments = await this.unitEconomicsService.calculateGrossMarginBySegment(start, end);
+
+    const overall =
+      segments.length > 0
+        ? segments.reduce((sum, s) => sum + s.revenue, 0) > 0
+          ? ((segments.reduce((sum, s) => sum + s.revenue, 0) -
+              segments.reduce((sum, s) => sum + s.cogs, 0)) /
+              segments.reduce((sum, s) => sum + s.revenue, 0)) *
+            100
+          : 0
+        : 0;
 
     return {
       success: true,
@@ -368,16 +355,16 @@ Target: Break-even at 100 shops (requires cost optimization)`,
     const tenantResult = await this.prisma.$queryRaw`
       SELECT COUNT(*) as count FROM tenants
     `;
-    const currentShops = Array.isArray(tenantResult) && tenantResult[0] 
-      ? Number(tenantResult[0].count) 
-      : 0;
+    const currentShops =
+      Array.isArray(tenantResult) && tenantResult[0] ? Number(tenantResult[0].count) : 0;
 
     // Calculate months to break-even
-    const monthsToBreakEven = currentShops >= breakEvenShops 
-      ? 0 
-      : Math.ceil(
-          Math.log(breakEvenShops / Math.max(currentShops, 1)) / Math.log(1 + monthlyGrowthRate)
-        );
+    const monthsToBreakEven =
+      currentShops >= breakEvenShops
+        ? 0
+        : Math.ceil(
+            Math.log(breakEvenShops / Math.max(currentShops, 1)) / Math.log(1 + monthlyGrowthRate),
+          );
 
     // Generate projections
     const projections = [];
@@ -437,14 +424,14 @@ Warning: <3:1 requires immediate attention`,
   })
   @ApiResponse({ status: 200, description: 'LTV/CAC ratio retrieved' })
   @ApiResponse({ status: 403, description: 'Admin access required' })
-  async getLTVCACRatio(): Promise<{ 
-    success: boolean; 
-    data: { 
-      ratio: number; 
-      ltv: number; 
+  async getLTVCACRatio(): Promise<{
+    success: boolean;
+    data: {
+      ratio: number;
+      ltv: number;
       cac: number;
       status: 'excellent' | 'good' | 'warning' | 'critical';
-    } 
+    };
   }> {
     const cac = await this.unitEconomicsService.calculateCAC(
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -452,9 +439,9 @@ Warning: <3:1 requires immediate attention`,
     );
     const ltvByTier = await this.unitEconomicsService.calculateLTVByTier();
     const blendedLTV = ltvByTier.reduce((sum, t) => sum + t.ltv, 0) / ltvByTier.length;
-    
+
     const ratio = cac.blended > 0 ? blendedLTV / cac.blended : 0;
-    
+
     let status: 'excellent' | 'good' | 'warning' | 'critical';
     if (ratio >= 5) status = 'excellent';
     else if (ratio >= 3) status = 'good';
@@ -491,20 +478,20 @@ Excellent: <6 months`,
   })
   @ApiResponse({ status: 200, description: 'Payback period retrieved' })
   @ApiResponse({ status: 403, description: 'Admin access required' })
-  async getPaybackPeriod(): Promise<{ 
-    success: boolean; 
-    data: { 
+  async getPaybackPeriod(): Promise<{
+    success: boolean;
+    data: {
       months: number;
       days: number;
       cac: number;
       monthlyContribution: number;
-    } 
+    };
   }> {
     const cac = await this.unitEconomicsService.calculateCAC(
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       new Date(),
     );
-    
+
     const arpa = 82;
     const grossMargin = 0.62;
     const monthlyContribution = arpa * grossMargin;

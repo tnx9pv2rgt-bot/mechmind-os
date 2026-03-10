@@ -107,9 +107,12 @@ export interface LprStats {
   avgConfidence: number;
   falsePositives: number;
   processingTimeMs: number;
-  byProvider: Record<OcrProvider, {
-    count: number;
-    avgConfidence: number;
-  }>;
+  byProvider: Record<
+    OcrProvider,
+    {
+      count: number;
+      avgConfidence: number;
+    }
+  >;
   byHour: Record<number, number>;
 }

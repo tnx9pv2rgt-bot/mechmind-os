@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Parts Catalog & Inventory Service
- * 
+ *
  * Manages parts catalog, inventory, and purchase orders:
  * - Part catalog with compatibility
  * - Stock tracking with reservations
@@ -39,7 +39,7 @@ export class PartsService {
     const existing = await this.prisma.part.findUnique({
       where: { tenantId_sku: { tenantId, sku: dto.sku } },
     });
-    
+
     if (existing) {
       throw new BadRequestException(`Part with SKU ${dto.sku} already exists`);
     }
@@ -87,15 +87,15 @@ export class PartsService {
     filters: { category?: string; supplierId?: string; lowStock?: boolean; search?: string },
   ): Promise<PartResponseDto[]> {
     const where: any = { tenantId, isActive: true };
-    
+
     if (filters.category) {
       where.category = filters.category;
     }
-    
+
     if (filters.supplierId) {
       where.supplierId = filters.supplierId;
     }
-    
+
     if (filters.search) {
       where.OR = [
         { name: { contains: filters.search, mode: 'insensitive' } },
@@ -111,11 +111,11 @@ export class PartsService {
     });
 
     const dtos = parts.map(p => this.mapPartToDto(p));
-    
+
     if (filters.lowStock) {
       return dtos.filter(p => p.isLowStock);
     }
-    
+
     return dtos;
   }
 
@@ -138,7 +138,8 @@ export class PartsService {
       data: {
         name: dto.name,
         costPrice: dto.costPrice !== undefined ? new Prisma.Decimal(dto.costPrice) : undefined,
-        retailPrice: dto.retailPrice !== undefined ? new Prisma.Decimal(dto.retailPrice) : undefined,
+        retailPrice:
+          dto.retailPrice !== undefined ? new Prisma.Decimal(dto.retailPrice) : undefined,
         isActive: dto.isActive,
       },
       include: { supplier: true, inventory: true },
@@ -301,7 +302,10 @@ export class PartsService {
     return this.mapOrderToDto(order);
   }
 
-  async getPurchaseOrders(tenantId: string, status?: OrderStatus): Promise<PurchaseOrderResponseDto[]> {
+  async getPurchaseOrders(
+    tenantId: string,
+    status?: OrderStatus,
+  ): Promise<PurchaseOrderResponseDto[]> {
     const orders = await this.prisma.purchaseOrder.findMany({
       where: { tenantId, ...(status && { status }) },
       include: { supplier: true, items: { include: { part: true } } },
@@ -376,7 +380,11 @@ export class PartsService {
       this.prisma.purchaseOrder.update({
         where: { id: orderId },
         data: {
-          status: fullyReceived ? OrderStatus.RECEIVED : partiallyReceived ? OrderStatus.PARTIALLY_RECEIVED : OrderStatus.SENT,
+          status: fullyReceived
+            ? OrderStatus.RECEIVED
+            : partiallyReceived
+              ? OrderStatus.PARTIALLY_RECEIVED
+              : OrderStatus.SENT,
           receivedAt: fullyReceived ? new Date() : undefined,
         },
       }),
@@ -400,7 +408,10 @@ export class PartsService {
       })
       .map(part => {
         const inventory = part.inventory[0];
-        const suggestedQty = Math.max(part.minStockLevel * 2 - inventory.quantity, part.minStockLevel);
+        const suggestedQty = Math.max(
+          part.minStockLevel * 2 - inventory.quantity,
+          part.minStockLevel,
+        );
 
         return {
           partId: part.id,

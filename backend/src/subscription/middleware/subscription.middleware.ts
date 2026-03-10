@@ -1,6 +1,6 @@
 /**
  * SUBSCRIPTION MIDDLEWARE
- * 
+ *
  * Middleware for enforcing subscription-based access control
  */
 
@@ -40,7 +40,7 @@ export class SubscriptionMiddleware implements NestMiddleware {
     try {
       // Get usage stats which includes subscription info
       const usageStats = await this.featureAccessService.getUsageStats(tenantId);
-      
+
       req.subscription = {
         plan: usageStats.plan,
         status: usageStats.status,
@@ -88,14 +88,14 @@ export class SubscriptionRateLimitMiddleware implements NestMiddleware {
     // Track API call
     const now = Date.now();
     const key = `${tenantId}:${new Date().toISOString().slice(0, 7)}`; // Monthly key
-    
+
     const current = this.apiCallCounts.get(key) || { count: 0, resetAt: now + 24 * 60 * 60 * 1000 };
-    
+
     if (now > current.resetAt) {
       current.count = 0;
       current.resetAt = now + 24 * 60 * 60 * 1000;
     }
-    
+
     current.count++;
     this.apiCallCounts.set(key, current);
 

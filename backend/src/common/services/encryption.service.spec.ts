@@ -85,9 +85,7 @@ describe('EncryptionService', () => {
     });
 
     it('should throw on invalid ciphertext', () => {
-      expect(() => service.decrypt('invalid-hex-data')).toThrow(
-        'Failed to decrypt data',
-      );
+      expect(() => service.decrypt('invalid-hex-data')).toThrow('Failed to decrypt data');
     });
   });
 

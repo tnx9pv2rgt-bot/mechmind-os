@@ -14,7 +14,7 @@ interface RetentionJobPayload {
 
 /**
  * Data Retention Job Processor
- * 
+ *
  * Handles automated data retention policy enforcement.
  * Processes jobs from the gdpr-retention queue.
  */
@@ -46,7 +46,7 @@ export class DataRetentionProcessor extends WorkerHost {
 
     this.logger.log(
       `Starting retention enforcement job ${job.id}` +
-      (tenantId ? ` for tenant ${tenantId}` : ' for all tenants'),
+        (tenantId ? ` for tenant ${tenantId}` : ' for all tenants'),
     );
 
     await job.updateProgress(10);
@@ -54,7 +54,7 @@ export class DataRetentionProcessor extends WorkerHost {
     try {
       // Execute retention policy
       const result = await this.dataRetentionService.enforceRetentionPolicy(tenantId);
-      
+
       await job.updateProgress(100);
 
       const processingTimeMs = Date.now() - startTime;
@@ -62,8 +62,8 @@ export class DataRetentionProcessor extends WorkerHost {
       if (result.success) {
         this.loggerService.log(
           `Retention job ${job.id} completed successfully. ` +
-          `Anonymized: ${result.customersAnonymized}, ` +
-          `Recordings deleted: ${result.recordingsDeleted}`,
+            `Anonymized: ${result.customersAnonymized}, ` +
+            `Recordings deleted: ${result.recordingsDeleted}`,
           'DataRetentionProcessor',
         );
       } else {
@@ -79,11 +79,9 @@ export class DataRetentionProcessor extends WorkerHost {
         recordingsDeleted: result.recordingsDeleted,
         processingTimeMs,
       };
-
     } catch (error) {
       this.logger.error(`Retention job ${job.id} failed: ${error.message}`);
       throw error;
     }
   }
-
 }

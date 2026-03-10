@@ -50,28 +50,20 @@ describe('SseService', () => {
   // =========================================================================
   describe('createEventStream', () => {
     it('should create an observable SSE stream', () => {
-      const stream = service.createEventStream(
-        mockClientId,
-        mockTenantId,
-        mockUserId,
-      );
+      const stream = service.createEventStream(mockClientId, mockTenantId, mockUserId);
 
       expect(stream).toBeDefined();
       expect(typeof stream.subscribe).toBe('function');
     });
 
-    it('should send initial connected event', (done) => {
-      const stream = service.createEventStream(
-        mockClientId,
-        mockTenantId,
-        mockUserId,
-      );
+    it('should send initial connected event', done => {
+      const stream = service.createEventStream(mockClientId, mockTenantId, mockUserId);
 
       // Use a variable to hold the subscription so it can be unsubscribed
       // after the synchronous 'connected' event is received.
       let sub: { unsubscribe: () => void } | undefined;
       sub = stream.subscribe({
-        next: (event) => {
+        next: event => {
           if (event.event === 'connected') {
             const data = JSON.parse(event.data);
             expect(data.clientId).toBe(mockClientId);
@@ -89,11 +81,7 @@ describe('SseService', () => {
     });
 
     it('should register client and increment connected count', () => {
-      const stream = service.createEventStream(
-        'client-A',
-        mockTenantId,
-        mockUserId,
-      );
+      const stream = service.createEventStream('client-A', mockTenantId, mockUserId);
 
       stream.subscribe(() => {});
 
@@ -101,26 +89,16 @@ describe('SseService', () => {
     });
 
     it('should subscribe to Redis tenant channel', () => {
-      const stream = service.createEventStream(
-        'client-redis',
-        mockTenantId,
-        mockUserId,
-      );
+      const stream = service.createEventStream('client-redis', mockTenantId, mockUserId);
 
       stream.subscribe(() => {});
 
-      expect(redisPubSub.getTenantObservable).toHaveBeenCalledWith(
-        mockTenantId,
-      );
+      expect(redisPubSub.getTenantObservable).toHaveBeenCalledWith(mockTenantId);
     });
 
-    it('should cleanup client on unsubscribe', (done) => {
+    it('should cleanup client on unsubscribe', done => {
       const clientId = 'client-cleanup';
-      const stream = service.createEventStream(
-        clientId,
-        mockTenantId,
-        mockUserId,
-      );
+      const stream = service.createEventStream(clientId, mockTenantId, mockUserId);
 
       const subscription = stream.subscribe(() => {});
 
@@ -131,9 +109,7 @@ describe('SseService', () => {
 
         // Give time for cleanup
         setTimeout(() => {
-          expect(service.getConnectedClientsCount()).toBeLessThanOrEqual(
-            countBefore,
-          );
+          expect(service.getConnectedClientsCount()).toBeLessThanOrEqual(countBefore);
           done();
         }, 100);
       }, 50);
@@ -155,10 +131,7 @@ describe('SseService', () => {
 
       await service.broadcastToTenant(mockTenantId, data);
 
-      expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(
-        mockTenantId,
-        data,
-      );
+      expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(mockTenantId, data);
     });
 
     it('should isolate broadcasts by tenant', async () => {
@@ -181,12 +154,8 @@ describe('SseService', () => {
       await service.broadcastToTenant('tenant-B', data2);
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledTimes(2);
-      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[0][0]).toBe(
-        'tenant-A',
-      );
-      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[1][0]).toBe(
-        'tenant-B',
-      );
+      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[0][0]).toBe('tenant-A');
+      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[1][0]).toBe('tenant-B');
     });
   });
 
@@ -223,16 +192,10 @@ describe('SseService', () => {
     });
 
     it('should increase when clients connect', () => {
-      const stream1 = service.createEventStream(
-        'count-client-1',
-        mockTenantId,
-      );
+      const stream1 = service.createEventStream('count-client-1', mockTenantId);
       stream1.subscribe(() => {});
 
-      const stream2 = service.createEventStream(
-        'count-client-2',
-        mockTenantId,
-      );
+      const stream2 = service.createEventStream('count-client-2', mockTenantId);
       stream2.subscribe(() => {});
 
       expect(service.getConnectedClientsCount()).toBe(2);
@@ -244,22 +207,13 @@ describe('SseService', () => {
   // =========================================================================
   describe('getTenantClientsCount', () => {
     it('should return count for specific tenant', () => {
-      const streamA = service.createEventStream(
-        'tenant-count-1',
-        'tenant-A',
-      );
+      const streamA = service.createEventStream('tenant-count-1', 'tenant-A');
       streamA.subscribe(() => {});
 
-      const streamB = service.createEventStream(
-        'tenant-count-2',
-        'tenant-B',
-      );
+      const streamB = service.createEventStream('tenant-count-2', 'tenant-B');
       streamB.subscribe(() => {});
 
-      const streamA2 = service.createEventStream(
-        'tenant-count-3',
-        'tenant-A',
-      );
+      const streamA2 = service.createEventStream('tenant-count-3', 'tenant-A');
       streamA2.subscribe(() => {});
 
       expect(service.getTenantClientsCount('tenant-A')).toBe(2);
@@ -281,11 +235,15 @@ describe('SseService', () => {
 
       stream1.subscribe({
         next: () => {},
-        complete: () => { completed1 = true; },
+        complete: () => {
+          completed1 = true;
+        },
       });
       stream2.subscribe({
         next: () => {},
-        complete: () => { completed2 = true; },
+        complete: () => {
+          completed2 = true;
+        },
       });
 
       await service.disconnectAll();
@@ -299,17 +257,13 @@ describe('SseService', () => {
   // Tenant isolation in SSE
   // =========================================================================
   describe('tenant isolation in SSE streams', () => {
-    it('should only deliver notifications for the correct tenant', (done) => {
-      const stream = service.createEventStream(
-        'iso-client',
-        mockTenantId,
-        mockUserId,
-      );
+    it('should only deliver notifications for the correct tenant', done => {
+      const stream = service.createEventStream('iso-client', mockTenantId, mockUserId);
 
       const receivedEvents: string[] = [];
 
       const subscription = stream.subscribe({
-        next: (event) => {
+        next: event => {
           receivedEvents.push(event.event || 'unknown');
         },
       });

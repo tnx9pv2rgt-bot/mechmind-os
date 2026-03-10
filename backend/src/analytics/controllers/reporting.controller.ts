@@ -33,18 +33,14 @@ export class ReportingController {
   @Get('dashboard')
   @ApiOperation({ summary: 'Get dashboard summary KPIs' })
   @ApiResponse({ status: 200 })
-  async getDashboardSummary(
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  async getDashboardSummary(@CurrentUser('tenantId') tenantId: string) {
     return this.reportingService.getDashboardSummary(tenantId);
   }
 
   @Get('kpis')
   @ApiOperation({ summary: 'Get custom KPIs' })
   @ApiResponse({ status: 200 })
-  async getCustomKPIs(
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  async getCustomKPIs(@CurrentUser('tenantId') tenantId: string) {
     return this.reportingService.getCustomKPIs(tenantId);
   }
 
@@ -59,11 +55,7 @@ export class ReportingController {
     @Query('from') from: string,
     @Query('to') to: string,
   ) {
-    return this.reportingService.getBookingMetrics(
-      tenantId,
-      new Date(from),
-      new Date(to),
-    );
+    return this.reportingService.getBookingMetrics(tenantId, new Date(from), new Date(to));
   }
 
   // ============== REVENUE ANALYTICS ==============
@@ -88,23 +80,15 @@ export class ReportingController {
 
   @Get('customers/retention')
   @ApiOperation({ summary: 'Get customer retention metrics' })
-  async getCustomerRetention(
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  async getCustomerRetention(@CurrentUser('tenantId') tenantId: string) {
     return this.reportingService.getCustomerRetention(tenantId);
   }
 
   @Get('customers/top')
   @ApiOperation({ summary: 'Get top customers by revenue' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  async getTopCustomers(
-    @CurrentUser('tenantId') tenantId: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.reportingService.getTopCustomers(
-      tenantId,
-      limit ? parseInt(limit) : 10,
-    );
+  async getTopCustomers(@CurrentUser('tenantId') tenantId: string, @Query('limit') limit?: string) {
+    return this.reportingService.getTopCustomers(tenantId, limit ? parseInt(limit) : 10);
   }
 
   // ============== SERVICE ANALYTICS ==============
@@ -149,9 +133,7 @@ export class ReportingController {
 
   @Get('inventory/valuation')
   @ApiOperation({ summary: 'Get inventory valuation by category' })
-  async getInventoryValuation(
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  async getInventoryValuation(@CurrentUser('tenantId') tenantId: string) {
     return this.reportingService.getInventoryValuation(tenantId);
   }
 

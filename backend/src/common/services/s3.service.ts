@@ -1,6 +1,6 @@
 /**
  * MechMind OS - S3 Service
- * 
+ *
  * AWS S3 operations for file storage
  */
 
@@ -26,12 +26,14 @@ export class S3Service {
     body: Buffer,
     contentType: string,
   ): Promise<AWS.S3.ManagedUpload.SendData> {
-    return this.s3.upload({
-      Bucket: bucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    }).promise();
+    return this.s3
+      .upload({
+        Bucket: bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      })
+      .promise();
   }
 
   /**
@@ -42,12 +44,14 @@ export class S3Service {
     key: string,
     contentType: string,
   ): Promise<AWS.S3.ManagedUpload.SendData> {
-    return this.s3.upload({
-      Bucket: this.defaultBucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    }).promise();
+    return this.s3
+      .upload({
+        Bucket: this.defaultBucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      })
+      .promise();
   }
 
   async getSignedUrl(bucket: string, key: string, expiresIn: number): Promise<string> {
@@ -70,9 +74,11 @@ export class S3Service {
   }
 
   async delete(bucket: string, key: string): Promise<void> {
-    await this.s3.deleteObject({
-      Bucket: bucket,
-      Key: key,
-    }).promise();
+    await this.s3
+      .deleteObject({
+        Bucket: bucket,
+        Key: key,
+      })
+      .promise();
   }
 }

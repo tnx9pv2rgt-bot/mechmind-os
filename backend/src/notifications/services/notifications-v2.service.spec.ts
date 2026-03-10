@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotificationsV2Service,
-  NotificationPayloadV2,
-} from './notifications-v2.service';
+import { NotificationsV2Service, NotificationPayloadV2 } from './notifications-v2.service';
 import { RedisPubSubService } from './redis-pubsub.service';
 import { SseService } from './sse.service';
 import { NotificationEventData } from '../dto/notification-event.dto';
@@ -188,12 +185,7 @@ describe('NotificationsV2Service', () => {
   // =========================================================================
   describe('notifyBookingCreated', () => {
     it('should send booking created notification', async () => {
-      await service.notifyBookingCreated(
-        mockTenantId,
-        'bk-789',
-        'Mario Rossi',
-        mockUserId,
-      );
+      await service.notifyBookingCreated(mockTenantId, 'bk-789', 'Mario Rossi', mockUserId);
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(
         mockTenantId,
@@ -207,11 +199,7 @@ describe('NotificationsV2Service', () => {
     });
 
     it('should work without userId', async () => {
-      await service.notifyBookingCreated(
-        mockTenantId,
-        'bk-790',
-        'Luigi Bianchi',
-      );
+      await service.notifyBookingCreated(mockTenantId, 'bk-790', 'Luigi Bianchi');
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(
         mockTenantId,
@@ -224,12 +212,7 @@ describe('NotificationsV2Service', () => {
 
   describe('notifyBookingConfirmed', () => {
     it('should send booking confirmed notification', async () => {
-      await service.notifyBookingConfirmed(
-        mockTenantId,
-        'bk-100',
-        'Mario Rossi',
-        mockUserId,
-      );
+      await service.notifyBookingConfirmed(mockTenantId, 'bk-100', 'Mario Rossi', mockUserId);
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(
         mockTenantId,
@@ -269,11 +252,7 @@ describe('NotificationsV2Service', () => {
     });
 
     it('should send booking cancelled notification without reason', async () => {
-      await service.notifyBookingCancelled(
-        mockTenantId,
-        'bk-201',
-        'Mario Rossi',
-      );
+      await service.notifyBookingCancelled(mockTenantId, 'bk-201', 'Mario Rossi');
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(
         mockTenantId,
@@ -286,13 +265,7 @@ describe('NotificationsV2Service', () => {
 
   describe('notifyInvoicePaid', () => {
     it('should send invoice paid notification with amount', async () => {
-      await service.notifyInvoicePaid(
-        mockTenantId,
-        'inv-300',
-        250.5,
-        'Mario Rossi',
-        mockUserId,
-      );
+      await service.notifyInvoicePaid(mockTenantId, 'inv-300', 250.5, 'Mario Rossi', mockUserId);
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledWith(
         mockTenantId,
@@ -371,12 +344,8 @@ describe('NotificationsV2Service', () => {
       await service.notifyBookingCreated(tenant2, 'bk-2', 'Customer B');
 
       expect(redisPubSub.publishToTenant).toHaveBeenCalledTimes(2);
-      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[0][0]).toBe(
-        tenant1,
-      );
-      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[1][0]).toBe(
-        tenant2,
-      );
+      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[0][0]).toBe(tenant1);
+      expect((redisPubSub.publishToTenant as jest.Mock).mock.calls[1][0]).toBe(tenant2);
     });
   });
 });

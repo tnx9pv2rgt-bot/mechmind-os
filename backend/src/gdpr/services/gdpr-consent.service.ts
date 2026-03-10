@@ -25,7 +25,13 @@ export interface ConsentRecord {
   id: string;
   customerId: string;
   tenantId: string;
-  consentType: 'GDPR' | 'MARKETING' | 'CALL_RECORDING' | 'DATA_SHARING' | 'THIRD_PARTY' | 'ANALYTICS';
+  consentType:
+    | 'GDPR'
+    | 'MARKETING'
+    | 'CALL_RECORDING'
+    | 'DATA_SHARING'
+    | 'THIRD_PARTY'
+    | 'ANALYTICS';
   granted: boolean;
   timestamp: Date;
   ipSource?: string;
@@ -63,10 +69,10 @@ export interface CustomerConsentStatus {
 
 /**
  * GDPR Consent Service
- * 
+ *
  * Manages consent tracking and audit logging for GDPR compliance.
  * Provides methods for recording, updating, and querying consent.
- * 
+ *
  * @see GDPR Article 7 - Conditions for consent
  */
 @Injectable()
@@ -78,7 +84,7 @@ export class GdprConsentService {
 
   /**
    * Record consent for a customer
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @param consentType - Type of consent
@@ -102,7 +108,7 @@ export class GdprConsentService {
     },
   ): Promise<ConsentRecord> {
     // Verify customer exists
-    const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const customer = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
       });
@@ -113,7 +119,7 @@ export class GdprConsentService {
     }
 
     // Create audit log entry
-    const auditLog = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const auditLog = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.consentAuditLog.create({
         data: {
           tenantId,
@@ -156,7 +162,7 @@ export class GdprConsentService {
 
   /**
    * Revoke previously given consent
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @param consentType - Type of consent to revoke
@@ -171,7 +177,7 @@ export class GdprConsentService {
     revokedBy?: string,
   ): Promise<void> {
     // Find the most recent active consent
-    const latestConsent = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const latestConsent = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.consentAuditLog.findFirst({
         where: {
           customerId,
@@ -185,11 +191,13 @@ export class GdprConsentService {
     });
 
     if (!latestConsent) {
-      throw new NotFoundException(`No active ${consentType} consent found for customer ${customerId}`);
+      throw new NotFoundException(
+        `No active ${consentType} consent found for customer ${customerId}`,
+      );
     }
 
     // Mark as revoked
-    await this.prisma.withTenant(tenantId, async (prisma) => {
+    await this.prisma.withTenant(tenantId, async prisma => {
       await prisma.consentAuditLog.update({
         where: { id: latestConsent.id },
         data: {
@@ -218,18 +226,15 @@ export class GdprConsentService {
 
   /**
    * Get consent audit trail for a customer
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @returns Array of consent audit entries
    */
-  async getConsentAuditTrail(
-    customerId: string,
-    tenantId: string,
-  ): Promise<ConsentAuditEntry[]> {
-    const logs = await this.prisma.withTenant(tenantId, async (prisma) => {
+  async getConsentAuditTrail(customerId: string, tenantId: string): Promise<ConsentAuditEntry[]> {
+    const logs = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.consentAuditLog.findMany({
-        where: { 
+        where: {
           customerId,
           tenantId,
         },
@@ -251,7 +256,7 @@ export class GdprConsentService {
 
   /**
    * Get current consent status for a customer
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @returns Current consent status
@@ -260,7 +265,7 @@ export class GdprConsentService {
     customerId: string,
     tenantId: string,
   ): Promise<CustomerConsentStatus> {
-    const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const customer = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         select: {
@@ -292,7 +297,7 @@ export class GdprConsentService {
 
   /**
    * Check if customer has given specific consent
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @param consentType - Type of consent to check
@@ -303,7 +308,7 @@ export class GdprConsentService {
     tenantId: string,
     consentType: ConsentRecord['consentType'],
   ): Promise<boolean> {
-    const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const customer = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         select: {
@@ -327,7 +332,7 @@ export class GdprConsentService {
         return customer.callRecordingConsent;
       default:
         // For other types, check the audit log
-        const latestConsent = await this.prisma.withTenant(tenantId, async (prisma) => {
+        const latestConsent = await this.prisma.withTenant(tenantId, async prisma => {
           return prisma.consentAuditLog.findFirst({
             where: {
               customerId,
@@ -344,7 +349,7 @@ export class GdprConsentService {
 
   /**
    * Bulk check consent for multiple customers
-   * 
+   *
    * @param customerIds - Array of customer UUIDs
    * @param tenantId - Tenant ID
    * @param consentType - Type of consent to check
@@ -355,7 +360,7 @@ export class GdprConsentService {
     tenantId: string,
     consentType: ConsentRecord['consentType'],
   ): Promise<Map<string, boolean>> {
-    const customers = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const customers = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findMany({
         where: {
           id: { in: customerIds },
@@ -424,7 +429,7 @@ export class GdprConsentService {
     }
 
     if (Object.keys(updateData).length > 0) {
-      await this.prisma.withTenant(tenantId, async (prisma) => {
+      await this.prisma.withTenant(tenantId, async prisma => {
         await prisma.customerEncrypted.update({
           where: { id: customerId },
           data: updateData,

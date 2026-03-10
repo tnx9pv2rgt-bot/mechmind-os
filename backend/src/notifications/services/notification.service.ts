@@ -1,12 +1,39 @@
+/**
+ * NotificationService (v1)
+ *
+ * Multi-channel notification orchestrator.
+ * Routes notifications to Email (Resend), SMS (Twilio), or BullMQ queue
+ * based on customer channel preferences. Emits domain events on send/fail.
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '@common/services/prisma.service';
-import { EmailService, BookingConfirmationData, InvoiceReadyData, GdprDataExportData, WelcomeData, PasswordResetData, BookingReminderData, BookingCancelledData } from '../email/email.service';
-import { SmsService, BookingConfirmationSmsData, BookingReminderSmsData, InvoiceReadySmsData, BookingCancelledSmsData } from '../sms/sms.service';
-import { NotificationType, NotificationChannel, NotificationPriority, SendNotificationDto } from '../dto/send-notification.dto';
+import {
+  EmailService,
+  BookingConfirmationData,
+  InvoiceReadyData,
+  GdprDataExportData,
+  WelcomeData,
+  PasswordResetData,
+  BookingReminderData,
+  BookingCancelledData,
+} from '../email/email.service';
+import {
+  SmsService,
+  BookingConfirmationSmsData,
+  BookingReminderSmsData,
+  InvoiceReadySmsData,
+  BookingCancelledSmsData,
+} from '../sms/sms.service';
+import {
+  NotificationType,
+  NotificationChannel,
+  NotificationPriority,
+  SendNotificationDto,
+} from '../dto/send-notification.dto';
 
 // Events
 export class NotificationSentEvent {
@@ -83,7 +110,7 @@ export class NotificationOrchestratorService {
     channelPreference: NotificationChannel = NotificationChannel.AUTO,
   ): Promise<NotificationResult> {
     const notificationId = this.generateId();
-    
+
     this.logger.log(
       `[${notificationId}] Sending ${type} notification to customer ${customerId} (channel: ${channelPreference})`,
     );
@@ -123,14 +150,7 @@ export class NotificationOrchestratorService {
     if (result.success) {
       this.eventEmitter.emit(
         'notification.sent',
-        new NotificationSentEvent(
-          notificationId,
-          customerId,
-          tenantId,
-          type,
-          result.channel,
-          true,
-        ),
+        new NotificationSentEvent(notificationId, customerId, tenantId, type, result.channel, true),
       );
     } else {
       this.eventEmitter.emit(
@@ -163,15 +183,17 @@ export class NotificationOrchestratorService {
     // Try SMS if phone is available
     if (customer.phone) {
       this.logger.log(`[${notificationId}] Attempting SMS notification`);
-      
+
       const smsResult = await this.sendSmsNotification(customer, workshop, type, data);
-      
+
       if (smsResult.success) {
         this.logger.log(`[${notificationId}] SMS sent successfully`);
         return { success: true, channel: NotificationChannel.SMS, messageId: smsResult.messageId };
       }
 
-      this.logger.warn(`[${notificationId}] SMS failed, attempting email fallback: ${smsResult.error}`);
+      this.logger.warn(
+        `[${notificationId}] SMS failed, attempting email fallback: ${smsResult.error}`,
+      );
     } else {
       this.logger.log(`[${notificationId}] No phone number, using email directly`);
     }
@@ -179,7 +201,7 @@ export class NotificationOrchestratorService {
     // Fallback to email
     if (customer.email) {
       const emailResult = await this.sendEmailNotification(customer, workshop, type, data);
-      
+
       if (emailResult.success) {
         this.logger.log(`[${notificationId}] Email fallback successful`);
         return {
@@ -227,7 +249,7 @@ export class NotificationOrchestratorService {
     }
 
     const result = await this.sendEmailNotification(customer, workshop, type, data);
-    
+
     return {
       success: result.success,
       channel: NotificationChannel.EMAIL,
@@ -249,15 +271,25 @@ export class NotificationOrchestratorService {
     this.logger.log(`[${notificationId}] Sending both SMS and Email notifications`);
 
     const results = await Promise.allSettled([
-      customer.phone ? this.sendSmsNotification(customer, workshop, type, data) : Promise.resolve({ success: false, error: 'No phone' }),
-      customer.email ? this.sendEmailNotification(customer, workshop, type, data) : Promise.resolve({ success: false, error: 'No email' }),
+      customer.phone
+        ? this.sendSmsNotification(customer, workshop, type, data)
+        : Promise.resolve({ success: false, error: 'No phone' }),
+      customer.email
+        ? this.sendEmailNotification(customer, workshop, type, data)
+        : Promise.resolve({ success: false, error: 'No email' }),
     ]);
 
-    const smsResult = results[0].status === 'fulfilled' ? results[0].value : { success: false, error: 'SMS promise rejected' };
-    const emailResult = results[1].status === 'fulfilled' ? results[1].value : { success: false, error: 'Email promise rejected' };
+    const smsResult =
+      results[0].status === 'fulfilled'
+        ? results[0].value
+        : { success: false, error: 'SMS promise rejected' };
+    const emailResult =
+      results[1].status === 'fulfilled'
+        ? results[1].value
+        : { success: false, error: 'Email promise rejected' };
 
     const success = smsResult.success || emailResult.success;
-    
+
     return {
       success,
       channel: NotificationChannel.BOTH,
@@ -433,20 +465,16 @@ export class NotificationOrchestratorService {
     delayMs?: number,
   ): Promise<{ jobId: string; scheduledFor?: Date }> {
     const jobId = `notif-${this.generateId()}`;
-    
-    const job = await this.notificationQueue.add(
-      'send-notification',
-      dto,
-      {
-        jobId,
-        delay: delayMs,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 5000,
-        },
+
+    const job = await this.notificationQueue.add('send-notification', dto, {
+      jobId,
+      delay: delayMs,
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 5000,
       },
-    );
+    });
 
     this.logger.log(`Notification queued: ${jobId}`);
 
@@ -524,7 +552,10 @@ export class NotificationOrchestratorService {
   /**
    * Get customer notification preferences
    */
-  async getCustomerPreferences(customerId: string, tenantId: string): Promise<{
+  async getCustomerPreferences(
+    customerId: string,
+    tenantId: string,
+  ): Promise<{
     preferredChannel: NotificationChannel;
     bookingConfirmations: boolean;
     bookingReminders: boolean;
@@ -586,7 +617,7 @@ export class NotificationOrchestratorService {
     tenantId: string,
   ): Promise<CustomerInfo | null> {
     try {
-      const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
+      const customer = await this.prisma.withTenant(tenantId, async prisma => {
         return prisma.customer.findUnique({
           where: { id: customerId },
           select: {
@@ -603,7 +634,9 @@ export class NotificationOrchestratorService {
 
       return {
         id: customer.id,
-        name: `${customer.encryptedFirstName || ''} ${customer.encryptedLastName || ''}`.trim() || 'Customer',
+        name:
+          `${customer.encryptedFirstName || ''} ${customer.encryptedLastName || ''}`.trim() ||
+          'Customer',
         email: customer.encryptedEmail || '',
         phone: customer.encryptedPhone || undefined,
       };

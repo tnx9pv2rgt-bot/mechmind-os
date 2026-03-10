@@ -10,7 +10,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { NotificationOrchestratorService, NotificationResult } from '../services/notification.service';
+import {
+  NotificationOrchestratorService,
+  NotificationResult,
+} from '../services/notification.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
 import {
@@ -204,7 +207,7 @@ export class NotificationsApiController {
   @ApiResponse({ status: 200, description: 'Notification queued' })
   async queueNotification(@Body() dto: SendNotificationDto & { delayMinutes?: number }) {
     const delayMs = dto.delayMinutes ? dto.delayMinutes * 60 * 1000 : undefined;
-    
+
     const result = await this.notificationService.queueNotification(dto, delayMs);
 
     return {
@@ -316,7 +319,7 @@ export class NotificationsApiController {
   @ApiParam({ name: 'emailId', description: 'Resend Email ID' })
   async getEmailStatus(@Param('emailId') emailId: string) {
     const status = await this.emailService.getEmailStatus(emailId);
-    
+
     if (!status) {
       throw new NotFoundException('Email not found');
     }
@@ -400,11 +403,7 @@ export class NotificationsApiController {
     @Query('tenantId') tenantId: string,
     @Body() preferences: any,
   ) {
-    await this.notificationService.updateCustomerPreferences(
-      customerId,
-      tenantId,
-      preferences,
-    );
+    await this.notificationService.updateCustomerPreferences(customerId, tenantId, preferences);
 
     return { updated: true };
   }

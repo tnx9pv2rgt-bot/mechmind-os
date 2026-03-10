@@ -2,16 +2,7 @@
  * MechMind OS - Shop Floor Controller
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
@@ -55,18 +46,14 @@ export class ShopFloorController {
   @Get('bays')
   @ApiOperation({ summary: 'Get all bays' })
   @ApiResponse({ status: 200, type: [BayResponseDto] })
-  async getAllBays(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<BayResponseDto[]> {
+  async getAllBays(@CurrentUser('tenantId') tenantId: string): Promise<BayResponseDto[]> {
     return await this.shopFloorService.getAllBays(tenantId);
   }
 
   @Get('bays/:id')
   @ApiOperation({ summary: 'Get bay details' })
   @ApiResponse({ status: 200, type: BayResponseDto })
-  async getBay(
-    @Param('id') bayId: string,
-  ): Promise<BayResponseDto> {
+  async getBay(@Param('id') bayId: string): Promise<BayResponseDto> {
     return await this.shopFloorService.getBay(bayId);
   }
 
@@ -74,10 +61,7 @@ export class ShopFloorController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Add sensor to bay' })
   @ApiResponse({ status: 201 })
-  async addBaySensor(
-    @Param('id') bayId: string,
-    @Body() dto: AddBaySensorDto,
-  ): Promise<any> {
+  async addBaySensor(@Param('id') bayId: string, @Body() dto: AddBaySensorDto): Promise<any> {
     return await this.shopFloorService.addBaySensor(bayId, {
       type: dto.type,
       name: dto.name,
@@ -90,9 +74,7 @@ export class ShopFloorController {
   @Post('sensor-readings')
   @ApiOperation({ summary: 'Process sensor reading' })
   @ApiResponse({ status: 201 })
-  async processSensorReading(
-    @Body() dto: SensorReadingDto,
-  ): Promise<void> {
+  async processSensorReading(@Body() dto: SensorReadingDto): Promise<void> {
     await this.shopFloorService.processSensorReading(dto);
   }
 
@@ -116,9 +98,7 @@ export class ShopFloorController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Release bay' })
   @ApiResponse({ status: 200, type: BayResponseDto })
-  async releaseBay(
-    @Param('id') bayId: string,
-  ): Promise<BayResponseDto> {
+  async releaseBay(@Param('id') bayId: string): Promise<BayResponseDto> {
     return await this.shopFloorService.releaseBay(bayId);
   }
 
@@ -149,9 +129,7 @@ export class ShopFloorController {
   @Get('work-orders/:id/progress')
   @ApiOperation({ summary: 'Get work order progress' })
   @ApiResponse({ status: 200, type: WorkOrderProgressDto })
-  async getWorkOrderProgress(
-    @Param('id') workOrderId: string,
-  ): Promise<WorkOrderProgressDto> {
+  async getWorkOrderProgress(@Param('id') workOrderId: string): Promise<WorkOrderProgressDto> {
     return await this.shopFloorService.getWorkOrderProgress(workOrderId);
   }
 

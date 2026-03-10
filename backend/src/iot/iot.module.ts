@@ -1,6 +1,6 @@
 /**
  * MechMind OS - IoT Module
- * 
+ *
  * Aggregates all IoT-related services:
  * - OBD Streaming
  * - Vehicle Twin
@@ -48,11 +48,6 @@ import { AuthModule } from '../auth/auth.module';
     ShopFloorGateway,
     LicensePlateService,
   ],
-  exports: [
-    ObdStreamingService,
-    VehicleTwinService,
-    ShopFloorService,
-    LicensePlateService,
-  ],
+  exports: [ObdStreamingService, VehicleTwinService, ShopFloorService, LicensePlateService],
 })
 export class IotModule {}

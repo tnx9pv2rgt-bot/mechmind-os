@@ -1,6 +1,6 @@
 /**
  * SUBSCRIPTION CONTROLLER
- * 
+ *
  * API endpoints for subscription management
  */
 
@@ -96,16 +96,13 @@ export class SubscriptionController {
   @Get('features/:feature')
   async checkFeatureAccess(
     @Request() req: RequestWithTenant,
-    @Param('feature') feature: FeatureFlag
+    @Param('feature') feature: FeatureFlag,
   ) {
     return this.featureAccessService.canAccessFeature(req.tenantId, feature);
   }
 
   @Post('features/check')
-  async checkMultipleFeatures(
-    @Request() req: RequestWithTenant,
-    @Body() features: FeatureFlag[]
-  ) {
+  async checkMultipleFeatures(@Request() req: RequestWithTenant, @Body() features: FeatureFlag[]) {
     return this.featureAccessService.canAccessFeatures(req.tenantId, features);
   }
 
@@ -118,7 +115,7 @@ export class SubscriptionController {
   @UseGuards(LimitGuard)
   async upgradeSubscription(
     @Request() req: RequestWithTenant,
-    @Body() dto: UpgradeSubscriptionDto
+    @Body() dto: UpgradeSubscriptionDto,
   ) {
     const request: UpgradeRequest = {
       newPlan: dto.newPlan,
@@ -132,7 +129,7 @@ export class SubscriptionController {
   @Post('downgrade')
   async downgradeSubscription(
     @Request() req: RequestWithTenant,
-    @Body('newPlan') newPlan: SubscriptionPlan
+    @Body('newPlan') newPlan: SubscriptionPlan,
   ) {
     return this.subscriptionService.downgradeSubscription(req.tenantId, newPlan);
   }
@@ -142,10 +139,7 @@ export class SubscriptionController {
   // ==========================================
 
   @Post('ai-addon')
-  async toggleAiAddon(
-    @Request() req: RequestWithTenant,
-    @Body('enabled') enabled: boolean
-  ) {
+  async toggleAiAddon(@Request() req: RequestWithTenant, @Body('enabled') enabled: boolean) {
     return this.subscriptionService.toggleAiAddon(req.tenantId, enabled);
   }
 
@@ -154,14 +148,8 @@ export class SubscriptionController {
   // ==========================================
 
   @Post('cancel')
-  async cancelSubscription(
-    @Request() req: RequestWithTenant,
-    @Body() dto: CancelSubscriptionDto
-  ) {
-    return this.subscriptionService.cancelSubscription(
-      req.tenantId,
-      dto.immediate
-    );
+  async cancelSubscription(@Request() req: RequestWithTenant, @Body() dto: CancelSubscriptionDto) {
+    return this.subscriptionService.cancelSubscription(req.tenantId, dto.immediate);
   }
 
   @Post('reactivate')
@@ -176,7 +164,7 @@ export class SubscriptionController {
   @Post('checkout-session')
   async createCheckoutSession(
     @Request() req: RequestWithTenant,
-    @Body() dto: CreateCheckoutSessionDto
+    @Body() dto: CreateCheckoutSessionDto,
   ) {
     return this.subscriptionService.createStripeCheckoutSession(
       req.tenantId,
@@ -184,7 +172,7 @@ export class SubscriptionController {
       dto.billingCycle,
       dto.aiAddon ?? false,
       dto.successUrl,
-      dto.cancelUrl
+      dto.cancelUrl,
     );
   }
 
@@ -228,7 +216,7 @@ export class SubscriptionController {
   @Get('pricing/compare')
   async comparePlans() {
     const plans = [SubscriptionPlan.SMALL, SubscriptionPlan.MEDIUM, SubscriptionPlan.ENTERPRISE];
-    
+
     return {
       comparison: plans.map(plan => ({
         plan,
@@ -260,7 +248,7 @@ export class AdminSubscriptionController {
   @Get()
   async getAllSubscriptions(
     @Query('status') status?: SubscriptionStatus,
-    @Query('plan') plan?: SubscriptionPlan
+    @Query('plan') plan?: SubscriptionPlan,
   ) {
     return this.subscriptionService.getAllSubscriptions({ status, plan });
   }
@@ -278,7 +266,7 @@ export class AdminSubscriptionController {
   @Put(':tenantId')
   async updateSubscription(
     @Param('tenantId') tenantId: string,
-    @Body() dto: AdminUpdateSubscriptionDto
+    @Body() dto: AdminUpdateSubscriptionDto,
   ) {
     return this.subscriptionService.adminUpdateSubscription(tenantId, dto);
   }

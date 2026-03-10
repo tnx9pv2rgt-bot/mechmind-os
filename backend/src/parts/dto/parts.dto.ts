@@ -2,9 +2,17 @@
  * MechMind OS - Parts Catalog DTOs
  */
 
-import { 
-  IsString, IsOptional, IsNumber, IsInt, IsBoolean, IsEnum, 
-  IsUUID, IsArray, IsDecimal, Min 
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsInt,
+  IsBoolean,
+  IsEnum,
+  IsUUID,
+  IsArray,
+  IsDecimal,
+  Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { MovementType, OrderStatus } from '@prisma/client';

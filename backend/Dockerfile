@@ -1,24 +1,38 @@
-FROM node:20
+# Stage 1: Build
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies (ignore postinstall for now)
-RUN npm install --omit=dev --legacy-peer-deps --ignore-scripts && \
-    npm install prisma --legacy-peer-deps
-
-# Rebuild bcrypt and generate Prisma
-RUN npm rebuild bcrypt && \
+RUN npm ci --legacy-peer-deps && \
     npx prisma generate
 
-# Copy pre-built dist folder
-COPY dist ./dist
+COPY . .
 
-# Expose port
+RUN npm run build
+
+# Stage 2: Production
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install only production dependencies
+COPY package*.json ./
+COPY prisma ./prisma/
+
+RUN npm ci --omit=dev --legacy-peer-deps --ignore-scripts && \
+    npm rebuild bcrypt && \
+    npx prisma generate && \
+    npm cache clean --force
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+
+# Security: run as non-root user
+USER node
+
 EXPOSE 3000
 
-# Start the application
 CMD ["node", "dist/main"]

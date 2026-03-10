@@ -92,7 +92,7 @@ export class AuthService {
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash || '');
-    
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -119,7 +119,7 @@ export class AuthService {
   async generateTokens(user: UserWithTenant): Promise<AuthTokens> {
     // Create compound subject: userId:tenantId
     const subject = `${user.id}:${user.tenantId}`;
-    
+
     const payload: JwtPayload = {
       sub: subject,
       email: user.email,
@@ -138,9 +138,7 @@ export class AuthService {
       }),
     ]);
 
-    const expiresIn = parseInt(
-      this.configService.get<string>('JWT_EXPIRES_IN_SECONDS', '86400'),
-    );
+    const expiresIn = parseInt(this.configService.get<string>('JWT_EXPIRES_IN_SECONDS', '86400'));
 
     return {
       accessToken,
@@ -207,13 +205,13 @@ export class AuthService {
     if (payload.tenantId) {
       return payload.tenantId;
     }
-    
+
     // Fallback to parsing from subject
     const parts = payload.sub.split(':');
     if (parts.length >= 2) {
       return parts[1];
     }
-    
+
     throw new UnauthorizedException('Invalid token: tenant ID not found');
   }
 
@@ -303,7 +301,9 @@ export class AuthService {
   /**
    * Get user with 2FA status for verification
    */
-  async getUserWithTwoFactorStatus(userId: string): Promise<UserWithTenant & { totpEnabled: boolean }> {
+  async getUserWithTwoFactorStatus(
+    userId: string,
+  ): Promise<UserWithTenant & { totpEnabled: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
@@ -341,7 +341,9 @@ export class AuthService {
    * Log admin action for audit
    */
   async logAdminAction(action: AdminAction): Promise<void> {
-    this.logger.warn(`Admin action: ${action.action} by admin ${action.adminId}${action.targetUserId ? ` on user ${action.targetUserId}` : ''}`);
+    this.logger.warn(
+      `Admin action: ${action.action} by admin ${action.adminId}${action.targetUserId ? ` on user ${action.targetUserId}` : ''}`,
+    );
     // Store in auth audit log
     const tenantId = (await this.getUserTenant(action.adminId)).tenantId;
     await this.prisma.authAuditLog.create({
@@ -395,7 +397,9 @@ export class AuthService {
       select: { failedAttempts: true },
     });
 
-    this.logger.warn(`Failed login attempt for user ${userId} (attempt ${user.failedAttempts}/${this.MAX_FAILED_ATTEMPTS})`);
+    this.logger.warn(
+      `Failed login attempt for user ${userId} (attempt ${user.failedAttempts}/${this.MAX_FAILED_ATTEMPTS})`,
+    );
 
     if (user.failedAttempts >= this.MAX_FAILED_ATTEMPTS) {
       const lockedUntil = new Date(Date.now() + this.LOCKOUT_DURATION_MINUTES * 60 * 1000);

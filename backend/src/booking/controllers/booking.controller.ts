@@ -69,10 +69,7 @@ export class BookingController {
     description: 'Slot conflict - queued for retry',
     type: ConflictResponseDto,
   })
-  async reserveSlot(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: ReserveSlotDto,
-  ) {
+  async reserveSlot(@CurrentTenant() tenantId: string, @Body() dto: ReserveSlotDto) {
     const result = await this.bookingService.reserveSlot(tenantId, dto);
 
     if (!result.success && result.conflict) {
@@ -99,10 +96,7 @@ export class BookingController {
     description: 'Booking created successfully',
     type: BookingResponseDto,
   })
-  async createBooking(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: CreateBookingDto,
-  ) {
+  async createBooking(@CurrentTenant() tenantId: string, @Body() dto: CreateBookingDto) {
     const booking = await this.bookingService.createBooking(tenantId, dto);
     return {
       success: true,
@@ -113,7 +107,11 @@ export class BookingController {
   @Get()
   @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all bookings' })
-  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
+  })
   @ApiQuery({ name: 'customerId', required: false })
   @ApiQuery({ name: 'fromDate', required: false })
   @ApiQuery({ name: 'toDate', required: false })
@@ -154,10 +152,7 @@ export class BookingController {
   @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get booking by ID' })
   @ApiParam({ name: 'id', description: 'Booking ID' })
-  async getBooking(
-    @CurrentTenant() tenantId: string,
-    @Param('id') bookingId: string,
-  ) {
+  async getBooking(@CurrentTenant() tenantId: string, @Param('id') bookingId: string) {
     const booking = await this.bookingService.findById(tenantId, bookingId);
     return {
       success: true,
@@ -229,11 +224,7 @@ export class BookingController {
     @CurrentTenant() tenantId: string,
     @Query() query: FindAvailableSlotsDto,
   ) {
-    const slots = await this.slotService.findAvailableSlots(
-      tenantId,
-      query.date,
-      query.duration,
-    );
+    const slots = await this.slotService.findAvailableSlots(tenantId, query.date, query.duration);
 
     return {
       success: true,
@@ -248,10 +239,7 @@ export class BookingController {
   @Post('slots')
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new booking slot' })
-  async createSlot(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: CreateSlotDto,
-  ) {
+  async createSlot(@CurrentTenant() tenantId: string, @Body() dto: CreateSlotDto) {
     const slot = await this.slotService.createSlot(tenantId, dto);
     return {
       success: true,
@@ -262,10 +250,7 @@ export class BookingController {
   @Get('slots/:id')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get slot by ID' })
-  async getSlot(
-    @CurrentTenant() tenantId: string,
-    @Param('id') slotId: string,
-  ) {
+  async getSlot(@CurrentTenant() tenantId: string, @Param('id') slotId: string) {
     const slot = await this.slotService.findById(tenantId, slotId);
     return {
       success: true,
@@ -292,10 +277,7 @@ export class BookingController {
   @Delete('slots/:id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete a slot' })
-  async deleteSlot(
-    @CurrentTenant() tenantId: string,
-    @Param('id') slotId: string,
-  ) {
+  async deleteSlot(@CurrentTenant() tenantId: string, @Param('id') slotId: string) {
     await this.slotService.deleteSlot(tenantId, slotId);
     return {
       success: true,

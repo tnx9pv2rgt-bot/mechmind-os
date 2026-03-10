@@ -1,19 +1,15 @@
 /**
  * FEATURE ACCESS SERVICE
- * 
+ *
  * Centralized feature gating for MechMind OS
  * Provides methods to check if a tenant can access specific features
  */
 
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
-import { 
-  SubscriptionPlan, 
-  FeatureFlag, 
-  SubscriptionStatus 
-} from '@prisma/client';
-import { 
-  PLAN_FEATURES, 
+import { SubscriptionPlan, FeatureFlag, SubscriptionStatus } from '@prisma/client';
+import {
+  PLAN_FEATURES,
   AI_ADDON_FEATURES,
   PLAN_LIMITS,
   getFeaturesForPlan,
@@ -56,10 +52,7 @@ export class FeatureAccessService {
   /**
    * Check if a tenant can access a specific feature
    */
-  async canAccessFeature(
-    tenantId: string,
-    feature: FeatureFlag
-  ): Promise<FeatureAccessCheck> {
+  async canAccessFeature(tenantId: string, feature: FeatureFlag): Promise<FeatureAccessCheck> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { tenantId },
       include: { features: true },
@@ -81,15 +74,10 @@ export class FeatureAccessService {
     }
 
     // Check if feature is explicitly enabled in subscription
-    const featureEnabled = subscription.features.find(
-      f => f.feature === feature && f.enabled
-    );
+    const featureEnabled = subscription.features.find(f => f.feature === feature && f.enabled);
 
     // Check if feature is included in plan
-    const planFeatures = getFeaturesForPlan(
-      subscription.plan,
-      subscription.aiAddonEnabled
-    );
+    const planFeatures = getFeaturesForPlan(subscription.plan, subscription.aiAddonEnabled);
     const featureInPlan = planFeatures.includes(feature);
 
     // Special case: AI features require AI add-on
@@ -122,30 +110,30 @@ export class FeatureAccessService {
    */
   async canAccessFeatures(
     tenantId: string,
-    features: FeatureFlag[]
+    features: FeatureFlag[],
   ): Promise<Record<FeatureFlag, FeatureAccessCheck>> {
     const results = await Promise.all(
-      features.map(async (feature) => ({
+      features.map(async feature => ({
         feature,
         check: await this.canAccessFeature(tenantId, feature),
-      }))
+      })),
     );
 
-    return results.reduce((acc, { feature, check }) => {
-      acc[feature] = check;
-      return acc;
-    }, {} as Record<string, FeatureAccessCheck>) as Record<FeatureFlag, FeatureAccessCheck>;
+    return results.reduce(
+      (acc, { feature, check }) => {
+        acc[feature] = check;
+        return acc;
+      },
+      {} as Record<string, FeatureAccessCheck>,
+    ) as Record<FeatureFlag, FeatureAccessCheck>;
   }
 
   /**
    * Assert that a tenant can access a feature (throws if not)
    */
-  async assertCanAccessFeature(
-    tenantId: string,
-    feature: FeatureFlag
-  ): Promise<void> {
+  async assertCanAccessFeature(tenantId: string, feature: FeatureFlag): Promise<void> {
     const check = await this.canAccessFeature(tenantId, feature);
-    
+
     if (!check.allowed) {
       throw new ForbiddenException({
         message: check.reason,
@@ -179,18 +167,15 @@ export class FeatureAccessService {
     return {
       users: this.checkLimit(currentUsage.users, limits.maxUsers),
       locations: this.checkLimit(currentUsage.locations, limits.maxLocations),
-      apiCalls: this.checkLimit(
-        subscription.apiCallsUsed, 
-        limits.maxApiCallsPerMonth
-      ),
+      apiCalls: this.checkLimit(subscription.apiCallsUsed, limits.maxApiCallsPerMonth),
       storage: this.checkLimit(
-        Number(subscription.storageUsedBytes), 
-        limits.maxStorageBytes ? Number(limits.maxStorageBytes) : null
+        Number(subscription.storageUsedBytes),
+        limits.maxStorageBytes ? Number(limits.maxStorageBytes) : null,
       ),
       customers: this.checkLimit(currentUsage.customers, limits.maxCustomers),
       inspections: this.checkLimit(
-        currentUsage.inspectionsThisMonth, 
-        limits.maxInspectionsPerMonth
+        currentUsage.inspectionsThisMonth,
+        limits.maxInspectionsPerMonth,
       ),
     };
   }
@@ -198,10 +183,7 @@ export class FeatureAccessService {
   /**
    * Check a specific limit
    */
-  async checkSpecificLimit(
-    tenantId: string,
-    limitType: keyof PlanLimits
-  ): Promise<LimitCheck> {
+  async checkSpecificLimit(tenantId: string, limitType: keyof PlanLimits): Promise<LimitCheck> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { tenantId },
     });
@@ -245,7 +227,7 @@ export class FeatureAccessService {
    */
   async canAddResource(
     tenantId: string,
-    resourceType: 'user' | 'location' | 'customer'
+    resourceType: 'user' | 'location' | 'customer',
   ): Promise<LimitCheck> {
     const limitTypeMap: Record<string, keyof PlanLimits> = {
       user: 'maxUsers',
@@ -254,16 +236,14 @@ export class FeatureAccessService {
     };
 
     const check = await this.checkSpecificLimit(tenantId, limitTypeMap[resourceType]);
-    
+
     // Simulate adding one more
     const simulatedCheck: LimitCheck = {
       ...check,
       current: check.current + 1,
       remaining: check.limit !== null ? Math.max(0, check.limit - check.current - 1) : Infinity,
       withinLimit: check.limit === null || check.current + 1 <= check.limit,
-      percentageUsed: check.limit !== null 
-        ? ((check.current + 1) / check.limit) * 100 
-        : 0,
+      percentageUsed: check.limit !== null ? ((check.current + 1) / check.limit) * 100 : 0,
     };
 
     return simulatedCheck;
@@ -272,12 +252,9 @@ export class FeatureAccessService {
   /**
    * Assert that tenant is within a specific limit
    */
-  async assertWithinLimit(
-    tenantId: string,
-    limitType: keyof PlanLimits
-  ): Promise<void> {
+  async assertWithinLimit(tenantId: string, limitType: keyof PlanLimits): Promise<void> {
     const check = await this.checkSpecificLimit(tenantId, limitType);
-    
+
     if (!check.withinLimit) {
       const resourceName = this.getResourceNameFromLimitType(limitType);
       throw new ForbiddenException({
@@ -299,17 +276,16 @@ export class FeatureAccessService {
   async recordApiCall(
     tenantId: string,
     endpoint: string,
-    bytesTransferred: number = 0
+    bytesTransferred: number = 0,
   ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async tx => {
       // Update subscription counters
       await tx.subscription.update({
         where: { tenantId },
         data: {
           apiCallsUsed: { increment: 1 },
-          storageUsedBytes: bytesTransferred > 0 
-            ? { increment: BigInt(bytesTransferred) } 
-            : undefined,
+          storageUsedBytes:
+            bytesTransferred > 0 ? { increment: BigInt(bytesTransferred) } : undefined,
         },
       });
 
@@ -363,7 +339,7 @@ export class FeatureAccessService {
         start: subscription.currentPeriodStart,
         end: subscription.currentPeriodEnd,
         daysRemaining: Math.ceil(
-          (subscription.currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          (subscription.currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
         ),
       },
       usage: {
@@ -375,32 +351,36 @@ export class FeatureAccessService {
         locations: {
           current: currentUsage.locations,
           limit: limits.maxLocations,
-          percentage: limits.maxLocations ? (currentUsage.locations / limits.maxLocations) * 100 : 0,
+          percentage: limits.maxLocations
+            ? (currentUsage.locations / limits.maxLocations) * 100
+            : 0,
         },
         apiCalls: {
           current: subscription.apiCallsUsed,
           limit: limits.maxApiCallsPerMonth,
-          percentage: limits.maxApiCallsPerMonth 
-            ? (subscription.apiCallsUsed / limits.maxApiCallsPerMonth) * 100 
+          percentage: limits.maxApiCallsPerMonth
+            ? (subscription.apiCallsUsed / limits.maxApiCallsPerMonth) * 100
             : 0,
         },
         storage: {
           current: Number(subscription.storageUsedBytes),
           limit: limits.maxStorageBytes ? Number(limits.maxStorageBytes) : null,
-          percentage: limits.maxStorageBytes 
-            ? (Number(subscription.storageUsedBytes) / Number(limits.maxStorageBytes)) * 100 
+          percentage: limits.maxStorageBytes
+            ? (Number(subscription.storageUsedBytes) / Number(limits.maxStorageBytes)) * 100
             : 0,
         },
         customers: {
           current: currentUsage.customers,
           limit: limits.maxCustomers,
-          percentage: limits.maxCustomers ? (currentUsage.customers / limits.maxCustomers) * 100 : 0,
+          percentage: limits.maxCustomers
+            ? (currentUsage.customers / limits.maxCustomers) * 100
+            : 0,
         },
         inspections: {
           current: currentUsage.inspectionsThisMonth,
           limit: limits.maxInspectionsPerMonth,
-          percentage: limits.maxInspectionsPerMonth 
-            ? (currentUsage.inspectionsThisMonth / limits.maxInspectionsPerMonth) * 100 
+          percentage: limits.maxInspectionsPerMonth
+            ? (currentUsage.inspectionsThisMonth / limits.maxInspectionsPerMonth) * 100
             : 0,
         },
       },
@@ -412,11 +392,13 @@ export class FeatureAccessService {
   // ==========================================
 
   private isSubscriptionActive(status: SubscriptionStatus): boolean {
-    return ([
-      SubscriptionStatus.ACTIVE,
-      SubscriptionStatus.TRIAL,
-      SubscriptionStatus.PAST_DUE,
-    ] as SubscriptionStatus[]).includes(status);
+    return (
+      [
+        SubscriptionStatus.ACTIVE,
+        SubscriptionStatus.TRIAL,
+        SubscriptionStatus.PAST_DUE,
+      ] as SubscriptionStatus[]
+    ).includes(status);
   }
 
   private getMinimumPlanForFeature(feature: FeatureFlag): SubscriptionPlan {
@@ -468,7 +450,12 @@ export class FeatureAccessService {
     };
   }
 
-  private async getCurrentUsage(tenantId: string): Promise<{ users: number; locations: number; customers: number; inspectionsThisMonth: number }> {
+  private async getCurrentUsage(tenantId: string): Promise<{
+    users: number;
+    locations: number;
+    customers: number;
+    inspectionsThisMonth: number;
+  }> {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);

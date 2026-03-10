@@ -1,6 +1,6 @@
 /**
  * PRICING CONFIGURATION
- * 
+ *
  * Centralized pricing configuration for MechMind OS
  * Easy to modify prices, features, and limits
  */
@@ -29,8 +29,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, PlanPricing> = {
     name: 'Small',
     nameIt: 'Piccole',
     description: 'Perfect for small auto repair shops (1-3 employees)',
-    monthlyPrice: 100.00,
-    yearlyPrice: 1020.00, // €100 * 12 * 0.85 (15% discount)
+    monthlyPrice: 100.0,
+    yearlyPrice: 1020.0, // €100 * 12 * 0.85 (15% discount)
     yearlyDiscountPercent: 15,
     stripePriceId: process.env.STRIPE_PRICE_SMALL,
     isCustomPricing: false,
@@ -40,8 +40,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, PlanPricing> = {
     name: 'Medium',
     nameIt: 'Medie',
     description: 'For growing businesses (4-10 employees, 1-2 locations)',
-    monthlyPrice: 390.90,
-    yearlyPrice: 3990.00, // €390.90 * 12 * 0.85 (15% discount)
+    monthlyPrice: 390.9,
+    yearlyPrice: 3990.0, // €390.90 * 12 * 0.85 (15% discount)
     yearlyDiscountPercent: 15,
     stripePriceId: process.env.STRIPE_PRICE_MEDIUM,
     isCustomPricing: false,
@@ -78,8 +78,8 @@ export const AI_ADDON = {
   name: 'AI Assistant',
   nameIt: 'Assistente AI',
   description: 'AI-powered vehicle inspections and customer insights',
-  monthlyPrice: 200.00,
-  yearlyPrice: 2040.00, // €200 * 12 * 0.85
+  monthlyPrice: 200.0,
+  yearlyPrice: 2040.0, // €200 * 12 * 0.85
   stripePriceId: process.env.STRIPE_PRICE_AI_ADDON,
 };
 
@@ -143,10 +143,7 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, FeatureFlag[]> = {
     FeatureFlag.OBD_INTEGRATION,
     FeatureFlag.INVENTORY_MANAGEMENT,
   ],
-  [SubscriptionPlan.SMALL]: [
-    FeatureFlag.OBD_INTEGRATION,
-    FeatureFlag.INVENTORY_MANAGEMENT,
-  ],
+  [SubscriptionPlan.SMALL]: [FeatureFlag.OBD_INTEGRATION, FeatureFlag.INVENTORY_MANAGEMENT],
   [SubscriptionPlan.MEDIUM]: [
     FeatureFlag.MULTI_LOCATION,
     FeatureFlag.API_ACCESS,
@@ -304,7 +301,10 @@ export function getPlanPrice(plan: SubscriptionPlan, billingCycle: 'monthly' | '
   return billingCycle === 'yearly' ? pricing.yearlyPrice : pricing.monthlyPrice;
 }
 
-export function getFormattedPrice(plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly'): string {
+export function getFormattedPrice(
+  plan: SubscriptionPlan,
+  billingCycle: 'monthly' | 'yearly',
+): string {
   const price = getPlanPrice(plan, billingCycle);
   if (PLAN_PRICING[plan].isCustomPricing) {
     return 'Custom';
@@ -320,27 +320,24 @@ export function calculateProratedAmount(
   newPlan: SubscriptionPlan,
   billingCycle: 'monthly' | 'yearly',
   daysRemaining: number,
-  daysInPeriod: number = 30
+  daysInPeriod: number = 30,
 ): number {
   const oldPrice = getPlanPrice(oldPlan, billingCycle);
   const newPrice = getPlanPrice(newPlan, billingCycle);
-  
+
   const remainingValue = (oldPrice / daysInPeriod) * daysRemaining;
   const newValue = (newPrice / daysInPeriod) * daysRemaining;
-  
+
   return Math.round((newValue - remainingValue) * 100) / 100;
 }
 
-export function getFeaturesForPlan(
-  plan: SubscriptionPlan,
-  hasAiAddon: boolean
-): FeatureFlag[] {
+export function getFeaturesForPlan(plan: SubscriptionPlan, hasAiAddon: boolean): FeatureFlag[] {
   const baseFeatures = [...PLAN_FEATURES[plan]];
-  
+
   if (hasAiAddon) {
     baseFeatures.push(...AI_ADDON_FEATURES);
   }
-  
+
   return [...new Set(baseFeatures)];
 }
 
@@ -348,12 +345,12 @@ export function formatBytes(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let size = bytes;
   let unitIndex = 0;
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
     unitIndex++;
   }
-  
+
   return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
 

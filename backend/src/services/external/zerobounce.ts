@@ -58,15 +58,15 @@ export class ZeroBounceService {
   constructor(private readonly configService: ConfigService) {
     this.isDevelopment = this.configService.get('NODE_ENV') === 'development';
     this.apiKey = this.configService.get('ZEROBOUNCE_API_KEY') || '';
-    
+
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
       db: parseInt(this.configService.get('REDIS_DB') || '0'),
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: times => Math.min(times * 50, 2000),
     });
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', err => {
       this.logger.error('Redis connection error:', err.message);
     });
   }
@@ -76,7 +76,7 @@ export class ZeroBounceService {
    */
   async verifyEmail(email: string, ipAddress?: string): Promise<EmailVerificationResult> {
     const normalizedEmail = this.normalizeEmail(email);
-    
+
     if (!this.isValidEmailFormat(normalizedEmail)) {
       return {
         email: normalizedEmail,
@@ -127,10 +127,9 @@ export class ZeroBounceService {
         params.append('ip_address', ipAddress);
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/validate?${params.toString()}`,
-        { method: 'GET' }
-      );
+      const response = await fetch(`${this.baseUrl}/validate?${params.toString()}`, {
+        method: 'GET',
+      });
 
       if (!response.ok) {
         throw new Error(`ZeroBounce API HTTP error: ${response.status}`);
@@ -147,11 +146,11 @@ export class ZeroBounceService {
       return result;
     } catch (error) {
       this.logger.error(`Email verification error for ${normalizedEmail}:`, error.message);
-      
+
       if (this.isDevelopment) {
         return this.getMockResult(normalizedEmail);
       }
-      
+
       throw error;
     }
   }
@@ -161,15 +160,13 @@ export class ZeroBounceService {
    */
   async verifyMultipleEmails(emails: string[]): Promise<Map<string, EmailVerificationResult>> {
     const results = new Map<string, EmailVerificationResult>();
-    
+
     // Process in batches
     const batchSize = 5;
     for (let i = 0; i < emails.length; i += batchSize) {
       const batch = emails.slice(i, i + batchSize);
-      const batchResults = await Promise.allSettled(
-        batch.map(email => this.verifyEmail(email))
-      );
-      
+      const batchResults = await Promise.allSettled(batch.map(email => this.verifyEmail(email)));
+
       batch.forEach((email, index) => {
         const result = batchResults[index];
         if (result.status === 'fulfilled') {
@@ -191,12 +188,12 @@ export class ZeroBounceService {
           });
         }
       });
-      
+
       if (i + batchSize < emails.length) {
         await this.delay(1000);
       }
     }
-    
+
     return results;
   }
 
@@ -205,7 +202,7 @@ export class ZeroBounceService {
    */
   async uploadBulkVerification(
     fileBuffer: Buffer,
-    fileName: string
+    fileName: string,
   ): Promise<BulkVerificationResult> {
     if (this.isDevelopment && !this.apiKey) {
       return {
@@ -223,19 +220,21 @@ export class ZeroBounceService {
       // Use multipart form data for file upload
       const boundary = `----FormBoundary${Math.random().toString(36).substring(2)}`;
       const chunks: Buffer[] = [];
-      
+
       // Add api_key field
       chunks.push(Buffer.from(`--${boundary}\r\n`));
       chunks.push(Buffer.from(`Content-Disposition: form-data; name="api_key"\r\n\r\n`));
       chunks.push(Buffer.from(`${this.apiKey}\r\n`));
-      
+
       // Add file field
       chunks.push(Buffer.from(`--${boundary}\r\n`));
-      chunks.push(Buffer.from(`Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n`));
+      chunks.push(
+        Buffer.from(`Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n`),
+      );
       chunks.push(Buffer.from(`Content-Type: text/csv\r\n\r\n`));
       chunks.push(fileBuffer);
       chunks.push(Buffer.from(`\r\n--${boundary}--\r\n`));
-      
+
       const body = Buffer.concat(chunks);
 
       const response = await fetch(`${this.bulkUrl}/sendfile`, {
@@ -252,7 +251,7 @@ export class ZeroBounceService {
       }
 
       const data = await response.json();
-      
+
       if (data.success === false) {
         throw new Error(`ZeroBounce Bulk API error: ${data.message}`);
       }
@@ -293,21 +292,19 @@ export class ZeroBounceService {
         file_id: fileId,
       });
 
-      const response = await fetch(
-        `${this.bulkUrl}/filestatus?${params.toString()}`
-      );
+      const response = await fetch(`${this.bulkUrl}/filestatus?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`ZeroBounce Status API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       const statusMap: Record<string, BulkVerificationResult['status']> = {
-        'Pending': 'pending',
-        'Processing': 'pending',
-        'Completed': 'completed',
-        'Error': 'error',
+        Pending: 'pending',
+        Processing: 'pending',
+        Completed: 'completed',
+        Error: 'error',
       };
 
       return {
@@ -338,9 +335,7 @@ export class ZeroBounceService {
         file_id: fileId,
       });
 
-      const response = await fetch(
-        `${this.bulkUrl}/getfile?${params.toString()}`
-      );
+      const response = await fetch(`${this.bulkUrl}/getfile?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`ZeroBounce Download API HTTP error: ${response.status}`);
@@ -366,9 +361,7 @@ export class ZeroBounceService {
         api_key: this.apiKey,
       });
 
-      const response = await fetch(
-        `${this.baseUrl}/getcredits?${params.toString()}`
-      );
+      const response = await fetch(`${this.baseUrl}/getcredits?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`ZeroBounce Credits API HTTP error: ${response.status}`);
@@ -391,7 +384,7 @@ export class ZeroBounceService {
 
     // Regex base per email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (!normalizedEmail) {
       errors.push('Email is empty');
       return { valid: false, errors };
@@ -428,10 +421,14 @@ export class ZeroBounceService {
 
     // Check disposable domains (lista base)
     const disposableDomains = [
-      'tempmail.com', 'throwaway.com', 'mailinator.com',
-      'guerrillamail.com', '10minutemail.com', 'yopmail.com',
+      'tempmail.com',
+      'throwaway.com',
+      'mailinator.com',
+      'guerrillamail.com',
+      '10minutemail.com',
+      'yopmail.com',
     ];
-    
+
     if (domain && disposableDomains.includes(domain.toLowerCase())) {
       errors.push('Disposable email addresses are not allowed');
     }
@@ -443,13 +440,13 @@ export class ZeroBounceService {
 
   private parseApiResponse(email: string, data: any): EmailVerificationResult {
     const statusMap: Record<string, EmailVerificationResult['status']> = {
-      'valid': 'valid',
-      'invalid': 'invalid',
+      valid: 'valid',
+      invalid: 'invalid',
       'catch-all': 'catch-all',
-      'unknown': 'unknown',
-      'spamtrap': 'spamtrap',
-      'abuse': 'abuse',
-      'do_not_mail': 'do_not_mail',
+      unknown: 'unknown',
+      spamtrap: 'spamtrap',
+      abuse: 'abuse',
+      do_not_mail: 'do_not_mail',
     };
 
     return {
@@ -490,13 +487,13 @@ export class ZeroBounceService {
   private checkRateLimit(): boolean {
     const now = Date.now();
     this.requestTimestamps = this.requestTimestamps.filter(
-      timestamp => now - timestamp < this.rateLimitWindow
+      timestamp => now - timestamp < this.rateLimitWindow,
     );
-    
+
     if (this.requestTimestamps.length >= this.rateLimitMax) {
       return false;
     }
-    
+
     this.requestTimestamps.push(now);
     return true;
   }
@@ -523,7 +520,7 @@ export class ZeroBounceService {
     const validDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'mechmind.io', 'company.com'];
     const disposableDomains = ['tempmail.com', 'throwaway.com', 'mailinator.com'];
     const roleBased = ['info@', 'admin@', 'support@', 'sales@', 'contact@'];
-    
+
     const domain = email.split('@')[1] || '';
     const isDisposable = disposableDomains.includes(domain);
     const isRoleBased = roleBased.some(role => email.startsWith(role));
@@ -557,7 +554,7 @@ export class ZeroBounceService {
 // Standalone function
 export async function verifyEmail(
   email: string,
-  config?: { apiKey?: string; redisUrl?: string }
+  config?: { apiKey?: string; redisUrl?: string },
 ): Promise<EmailVerificationResult> {
   const service = new ZeroBounceService({
     get: (key: string) => {

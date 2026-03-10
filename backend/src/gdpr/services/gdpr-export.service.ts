@@ -31,7 +31,7 @@ interface CallRecording {
 }
 
 /**
- * Invoice entry - TODO: Add to schema.prisma
+ * Invoice entry
  */
 interface Invoice {
   id: string;
@@ -44,7 +44,7 @@ interface Invoice {
 }
 
 /**
- * Extended Vehicle with service tracking fields - TODO: Add to schema.prisma
+ * Extended Vehicle with service tracking fields
  */
 type VehicleWithServiceTracking = Vehicle & {
   lastServiceDate?: Date | null;
@@ -52,9 +52,9 @@ type VehicleWithServiceTracking = Vehicle & {
 };
 
 /**
- * Extended Booking with invoice relation and extra fields - TODO: Add to schema.prisma
+ * Extended Booking with invoice relation and extra fields
  */
-type BookingWithInvoices = Booking & { 
+type BookingWithInvoices = Booking & {
   invoices: Invoice[];
   // Extended fields not in current schema
   estimatedDurationMinutes?: number;
@@ -76,7 +76,7 @@ export interface CustomerDataExport {
   format: ExportFormat;
   customerId: string;
   tenantId: string;
-  
+
   personalData: {
     id: string;
     createdAt: Date;
@@ -88,7 +88,7 @@ export interface CustomerDataExport {
     email?: string;
     name?: string;
   };
-  
+
   vehicles: Array<{
     id: string;
     licensePlate: string;
@@ -98,7 +98,7 @@ export interface CustomerDataExport {
     lastServiceDate?: Date;
     nextServiceDueKm?: number;
   }>;
-  
+
   bookings: Array<{
     id: string;
     createdAt: Date;
@@ -108,7 +108,7 @@ export interface CustomerDataExport {
     totalCostCents?: bigint;
     paymentStatus: string;
   }>;
-  
+
   invoices: Array<{
     id: string;
     createdAt: Date;
@@ -117,7 +117,7 @@ export interface CustomerDataExport {
     status: string;
     paymentDate?: Date;
   }>;
-  
+
   consentHistory: Array<{
     type: string;
     granted: boolean;
@@ -125,7 +125,7 @@ export interface CustomerDataExport {
     ipSource?: string;
     method?: string;
   }>;
-  
+
   callRecordings: Array<{
     id: string;
     recordedAt: Date;
@@ -133,7 +133,7 @@ export interface CustomerDataExport {
     direction: string;
     // Note: Actual recording files handled separately
   }>;
-  
+
   metadata: {
     totalRecords: number;
     generatedBy: string;
@@ -177,13 +177,13 @@ export interface ExportJobResult {
 
 /**
  * GDPR Export Service
- * 
+ *
  * Handles data export requests for GDPR compliance:
  * - Art. 15: Right of Access (complete data export)
  * - Art. 20: Right to Data Portability (machine-readable format)
- * 
+ *
  * Provides secure, encrypted exports with audit logging.
- * 
+ *
  * @see GDPR Article 15 - Right of access by the data subject
  * @see GDPR Article 20 - Right to data portability
  */
@@ -200,7 +200,7 @@ export class GdprExportService {
 
   /**
    * Export customer data for GDPR access request (Art. 15)
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @param format - Export format (JSON, CSV, PDF)
@@ -220,9 +220,8 @@ export class GdprExportService {
     );
 
     // Fetch customer with all related data
-    const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
-      // TODO: Add customerEncrypted model to schema.prisma or use Customer model
-      return (prisma as any).customerEncrypted.findFirst({
+    const customer = await this.prisma.withTenant(tenantId, async prisma => {
+      return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
           vehicles: true,
@@ -241,18 +240,16 @@ export class GdprExportService {
     }
 
     // Fetch consent history
-    const consentHistory = await this.prisma.withTenant(tenantId, async (prisma) => {
-      // TODO: Add consentAuditLog model to schema.prisma
-      return (prisma as any).consentAuditLog.findMany({
+    const consentHistory = await this.prisma.withTenant(tenantId, async prisma => {
+      return prisma.consentAuditLog.findMany({
         where: { customerId, tenantId },
         orderBy: { timestamp: 'desc' },
       });
     });
 
     // Fetch call recordings
-    const callRecordings = await this.prisma.withTenant(tenantId, async (prisma) => {
-      // TODO: Add callRecordings model to schema.prisma
-      return (prisma as any).callRecordings.findMany({
+    const callRecordings = await this.prisma.withTenant(tenantId, async prisma => {
+      return prisma.callRecording.findMany({
         where: { customerId, tenantId },
         orderBy: { recordedAt: 'desc' },
       });
@@ -260,16 +257,18 @@ export class GdprExportService {
 
     // Decrypt PII for export
     const decryptedPhone = this.encryption.decrypt(customer.phoneEncrypted);
-    const decryptedEmail = customer.emailEncrypted 
-      ? this.encryption.decrypt(customer.emailEncrypted) 
+    const decryptedEmail = customer.emailEncrypted
+      ? this.encryption.decrypt(customer.emailEncrypted)
       : undefined;
-    const decryptedName = customer.nameEncrypted 
-      ? this.encryption.decrypt(customer.nameEncrypted) 
+    const decryptedName = customer.nameEncrypted
+      ? this.encryption.decrypt(customer.nameEncrypted)
       : undefined;
 
     const exportId = `export-${Date.now()}-${customerId.substring(0, 8)}`;
     const exportDate = new Date();
-    const expiresAt = new Date(exportDate.getTime() + this.EXPORT_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      exportDate.getTime() + this.EXPORT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     const exportData: CustomerDataExport = {
       exportId,
@@ -277,7 +276,7 @@ export class GdprExportService {
       format,
       customerId,
       tenantId,
-      
+
       personalData: {
         id: customer.id,
         createdAt: customer.createdAt,
@@ -288,7 +287,7 @@ export class GdprExportService {
         email: decryptedEmail,
         name: decryptedName,
       },
-      
+
       vehicles: customer.vehicles.map((v: VehicleWithServiceTracking) => ({
         id: v.id,
         licensePlate: v.licensePlate,
@@ -298,7 +297,7 @@ export class GdprExportService {
         lastServiceDate: v.lastServiceDate || undefined,
         nextServiceDueKm: v.nextServiceDueKm || undefined,
       })),
-      
+
       bookings: customer.bookings.map((b: BookingWithInvoices) => ({
         id: b.id,
         createdAt: b.createdAt,
@@ -308,8 +307,8 @@ export class GdprExportService {
         totalCostCents: b.totalCostCents || undefined,
         paymentStatus: b.paymentStatus,
       })),
-      
-      invoices: customer.bookings.flatMap((b: BookingWithInvoices) => 
+
+      invoices: customer.bookings.flatMap((b: BookingWithInvoices) =>
         b.invoices.map((i: Invoice) => ({
           id: i.id,
           createdAt: i.createdAt,
@@ -317,9 +316,9 @@ export class GdprExportService {
           taxCents: i.taxCents || undefined,
           status: i.status,
           paymentDate: i.paymentDate || undefined,
-        }))
+        })),
       ),
-      
+
       consentHistory: consentHistory.map((c: ConsentAuditLog) => ({
         type: c.consentType,
         granted: c.granted,
@@ -327,17 +326,21 @@ export class GdprExportService {
         ipSource: c.ipSource || undefined,
         method: c.collectionMethod || undefined,
       })),
-      
+
       callRecordings: callRecordings.map((r: CallRecording) => ({
         id: r.id,
         recordedAt: r.recordedAt,
         durationSeconds: r.durationSeconds,
         direction: r.direction,
       })),
-      
+
       metadata: {
-        totalRecords: 1 + customer.vehicles.length + customer.bookings.length + 
-                      consentHistory.length + callRecordings.length,
+        totalRecords:
+          1 +
+          customer.vehicles.length +
+          customer.bookings.length +
+          consentHistory.length +
+          callRecordings.length,
         generatedBy: 'MechMind OS GDPR Export Service',
         expiresAt,
         checksum: this.generateChecksum(customerId + exportDate.toISOString()),
@@ -345,9 +348,8 @@ export class GdprExportService {
     };
 
     // Log the export
-    await this.prisma.withTenant(tenantId, async (prisma) => {
-      // TODO: Add auditLog model to schema.prisma
-      await (prisma as any).auditLog.create({
+    await this.prisma.withTenant(tenantId, async prisma => {
+      await prisma.auditLog.create({
         data: {
           tenantId,
           action: 'DATA_EXPORT_CREATED',
@@ -366,9 +368,8 @@ export class GdprExportService {
 
     // Update request if provided
     if (requestId) {
-      await this.prisma.withTenant(tenantId, async (prisma) => {
-        // TODO: Add dataSubjectRequests model to schema.prisma
-        await (prisma as any).dataSubjectRequest.update({
+      await this.prisma.withTenant(tenantId, async prisma => {
+        await prisma.dataSubjectRequest.update({
           where: { id: requestId },
           data: {
             exportFormat: format,
@@ -389,18 +390,14 @@ export class GdprExportService {
 
   /**
    * Create machine-readable data export for portability (Art. 20)
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @returns Structured data in portable format
    */
-  async exportPortableData(
-    customerId: string,
-    tenantId: string,
-  ): Promise<DataPortabilityExport> {
-    const customer = await this.prisma.withTenant(tenantId, async (prisma) => {
-      // TODO: Add customerEncrypted model to schema.prisma or use Customer model
-      return (prisma as any).customerEncrypted.findFirst({
+  async exportPortableData(customerId: string, tenantId: string): Promise<DataPortabilityExport> {
+    const customer = await this.prisma.withTenant(tenantId, async prisma => {
+      return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
           vehicles: true,
@@ -415,11 +412,11 @@ export class GdprExportService {
 
     // Decrypt PII
     const decryptedPhone = this.encryption.decrypt(customer.phoneEncrypted);
-    const decryptedEmail = customer.emailEncrypted 
-      ? this.encryption.decrypt(customer.emailEncrypted) 
+    const decryptedEmail = customer.emailEncrypted
+      ? this.encryption.decrypt(customer.emailEncrypted)
       : undefined;
-    const decryptedName = customer.nameEncrypted 
-      ? this.encryption.decrypt(customer.nameEncrypted) 
+    const decryptedName = customer.nameEncrypted
+      ? this.encryption.decrypt(customer.nameEncrypted)
       : undefined;
 
     return {
@@ -460,7 +457,7 @@ export class GdprExportService {
 
   /**
    * Generate export in specified format
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @param format - Export format
@@ -517,7 +514,6 @@ export class GdprExportService {
         fileSize: Buffer.byteLength(serialized, 'utf8'),
         checksum,
       };
-
     } catch (error) {
       return {
         exportId,
@@ -530,7 +526,7 @@ export class GdprExportService {
 
   /**
    * Get export status
-   * 
+   *
    * @param exportId - Export ID
    * @returns Export job status
    */
@@ -545,10 +541,10 @@ export class GdprExportService {
    */
   private convertToCSV(data: CustomerDataExport): string {
     const rows: string[] = [];
-    
+
     // Header
     rows.push('Section,Field,Value');
-    
+
     // Personal data
     rows.push(`Personal,ID,${data.personalData.id}`);
     rows.push(`Personal,Created At,${data.personalData.createdAt}`);
@@ -557,7 +553,7 @@ export class GdprExportService {
     rows.push(`Personal,Name,${data.personalData.name || ''}`);
     rows.push(`Personal,GDPR Consent,${data.personalData.gdprConsent}`);
     rows.push(`Personal,Marketing Consent,${data.personalData.marketingConsent}`);
-    
+
     // Vehicles
     for (const vehicle of data.vehicles) {
       rows.push(`Vehicle,ID,${vehicle.id}`);
@@ -565,7 +561,7 @@ export class GdprExportService {
       rows.push(`Vehicle,Make,${vehicle.make || ''}`);
       rows.push(`Vehicle,Model,${vehicle.model || ''}`);
     }
-    
+
     // Bookings
     for (const booking of data.bookings) {
       rows.push(`Booking,ID,${booking.id}`);

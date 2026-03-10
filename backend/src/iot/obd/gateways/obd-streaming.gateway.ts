@@ -1,6 +1,6 @@
 /**
  * MechMind OS - OBD Streaming WebSocket Gateway
- * 
+ *
  * Real-time OBD data streaming via WebSocket
  */
 
@@ -18,11 +18,7 @@ import { WsJwtGuard } from '../../../auth/guards/ws-jwt.guard';
 import { ObdStreamingService } from '../services/obd-streaming.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
-import {
-  AdapterType,
-  ObdProtocol,
-  ObdSensorData,
-} from '../interfaces/obd-streaming.interface';
+import { AdapterType, ObdProtocol, ObdSensorData } from '../interfaces/obd-streaming.interface';
 
 interface StreamingClient {
   socket: Socket;
@@ -63,7 +59,7 @@ export class ObdStreamingGateway
   async handleConnection(client: Socket) {
     try {
       const { tenantId, userId } = client.data.user;
-      
+
       this.clients.set(client.id, {
         socket: client,
         tenantId,
@@ -72,7 +68,7 @@ export class ObdStreamingGateway
       });
 
       this.logger.log(`Client connected: ${client.id} (tenant: ${tenantId})`);
-      
+
       client.emit('connected', {
         message: 'Connected to OBD streaming gateway',
         clientId: client.id,
@@ -90,10 +86,10 @@ export class ObdStreamingGateway
       for (const deviceId of clientData.subscribedDevices) {
         this.redisSubscriber.unsubscribe(`obd:live:${deviceId}`);
       }
-      
+
       this.clients.delete(client.id);
     }
-    
+
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
@@ -113,15 +109,12 @@ export class ObdStreamingGateway
       if (!clientData) return;
 
       // Start streaming session
-      const stream = await this.streamingService.startStreaming(
-        payload.deviceId,
-        {
-          adapterType: payload.adapterType,
-          protocol: payload.protocol,
-          sensors: payload.sensors,
-          interval: payload.interval,
-        },
-      );
+      const stream = await this.streamingService.startStreaming(payload.deviceId, {
+        adapterType: payload.adapterType,
+        protocol: payload.protocol,
+        sensors: payload.sensors,
+        interval: payload.interval,
+      });
 
       // Subscribe to device updates
       clientData.subscribedDevices.add(payload.deviceId);
@@ -140,10 +133,7 @@ export class ObdStreamingGateway
   }
 
   @SubscribeMessage('stop-streaming')
-  async handleStopStreaming(
-    client: Socket,
-    payload: { streamId: string },
-  ) {
+  async handleStopStreaming(client: Socket, payload: { streamId: string }) {
     try {
       const clientData = this.clients.get(client.id);
       if (!clientData) return;
@@ -167,10 +157,7 @@ export class ObdStreamingGateway
   }
 
   @SubscribeMessage('subscribe-device')
-  async handleSubscribeDevice(
-    client: Socket,
-    payload: { deviceId: string },
-  ) {
+  async handleSubscribeDevice(client: Socket, payload: { deviceId: string }) {
     try {
       const clientData = this.clients.get(client.id);
       if (!clientData) return;
@@ -191,10 +178,7 @@ export class ObdStreamingGateway
   }
 
   @SubscribeMessage('unsubscribe-device')
-  async handleUnsubscribeDevice(
-    client: Socket,
-    payload: { deviceId: string },
-  ) {
+  async handleUnsubscribeDevice(client: Socket, payload: { deviceId: string }) {
     try {
       const clientData = this.clients.get(client.id);
       if (!clientData) return;
@@ -217,20 +201,14 @@ export class ObdStreamingGateway
     },
   ) {
     try {
-      await this.streamingService.processSensorData(
-        payload.streamId,
-        payload.data,
-      );
+      await this.streamingService.processSensorData(payload.streamId, payload.data);
     } catch (error) {
       client.emit('error', { message: error.message });
     }
   }
 
   @SubscribeMessage('capture-freeze-frame')
-  async handleCaptureFreezeFrame(
-    client: Socket,
-    payload: { deviceId: string; dtcCode: string },
-  ) {
+  async handleCaptureFreezeFrame(client: Socket, payload: { deviceId: string; dtcCode: string }) {
     try {
       const freezeFrame = await this.streamingService.captureFreezeFrame(
         payload.deviceId,
@@ -244,10 +222,7 @@ export class ObdStreamingGateway
   }
 
   @SubscribeMessage('get-mode06-tests')
-  async handleGetMode06Tests(
-    client: Socket,
-    payload: { deviceId: string },
-  ) {
+  async handleGetMode06Tests(client: Socket, payload: { deviceId: string }) {
     try {
       const results = await this.streamingService.getMode06Tests(payload.deviceId);
       client.emit('mode06-results', { deviceId: payload.deviceId, results });
@@ -262,10 +237,7 @@ export class ObdStreamingGateway
     payload: { deviceId: string; testType: 'LEAK' | 'PRESSURE' | 'VACUUM' },
   ) {
     try {
-      const test = await this.streamingService.executeEvapTest(
-        payload.deviceId,
-        payload.testType,
-      );
+      const test = await this.streamingService.executeEvapTest(payload.deviceId, payload.testType);
 
       client.emit('evap-test-started', test);
     } catch (error) {
@@ -274,14 +246,11 @@ export class ObdStreamingGateway
   }
 
   @SubscribeMessage('request-snapshot')
-  async handleRequestSnapshot(
-    client: Socket,
-    payload: { deviceId: string },
-  ) {
+  async handleRequestSnapshot(client: Socket, payload: { deviceId: string }) {
     try {
       // Get latest data from cache
       const snapshot = await this.redis.get(`obd:latest:${payload.deviceId}`);
-      
+
       client.emit('snapshot', {
         deviceId: payload.deviceId,
         data: snapshot ? JSON.parse(snapshot) : null,
@@ -295,7 +264,7 @@ export class ObdStreamingGateway
   private setupRedisSubscription() {
     this.redisSubscriber.on('message', (channel, message) => {
       const deviceId = channel.replace('obd:live:', '');
-      
+
       // Broadcast to all subscribed clients
       for (const clientData of this.clients.values()) {
         if (clientData.subscribedDevices.has(deviceId)) {

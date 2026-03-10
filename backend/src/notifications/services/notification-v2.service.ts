@@ -1,6 +1,9 @@
 /**
- * Notification Service v2
- * Enhanced service for SMS/WhatsApp/Email notifications with Twilio
+ * NotificationV2Service
+ *
+ * Enhanced notification delivery via Twilio (SMS + WhatsApp) and Prisma
+ * persistence. Handles retries, delivery status tracking, and per-customer
+ * channel preferences. Supersedes v1 for direct Twilio integration.
  */
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -9,10 +12,10 @@ import { PrismaService } from '@common/services/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import twilio from 'twilio';
 import type { Twilio } from 'twilio';
-import { 
-  Notification, 
-  NotificationType, 
-  NotificationChannel, 
+import {
+  Notification,
+  NotificationType,
+  NotificationChannel,
   NotificationStatus,
   Customer,
 } from '@prisma/client';
@@ -147,7 +150,7 @@ export class NotificationV2Service {
    */
   async queueNotification(data: CreateNotificationDTO): Promise<Notification> {
     // Generate message if not provided
-    let message = data.message;
+    const message = data.message;
     if (!message) {
       const customer = await this.prisma.customer.findUnique({
         where: { id: data.customerId },
@@ -172,10 +175,10 @@ export class NotificationV2Service {
     });
 
     this.logger.log(`Notification queued: ${notification.id}`);
-    
+
     // Emit event for immediate processing if needed
     this.eventEmitter.emit('notification.queued', notification);
-    
+
     return notification;
   }
 
@@ -211,10 +214,12 @@ export class NotificationV2Service {
       const phone = await this.decryptPhone(customer.encryptedPhone);
 
       // Generate message from template
-      const message = data.message || this.generateMessage(data.type, 'it', {
-        customerName: await this.getCustomerName(customer),
-        ...data.metadata,
-      });
+      const message =
+        data.message ||
+        this.generateMessage(data.type, 'it', {
+          customerName: await this.getCustomerName(customer),
+          ...data.metadata,
+        });
 
       // Send based on channel
       let messageId: string;
@@ -254,7 +259,7 @@ export class NotificationV2Service {
       };
     } catch (error) {
       this.logger.error(`Failed to send notification: ${error.message}`);
-      
+
       // Create failed notification record
       const notification = await this.prisma.notification.create({
         data: {
@@ -285,7 +290,7 @@ export class NotificationV2Service {
       where: {
         OR: [
           { status: NotificationStatus.PENDING },
-          { 
+          {
             status: NotificationStatus.FAILED,
             retries: { lt: this.prisma.notification.fields.maxRetries },
           },
@@ -319,11 +324,11 @@ export class NotificationV2Service {
    */
   async sendBatch(notifications: CreateNotificationDTO[]): Promise<NotificationResult[]> {
     const results: NotificationResult[] = [];
-    
+
     for (const data of notifications) {
       const result = await this.sendImmediate(data);
       results.push(result);
-      
+
       // Rate limiting - small delay between sends
       await this.delay(100);
     }
@@ -338,7 +343,10 @@ export class NotificationV2Service {
   /**
    * Get message template for notification type
    */
-  getTemplate(type: NotificationType, lang: string = 'it'): (vars: NotificationTemplateData) => string {
+  getTemplate(
+    type: NotificationType,
+    lang: string = 'it',
+  ): (vars: NotificationTemplateData) => string {
     const templates = lang === 'en' ? this.getEnglishTemplates() : this.getItalianTemplates();
     return templates[type] || templates.STATUS_UPDATE;
   }
@@ -356,13 +364,41 @@ export class NotificationV2Service {
    */
   getAvailableTemplates(): { type: NotificationType; name: string; description: string }[] {
     return [
-      { type: NotificationType.BOOKING_REMINDER, name: 'Promemoria Appuntamento', description: 'Inviato 24h prima dell\'appuntamento' },
-      { type: NotificationType.BOOKING_CONFIRMATION, name: 'Conferma Prenotazione', description: 'Inviato quando una prenotazione viene confermata' },
-      { type: NotificationType.STATUS_UPDATE, name: 'Aggiornamento Stato', description: 'Aggiornamenti sullo stato del veicolo' },
-      { type: NotificationType.INVOICE_READY, name: 'Fattura Pronta', description: 'Notifica quando la fattura è disponibile' },
-      { type: NotificationType.MAINTENANCE_DUE, name: 'Manutenzione Dovuta', description: 'Promemoria manutenzione periodica' },
-      { type: NotificationType.INSPECTION_COMPLETE, name: 'Ispezione Completata', description: 'Risultati ispezione digitale' },
-      { type: NotificationType.PAYMENT_REMINDER, name: 'Promemoria Pagamento', description: 'Sollecito pagamento fattura' },
+      {
+        type: NotificationType.BOOKING_REMINDER,
+        name: 'Promemoria Appuntamento',
+        description: "Inviato 24h prima dell'appuntamento",
+      },
+      {
+        type: NotificationType.BOOKING_CONFIRMATION,
+        name: 'Conferma Prenotazione',
+        description: 'Inviato quando una prenotazione viene confermata',
+      },
+      {
+        type: NotificationType.STATUS_UPDATE,
+        name: 'Aggiornamento Stato',
+        description: 'Aggiornamenti sullo stato del veicolo',
+      },
+      {
+        type: NotificationType.INVOICE_READY,
+        name: 'Fattura Pronta',
+        description: 'Notifica quando la fattura è disponibile',
+      },
+      {
+        type: NotificationType.MAINTENANCE_DUE,
+        name: 'Manutenzione Dovuta',
+        description: 'Promemoria manutenzione periodica',
+      },
+      {
+        type: NotificationType.INSPECTION_COMPLETE,
+        name: 'Ispezione Completata',
+        description: 'Risultati ispezione digitale',
+      },
+      {
+        type: NotificationType.PAYMENT_REMINDER,
+        name: 'Promemoria Pagamento',
+        description: 'Sollecito pagamento fattura',
+      },
     ];
   }
 
@@ -375,7 +411,7 @@ export class NotificationV2Service {
    */
   async updateStatus(messageId: string, status: string): Promise<void> {
     const notificationStatus = this.mapTwilioStatus(status);
-    
+
     await this.prisma.notification.updateMany({
       where: { messageId },
       data: {
@@ -452,13 +488,19 @@ export class NotificationV2Service {
   /**
    * Get customer notification preferences
    */
-  async getPreferences(customerId: string): Promise<{ channel: NotificationChannel; enabled: boolean }[]> {
+  async getPreferences(
+    customerId: string,
+  ): Promise<{ channel: NotificationChannel; enabled: boolean }[]> {
     const prefs = await this.prisma.customerNotificationPreference.findMany({
       where: { customerId },
     });
 
     // Return all channels with defaults if not set
-    const allChannels = [NotificationChannel.SMS, NotificationChannel.WHATSAPP, NotificationChannel.EMAIL];
+    const allChannels = [
+      NotificationChannel.SMS,
+      NotificationChannel.WHATSAPP,
+      NotificationChannel.EMAIL,
+    ];
     return allChannels.map(channel => ({
       channel,
       enabled: prefs.find(p => p.channel === channel)?.enabled ?? true,
@@ -493,17 +535,21 @@ export class NotificationV2Service {
   // PRIVATE HELPERS
   // ==========================================
 
-  private async processNotification(notification: Notification & { customer: Customer }): Promise<NotificationResult> {
+  private async processNotification(
+    notification: Notification & { customer: Customer },
+  ): Promise<NotificationResult> {
     const { customer, channel, type, message: existingMessage } = notification;
 
     // Decrypt phone
     const phone = await this.decryptPhone(customer.encryptedPhone);
 
     // Generate message if needed
-    const message = existingMessage || this.generateMessage(type, 'it', {
-      customerName: await this.getCustomerName(customer),
-      ...((notification.metadata as any) || {}),
-    });
+    const message =
+      existingMessage ||
+      this.generateMessage(type, 'it', {
+        customerName: await this.getCustomerName(customer),
+        ...((notification.metadata as any) || {}),
+      });
 
     // Send based on channel
     let messageId: string;
@@ -529,7 +575,10 @@ export class NotificationV2Service {
       },
     });
 
-    this.eventEmitter.emit('notification.sent', { ...notification, status: NotificationStatus.SENT });
+    this.eventEmitter.emit('notification.sent', {
+      ...notification,
+      status: NotificationStatus.SENT,
+    });
 
     return {
       success: true,
@@ -604,52 +653,58 @@ export class NotificationV2Service {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private getItalianTemplates(): Record<NotificationType, (vars: NotificationTemplateData) => string> {
+  private getItalianTemplates(): Record<
+    NotificationType,
+    (vars: NotificationTemplateData) => string
+  > {
     return {
-      [NotificationType.BOOKING_REMINDER]: (v) =>
+      [NotificationType.BOOKING_REMINDER]: v =>
         `Ciao ${v.customerName}, ti ricordiamo l'appuntamento domani ${v.date} alle ${v.time}${v.location ? ` presso ${v.location}` : ''}. Conferma o modifica: ${v.link || 'https://mechmind.io/portal'}`,
-      
-      [NotificationType.BOOKING_CONFIRMATION]: (v) =>
+
+      [NotificationType.BOOKING_CONFIRMATION]: v =>
         `Ciao ${v.customerName}, appuntamento confermato per ${v.date} alle ${v.time}${v.workshopName ? ` da ${v.workshopName}` : ''}${v.bookingCode ? ` (Codice: ${v.bookingCode})` : ''}. Ti aspettiamo!`,
-      
-      [NotificationType.STATUS_UPDATE]: (v) =>
+
+      [NotificationType.STATUS_UPDATE]: v =>
         `Ciao ${v.customerName}, aggiornamento: ${v.status || 'in lavorazione'}. ${v.link ? `Dettagli: ${v.link}` : ''}`,
-      
-      [NotificationType.INVOICE_READY]: (v) =>
+
+      [NotificationType.INVOICE_READY]: v =>
         `Ciao ${v.customerName}, fattura pronta. Importo: ${v.amount || 'N/D'}. Visualizza: ${v.link || 'https://mechmind.io/portal'}`,
-      
-      [NotificationType.MAINTENANCE_DUE]: (v) =>
+
+      [NotificationType.MAINTENANCE_DUE]: v =>
         `Ciao ${v.customerName}, ${v.service || 'manutenzione'} dovuta tra ${v.days || 'pochi'} giorni. Prenota: ${v.link || 'https://mechmind.io/portal'}`,
-      
-      [NotificationType.INSPECTION_COMPLETE]: (v) =>
+
+      [NotificationType.INSPECTION_COMPLETE]: v =>
         `Ciao ${v.customerName}, ispezione completata!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
-      
-      [NotificationType.PAYMENT_REMINDER]: (v) =>
+
+      [NotificationType.PAYMENT_REMINDER]: v =>
         `Ciao ${v.customerName}, promemoria pagamento fattura ${v.amount ? `di ${v.amount}` : ''}. Paga qui: ${v.link || 'https://mechmind.io/portal'}`,
     };
   }
 
-  private getEnglishTemplates(): Record<NotificationType, (vars: NotificationTemplateData) => string> {
+  private getEnglishTemplates(): Record<
+    NotificationType,
+    (vars: NotificationTemplateData) => string
+  > {
     return {
-      [NotificationType.BOOKING_REMINDER]: (v) =>
+      [NotificationType.BOOKING_REMINDER]: v =>
         `Hi ${v.customerName}, reminder: your appointment is tomorrow ${v.date} at ${v.time}${v.location ? ` at ${v.location}` : ''}. Confirm or modify: ${v.link || 'https://mechmind.io/portal'}`,
-      
-      [NotificationType.BOOKING_CONFIRMATION]: (v) =>
+
+      [NotificationType.BOOKING_CONFIRMATION]: v =>
         `Hi ${v.customerName}, appointment confirmed for ${v.date} at ${v.time}${v.workshopName ? ` at ${v.workshopName}` : ''}${v.bookingCode ? ` (Code: ${v.bookingCode})` : ''}. See you soon!`,
-      
-      [NotificationType.STATUS_UPDATE]: (v) =>
+
+      [NotificationType.STATUS_UPDATE]: v =>
         `Hi ${v.customerName}, status update: ${v.status || 'in progress'}. ${v.link ? `Details: ${v.link}` : ''}`,
-      
-      [NotificationType.INVOICE_READY]: (v) =>
+
+      [NotificationType.INVOICE_READY]: v =>
         `Hi ${v.customerName}, your invoice is ready. Amount: ${v.amount || 'N/A'}. View: ${v.link || 'https://mechmind.io/portal'}`,
-      
-      [NotificationType.MAINTENANCE_DUE]: (v) =>
+
+      [NotificationType.MAINTENANCE_DUE]: v =>
         `Hi ${v.customerName}, ${v.service || 'maintenance'} due in ${v.days || 'a few'} days. Book: ${v.link || 'https://mechmind.io/portal'}`,
-      
-      [NotificationType.INSPECTION_COMPLETE]: (v) =>
+
+      [NotificationType.INSPECTION_COMPLETE]: v =>
         `Hi ${v.customerName}, inspection completed!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
-      
-      [NotificationType.PAYMENT_REMINDER]: (v) =>
+
+      [NotificationType.PAYMENT_REMINDER]: v =>
         `Hi ${v.customerName}, payment reminder${v.amount ? ` for ${v.amount}` : ''}. Pay here: ${v.link || 'https://mechmind.io/portal'}`,
     };
   }

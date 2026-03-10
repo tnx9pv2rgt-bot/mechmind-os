@@ -43,10 +43,7 @@ export class BookingService {
    * Reserve a booking slot with advisory lock and serializable transaction
    * Implements race condition prevention as per spec
    */
-  async reserveSlot(
-    tenantId: string,
-    dto: ReserveSlotDto,
-  ): Promise<BookingReservationResult> {
+  async reserveSlot(tenantId: string, dto: ReserveSlotDto): Promise<BookingReservationResult> {
     const { slotId, customerId, vehicleId, serviceIds, notes } = dto;
 
     this.logger.log(`Attempting to reserve slot ${slotId} for tenant ${tenantId}`);
@@ -56,7 +53,7 @@ export class BookingService {
 
     if (!lockAcquired) {
       this.logger.warn(`Could not acquire lock for slot ${slotId}`);
-      
+
       // Queue for retry
       const job = await this.queueService.addBookingJob(
         'reserve-slot-retry',
@@ -80,7 +77,7 @@ export class BookingService {
     try {
       // Step 2-9: Execute booking creation in SERIALIZABLE transaction
       const result = await this.prisma.withSerializableTransaction(
-        async (tx) => {
+        async tx => {
           // Step 4: Validate slot is available
           const slot = await tx.bookingSlot.findFirst({
             where: {
@@ -152,7 +149,7 @@ export class BookingService {
               }),
               ...(serviceIds?.length && {
                 services: {
-                  create: serviceIds.map((serviceId) => ({
+                  create: serviceIds.map(serviceId => ({
                     service: { connect: { id: serviceId } },
                     price: 0, // Will be updated from service
                   })),
@@ -212,9 +209,7 @@ export class BookingService {
       // Handle Prisma errors
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2034') {
-          throw new ConflictException(
-            'Booking conflict detected. Please try again.',
-          );
+          throw new ConflictException('Booking conflict detected. Please try again.');
         }
       }
 
@@ -229,13 +224,20 @@ export class BookingService {
   /**
    * Create a new booking (without advisory lock - for internal use)
    */
-  async createBooking(
-    tenantId: string,
-    dto: CreateBookingDto,
-  ): Promise<any> {
-    const { customerId, vehicleId, slotId, scheduledDate, durationMinutes, serviceIds, notes, source, vapiCallId } = dto;
+  async createBooking(tenantId: string, dto: CreateBookingDto): Promise<any> {
+    const {
+      customerId,
+      vehicleId,
+      slotId,
+      scheduledDate,
+      durationMinutes,
+      serviceIds,
+      notes,
+      source,
+      vapiCallId,
+    } = dto;
 
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       // Validate slot
       const slot = await prisma.bookingSlot.findUnique({
         where: { id: slotId },
@@ -308,7 +310,7 @@ export class BookingService {
    * Find booking by ID
    */
   async findById(tenantId: string, bookingId: string): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const booking = await prisma.booking.findFirst({
         where: {
           id: bookingId,
@@ -351,17 +353,18 @@ export class BookingService {
       offset?: number;
     },
   ): Promise<{ bookings: any[]; total: number }> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const where: Prisma.BookingWhereInput = {
         tenantId,
         ...(filters?.status && { status: filters.status }),
         ...(filters?.customerId && { customerId: filters.customerId }),
-        ...(filters?.fromDate && filters?.toDate && {
-          scheduledDate: {
-            gte: filters.fromDate,
-            lte: filters.toDate,
-          },
-        }),
+        ...(filters?.fromDate &&
+          filters?.toDate && {
+            scheduledDate: {
+              gte: filters.fromDate,
+              lte: filters.toDate,
+            },
+          }),
       };
 
       const [bookings, total] = await Promise.all([
@@ -391,12 +394,8 @@ export class BookingService {
   /**
    * Update booking
    */
-  async updateBooking(
-    tenantId: string,
-    bookingId: string,
-    dto: UpdateBookingDto,
-  ): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async updateBooking(tenantId: string, bookingId: string, dto: UpdateBookingDto): Promise<any> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const existing = await prisma.booking.findFirst({
         where: { id: bookingId, tenantId },
       });
@@ -447,12 +446,8 @@ export class BookingService {
   /**
    * Cancel booking
    */
-  async cancelBooking(
-    tenantId: string,
-    bookingId: string,
-    reason?: string,
-  ): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async cancelBooking(tenantId: string, bookingId: string, reason?: string): Promise<any> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const booking = await prisma.booking.findFirst({
         where: { id: bookingId, tenantId },
         include: { slot: true },
@@ -505,19 +500,18 @@ export class BookingService {
    * Get booking statistics
    */
   async getStats(tenantId: string, fromDate?: Date, toDate?: Date): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
-      const dateFilter = fromDate && toDate ? {
-        scheduledDate: {
-          gte: fromDate,
-          lte: toDate,
-        },
-      } : {};
+    return this.prisma.withTenant(tenantId, async prisma => {
+      const dateFilter =
+        fromDate && toDate
+          ? {
+              scheduledDate: {
+                gte: fromDate,
+                lte: toDate,
+              },
+            }
+          : {};
 
-      const [
-        totalBookings,
-        statusCounts,
-        sourceCounts,
-      ] = await Promise.all([
+      const [totalBookings, statusCounts, sourceCounts] = await Promise.all([
         prisma.booking.count({
           where: { tenantId, ...dateFilter },
         }),
@@ -535,14 +529,20 @@ export class BookingService {
 
       return {
         total: totalBookings,
-        byStatus: statusCounts.reduce((acc, curr) => ({
-          ...acc,
-          [curr.status]: curr._count.status,
-        }), {}),
-        bySource: sourceCounts.reduce((acc, curr) => ({
-          ...acc,
-          [curr.source]: curr._count.source,
-        }), {}),
+        byStatus: statusCounts.reduce(
+          (acc, curr) => ({
+            ...acc,
+            [curr.status]: curr._count.status,
+          }),
+          {},
+        ),
+        bySource: sourceCounts.reduce(
+          (acc, curr) => ({
+            ...acc,
+            [curr.source]: curr._count.source,
+          }),
+          {},
+        ),
       };
     });
   }

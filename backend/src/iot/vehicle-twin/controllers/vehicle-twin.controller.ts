@@ -2,16 +2,7 @@
  * MechMind OS - Vehicle Twin Controller
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
@@ -41,9 +32,7 @@ export class VehicleTwinController {
   @Get(':vehicleId')
   @ApiOperation({ summary: 'Get vehicle twin state' })
   @ApiResponse({ status: 200, type: VehicleTwinStateDto })
-  async getTwinState(
-    @Param('vehicleId') vehicleId: string,
-  ): Promise<VehicleTwinStateDto> {
+  async getTwinState(@Param('vehicleId') vehicleId: string): Promise<VehicleTwinStateDto> {
     return await this.vehicleTwinService.getOrCreateTwin(vehicleId);
   }
 
@@ -97,9 +86,7 @@ export class VehicleTwinController {
   @Get(':vehicleId/alerts')
   @ApiOperation({ summary: 'Get predictive alerts' })
   @ApiResponse({ status: 200, type: [PredictiveAlertDto] })
-  async getPredictiveAlerts(
-    @Param('vehicleId') vehicleId: string,
-  ): Promise<PredictiveAlertDto[]> {
+  async getPredictiveAlerts(@Param('vehicleId') vehicleId: string): Promise<PredictiveAlertDto[]> {
     return await this.vehicleTwinService.getPredictiveAlerts(vehicleId);
   }
 
@@ -116,9 +103,7 @@ export class VehicleTwinController {
   @Get(':vehicleId/visualization-config')
   @ApiOperation({ summary: 'Get 3D visualization config' })
   @ApiResponse({ status: 200 })
-  async getVisualizationConfig(
-    @Param('vehicleId') vehicleId: string,
-  ): Promise<any> {
+  async getVisualizationConfig(@Param('vehicleId') vehicleId: string): Promise<any> {
     return await this.vehicleTwinService.getVisualizationConfig(vehicleId);
   }
 

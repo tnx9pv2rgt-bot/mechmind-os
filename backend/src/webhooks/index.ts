@@ -3,7 +3,18 @@
  * Endpoint per integrazioni con servizi esterni
  */
 
-import { Injectable, Logger, Controller, Post, Body, Headers, HttpException, HttpStatus, Req, Param } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  Controller,
+  Post,
+  Body,
+  Headers,
+  HttpException,
+  HttpStatus,
+  Req,
+  Param,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
@@ -81,7 +92,7 @@ export class SegmentWebhookService {
 
   private async handleTrackEvent(event: SegmentEvent): Promise<void> {
     const { event: eventName, userId, properties } = event;
-    
+
     // Map Segment events to internal analytics
     const eventMap: Record<string, string> = {
       'Booking Created': 'booking.created',
@@ -92,29 +103,27 @@ export class SegmentWebhookService {
     };
 
     const internalEvent = (eventName && eventMap[eventName]) || eventName || 'unknown';
-    
+
     // TODO: Emit to internal event bus or analytics service
     this.logger.log(`Analytics event: ${internalEvent}`, { userId, properties });
   }
 
   private async handleIdentifyEvent(event: SegmentEvent): Promise<void> {
     const { userId, traits } = event;
-    
+
     // Update user profile in internal systems
     this.logger.log(`User identified: ${userId}`, traits);
   }
 
   private async handlePageEvent(event: SegmentEvent): Promise<void> {
     const { userId, properties } = event;
-    
+
     this.logger.log(`Page viewed by ${userId}`, properties);
   }
 
   verifySignature(payload: string, signature: string, secret: string): boolean {
-    const expectedSignature = createHmac('sha1', secret)
-      .update(payload)
-      .digest('hex');
-    
+    const expectedSignature = createHmac('sha1', secret).update(payload).digest('hex');
+
     return signature === expectedSignature || signature === `sha1=${expectedSignature}`;
   }
 }
@@ -173,15 +182,15 @@ export class ZapierWebhookService {
 
   private async executeAutomation(event: string, data: Record<string, any>): Promise<string> {
     const automations: Record<string, () => Promise<string>> = {
-      'create_booking': async () => {
+      create_booking: async () => {
         // Create booking from external trigger
         return 'booking_created';
       },
-      'update_customer': async () => {
+      update_customer: async () => {
         // Update customer from external trigger
         return 'customer_updated';
       },
-      'send_notification': async () => {
+      send_notification: async () => {
         // Send notification
         return 'notification_sent';
       },
@@ -256,9 +265,9 @@ export class SlackWebhookService {
     this.logger.debug(`Slack command received: ${command.command}`);
 
     const handlers: Record<string, (cmd: SlackSlashCommand) => Promise<any>> = {
-      '/mechmind': async (cmd) => this.handleMechMindCommand(cmd),
-      '/booking': async (cmd) => this.handleBookingCommand(cmd),
-      '/customer': async (cmd) => this.handleCustomerCommand(cmd),
+      '/mechmind': async cmd => this.handleMechMindCommand(cmd),
+      '/booking': async cmd => this.handleBookingCommand(cmd),
+      '/customer': async cmd => this.handleCustomerCommand(cmd),
     };
 
     const handler = handlers[command.command];
@@ -282,7 +291,7 @@ export class SlackWebhookService {
       const response = await fetch('https://slack.com/api/chat.postMessage', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.botToken}`,
+          Authorization: `Bearer ${this.botToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -371,15 +380,10 @@ export class SlackWebhookService {
     };
   }
 
-  verifySignature(
-    body: string,
-    signature: string,
-    timestamp: string,
-    secret: string
-  ): boolean {
+  verifySignature(body: string, signature: string, timestamp: string, secret: string): boolean {
     const basestring = `v0:${timestamp}:${body}`;
     const mySignature = 'v0=' + createHmac('sha256', secret).update(basestring).digest('hex');
-    
+
     try {
       return mySignature === signature;
     } catch {
@@ -459,7 +463,7 @@ export class CRMWebhookService {
 
   async syncToCRM(
     provider: 'salesforce' | 'hubspot' | 'pipedrive',
-    data: Record<string, any>
+    data: Record<string, any>,
   ): Promise<boolean> {
     const configs = {
       salesforce: {
@@ -549,7 +553,7 @@ export class WebhookController {
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
       const body = (req as any).rawBody || JSON.stringify(req.body);
-      
+
       // Check timestamp (prevent replay attacks)
       const requestTimestamp = parseInt(timestamp, 10);
       const now = Math.floor(Date.now() / 1000);
@@ -601,7 +605,10 @@ export class WebhookController {
     return this.crmService.handleEvent(event);
   }
 
-  private normalizeCRMEvent(provider: 'salesforce' | 'hubspot' | 'pipedrive', payload: any): CRMEvent {
+  private normalizeCRMEvent(
+    provider: 'salesforce' | 'hubspot' | 'pipedrive',
+    payload: any,
+  ): CRMEvent {
     // Normalize different CRM webhook formats to common structure
     switch (provider) {
       case 'salesforce':

@@ -10,15 +10,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    CommonModule,
-    AuthModule,
-    NotificationsModule,
-  ],
+  imports: [CommonModule, AuthModule, NotificationsModule],
   controllers: [InspectionController],
-  providers: [
-    InspectionService,
-  ],
+  providers: [InspectionService],
   exports: [InspectionService],
 })
 export class DviModule {}

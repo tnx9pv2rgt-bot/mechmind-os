@@ -6,7 +6,7 @@
 export { GdprModule } from './gdpr.module';
 
 // Services
-export { 
+export {
   GdprDeletionService,
   DeletionJobPayload,
   DeletionSnapshot,

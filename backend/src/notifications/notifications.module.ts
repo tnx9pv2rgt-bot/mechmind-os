@@ -80,7 +80,7 @@ import { NotificationProcessor } from './processors/notification.processor';
 
     // Gateways
     NotificationsGateway,
-    
+
     // Processors
     EmailProcessor,
     NotificationProcessor,

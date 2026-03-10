@@ -2,16 +2,7 @@
  * MechMind OS - Parts Catalog Controller
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -96,10 +87,7 @@ export class PartsController {
   @Post('suppliers')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create supplier' })
-  async createSupplier(
-    @CurrentUser('tenantId') tenantId: string,
-    @Body() dto: CreateSupplierDto,
-  ) {
+  async createSupplier(@CurrentUser('tenantId') tenantId: string, @Body() dto: CreateSupplierDto) {
     return this.partsService.createSupplier(tenantId, dto);
   }
 
@@ -137,9 +125,7 @@ export class PartsController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Get low stock alerts' })
   @ApiResponse({ status: 200, type: [LowStockAlertDto] })
-  async getLowStockAlerts(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<LowStockAlertDto[]> {
+  async getLowStockAlerts(@CurrentUser('tenantId') tenantId: string): Promise<LowStockAlertDto[]> {
     return this.partsService.getLowStockAlerts(tenantId);
   }
 

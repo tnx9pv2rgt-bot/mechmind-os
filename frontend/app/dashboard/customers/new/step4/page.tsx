@@ -322,7 +322,7 @@ export default function Step4Page() {
             </h3>
           </div>
           <div className="space-y-3">
-            {formData.vehicles?.map((v: any, i: number) => (
+            {formData.vehicles?.map((v: { make?: string; model?: string; plate?: string; year?: number; km?: number; fuel?: string }, i: number) => (
               <motion.div 
                 key={i} 
                 initial={{ opacity: 0, x: -20 }}

@@ -13,12 +13,8 @@ export class VehicleService {
   /**
    * Create a new vehicle for a customer
    */
-  async create(
-    tenantId: string,
-    customerId: string,
-    dto: CreateVehicleDto,
-  ): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async create(tenantId: string, customerId: string, dto: CreateVehicleDto): Promise<any> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       // Verify customer exists
       const customer = await prisma.customer.findFirst({
         where: { id: customerId, tenantId },
@@ -57,9 +53,7 @@ export class VehicleService {
         },
       });
 
-      this.logger.log(
-        `Created vehicle ${vehicle.id} for customer ${customerId}`,
-      );
+      this.logger.log(`Created vehicle ${vehicle.id} for customer ${customerId}`);
 
       return vehicle;
     });
@@ -69,7 +63,7 @@ export class VehicleService {
    * Find vehicle by ID
    */
   async findById(tenantId: string, vehicleId: string): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
         where: { id: vehicleId },
         include: {
@@ -93,7 +87,7 @@ export class VehicleService {
    * Find vehicles by customer
    */
   async findByCustomer(tenantId: string, customerId: string): Promise<any[]> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       // Verify customer exists
       const customer = await prisma.customer.findFirst({
         where: { id: customerId, tenantId },
@@ -113,11 +107,8 @@ export class VehicleService {
   /**
    * Find vehicle by license plate
    */
-  async findByLicensePlate(
-    tenantId: string,
-    licensePlate: string,
-  ): Promise<any | null> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async findByLicensePlate(tenantId: string, licensePlate: string): Promise<any | null> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const normalizedPlate = licensePlate.toUpperCase().replace(/\s+/g, '');
 
       return prisma.vehicle.findFirst({
@@ -132,12 +123,8 @@ export class VehicleService {
   /**
    * Update vehicle
    */
-  async update(
-    tenantId: string,
-    vehicleId: string,
-    dto: UpdateVehicleDto,
-  ): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async update(tenantId: string, vehicleId: string, dto: UpdateVehicleDto): Promise<any> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
         where: { id: vehicleId },
       });
@@ -149,9 +136,7 @@ export class VehicleService {
       const updateData: any = {};
 
       if (dto.licensePlate) {
-        updateData.licensePlate = dto.licensePlate
-          .toUpperCase()
-          .replace(/\s+/g, '');
+        updateData.licensePlate = dto.licensePlate.toUpperCase().replace(/\s+/g, '');
       }
       if (dto.make) updateData.make = dto.make;
       if (dto.model) updateData.model = dto.model;
@@ -174,7 +159,7 @@ export class VehicleService {
    * Delete vehicle
    */
   async delete(tenantId: string, vehicleId: string): Promise<void> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
         where: { id: vehicleId },
       });

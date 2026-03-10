@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Business Intelligence Reporting Service
- * 
+ *
  * Provides analytics and reporting using PostgreSQL Materialized Views:
  * - Dashboard KPIs
  * - Revenue analytics
@@ -26,15 +26,11 @@ export class ReportingService {
       WHERE tenant_id = ${tenantId}::uuid
       LIMIT 1
     `;
-    
+
     return (result as any[])[0] || null;
   }
 
-  async getBookingMetrics(
-    tenantId: string,
-    fromDate: Date,
-    toDate: Date,
-  ) {
+  async getBookingMetrics(tenantId: string, fromDate: Date, toDate: Date) {
     return this.prisma.$queryRaw`
       SELECT * FROM mv_daily_booking_metrics
       WHERE tenant_id = ${tenantId}::uuid
@@ -44,26 +40,22 @@ export class ReportingService {
     `;
   }
 
-  async getRevenueAnalytics(
-    tenantId: string,
-    year: number,
-    month?: number,
-  ) {
+  async getRevenueAnalytics(tenantId: string, year: number, month?: number) {
     let query = `
       SELECT * FROM mv_revenue_analytics
       WHERE tenant_id = $1::uuid
         AND EXTRACT(YEAR FROM date) = $2
     `;
-    
+
     const params: any[] = [tenantId, year];
-    
+
     if (month) {
       query += ` AND EXTRACT(MONTH FROM date) = $3`;
       params.push(month);
     }
-    
+
     query += ` ORDER BY date DESC`;
-    
+
     return this.prisma.$queryRawUnsafe(query, ...params);
   }
 
@@ -109,26 +101,22 @@ export class ReportingService {
     `;
   }
 
-  async getMechanicPerformance(
-    tenantId: string,
-    year: number,
-    month?: number,
-  ) {
+  async getMechanicPerformance(tenantId: string, year: number, month?: number) {
     let query = `
       SELECT * FROM mv_mechanic_performance
       WHERE tenant_id = $1::uuid
         AND EXTRACT(YEAR FROM month) = $2
     `;
-    
+
     const params: any[] = [tenantId, year];
-    
+
     if (month) {
       query += ` AND EXTRACT(MONTH FROM month) = $3`;
       params.push(month);
     }
-    
+
     query += ` ORDER BY total_revenue_generated DESC`;
-    
+
     return this.prisma.$queryRawUnsafe(query, ...params);
   }
 
@@ -139,16 +127,16 @@ export class ReportingService {
       SELECT * FROM mv_inventory_status
       WHERE tenant_id = $1::uuid
     `;
-    
+
     const params: any[] = [tenantId];
-    
+
     if (status) {
       query += ` AND stock_status = $2`;
       params.push(status);
     }
-    
+
     query += ` ORDER BY inventory_value DESC`;
-    
+
     return this.prisma.$queryRawUnsafe(query, ...params);
   }
 
@@ -308,12 +296,7 @@ export class ReportingService {
   // ============== CUSTOM KPIs ==============
 
   async getCustomKPIs(tenantId: string) {
-    const [
-      bookingMetrics,
-      revenueMetrics,
-      customerMetrics,
-      inventoryMetrics,
-    ] = await Promise.all([
+    const [bookingMetrics, revenueMetrics, customerMetrics, inventoryMetrics] = await Promise.all([
       // Today's metrics
       this.prisma.$queryRaw`
         SELECT 

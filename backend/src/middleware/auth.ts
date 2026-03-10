@@ -7,9 +7,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { 
-  verifyAccessToken, 
-  verifyRefreshToken, 
+import {
+  verifyAccessToken,
+  verifyRefreshToken,
   decodeToken,
   TokenVerificationResult,
   DecodedToken,
@@ -20,10 +20,10 @@ import '../types/express';
 
 // Interfacce
 export interface AuthMiddlewareOptions {
-  optional?: boolean;           // Se true, non ritorna errore se manca token
-  allowExpired?: boolean;       // Se true, accetta token scaduti
-  requireRole?: string[];       // Ruoli richiesti
-  requireTenant?: boolean;      // Se true, richiede tenantId nel token
+  optional?: boolean; // Se true, non ritorna errore se manca token
+  allowExpired?: boolean; // Se true, accetta token scaduti
+  requireRole?: string[]; // Ruoli richiesti
+  requireTenant?: boolean; // Se true, richiede tenantId nel token
 }
 
 export interface AuthError {
@@ -69,13 +69,13 @@ const AUTH_ERRORS = {
  */
 export function extractTokenFromHeader(req: Request): string | null {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader) {
     return null;
   }
 
   const parts = authHeader.split(' ');
-  
+
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
     return null;
   }
@@ -89,7 +89,10 @@ export function extractTokenFromHeader(req: Request): string | null {
  * @param cookieName - Nome del cookie
  * @returns string | null
  */
-export function extractTokenFromCookie(req: Request, cookieName: string = 'accessToken'): string | null {
+export function extractTokenFromCookie(
+  req: Request,
+  cookieName: string = 'accessToken',
+): string | null {
   return req.cookies?.[cookieName] || null;
 }
 
@@ -101,7 +104,7 @@ export function verifyToken(options: AuthMiddlewareOptions = {}) {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Estrai token da header o cookie
     let token = extractTokenFromHeader(req);
-    
+
     if (!token) {
       token = extractTokenFromCookie(req);
     }
@@ -111,7 +114,7 @@ export function verifyToken(options: AuthMiddlewareOptions = {}) {
       if (options.optional) {
         return next();
       }
-      
+
       res.status(401).json({
         success: false,
         error: AUTH_ERRORS.NO_TOKEN,
@@ -187,7 +190,7 @@ export function extractUser(req: Request, res: Response, next: NextFunction): vo
 
   if (token) {
     const verification = verifyAccessToken(token);
-    
+
     if (verification.valid && verification.payload) {
       req.user = verification.payload;
       req.token = token;
@@ -261,10 +264,7 @@ export function requireTenant(req: Request, res: Response, next: NextFunction): 
  * Middleware combinato: richiede auth + ruolo specifico
  */
 export function requireAuthWithRole(...roles: string[]) {
-  const middlewares = [
-    requireAuth(),
-    requireRoles(...roles),
-  ];
+  const middlewares = [requireAuth(), requireRoles(...roles)];
 
   return (req: Request, res: Response, next: NextFunction): void => {
     let index = 0;
@@ -286,7 +286,11 @@ export function requireAuthWithRole(...roles: string[]) {
  * Middleware per refresh token endpoint
  * Verifica il refresh token e permette il rinnovo
  */
-export function verifyRefreshTokenMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function verifyRefreshTokenMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const token = req.body.refreshToken || extractTokenFromHeader(req);
 
   if (!token) {
@@ -325,7 +329,7 @@ export function verifyRefreshTokenMiddleware(req: Request, res: Response, next: 
 export function tenantCorsMiddleware(allowedOrigins: string[] = []) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const origin = req.headers.origin;
-    const tenantId = req.tenantId || req.headers['x-tenant-id'] as string;
+    const tenantId = req.tenantId || (req.headers['x-tenant-id'] as string);
 
     // Se non c'è origine o è Postman/localhost, permetti
     if (!origin || origin.includes('localhost') || origin.includes('postman')) {
@@ -333,8 +337,8 @@ export function tenantCorsMiddleware(allowedOrigins: string[] = []) {
     }
 
     // Verifica origine consentita
-    const isAllowed = allowedOrigins.some(allowed => 
-      origin === allowed || origin.endsWith(allowed.replace('*', ''))
+    const isAllowed = allowedOrigins.some(
+      allowed => origin === allowed || origin.endsWith(allowed.replace('*', '')),
     );
 
     if (!isAllowed && allowedOrigins.length > 0) {
@@ -353,7 +357,10 @@ export function tenantCorsMiddleware(allowedOrigins: string[] = []) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Tenant-Id');
+    res.header(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Tenant-Id',
+    );
 
     if (req.method === 'OPTIONS') {
       res.sendStatus(200);

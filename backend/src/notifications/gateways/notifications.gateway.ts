@@ -33,7 +33,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       // Simplified auth - in production use JWT verification
       client.data.userId = 'user-' + Math.random().toString(36).substr(2, 9);
       client.data.tenantId = 'tenant-001';
-      
+
       client.join(`tenant:${client.data.tenantId}`);
       client.join(`user:${client.data.userId}`);
 
@@ -65,7 +65,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   private extractToken(client: Socket): string | null {
-    return client.handshake.auth?.token || 
-           (typeof client.handshake.query?.token === 'string' ? client.handshake.query.token : null);
+    return (
+      client.handshake.auth?.token ||
+      (typeof client.handshake.query?.token === 'string' ? client.handshake.query.token : null)
+    );
   }
 }

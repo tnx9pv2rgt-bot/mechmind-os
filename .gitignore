@@ -69,3 +69,6 @@ terraform.rc
 *.dll
 *.so
 *.dylib
+
+# Embedded repos
+mechmind-os/

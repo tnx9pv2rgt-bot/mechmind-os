@@ -14,7 +14,7 @@ export {
 } from './redisRateLimiter';
 
 // Auth Middleware
-export { 
+export {
   verifyToken,
   requireAuth,
   extractUser,

@@ -14,15 +14,11 @@ export class BookingSlotService {
   /**
    * Find available slots for a date range
    */
-  async findAvailableSlots(
-    tenantId: string,
-    date: string,
-    duration?: number,
-  ): Promise<any[]> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async findAvailableSlots(tenantId: string, date: string, duration?: number): Promise<any[]> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
-      
+
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
@@ -42,9 +38,8 @@ export class BookingSlotService {
 
       // Filter by duration if specified
       if (duration) {
-        return slots.filter((slot) => {
-          const slotDuration =
-            (slot.endTime.getTime() - slot.startTime.getTime()) / 60000;
+        return slots.filter(slot => {
+          const slotDuration = (slot.endTime.getTime() - slot.startTime.getTime()) / 60000;
           return slotDuration >= duration;
         });
       }
@@ -57,7 +52,7 @@ export class BookingSlotService {
    * Create a new booking slot
    */
   async createSlot(tenantId: string, dto: CreateSlotDto): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const startTime = new Date(dto.startTime);
       const endTime = new Date(dto.endTime);
 
@@ -121,11 +116,11 @@ export class BookingSlotService {
     slotDurationMinutes: number = 60,
     workingHours: { start: number; end: number } = { start: 9, end: 18 },
   ): Promise<number> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const slots: Prisma.BookingSlotCreateManyInput[] = [];
-      
+
       const currentDate = new Date(startDate);
-      
+
       while (currentDate <= endDate) {
         // Skip weekends
         const dayOfWeek = currentDate.getDay();
@@ -138,7 +133,7 @@ export class BookingSlotService {
         for (let hour = workingHours.start; hour < workingHours.end; hour++) {
           const slotStart = new Date(currentDate);
           slotStart.setHours(hour, 0, 0, 0);
-          
+
           const slotEnd = new Date(slotStart);
           slotEnd.setMinutes(slotStart.getMinutes() + slotDurationMinutes);
 
@@ -171,7 +166,7 @@ export class BookingSlotService {
    * Get slot by ID
    */
   async findById(tenantId: string, slotId: string): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: {
           id: slotId,
@@ -198,12 +193,8 @@ export class BookingSlotService {
   /**
    * Update slot status
    */
-  async updateSlotStatus(
-    tenantId: string,
-    slotId: string,
-    status: SlotStatus,
-  ): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async updateSlotStatus(tenantId: string, slotId: string, status: SlotStatus): Promise<any> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: { id: slotId, tenantId },
       });
@@ -226,12 +217,8 @@ export class BookingSlotService {
   /**
    * Block a slot (e.g., for lunch break, maintenance)
    */
-  async blockSlot(
-    tenantId: string,
-    slotId: string,
-    reason?: string,
-  ): Promise<any> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async blockSlot(tenantId: string, slotId: string, reason?: string): Promise<any> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: { id: slotId, tenantId },
       });
@@ -259,7 +246,7 @@ export class BookingSlotService {
    * Delete a slot
    */
   async deleteSlot(tenantId: string, slotId: string): Promise<void> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: { id: slotId, tenantId },
       });
@@ -283,12 +270,8 @@ export class BookingSlotService {
   /**
    * Get slot availability for a date range
    */
-  async getAvailabilityForRange(
-    tenantId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<any[]> {
-    return this.prisma.withTenant(tenantId, async (prisma) => {
+  async getAvailabilityForRange(tenantId: string, startDate: Date, endDate: Date): Promise<any[]> {
+    return this.prisma.withTenant(tenantId, async prisma => {
       const slots = await prisma.bookingSlot.findMany({
         where: {
           tenantId,
@@ -303,29 +286,32 @@ export class BookingSlotService {
       });
 
       // Group by date
-      const grouped = slots.reduce((acc, slot) => {
-        const date = slot.startTime.toISOString().split('T')[0];
-        if (!acc[date]) {
-          acc[date] = {
-            date,
-            totalSlots: 0,
-            availableSlots: 0,
-            bookedSlots: 0,
-            blockedSlots: 0,
-          };
-        }
+      const grouped = slots.reduce(
+        (acc, slot) => {
+          const date = slot.startTime.toISOString().split('T')[0];
+          if (!acc[date]) {
+            acc[date] = {
+              date,
+              totalSlots: 0,
+              availableSlots: 0,
+              bookedSlots: 0,
+              blockedSlots: 0,
+            };
+          }
 
-        acc[date].totalSlots++;
-        if (slot.status === SlotStatus.AVAILABLE) {
-          acc[date].availableSlots++;
-        } else if (slot.status === SlotStatus.BOOKED) {
-          acc[date].bookedSlots++;
-        } else if (slot.status === SlotStatus.BLOCKED) {
-          acc[date].blockedSlots++;
-        }
+          acc[date].totalSlots++;
+          if (slot.status === SlotStatus.AVAILABLE) {
+            acc[date].availableSlots++;
+          } else if (slot.status === SlotStatus.BOOKED) {
+            acc[date].bookedSlots++;
+          } else if (slot.status === SlotStatus.BLOCKED) {
+            acc[date].blockedSlots++;
+          }
 
-        return acc;
-      }, {} as Record<string, any>);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
 
       return Object.values(grouped);
     });

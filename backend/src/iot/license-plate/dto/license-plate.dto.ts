@@ -2,7 +2,15 @@
  * MechMind OS - License Plate DTOs
  */
 
-import { IsString, IsOptional, IsEnum, IsNumber, IsObject, IsBoolean, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsObject,
+  IsBoolean,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OcrProvider, EntryExitType } from '../interfaces/license-plate.interface';
 
@@ -172,10 +180,13 @@ export class LprStatsDto {
   avgConfidence: number;
   falsePositives: number;
   processingTimeMs: number;
-  byProvider: Record<OcrProvider, {
-    count: number;
-    avgConfidence: number;
-  }>;
+  byProvider: Record<
+    OcrProvider,
+    {
+      count: number;
+      avgConfidence: number;
+    }
+  >;
   byHour: Record<number, number>;
 }
 

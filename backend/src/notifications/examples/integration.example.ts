@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Notification System Integration Examples
- * 
+ *
  * Questo file mostra come integrare il sistema di notifiche nei vari servizi.
  */
 
@@ -20,9 +20,7 @@ import {
 
 @Injectable()
 export class BookingNotificationExample {
-  constructor(
-    private readonly notificationService: NotificationOrchestratorService,
-  ) {}
+  constructor(private readonly notificationService: NotificationOrchestratorService) {}
 
   /**
    * Quando una prenotazione viene creata
@@ -36,8 +34,11 @@ export class BookingNotificationExample {
       {
         service: booking.services.map((s: any) => s.name).join(', '),
         date: booking.scheduledDate.toLocaleDateString('it-IT'),
-        time: booking.scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-        vehicle: booking.vehicle 
+        time: booking.scheduledDate.toLocaleTimeString('it-IT', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        vehicle: booking.vehicle
           ? `${booking.vehicle.brand} ${booking.vehicle.model} ${booking.vehicle.plate}`
           : 'Non specificato',
         bookingCode: booking.id.slice(-8).toUpperCase(),
@@ -75,8 +76,11 @@ export class BookingNotificationExample {
       {
         service: booking.services.map((s: any) => s.name).join(', '),
         date: booking.scheduledDate.toLocaleDateString('it-IT'),
-        time: booking.scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-        vehicle: booking.vehicle 
+        time: booking.scheduledDate.toLocaleTimeString('it-IT', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        vehicle: booking.vehicle
           ? `${booking.vehicle.brand} ${booking.vehicle.model}`
           : 'Non specificato',
         bookingCode: booking.id.slice(-8).toUpperCase(),
@@ -93,9 +97,7 @@ export class BookingNotificationExample {
 
 @Injectable()
 export class InvoiceNotificationExample {
-  constructor(
-    private readonly notificationService: NotificationOrchestratorService,
-  ) {}
+  constructor(private readonly notificationService: NotificationOrchestratorService) {}
 
   async onInvoiceCreated(invoice: any): Promise<void> {
     await this.notificationService.notifyCustomer(
@@ -120,9 +122,7 @@ export class InvoiceNotificationExample {
 
 @Injectable()
 export class GdprNotificationExample {
-  constructor(
-    private readonly emailService: EmailService,
-  ) {}
+  constructor(private readonly emailService: EmailService) {}
 
   async onExportReady(exportJob: any): Promise<void> {
     // GDPR: sempre via email per sicurezza
@@ -142,9 +142,7 @@ export class GdprNotificationExample {
 
 @Injectable()
 export class BookingEventListenerExample {
-  constructor(
-    private readonly notificationService: NotificationOrchestratorService,
-  ) {}
+  constructor(private readonly notificationService: NotificationOrchestratorService) {}
 
   @OnEvent('booking.created')
   async handleBookingCreated(event: {
@@ -176,18 +174,12 @@ export class BookingEventListenerExample {
 
 @Injectable()
 export class BulkNotificationExample {
-  constructor(
-    private readonly notificationService: NotificationOrchestratorService,
-  ) {}
+  constructor(private readonly notificationService: NotificationOrchestratorService) {}
 
   /**
    * Notifica tutti i clienti di un officina
    */
-  async notifyAllCustomers(
-    tenantId: string,
-    customerIds: string[],
-    message: string,
-  ): Promise<any> {
+  async notifyAllCustomers(tenantId: string, customerIds: string[], message: string): Promise<any> {
     const notifications = customerIds.map(customerId => ({
       customerId,
       tenantId,
@@ -260,9 +252,10 @@ export class DirectServiceExample {
   }
 
   async calculateSmsCost(): Promise<void> {
-    const message = 'Ciao! La tua prenotazione per Tagliando è confermata. 📅 15/03/2024 alle 14:30 📍 Officina Rossi 🔢 Codice: BK-001';
+    const message =
+      'Ciao! La tua prenotazione per Tagliando è confermata. 📅 15/03/2024 alle 14:30 📍 Officina Rossi 🔢 Codice: BK-001';
     const cost = this.smsService.calculateCost(message);
-    
+
     console.log(`Segments: ${cost.segments}`);
     console.log(`Estimated cost: €${(cost.estimatedCost * 0.92).toFixed(4)}`); // Converti in EUR
   }
@@ -274,9 +267,7 @@ export class DirectServiceExample {
 
 @Injectable()
 export class NotificationHealthExample {
-  constructor(
-    private readonly smsService: SmsService,
-  ) {}
+  constructor(private readonly smsService: SmsService) {}
 
   async checkServicesHealth(): Promise<any> {
     const [smsHealth, templates] = await Promise.all([

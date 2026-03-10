@@ -34,10 +34,7 @@ export class IntentHandlerService {
     extractedData: ExtractedDataDto,
     vapiCallId: string,
   ): Promise<BookingResult> {
-    this.logger.log(
-      `Handling booking intent for ${customerPhone}`,
-      'IntentHandlerService',
-    );
+    this.logger.log(`Handling booking intent for ${customerPhone}`, 'IntentHandlerService');
 
     try {
       // Find or create customer
@@ -66,19 +63,16 @@ export class IntentHandlerService {
 
       if (!slot) {
         // No slot available, queue for callback
-        await this.queueService.addBookingJob(
-          'schedule-callback',
-          {
-            type: 'schedule-callback',
-            payload: {
-              customerId: customer.id,
-              preferredDate: extractedData.preferredDate,
-              preferredTime: extractedData.preferredTime,
-              serviceType: extractedData.serviceType,
-            },
-            tenantId,
+        await this.queueService.addBookingJob('schedule-callback', {
+          type: 'schedule-callback',
+          payload: {
+            customerId: customer.id,
+            preferredDate: extractedData.preferredDate,
+            preferredTime: extractedData.preferredTime,
+            serviceType: extractedData.serviceType,
           },
-        );
+          tenantId,
+        });
 
         return {
           success: false,
@@ -128,18 +122,15 @@ export class IntentHandlerService {
       });
 
       // Queue confirmation SMS
-      await this.queueService.addNotificationJob(
-        'send-sms-confirmation',
-        {
-          type: 'sms-confirmation',
-          payload: {
-            customerId: customer.id,
-            bookingId: booking.id,
-            scheduledDate: slot.startTime,
-          },
-          tenantId,
+      await this.queueService.addNotificationJob('send-sms-confirmation', {
+        type: 'sms-confirmation',
+        payload: {
+          customerId: customer.id,
+          bookingId: booking.id,
+          scheduledDate: slot.startTime,
         },
-      );
+        tenantId,
+      });
 
       this.logger.log(`Created booking ${booking.id} for customer ${customer.id}`);
 
@@ -165,10 +156,7 @@ export class IntentHandlerService {
     customerPhone: string,
     extractedData: ExtractedDataDto,
   ): Promise<void> {
-    this.logger.log(
-      `Handling status check for ${customerPhone}`,
-      'IntentHandlerService',
-    );
+    this.logger.log(`Handling status check for ${customerPhone}`, 'IntentHandlerService');
 
     const customer = await this.customerService.findByPhone(tenantId, customerPhone);
 
@@ -196,22 +184,19 @@ export class IntentHandlerService {
     });
 
     // Queue SMS with status update
-    await this.queueService.addNotificationJob(
-      'send-status-update',
-      {
-        type: 'status-update',
-        payload: {
-          customerId: customer.id,
-          bookings: bookings.map((b) => ({
-            id: b.id,
-            status: b.status,
-            scheduledDate: b.scheduledDate,
-            services: b.services.map((s) => s.service.name),
-          })),
-        },
-        tenantId,
+    await this.queueService.addNotificationJob('send-status-update', {
+      type: 'status-update',
+      payload: {
+        customerId: customer.id,
+        bookings: bookings.map(b => ({
+          id: b.id,
+          status: b.status,
+          scheduledDate: b.scheduledDate,
+          services: b.services.map(s => s.service.name),
+        })),
       },
-    );
+      tenantId,
+    });
   }
 
   /**
@@ -223,41 +208,32 @@ export class IntentHandlerService {
     transcript: string | undefined,
     extractedData: ExtractedDataDto,
   ): Promise<void> {
-    this.logger.log(
-      `Handling complaint from ${customerPhone}`,
-      'IntentHandlerService',
-    );
+    this.logger.log(`Handling complaint from ${customerPhone}`, 'IntentHandlerService');
 
     const customer = await this.customerService.findByPhone(tenantId, customerPhone);
 
     // Queue for manager review
-    await this.queueService.addVoiceJob(
-      'complaint-review',
-      {
-        type: 'complaint-review',
-        payload: {
-          customerId: customer?.id,
-          customerPhone,
-          transcript,
-          issueDescription: extractedData.issueDescription,
-          licensePlate: extractedData.licensePlate,
-        },
-        tenantId,
+    await this.queueService.addVoiceJob('complaint-review', {
+      type: 'complaint-review',
+      payload: {
+        customerId: customer?.id,
+        customerPhone,
+        transcript,
+        issueDescription: extractedData.issueDescription,
+        licensePlate: extractedData.licensePlate,
       },
-    );
+      tenantId,
+    });
 
     // If customer found, send acknowledgment
     if (customer) {
-      await this.queueService.addNotificationJob(
-        'send-complaint-acknowledgment',
-        {
-          type: 'complaint-acknowledgment',
-          payload: {
-            customerId: customer.id,
-          },
-          tenantId,
+      await this.queueService.addNotificationJob('send-complaint-acknowledgment', {
+        type: 'complaint-acknowledgment',
+        payload: {
+          customerId: customer.id,
         },
-      );
+        tenantId,
+      });
     }
   }
 
@@ -338,7 +314,7 @@ export class IntentHandlerService {
     ];
 
     for (const { keywords, intent } of intents) {
-      const matches = keywords.filter((k) => lowerTranscript.includes(k));
+      const matches = keywords.filter(k => lowerTranscript.includes(k));
       if (matches.length > 0) {
         const confidence = Math.min(matches.length / keywords.length + 0.3, 1);
         return { intent, confidence };

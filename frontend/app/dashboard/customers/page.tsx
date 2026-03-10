@@ -53,7 +53,7 @@ const mockCustomers = [
   { id: '5', name: 'Roberto Marino', email: 'roberto@email.it', phone: '+39 333 1122334', vehicles: 2, visits: 15, spent: '€4,120', loyalty: 'Gold', lastVisit: '5 giorni fa' },
 ]
 
-const loyaltyColors: any = {
+const loyaltyColors: Record<string, string> = {
   'Bronze': 'bg-amber-700',
   'Silver': 'bg-slate-400',
   'Gold': 'bg-amber-400',

@@ -18,7 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
 const class_validator_1 = require("class-validator");
 const auth_service_1 = require("../services/auth.service");
-const two_factor_service_1 = require("../two-factor/services/two-factor.service");
+const mfa_service_1 = require("../mfa/mfa.service");
 class LoginDto {
 }
 __decorate([
@@ -60,9 +60,9 @@ __decorate([
     __metadata("design:type", String)
 ], Verify2FADto.prototype, "totpCode", void 0);
 let AuthController = class AuthController {
-    constructor(authService, twoFactorService) {
+    constructor(authService, mfaService) {
         this.authService = authService;
-        this.twoFactorService = twoFactorService;
+        this.mfaService = mfaService;
     }
     async login(dto, ip) {
         const user = await this.authService.validateUser(dto.email, dto.password, dto.tenantSlug);
@@ -73,11 +73,11 @@ let AuthController = class AuthController {
         if (lockStatus.locked) {
             throw new common_1.UnauthorizedException(`Account locked until ${lockStatus.until?.toISOString()}`);
         }
-        const twoFactorStatus = await this.twoFactorService.getStatus(user.id);
-        if (twoFactorStatus.enabled) {
+        const mfaStatus = await this.mfaService.getStatus(user.id);
+        if (mfaStatus.enabled) {
             if (dto.totpCode) {
-                const verified = await this.twoFactorService.verifyLogin(user.id, dto.totpCode);
-                if (!verified) {
+                const result = await this.mfaService.verify(user.id, dto.totpCode);
+                if (!result.valid) {
                     await this.authService.recordFailedLogin(user.id);
                     throw new common_1.UnauthorizedException('Invalid 2FA code');
                 }
@@ -86,7 +86,7 @@ let AuthController = class AuthController {
                 const tempToken = await this.authService.generateTwoFactorTempToken(user.id);
                 return {
                     tempToken,
-                    requiresTwoFactor: true,
+                    requiresMfa: true,
                     methods: ['totp', 'backup'],
                 };
             }
@@ -96,8 +96,8 @@ let AuthController = class AuthController {
     }
     async verifyTwoFactor(dto, ip) {
         const userId = await this.authService.verifyTwoFactorTempToken(dto.tempToken);
-        const verified = await this.twoFactorService.verifyLogin(userId, dto.totpCode);
-        if (!verified) {
+        const result = await this.mfaService.verify(userId, dto.totpCode);
+        if (!result.valid) {
             throw new common_1.UnauthorizedException('Invalid 2FA code');
         }
         const user = await this.authService.getUserWithTwoFactorStatus(userId);
@@ -218,5 +218,5 @@ exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Authentication'),
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
-        two_factor_service_1.TwoFactorService])
+        mfa_service_1.MfaService])
 ], AuthController);

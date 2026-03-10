@@ -2,11 +2,23 @@
  * MechMind OS - Vehicle Twin DTOs
  */
 
-import { IsString, IsOptional, IsEnum, IsInt, IsNumber, IsArray, IsJSON, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsArray,
+  IsJSON,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateComponentDto {
-  @ApiProperty({ enum: ['HEALTHY', 'WARNING', 'CRITICAL', 'REPLACED', 'REPAIRING'], required: false })
+  @ApiProperty({
+    enum: ['HEALTHY', 'WARNING', 'CRITICAL', 'REPLACED', 'REPAIRING'],
+    required: false,
+  })
   @IsOptional()
   @IsEnum(['HEALTHY', 'WARNING', 'CRITICAL', 'REPLACED', 'REPAIRING'] as const)
   status?: 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'REPLACED' | 'REPAIRING';

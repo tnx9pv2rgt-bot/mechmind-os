@@ -23,8 +23,12 @@ jest.mock('twilio', () => {
 // Mock Prisma enums and PrismaClient (needed because PrismaService extends PrismaClient)
 jest.mock('@prisma/client', () => {
   class PrismaClient {
-    $connect(): Promise<void> { return Promise.resolve(); }
-    $disconnect(): Promise<void> { return Promise.resolve(); }
+    $connect(): Promise<void> {
+      return Promise.resolve();
+    }
+    $disconnect(): Promise<void> {
+      return Promise.resolve();
+    }
   }
   return {
     PrismaClient,
@@ -184,17 +188,17 @@ describe('NotificationV2Service', () => {
     it('should throw on invalid phone number format', async () => {
       // '+' alone stripped to empty digits becomes '+39' which is too short
       // Use a number that produces a truly invalid E.164 result
-      await expect(
-        service.sendSMS('+', 'Test message'),
-      ).rejects.toThrow('Invalid phone number format');
+      await expect(service.sendSMS('+', 'Test message')).rejects.toThrow(
+        'Invalid phone number format',
+      );
     });
 
     it('should throw when Twilio fails', async () => {
       mockTwilioCreate.mockRejectedValue(new Error('Twilio error'));
 
-      await expect(
-        service.sendSMS('+393331234567', 'Test message'),
-      ).rejects.toThrow('Twilio error');
+      await expect(service.sendSMS('+393331234567', 'Test message')).rejects.toThrow(
+        'Twilio error',
+      );
     });
 
     it('should format phone numbers starting with 0', async () => {
@@ -217,10 +221,7 @@ describe('NotificationV2Service', () => {
     it('should send WhatsApp message via Twilio', async () => {
       mockTwilioCreate.mockResolvedValue({ sid: 'WA-TEST-123' });
 
-      const result = await service.sendWhatsApp(
-        '+393331234567',
-        'WhatsApp test',
-      );
+      const result = await service.sendWhatsApp('+393331234567', 'WhatsApp test');
 
       expect(result).toBe('WA-TEST-123');
       expect(mockTwilioCreate).toHaveBeenCalledWith(
@@ -233,9 +234,9 @@ describe('NotificationV2Service', () => {
     });
 
     it('should throw on invalid phone number', async () => {
-      await expect(
-        service.sendWhatsApp('+', 'Test'),
-      ).rejects.toThrow('Invalid phone number format');
+      await expect(service.sendWhatsApp('+', 'Test')).rejects.toThrow(
+        'Invalid phone number format',
+      );
     });
   });
 
@@ -244,12 +245,8 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('queueNotification', () => {
     it('should create a pending notification record', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.notification.create as jest.Mock).mockResolvedValue(
-        mockNotification,
-      );
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       const dto: CreateNotificationDTO = {
         customerId: mockCustomerId,
@@ -272,12 +269,8 @@ describe('NotificationV2Service', () => {
     });
 
     it('should emit notification.queued event', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.notification.create as jest.Mock).mockResolvedValue(
-        mockNotification,
-      );
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       await service.queueNotification({
         customerId: mockCustomerId,
@@ -306,12 +299,8 @@ describe('NotificationV2Service', () => {
     });
 
     it('should include tenantId in created notification', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.notification.create as jest.Mock).mockResolvedValue(
-        mockNotification,
-      );
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       await service.queueNotification({
         customerId: mockCustomerId,
@@ -321,8 +310,7 @@ describe('NotificationV2Service', () => {
         message: 'Test',
       });
 
-      const createData = (prisma.notification.create as jest.Mock).mock
-        .calls[0][0].data;
+      const createData = (prisma.notification.create as jest.Mock).mock.calls[0][0].data;
       expect(createData.tenantId).toBe(mockTenantId);
     });
   });
@@ -332,11 +320,8 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('sendImmediate', () => {
     it('should send SMS notification immediately', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
         status: 'SENT',
@@ -370,11 +355,10 @@ describe('NotificationV2Service', () => {
     });
 
     it('should respect customer channel preference when disabled', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue({ enabled: false });
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue({
+        enabled: false,
+      });
 
       const result = await service.sendImmediate({
         customerId: mockCustomerId,
@@ -388,11 +372,8 @@ describe('NotificationV2Service', () => {
     });
 
     it('should send WhatsApp notification when channel is WHATSAPP', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
         channel: 'WHATSAPP',
@@ -412,14 +393,9 @@ describe('NotificationV2Service', () => {
     });
 
     it('should return failure for unsupported channel', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue(null);
-      (prisma.notification.create as jest.Mock).mockResolvedValue(
-        mockNotification,
-      );
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       const result = await service.sendImmediate({
         customerId: mockCustomerId,
@@ -434,11 +410,8 @@ describe('NotificationV2Service', () => {
     });
 
     it('should create failed notification record on error', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
         status: 'FAILED',
@@ -464,11 +437,8 @@ describe('NotificationV2Service', () => {
     });
 
     it('should emit notification.sent event on success', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
         status: 'SENT',
@@ -495,11 +465,8 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('sendBatch', () => {
     it('should send multiple notifications and return results', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(
-        mockCustomer,
-      );
-      (prisma.customerNotificationPreference.findUnique as jest.Mock)
-        .mockResolvedValue(null);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
         status: 'SENT',
@@ -536,17 +503,13 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('template methods', () => {
     it('should generate Italian message from template', () => {
-      const message = service.generateMessage(
-        'BOOKING_CONFIRMATION' as never,
-        'it',
-        {
-          customerName: 'Mario',
-          date: '15/03/2024',
-          time: '14:30',
-          workshopName: 'Officina Test',
-          bookingCode: 'BK-001',
-        },
-      );
+      const message = service.generateMessage('BOOKING_CONFIRMATION' as never, 'it', {
+        customerName: 'Mario',
+        date: '15/03/2024',
+        time: '14:30',
+        workshopName: 'Officina Test',
+        bookingCode: 'BK-001',
+      });
 
       expect(message).toContain('Mario');
       expect(message).toContain('15/03/2024');
@@ -555,17 +518,13 @@ describe('NotificationV2Service', () => {
     });
 
     it('should generate English message from template', () => {
-      const message = service.generateMessage(
-        'BOOKING_CONFIRMATION' as never,
-        'en',
-        {
-          customerName: 'Mario',
-          date: '2024-03-15',
-          time: '14:30',
-          workshopName: 'Test Workshop',
-          bookingCode: 'BK-001',
-        },
-      );
+      const message = service.generateMessage('BOOKING_CONFIRMATION' as never, 'en', {
+        customerName: 'Mario',
+        date: '2024-03-15',
+        time: '14:30',
+        workshopName: 'Test Workshop',
+        bookingCode: 'BK-001',
+      });
 
       expect(message).toContain('Mario');
       expect(message).toContain('confirmed');
@@ -737,9 +696,7 @@ describe('NotificationV2Service', () => {
         retries: 1,
         maxRetries: 3,
       });
-      (prisma.notification.update as jest.Mock).mockResolvedValue(
-        mockNotification,
-      );
+      (prisma.notification.update as jest.Mock).mockResolvedValue(mockNotification);
       mockTwilioCreate.mockResolvedValue({ sid: 'SM-RETRY-1' });
 
       const result = await service.retryNotification(mockNotificationId);
@@ -761,9 +718,7 @@ describe('NotificationV2Service', () => {
   describe('getHistory', () => {
     it('should return notification history for customer', async () => {
       const mockNotifications = [mockNotification];
-      (prisma.notification.findMany as jest.Mock).mockResolvedValue(
-        mockNotifications,
-      );
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue(mockNotifications);
       (prisma.notification.count as jest.Mock).mockResolvedValue(1);
 
       const result = await service.getHistory(mockCustomerId);
@@ -819,20 +774,19 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('getPreferences', () => {
     it('should return preferences for all channels', async () => {
-      (prisma.customerNotificationPreference.findMany as jest.Mock)
-        .mockResolvedValue([
-          { channel: 'SMS', enabled: true },
-          { channel: 'WHATSAPP', enabled: false },
-        ]);
+      (prisma.customerNotificationPreference.findMany as jest.Mock).mockResolvedValue([
+        { channel: 'SMS', enabled: true },
+        { channel: 'WHATSAPP', enabled: false },
+      ]);
 
       const result = await service.getPreferences(mockCustomerId);
 
       expect(result).toHaveLength(3); // SMS, WHATSAPP, EMAIL
-      const smsPref = result.find((p) => p.channel === 'SMS');
+      const smsPref = result.find(p => p.channel === 'SMS');
       expect(smsPref?.enabled).toBe(true);
-      const whatsappPref = result.find((p) => p.channel === 'WHATSAPP');
+      const whatsappPref = result.find(p => p.channel === 'WHATSAPP');
       expect(whatsappPref?.enabled).toBe(false);
-      const emailPref = result.find((p) => p.channel === 'EMAIL');
+      const emailPref = result.find(p => p.channel === 'EMAIL');
       expect(emailPref?.enabled).toBe(true); // default
     });
   });
@@ -842,27 +796,24 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('updatePreference', () => {
     it('should upsert customer notification preference', async () => {
-      (prisma.customerNotificationPreference.upsert as jest.Mock)
-        .mockResolvedValue({});
+      (prisma.customerNotificationPreference.upsert as jest.Mock).mockResolvedValue({});
 
       await service.updatePreference(mockCustomerId, 'SMS' as never, false);
 
-      expect(prisma.customerNotificationPreference.upsert).toHaveBeenCalledWith(
-        {
-          where: {
-            customerId_channel: {
-              customerId: mockCustomerId,
-              channel: 'SMS',
-            },
-          },
-          update: { enabled: false },
-          create: {
+      expect(prisma.customerNotificationPreference.upsert).toHaveBeenCalledWith({
+        where: {
+          customerId_channel: {
             customerId: mockCustomerId,
             channel: 'SMS',
-            enabled: false,
           },
         },
-      );
+        update: { enabled: false },
+        create: {
+          customerId: mockCustomerId,
+          channel: 'SMS',
+          enabled: false,
+        },
+      });
     });
   });
 
@@ -879,17 +830,15 @@ describe('NotificationV2Service', () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn(
-                (key: string, defaultValue?: string | boolean | number) => {
-                  const config: Record<string, string | boolean> = {
-                    TWILIO_ACCOUNT_SID: '',
-                    TWILIO_AUTH_TOKEN: '',
-                    TWILIO_PHONE_NUMBER: '',
-                    ENABLE_SMS_NOTIFICATIONS: false,
-                  };
-                  return config[key] ?? defaultValue;
-                },
-              ),
+              get: jest.fn((key: string, defaultValue?: string | boolean | number) => {
+                const config: Record<string, string | boolean> = {
+                  TWILIO_ACCOUNT_SID: '',
+                  TWILIO_AUTH_TOKEN: '',
+                  TWILIO_PHONE_NUMBER: '',
+                  ENABLE_SMS_NOTIFICATIONS: false,
+                };
+                return config[key] ?? defaultValue;
+              }),
             },
           },
           {
@@ -929,10 +878,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should return mock WhatsApp ID in dev mode', async () => {
-      const result = await devService.sendWhatsApp(
-        '+393331234567',
-        'Dev WhatsApp test',
-      );
+      const result = await devService.sendWhatsApp('+393331234567', 'Dev WhatsApp test');
 
       expect(result).toContain('mock-whatsapp-id-');
     });

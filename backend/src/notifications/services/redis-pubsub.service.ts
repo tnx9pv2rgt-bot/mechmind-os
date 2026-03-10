@@ -12,6 +12,14 @@ interface RedisConfig {
   tls?: boolean;
 }
 
+/**
+ * RedisPubSubService
+ *
+ * Redis Pub/Sub wrapper for cross-instance notification fan-out.
+ * Manages publisher and subscriber connections independently.
+ * Provides typed channels (per-tenant, per-user) so that SSE and
+ * WebSocket gateways receive only relevant messages.
+ */
 @Injectable()
 export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisPubSubService.name);
@@ -74,11 +82,11 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
         this.isConnected = true;
       });
 
-      this.publisher.on('error', (err) => {
+      this.publisher.on('error', err => {
         this.logger.error('Redis publisher error:', err.message);
       });
 
-      this.subscriber.on('error', (err) => {
+      this.subscriber.on('error', err => {
         this.logger.error('Redis subscriber error:', err.message);
         this.isConnected = false;
       });
@@ -97,7 +105,7 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
 
   private async disconnect(): Promise<void> {
     this.logger.log('Disconnecting Redis Pub/Sub...');
-    
+
     // Unsubscribe from all channels
     if (this.subscriber) {
       await this.subscriber.unsubscribe();
@@ -119,7 +127,7 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
     try {
       const data: NotificationEventData = JSON.parse(message);
       const subject = this.channels.get(channel);
-      
+
       if (subject) {
         subject.next(data);
       }
@@ -133,7 +141,7 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
    */
   async subscribeToTenant(tenantId: string): Promise<Subject<NotificationEventData>> {
     const channel = `notifications:${tenantId}`;
-    
+
     if (this.channels.has(channel)) {
       return this.channels.get(channel)!;
     }
@@ -152,12 +160,12 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
    */
   async unsubscribeFromTenant(tenantId: string): Promise<void> {
     const channel = `notifications:${tenantId}`;
-    
+
     if (this.channels.has(channel)) {
       const subject = this.channels.get(channel);
       subject?.complete();
       this.channels.delete(channel);
-      
+
       await this.subscriber.unsubscribe(channel);
       this.logger.log(`Unsubscribed from channel: ${channel}`);
     }
@@ -166,13 +174,10 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
   /**
    * Publish a notification to a tenant channel
    */
-  async publishToTenant(
-    tenantId: string,
-    data: NotificationEventData,
-  ): Promise<number> {
+  async publishToTenant(tenantId: string, data: NotificationEventData): Promise<number> {
     const channel = `notifications:${tenantId}`;
     const message = JSON.stringify(data);
-    
+
     try {
       const result = await this.publisher.publish(channel, message);
       this.logger.debug(`Published to ${channel}: ${result} subscribers`);

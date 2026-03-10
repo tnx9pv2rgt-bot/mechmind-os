@@ -12,9 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [CommonModule, NotificationsModule, AuthModule],
   controllers: [ObdController],
-  providers: [
-    ObdService,
-  ],
+  providers: [ObdService],
   exports: [ObdService],
 })
 export class ObdModule {}

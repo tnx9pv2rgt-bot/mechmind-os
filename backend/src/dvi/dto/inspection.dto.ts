@@ -2,13 +2,28 @@
  * MechMind OS - Digital Vehicle Inspection DTOs
  */
 
-import { 
-  IsString, IsOptional, IsEnum, IsInt, IsNumber, IsBoolean, 
-  IsUUID, IsArray, ValidateNested, Min, Max 
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsBoolean,
+  IsUUID,
+  IsArray,
+  ValidateNested,
+  Min,
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { InspectionStatus, InspectionItemStatus, FindingSeverity, FindingStatus, FuelLevel } from '@prisma/client';
+import {
+  InspectionStatus,
+  InspectionItemStatus,
+  FindingSeverity,
+  FindingStatus,
+  FuelLevel,
+} from '@prisma/client';
 
 // ==========================================
 // Create Inspection
@@ -78,7 +93,11 @@ export class UpdateInspectionDto {
   @IsInt()
   mileage?: number;
 
-  @ApiProperty({ description: 'Inspection items', type: [UpdateInspectionItemDto], required: false })
+  @ApiProperty({
+    description: 'Inspection items',
+    type: [UpdateInspectionItemDto],
+    required: false,
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

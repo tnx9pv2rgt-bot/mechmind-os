@@ -1,6 +1,6 @@
 /**
  * MechMind OS - WebSocket JWT Guard
- * 
+ *
  * JWT authentication guard for WebSocket connections
  */
 

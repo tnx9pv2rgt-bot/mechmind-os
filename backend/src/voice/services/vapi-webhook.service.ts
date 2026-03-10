@@ -81,9 +81,7 @@ export class VapiWebhookService {
   /**
    * Handle call completed event
    */
-  private async handleCallCompleted(
-    payload: VapiWebhookDto,
-  ): Promise<WebhookProcessingResult> {
+  private async handleCallCompleted(payload: VapiWebhookDto): Promise<WebhookProcessingResult> {
     const { intent, tenantId, customerPhone, extractedData, callId } = payload;
 
     // Process based on intent
@@ -135,7 +133,9 @@ export class VapiWebhookService {
    */
   private async handleMessage(payload: VapiWebhookDto): Promise<WebhookProcessingResult> {
     // Can be used for real-time monitoring or sentiment analysis
-    this.logger.debug(`Message from call ${payload.callId}: ${payload.transcript?.slice(0, 100)}...`);
+    this.logger.debug(
+      `Message from call ${payload.callId}: ${payload.transcript?.slice(0, 100)}...`,
+    );
     return { action: 'message_logged' };
   }
 
@@ -167,10 +167,7 @@ export class VapiWebhookService {
   }> {
     const { callId, tenantId, customerPhone, reason, category } = payload;
 
-    this.logger.log(
-      `Transfer requested for call ${callId}: ${reason}`,
-      'VapiWebhookService',
-    );
+    this.logger.log(`Transfer requested for call ${callId}: ${reason}`, 'VapiWebhookService');
 
     // Find available agent
     const agent = await this.escalationService.findAvailableAgent(tenantId, category);
@@ -218,18 +215,15 @@ export class VapiWebhookService {
    * Queue conversation for manual review
    */
   private async queueForReview(payload: VapiWebhookDto): Promise<void> {
-    await this.queueService.addVoiceJob(
-      'manual-review',
-      {
-        type: 'manual-review',
-        payload: {
-          callId: payload.callId,
-          transcript: payload.transcript,
-          customerPhone: payload.customerPhone,
-        },
-        tenantId: payload.tenantId,
+    await this.queueService.addVoiceJob('manual-review', {
+      type: 'manual-review',
+      payload: {
+        callId: payload.callId,
+        transcript: payload.transcript,
+        customerPhone: payload.customerPhone,
       },
-    );
+      tenantId: payload.tenantId,
+    });
 
     this.logger.log(`Queued call ${payload.callId} for manual review`);
   }
@@ -240,20 +234,16 @@ export class VapiWebhookService {
   async getStats(tenantId: string, fromDate?: Date, toDate?: Date): Promise<any> {
     const where: any = {
       tenantId,
-      ...(fromDate && toDate && {
-        createdAt: {
-          gte: fromDate,
-          lte: toDate,
-        },
-      }),
+      ...(fromDate &&
+        toDate && {
+          createdAt: {
+            gte: fromDate,
+            lte: toDate,
+          },
+        }),
     };
 
-    const [
-      totalEvents,
-      eventTypeCounts,
-      processedCount,
-      unprocessedCount,
-    ] = await Promise.all([
+    const [totalEvents, eventTypeCounts, processedCount, unprocessedCount] = await Promise.all([
       this.prisma.voiceWebhookEvent.count({ where }),
       this.prisma.voiceWebhookEvent.groupBy({
         by: ['eventType'],
@@ -270,10 +260,13 @@ export class VapiWebhookService {
 
     return {
       total: totalEvents,
-      byEventType: eventTypeCounts.reduce((acc, curr) => ({
-        ...acc,
-        [curr.eventType]: curr._count.eventType,
-      }), {}),
+      byEventType: eventTypeCounts.reduce(
+        (acc, curr) => ({
+          ...acc,
+          [curr.eventType]: curr._count.eventType,
+        }),
+        {},
+      ),
       processed: processedCount,
       unprocessed: unprocessedCount,
     };

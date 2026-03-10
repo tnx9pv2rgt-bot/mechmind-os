@@ -15,17 +15,7 @@ import { ValidationController } from './validation.controller';
 @Module({
   imports: [ConfigModule],
   controllers: [ValidationController],
-  providers: [
-    ViesApiService,
-    GooglePlacesService,
-    ZeroBounceService,
-    TwilioService,
-  ],
-  exports: [
-    ViesApiService,
-    GooglePlacesService,
-    ZeroBounceService,
-    TwilioService,
-  ],
+  providers: [ViesApiService, GooglePlacesService, ZeroBounceService, TwilioService],
+  exports: [ViesApiService, GooglePlacesService, ZeroBounceService, TwilioService],
 })
 export class ExternalServicesModule {}

@@ -139,17 +139,14 @@ describe('EscalationService', () => {
       await service.transferToAgent(CALL_ID, agentId, reason);
 
       // Assert
-      expect(queueService.addVoiceJob).toHaveBeenCalledWith(
-        'transfer-call',
-        {
-          type: 'transfer-call',
-          payload: {
-            callId: CALL_ID,
-            agentId,
-            reason,
-          },
+      expect(queueService.addVoiceJob).toHaveBeenCalledWith('transfer-call', {
+        type: 'transfer-call',
+        payload: {
+          callId: CALL_ID,
+          agentId,
+          reason,
         },
-      );
+      });
     });
 
     it('should return an escalation result with escalated=true', async () => {
@@ -204,17 +201,14 @@ describe('EscalationService', () => {
       await service.queueForCallback(TENANT_ID, CUSTOMER_PHONE, reason);
 
       // Assert
-      expect(queueService.addNotificationJob).toHaveBeenCalledWith(
-        'notify-callback-needed',
-        {
-          type: 'callback-needed',
-          payload: {
-            customerPhone: CUSTOMER_PHONE,
-            reason,
-          },
-          tenantId: TENANT_ID,
+      expect(queueService.addNotificationJob).toHaveBeenCalledWith('notify-callback-needed', {
+        type: 'callback-needed',
+        payload: {
+          customerPhone: CUSTOMER_PHONE,
+          reason,
         },
-      );
+        tenantId: TENANT_ID,
+      });
     });
 
     it('should include tenantId in the callback job for tenant isolation', async () => {
@@ -281,11 +275,7 @@ describe('EscalationService', () => {
 
     it('should escalate when transcript contains "agent"', () => {
       // Arrange & Act
-      const result = service.shouldEscalate(
-        'Let me talk to an agent',
-        'other',
-        'neutral',
-      );
+      const result = service.shouldEscalate('Let me talk to an agent', 'other', 'neutral');
 
       // Assert
       expect(result.shouldEscalate).toBe(true);
@@ -294,11 +284,7 @@ describe('EscalationService', () => {
 
     it('should escalate when transcript contains "operator"', () => {
       // Arrange & Act
-      const result = service.shouldEscalate(
-        'Can I speak with the operator?',
-        'other',
-        'neutral',
-      );
+      const result = service.shouldEscalate('Can I speak with the operator?', 'other', 'neutral');
 
       // Assert
       expect(result.shouldEscalate).toBe(true);
@@ -307,11 +293,7 @@ describe('EscalationService', () => {
 
     it('should escalate when transcript contains keyword case-insensitively', () => {
       // Arrange & Act
-      const result = service.shouldEscalate(
-        'I NEED A HUMAN NOW',
-        'other',
-        'neutral',
-      );
+      const result = service.shouldEscalate('I NEED A HUMAN NOW', 'other', 'neutral');
 
       // Assert
       expect(result.shouldEscalate).toBe(true);
@@ -319,11 +301,7 @@ describe('EscalationService', () => {
 
     it('should escalate when sentiment is negative', () => {
       // Arrange & Act
-      const result = service.shouldEscalate(
-        'This is terrible',
-        'other',
-        'negative',
-      );
+      const result = service.shouldEscalate('This is terrible', 'other', 'negative');
 
       // Assert
       expect(result.shouldEscalate).toBe(true);
@@ -332,7 +310,8 @@ describe('EscalationService', () => {
 
     it('should escalate for complex complaints (complaint intent + long transcript)', () => {
       // Arrange
-      const longTranscript = 'I have a very serious complaint. ' +
+      const longTranscript =
+        'I have a very serious complaint. ' +
         'The repair you did last week is completely wrong. The brakes are still squeaking, ' +
         'the engine light came back on immediately after I drove away, and on top of that ' +
         'I was overcharged for the parts. This is unacceptable service and I want a full refund.';

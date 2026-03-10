@@ -324,7 +324,7 @@ export default function Step3Page() {
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">Tipologia</Label>
                     <Select 
                       value={watch(`vehicles.${index}.vehicleType`) || 'none'}
-                      onValueChange={(v) => setValue(`vehicles.${index}.vehicleType`, v === 'none' ? undefined : v as any)}
+                      onValueChange={(v) => setValue(`vehicles.${index}.vehicleType`, v === 'none' ? undefined : v as FormData['vehicles'][number]['vehicleType'])}
                     >
                       <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                         <SelectValue placeholder="Seleziona..." />
@@ -396,7 +396,7 @@ export default function Step3Page() {
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">Carburante</Label>
                     <Select 
                       value={watch(`vehicles.${index}.fuel`) || 'none'}
-                      onValueChange={(v) => setValue(`vehicles.${index}.fuel`, v === 'none' ? undefined : v as any)}
+                      onValueChange={(v) => setValue(`vehicles.${index}.fuel`, v === 'none' ? undefined : v as FormData['vehicles'][number]['fuel'])}
                     >
                       <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                         <SelectValue placeholder="Seleziona..." />

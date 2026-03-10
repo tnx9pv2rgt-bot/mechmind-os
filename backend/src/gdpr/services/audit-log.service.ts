@@ -63,10 +63,10 @@ export interface AuditLogStats {
 
 /**
  * GDPR Audit Log Service
- * 
+ *
  * Manages audit trail for GDPR compliance operations.
  * Provides methods for recording, querying, and preserving audit logs.
- * 
+ *
  * @see GDPR Article 30 - Records of processing activities
  */
 @Injectable()
@@ -78,7 +78,7 @@ export class AuditLogService {
 
   /**
    * Create a new audit log entry
-   * 
+   *
    * @param data - Audit log entry data
    * @returns Created audit log entry
    */
@@ -93,7 +93,7 @@ export class AuditLogService {
     ipAddress?: string;
     userAgent?: string;
   }): Promise<AuditLogEntry> {
-    const entry = await this.prisma.withTenant(data.tenantId, async (prisma) => {
+    const entry = await this.prisma.withTenant(data.tenantId, async prisma => {
       return prisma.auditLog.create({
         data: {
           tenantId: data.tenantId,
@@ -120,7 +120,7 @@ export class AuditLogService {
 
   /**
    * Get audit log entries with filtering and pagination
-   * 
+   *
    * @param query - Query filters
    * @param pagination - Pagination options
    * @returns Paginated audit log entries
@@ -185,7 +185,7 @@ export class AuditLogService {
 
   /**
    * Get audit trail for a specific record
-   * 
+   *
    * @param tableName - Table name
    * @param recordId - Record UUID
    * @param tenantId - Tenant ID
@@ -196,7 +196,7 @@ export class AuditLogService {
     recordId: string,
     tenantId: string,
   ): Promise<AuditLogEntry[]> {
-    const entries = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const entries = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.auditLog.findMany({
         where: {
           tableName,
@@ -213,15 +213,12 @@ export class AuditLogService {
   /**
    * Get audit entries for GDPR-related actions
    * Preserved after customer deletion for compliance
-   * 
+   *
    * @param customerId - Customer UUID
    * @param tenantId - Tenant ID
    * @returns GDPR audit entries
    */
-  async getGdprAuditTrail(
-    customerId: string,
-    tenantId: string,
-  ): Promise<AuditLogEntry[]> {
+  async getGdprAuditTrail(customerId: string, tenantId: string): Promise<AuditLogEntry[]> {
     const gdprActions = [
       'CUSTOMER_ANONYMIZED',
       'IDENTITY_VERIFICATION',
@@ -233,7 +230,7 @@ export class AuditLogService {
       'CONSENT_REVOKED',
     ];
 
-    const entries = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const entries = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.auditLog.findMany({
         where: {
           tenantId,
@@ -252,7 +249,7 @@ export class AuditLogService {
 
   /**
    * Get audit log statistics
-   * 
+   *
    * @param tenantId - Optional tenant filter
    * @returns Audit statistics
    */
@@ -302,18 +299,14 @@ export class AuditLogService {
   /**
    * Preserve audit logs during customer deletion
    * Creates a summary entry that survives anonymization
-   * 
+   *
    * @param customerId - Customer being deleted
    * @param tenantId - Tenant ID
    * @param requestId - Data subject request ID
    */
-  async preserveAuditTrail(
-    customerId: string,
-    tenantId: string,
-    requestId: string,
-  ): Promise<void> {
+  async preserveAuditTrail(customerId: string, tenantId: string, requestId: string): Promise<void> {
     // Get count of audit entries for this customer
-    const count = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const count = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.auditLog.count({
         where: {
           tenantId,
@@ -323,7 +316,7 @@ export class AuditLogService {
     });
 
     // Create preservation record
-    await this.prisma.withTenant(tenantId, async (prisma) => {
+    await this.prisma.withTenant(tenantId, async prisma => {
       await prisma.auditLog.create({
         data: {
           tenantId,
@@ -350,7 +343,7 @@ export class AuditLogService {
   /**
    * Archive old audit logs
    * Moves entries older than retention period to archive
-   * 
+   *
    * @param retentionDays - Days to keep before archiving
    * @param tenantId - Optional tenant filter
    * @returns Archive result
@@ -401,7 +394,7 @@ export class AuditLogService {
 
   /**
    * Export audit logs for compliance reporting
-   * 
+   *
    * @param query - Query filters
    * @returns Export data
    */

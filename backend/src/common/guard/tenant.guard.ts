@@ -9,7 +9,7 @@ import { RequestWithTenant } from '@auth/middleware/tenant-context.middleware';
 
 /**
  * TenantGuard - Ensures tenant context is properly set for multi-tenant requests
- * 
+ *
  * This guard validates that:
  * 1. A tenant ID is present in the request
  * 2. The user belongs to the specified tenant
@@ -19,7 +19,7 @@ import { RequestWithTenant } from '@auth/middleware/tenant-context.middleware';
 export class TenantGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<RequestWithTenant>();
-    
+
     // Check if tenant ID is present
     const tenantId = request.tenantId;
     if (!tenantId) {

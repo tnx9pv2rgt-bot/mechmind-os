@@ -14,12 +14,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { 
-  ViesApiService, 
-  GooglePlacesService, 
-  ZeroBounceService, 
-  TwilioService 
-} from './index';
+import { ViesApiService, GooglePlacesService, ZeroBounceService, TwilioService } from './index';
 import { ApplyRateLimit, RedisRateLimiterMiddleware } from '../../middleware';
 
 @ApiTags('External Services')
@@ -92,10 +87,7 @@ export class ExternalServicesExampleController {
 
   @Get('address/reverse-geocode')
   @ApiOperation({ summary: 'Reverse geocode coordinates to address' })
-  async reverseGeocode(
-    @Query('lat') latitude: string,
-    @Query('lng') longitude: string,
-  ) {
+  async reverseGeocode(@Query('lat') latitude: string, @Query('lng') longitude: string) {
     const results = await this.placesService.reverseGeocode(
       parseFloat(latitude),
       parseFloat(longitude),
@@ -158,10 +150,7 @@ export class ExternalServicesExampleController {
   @Post('phone/format-e164')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Format phone to E.164' })
-  formatPhoneE164(
-    @Body('phone') phone: string,
-    @Body('country') country?: string,
-  ) {
+  formatPhoneE164(@Body('phone') phone: string, @Body('country') country?: string) {
     const formatted = this.phoneService.formatE164(phone, country || 'IT');
     return {
       success: true,
@@ -183,10 +172,7 @@ export class ExternalServicesExampleController {
   @Post('phone/verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify OTP code' })
-  async verifyOtp(
-    @Body('phone') phone: string,
-    @Body('code') code: string,
-  ) {
+  async verifyOtp(@Body('phone') phone: string, @Body('code') code: string) {
     const result = await this.phoneService.verifyOtp(phone, code);
     return {
       success: result.success,

@@ -1,6 +1,6 @@
 /**
  * Express Type Augmentations
- * 
+ *
  * This file augments the Express and Passport types globally.
  * It ensures req.user has the correct shape across the application.
  */

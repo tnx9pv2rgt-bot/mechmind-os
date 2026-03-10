@@ -65,15 +65,15 @@ export class TwilioService {
     this.verifyServiceSid = this.configService.get('TWILIO_VERIFY_SERVICE_SID') || '';
 
     this.twilio = TwilioClient(this.accountSid, this.authToken);
-    
+
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
       db: parseInt(this.configService.get('REDIS_DB') || '0'),
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: times => Math.min(times * 50, 2000),
     });
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', err => {
       this.logger.error('Redis connection error:', err.message);
     });
   }
@@ -84,12 +84,12 @@ export class TwilioService {
   formatE164(phoneNumber: string, defaultCountry: string = 'IT'): string {
     // Rimuovi tutti i caratteri non numerici tranne il +
     let cleaned = phoneNumber.replace(/[^\d+]/g, '');
-    
+
     // Se inizia con 00, sostituisci con +
     if (cleaned.startsWith('00')) {
       cleaned = '+' + cleaned.substring(2);
     }
-    
+
     // Se non inizia con +, aggiungi prefisso paese
     if (!cleaned.startsWith('+')) {
       const countryPrefix = this.getCountryPrefix(defaultCountry);
@@ -104,7 +104,7 @@ export class TwilioService {
    */
   async validatePhoneNumber(
     phoneNumber: string,
-    options?: { includeCarrier?: boolean; includeCallerName?: boolean }
+    options?: { includeCarrier?: boolean; includeCallerName?: boolean },
   ): Promise<PhoneValidationResult> {
     const formattedNumber = this.formatE164(phoneNumber);
 
@@ -131,7 +131,7 @@ export class TwilioService {
       });
 
       const result = this.parseLookupResult(formattedNumber, lookup);
-      
+
       // Cache valid results
       if (result.isValid) {
         await this.setCached(cacheKey, result, 24 * 60 * 60);
@@ -140,7 +140,7 @@ export class TwilioService {
       return result;
     } catch (error) {
       this.logger.error(`Phone validation error for ${formattedNumber}:`, error.message);
-      
+
       if (error.code === 20404) {
         return {
           phoneNumber: formattedNumber,
@@ -175,7 +175,7 @@ export class TwilioService {
   async sendOtp(phoneNumber: string, template?: string): Promise<SmsVerificationResult> {
     const formattedNumber = this.formatE164(phoneNumber);
     const code = this.generateOtpCode();
-    
+
     const session: OtpSession = {
       phoneNumber: formattedNumber,
       code,
@@ -216,7 +216,7 @@ export class TwilioService {
     }
 
     try {
-      const messageBody = template 
+      const messageBody = template
         ? template.replace('{{code}}', code)
         : `Il tuo codice di verifica MechMind è: ${code}. Valido per 10 minuti.`;
 
@@ -266,7 +266,7 @@ export class TwilioService {
 
     // Custom verification
     const session = await this.getOtpSession(formattedNumber);
-    
+
     if (!session) {
       return { success: false, valid: false, message: 'Session not found or expired' };
     }
@@ -286,10 +286,10 @@ export class TwilioService {
     await this.saveOtpSession(formattedNumber, session);
 
     if (session.code !== code) {
-      return { 
-        success: false, 
-        valid: false, 
-        message: `Invalid code. ${this.maxAttempts - session.attempts} attempts remaining.` 
+      return {
+        success: false,
+        valid: false,
+        message: `Invalid code. ${this.maxAttempts - session.attempts} attempts remaining.`,
       };
     }
 
@@ -313,7 +313,8 @@ export class TwilioService {
     }
 
     // Check if we should allow resend (cooldown 60 seconds)
-    const timeSinceLastSend = Date.now() - (new Date(session.expiresAt).getTime() - this.otpTtlSeconds * 1000);
+    const timeSinceLastSend =
+      Date.now() - (new Date(session.expiresAt).getTime() - this.otpTtlSeconds * 1000);
     if (timeSinceLastSend < 60000) {
       const waitSeconds = Math.ceil((60000 - timeSinceLastSend) / 1000);
       return {
@@ -328,7 +329,7 @@ export class TwilioService {
     session.code = newCode;
     session.attempts = 0;
     session.expiresAt = new Date(Date.now() + this.otpTtlSeconds * 1000);
-    
+
     await this.saveOtpSession(formattedNumber, session);
 
     if (this.isDevelopment && (!this.accountSid || !this.authToken)) {
@@ -403,10 +404,10 @@ export class TwilioService {
    * Ottieni info numero (batch)
    */
   async validateMultiplePhones(
-    phoneNumbers: string[]
+    phoneNumbers: string[],
   ): Promise<Map<string, PhoneValidationResult>> {
     const results = new Map<string, PhoneValidationResult>();
-    
+
     for (const phone of phoneNumbers) {
       try {
         const result = await this.validatePhoneNumber(phone);
@@ -423,11 +424,11 @@ export class TwilioService {
           countryCode: this.extractCountryCode(this.formatE164(phone)),
         });
       }
-      
+
       // Rate limiting per Twilio
       await this.delay(100);
     }
-    
+
     return results;
   }
 
@@ -435,10 +436,10 @@ export class TwilioService {
 
   private parseLookupResult(
     formattedNumber: string,
-    lookup: PhoneNumberInstance
+    lookup: PhoneNumberInstance,
   ): PhoneValidationResult {
     const lineType = (lookup as any).lineTypeIntelligence?.type;
-    
+
     return {
       phoneNumber: lookup.phoneNumber,
       formattedNumber,
@@ -456,16 +457,16 @@ export class TwilioService {
 
   private getCountryPrefix(countryCode: string): string {
     const prefixes: Record<string, string> = {
-      'IT': '+39',
-      'US': '+1',
-      'GB': '+44',
-      'FR': '+33',
-      'DE': '+49',
-      'ES': '+34',
-      'CH': '+41',
-      'AT': '+43',
-      'NL': '+31',
-      'BE': '+32',
+      IT: '+39',
+      US: '+1',
+      GB: '+44',
+      FR: '+33',
+      DE: '+49',
+      ES: '+34',
+      CH: '+41',
+      AT: '+43',
+      NL: '+31',
+      BE: '+32',
     };
     return prefixes[countryCode.toUpperCase()] || '+39';
   }
@@ -524,7 +525,7 @@ export class TwilioService {
   private getMockValidationResult(phoneNumber: string): PhoneValidationResult {
     const countryCode = this.extractCountryCode(phoneNumber);
     const isItalianMobile = phoneNumber.startsWith('+393');
-    
+
     return {
       phoneNumber,
       formattedNumber: phoneNumber,
@@ -541,12 +542,12 @@ export class TwilioService {
 
   private getCountryName(code: string): string {
     const names: Record<string, string> = {
-      'IT': 'Italy',
-      'US': 'United States',
-      'GB': 'United Kingdom',
-      'FR': 'France',
-      'DE': 'Germany',
-      'ES': 'Spain',
+      IT: 'Italy',
+      US: 'United States',
+      GB: 'United Kingdom',
+      FR: 'France',
+      DE: 'Germany',
+      ES: 'Spain',
     };
     return names[code] || code;
   }
@@ -563,7 +564,7 @@ export class TwilioService {
 // Standalone functions
 export async function validatePhoneNumber(
   phoneNumber: string,
-  config?: { accountSid?: string; authToken?: string }
+  config?: { accountSid?: string; authToken?: string },
 ): Promise<PhoneValidationResult> {
   const service = new TwilioService({
     get: (key: string) => {
@@ -586,15 +587,21 @@ export async function validatePhoneNumber(
 
 export function formatE164(phoneNumber: string, defaultCountry: string = 'IT'): string {
   let cleaned = phoneNumber.replace(/[^\d+]/g, '');
-  
+
   if (cleaned.startsWith('00')) {
     cleaned = '+' + cleaned.substring(2);
   }
-  
+
   if (!cleaned.startsWith('+')) {
     const prefixes: Record<string, string> = {
-      'IT': '+39', 'US': '+1', 'GB': '+44', 'FR': '+33',
-      'DE': '+49', 'ES': '+34', 'CH': '+41', 'AT': '+43',
+      IT: '+39',
+      US: '+1',
+      GB: '+44',
+      FR: '+33',
+      DE: '+49',
+      ES: '+34',
+      CH: '+41',
+      AT: '+43',
     };
     cleaned = (prefixes[defaultCountry.toUpperCase()] || '+39') + cleaned;
   }

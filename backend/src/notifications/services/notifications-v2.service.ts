@@ -12,6 +12,14 @@ export interface NotificationPayloadV2 {
   data?: Record<string, unknown>;
 }
 
+/**
+ * NotificationsV2Service
+ *
+ * Real-time notification dispatcher that pushes events through
+ * SSE (via SseService) and Redis Pub/Sub (via RedisPubSubService).
+ * Used by controllers and event handlers to deliver instant
+ * updates to connected dashboard clients.
+ */
 @Injectable()
 export class NotificationsV2Service {
   private readonly logger = new Logger(NotificationsV2Service.name);
@@ -167,9 +175,9 @@ export class NotificationsV2Service {
       type: 'gdpr_deletion_scheduled',
       title: 'Cancellazione GDPR Programmata',
       message: `I dati di ${customerName} saranno cancellati il ${scheduledDate.toLocaleDateString('it-IT')}`,
-      data: { 
-        customerId, 
-        customerName, 
+      data: {
+        customerId,
+        customerName,
         scheduledDate: scheduledDate.toISOString(),
       },
     });

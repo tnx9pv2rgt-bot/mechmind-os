@@ -11,10 +11,7 @@ import {
   NotificationFailedEvent,
   NotificationResult,
 } from './notification.service';
-import {
-  NotificationType,
-  NotificationChannel,
-} from '../dto/send-notification.dto';
+import { NotificationType, NotificationChannel } from '../dto/send-notification.dto';
 
 describe('NotificationOrchestratorService', () => {
   let service: NotificationOrchestratorService;
@@ -91,9 +88,7 @@ describe('NotificationOrchestratorService', () => {
       ],
     }).compile();
 
-    service = module.get<NotificationOrchestratorService>(
-      NotificationOrchestratorService,
-    );
+    service = module.get<NotificationOrchestratorService>(NotificationOrchestratorService);
     emailService = module.get<EmailService>(EmailService);
     smsService = module.get<SmsService>(SmsService);
     prisma = module.get<PrismaService>(PrismaService);
@@ -332,10 +327,7 @@ describe('NotificationOrchestratorService', () => {
         { date: '2024-03-15', time: '14:30', service: 'Tagliando', bookingCode: 'BK-001' },
       );
 
-      expect(prisma.withTenant).toHaveBeenCalledWith(
-        mockTenantId,
-        expect.any(Function),
-      );
+      expect(prisma.withTenant).toHaveBeenCalledWith(mockTenantId, expect.any(Function));
     });
   });
 
@@ -711,11 +703,15 @@ describe('NotificationOrchestratorService', () => {
     });
 
     it('should stop on first failure when continueOnError is false', async () => {
-      (smsService.sendBookingReminder as jest.Mock)
-        .mockResolvedValueOnce({ success: false, error: 'SMS failed' });
+      (smsService.sendBookingReminder as jest.Mock).mockResolvedValueOnce({
+        success: false,
+        error: 'SMS failed',
+      });
 
-      (emailService.sendBookingReminder as jest.Mock)
-        .mockResolvedValueOnce({ success: false, error: 'Email failed' });
+      (emailService.sendBookingReminder as jest.Mock).mockResolvedValueOnce({
+        success: false,
+        error: 'Email failed',
+      });
 
       const notifications = [
         {
@@ -749,10 +745,7 @@ describe('NotificationOrchestratorService', () => {
   // =========================================================================
   describe('getCustomerPreferences', () => {
     it('should return default preferences', async () => {
-      const prefs = await service.getCustomerPreferences(
-        mockCustomerId,
-        mockTenantId,
-      );
+      const prefs = await service.getCustomerPreferences(mockCustomerId, mockTenantId);
 
       expect(prefs).toEqual({
         preferredChannel: NotificationChannel.AUTO,

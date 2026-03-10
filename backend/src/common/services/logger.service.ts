@@ -59,18 +59,16 @@ export class LoggerService implements NestLoggerService {
       console.log(JSON.stringify(logEntry));
     } else {
       const colorMap = {
-        log: '\x1b[32m',    // Green
-        error: '\x1b[31m',  // Red
-        warn: '\x1b[33m',   // Yellow
-        debug: '\x1b[34m',  // Blue
+        log: '\x1b[32m', // Green
+        error: '\x1b[31m', // Red
+        warn: '\x1b[33m', // Yellow
+        debug: '\x1b[34m', // Blue
         verbose: '\x1b[35m', // Magenta
       };
       const resetColor = '\x1b[0m';
       const color = colorMap[level];
-      
-      console.log(
-        `${color}[${level.toUpperCase()}]${resetColor} ${timestamp} [${ctx}] ${message}`,
-      );
+
+      console.log(`${color}[${level.toUpperCase()}]${resetColor} ${timestamp} [${ctx}] ${message}`);
     }
   }
 }

@@ -76,7 +76,7 @@ export class QueueService {
     delayed: number;
   }> {
     const queue = this.getQueue(queueName);
-    
+
     const [waiting, active, completed, failed, delayed] = await Promise.all([
       queue.getWaitingCount(),
       queue.getActiveCount(),
@@ -97,7 +97,7 @@ export class QueueService {
   ): Promise<void> {
     const queue = this.getQueue(queueName);
     const timestamp = Date.now() - olderThanHours * 60 * 60 * 1000;
-    
+
     await queue.clean(timestamp, 1000, 'completed');
     this.logger.log(`Cleaned completed jobs from ${queueName} queue`);
   }
@@ -111,7 +111,7 @@ export class QueueService {
   ): Promise<Job[]> {
     const queue = this.getQueue(queueName);
     const failedJobs = await queue.getFailed();
-    
+
     const jobsToRetry = failedJobs.slice(0, count);
     const retriedJobs: Job[] = [];
 

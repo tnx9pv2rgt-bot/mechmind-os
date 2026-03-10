@@ -148,18 +148,15 @@ describe('RedisPubSubService', () => {
 
       await service.publishToTenant('my-tenant-id', mockData);
 
-      expect(mockPublish).toHaveBeenCalledWith(
-        'notifications:my-tenant-id',
-        expect.any(String),
-      );
+      expect(mockPublish).toHaveBeenCalledWith('notifications:my-tenant-id', expect.any(String));
     });
 
     it('should throw when publish fails', async () => {
       mockPublish.mockRejectedValue(new Error('Redis publish error'));
 
-      await expect(
-        service.publishToTenant('tenant-uuid-1', mockData),
-      ).rejects.toThrow('Redis publish error');
+      await expect(service.publishToTenant('tenant-uuid-1', mockData)).rejects.toThrow(
+        'Redis publish error',
+      );
     });
 
     it('should isolate messages by tenant ID', async () => {
@@ -191,9 +188,7 @@ describe('RedisPubSubService', () => {
       const subject = await service.subscribeToTenant('tenant-uuid-1');
 
       expect(subject).toBeDefined();
-      expect(mockSubscribe).toHaveBeenCalledWith(
-        'notifications:tenant-uuid-1',
-      );
+      expect(mockSubscribe).toHaveBeenCalledWith('notifications:tenant-uuid-1');
     });
 
     it('should return existing subject for duplicate subscription', async () => {
@@ -223,15 +218,11 @@ describe('RedisPubSubService', () => {
       await service.subscribeToTenant('tenant-uuid-1');
       await service.unsubscribeFromTenant('tenant-uuid-1');
 
-      expect(mockUnsubscribe).toHaveBeenCalledWith(
-        'notifications:tenant-uuid-1',
-      );
+      expect(mockUnsubscribe).toHaveBeenCalledWith('notifications:tenant-uuid-1');
     });
 
     it('should be safe to unsubscribe from non-existent channel', async () => {
-      await expect(
-        service.unsubscribeFromTenant('nonexistent-tenant'),
-      ).resolves.toBeUndefined();
+      await expect(service.unsubscribeFromTenant('nonexistent-tenant')).resolves.toBeUndefined();
     });
 
     it('should remove the subject after unsubscribing', async () => {
@@ -302,7 +293,7 @@ describe('RedisPubSubService', () => {
 
       if (messageHandler) {
         const receivedData: NotificationEventData[] = [];
-        subject.subscribe((data) => receivedData.push(data));
+        subject.subscribe(data => receivedData.push(data));
 
         const testData: NotificationEventData = {
           type: 'booking_created',
@@ -313,10 +304,7 @@ describe('RedisPubSubService', () => {
         };
 
         // Simulate message from Redis
-        messageHandler[1](
-          'notifications:tenant-uuid-1',
-          JSON.stringify(testData),
-        );
+        messageHandler[1]('notifications:tenant-uuid-1', JSON.stringify(testData));
 
         expect(receivedData).toHaveLength(1);
         expect(receivedData[0].type).toBe('booking_created');
@@ -335,10 +323,7 @@ describe('RedisPubSubService', () => {
       if (messageHandler) {
         // Should not throw on invalid JSON
         expect(() => {
-          messageHandler[1](
-            'notifications:tenant-uuid-1',
-            'invalid-json',
-          );
+          messageHandler[1]('notifications:tenant-uuid-1', 'invalid-json');
         }).not.toThrow();
       }
     });
@@ -377,10 +362,7 @@ describe('RedisPubSubService', () => {
 
       // Ensure only tenant-A channel was published to
       expect(mockPublish).toHaveBeenCalledTimes(1);
-      expect(mockPublish).toHaveBeenCalledWith(
-        'notifications:tenant-A',
-        expect.any(String),
-      );
+      expect(mockPublish).toHaveBeenCalledWith('notifications:tenant-A', expect.any(String));
     });
   });
 });

@@ -10,6 +10,7 @@
 resource "aws_cloudwatch_log_group" "lambda_api" {
   name              = "/aws/lambda/${local.name_prefix}-api-main"
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = local.is_production ? aws_kms_key.mechmind_secrets[0].arn : null
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-lambda-api-logs"
@@ -19,6 +20,7 @@ resource "aws_cloudwatch_log_group" "lambda_api" {
 resource "aws_cloudwatch_log_group" "lambda_worker" {
   name              = "/aws/lambda/${local.name_prefix}-worker-booking"
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = local.is_production ? aws_kms_key.mechmind_secrets[0].arn : null
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-lambda-worker-logs"
@@ -28,6 +30,7 @@ resource "aws_cloudwatch_log_group" "lambda_worker" {
 resource "aws_cloudwatch_log_group" "lambda_notification" {
   name              = "/aws/lambda/${local.name_prefix}-worker-notification"
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = local.is_production ? aws_kms_key.mechmind_secrets[0].arn : null
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-lambda-notification-logs"
@@ -37,6 +40,7 @@ resource "aws_cloudwatch_log_group" "lambda_notification" {
 resource "aws_cloudwatch_log_group" "lambda_voice" {
   name              = "/aws/lambda/${local.name_prefix}-voice-handler"
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = local.is_production ? aws_kms_key.mechmind_secrets[0].arn : null
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-lambda-voice-logs"

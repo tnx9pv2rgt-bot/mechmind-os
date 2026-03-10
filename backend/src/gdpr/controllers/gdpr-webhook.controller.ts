@@ -1,10 +1,18 @@
-import { Controller, Post, Body, Headers, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { GdprRequestService } from '../services/gdpr-request.service';
 import { LoggerService } from '@common/services/logger.service';
 
 /**
  * GDPR Webhook Controller
- * 
+ *
  * Handles incoming webhooks for GDPR-related events:
  * - Data subject requests from external forms
  * - Third-party consent updates
@@ -20,14 +28,15 @@ export class GdprWebhookController {
 
   /**
    * Handle data subject request from external form
-   * 
+   *
    * @param body Webhook payload
    * @param signature Webhook signature for verification
    */
   @Post('requests')
   @HttpCode(HttpStatus.ACCEPTED)
   async handleDataSubjectRequest(
-    @Body() body: {
+    @Body()
+    body: {
       tenantId: string;
       requestType: string;
       requesterEmail?: string;
@@ -67,13 +76,14 @@ export class GdprWebhookController {
 
   /**
    * Handle consent update from external source
-   * 
+   *
    * @param body Consent update payload
    */
   @Post('consent')
   @HttpCode(HttpStatus.OK)
   async handleConsentUpdate(
-    @Body() body: {
+    @Body()
+    body: {
       tenantId: string;
       customerId: string;
       consentType: string;
@@ -99,13 +109,14 @@ export class GdprWebhookController {
 
   /**
    * Handle sub-processor data deletion confirmation
-   * 
+   *
    * @param body Deletion confirmation payload
    */
   @Post('deletion-confirmation')
   @HttpCode(HttpStatus.OK)
   async handleDeletionConfirmation(
-    @Body() body: {
+    @Body()
+    body: {
       subProcessor: string;
       customerId: string;
       deletionType: string;

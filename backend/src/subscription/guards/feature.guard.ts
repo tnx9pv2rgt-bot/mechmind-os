@@ -1,14 +1,14 @@
 /**
  * FEATURE GUARD
- * 
+ *
  * Protects routes based on subscription features
  * Usage: @UseGuards(FeatureGuard(FeatureFlag.AI_INSPECTIONS))
  */
 
-import { 
-  Injectable, 
-  CanActivate, 
-  ExecutionContext, 
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
   ForbiddenException,
   Type,
 } from '@nestjs/common';
@@ -19,11 +19,7 @@ import { FeatureAccessService } from '../services/feature-access.service';
 export const REQUIRED_FEATURE_KEY = 'requiredFeature';
 
 export function RequireFeature(...features: FeatureFlag[]) {
-  return function (
-    target: any,
-    propertyKey?: string | symbol,
-    descriptor?: PropertyDescriptor
-  ) {
+  return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     if (descriptor) {
       // Method decorator
       Reflect.defineMetadata(REQUIRED_FEATURE_KEY, features, descriptor.value);
@@ -43,10 +39,10 @@ export class FeatureGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // Get required features from method or class decorator
-    const requiredFeatures = this.reflector.getAllAndOverride<FeatureFlag[]>(
-      REQUIRED_FEATURE_KEY,
-      [context.getHandler(), context.getClass()]
-    );
+    const requiredFeatures = this.reflector.getAllAndOverride<FeatureFlag[]>(REQUIRED_FEATURE_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!requiredFeatures || requiredFeatures.length === 0) {
       return true; // No feature requirements
@@ -60,14 +56,9 @@ export class FeatureGuard implements CanActivate {
     }
 
     // Check all required features
-    const checks = await this.featureAccessService.canAccessFeatures(
-      tenantId,
-      requiredFeatures
-    );
+    const checks = await this.featureAccessService.canAccessFeatures(tenantId, requiredFeatures);
 
-    const missingFeatures = requiredFeatures.filter(
-      feature => !checks[feature].allowed
-    );
+    const missingFeatures = requiredFeatures.filter(feature => !checks[feature].allowed);
 
     if (missingFeatures.length > 0) {
       const firstMissing = missingFeatures[0];
@@ -92,9 +83,7 @@ export class FeatureGuard implements CanActivate {
 export function createFeatureGuard(...features: FeatureFlag[]): Type<CanActivate> {
   @Injectable()
   class DynamicFeatureGuard implements CanActivate {
-    constructor(
-      private featureAccessService: FeatureAccessService,
-    ) {}
+    constructor(private featureAccessService: FeatureAccessService) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest();

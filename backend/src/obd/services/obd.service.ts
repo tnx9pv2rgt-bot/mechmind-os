@@ -1,6 +1,6 @@
 /**
  * MechMind OS - OBD Service
- * 
+ *
  * Manages OBD device connections and data:
  * - Device registration and pairing
  * - Real-time sensor data collection
@@ -29,18 +29,18 @@ import { TroubleCodeSeverity } from '@prisma/client';
 export class ObdService {
   // DTC severity mapping based on code prefixes
   private readonly DTC_SEVERITY_MAP: Record<string, TroubleCodeSeverity> = {
-    'P01': TroubleCodeSeverity.MEDIUM, // Fuel and Air Metering
-    'P02': TroubleCodeSeverity.HIGH,   // Fuel and Air Metering (Injector Circuit)
-    'P03': TroubleCodeSeverity.HIGH,   // Ignition System
-    'P04': TroubleCodeSeverity.MEDIUM, // Auxiliary Emissions Controls
-    'P05': TroubleCodeSeverity.LOW,    // Vehicle Speed Controls
-    'P06': TroubleCodeSeverity.HIGH,   // Computer Output Circuit
-    'P07': TroubleCodeSeverity.MEDIUM, // Transmission
-    'P08': TroubleCodeSeverity.HIGH,   // Transmission
-    'P0A': TroubleCodeSeverity.HIGH,   // Hybrid Powertrain
-    'B00': TroubleCodeSeverity.MEDIUM, // Body
-    'C00': TroubleCodeSeverity.HIGH,   // Chassis (ABS, etc.)
-    'U00': TroubleCodeSeverity.HIGH,   // Network
+    P01: TroubleCodeSeverity.MEDIUM, // Fuel and Air Metering
+    P02: TroubleCodeSeverity.HIGH, // Fuel and Air Metering (Injector Circuit)
+    P03: TroubleCodeSeverity.HIGH, // Ignition System
+    P04: TroubleCodeSeverity.MEDIUM, // Auxiliary Emissions Controls
+    P05: TroubleCodeSeverity.LOW, // Vehicle Speed Controls
+    P06: TroubleCodeSeverity.HIGH, // Computer Output Circuit
+    P07: TroubleCodeSeverity.MEDIUM, // Transmission
+    P08: TroubleCodeSeverity.HIGH, // Transmission
+    P0A: TroubleCodeSeverity.HIGH, // Hybrid Powertrain
+    B00: TroubleCodeSeverity.MEDIUM, // Body
+    C00: TroubleCodeSeverity.HIGH, // Chassis (ABS, etc.)
+    U00: TroubleCodeSeverity.HIGH, // Network
   };
 
   constructor(
@@ -88,7 +88,7 @@ export class ObdService {
    */
   async listDevices(tenantId: string, vehicleId?: string): Promise<ObdDeviceResponseDto[]> {
     const devices = await this.prisma.obdDevice.findMany({
-      where: { 
+      where: {
         tenantId,
         ...(vehicleId && { vehicleId }),
       },
@@ -181,7 +181,10 @@ export class ObdService {
   /**
    * Get latest reading
    */
-  async getLatestReading(tenantId: string, deviceId: string): Promise<ObdReadingResponseDto | null> {
+  async getLatestReading(
+    tenantId: string,
+    deviceId: string,
+  ): Promise<ObdReadingResponseDto | null> {
     const reading = await this.prisma.obdReading.findFirst({
       where: { deviceId, device: { tenantId } },
       orderBy: { recordedAt: 'desc' },
@@ -193,7 +196,11 @@ export class ObdService {
   /**
    * Record trouble codes
    */
-  async recordTroubleCodes(deviceId: string, codes: TroubleCodeDto[], tenantId: string): Promise<void> {
+  async recordTroubleCodes(
+    deviceId: string,
+    codes: TroubleCodeDto[],
+    tenantId: string,
+  ): Promise<void> {
     const device = await this.prisma.obdDevice.findUnique({
       where: { id: deviceId },
       include: { tenant: true, vehicle: true },
@@ -320,9 +327,9 @@ export class ObdService {
     // Aggregate data from all devices
     const allReadings = vehicle.obdDevices.flatMap(d => d.readings);
     const allCodes = vehicle.obdDevices.flatMap(d => d.dtcs);
-    
+
     const latestReading = allReadings.sort(
-      (a, b) => b.recordedAt.getTime() - a.recordedAt.getTime()
+      (a, b) => b.recordedAt.getTime() - a.recordedAt.getTime(),
     )[0];
 
     const activeCodes = allCodes.filter(c => c.isActive && !c.isPending).length;
@@ -335,11 +342,13 @@ export class ObdService {
     // Deduct for trouble codes
     allCodes.forEach(code => {
       if (!code.isActive) return;
-      
+
       switch (code.severity) {
         case TroubleCodeSeverity.CRITICAL:
           score -= 30;
-          recommendations.push(`CRITICAL: ${code.code} - ${code.description}. Immediate attention required.`);
+          recommendations.push(
+            `CRITICAL: ${code.code} - ${code.description}. Immediate attention required.`,
+          );
           break;
         case TroubleCodeSeverity.HIGH:
           score -= 15;
@@ -347,7 +356,9 @@ export class ObdService {
           break;
         case TroubleCodeSeverity.MEDIUM:
           score -= 5;
-          recommendations.push(`MEDIUM: ${code.code} - ${code.description}. Monitor and address when possible.`);
+          recommendations.push(
+            `MEDIUM: ${code.code} - ${code.description}. Monitor and address when possible.`,
+          );
           break;
         case TroubleCodeSeverity.LOW:
           score -= 2;
@@ -390,7 +401,10 @@ export class ObdService {
       activeCodes,
       pendingCodes,
       lastReading: latestReading ? this.mapReadingToDto(latestReading) : undefined,
-      recommendations: recommendations.length > 0 ? recommendations : ['No issues detected. Vehicle is in good condition.'],
+      recommendations:
+        recommendations.length > 0
+          ? recommendations
+          : ['No issues detected. Vehicle is in good condition.'],
     };
   }
 
@@ -404,11 +418,16 @@ export class ObdService {
   private getCategoryFromCode(code: string): string {
     const type = code.charAt(0);
     switch (type) {
-      case 'P': return 'POWERTRAIN';
-      case 'B': return 'BODY';
-      case 'C': return 'CHASSIS';
-      case 'U': return 'NETWORK';
-      default: return 'UNKNOWN';
+      case 'P':
+        return 'POWERTRAIN';
+      case 'B':
+        return 'BODY';
+      case 'C':
+        return 'CHASSIS';
+      case 'U':
+        return 'NETWORK';
+      default:
+        return 'UNKNOWN';
     }
   }
 
@@ -419,7 +438,7 @@ export class ObdService {
         where: { id: deviceId },
         include: { tenant: true },
       });
-      
+
       if (device) {
         await this.notifications.sendToTenant(device.tenantId, {
           title: '⚠️ Critical Engine Temperature',
@@ -440,12 +459,14 @@ export class ObdService {
       isActive: device.isActive,
       lastConnected: device.lastConnected ?? undefined,
       batteryLevel: device.batteryLevel ?? undefined,
-      vehicle: device.vehicle ? {
-        id: device.vehicle.id,
-        make: device.vehicle.make,
-        model: device.vehicle.model,
-        licensePlate: device.vehicle.licensePlate,
-      } : undefined,
+      vehicle: device.vehicle
+        ? {
+            id: device.vehicle.id,
+            make: device.vehicle.make,
+            model: device.vehicle.model,
+            licensePlate: device.vehicle.licensePlate,
+          }
+        : undefined,
     };
   }
 

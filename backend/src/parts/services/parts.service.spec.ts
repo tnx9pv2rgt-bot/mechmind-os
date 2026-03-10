@@ -285,7 +285,7 @@ describe('PartsService', () => {
 
       // Assert
       expect(prisma.part.findUnique).toHaveBeenCalledWith({
-        where: { sku: dto.sku },
+        where: { tenantId_sku: { tenantId: TENANT_ID, sku: dto.sku } },
       });
       expect(prisma.part.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -408,9 +408,7 @@ describe('PartsService', () => {
       prisma.part.findUnique.mockResolvedValue(makeMockPart());
 
       // Act & Assert
-      await expect(service.createPart(TENANT_ID, dto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createPart(TENANT_ID, dto)).rejects.toThrow(BadRequestException);
       await expect(service.createPart(TENANT_ID, dto)).rejects.toThrow(
         `Part with SKU ${dto.sku} already exists`,
       );
@@ -451,7 +449,10 @@ describe('PartsService', () => {
   describe('getParts', () => {
     it('should return all active parts for a tenant', async () => {
       // Arrange
-      const parts = [makeMockPart(), makeMockPart({ id: 'part-002', sku: 'ENG-001', name: 'Oil Filter' })];
+      const parts = [
+        makeMockPart(),
+        makeMockPart({ id: 'part-002', sku: 'ENG-001', name: 'Oil Filter' }),
+      ];
       prisma.part.findMany.mockResolvedValue(parts);
 
       // Act
@@ -556,7 +557,11 @@ describe('PartsService', () => {
       prisma.part.findMany.mockResolvedValue([]);
 
       // Act
-      await service.getParts(TENANT_ID, { category: 'BRAKES', supplierId: SUPPLIER_ID, search: 'pad' });
+      await service.getParts(TENANT_ID, {
+        category: 'BRAKES',
+        supplierId: SUPPLIER_ID,
+        search: 'pad',
+      });
 
       // Assert
       const whereArg = prisma.part.findMany.mock.calls[0][0].where;
@@ -608,12 +613,8 @@ describe('PartsService', () => {
       prisma.part.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.getPart(TENANT_ID, 'nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.getPart(TENANT_ID, 'nonexistent')).rejects.toThrow(
-        'Part not found',
-      );
+      await expect(service.getPart(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getPart(TENANT_ID, 'nonexistent')).rejects.toThrow('Part not found');
     });
 
     it('should map costPrice and retailPrice to numbers in response', async () => {
@@ -682,9 +683,7 @@ describe('PartsService', () => {
     it('should update part name', async () => {
       // Arrange
       const dto: UpdatePartDto = { name: 'Premium Brake Pad Set' };
-      prisma.part.update.mockResolvedValue(
-        makeMockPart({ name: 'Premium Brake Pad Set' }),
-      );
+      prisma.part.update.mockResolvedValue(makeMockPart({ name: 'Premium Brake Pad Set' }));
 
       // Act
       const result = await service.updatePart(TENANT_ID, PART_ID, dto);
@@ -701,9 +700,7 @@ describe('PartsService', () => {
     it('should update costPrice as Prisma.Decimal when provided', async () => {
       // Arrange
       const dto: UpdatePartDto = { costPrice: 42.5 };
-      prisma.part.update.mockResolvedValue(
-        makeMockPart({ costPrice: new Prisma.Decimal(42.5) }),
-      );
+      prisma.part.update.mockResolvedValue(makeMockPart({ costPrice: new Prisma.Decimal(42.5) }));
 
       // Act
       await service.updatePart(TENANT_ID, PART_ID, dto);
@@ -828,7 +825,10 @@ describe('PartsService', () => {
   describe('getSuppliers', () => {
     it('should return all active suppliers for a tenant', async () => {
       // Arrange
-      const suppliers = [makeMockSupplier(), makeMockSupplier({ id: 'supplier-002', name: 'Bosch' })];
+      const suppliers = [
+        makeMockSupplier(),
+        makeMockSupplier({ id: 'supplier-002', name: 'Bosch' }),
+      ];
       prisma.supplier.findMany.mockResolvedValue(suppliers);
 
       // Act
@@ -932,12 +932,12 @@ describe('PartsService', () => {
       prisma.part.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.adjustStock(TENANT_ID, 'nonexistent', dto, USER_ID),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.adjustStock(TENANT_ID, 'nonexistent', dto, USER_ID),
-      ).rejects.toThrow('Part not found');
+      await expect(service.adjustStock(TENANT_ID, 'nonexistent', dto, USER_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.adjustStock(TENANT_ID, 'nonexistent', dto, USER_ID)).rejects.toThrow(
+        'Part not found',
+      );
     });
 
     it('should throw BadRequestException when stock would go negative', async () => {
@@ -946,12 +946,12 @@ describe('PartsService', () => {
       prisma.part.findFirst.mockResolvedValue(makeMockPart());
 
       // Act & Assert
-      await expect(
-        service.adjustStock(TENANT_ID, PART_ID, dto, USER_ID),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.adjustStock(TENANT_ID, PART_ID, dto, USER_ID),
-      ).rejects.toThrow('Stock cannot be negative');
+      await expect(service.adjustStock(TENANT_ID, PART_ID, dto, USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.adjustStock(TENANT_ID, PART_ID, dto, USER_ID)).rejects.toThrow(
+        'Stock cannot be negative',
+      );
     });
 
     it('should enforce tenant isolation in part lookup', async () => {
@@ -1118,9 +1118,7 @@ describe('PartsService', () => {
       supplierId: SUPPLIER_ID,
       notes: 'Urgent restock',
       expectedDate: '2024-06-15',
-      items: [
-        { partId: PART_ID, quantity: 10, unitPrice: 35 },
-      ],
+      items: [{ partId: PART_ID, quantity: 10, unitPrice: 35 }],
     };
 
     it('should create a purchase order with generated order number', async () => {
@@ -1208,9 +1206,9 @@ describe('PartsService', () => {
       prisma.part.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.createPurchaseOrder(TENANT_ID, dto, USER_ID),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.createPurchaseOrder(TENANT_ID, dto, USER_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should enforce tenantId in part lookup for each item', async () => {
@@ -1236,9 +1234,7 @@ describe('PartsService', () => {
       };
       prisma.purchaseOrder.count.mockResolvedValue(0);
       prisma.part.findFirst.mockResolvedValue(makeMockPart());
-      prisma.purchaseOrder.create.mockResolvedValue(
-        makeMockPurchaseOrder({ expectedDate: null }),
-      );
+      prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder({ expectedDate: null }));
 
       // Act
       await service.createPurchaseOrder(TENANT_ID, dtoNoDate, USER_ID);
@@ -1338,11 +1334,11 @@ describe('PartsService', () => {
   // =========================================================================
 
   describe('receiveOrder', () => {
-    const receiveItems: ReceiveOrderDto[] = [
-      { itemId: 'poi-001', quantity: 10 },
-    ];
+    const receiveItems: ReceiveOrderDto[] = [{ itemId: 'poi-001', quantity: 10 }];
 
-    function makeMockOrderForReceive(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    function makeMockOrderForReceive(
+      overrides: Record<string, unknown> = {},
+    ): Record<string, unknown> {
       return {
         id: ORDER_ID,
         tenantId: TENANT_ID,
@@ -1461,7 +1457,12 @@ describe('PartsService', () => {
       ]);
 
       // Act - only receive poi-001
-      await service.receiveOrder(TENANT_ID, ORDER_ID, [{ itemId: 'poi-001', quantity: 10 }], USER_ID);
+      await service.receiveOrder(
+        TENANT_ID,
+        ORDER_ID,
+        [{ itemId: 'poi-001', quantity: 10 }],
+        USER_ID,
+      );
 
       // Assert
       expect(prisma.purchaseOrder.update).toHaveBeenCalledWith({
@@ -1508,9 +1509,7 @@ describe('PartsService', () => {
       prisma.purchaseOrderItem.findMany.mockResolvedValue([
         { id: 'poi-001', quantity: 10, receivedQty: 0 },
       ]);
-      const itemsWithUnknown: ReceiveOrderDto[] = [
-        { itemId: 'unknown-item', quantity: 5 },
-      ];
+      const itemsWithUnknown: ReceiveOrderDto[] = [{ itemId: 'unknown-item', quantity: 5 }];
 
       // Act
       await service.receiveOrder(TENANT_ID, ORDER_ID, itemsWithUnknown, USER_ID);
@@ -1725,9 +1724,7 @@ describe('PartsService', () => {
   describe('response mapping', () => {
     it('should map part with null description to undefined', async () => {
       // Arrange
-      prisma.part.findFirst.mockResolvedValue(
-        makeMockPart({ description: null }),
-      );
+      prisma.part.findFirst.mockResolvedValue(makeMockPart({ description: null }));
 
       // Act
       const result = await service.getPart(TENANT_ID, PART_ID);
@@ -1738,9 +1735,7 @@ describe('PartsService', () => {
 
     it('should map part with null brand to undefined', async () => {
       // Arrange
-      prisma.part.findFirst.mockResolvedValue(
-        makeMockPart({ brand: null }),
-      );
+      prisma.part.findFirst.mockResolvedValue(makeMockPart({ brand: null }));
 
       // Act
       const result = await service.getPart(TENANT_ID, PART_ID);

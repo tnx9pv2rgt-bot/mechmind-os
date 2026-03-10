@@ -7,12 +7,7 @@ import {
   UnauthorizedException,
   Ip,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { AuthService, AuthTokens } from '../services/auth.service';
@@ -63,9 +58,10 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { ttl: 60000, limit: 5 } }) // 5 attempts per minute
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'User login',
-    description: 'Login with email/password. If 2FA is enabled, returns tempToken for verification.'
+    description:
+      'Login with email/password. If 2FA is enabled, returns tempToken for verification.',
   })
   @ApiBody({
     schema: {
@@ -74,7 +70,11 @@ export class AuthController {
         email: { type: 'string', example: 'user@example.com' },
         password: { type: 'string', example: 'password123' },
         tenantSlug: { type: 'string', example: 'garage-roma' },
-        totpCode: { type: 'string', example: '123456', description: 'Optional: TOTP code if 2FA enabled' },
+        totpCode: {
+          type: 'string',
+          example: '123456',
+          description: 'Optional: TOTP code if 2FA enabled',
+        },
       },
     },
   })
@@ -109,11 +109,7 @@ export class AuthController {
     @Ip() ip: string,
   ): Promise<AuthTokens | MfaRequiredResponseDto> {
     // Validate credentials
-    const user = await this.authService.validateUser(
-      dto.email,
-      dto.password,
-      dto.tenantSlug,
-    );
+    const user = await this.authService.validateUser(dto.email, dto.password, dto.tenantSlug);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -122,9 +118,7 @@ export class AuthController {
     // Check if account is locked
     const lockStatus = await this.authService.isAccountLocked(user.id);
     if (lockStatus.locked) {
-      throw new UnauthorizedException(
-        `Account locked until ${lockStatus.until?.toISOString()}`
-      );
+      throw new UnauthorizedException(`Account locked until ${lockStatus.until?.toISOString()}`);
     }
 
     // Check if MFA is enabled
@@ -158,9 +152,9 @@ export class AuthController {
   @Post('verify-2fa')
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { ttl: 60000, limit: 10 } }) // 10 attempts per minute
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Verify 2FA code',
-    description: 'Complete login with TOTP code or backup code after receiving tempToken'
+    description: 'Complete login with TOTP code or backup code after receiving tempToken',
   })
   @ApiBody({
     schema: {
@@ -184,13 +178,10 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 401, description: 'Invalid temp token or 2FA code' })
-  async verifyTwoFactor(
-    @Body() dto: Verify2FADto,
-    @Ip() ip: string,
-  ): Promise<AuthTokens> {
+  async verifyTwoFactor(@Body() dto: Verify2FADto, @Ip() ip: string): Promise<AuthTokens> {
     // Verify temp token and get userId
     const userId = await this.authService.verifyTwoFactorTempToken(dto.tempToken);
-    
+
     // Verify MFA code
     const result = await this.mfaService.verify(userId, dto.totpCode);
     if (!result.valid) {
@@ -199,7 +190,7 @@ export class AuthController {
 
     // Get full user and generate tokens
     const user = await this.authService.getUserWithTwoFactorStatus(userId);
-    
+
     // Update last login
     await this.authService.updateLastLogin(userId, ip);
 

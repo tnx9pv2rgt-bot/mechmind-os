@@ -67,7 +67,11 @@ const baseTemplate = (content: string, title: string): string => `
 `;
 
 // Template per email di verifica
-const verificationEmailTemplate = (firstName: string, verificationLink: string, token: string): string => {
+const verificationEmailTemplate = (
+  firstName: string,
+  verificationLink: string,
+  token: string,
+): string => {
   const content = `
     <h2>Ciao ${firstName}, benvenuto su MechMind! 👋</h2>
     <p>Grazie per esserti registrato. Per completare la registrazione e attivare il tuo account, conferma il tuo indirizzo email cliccando il pulsante qui sotto:</p>
@@ -168,7 +172,7 @@ export async function sendVerificationEmail(
     }
 
     const verificationLink = `${APP_URL}/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
-    
+
     const msg = {
       to: email,
       from: {
@@ -185,7 +189,7 @@ export async function sendVerificationEmail(
     };
 
     const [response] = await sgMail.send(msg);
-    
+
     return {
       success: true,
       messageId: response.headers['x-message-id'] as string,
@@ -194,7 +198,7 @@ export async function sendVerificationEmail(
     console.error('Errore invio email di verifica:', error);
     return {
       success: false,
-      error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+      error: error.message || "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }
@@ -205,17 +209,14 @@ export async function sendVerificationEmail(
  * @param firstName - Nome dell'utente
  * @returns Promise<EmailResult>
  */
-export async function sendWelcomeEmail(
-  email: string,
-  firstName: string,
-): Promise<EmailResult> {
+export async function sendWelcomeEmail(email: string, firstName: string): Promise<EmailResult> {
   try {
     if (!SENDGRID_API_KEY) {
       throw new Error('SendGrid API key non configurata');
     }
 
     const dashboardLink = `${APP_URL}/dashboard`;
-    
+
     const msg = {
       to: email,
       from: {
@@ -232,7 +233,7 @@ export async function sendWelcomeEmail(
     };
 
     const [response] = await sgMail.send(msg);
-    
+
     return {
       success: true,
       messageId: response.headers['x-message-id'] as string,
@@ -241,7 +242,7 @@ export async function sendWelcomeEmail(
     console.error('Errore invio email di benvenuto:', error);
     return {
       success: false,
-      error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+      error: error.message || "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }
@@ -252,10 +253,7 @@ export async function sendWelcomeEmail(
  * @param token - Token di reset
  * @returns Promise<EmailResult>
  */
-export async function sendPasswordResetEmail(
-  email: string,
-  token: string,
-): Promise<EmailResult> {
+export async function sendPasswordResetEmail(email: string, token: string): Promise<EmailResult> {
   try {
     if (!SENDGRID_API_KEY) {
       throw new Error('SendGrid API key non configurata');
@@ -264,7 +262,7 @@ export async function sendPasswordResetEmail(
     // Estrai il nome dall'email (prima parte prima di @)
     const firstName = email.split('@')[0];
     const resetLink = `${APP_URL}/auth/reset-password?token=${encodeURIComponent(token)}`;
-    
+
     const msg = {
       to: email,
       from: {
@@ -281,7 +279,7 @@ export async function sendPasswordResetEmail(
     };
 
     const [response] = await sgMail.send(msg);
-    
+
     return {
       success: true,
       messageId: response.headers['x-message-id'] as string,
@@ -290,7 +288,7 @@ export async function sendPasswordResetEmail(
     console.error('Errore invio email reset password:', error);
     return {
       success: false,
-      error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+      error: error.message || "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }
@@ -308,9 +306,7 @@ export function isEmailServiceConfigured(): boolean {
  * @param options - Opzioni email SendGrid
  * @returns Promise<EmailResult>
  */
-export async function sendEmail(
-  options: sgMail.MailDataRequired,
-): Promise<EmailResult> {
+export async function sendEmail(options: sgMail.MailDataRequired): Promise<EmailResult> {
   try {
     if (!SENDGRID_API_KEY) {
       throw new Error('SendGrid API key non configurata');
@@ -325,7 +321,7 @@ export async function sendEmail(
     };
 
     const [response] = await sgMail.send(msg);
-    
+
     return {
       success: true,
       messageId: response.headers['x-message-id'] as string,
@@ -334,7 +330,7 @@ export async function sendEmail(
     console.error('Errore invio email:', error);
     return {
       success: false,
-      error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+      error: error.message || "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }

@@ -9,25 +9,26 @@ import jwt from 'jsonwebtoken';
 
 // Configurazione da env vars
 const JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret-change-in-production';
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET || 'default-refresh-secret-change-in-production';
 
 // Expiry times
-const ACCESS_TOKEN_EXPIRY = '15m';  // 15 minuti
-const REFRESH_TOKEN_EXPIRY = '7d';  // 7 giorni
+const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minuti
+const REFRESH_TOKEN_EXPIRY = '7d'; // 7 giorni
 
 // Expiry in secondi per il frontend
-const ACCESS_TOKEN_EXPIRY_SECONDS = 15 * 60;  // 900 secondi
-const REFRESH_TOKEN_EXPIRY_SECONDS = 7 * 24 * 60 * 60;  // 604800 secondi
+const ACCESS_TOKEN_EXPIRY_SECONDS = 15 * 60; // 900 secondi
+const REFRESH_TOKEN_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 604800 secondi
 
 // Interfacce
 export interface JwtPayload {
-  sub: string;        // User ID
-  email: string;      // Email utente
-  role: string;       // Ruolo utente
-  tenantId: string;   // ID tenant (multi-tenant)
-  type?: 'access' | 'refresh' | '2fa_pending' | 'email_verification' | 'password_reset';  // Tipo di token
-  iat?: number;       // Issued at
-  exp?: number;       // Expiration
+  sub: string; // User ID
+  email: string; // Email utente
+  role: string; // Ruolo utente
+  tenantId: string; // ID tenant (multi-tenant)
+  type?: 'access' | 'refresh' | '2fa_pending' | 'email_verification' | 'password_reset'; // Tipo di token
+  iat?: number; // Issued at
+  exp?: number; // Expiration
 }
 
 export interface TokenPair {
@@ -56,18 +57,14 @@ export interface TokenVerificationResult {
  */
 export function generateTokenPair(payload: Omit<JwtPayload, 'type' | 'iat' | 'exp'>): TokenPair {
   // Access token
-  const accessToken = jwt.sign(
-    { ...payload, type: 'access' },
-    JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRY }
-  );
+  const accessToken = jwt.sign({ ...payload, type: 'access' }, JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
 
   // Refresh token
-  const refreshToken = jwt.sign(
-    { ...payload, type: 'refresh' },
-    JWT_REFRESH_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRY }
-  );
+  const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
 
   return {
     accessToken,
@@ -83,11 +80,7 @@ export function generateTokenPair(payload: Omit<JwtPayload, 'type' | 'iat' | 'ex
  * @returns string
  */
 export function generateAccessToken(payload: Omit<JwtPayload, 'type' | 'iat' | 'exp'>): string {
-  return jwt.sign(
-    { ...payload, type: 'access' },
-    JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRY }
-  );
+  return jwt.sign({ ...payload, type: 'access' }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 
 /**
@@ -96,11 +89,9 @@ export function generateAccessToken(payload: Omit<JwtPayload, 'type' | 'iat' | '
  * @returns string
  */
 export function generateRefreshToken(payload: Omit<JwtPayload, 'type' | 'iat' | 'exp'>): string {
-  return jwt.sign(
-    { ...payload, type: 'refresh' },
-    JWT_REFRESH_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRY }
-  );
+  return jwt.sign({ ...payload, type: 'refresh' }, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
 }
 
 /**
@@ -111,7 +102,7 @@ export function generateRefreshToken(payload: Omit<JwtPayload, 'type' | 'iat' | 
 export function verifyAccessToken(token: string): TokenVerificationResult {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    
+
     // Verifica che sia un access token
     if (payload.type !== 'access') {
       return {
@@ -159,7 +150,7 @@ export function verifyAccessToken(token: string): TokenVerificationResult {
 export function verifyRefreshToken(token: string): TokenVerificationResult {
   try {
     const payload = jwt.verify(token, JWT_REFRESH_SECRET) as DecodedToken;
-    
+
     // Verifica che sia un refresh token
     if (payload.type !== 'refresh') {
       return {
@@ -229,7 +220,7 @@ export function extractUserId(token: string): string | null {
 export function isTokenExpired(token: string): boolean {
   const payload = decodeToken(token);
   if (!payload?.exp) return true;
-  
+
   const now = Math.floor(Date.now() / 1000);
   return payload.exp < now;
 }
@@ -242,10 +233,10 @@ export function isTokenExpired(token: string): boolean {
 export function getTokenExpiryTime(token: string): number {
   const payload = decodeToken(token);
   if (!payload?.exp) return 0;
-  
+
   const now = Math.floor(Date.now() / 1000);
   const remaining = payload.exp - now;
-  
+
   return remaining > 0 ? remaining : 0;
 }
 
@@ -256,14 +247,14 @@ export function getTokenExpiryTime(token: string): number {
  */
 export function refreshAccessToken(refreshToken: string): TokenPair | null {
   const verification = verifyRefreshToken(refreshToken);
-  
+
   if (!verification.valid || !verification.payload) {
     return null;
   }
 
   // Crea nuovo payload senza i campi interni
   const { sub, email, role, tenantId } = verification.payload;
-  
+
   return generateTokenPair({ sub, email, role, tenantId });
 }
 
@@ -275,13 +266,13 @@ export function refreshAccessToken(refreshToken: string): TokenPair | null {
  */
 export function generateTwoFactorTempToken(userId: string, email: string): string {
   return jwt.sign(
-    { 
-      sub: userId, 
-      email, 
-      type: '2fa_pending' 
+    {
+      sub: userId,
+      email,
+      type: '2fa_pending',
     },
     JWT_SECRET,
-    { expiresIn: '5m' }
+    { expiresIn: '5m' },
   );
 }
 
@@ -293,7 +284,7 @@ export function generateTwoFactorTempToken(userId: string, email: string): strin
 export function verifyTwoFactorTempToken(token: string): TokenVerificationResult {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    
+
     if (payload.type !== '2fa_pending') {
       return {
         valid: false,
@@ -322,13 +313,13 @@ export function verifyTwoFactorTempToken(token: string): TokenVerificationResult
  */
 export function generateEmailVerificationToken(email: string, tenantId: string): string {
   return jwt.sign(
-    { 
-      email, 
-      tenantId, 
-      type: 'email_verification' 
+    {
+      email,
+      tenantId,
+      type: 'email_verification',
     },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '24h' },
   );
 }
 
@@ -340,7 +331,7 @@ export function generateEmailVerificationToken(email: string, tenantId: string):
 export function verifyEmailVerificationToken(token: string): TokenVerificationResult {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    
+
     if (payload.type !== 'email_verification') {
       return {
         valid: false,
@@ -369,13 +360,13 @@ export function verifyEmailVerificationToken(token: string): TokenVerificationRe
  */
 export function generatePasswordResetToken(email: string, tenantId: string): string {
   return jwt.sign(
-    { 
-      email, 
-      tenantId, 
-      type: 'password_reset' 
+    {
+      email,
+      tenantId,
+      type: 'password_reset',
     },
     JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '1h' },
   );
 }
 
@@ -387,7 +378,7 @@ export function generatePasswordResetToken(email: string, tenantId: string): str
 export function verifyPasswordResetToken(token: string): TokenVerificationResult {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    
+
     if (payload.type !== 'password_reset') {
       return {
         valid: false,

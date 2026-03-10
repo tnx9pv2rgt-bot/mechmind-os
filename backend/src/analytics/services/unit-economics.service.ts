@@ -73,7 +73,7 @@ export class UnitEconomicsService {
 
   /**
    * Calculate CAC (Customer Acquisition Cost) per channel
-   * 
+   *
    * Formula: CAC = Total Sales & Marketing Spend / Number of New Customers
    */
   async calculateCAC(
@@ -141,12 +141,10 @@ export class UnitEconomicsService {
 
   /**
    * Track LTV (Lifetime Value) by cohort
-   * 
+   *
    * Formula: LTV = ARPA × Gross Margin × (1 / Monthly Churn Rate)
    */
-  async calculateLTVByCohort(
-    months: number = 12,
-  ): Promise<CohortLTV[]> {
+  async calculateLTVByCohort(months: number = 12): Promise<CohortLTV[]> {
     this.logger.debug(`Calculating LTV for last ${months} cohorts`);
 
     const cohorts: CohortLTV[] = [];
@@ -217,7 +215,7 @@ export class UnitEconomicsService {
     const grossMargin = 0.62;
     const monthlyChurn = 0.03;
 
-    return tiers.map((tier) => ({
+    return tiers.map(tier => ({
       tier: tier.name,
       arpa: tier.arpa,
       ltv: Math.round(tier.arpa * grossMargin * (1 / monthlyChurn)),
@@ -227,9 +225,7 @@ export class UnitEconomicsService {
   /**
    * Analyze churn rate over time
    */
-  async analyzeChurn(
-    months: number = 12,
-  ): Promise<ChurnAnalysis[]> {
+  async analyzeChurn(months: number = 12): Promise<ChurnAnalysis[]> {
     this.logger.debug(`Analyzing churn for last ${months} months`);
 
     const analyses: ChurnAnalysis[] = [];
@@ -246,9 +242,10 @@ export class UnitEconomicsService {
         FROM tenants
         WHERE created_at < ${periodEnd}
       `;
-      const startingCustomers = Array.isArray(startingCustomersResult) && startingCustomersResult[0] 
-        ? Number(startingCustomersResult[0].count) 
-        : 0;
+      const startingCustomers =
+        Array.isArray(startingCustomersResult) && startingCustomersResult[0]
+          ? Number(startingCustomersResult[0].count)
+          : 0;
 
       // Query customers who churned (became inactive) during period
       // In production, this would track deactivations specifically
@@ -303,7 +300,7 @@ export class UnitEconomicsService {
         FROM tenants
         GROUP BY subscription_tier
       `;
-      
+
       if (Array.isArray(tierCounts)) {
         tierCounts.forEach((t: any) => {
           if (t.subscription_tier === 'starter') starterCount = Number(t.count);
@@ -321,7 +318,7 @@ export class UnitEconomicsService {
       { name: 'enterprise', avgShops: enterpriseCount, arpa: 299 },
     ];
 
-    return segments.map((segment) => {
+    return segments.map(segment => {
       const revenue = segment.avgShops * segment.arpa;
       const cogs = segment.avgShops * this.STANDARD_COGS;
       const grossMargin = revenue - cogs;
@@ -339,7 +336,7 @@ export class UnitEconomicsService {
 
   /**
    * Calculate payback period for CAC
-   * 
+   *
    * Formula: Payback Period = CAC / (ARPA × Gross Margin)
    */
   calculatePaybackPeriod(cac: number, arpa: number, grossMargin: number): number {
@@ -350,10 +347,7 @@ export class UnitEconomicsService {
   /**
    * Generate comprehensive unit economics report
    */
-  async generateReport(
-    startDate: Date,
-    endDate: Date,
-  ): Promise<UnitEconomicsReport> {
+  async generateReport(startDate: Date, endDate: Date): Promise<UnitEconomicsReport> {
     this.logger.log(`Generating unit economics report`);
 
     const [cac, ltvByCohort, ltvByTier, churn, grossMarginBySegment] = await Promise.all([
@@ -365,14 +359,16 @@ export class UnitEconomicsService {
     ]);
 
     // Calculate blended LTV
-    const blendedLTV = ltvByCohort.length > 0 
-      ? ltvByCohort.reduce((sum, c) => sum + c.ltv, 0) / ltvByCohort.length 
-      : 0;
+    const blendedLTV =
+      ltvByCohort.length > 0
+        ? ltvByCohort.reduce((sum, c) => sum + c.ltv, 0) / ltvByCohort.length
+        : 0;
 
     // Calculate overall gross margin
     const totalRevenue = grossMarginBySegment.reduce((sum, s) => sum + s.revenue, 0);
     const totalCOGS = grossMarginBySegment.reduce((sum, s) => sum + s.cogs, 0);
-    const overallGrossMargin = totalRevenue > 0 ? ((totalRevenue - totalCOGS) / totalRevenue) * 100 : 0;
+    const overallGrossMargin =
+      totalRevenue > 0 ? ((totalRevenue - totalCOGS) / totalRevenue) * 100 : 0;
 
     // Calculate ARPA
     const arpa = 82; // Target blended ARPA
@@ -419,9 +415,8 @@ export class UnitEconomicsService {
     const customerResult = await this.prisma.$queryRaw`
       SELECT COUNT(*) as count FROM tenants
     `;
-    const customerCount = Array.isArray(customerResult) && customerResult[0] 
-      ? Number(customerResult[0].count) 
-      : 0;
+    const customerCount =
+      Array.isArray(customerResult) && customerResult[0] ? Number(customerResult[0].count) : 0;
 
     const mrr = customerCount * 82; // Blended ARPA
     const arr = mrr * 12;

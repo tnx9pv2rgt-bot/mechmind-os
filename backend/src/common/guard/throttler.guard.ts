@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Advanced Rate Limiting Guard
- * 
+ *
  * Custom ThrottlerGuard with:
  * - Redis storage for distributed rate limiting
  * - Different limits per endpoint/user role
@@ -34,13 +34,13 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
    */
   protected async getTracker(req: Request): Promise<string> {
     const ip = this.getClientIp(req);
-    
+
     // If user is authenticated, include user ID for per-user limiting
     const userId = (req as any).user?.sub;
     if (userId) {
       return `user:${userId}`;
     }
-    
+
     return `ip:${ip}`;
   }
 
@@ -51,10 +51,10 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
     const request = context.switchToHttp().getRequest<Request>();
     const path = request.path;
     const method = request.method;
-    
+
     // Different limits for different endpoints
     const limits = this.getLimitsForPath(path, method);
-    
+
     return {
       ttl: limits.ttl,
       limit: limits.limit,
@@ -69,37 +69,37 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
     if (path.includes('/auth/login') || path.includes('/auth/verify-2fa')) {
       return { ttl: 60, limit: 5 }; // 5 attempts per minute
     }
-    
+
     // Password reset - very strict
     if (path.includes('/auth/reset-password') || path.includes('/auth/forgot-password')) {
       return { ttl: 3600, limit: 3 }; // 3 attempts per hour
     }
-    
+
     // 2FA setup - moderate
     if (path.includes('/auth/2fa')) {
       return { ttl: 60, limit: 10 }; // 10 attempts per minute
     }
-    
+
     // Webhooks - higher limits but still protected
     if (path.includes('/webhook')) {
       return { ttl: 60, limit: 100 }; // 100 requests per minute
     }
-    
+
     // Voice API - higher limits
     if (path.includes('/voice')) {
       return { ttl: 60, limit: 200 }; // 200 requests per minute
     }
-    
+
     // API endpoints - general limit
     if (path.startsWith('/api/v1/')) {
       return { ttl: 60, limit: 100 }; // 100 requests per minute
     }
-    
+
     // GraphQL/WebSocket - higher limits
     if (path.includes('/graphql') || path.includes('/ws')) {
       return { ttl: 60, limit: 500 }; // 500 requests per minute
     }
-    
+
     // Default limit
     return { ttl: 60, limit: 60 }; // 60 requests per minute
   }
@@ -114,13 +114,13 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
       const ips = Array.isArray(forwarded) ? forwarded[0] : forwarded;
       return ips.split(',')[0].trim();
     }
-    
+
     // Check for X-Real-IP header
     const realIp = req.headers['x-real-ip'];
     if (realIp) {
       return Array.isArray(realIp) ? realIp[0] : realIp;
     }
-    
+
     // Fallback to connection remote address
     return req.ip || 'unknown';
   }

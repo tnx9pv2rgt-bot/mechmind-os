@@ -16,7 +16,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -117,16 +124,18 @@ export class InspectionController {
 
   @Post(':id/photos')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-    fileFilter: (req, file, cb) => {
-      if (file.mimetype.match(/image\/(jpg|jpeg|png|webp)/)) {
-        cb(null, true);
-      } else {
-        cb(new BadRequestException('Only image files allowed'), false);
-      }
-    },
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype.match(/image\/(jpg|jpeg|png|webp)/)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Only image files allowed'), false);
+        }
+      },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload inspection photo' })
   @ApiBody({

@@ -2,7 +2,11 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { NotificationOrchestratorService } from '../services/notification.service';
-import { SendNotificationDto, NotificationType, NotificationChannel } from '../dto/send-notification.dto';
+import {
+  SendNotificationDto,
+  NotificationType,
+  NotificationChannel,
+} from '../dto/send-notification.dto';
 
 interface NotificationJobData {
   type: NotificationType;
@@ -17,9 +21,7 @@ interface NotificationJobData {
 export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
-  constructor(
-    private readonly notificationService: NotificationOrchestratorService,
-  ) {
+  constructor(private readonly notificationService: NotificationOrchestratorService) {
     super();
   }
 
@@ -41,9 +43,7 @@ export class NotificationProcessor extends WorkerHost {
         throw new Error(result.error || 'Notification failed');
       }
 
-      this.logger.log(
-        `Notification job ${job.id} completed successfully via ${result.channel}`,
-      );
+      this.logger.log(`Notification job ${job.id} completed successfully via ${result.channel}`);
 
       return {
         success: true,
@@ -52,10 +52,7 @@ export class NotificationProcessor extends WorkerHost {
         fallbackUsed: result.fallbackUsed,
       };
     } catch (error) {
-      this.logger.error(
-        `Notification job ${job.id} failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Notification job ${job.id} failed: ${error.message}`, error.stack);
       throw error; // Trigger retry
     }
   }
@@ -67,9 +64,7 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('failed')
   onFailed(job: Job, error: Error): void {
-    this.logger.error(
-      `❌ Notification job ${job.id} failed: ${error.message}`,
-    );
+    this.logger.error(`❌ Notification job ${job.id} failed: ${error.message}`);
   }
 
   @OnWorkerEvent('stalled')

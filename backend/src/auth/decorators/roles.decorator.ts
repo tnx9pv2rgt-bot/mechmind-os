@@ -24,9 +24,5 @@ export const ManagerAndAbove = () => Roles(UserRole.ADMIN, UserRole.MANAGER);
 /**
  * Decorator to allow all authenticated users
  */
-export const AllRoles = () => Roles(
-  UserRole.ADMIN,
-  UserRole.MANAGER,
-  UserRole.MECHANIC,
-  UserRole.RECEPTIONIST,
-);
+export const AllRoles = () =>
+  Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC, UserRole.RECEPTIONIST);

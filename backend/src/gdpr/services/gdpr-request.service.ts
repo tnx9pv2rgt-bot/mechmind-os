@@ -26,18 +26,18 @@ interface DataSubjectRequest {
 /**
  * Data Subject Request Types
  */
-export type DataSubjectRequestType = 
-  | 'ACCESS'      // Art. 15 - Right of access
-  | 'DELETION'    // Art. 17 - Right to erasure
+export type DataSubjectRequestType =
+  | 'ACCESS' // Art. 15 - Right of access
+  | 'DELETION' // Art. 17 - Right to erasure
   | 'RECTIFICATION' // Art. 16 - Right to rectification
   | 'PORTABILITY' // Art. 20 - Right to data portability
   | 'RESTRICTION' // Art. 18 - Right to restriction of processing
-  | 'OBJECTION';  // Art. 21 - Right to object
+  | 'OBJECTION'; // Art. 21 - Right to object
 
 /**
  * Request status
  */
-export type RequestStatus = 
+export type RequestStatus =
   | 'RECEIVED'
   | 'VERIFICATION_PENDING'
   | 'VERIFIED'
@@ -110,14 +110,14 @@ export interface VerificationResult {
 
 /**
  * GDPR Request Service
- * 
+ *
  * Manages data subject requests (DSR) lifecycle:
  * - Request intake and ticket generation
  * - Identity verification workflow
  * - SLA tracking and deadline management
  * - Assignment and escalation
  * - Status updates and notifications
- * 
+ *
  * @see GDPR Articles 12-22 - Data subject rights
  */
 @Injectable()
@@ -132,7 +132,7 @@ export class GdprRequestService {
 
   /**
    * Create a new data subject request
-   * 
+   *
    * @param dto - Request creation data
    * @returns Created request with ticket number
    */
@@ -154,7 +154,7 @@ export class GdprRequestService {
     const deadlineAt = new Date(receivedAt.getTime() + this.SLA_DAYS * 24 * 60 * 60 * 1000);
 
     // Create the request
-    const request = await this.prisma.withTenant(dto.tenantId, async (prisma) => {
+    const request = await this.prisma.withTenant(dto.tenantId, async prisma => {
       return prisma.dataSubjectRequest.create({
         data: {
           tenantId: dto.tenantId,
@@ -180,7 +180,7 @@ export class GdprRequestService {
     );
 
     // Log to audit trail
-    await this.prisma.withTenant(dto.tenantId, async (prisma) => {
+    await this.prisma.withTenant(dto.tenantId, async prisma => {
       await prisma.auditLog.create({
         data: {
           tenantId: dto.tenantId,
@@ -202,13 +202,13 @@ export class GdprRequestService {
 
   /**
    * Get a request by ID
-   * 
+   *
    * @param requestId - Request UUID
    * @param tenantId - Tenant ID
    * @returns Request details
    */
   async getRequest(requestId: string, tenantId: string): Promise<DataSubjectRequestResponse> {
-    const request = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const request = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.findFirst({
         where: { id: requestId, tenantId },
       });
@@ -223,13 +223,16 @@ export class GdprRequestService {
 
   /**
    * Get a request by ticket number
-   * 
+   *
    * @param ticketNumber - Ticket number (e.g., GDPR-2026-0001)
    * @param tenantId - Tenant ID
    * @returns Request details
    */
-  async getRequestByTicket(ticketNumber: string, tenantId: string): Promise<DataSubjectRequestResponse> {
-    const request = await this.prisma.withTenant(tenantId, async (prisma) => {
+  async getRequestByTicket(
+    ticketNumber: string,
+    tenantId: string,
+  ): Promise<DataSubjectRequestResponse> {
+    const request = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.findFirst({
         where: { ticketNumber, tenantId },
       });
@@ -244,7 +247,7 @@ export class GdprRequestService {
 
   /**
    * List requests for a tenant
-   * 
+   *
    * @param tenantId - Tenant ID
    * @param filters - Optional filters
    * @returns List of requests
@@ -273,7 +276,7 @@ export class GdprRequestService {
       };
     }
 
-    const requests = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const requests = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.findMany({
         where,
         orderBy: { receivedAt: 'desc' },
@@ -285,7 +288,7 @@ export class GdprRequestService {
 
   /**
    * Update request status
-   * 
+   *
    * @param requestId - Request UUID
    * @param tenantId - Tenant ID
    * @param status - New status
@@ -312,12 +315,12 @@ export class GdprRequestService {
     }
 
     if (notes) {
-      updateData.notes = request.notes 
-        ? `${request.notes}\n${new Date().toISOString()}: ${notes}` 
+      updateData.notes = request.notes
+        ? `${request.notes}\n${new Date().toISOString()}: ${notes}`
         : notes;
     }
 
-    const updated = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const updated = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: updateData,
@@ -334,7 +337,7 @@ export class GdprRequestService {
 
   /**
    * Verify requester identity
-   * 
+   *
    * @param requestId - Request UUID
    * @param tenantId - Tenant ID
    * @param verificationData - Verification details
@@ -357,7 +360,7 @@ export class GdprRequestService {
 
     const verifiedAt = new Date();
 
-    await this.prisma.withTenant(tenantId, async (prisma) => {
+    await this.prisma.withTenant(tenantId, async prisma => {
       await prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: {
@@ -386,7 +389,7 @@ export class GdprRequestService {
 
   /**
    * Assign request to a user
-   * 
+   *
    * @param requestId - Request UUID
    * @param tenantId - Tenant ID
    * @param userId - User to assign to
@@ -397,7 +400,7 @@ export class GdprRequestService {
     tenantId: string,
     userId: string,
   ): Promise<DataSubjectRequestResponse> {
-    const updated = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const updated = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: {
@@ -417,7 +420,7 @@ export class GdprRequestService {
 
   /**
    * Reject a request
-   * 
+   *
    * @param requestId - Request UUID
    * @param tenantId - Tenant ID
    * @param reason - Rejection reason
@@ -436,7 +439,7 @@ export class GdprRequestService {
       throw new BadRequestException('Cannot reject completed request');
     }
 
-    const updated = await this.prisma.withTenant(tenantId, async (prisma) => {
+    const updated = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.update({
         where: { id: requestId },
         data: {
@@ -459,7 +462,7 @@ export class GdprRequestService {
 
   /**
    * Get pending requests that need attention
-   * 
+   *
    * @param tenantId - Optional tenant filter
    * @returns Pending requests grouped by urgency
    */
@@ -507,7 +510,7 @@ export class GdprRequestService {
 
   /**
    * Get request statistics
-   * 
+   *
    * @param tenantId - Optional tenant filter
    * @returns Statistics summary
    */

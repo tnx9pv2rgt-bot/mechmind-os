@@ -4,11 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { VoiceWebhookController } from './voice-webhook.controller';
 import { VapiWebhookService } from '../services/vapi-webhook.service';
-import {
-  VapiWebhookDto,
-  VapiEventType,
-  TransferRequestDto,
-} from '../dto/vapi-webhook.dto';
+import { VapiWebhookDto, VapiEventType, TransferRequestDto } from '../dto/vapi-webhook.dto';
 
 describe('VoiceWebhookController', () => {
   let controller: VoiceWebhookController;
@@ -27,18 +23,12 @@ describe('VoiceWebhookController', () => {
    * Generate a valid HMAC-SHA256 signature for a payload, matching the
    * controller's verifySignature implementation.
    */
-  const generateSignature = (
-    payload: Record<string, unknown>,
-    timestamp?: string,
-  ): string => {
+  const generateSignature = (payload: Record<string, unknown>, timestamp?: string): string => {
     const signedPayload = timestamp
       ? `${timestamp}.${JSON.stringify(payload)}`
       : JSON.stringify(payload);
 
-    return crypto
-      .createHmac('sha256', WEBHOOK_SECRET)
-      .update(signedPayload)
-      .digest('hex');
+    return crypto.createHmac('sha256', WEBHOOK_SECRET).update(signedPayload).digest('hex');
   };
 
   const buildPayload = (overrides: Partial<VapiWebhookDto> = {}): VapiWebhookDto => ({
@@ -133,9 +123,9 @@ describe('VoiceWebhookController', () => {
       const signature = 'some-signature';
 
       // Act & Assert
-      await expect(
-        controller.handleCallEvent(payload, signature, timestamp),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.handleCallEvent(payload, signature, timestamp)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should reject webhook with timestamp older than 5 minutes', async () => {
@@ -148,9 +138,9 @@ describe('VoiceWebhookController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.handleCallEvent(payload, signature, oldTimestamp),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.handleCallEvent(payload, signature, oldTimestamp)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should reject webhook with timestamp too far in the future', async () => {
@@ -163,9 +153,9 @@ describe('VoiceWebhookController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.handleCallEvent(payload, signature, futureTimestamp),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.handleCallEvent(payload, signature, futureTimestamp)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should reject webhook with non-numeric timestamp', async () => {
@@ -186,10 +176,7 @@ describe('VoiceWebhookController', () => {
     it('should accept webhook without timestamp for backward compatibility', async () => {
       // Arrange
       const payload = buildPayload();
-      const signature = generateSignature(
-        payload as unknown as Record<string, unknown>,
-        undefined,
-      );
+      const signature = generateSignature(payload as unknown as Record<string, unknown>, undefined);
 
       // Act
       const result = await controller.handleCallEvent(
@@ -204,32 +191,28 @@ describe('VoiceWebhookController', () => {
 
     it('should throw BadRequestException when service processing fails', async () => {
       // Arrange
-      vapiWebhookService.processWebhook.mockRejectedValue(
-        new Error('Processing failed'),
-      );
+      vapiWebhookService.processWebhook.mockRejectedValue(new Error('Processing failed'));
       const payload = buildPayload();
       const timestamp = Date.now().toString();
       const signature = generateSignature(payload as unknown as Record<string, unknown>, timestamp);
 
       // Act & Assert
-      await expect(
-        controller.handleCallEvent(payload, signature, timestamp),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.handleCallEvent(payload, signature, timestamp)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should include error message in BadRequestException', async () => {
       // Arrange
-      vapiWebhookService.processWebhook.mockRejectedValue(
-        new Error('Database unavailable'),
-      );
+      vapiWebhookService.processWebhook.mockRejectedValue(new Error('Database unavailable'));
       const payload = buildPayload();
       const timestamp = Date.now().toString();
       const signature = generateSignature(payload as unknown as Record<string, unknown>, timestamp);
 
       // Act & Assert
-      await expect(
-        controller.handleCallEvent(payload, signature, timestamp),
-      ).rejects.toThrow('Failed to process webhook: Database unavailable');
+      await expect(controller.handleCallEvent(payload, signature, timestamp)).rejects.toThrow(
+        'Failed to process webhook: Database unavailable',
+      );
     });
 
     it('should use timing-safe comparison for signature verification', async () => {
@@ -241,8 +224,7 @@ describe('VoiceWebhookController', () => {
         timestamp,
       );
       // Flip the first character to create an invalid signature of the same length
-      const tamperedSignature =
-        (realSignature[0] === 'a' ? 'b' : 'a') + realSignature.slice(1);
+      const tamperedSignature = (realSignature[0] === 'a' ? 'b' : 'a') + realSignature.slice(1);
 
       // Act & Assert
       await expect(
@@ -285,9 +267,9 @@ describe('VoiceWebhookController', () => {
       };
 
       // Act & Assert
-      await expect(
-        controller.handleTransfer(payload, 'bad-signature'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.handleTransfer(payload, 'bad-signature')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should pass the transfer payload to the service', async () => {
@@ -327,9 +309,9 @@ describe('VoiceWebhookController', () => {
       const shortSignature = 'abc';
 
       // Act & Assert
-      await expect(
-        controller.handleCallEvent(payload, shortSignature, timestamp),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.handleCallEvent(payload, shortSignature, timestamp)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should construct signed payload with timestamp when provided', async () => {
@@ -344,11 +326,7 @@ describe('VoiceWebhookController', () => {
         .digest('hex');
 
       // Act
-      const result = await controller.handleCallEvent(
-        payload,
-        correctSignature,
-        timestamp,
-      );
+      const result = await controller.handleCallEvent(payload, correctSignature, timestamp);
 
       // Assert
       expect(result.success).toBe(true);

@@ -20,12 +20,12 @@ import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '
             {
               name: 'default',
               ttl: 60000, // 1 minute
-              limit: 60,  // 60 requests per minute
+              limit: 60, // 60 requests per minute
             },
             {
               name: 'strict',
               ttl: 60000,
-              limit: 10,  // 10 requests per minute (for sensitive endpoints)
+              limit: 10, // 10 requests per minute (for sensitive endpoints)
             },
             {
               name: 'lenient',

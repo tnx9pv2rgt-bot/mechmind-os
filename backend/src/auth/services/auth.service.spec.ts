@@ -148,10 +148,7 @@ describe('AuthService', () => {
         where: { email: 'mario@test.com', tenantId: 'tenant-uuid-1' },
         include: { tenant: true },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        'correct-password',
-        mockUser.passwordHash,
-      );
+      expect(bcrypt.compare).toHaveBeenCalledWith('correct-password', mockUser.passwordHash);
     });
 
     it('should throw UnauthorizedException when tenant is not found', async () => {
@@ -282,14 +279,8 @@ describe('AuthService', () => {
       expect(configService.get).toHaveBeenCalledWith('JWT_SECRET');
       expect(configService.get).toHaveBeenCalledWith('JWT_REFRESH_SECRET');
       expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN', '24h');
-      expect(configService.get).toHaveBeenCalledWith(
-        'JWT_REFRESH_EXPIRES_IN',
-        '7d',
-      );
-      expect(configService.get).toHaveBeenCalledWith(
-        'JWT_EXPIRES_IN_SECONDS',
-        '86400',
-      );
+      expect(configService.get).toHaveBeenCalledWith('JWT_REFRESH_EXPIRES_IN', '7d');
+      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN_SECONDS', '86400');
     });
   });
 
@@ -319,10 +310,9 @@ describe('AuthService', () => {
         expiresIn: 86400,
       });
 
-      expect(jwtService.verifyAsync).toHaveBeenCalledWith(
-        'valid-refresh-token',
-        { secret: 'test-jwt-refresh-secret' },
-      );
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-refresh-token', {
+        secret: 'test-jwt-refresh-secret',
+      });
     });
 
     it('should look up user by userId and tenantId from payload subject', async () => {
@@ -343,31 +333,26 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when refresh token is invalid', async () => {
-      (jwtService.verifyAsync as jest.Mock).mockRejectedValue(
-        new Error('jwt expired'),
+      (jwtService.verifyAsync as jest.Mock).mockRejectedValue(new Error('jwt expired'));
+
+      await expect(service.refreshTokens('expired-refresh-token')).rejects.toThrow(
+        UnauthorizedException,
       );
 
-      await expect(
-        service.refreshTokens('expired-refresh-token'),
-      ).rejects.toThrow(UnauthorizedException);
-
-      await expect(
-        service.refreshTokens('expired-refresh-token'),
-      ).rejects.toThrow('Invalid refresh token');
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Token refresh failed',
-        expect.any(String),
+      await expect(service.refreshTokens('expired-refresh-token')).rejects.toThrow(
+        'Invalid refresh token',
       );
+
+      expect(logger.error).toHaveBeenCalledWith('Token refresh failed', expect.any(String));
     });
 
     it('should throw UnauthorizedException when user is not found', async () => {
       (jwtService.verifyAsync as jest.Mock).mockResolvedValue(mockPayload);
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.refreshTokens('valid-refresh-token'),
-      ).rejects.toThrow('Invalid refresh token');
+      await expect(service.refreshTokens('valid-refresh-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
 
     it('should throw UnauthorizedException when tenant is inactive', async () => {
@@ -377,9 +362,9 @@ describe('AuthService', () => {
         tenant: { ...mockTenant, isActive: false },
       });
 
-      await expect(
-        service.refreshTokens('valid-refresh-token'),
-      ).rejects.toThrow('Invalid refresh token');
+      await expect(service.refreshTokens('valid-refresh-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
   });
 
@@ -395,9 +380,7 @@ describe('AuthService', () => {
         tenantId: 'tenant-uuid-1',
       };
 
-      expect(service.extractTenantIdFromPayload(payload)).toBe(
-        'tenant-uuid-1',
-      );
+      expect(service.extractTenantIdFromPayload(payload)).toBe('tenant-uuid-1');
     });
 
     it('should fallback to parsing tenantId from subject when tenantId field is empty', () => {
@@ -408,9 +391,7 @@ describe('AuthService', () => {
         tenantId: '',
       } as JwtPayload;
 
-      expect(service.extractTenantIdFromPayload(payload)).toBe(
-        'tenant-uuid-from-sub',
-      );
+      expect(service.extractTenantIdFromPayload(payload)).toBe('tenant-uuid-from-sub');
     });
 
     it('should throw UnauthorizedException when tenantId cannot be extracted', () => {
@@ -421,9 +402,7 @@ describe('AuthService', () => {
         tenantId: '',
       } as JwtPayload;
 
-      expect(() => service.extractTenantIdFromPayload(payload)).toThrow(
-        UnauthorizedException,
-      );
+      expect(() => service.extractTenantIdFromPayload(payload)).toThrow(UnauthorizedException);
       expect(() => service.extractTenantIdFromPayload(payload)).toThrow(
         'Invalid token: tenant ID not found',
       );
@@ -515,12 +494,8 @@ describe('AuthService', () => {
       const lockedUntil = lockCall[0].data.lockedUntil as Date;
       // lockedUntil should be ~15 minutes in the future
       const fifteenMinutesMs = 15 * 60 * 1000;
-      expect(lockedUntil.getTime()).toBeGreaterThanOrEqual(
-        beforeTest + fifteenMinutesMs,
-      );
-      expect(lockedUntil.getTime()).toBeLessThanOrEqual(
-        afterTest + fifteenMinutesMs,
-      );
+      expect(lockedUntil.getTime()).toBeGreaterThanOrEqual(beforeTest + fifteenMinutesMs);
+      expect(lockedUntil.getTime()).toBeLessThanOrEqual(afterTest + fifteenMinutesMs);
     });
 
     it('should lock account when failedAttempts exceeds 5', async () => {
@@ -691,19 +666,17 @@ describe('AuthService', () => {
         type: 'not_2fa',
       });
 
-      await expect(
-        service.verifyTwoFactorTempToken('wrong-type-token'),
-      ).rejects.toThrow('Invalid or expired 2FA token');
+      await expect(service.verifyTwoFactorTempToken('wrong-type-token')).rejects.toThrow(
+        'Invalid or expired 2FA token',
+      );
     });
 
     it('should throw UnauthorizedException for expired token', async () => {
-      (jwtService.verifyAsync as jest.Mock).mockRejectedValue(
-        new Error('jwt expired'),
-      );
+      (jwtService.verifyAsync as jest.Mock).mockRejectedValue(new Error('jwt expired'));
 
-      await expect(
-        service.verifyTwoFactorTempToken('expired-token'),
-      ).rejects.toThrow('Invalid or expired 2FA token');
+      await expect(service.verifyTwoFactorTempToken('expired-token')).rejects.toThrow(
+        'Invalid or expired 2FA token',
+      );
     });
   });
 
@@ -729,9 +702,9 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when user is not found', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.getUserWithTwoFactorStatus('nonexistent'),
-      ).rejects.toThrow('User not found or inactive');
+      await expect(service.getUserWithTwoFactorStatus('nonexistent')).rejects.toThrow(
+        'User not found or inactive',
+      );
     });
 
     it('should throw UnauthorizedException when user is inactive', async () => {
@@ -740,9 +713,9 @@ describe('AuthService', () => {
         isActive: false,
       });
 
-      await expect(
-        service.getUserWithTwoFactorStatus('user-uuid-1'),
-      ).rejects.toThrow('User not found or inactive');
+      await expect(service.getUserWithTwoFactorStatus('user-uuid-1')).rejects.toThrow(
+        'User not found or inactive',
+      );
     });
 
     it('should throw UnauthorizedException when tenant is inactive', async () => {
@@ -751,9 +724,9 @@ describe('AuthService', () => {
         tenant: { ...mockTenant, isActive: false },
       });
 
-      await expect(
-        service.getUserWithTwoFactorStatus('user-uuid-1'),
-      ).rejects.toThrow('User not found or inactive');
+      await expect(service.getUserWithTwoFactorStatus('user-uuid-1')).rejects.toThrow(
+        'User not found or inactive',
+      );
     });
   });
 
@@ -777,12 +750,8 @@ describe('AuthService', () => {
       });
 
       const callData = (prisma.user.update as jest.Mock).mock.calls[0][0].data;
-      expect(callData.lastLoginAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTest.getTime(),
-      );
-      expect(callData.lastLoginAt.getTime()).toBeLessThanOrEqual(
-        afterTest.getTime(),
-      );
+      expect(callData.lastLoginAt.getTime()).toBeGreaterThanOrEqual(beforeTest.getTime());
+      expect(callData.lastLoginAt.getTime()).toBeLessThanOrEqual(afterTest.getTime());
     });
 
     it('should set lastLoginIp to undefined when ip is not provided', async () => {
@@ -860,9 +829,7 @@ describe('AuthService', () => {
 
       await service.logAdminAction(action);
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Admin action: export_data by admin admin-uuid-1',
-      );
+      expect(logger.warn).toHaveBeenCalledWith('Admin action: export_data by admin admin-uuid-1');
     });
 
     it('should throw when admin user is not found', async () => {
@@ -874,9 +841,7 @@ describe('AuthService', () => {
         timestamp: new Date(),
       };
 
-      await expect(service.logAdminAction(action)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.logAdminAction(action)).rejects.toThrow(UnauthorizedException);
     });
   });
 });

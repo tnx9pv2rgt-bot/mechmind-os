@@ -9,18 +9,9 @@ import { CommonModule } from '@common/common.module';
 import { CustomerModule } from '@customer/customer.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    EventEmitterModule.forRoot(),
-    CommonModule,
-    CustomerModule,
-  ],
+  imports: [ConfigModule, EventEmitterModule.forRoot(), CommonModule, CustomerModule],
   controllers: [BookingController],
-  providers: [
-    BookingService,
-    BookingSlotService,
-    BookingEventListener,
-  ],
+  providers: [BookingService, BookingSlotService, BookingEventListener],
   exports: [BookingService, BookingSlotService],
 })
 export class BookingModule {}

@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Vehicle Twin Service
- * 
+ *
  * Digital twin for vehicle visualization and predictive maintenance
  * - 3D model management
  * - Component health tracking
@@ -172,10 +172,7 @@ export class VehicleTwinService {
   /**
    * Record damage
    */
-  async recordDamage(
-    vehicleId: string,
-    damage: Omit<DamageRecord, 'id'>,
-  ): Promise<DamageRecord> {
+  async recordDamage(vehicleId: string, damage: Omit<DamageRecord, 'id'>): Promise<DamageRecord> {
     const record = await (this.prisma.vehicleDamage.create as any)({
       data: {
         vehicleId,
@@ -195,7 +192,7 @@ export class VehicleTwinService {
     // Update component health based on damage
     const healthImpact = this.calculateDamageHealthImpact(damage.type, damage.severity);
     const component = await this.getComponent(vehicleId, damage.componentId);
-    
+
     await this.updateComponentStatus(vehicleId, damage.componentId, {
       status: damage.severity === 'SEVERE' ? 'CRITICAL' : 'WARNING',
       healthScore: Math.max(0, component.healthScore - healthImpact),
@@ -270,7 +267,7 @@ export class VehicleTwinService {
     }
 
     const component = await this.getComponent(vehicleId, componentId);
-    
+
     return this.predictComponentWear(component, vehicle);
   }
 
@@ -328,7 +325,9 @@ export class VehicleTwinService {
         ...(config.modelFormat && { modelFormat: config.modelFormat }),
         ...(config.modelUrl && { modelUrl: config.modelUrl }),
         ...(config.componentMappings && { componentMappings: config.componentMappings }),
-        ...(config.defaultCameraPosition && { defaultCameraPosition: config.defaultCameraPosition }),
+        ...(config.defaultCameraPosition && {
+          defaultCameraPosition: config.defaultCameraPosition,
+        }),
         ...(config.hotspots && { hotspots: config.hotspots }),
       },
     });
@@ -367,7 +366,7 @@ export class VehicleTwinService {
   private async buildTwinState(vehicle: any): Promise<VehicleTwinState> {
     // Get or initialize components
     const components = await this.getOrInitializeComponents(vehicle);
-    
+
     // Get component history
     const history = await (this.prisma.componentHistory.findMany as any)({
       where: { vehicleId: vehicle.id },
@@ -402,31 +401,60 @@ export class VehicleTwinService {
       lastUpdated: new Date(),
       components,
       activeAlerts,
-      recentHistory: history.map((h: { id: string; componentId: string; eventType: string; date: Date; description?: string | null; technicianId?: string | null; cost?: number | null; partsUsed: any; photos: any; documents: any; odometer?: number | null }) => ({
-        id: h.id,
-        componentId: h.componentId,
-        eventType: h.eventType as any,
-        date: h.date,
-        description: h.description,
-        technicianId: h.technicianId || undefined,
-        cost: h.cost || undefined,
-        partsUsed: h.partsUsed as string[],
-        photos: h.photos as string[],
-        documents: h.documents as string[],
-        odometer: h.odometer || undefined,
-      })),
-      damageRecords: damageRecords.map((d: { id: string; componentId: string; type: string; severity: string; description: string; locationX: number; locationY: number; locationZ: number; photos: any; reportedAt: Date; repairedAt?: Date | null; repairCost?: number | null }) => ({
-        id: d.id,
-        componentId: d.componentId,
-        type: d.type as any,
-        severity: d.severity as any,
-        description: d.description,
-        location: { x: d.locationX, y: d.locationY, z: d.locationZ },
-        photos: d.photos as string[],
-        reportedAt: d.reportedAt,
-        repairedAt: d.repairedAt || undefined,
-        repairCost: d.repairCost || undefined,
-      })),
+      recentHistory: history.map(
+        (h: {
+          id: string;
+          componentId: string;
+          eventType: string;
+          date: Date;
+          description?: string | null;
+          technicianId?: string | null;
+          cost?: number | null;
+          partsUsed: any;
+          photos: any;
+          documents: any;
+          odometer?: number | null;
+        }) => ({
+          id: h.id,
+          componentId: h.componentId,
+          eventType: h.eventType as any,
+          date: h.date,
+          description: h.description,
+          technicianId: h.technicianId || undefined,
+          cost: h.cost || undefined,
+          partsUsed: h.partsUsed as string[],
+          photos: h.photos as string[],
+          documents: h.documents as string[],
+          odometer: h.odometer || undefined,
+        }),
+      ),
+      damageRecords: damageRecords.map(
+        (d: {
+          id: string;
+          componentId: string;
+          type: string;
+          severity: string;
+          description: string;
+          locationX: number;
+          locationY: number;
+          locationZ: number;
+          photos: any;
+          reportedAt: Date;
+          repairedAt?: Date | null;
+          repairCost?: number | null;
+        }) => ({
+          id: d.id,
+          componentId: d.componentId,
+          type: d.type as any,
+          severity: d.severity as any,
+          description: d.description,
+          location: { x: d.locationX, y: d.locationY, z: d.locationZ },
+          photos: d.photos as string[],
+          reportedAt: d.reportedAt,
+          repairedAt: d.repairedAt || undefined,
+          repairCost: d.repairCost || undefined,
+        }),
+      ),
       mileage: latestReading?.distance || 0,
       engineHours: latestReading?.runTime || 0,
     };
@@ -438,24 +466,40 @@ export class VehicleTwinService {
     });
 
     if (existing.length > 0) {
-      return existing.map((c: { componentId: string; name: string; category: string; status: string; healthScore: number; lastServiceDate?: Date | null; nextServiceDue?: Date | null; estimatedLifespan?: number | null; positionX: number; positionY: number; positionZ: number; modelPartId?: string | null; metadata: any }) => ({
-        id: c.componentId,
-        name: c.name,
-        category: c.category as any,
-        status: c.status as any,
-        healthScore: c.healthScore,
-        lastServiceDate: c.lastServiceDate || undefined,
-        nextServiceDue: c.nextServiceDue || undefined,
-        estimatedLifespan: c.estimatedLifespan || undefined,
-        position: { x: c.positionX, y: c.positionY, z: c.positionZ },
-        modelPartId: c.modelPartId || undefined,
-        metadata: c.metadata as Record<string, any>,
-      }));
+      return existing.map(
+        (c: {
+          componentId: string;
+          name: string;
+          category: string;
+          status: string;
+          healthScore: number;
+          lastServiceDate?: Date | null;
+          nextServiceDue?: Date | null;
+          estimatedLifespan?: number | null;
+          positionX: number;
+          positionY: number;
+          positionZ: number;
+          modelPartId?: string | null;
+          metadata: any;
+        }) => ({
+          id: c.componentId,
+          name: c.name,
+          category: c.category as any,
+          status: c.status as any,
+          healthScore: c.healthScore,
+          lastServiceDate: c.lastServiceDate || undefined,
+          nextServiceDue: c.nextServiceDue || undefined,
+          estimatedLifespan: c.estimatedLifespan || undefined,
+          position: { x: c.positionX, y: c.positionY, z: c.positionZ },
+          modelPartId: c.modelPartId || undefined,
+          metadata: c.metadata as Record<string, any>,
+        }),
+      );
     }
 
     // Initialize default components
     const defaultComponents = this.getDefaultComponents(vehicle);
-    
+
     await (this.prisma.vehicleTwinComponent.createMany as any)({
       data: defaultComponents.map(c => ({
         vehicleId: vehicle.id,
@@ -571,10 +615,7 @@ export class VehicleTwinService {
     ];
   }
 
-  private async getComponent(
-    vehicleId: string,
-    componentId: string,
-  ): Promise<VehicleComponent> {
+  private async getComponent(vehicleId: string, componentId: string): Promise<VehicleComponent> {
     const component = await (this.prisma.vehicleTwinComponent.findUnique as any)({
       where: {
         vehicleId_componentId: {
@@ -605,7 +646,7 @@ export class VehicleTwinService {
 
   private calculateOverallHealth(components: VehicleComponent[]): number {
     if (components.length === 0) return 100;
-    
+
     const totalScore = components.reduce((sum, c) => sum + c.healthScore, 0);
     return Math.round(totalScore / components.length);
   }
@@ -646,11 +687,7 @@ export class VehicleTwinService {
         orderBy: { date: 'desc' },
       });
 
-      const prediction = this.predictComponentFailure(
-        component,
-        serviceHistory,
-        mileage,
-      );
+      const prediction = this.predictComponentFailure(component, serviceHistory, mileage);
 
       if (prediction.shouldAlert) {
         alerts.push({
@@ -692,8 +729,8 @@ export class VehicleTwinService {
     let confidence = 0.5;
 
     // Check last service
-    const lastService = history.find(h => 
-      h.eventType === 'MAINTENANCE' || h.eventType === 'REPLACEMENT'
+    const lastService = history.find(
+      h => h.eventType === 'MAINTENANCE' || h.eventType === 'REPLACEMENT',
     );
 
     const lifespan = this.LIFESPAN_ESTIMATES[component.category];
@@ -706,17 +743,23 @@ export class VehicleTwinService {
         shouldAlert = true;
         severity = 'CRITICAL';
         confidence = 0.9;
-        reasoning.push(`${component.name} has exceeded ${Math.round(wearPercentage)}% of expected lifespan`);
+        reasoning.push(
+          `${component.name} has exceeded ${Math.round(wearPercentage)}% of expected lifespan`,
+        );
       } else if (wearPercentage > 75) {
         shouldAlert = true;
         severity = 'HIGH';
         confidence = 0.75;
-        reasoning.push(`${component.name} is at ${Math.round(wearPercentage)}% of expected lifespan`);
+        reasoning.push(
+          `${component.name} is at ${Math.round(wearPercentage)}% of expected lifespan`,
+        );
       } else if (wearPercentage > 50) {
         shouldAlert = true;
         severity = 'MEDIUM';
         confidence = 0.6;
-        reasoning.push(`${component.name} is approaching service interval (${Math.round(wearPercentage)}% wear)`);
+        reasoning.push(
+          `${component.name} is approaching service interval (${Math.round(wearPercentage)}% wear)`,
+        );
       }
 
       // Calculate predicted failure
@@ -746,10 +789,7 @@ export class VehicleTwinService {
     };
   }
 
-  private predictComponentWear(
-    component: VehicleComponent,
-    vehicle: any,
-  ): ComponentWearPrediction {
+  private predictComponentWear(component: VehicleComponent, vehicle: any): ComponentWearPrediction {
     const currentMileage = vehicle.mileage || 0;
     const predictions: { date: Date; wearPercentage: number }[] = [];
 
@@ -759,9 +799,9 @@ export class VehicleTwinService {
 
     if (lifespan) {
       for (let month = 1; month <= 12; month++) {
-        const projectedMileage = currentMileage + (monthlyMiles * month);
+        const projectedMileage = currentMileage + monthlyMiles * month;
         const wearPercentage = Math.min(100, (projectedMileage / lifespan.max) * 100);
-        
+
         predictions.push({
           date: new Date(Date.now() + month * 30 * 24 * 60 * 60 * 1000),
           wearPercentage,
@@ -786,46 +826,56 @@ export class VehicleTwinService {
   private mapDtcToComponent(dtcCode: string): string {
     const prefix = dtcCode.substring(0, 2);
     const mappings: Record<string, string> = {
-      'P0': 'engine',
-      'P1': 'engine',
-      'P2': 'fuel_system',
-      'P3': 'transmission',
-      'B0': 'battery',
-      'B1': 'electrical',
-      'C0': 'brakes_front',
-      'C1': 'suspension_front',
-      'U0': 'engine',
+      P0: 'engine',
+      P1: 'engine',
+      P2: 'fuel_system',
+      P3: 'transmission',
+      B0: 'battery',
+      B1: 'electrical',
+      C0: 'brakes_front',
+      C1: 'suspension_front',
+      U0: 'engine',
     };
     return mappings[prefix] || 'engine';
   }
 
   private mapEventTypeToStatus(eventType: string): VehicleComponent['status'] {
     const mappings: Record<string, VehicleComponent['status']> = {
-      'INSPECTION': 'HEALTHY',
-      'REPAIR': 'REPAIRING',
-      'REPLACEMENT': 'REPLACED',
-      'DAMAGE': 'CRITICAL',
-      'MAINTENANCE': 'HEALTHY',
+      INSPECTION: 'HEALTHY',
+      REPAIR: 'REPAIRING',
+      REPLACEMENT: 'REPLACED',
+      DAMAGE: 'CRITICAL',
+      MAINTENANCE: 'HEALTHY',
     };
     return mappings[eventType] || 'HEALTHY';
   }
 
   private calculateDamageHealthImpact(type: string, severity: string): number {
     const baseImpact = { MINOR: 10, MODERATE: 25, SEVERE: 50 };
-    const typeMultiplier = { DENT: 1, SCRATCH: 0.5, CRACK: 1.5, CORROSION: 1.2, WEAR: 1, IMPACT: 1.5 };
-    return baseImpact[severity as keyof typeof baseImpact] * (typeMultiplier[type as keyof typeof typeMultiplier] || 1);
+    const typeMultiplier = {
+      DENT: 1,
+      SCRATCH: 0.5,
+      CRACK: 1.5,
+      CORROSION: 1.2,
+      WEAR: 1,
+      IMPACT: 1.5,
+    };
+    return (
+      baseImpact[severity as keyof typeof baseImpact] *
+      (typeMultiplier[type as keyof typeof typeMultiplier] || 1)
+    );
   }
 
   private estimateRepairCost(dtcCode: string): number {
     // Simplified cost estimation
     const prefix = dtcCode.substring(0, 3);
     const baseCosts: Record<string, number> = {
-      'P01': 150, // Fuel
-      'P02': 200, // Injector
-      'P03': 300, // Ignition
-      'P04': 250, // Emissions
-      'P07': 800, // Transmission
-      'P08': 1000, // Transmission
+      P01: 150, // Fuel
+      P02: 200, // Injector
+      P03: 300, // Ignition
+      P04: 250, // Emissions
+      P07: 800, // Transmission
+      P08: 1000, // Transmission
     };
     return baseCosts[prefix] || 200;
   }
@@ -851,8 +901,16 @@ export class VehicleTwinService {
       { componentId: 'transmission', meshName: 'Transmission', materialName: 'Transmission_Metal' },
       { componentId: 'brakes_front', meshName: 'Brake_Front_L', materialName: 'Brake_Disc' },
       { componentId: 'brakes_rear', meshName: 'Brake_Rear_L', materialName: 'Brake_Disc' },
-      { componentId: 'suspension_front', meshName: 'Suspension_Front', materialName: 'Suspension_Metal' },
-      { componentId: 'suspension_rear', meshName: 'Suspension_Rear', materialName: 'Suspension_Metal' },
+      {
+        componentId: 'suspension_front',
+        meshName: 'Suspension_Front',
+        materialName: 'Suspension_Metal',
+      },
+      {
+        componentId: 'suspension_rear',
+        meshName: 'Suspension_Rear',
+        materialName: 'Suspension_Metal',
+      },
       { componentId: 'battery', meshName: 'Battery', materialName: 'Battery_Case' },
       { componentId: 'exhaust', meshName: 'Exhaust_System', materialName: 'Exhaust_Metal' },
     ];

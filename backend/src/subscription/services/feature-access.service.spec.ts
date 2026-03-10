@@ -2,16 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { FeatureAccessService } from './feature-access.service';
-import {
-  SubscriptionPlan,
-  SubscriptionStatus,
-  FeatureFlag,
-} from '@prisma/client';
-import {
-  PLAN_FEATURES,
-  PLAN_LIMITS,
-  AI_ADDON_FEATURES,
-} from '../config/pricing.config';
+import { SubscriptionPlan, SubscriptionStatus, FeatureFlag } from '@prisma/client';
+import { PLAN_FEATURES, PLAN_LIMITS, AI_ADDON_FEATURES } from '../config/pricing.config';
 
 describe('FeatureAccessService', () => {
   let service: FeatureAccessService;
@@ -150,24 +142,23 @@ describe('FeatureAccessService', () => {
       usageTracking: {
         upsert: jest.fn().mockResolvedValue({ id: 'usage-001' }),
       },
-      $transaction: jest.fn((callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
-        const tx = {
-          subscription: {
-            update: jest.fn().mockResolvedValue(mockMediumSubscription),
-          },
-          usageTracking: {
-            upsert: jest.fn().mockResolvedValue({ id: 'usage-001' }),
-          },
-        };
-        return callback(tx);
-      }),
+      $transaction: jest.fn(
+        (callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
+          const tx = {
+            subscription: {
+              update: jest.fn().mockResolvedValue(mockMediumSubscription),
+            },
+            usageTracking: {
+              upsert: jest.fn().mockResolvedValue({ id: 'usage-001' }),
+            },
+          };
+          return callback(tx);
+        },
+      ),
     } as unknown as Record<string, Record<string, jest.Mock> | jest.Mock>;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FeatureAccessService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [FeatureAccessService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<FeatureAccessService>(FeatureAccessService);
@@ -288,7 +279,13 @@ describe('FeatureAccessService', () => {
         aiAddonEnabled: true,
         features: [
           ...mockMediumSubscription.features,
-          { id: 'feat-ai', subscriptionId: SUBSCRIPTION_ID, feature: FeatureFlag.AI_INSPECTIONS, enabled: true, createdAt: now },
+          {
+            id: 'feat-ai',
+            subscriptionId: SUBSCRIPTION_ID,
+            feature: FeatureFlag.AI_INSPECTIONS,
+            enabled: true,
+            createdAt: now,
+          },
         ],
       };
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
@@ -322,13 +319,13 @@ describe('FeatureAccessService', () => {
 
       // Act
       const results = await Promise.all(
-        PLAN_FEATURES[SubscriptionPlan.ENTERPRISE].map(
-          (feature) => service.canAccessFeature(TENANT_ID, feature),
+        PLAN_FEATURES[SubscriptionPlan.ENTERPRISE].map(feature =>
+          service.canAccessFeature(TENANT_ID, feature),
         ),
       );
 
       // Assert
-      results.forEach((result) => {
+      results.forEach(result => {
         expect(result.allowed).toBe(true);
       });
     });
@@ -352,7 +349,13 @@ describe('FeatureAccessService', () => {
         ...mockSmallSubscription,
         features: [
           ...mockSmallSubscription.features,
-          { id: 'feat-explicit', subscriptionId: 'sub-small', feature: FeatureFlag.API_ACCESS, enabled: true, createdAt: now },
+          {
+            id: 'feat-explicit',
+            subscriptionId: 'sub-small',
+            feature: FeatureFlag.API_ACCESS,
+            enabled: true,
+            createdAt: now,
+          },
         ],
       };
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
@@ -375,7 +378,11 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      const features = [FeatureFlag.API_ACCESS, FeatureFlag.WHITE_LABEL, FeatureFlag.ADVANCED_REPORTS];
+      const features = [
+        FeatureFlag.API_ACCESS,
+        FeatureFlag.WHITE_LABEL,
+        FeatureFlag.ADVANCED_REPORTS,
+      ];
 
       // Act
       const results = await service.canAccessFeatures(TENANT_ID, features);
@@ -557,9 +564,7 @@ describe('FeatureAccessService', () => {
       findUniqueMock.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.checkAllLimits(TENANT_ID)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.checkAllLimits(TENANT_ID)).rejects.toThrow(ForbiddenException);
     });
 
     it('should show unlimited for enterprise plan', async () => {
@@ -718,9 +723,9 @@ describe('FeatureAccessService', () => {
       findUniqueMock.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.checkSpecificLimit(TENANT_ID, 'maxUsers'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.checkSpecificLimit(TENANT_ID, 'maxUsers')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should return unlimited for enterprise plan limits', async () => {
@@ -846,9 +851,7 @@ describe('FeatureAccessService', () => {
       (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(5);
 
       // Act & Assert
-      await expect(
-        service.assertWithinLimit(TENANT_ID, 'maxUsers'),
-      ).resolves.toBeUndefined();
+      await expect(service.assertWithinLimit(TENANT_ID, 'maxUsers')).resolves.toBeUndefined();
     });
 
     it('should throw ForbiddenException when limit is exceeded', async () => {
@@ -858,9 +861,9 @@ describe('FeatureAccessService', () => {
       (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15); // exceeds 10
 
       // Act & Assert
-      await expect(
-        service.assertWithinLimit(TENANT_ID, 'maxUsers'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.assertWithinLimit(TENANT_ID, 'maxUsers')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should include LIMIT_EXCEEDED code in ForbiddenException', async () => {
@@ -910,9 +913,7 @@ describe('FeatureAccessService', () => {
       (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(9999);
 
       // Act & Assert
-      await expect(
-        service.assertWithinLimit(TENANT_ID, 'maxUsers'),
-      ).resolves.toBeUndefined();
+      await expect(service.assertWithinLimit(TENANT_ID, 'maxUsers')).resolves.toBeUndefined();
     });
   });
 
@@ -951,7 +952,9 @@ describe('FeatureAccessService', () => {
 
       // Assert
       expect(capturedSubscriptionUpdate).toBeDefined();
-      expect((capturedSubscriptionUpdate as Record<string, Record<string, unknown>>).where).toEqual({ tenantId: TENANT_ID });
+      expect((capturedSubscriptionUpdate as Record<string, Record<string, unknown>>).where).toEqual(
+        { tenantId: TENANT_ID },
+      );
       expect((capturedSubscriptionUpdate as Record<string, Record<string, unknown>>).data).toEqual(
         expect.objectContaining({
           apiCallsUsed: { increment: 1 },
@@ -1047,7 +1050,10 @@ describe('FeatureAccessService', () => {
       // Assert
       expect(capturedUsageUpsert).toBeDefined();
       const currentDate = new Date();
-      const whereClause = capturedUsageUpsert as Record<string, Record<string, Record<string, unknown>>>;
+      const whereClause = capturedUsageUpsert as Record<
+        string,
+        Record<string, Record<string, unknown>>
+      >;
       expect(whereClause.where.tenantId_year_month).toEqual(
         expect.objectContaining({
           tenantId: TENANT_ID,
@@ -1130,9 +1136,7 @@ describe('FeatureAccessService', () => {
       findUniqueMock.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.getUsageStats(TENANT_ID)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.getUsageStats(TENANT_ID)).rejects.toThrow(ForbiddenException);
     });
 
     it('should include current usage counts in response', async () => {
@@ -1251,10 +1255,12 @@ describe('FeatureAccessService', () => {
         async (callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
           const tx = {
             subscription: {
-              update: jest.fn().mockImplementation((args: Record<string, Record<string, string>>) => {
-                capturedTenantId = args.where.tenantId;
-                return Promise.resolve(mockMediumSubscription);
-              }),
+              update: jest
+                .fn()
+                .mockImplementation((args: Record<string, Record<string, string>>) => {
+                  capturedTenantId = args.where.tenantId;
+                  return Promise.resolve(mockMediumSubscription);
+                }),
             },
             usageTracking: {
               upsert: jest.fn().mockResolvedValue({ id: 'usage-010' }),
@@ -1285,13 +1291,11 @@ describe('FeatureAccessService', () => {
 
       // Act
       const results = await Promise.all(
-        smallFeatures.map((feature) =>
-          service.canAccessFeature(TENANT_ID, feature),
-        ),
+        smallFeatures.map(feature => service.canAccessFeature(TENANT_ID, feature)),
       );
 
       // Assert
-      results.forEach((result) => {
+      results.forEach(result => {
         expect(result.allowed).toBe(true);
       });
     });
@@ -1316,13 +1320,11 @@ describe('FeatureAccessService', () => {
 
       // Act
       const results = await Promise.all(
-        mediumFeatures.map((feature) =>
-          service.canAccessFeature(TENANT_ID, feature),
-        ),
+        mediumFeatures.map(feature => service.canAccessFeature(TENANT_ID, feature)),
       );
 
       // Assert
-      results.forEach((result) => {
+      results.forEach(result => {
         expect(result.allowed).toBe(true);
       });
     });
@@ -1335,13 +1337,11 @@ describe('FeatureAccessService', () => {
 
       // Act
       const results = await Promise.all(
-        enterpriseFeatures.map((feature) =>
-          service.canAccessFeature(TENANT_ID, feature),
-        ),
+        enterpriseFeatures.map(feature => service.canAccessFeature(TENANT_ID, feature)),
       );
 
       // Assert
-      results.forEach((result) => {
+      results.forEach(result => {
         expect(result.allowed).toBe(true);
       });
     });
@@ -1396,9 +1396,9 @@ describe('FeatureAccessService', () => {
       findUniqueMock.findUnique.mockRejectedValue(new Error('Database connection lost'));
 
       // Act & Assert
-      await expect(
-        service.canAccessFeature(TENANT_ID, FeatureFlag.API_ACCESS),
-      ).rejects.toThrow('Database connection lost');
+      await expect(service.canAccessFeature(TENANT_ID, FeatureFlag.API_ACCESS)).rejects.toThrow(
+        'Database connection lost',
+      );
     });
 
     it('should handle database errors in checkAllLimits gracefully', async () => {
@@ -1407,9 +1407,7 @@ describe('FeatureAccessService', () => {
       findUniqueMock.findUnique.mockRejectedValue(new Error('Connection timeout'));
 
       // Act & Assert
-      await expect(
-        service.checkAllLimits(TENANT_ID),
-      ).rejects.toThrow('Connection timeout');
+      await expect(service.checkAllLimits(TENANT_ID)).rejects.toThrow('Connection timeout');
     });
 
     it('should handle database errors in recordApiCall gracefully', async () => {
@@ -1417,9 +1415,9 @@ describe('FeatureAccessService', () => {
       (prisma.$transaction as jest.Mock).mockRejectedValue(new Error('Transaction failed'));
 
       // Act & Assert
-      await expect(
-        service.recordApiCall(TENANT_ID, '/api/test'),
-      ).rejects.toThrow('Transaction failed');
+      await expect(service.recordApiCall(TENANT_ID, '/api/test')).rejects.toThrow(
+        'Transaction failed',
+      );
     });
 
     it('should handle concurrent usage check without subscription', async () => {

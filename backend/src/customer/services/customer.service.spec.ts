@@ -73,9 +73,8 @@ describe('CustomerService', () => {
     };
 
     prisma = {
-      withTenant: jest.fn(
-        (_tenantId: string, cb: (p: typeof prisma) => Promise<unknown>) =>
-          cb(prisma),
+      withTenant: jest.fn((_tenantId: string, cb: (p: typeof prisma) => Promise<unknown>) =>
+        cb(prisma),
       ),
       customer: {
         create: jest.fn().mockResolvedValue(mockDbCustomer),
@@ -122,18 +121,13 @@ describe('CustomerService', () => {
         .mockResolvedValueOnce(null) // findByPhone lookup returns null
         .mockResolvedValueOnce(mockDbCustomer); // not used in create path, but safe
 
-      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(mockDbCustomer);
 
       // Act
       const result = await service.create(TENANT_ID, createDto);
 
       // Assert - withTenant called with correct tenantId
-      expect(prisma.withTenant).toHaveBeenCalledWith(
-        TENANT_ID,
-        expect.any(Function),
-      );
+      expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
 
       // Assert - PII encryption called for each field
       expect(encryption.encrypt).toHaveBeenCalledWith('+390123456789');
@@ -145,9 +139,7 @@ describe('CustomerService', () => {
       expect(encryption.hash).toHaveBeenCalledWith('+390123456789');
 
       // Assert - Prisma create called with encrypted data
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).create,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           encryptedPhone: 'enc_+390123456789',
           encryptedEmail: 'enc_mario@rossi.it',
@@ -177,8 +169,7 @@ describe('CustomerService', () => {
       await service.create(TENANT_ID, createDto);
 
       // Assert
-      const createCall = (prisma.customer as Record<string, jest.Mock>).create
-        .mock.calls[0][0];
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.gdprConsentAt).toBeInstanceOf(Date);
     });
 
@@ -194,8 +185,7 @@ describe('CustomerService', () => {
       await service.create(TENANT_ID, dtoNoConsent);
 
       // Assert
-      const createCall = (prisma.customer as Record<string, jest.Mock>).create
-        .mock.calls[0][0];
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.gdprConsentAt).toBeNull();
     });
 
@@ -206,9 +196,7 @@ describe('CustomerService', () => {
       );
 
       // Act & Assert
-      await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(ConflictException);
       await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(
         `Customer with phone ${createDto.phone} already exists`,
       );
@@ -227,16 +215,13 @@ describe('CustomerService', () => {
         encryptedFirstName: null,
         encryptedLastName: null,
       };
-      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(
-        minimalDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(minimalDbCustomer);
 
       // Act
       await service.create(TENANT_ID, minimalDto);
 
       // Assert
-      const createCall = (prisma.customer as Record<string, jest.Mock>).create
-        .mock.calls[0][0];
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.encryptedEmail).toBeNull();
       expect(createCall.data.encryptedFirstName).toBeNull();
       expect(createCall.data.encryptedLastName).toBeNull();
@@ -264,8 +249,7 @@ describe('CustomerService', () => {
       await service.create(TENANT_ID, dtoNoConsent);
 
       // Assert
-      const createCall = (prisma.customer as Record<string, jest.Mock>).create
-        .mock.calls[0][0];
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.gdprConsent).toBe(false);
       expect(createCall.data.marketingConsent).toBe(false);
     });
@@ -287,9 +271,7 @@ describe('CustomerService', () => {
       });
 
       // Assert - create was called with phone + default consents
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).create,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           gdprConsent: false,
           marketingConsent: false,
@@ -303,10 +285,7 @@ describe('CustomerService', () => {
       (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act
-      const result = await service.createFromVoiceCall(
-        TENANT_ID,
-        '+390123456789',
-      );
+      const result = await service.createFromVoiceCall(TENANT_ID, '+390123456789');
 
       // Assert
       expect(result).toBeDefined();
@@ -333,13 +312,8 @@ describe('CustomerService', () => {
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
 
       // Assert
-      expect(prisma.withTenant).toHaveBeenCalledWith(
-        TENANT_ID,
-        expect.any(Function),
-      );
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findFirst,
-      ).toHaveBeenCalledWith({
+      expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
+      expect((prisma.customer as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
         where: { id: CUSTOMER_ID, tenantId: TENANT_ID },
         include: {
           vehicles: true,
@@ -366,34 +340,29 @@ describe('CustomerService', () => {
       (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.findById(TENANT_ID, 'nonexistent-id'),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.findById(TENANT_ID, 'nonexistent-id'),
-      ).rejects.toThrow('Customer nonexistent-id not found');
+      await expect(service.findById(TENANT_ID, 'nonexistent-id')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.findById(TENANT_ID, 'nonexistent-id')).rejects.toThrow(
+        'Customer nonexistent-id not found',
+      );
     });
 
     it('should always filter by tenantId for tenant isolation', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.findById(TENANT_ID, CUSTOMER_ID);
 
       // Assert
-      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst
-        .mock.calls[0][0];
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst.mock.calls[0][0];
       expect(findCall.where.tenantId).toBe(TENANT_ID);
     });
 
     it('should decrypt all PII fields via EncryptionService', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.findById(TENANT_ID, CUSTOMER_ID);
@@ -438,9 +407,7 @@ describe('CustomerService', () => {
         ...mockDbCustomer,
         vehicles: [{ id: 'v-001' }],
       };
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        dbWithVehicles,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(dbWithVehicles);
 
       // Act
       const result = await service.findByPhone(TENANT_ID, phone);
@@ -449,9 +416,7 @@ describe('CustomerService', () => {
       expect(encryption.hash).toHaveBeenCalledWith(phone);
 
       // Assert - query uses phoneHash + tenantId
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findFirst,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
         where: {
           phoneHash: 'hash_+390123456789',
           tenantId: TENANT_ID,
@@ -464,9 +429,7 @@ describe('CustomerService', () => {
       // Assert - returns decrypted
       expect(result).not.toBeNull();
       expect(result!.phone).toBe('+390123456789');
-      expect((result as Record<string, unknown>).vehicles).toEqual([
-        { id: 'v-001' },
-      ]);
+      expect((result as Record<string, unknown>).vehicles).toEqual([{ id: 'v-001' }]);
     });
 
     it('should return null when no customer matches the phone hash', async () => {
@@ -488,8 +451,7 @@ describe('CustomerService', () => {
       await service.findByPhone(TENANT_ID, '+390123456789');
 
       // Assert
-      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst
-        .mock.calls[0][0];
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst.mock.calls[0][0];
       expect(findCall.where.tenantId).toBe(TENANT_ID);
     });
   });
@@ -509,9 +471,7 @@ describe('CustomerService', () => {
           encryptedLastName: 'enc_Bianchi',
         },
       ];
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        dbCustomers,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(dbCustomers);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(2);
 
       // Act
@@ -533,9 +493,7 @@ describe('CustomerService', () => {
           encryptedEmail: 'enc_luigi@bianchi.it',
         },
       ];
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        dbCustomers,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(dbCustomers);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(2);
 
       // Act
@@ -548,20 +506,14 @@ describe('CustomerService', () => {
 
     it('should apply limit and offset for pagination', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        [mockDbCustomer],
-      );
-      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(
-        100,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
+      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(100);
 
       // Act
       await service.search(TENANT_ID, { limit: 10, offset: 20 });
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith({
         where: { tenantId: TENANT_ID },
         take: 10,
         skip: 20,
@@ -578,9 +530,7 @@ describe('CustomerService', () => {
       await service.search(TENANT_ID, {});
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith(
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 50,
           skip: 0,
@@ -590,9 +540,7 @@ describe('CustomerService', () => {
 
     it('should return all customers when no filters are applied', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        [mockDbCustomer],
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1);
 
       // Act
@@ -605,9 +553,7 @@ describe('CustomerService', () => {
 
     it('should perform case-insensitive name filtering', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        [mockDbCustomer],
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1);
 
       // Act
@@ -620,9 +566,7 @@ describe('CustomerService', () => {
 
     it('should perform case-insensitive email filtering', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        [mockDbCustomer],
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1);
 
       // Act
@@ -643,9 +587,7 @@ describe('CustomerService', () => {
           encryptedEmail: 'enc_other@email.it',
         },
       ];
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        dbCustomers,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(dbCustomers);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(2);
 
       // Act
@@ -661,9 +603,7 @@ describe('CustomerService', () => {
 
     it('should match last name in name search', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        [mockDbCustomer],
-      );
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1);
 
       // Act
@@ -683,16 +623,14 @@ describe('CustomerService', () => {
       await service.search(TENANT_ID, {});
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith(
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: TENANT_ID },
         }),
       );
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).count,
-      ).toHaveBeenCalledWith({ where: { tenantId: TENANT_ID } });
+      expect((prisma.customer as Record<string, jest.Mock>).count).toHaveBeenCalledWith({
+        where: { tenantId: TENANT_ID },
+      });
     });
   });
 
@@ -710,9 +648,7 @@ describe('CustomerService', () => {
 
     it('should encrypt updated PII fields and persist them', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
       (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue({
         ...mockDbCustomer,
         encryptedPhone: 'enc_+390999888777',
@@ -736,9 +672,7 @@ describe('CustomerService', () => {
       expect(encryption.hash).toHaveBeenCalledWith('+390999888777');
 
       // Assert - prisma update called
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).update,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: CUSTOMER_ID },
         data: {
           encryptedPhone: 'enc_+390999888777',
@@ -760,30 +694,25 @@ describe('CustomerService', () => {
       (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.update(TENANT_ID, 'nonexistent-id', updateDto),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.update(TENANT_ID, 'nonexistent-id', updateDto),
-      ).rejects.toThrow('Customer nonexistent-id not found');
+      await expect(service.update(TENANT_ID, 'nonexistent-id', updateDto)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.update(TENANT_ID, 'nonexistent-id', updateDto)).rejects.toThrow(
+        'Customer nonexistent-id not found',
+      );
     });
 
     it('should only update provided fields (partial update)', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
       const partialDto: UpdateCustomerDto = { notes: 'Just notes' };
 
       // Act
       await service.update(TENANT_ID, CUSTOMER_ID, partialDto);
 
       // Assert - only notes in update data, no encrypted fields
-      const updateCall = (prisma.customer as Record<string, jest.Mock>).update
-        .mock.calls[0][0];
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
       expect(updateCall.data).toEqual({ notes: 'Just notes' });
       expect(updateCall.data.encryptedPhone).toBeUndefined();
       expect(updateCall.data.encryptedEmail).toBeUndefined();
@@ -791,9 +720,7 @@ describe('CustomerService', () => {
 
     it('should set encryptedEmail to null when email is explicitly set to empty string', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
       (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue({
         ...mockDbCustomer,
         encryptedEmail: null,
@@ -804,16 +731,13 @@ describe('CustomerService', () => {
       await service.update(TENANT_ID, CUSTOMER_ID, clearEmailDto);
 
       // Assert
-      const updateCall = (prisma.customer as Record<string, jest.Mock>).update
-        .mock.calls[0][0];
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
       expect(updateCall.data.encryptedEmail).toBeNull();
     });
 
     it('should set encryptedFirstName to null when firstName is explicitly empty', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
       (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue({
         ...mockDbCustomer,
         encryptedFirstName: null,
@@ -823,16 +747,13 @@ describe('CustomerService', () => {
       await service.update(TENANT_ID, CUSTOMER_ID, { firstName: '' });
 
       // Assert
-      const updateCall = (prisma.customer as Record<string, jest.Mock>).update
-        .mock.calls[0][0];
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
       expect(updateCall.data.encryptedFirstName).toBeNull();
     });
 
     it('should set encryptedLastName to null when lastName is explicitly empty', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
       (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue({
         ...mockDbCustomer,
         encryptedLastName: null,
@@ -842,45 +763,33 @@ describe('CustomerService', () => {
       await service.update(TENANT_ID, CUSTOMER_ID, { lastName: '' });
 
       // Assert
-      const updateCall = (prisma.customer as Record<string, jest.Mock>).update
-        .mock.calls[0][0];
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
       expect(updateCall.data.encryptedLastName).toBeNull();
     });
 
     it('should enforce tenant isolation when checking customer existence', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.update(TENANT_ID, CUSTOMER_ID, { notes: 'test' });
 
       // Assert
-      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst
-        .mock.calls[0][0];
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst.mock.calls[0][0];
       expect(findCall.where).toEqual({ id: CUSTOMER_ID, tenantId: TENANT_ID });
     });
 
     it('should log the update operation', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.update(TENANT_ID, CUSTOMER_ID, { notes: 'x' });
 
       // Assert
-      expect(logger.log).toHaveBeenCalledWith(
-        `Updated customer ${CUSTOMER_ID}`,
-      );
+      expect(logger.log).toHaveBeenCalledWith(`Updated customer ${CUSTOMER_ID}`);
     });
   });
 
@@ -890,9 +799,7 @@ describe('CustomerService', () => {
   describe('delete', () => {
     it('should anonymize PII instead of hard deleting', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
       (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue({
         ...mockDbCustomer,
         encryptedPhone: 'enc_DELETED',
@@ -907,9 +814,7 @@ describe('CustomerService', () => {
       await service.delete(TENANT_ID, CUSTOMER_ID);
 
       // Assert - uses update (soft delete), not prisma.customer.delete
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).update,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: CUSTOMER_ID },
         data: {
           encryptedPhone: 'enc_DELETED',
@@ -924,12 +829,8 @@ describe('CustomerService', () => {
 
     it('should encrypt the "DELETED" placeholder for the phone field', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.delete(TENANT_ID, CUSTOMER_ID);
@@ -943,60 +844,42 @@ describe('CustomerService', () => {
       (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.delete(TENANT_ID, 'nonexistent-id'),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.delete(TENANT_ID, 'nonexistent-id'),
-      ).rejects.toThrow('Customer nonexistent-id not found');
+      await expect(service.delete(TENANT_ID, 'nonexistent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.delete(TENANT_ID, 'nonexistent-id')).rejects.toThrow(
+        'Customer nonexistent-id not found',
+      );
     });
 
     it('should enforce tenant isolation when looking up customer to delete', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.delete(TENANT_ID, CUSTOMER_ID);
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findFirst,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
         where: { id: CUSTOMER_ID, tenantId: TENANT_ID },
       });
     });
 
     it('should log the deletion', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.delete(TENANT_ID, CUSTOMER_ID);
 
       // Assert
-      expect(logger.log).toHaveBeenCalledWith(
-        `Deleted customer ${CUSTOMER_ID}`,
-      );
+      expect(logger.log).toHaveBeenCalledWith(`Deleted customer ${CUSTOMER_ID}`);
     });
 
     it('should return void on successful deletion', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       const result = await service.delete(TENANT_ID, CUSTOMER_ID);
@@ -1012,13 +895,8 @@ describe('CustomerService', () => {
   describe('findAll', () => {
     it('should return paginated list of decrypted customers with total count', async () => {
       // Arrange
-      const dbCustomers = [
-        mockDbCustomer,
-        { ...mockDbCustomer, id: 'cust-002' },
-      ];
-      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(
-        dbCustomers,
-      );
+      const dbCustomers = [mockDbCustomer, { ...mockDbCustomer, id: 'cust-002' }];
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue(dbCustomers);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(2);
 
       // Act
@@ -1040,9 +918,7 @@ describe('CustomerService', () => {
       await service.findAll(TENANT_ID, { limit: 25, offset: 50 });
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith({
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith({
         where: { tenantId: TENANT_ID },
         take: 25,
         skip: 50,
@@ -1059,9 +935,7 @@ describe('CustomerService', () => {
       await service.findAll(TENANT_ID);
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith(
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 50,
           skip: 0,
@@ -1078,9 +952,7 @@ describe('CustomerService', () => {
       await service.findAll(TENANT_ID);
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith(
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { createdAt: 'desc' },
         }),
@@ -1096,16 +968,14 @@ describe('CustomerService', () => {
       await service.findAll(TENANT_ID);
 
       // Assert
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).findMany,
-      ).toHaveBeenCalledWith(
+      expect((prisma.customer as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: TENANT_ID },
         }),
       );
-      expect(
-        (prisma.customer as Record<string, jest.Mock>).count,
-      ).toHaveBeenCalledWith({ where: { tenantId: TENANT_ID } });
+      expect((prisma.customer as Record<string, jest.Mock>).count).toHaveBeenCalledWith({
+        where: { tenantId: TENANT_ID },
+      });
     });
 
     it('should execute findMany and count in parallel', async () => {
@@ -1115,14 +985,14 @@ describe('CustomerService', () => {
 
       (prisma.customer as Record<string, jest.Mock>).findMany.mockImplementation(
         () =>
-          new Promise((resolve) => {
+          new Promise(resolve => {
             findManyResolved = true;
             resolve([]);
           }),
       );
       (prisma.customer as Record<string, jest.Mock>).count.mockImplementation(
         () =>
-          new Promise((resolve) => {
+          new Promise(resolve => {
             countResolved = true;
             resolve(0);
           }),
@@ -1160,9 +1030,7 @@ describe('CustomerService', () => {
         ...mockDbCustomer,
         encryptedPhone: '',
       };
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        customerNoPhone,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(customerNoPhone);
 
       // Act
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
@@ -1173,9 +1041,7 @@ describe('CustomerService', () => {
 
     it('should preserve non-encrypted fields as-is', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
 
       // Act
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
@@ -1195,9 +1061,7 @@ describe('CustomerService', () => {
         ...mockDbCustomer,
         vehicles: [{ id: 'v-1', licensePlate: 'AB123CD' }],
       };
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        withVehicles,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(withVehicles);
 
       // Act
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
@@ -1214,9 +1078,7 @@ describe('CustomerService', () => {
         ...mockDbCustomer,
         bookings: [{ id: 'b-1', scheduledDate: NOW }],
       };
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        withBookings,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(withBookings);
 
       // Act
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
@@ -1229,9 +1091,7 @@ describe('CustomerService', () => {
 
     it('should not include relations keys when they are absent from DB record', async () => {
       // Arrange - mockDbCustomer has no vehicles/bookings keys
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
 
       // Act
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
@@ -1263,12 +1123,12 @@ describe('CustomerService', () => {
       await service.create(TENANT_ID, { phone: '+390123456789' });
       // create calls withTenant once, and internally calls findByPhone which
       // also calls withTenant => 2 withTenant calls so far
-      await service.findById(TENANT_ID, CUSTOMER_ID);       // +1 = 3
+      await service.findById(TENANT_ID, CUSTOMER_ID); // +1 = 3
       await service.findByPhone(TENANT_ID, '+390123456789'); // +1 = 4
-      await service.search(TENANT_ID, {});                   // +1 = 5
-      await service.findAll(TENANT_ID);                      // +1 = 6
+      await service.search(TENANT_ID, {}); // +1 = 5
+      await service.findAll(TENANT_ID); // +1 = 6
       await service.update(TENANT_ID, CUSTOMER_ID, { notes: 'x' }); // +1 = 7
-      await service.delete(TENANT_ID, CUSTOMER_ID);          // +1 = 8
+      await service.delete(TENANT_ID, CUSTOMER_ID); // +1 = 8
 
       // Assert - withTenant called for every operation
       // create internally invokes findByPhone, which is itself a withTenant call,
@@ -1284,22 +1144,16 @@ describe('CustomerService', () => {
     it('should not allow cross-tenant access via query parameters', async () => {
       // Arrange
       const differentTenant = 'tenant-other';
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.findById(differentTenant, CUSTOMER_ID);
 
       // Assert - withTenant scoped to the requesting tenant
-      expect(prisma.withTenant).toHaveBeenCalledWith(
-        differentTenant,
-        expect.any(Function),
-      );
+      expect(prisma.withTenant).toHaveBeenCalledWith(differentTenant, expect.any(Function));
 
       // Assert - query includes the correct tenantId
-      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst
-        .mock.calls[0][0];
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst.mock.calls[0][0];
       expect(findCall.where.tenantId).toBe(differentTenant);
     });
   });
@@ -1322,8 +1176,7 @@ describe('CustomerService', () => {
       });
 
       // Assert - create data should only contain encrypted versions
-      const createCall = (prisma.customer as Record<string, jest.Mock>).create
-        .mock.calls[0][0];
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.phone).toBeUndefined();
       expect(createCall.data.email).toBeUndefined();
       expect(createCall.data.firstName).toBeUndefined();
@@ -1342,8 +1195,7 @@ describe('CustomerService', () => {
       await service.findByPhone(TENANT_ID, '+390123456789');
 
       // Assert
-      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst
-        .mock.calls[0][0];
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findFirst.mock.calls[0][0];
       expect(findCall.where.phoneHash).toBe('hash_+390123456789');
       expect(findCall.where.encryptedPhone).toBeUndefined();
       expect(findCall.where.phone).toBeUndefined();
@@ -1351,12 +1203,8 @@ describe('CustomerService', () => {
 
     it('should update phoneHash when phone is updated', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
-      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.update(TENANT_ID, CUSTOMER_ID, {
@@ -1364,17 +1212,14 @@ describe('CustomerService', () => {
       });
 
       // Assert
-      const updateCall = (prisma.customer as Record<string, jest.Mock>).update
-        .mock.calls[0][0];
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
       expect(updateCall.data.phoneHash).toBe('hash_+390111222333');
       expect(updateCall.data.encryptedPhone).toBe('enc_+390111222333');
     });
 
     it('should call decrypt for each encrypted field when returning data', async () => {
       // Arrange
-      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(
-        mockDbCustomer,
-      );
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
 
       // Act
       await service.findById(TENANT_ID, CUSTOMER_ID);

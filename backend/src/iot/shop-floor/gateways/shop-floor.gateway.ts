@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Shop Floor WebSocket Gateway
- * 
+ *
  * Real-time shop floor updates via WebSocket
  */
 
@@ -31,9 +31,7 @@ interface ShopFloorClient {
   transports: ['websocket', 'polling'],
 })
 @UseGuards(WsJwtGuard)
-export class ShopFloorGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -53,7 +51,7 @@ export class ShopFloorGateway
   async handleConnection(client: Socket) {
     try {
       const { tenantId, userId } = client.data.user;
-      
+
       this.clients.set(client.id, {
         socket: client,
         tenantId,
@@ -62,7 +60,7 @@ export class ShopFloorGateway
       });
 
       this.logger.log(`Shop floor client connected: ${client.id} (tenant: ${tenantId})`);
-      
+
       client.emit('connected', {
         message: 'Connected to shop floor gateway',
         clientId: client.id,
@@ -80,18 +78,15 @@ export class ShopFloorGateway
       for (const bayId of clientData.subscribedBays) {
         this.redisSubscriber.unsubscribe(`shopfloor:sensor:${bayId}`);
       }
-      
+
       this.clients.delete(client.id);
     }
-    
+
     this.logger.log(`Shop floor client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('subscribe-bay')
-  async handleSubscribeBay(
-    client: Socket,
-    payload: { bayId: string },
-  ) {
+  async handleSubscribeBay(client: Socket, payload: { bayId: string }) {
     try {
       const clientData = this.clients.get(client.id);
       if (!clientData) return;
@@ -106,10 +101,7 @@ export class ShopFloorGateway
   }
 
   @SubscribeMessage('unsubscribe-bay')
-  async handleUnsubscribeBay(
-    client: Socket,
-    payload: { bayId: string },
-  ) {
+  async handleUnsubscribeBay(client: Socket, payload: { bayId: string }) {
     try {
       const clientData = this.clients.get(client.id);
       if (!clientData) return;
@@ -155,7 +147,7 @@ export class ShopFloorGateway
 
       if (channel.startsWith('shopfloor:sensor:')) {
         const bayId = channel.replace('shopfloor:sensor:', '');
-        
+
         // Broadcast to subscribed clients
         for (const clientData of this.clients.values()) {
           if (clientData.subscribedBays.has(bayId)) {

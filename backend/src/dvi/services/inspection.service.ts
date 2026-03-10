@@ -1,6 +1,6 @@
 /**
  * MechMind OS - Digital Vehicle Inspection Service
- * 
+ *
  * Manages complete vehicle inspection workflow:
  * - Create inspections from templates
  * - Record inspection items with photos
@@ -22,7 +22,12 @@ import {
   InspectionResponseDto,
   InspectionSummaryDto,
 } from '../dto/inspection.dto';
-import { InspectionStatus, InspectionItemStatus, FindingStatus, InspectionFinding } from '@prisma/client';
+import {
+  InspectionStatus,
+  InspectionItemStatus,
+  FindingStatus,
+  InspectionFinding,
+} from '@prisma/client';
 
 @Injectable()
 export class InspectionService {
@@ -34,7 +39,10 @@ export class InspectionService {
     private readonly s3: S3Service,
     private readonly notifications: NotificationsService,
   ) {
-    this.photoBucket = this.config.get<string>('S3_INSPECTION_PHOTOS_BUCKET', 'mechmind-inspection-photos');
+    this.photoBucket = this.config.get<string>(
+      'S3_INSPECTION_PHOTOS_BUCKET',
+      'mechmind-inspection-photos',
+    );
   }
 
   /**
@@ -110,7 +118,12 @@ export class InspectionService {
    */
   async findAll(
     tenantId: string,
-    filters: { vehicleId?: string; customerId?: string; status?: InspectionStatus; mechanicId?: string },
+    filters: {
+      vehicleId?: string;
+      customerId?: string;
+      status?: InspectionStatus;
+      mechanicId?: string;
+    },
   ): Promise<InspectionSummaryDto[]> {
     const inspections = await this.prisma.inspection.findMany({
       where: {
@@ -206,11 +219,7 @@ export class InspectionService {
   /**
    * Add finding to inspection
    */
-  async addFinding(
-    tenantId: string,
-    inspectionId: string,
-    dto: CreateFindingDto,
-  ): Promise<void> {
+  async addFinding(tenantId: string, inspectionId: string, dto: CreateFindingDto): Promise<void> {
     const inspection = await this.prisma.inspection.findFirst({
       where: { id: inspectionId, tenantId },
     });
@@ -236,11 +245,7 @@ export class InspectionService {
   /**
    * Update finding status
    */
-  async updateFinding(
-    tenantId: string,
-    findingId: string,
-    dto: UpdateFindingDto,
-  ): Promise<void> {
+  async updateFinding(tenantId: string, findingId: string, dto: UpdateFindingDto): Promise<void> {
     const finding = await this.prisma.inspectionFinding.findFirst({
       where: { id: findingId, inspection: { tenantId } },
     });
@@ -371,15 +376,105 @@ export class InspectionService {
   }
 
   /**
-   * Generate PDF report
+   * Generate PDF report for a vehicle inspection using PDFKit
    */
   async generateReport(tenantId: string, inspectionId: string): Promise<Buffer> {
     const inspection = await this.findById(tenantId, inspectionId);
-    
-    // TODO: Implement PDF generation using puppeteer or similar
-    // This would generate a professional inspection report
-    
-    throw new Error('PDF generation not yet implemented');
+
+    // Dynamic import to keep PDFKit optional
+    const PDFDocument = (await import('pdfkit')).default;
+
+    return new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Header
+      doc.fontSize(22).text('Digital Vehicle Inspection Report', { align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(10).fillColor('#666').text(`Report ID: ${inspection.id}`, { align: 'center' });
+      doc.moveDown(1);
+
+      // Vehicle info
+      doc.fontSize(14).fillColor('#000').text('Vehicle Information');
+      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+      doc.moveDown(0.3);
+      doc.fontSize(10);
+      doc.text(`Make/Model: ${inspection.vehicle.make} ${inspection.vehicle.model}`);
+      doc.text(`License Plate: ${inspection.vehicle.licensePlate}`);
+      if (inspection.mileage) doc.text(`Mileage: ${inspection.mileage.toLocaleString()} km`);
+      if (inspection.fuelLevel) doc.text(`Fuel Level: ${inspection.fuelLevel}`);
+      doc.text(`Mechanic: ${inspection.mechanic.name}`);
+      doc.text(`Date: ${inspection.startedAt.toLocaleDateString('it-IT')}`);
+      doc.moveDown(1);
+
+      // Findings summary
+      doc.fontSize(14).text('Findings Summary');
+      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+      doc.moveDown(0.3);
+      doc.fontSize(10);
+
+      if (inspection.findings.length === 0) {
+        doc.text('No issues found.', { italic: true });
+      } else {
+        for (const finding of inspection.findings) {
+          const severityColor =
+            finding.severity === 'CRITICAL'
+              ? '#dc2626'
+              : finding.severity === 'HIGH'
+                ? '#ea580c'
+                : finding.severity === 'MEDIUM'
+                  ? '#ca8a04'
+                  : '#16a34a';
+
+          doc.fillColor(severityColor).text(`[${finding.severity}] `, { continued: true });
+          doc.fillColor('#000').text(`${finding.title} — ${finding.description}`);
+          if (finding.recommendation) {
+            doc.fillColor('#555').text(`  Recommendation: ${finding.recommendation}`);
+          }
+          if (finding.estimatedCost !== undefined) {
+            doc.text(`  Estimated Cost: €${finding.estimatedCost.toFixed(2)}`);
+          }
+          doc.fillColor('#000');
+          doc.moveDown(0.3);
+        }
+      }
+      doc.moveDown(1);
+
+      // Inspection items
+      doc.fontSize(14).text('Inspection Items');
+      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+      doc.moveDown(0.3);
+      doc.fontSize(10);
+
+      for (const item of inspection.items) {
+        const statusIcon =
+          item.status === 'CHECKED'
+            ? 'OK'
+            : item.status === 'ISSUE_FOUND'
+              ? 'ISSUE'
+              : item.status === 'NOT_APPLICABLE'
+                ? 'N/A'
+                : 'PENDING';
+
+        doc.text(`${item.category} > ${item.name}: ${statusIcon}`);
+        if (item.notes) doc.fillColor('#555').text(`  Notes: ${item.notes}`).fillColor('#000');
+      }
+
+      // Footer
+      doc.moveDown(2);
+      doc
+        .fontSize(8)
+        .fillColor('#999')
+        .text(`Generated by MechMind OS on ${new Date().toLocaleString('it-IT')}`, {
+          align: 'center',
+        });
+
+      doc.end();
+    });
   }
 
   // ============== PRIVATE METHODS ==============

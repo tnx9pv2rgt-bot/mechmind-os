@@ -282,7 +282,7 @@ export default function Step1Page() {
             {/* Titolo */}
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Titolo</Label>
-              <Select onValueChange={(v) => setValue('title', (v === 'none' ? '' : v) as any)} defaultValue="none">
+              <Select onValueChange={(v) => setValue('title', (v === 'none' ? '' : v) as FormData['title'])} defaultValue="none">
                 <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
@@ -334,7 +334,7 @@ export default function Step1Page() {
             {/* Sesso */}
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Sesso</Label>
-              <Select onValueChange={(v) => setValue('gender', v === 'not_specified' ? '' : v as any)} defaultValue="not_specified">
+              <Select onValueChange={(v) => setValue('gender', (v === 'not_specified' ? '' : v) as FormData['gender'])} defaultValue="not_specified">
                 <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
@@ -350,7 +350,7 @@ export default function Step1Page() {
             {/* Stato civile */}
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Stato Civile</Label>
-              <Select onValueChange={(v) => setValue('maritalStatus', (v === 'not_specified' ? '' : v) as any)} defaultValue="not_specified">
+              <Select onValueChange={(v) => setValue('maritalStatus', (v === 'not_specified' ? '' : v) as FormData['maritalStatus'])} defaultValue="not_specified">
                 <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
@@ -463,7 +463,7 @@ export default function Step1Page() {
             {/* Canale preferito */}
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Canale Preferito</Label>
-              <Select onValueChange={(v) => setValue('preferredChannel', v === 'none' ? '' : v as any)} defaultValue="none">
+              <Select onValueChange={(v) => setValue('preferredChannel', (v === 'none' ? '' : v) as FormData['preferredChannel'])} defaultValue="none">
                 <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
@@ -484,7 +484,7 @@ export default function Step1Page() {
             {/* Lingua */}
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Lingua</Label>
-              <Select onValueChange={(v) => setValue('language', v as any)} defaultValue="italiano">
+              <Select onValueChange={(v) => setValue('language', v as FormData['language'])} defaultValue="italiano">
                 <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                   <SelectValue />
                 </SelectTrigger>
@@ -499,7 +499,7 @@ export default function Step1Page() {
             {/* Fonte */}
             <div className="col-span-2">
               <Label className="text-sm font-medium text-gray-700 mb-2 block">Come ci hai conosciuto?</Label>
-              <Select onValueChange={(v) => setValue('source', (v === 'not_specified' ? '' : v) as any)} defaultValue="not_specified">
+              <Select onValueChange={(v) => setValue('source', (v === 'not_specified' ? '' : v) as FormData['source'])} defaultValue="not_specified">
                 <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>

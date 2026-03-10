@@ -107,10 +107,7 @@ export class SmsService {
   /**
    * Send booking reminder SMS (24h before)
    */
-  async sendBookingReminder(
-    phone: string,
-    data: BookingReminderSmsData,
-  ): Promise<SmsResult> {
+  async sendBookingReminder(phone: string, data: BookingReminderSmsData): Promise<SmsResult> {
     const message = this.formatMessage(
       `⏰ Promemoria da {{workshopName}}:\n` +
         `Domani {{date}} alle {{time}} hai un appuntamento per {{service}}.\n` +
@@ -125,10 +122,7 @@ export class SmsService {
   /**
    * Send same-day booking reminder SMS
    */
-  async sendSameDayReminder(
-    phone: string,
-    data: BookingReminderSmsData,
-  ): Promise<SmsResult> {
+  async sendSameDayReminder(phone: string, data: BookingReminderSmsData): Promise<SmsResult> {
     const message = this.formatMessage(
       `⏰ Oggi alle {{time}} il tuo appuntamento per {{service}} da {{workshopName}}.\n` +
         `🔢 Codice: {{bookingCode}}\n` +
@@ -142,10 +136,7 @@ export class SmsService {
   /**
    * Send invoice ready notification SMS
    */
-  async sendInvoiceReady(
-    phone: string,
-    data: InvoiceReadySmsData,
-  ): Promise<SmsResult> {
+  async sendInvoiceReady(phone: string, data: InvoiceReadySmsData): Promise<SmsResult> {
     const message = this.formatMessage(
       `🧾 {{workshopName}}: La tua fattura {{invoiceNumber}} di €{{amount}} è pronta.\n` +
         `Scaricala qui: {{downloadUrl}}\n` +
@@ -159,10 +150,7 @@ export class SmsService {
   /**
    * Send booking cancellation SMS
    */
-  async sendBookingCancelled(
-    phone: string,
-    data: BookingCancelledSmsData,
-  ): Promise<SmsResult> {
+  async sendBookingCancelled(phone: string, data: BookingCancelledSmsData): Promise<SmsResult> {
     let message = this.formatMessage(
       `❌ {{workshopName}}: La tua prenotazione del {{date}} per {{service}} è stata annullata.\n` +
         `🔢 Codice: {{bookingCode}}`,
@@ -181,10 +169,7 @@ export class SmsService {
   /**
    * Send GDPR data export ready SMS
    */
-  async sendGdprExportReady(
-    phone: string,
-    data: GdprExportReadySmsData,
-  ): Promise<SmsResult> {
+  async sendGdprExportReady(phone: string, data: GdprExportReadySmsData): Promise<SmsResult> {
     const message = this.formatMessage(
       `📥 I tuoi dati sono pronti per il download.\n` +
         `Link: {{downloadUrl}}\n` +
@@ -199,10 +184,7 @@ export class SmsService {
   /**
    * Send password reset code via SMS
    */
-  async sendPasswordReset(
-    phone: string,
-    data: PasswordResetSmsData,
-  ): Promise<SmsResult> {
+  async sendPasswordReset(phone: string, data: PasswordResetSmsData): Promise<SmsResult> {
     const message = this.formatMessage(
       `🔐 Codice di ripristino password MechMind: {{resetCode}}\n` +
         `Valido per {{expiryMinutes}} minuti.\n` +
@@ -227,11 +209,7 @@ export class SmsService {
   /**
    * Send promotional SMS (with opt-in check)
    */
-  async sendPromotional(
-    phone: string,
-    message: string,
-    workshopName: string,
-  ): Promise<SmsResult> {
+  async sendPromotional(phone: string, message: string, workshopName: string): Promise<SmsResult> {
     const brandedMessage = `${workshopName}: ${message}\n\nPer disiscriverti: rispondi STOP`;
     return this.sendSmsWithRetry(phone, brandedMessage, 'promotional');
   }
@@ -252,7 +230,7 @@ export class SmsService {
 
     try {
       const message = await this.twilioClient.messages(messageSid).fetch();
-      
+
       return {
         status: message.status,
         deliveredAt: message.dateSent ? new Date(message.dateSent) : undefined,
@@ -311,7 +289,7 @@ export class SmsService {
   } {
     const segments = this.calculateSegments(message);
     const costPerSegment = 0.0075; // USD for Italy
-    
+
     return {
       segments,
       estimatedCost: segments * costPerSegment,
@@ -364,11 +342,11 @@ export class SmsService {
     }
 
     const startTime = Date.now();
-    
+
     try {
       // Fetch account info as health check
       await this.twilioClient.api.accounts.list({ limit: 1 });
-      
+
       return {
         healthy: true,
         latency: Date.now() - startTime,
@@ -399,11 +377,7 @@ export class SmsService {
     return result;
   }
 
-  private async sendSms(
-    phone: string,
-    message: string,
-    category: string,
-  ): Promise<SmsResult> {
+  private async sendSms(phone: string, message: string, category: string): Promise<SmsResult> {
     if (!this.twilioClient) {
       this.logger.warn('SMS service not initialized, logging message instead');
       this.logger.debug(`SMS to ${phone} [${category}]: ${message}`);
@@ -482,7 +456,7 @@ export class SmsService {
   private calculateSegments(message: string): number {
     // Check if message contains Unicode characters
     const hasUnicode = /[^\x00-\x7F]/.test(message);
-    
+
     if (hasUnicode) {
       // Unicode (UCS-2) encoding: 70 chars per segment, 67 for concatenated
       const segmentLength = message.length <= 70 ? 70 : 67;

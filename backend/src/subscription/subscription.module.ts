@@ -1,6 +1,6 @@
 /**
  * SUBSCRIPTION MODULE
- * 
+ *
  * Handles pricing tiers, feature gating, and subscription management
  */
 
@@ -8,8 +8,8 @@ import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SubscriptionService } from './services/subscription.service';
 import { FeatureAccessService } from './services/feature-access.service';
-import { 
-  SubscriptionController, 
+import {
+  SubscriptionController,
   AdminSubscriptionController,
   StripeWebhookController,
 } from './controllers/subscription.controller';
@@ -19,16 +19,8 @@ import { CommonModule } from '../common/common.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    CommonModule,
-    AuthModule,
-  ],
-  controllers: [
-    SubscriptionController,
-    AdminSubscriptionController,
-    StripeWebhookController,
-  ],
+  imports: [ConfigModule, CommonModule, AuthModule],
+  controllers: [SubscriptionController, AdminSubscriptionController, StripeWebhookController],
   providers: [
     SubscriptionService,
     FeatureAccessService,
@@ -36,12 +28,7 @@ import { AuthModule } from '../auth/auth.module';
     LimitGuard,
     ApiUsageMiddleware,
   ],
-  exports: [
-    SubscriptionService,
-    FeatureAccessService,
-    FeatureGuard,
-    LimitGuard,
-  ],
+  exports: [SubscriptionService, FeatureAccessService, FeatureGuard, LimitGuard],
 })
 export class SubscriptionModule {
   configure(consumer: MiddlewareConsumer) {

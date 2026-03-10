@@ -51,8 +51,7 @@ describe('EmailService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn(
-              (key: string, defaultValue?: string | boolean) =>
-                config[key] ?? defaultValue,
+              (key: string, defaultValue?: string | boolean) => config[key] ?? defaultValue,
             ),
           },
         },

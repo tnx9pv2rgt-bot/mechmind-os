@@ -122,7 +122,7 @@ const PROVINCE_CODES: Record<string, string> = {
   '64': 'Roma',
   '65': 'Latina',
   '66': 'Frosinone',
-  '67': 'L\'Aquila',
+  '67': "L'Aquila",
   '68': 'Teramo',
   '69': 'Pescara',
   '70': 'Chieti',
@@ -159,20 +159,104 @@ const PROVINCE_CODES: Record<string, string> = {
 
 // Sigle province
 const PROVINCE_SIGLE: Record<string, string> = {
-  '01': 'TO', '02': 'VA', '03': 'BG', '04': 'MI', '05': 'BS', '06': 'LC', '07': 'CO',
-  '08': 'SO', '09': 'MB', '10': 'NO', '11': 'CN', '12': 'AT', '13': 'AL', '14': 'BI',
-  '15': 'VB', '16': 'GE', '17': 'SV', '18': 'IM', '19': 'SP', '20': 'MI', '21': 'PV',
-  '22': 'LO', '23': 'CR', '24': 'MN', '25': 'BS', '26': 'VA', '27': 'BG', '28': 'CO',
-  '29': 'PC', '30': 'VE', '31': 'TV', '32': 'VR', '33': 'VI', '34': 'PD', '35': 'RO',
-  '36': 'BL', '37': 'UD', '38': 'GO', '39': 'TS', '40': 'BO', '41': 'MO', '42': 'PR',
-  '43': 'RE', '44': 'FE', '45': 'RA', '46': 'FC', '47': 'RN', '48': 'PU', '49': 'AN',
-  '50': 'FI', '51': 'PT', '52': 'PO', '53': 'LU', '54': 'MS', '55': 'LI', '56': 'PI',
-  '57': 'AR', '58': 'SI', '59': 'GR', '60': 'PG', '61': 'TR', '62': 'VT', '63': 'RI',
-  '64': 'RM', '65': 'LT', '66': 'FR', '67': 'AQ', '68': 'TE', '69': 'PE', '70': 'CH',
-  '71': 'CB', '72': 'IS', '73': 'CE', '74': 'BN', '75': 'NA', '76': 'AV', '77': 'SA',
-  '78': 'FG', '79': 'BA', '80': 'TA', '81': 'BR', '82': 'LE', '83': 'BA', '84': 'PZ',
-  '85': 'MT', '86': 'CS', '87': 'CZ', '88': 'RC', '89': 'KR', '90': 'PA', '91': 'AG',
-  '92': 'CL', '93': 'EN', '94': 'CT', '95': 'ME', '96': 'RG', '97': 'SR', '98': 'SS',
+  '01': 'TO',
+  '02': 'VA',
+  '03': 'BG',
+  '04': 'MI',
+  '05': 'BS',
+  '06': 'LC',
+  '07': 'CO',
+  '08': 'SO',
+  '09': 'MB',
+  '10': 'NO',
+  '11': 'CN',
+  '12': 'AT',
+  '13': 'AL',
+  '14': 'BI',
+  '15': 'VB',
+  '16': 'GE',
+  '17': 'SV',
+  '18': 'IM',
+  '19': 'SP',
+  '20': 'MI',
+  '21': 'PV',
+  '22': 'LO',
+  '23': 'CR',
+  '24': 'MN',
+  '25': 'BS',
+  '26': 'VA',
+  '27': 'BG',
+  '28': 'CO',
+  '29': 'PC',
+  '30': 'VE',
+  '31': 'TV',
+  '32': 'VR',
+  '33': 'VI',
+  '34': 'PD',
+  '35': 'RO',
+  '36': 'BL',
+  '37': 'UD',
+  '38': 'GO',
+  '39': 'TS',
+  '40': 'BO',
+  '41': 'MO',
+  '42': 'PR',
+  '43': 'RE',
+  '44': 'FE',
+  '45': 'RA',
+  '46': 'FC',
+  '47': 'RN',
+  '48': 'PU',
+  '49': 'AN',
+  '50': 'FI',
+  '51': 'PT',
+  '52': 'PO',
+  '53': 'LU',
+  '54': 'MS',
+  '55': 'LI',
+  '56': 'PI',
+  '57': 'AR',
+  '58': 'SI',
+  '59': 'GR',
+  '60': 'PG',
+  '61': 'TR',
+  '62': 'VT',
+  '63': 'RI',
+  '64': 'RM',
+  '65': 'LT',
+  '66': 'FR',
+  '67': 'AQ',
+  '68': 'TE',
+  '69': 'PE',
+  '70': 'CH',
+  '71': 'CB',
+  '72': 'IS',
+  '73': 'CE',
+  '74': 'BN',
+  '75': 'NA',
+  '76': 'AV',
+  '77': 'SA',
+  '78': 'FG',
+  '79': 'BA',
+  '80': 'TA',
+  '81': 'BR',
+  '82': 'LE',
+  '83': 'BA',
+  '84': 'PZ',
+  '85': 'MT',
+  '86': 'CS',
+  '87': 'CZ',
+  '88': 'RC',
+  '89': 'KR',
+  '90': 'PA',
+  '91': 'AG',
+  '92': 'CL',
+  '93': 'EN',
+  '94': 'CT',
+  '95': 'ME',
+  '96': 'RG',
+  '97': 'SR',
+  '98': 'SS',
   '99': 'NU',
 };
 
@@ -194,7 +278,7 @@ const MOCK_COMPANIES: Record<string, Partial<PivaAnagraficaData>> = {
   },
   '11111111111': {
     ragioneSociale: 'Officina Rossi & Figli',
-    indirizzo: 'Via dell\'Artigianato 7',
+    indirizzo: "Via dell'Artigianato 7",
     cap: '50100',
     città: 'Firenze',
     provincia: 'FI',
@@ -265,7 +349,7 @@ function calculateLuhnCheckDigit(piva: string): number {
 
   for (let i = 0; i < 10; i++) {
     let digit = digits[i];
-    
+
     // Posizioni dispari (1, 3, 5, 7, 9) -> moltiplica per 2
     if (i % 2 === 0) {
       digit *= 2;
@@ -273,7 +357,7 @@ function calculateLuhnCheckDigit(piva: string): number {
         digit -= 9;
       }
     }
-    
+
     sum += digit;
   }
 
@@ -288,7 +372,7 @@ function calculateLuhnCheckDigit(piva: string): number {
  */
 export function verifyPivaCheckDigit(piva: string): boolean {
   const cleaned = cleanPiva(piva);
-  
+
   if (cleaned.length !== 11) {
     return false;
   }
@@ -340,7 +424,7 @@ export function validatePiva(piva: string): PivaValidationResult {
 export function extractProvinceFromPiva(piva: string): string | null {
   const cleaned = cleanPiva(piva);
   if (cleaned.length !== 11) return null;
-  
+
   const provinceCode = cleaned.substring(0, 2);
   return PROVINCE_CODES[provinceCode] || null;
 }
@@ -353,7 +437,7 @@ export function extractProvinceFromPiva(piva: string): string | null {
 export function extractProvinceSiglaFromPiva(piva: string): string | null {
   const cleaned = cleanPiva(piva);
   if (cleaned.length !== 11) return null;
-  
+
   const provinceCode = cleaned.substring(0, 2);
   return PROVINCE_SIGLE[provinceCode] || null;
 }
@@ -435,10 +519,10 @@ async function cachePivaData(piva: string, data: PivaAnagraficaData): Promise<vo
  */
 async function fetchPivaDataFromAPI(piva: string): Promise<PivaAnagraficaData> {
   const cleaned = cleanPiva(piva);
-  
+
   // Simula latenza API
   await new Promise(resolve => setTimeout(resolve, 200));
-  
+
   // Verifica validità
   const validation = validatePiva(piva);
   if (!validation.isValid) {
@@ -454,7 +538,7 @@ async function fetchPivaDataFromAPI(piva: string): Promise<PivaAnagraficaData> {
 
   // Cerca nei dati mock
   const mockData = MOCK_COMPANIES[cleaned];
-  
+
   if (mockData) {
     return {
       isValid: true,
@@ -469,15 +553,15 @@ async function fetchPivaDataFromAPI(piva: string): Promise<PivaAnagraficaData> {
   // Genera dati fittizi basati sulla provincia
   const provinceSigla = extractProvinceSiglaFromPiva(piva);
   const provinceName = extractProvinceFromPiva(piva);
-  
+
   // Genera CAP casuale della provincia
   const provinceCode = cleaned.substring(0, 2);
   const baseCap = provinceCode + '100';
-  
+
   return {
     isValid: true,
     ragioneSociale: `Azienda ${cleaned.substring(0, 5)}...`,
-    indirizzo: 'Via dell\'Industria 1',
+    indirizzo: "Via dell'Industria 1",
     cap: baseCap,
     città: provinceName || 'Sede legale',
     provincia: provinceSigla || 'XX',
@@ -495,7 +579,7 @@ export async function getPivaData(
   skipCache: boolean = false,
 ): Promise<PivaAnagraficaData> {
   const cleaned = cleanPiva(piva);
-  
+
   // Verifica validità prima di procedere
   const validation = validatePiva(piva);
   if (!validation.isValid) {
@@ -519,7 +603,7 @@ export async function getPivaData(
 
   // Recupera da API
   const data = await fetchPivaDataFromAPI(cleaned);
-  
+
   // Salva in cache se valido
   if (data.isValid) {
     await cachePivaData(cleaned, data);

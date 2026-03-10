@@ -76,6 +76,23 @@ model Tenant {
   vehicleHealthHistories VehicleHealthHistory[]
   vehicleDamages VehicleDamage[]
 
+  // Fleet
+  fleets        Fleet[]
+  fleetVehicles FleetVehicle[]
+
+  // Tires
+  tireSets TireSet[]
+
+  // Estimates
+  estimates Estimate[]
+
+  // Labor Guides
+  laborGuides       LaborGuide[]
+  laborGuideEntries LaborGuideEntry[]
+
+  // Accounting
+  accountingSyncs AccountingSync[]
+
   @@map("tenants")
 }
 
@@ -2421,5 +2438,287 @@ model VehicleDamage {
 }
 
 // ============================================
-// AUTHENTICATION MODELS END
+// FLEET MANAGEMENT
 // ============================================
+
+model Fleet {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  companyName String?  @map("company_name")
+  contactName String?  @map("contact_name")
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  vehicles FleetVehicle[]
+
+  @@index([tenantId])
+  @@unique([tenantId, name])
+  @@map("fleets")
+}
+
+model FleetVehicle {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  fleetId   String  @map("fleet_id")
+  fleet     Fleet   @relation(fields: [fleetId], references: [id], onDelete: Cascade)
+  vehicleId String  @map("vehicle_id")
+
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  removedAt  DateTime? @map("removed_at")
+
+  @@unique([fleetId, vehicleId])
+  @@index([tenantId])
+  @@index([fleetId])
+  @@map("fleet_vehicles")
+}
+
+// ============================================
+// TIRE MANAGEMENT
+// ============================================
+
+model TireSet {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  vehicleId String? @map("vehicle_id")
+
+  // Tire details
+  brand   String
+  model   String
+  size    String  // e.g. "225/45 R17"
+  season  TireSeason
+  dot     String? // Manufacturing date code
+
+  // Condition
+  treadDepthMm Float? @map("tread_depth_mm") // mm remaining
+  wearLevel    Float  @default(0) @map("wear_level") // 0-100%
+
+  // Storage
+  storageLocation String?  @map("storage_location") // e.g. "RACK-A3"
+  isStored        Boolean  @default(false) @map("is_stored")
+  storedAt        DateTime? @map("stored_at")
+
+  // Mounting
+  isMounted   Boolean   @default(false) @map("is_mounted")
+  mountedAt   DateTime? @map("mounted_at")
+  unmountedAt DateTime? @map("unmounted_at")
+
+  notes     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([vehicleId])
+  @@index([season])
+  @@index([isStored])
+  @@map("tire_sets")
+}
+
+enum TireSeason {
+  SUMMER
+  WINTER
+  ALL_SEASON
+}
+
+// ============================================
+// ESTIMATES / QUOTES
+// ============================================
+
+model Estimate {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  estimateNumber String @unique @map("estimate_number") // EST-2026-001
+  customerId     String @map("customer_id")
+  vehicleId      String? @map("vehicle_id")
+
+  status EstimateStatus @default(DRAFT)
+
+  // Financial
+  subtotalCents BigInt  @map("subtotal_cents")
+  vatCents      BigInt  @map("vat_cents")
+  totalCents    BigInt  @map("total_cents")
+  discountCents BigInt  @default(0) @map("discount_cents")
+
+  // Validity
+  validUntil DateTime? @map("valid_until")
+  sentAt     DateTime? @map("sent_at")
+  acceptedAt DateTime? @map("accepted_at")
+  rejectedAt DateTime? @map("rejected_at")
+
+  // Conversion to booking
+  bookingId String? @map("booking_id")
+
+  notes     String?
+  createdBy String  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lines EstimateLine[]
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([status])
+  @@map("estimates")
+}
+
+model EstimateLine {
+  id         String   @id @default(uuid())
+  estimateId String   @map("estimate_id")
+  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  type        EstimateLineType // LABOR, PART, OTHER
+  description String
+  quantity    Int      @default(1)
+  unitPriceCents BigInt @map("unit_price_cents")
+  totalCents  BigInt   @map("total_cents")
+  vatRate     Decimal  @default(22.00) @map("vat_rate") @db.Decimal(5, 2)
+
+  // Optional part reference
+  partId String? @map("part_id")
+
+  position Int @default(0)
+
+  @@index([estimateId])
+  @@map("estimate_lines")
+}
+
+enum EstimateStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+
+enum EstimateLineType {
+  LABOR
+  PART
+  OTHER
+}
+
+// ============================================
+// LABOR GUIDE (Tempari)
+// ============================================
+
+model LaborGuide {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  source      String? // e.g. "MANUFACTURER", "CUSTOM", "AUTODATA"
+  isActive    Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  entries LaborGuideEntry[]
+
+  @@index([tenantId])
+  @@unique([tenantId, name])
+  @@map("labor_guides")
+}
+
+model LaborGuideEntry {
+  id      String     @id @default(uuid())
+  guideId String     @map("guide_id")
+  guide   LaborGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  tenantId String    @map("tenant_id")
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Vehicle matching
+  make  String
+  model String?
+  yearFrom Int? @map("year_from")
+  yearTo   Int? @map("year_to")
+
+  // Operation
+  operationCode String  @map("operation_code")
+  operationName String  @map("operation_name")
+  category      String  // ENGINE, BRAKES, ELECTRICAL, etc.
+
+  // Time
+  laborTimeMinutes Int @map("labor_time_minutes")
+  difficultyLevel  Int @default(1) @map("difficulty_level") // 1-5
+
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([guideId])
+  @@index([tenantId])
+  @@index([make])
+  @@index([category])
+  @@map("labor_guide_entries")
+}
+
+// ============================================
+// ACCOUNTING SYNC
+// ============================================
+
+model AccountingSync {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Provider
+  provider AccountingProvider
+  externalId String? @map("external_id") // ID in external system
+
+  // Entity being synced
+  entityType String @map("entity_type") // INVOICE, CUSTOMER, PAYMENT
+  entityId   String @map("entity_id")   // Internal ID
+
+  // Sync status
+  status    AccountingSyncStatus @default(PENDING)
+  direction String @default("OUTBOUND") // OUTBOUND (us -> provider), INBOUND
+
+  // Result
+  syncedAt    DateTime? @map("synced_at")
+  error       String?
+  retryCount  Int       @default(0) @map("retry_count")
+  lastRetryAt DateTime? @map("last_retry_at")
+
+  // Payload
+  payload  Json? // Data sent/received
+  response Json? // Provider response
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([provider])
+  @@map("accounting_syncs")
+}
+
+enum AccountingProvider {
+  QUICKBOOKS
+  XERO
+  FATTUREINCLOUD
+}
+
+enum AccountingSyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  FAILED
+  SKIPPED
+}

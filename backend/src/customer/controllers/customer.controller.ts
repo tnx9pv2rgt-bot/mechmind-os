@@ -54,10 +54,7 @@ export class CustomerController {
     description: 'Customer created successfully',
     type: CustomerResponseDto,
   })
-  async createCustomer(
-    @CurrentTenant() tenantId: string,
-    @Body() dto: CreateCustomerDto,
-  ) {
+  async createCustomer(@CurrentTenant() tenantId: string, @Body() dto: CreateCustomerDto) {
     const customer = await this.customerService.create(tenantId, dto);
     return {
       success: true,
@@ -94,10 +91,7 @@ export class CustomerController {
   @Get('search')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Search customers' })
-  async searchCustomers(
-    @CurrentTenant() tenantId: string,
-    @Query() query: CustomerSearchDto,
-  ) {
+  async searchCustomers(@CurrentTenant() tenantId: string, @Query() query: CustomerSearchDto) {
     const result = await this.customerService.search(tenantId, {
       name: query.name,
       email: query.email,
@@ -118,10 +112,7 @@ export class CustomerController {
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get customer by ID' })
   @ApiParam({ name: 'id', description: 'Customer ID' })
-  async getCustomer(
-    @CurrentTenant() tenantId: string,
-    @Param('id') customerId: string,
-  ) {
+  async getCustomer(@CurrentTenant() tenantId: string, @Param('id') customerId: string) {
     const customer = await this.customerService.findById(tenantId, customerId);
     return {
       success: true,
@@ -167,10 +158,7 @@ export class CustomerController {
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get customer vehicles' })
   @ApiParam({ name: 'id', description: 'Customer ID' })
-  async getCustomerVehicles(
-    @CurrentTenant() tenantId: string,
-    @Param('id') customerId: string,
-  ) {
+  async getCustomerVehicles(@CurrentTenant() tenantId: string, @Param('id') customerId: string) {
     const vehicles = await this.vehicleService.findByCustomer(tenantId, customerId);
     return {
       success: true,
@@ -182,10 +170,7 @@ export class CustomerController {
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get vehicle by ID' })
   @ApiParam({ name: 'vehicleId', description: 'Vehicle ID' })
-  async getVehicle(
-    @CurrentTenant() tenantId: string,
-    @Param('vehicleId') vehicleId: string,
-  ) {
+  async getVehicle(@CurrentTenant() tenantId: string, @Param('vehicleId') vehicleId: string) {
     const vehicle = await this.vehicleService.findById(tenantId, vehicleId);
     return {
       success: true,
@@ -214,10 +199,7 @@ export class CustomerController {
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete vehicle' })
   @ApiParam({ name: 'vehicleId', description: 'Vehicle ID' })
-  async deleteVehicle(
-    @CurrentTenant() tenantId: string,
-    @Param('vehicleId') vehicleId: string,
-  ) {
+  async deleteVehicle(@CurrentTenant() tenantId: string, @Param('vehicleId') vehicleId: string) {
     await this.vehicleService.delete(tenantId, vehicleId);
     return {
       success: true,

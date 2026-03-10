@@ -64,9 +64,7 @@ export class LicensePlateController {
   @Post('entry-exit')
   @ApiOperation({ summary: 'Record vehicle entry or exit' })
   @ApiResponse({ status: 201, type: VehicleEntryExitDto })
-  async recordEntryExit(
-    @Body() dto: RecordEntryExitDto,
-  ): Promise<VehicleEntryExitDto> {
+  async recordEntryExit(@Body() dto: RecordEntryExitDto): Promise<VehicleEntryExitDto> {
     // Get the detection first
     const detection = await this.licensePlateService.detectLicensePlate(
       Buffer.from(''), // Mock - would get actual detection
@@ -93,18 +91,14 @@ export class LicensePlateController {
   @Get('cameras')
   @ApiOperation({ summary: 'Get all cameras' })
   @ApiResponse({ status: 200, type: [LprCameraDto] })
-  async getCameras(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<LprCameraDto[]> {
+  async getCameras(@CurrentUser('tenantId') tenantId: string): Promise<LprCameraDto[]> {
     return await this.licensePlateService.getCameras(tenantId);
   }
 
   @Get('cameras/:id')
   @ApiOperation({ summary: 'Get camera details' })
   @ApiResponse({ status: 200, type: LprCameraDto })
-  async getCamera(
-    @Param('id') cameraId: string,
-  ): Promise<LprCameraDto> {
+  async getCamera(@Param('id') cameraId: string): Promise<LprCameraDto> {
     return await this.licensePlateService.getCamera(cameraId);
   }
 

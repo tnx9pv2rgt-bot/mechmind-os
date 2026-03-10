@@ -24,18 +24,15 @@ export class VoiceEventListener {
     );
 
     // Log call analytics
-    await this.queueService.addVoiceJob(
-      'log-call-analytics',
-      {
-        type: 'call-analytics',
-        payload: {
-          callId: event.callId,
-          duration: event.duration,
-          customerPhone: event.customerPhone,
-        },
-        tenantId: event.tenantId,
+    await this.queueService.addVoiceJob('log-call-analytics', {
+      type: 'call-analytics',
+      payload: {
+        callId: event.callId,
+        duration: event.duration,
+        customerPhone: event.customerPhone,
       },
-    );
+      tenantId: event.tenantId,
+    });
   }
 
   @OnEvent('voice.transfer.completed')
@@ -51,18 +48,15 @@ export class VoiceEventListener {
     );
 
     // Notify agent
-    await this.queueService.addNotificationJob(
-      'notify-agent-transfer',
-      {
-        type: 'agent-transfer',
-        payload: {
-          callId: event.callId,
-          agentId: event.agentId,
-          customerPhone: event.customerPhone,
-        },
-        tenantId: event.tenantId,
+    await this.queueService.addNotificationJob('notify-agent-transfer', {
+      type: 'agent-transfer',
+      payload: {
+        callId: event.callId,
+        agentId: event.agentId,
+        customerPhone: event.customerPhone,
       },
-    );
+      tenantId: event.tenantId,
+    });
   }
 
   @OnEvent('voice.callback.scheduled')

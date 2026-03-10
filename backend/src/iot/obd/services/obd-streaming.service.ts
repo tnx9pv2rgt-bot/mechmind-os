@@ -1,6 +1,6 @@
 /**
  * MechMind OS - OBD Streaming Service
- * 
+ *
  * Real-time OBD data streaming via WebSocket
  * - Live sensor data streaming
  * - Freeze frame capture
@@ -28,13 +28,13 @@ import {
 export class ObdStreamingService {
   private readonly logger = new Logger(ObdStreamingService.name);
   private activeStreams = new Map<string, ObdDataStream>();
-  
+
   // Sensor polling intervals (ms)
   private readonly SENSOR_INTERVALS = {
-    CRITICAL: 100,   // RPM, Speed - 10Hz
-    HIGH: 500,       // Coolant temp, Throttle - 2Hz
-    MEDIUM: 1000,    // Other sensors - 1Hz
-    LOW: 5000,       // Fuel level, etc - 0.2Hz
+    CRITICAL: 100, // RPM, Speed - 10Hz
+    HIGH: 500, // Coolant temp, Throttle - 2Hz
+    MEDIUM: 1000, // Other sensors - 1Hz
+    LOW: 5000, // Fuel level, etc - 0.2Hz
   };
 
   // OBD-II PIDs (Parameter IDs)
@@ -51,13 +51,13 @@ export class ObdStreamingService {
     VOLTAGE: '0142',
     DISTANCE: '0131',
     RUN_TIME: '011F',
-    
+
     // Freeze frame
     FREEZE_FRAME: '0202',
-    
+
     // Mode $06
     MODE_06_REQUEST: '0600',
-    
+
     // Mode $08
     MODE_08_REQUEST: '0800',
   };
@@ -81,7 +81,7 @@ export class ObdStreamingService {
     },
   ): Promise<ObdDataStream> {
     const streamId = `stream:${deviceId}:${Date.now()}`;
-    
+
     const stream: ObdDataStream = {
       id: streamId,
       deviceId,
@@ -102,7 +102,7 @@ export class ObdStreamingService {
     };
 
     this.activeStreams.set(streamId, stream);
-    
+
     // Store stream metadata in Redis
     await this.redis.setex(
       `obd:stream:${deviceId}`,
@@ -115,7 +115,7 @@ export class ObdStreamingService {
     );
 
     this.logger.log(`Started OBD stream ${streamId} for device ${deviceId}`);
-    
+
     return stream;
   }
 
@@ -128,7 +128,7 @@ export class ObdStreamingService {
 
     stream.isActive = false;
     stream.endTime = new Date();
-    
+
     // Flush remaining buffer to time-series DB
     if (stream.buffer.length > 0) {
       await this.flushBuffer(streamId);
@@ -136,19 +136,16 @@ export class ObdStreamingService {
 
     // Clear Redis
     await this.redis.del(`obd:stream:${stream.deviceId}`);
-    
+
     this.activeStreams.delete(streamId);
-    
+
     this.logger.log(`Stopped OBD stream ${streamId}`);
   }
 
   /**
    * Process incoming sensor data
    */
-  async processSensorData(
-    streamId: string,
-    data: ObdSensorData,
-  ): Promise<void> {
+  async processSensorData(streamId: string, data: ObdSensorData): Promise<void> {
     const stream = this.activeStreams.get(streamId);
     if (!stream || !stream.isActive) return;
 
@@ -159,7 +156,7 @@ export class ObdStreamingService {
 
     // Update stats
     stream.stats.packetsReceived++;
-    
+
     // Add to buffer for batch processing
     stream.buffer.push(data);
 
@@ -167,10 +164,7 @@ export class ObdStreamingService {
     await this.checkCriticalValues(stream.deviceId, data);
 
     // Publish to Redis for real-time subscribers
-    await this.redis.publish(
-      `obd:live:${stream.deviceId}`,
-      JSON.stringify(data),
-    );
+    await this.redis.publish(`obd:live:${stream.deviceId}`, JSON.stringify(data));
 
     // Flush buffer if full
     if (stream.buffer.length >= 100) {
@@ -181,10 +175,7 @@ export class ObdStreamingService {
   /**
    * Capture freeze frame data
    */
-  async captureFreezeFrame(
-    deviceId: string,
-    dtcCode: string,
-  ): Promise<FreezeFrameData> {
+  async captureFreezeFrame(deviceId: string, dtcCode: string): Promise<FreezeFrameData> {
     const device = await this.prisma.obdDevice.findUnique({
       where: { id: deviceId },
       include: { vehicle: true },
@@ -233,7 +224,7 @@ export class ObdStreamingService {
     freezeFrame.storedInDb = true;
 
     this.logger.log(`Captured freeze frame for ${dtcCode} on device ${deviceId}`);
-    
+
     return freezeFrame;
   }
 
@@ -252,9 +243,9 @@ export class ObdStreamingService {
     // Query supported tests
     const supportedTestsNum = await this.queryPid(deviceId, this.PIDS.MODE_06_REQUEST);
     const supportedTests = supportedTestsNum !== null ? supportedTestsNum.toString(16) : null;
-    
+
     const results: Mode06TestResult[] = [];
-    
+
     // Parse supported tests and query each
     for (let testId = 0; testId < 255; testId++) {
       if (this.isTestSupported(supportedTests, testId)) {
@@ -327,7 +318,7 @@ export class ObdStreamingService {
 
     // In real implementation, this would trigger the actual EVAP test
     // and monitor results via OBD commands
-    
+
     return test;
   }
 
@@ -362,10 +353,10 @@ export class ObdStreamingService {
   ): Promise<{ timestamp: Date; value: number }[]> {
     // Query from time-series optimized storage
     // In production, this would query InfluxDB/TimescaleDB
-    
+
     const cacheKey = `obd:history:${deviceId}:${sensor}:${from.getTime()}:${to.getTime()}`;
     const cached = await this.redis.get(cacheKey);
-    
+
     if (cached) {
       return JSON.parse(cached);
     }
@@ -430,15 +421,7 @@ export class ObdStreamingService {
   // ============== PRIVATE METHODS ==============
 
   private getDefaultSensors(): string[] {
-    return [
-      'rpm',
-      'speed',
-      'coolantTemp',
-      'throttlePos',
-      'engineLoad',
-      'fuelLevel',
-      'voltage',
-    ];
+    return ['rpm', 'speed', 'coolantTemp', 'throttlePos', 'engineLoad', 'fuelLevel', 'voltage'];
   }
 
   private async queryPid(deviceId: string, pid: string): Promise<number | null> {
@@ -464,10 +447,7 @@ export class ObdStreamingService {
     return (byte & (1 << bitIndex)) !== 0;
   }
 
-  private async checkCriticalValues(
-    deviceId: string,
-    data: ObdSensorData,
-  ): Promise<void> {
+  private async checkCriticalValues(deviceId: string, data: ObdSensorData): Promise<void> {
     const alerts: string[] = [];
 
     if (data.coolantTemp && data.coolantTemp > 110) {
@@ -532,19 +512,16 @@ export class ObdStreamingService {
 
     // Also write to time-series optimized storage (Redis for recent, TimescaleDB for historical)
     const pipeline = this.redis.pipeline();
-    
+
     for (const data of batch) {
       const key = `obd:ts:${stream.deviceId}:${data.timestamp?.getTime() || Date.now()}`;
       pipeline.setex(key, 86400, JSON.stringify(data)); // 24h TTL
     }
-    
+
     await pipeline.exec();
   }
 
-  private async archiveToColdStorage(
-    deviceId: string,
-    data: any[],
-  ): Promise<void> {
+  private async archiveToColdStorage(deviceId: string, data: any[]): Promise<void> {
     // In production, this would upload to S3 or similar
     this.logger.log(`Archiving ${data.length} records for ${deviceId} to cold storage`);
   }

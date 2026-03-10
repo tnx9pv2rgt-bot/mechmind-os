@@ -1,9 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import {
-  NotificationsService,
-  NotificationPayload,
-} from './notifications.service';
+import { NotificationsService, NotificationPayload } from './notifications.service';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
 
 describe('NotificationsService', () => {
@@ -80,14 +77,10 @@ describe('NotificationsService', () => {
     it('should broadcast to tenant for dashboard updates', async () => {
       await service.sendNotification(mockPayload);
 
-      expect(gateway.broadcastToTenant).toHaveBeenCalledWith(
-        mockTenantId,
-        'tenant:update',
-        {
-          type: 'booking_created',
-          data: { bookingId: 'booking-123' },
-        },
-      );
+      expect(gateway.broadcastToTenant).toHaveBeenCalledWith(mockTenantId, 'tenant:update', {
+        type: 'booking_created',
+        data: { bookingId: 'booking-123' },
+      });
     });
 
     it('should queue email when email data is provided', async () => {
@@ -225,8 +218,7 @@ describe('NotificationsService', () => {
         message: 'Inspection completed',
       });
 
-      const broadcastData = (gateway.broadcastToTenant as jest.Mock).mock
-        .calls[0][2];
+      const broadcastData = (gateway.broadcastToTenant as jest.Mock).mock.calls[0][2];
       expect(broadcastData.timestamp).toBeDefined();
     });
   });
@@ -264,8 +256,7 @@ describe('NotificationsService', () => {
         body: 'General info',
       });
 
-      const broadcastData = (gateway.broadcastToTenant as jest.Mock).mock
-        .calls[0][2];
+      const broadcastData = (gateway.broadcastToTenant as jest.Mock).mock.calls[0][2];
       expect(broadcastData.priority).toBe('normal');
     });
 

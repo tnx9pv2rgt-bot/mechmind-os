@@ -3,11 +3,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { SubscriptionService } from './subscription.service';
-import {
-  SubscriptionPlan,
-  SubscriptionStatus,
-  FeatureFlag,
-} from '@prisma/client';
+import { SubscriptionPlan, SubscriptionStatus, FeatureFlag } from '@prisma/client';
 import { PLAN_LIMITS, AI_ADDON, PLAN_FEATURES } from '../config/pricing.config';
 
 describe('SubscriptionService', () => {
@@ -47,8 +43,20 @@ describe('SubscriptionService', () => {
     createdAt: now,
     updatedAt: now,
     features: [
-      { id: 'feat-1', subscriptionId: SUBSCRIPTION_ID, feature: FeatureFlag.API_ACCESS, enabled: true, createdAt: now },
-      { id: 'feat-2', subscriptionId: SUBSCRIPTION_ID, feature: FeatureFlag.ADVANCED_REPORTS, enabled: true, createdAt: now },
+      {
+        id: 'feat-1',
+        subscriptionId: SUBSCRIPTION_ID,
+        feature: FeatureFlag.API_ACCESS,
+        enabled: true,
+        createdAt: now,
+      },
+      {
+        id: 'feat-2',
+        subscriptionId: SUBSCRIPTION_ID,
+        feature: FeatureFlag.ADVANCED_REPORTS,
+        enabled: true,
+        createdAt: now,
+      },
     ],
   };
 
@@ -62,7 +70,13 @@ describe('SubscriptionService', () => {
     stripeSubscriptionId: null,
     aiAddonEnabled: false,
     features: [
-      { id: 'feat-t1', subscriptionId: 'sub-trial', feature: FeatureFlag.AI_INSPECTIONS, enabled: true, createdAt: now },
+      {
+        id: 'feat-t1',
+        subscriptionId: 'sub-trial',
+        feature: FeatureFlag.AI_INSPECTIONS,
+        enabled: true,
+        createdAt: now,
+      },
     ],
   };
 
@@ -75,26 +89,36 @@ describe('SubscriptionService', () => {
     maxLocations: 1,
     aiAddonEnabled: false,
     features: [
-      { id: 'feat-s1', subscriptionId: 'sub-small', feature: FeatureFlag.OBD_INTEGRATION, enabled: true, createdAt: now },
+      {
+        id: 'feat-s1',
+        subscriptionId: 'sub-small',
+        feature: FeatureFlag.OBD_INTEGRATION,
+        enabled: true,
+        createdAt: now,
+      },
     ],
   };
 
   function createTransactionMock(): jest.Mock {
-    return jest.fn((callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
-      const tx = {
-        subscription: {
-          update: jest.fn().mockResolvedValue({ ...mockSubscription, features: mockSubscription.features }),
-        },
-        subscriptionChange: {
-          create: jest.fn().mockResolvedValue({ id: 'change-001' }),
-        },
-        subscriptionFeature: {
-          deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
-          createMany: jest.fn().mockResolvedValue({ count: 5 }),
-        },
-      };
-      return callback(tx);
-    });
+    return jest.fn(
+      (callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
+        const tx = {
+          subscription: {
+            update: jest
+              .fn()
+              .mockResolvedValue({ ...mockSubscription, features: mockSubscription.features }),
+          },
+          subscriptionChange: {
+            create: jest.fn().mockResolvedValue({ id: 'change-001' }),
+          },
+          subscriptionFeature: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+            createMany: jest.fn().mockResolvedValue({ count: 5 }),
+          },
+        };
+        return callback(tx);
+      },
+    );
   }
 
   beforeEach(async () => {
@@ -352,7 +376,7 @@ describe('SubscriptionService', () => {
       expect(result.immediate).toBe(true);
       expect(result.proratedAmount).toBeDefined();
       expect(typeof result.proratedAmount).toBe('number');
-      expect((prisma.$transaction as jest.Mock)).toHaveBeenCalled();
+      expect(prisma.$transaction as jest.Mock).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when upgrading to TRIAL', async () => {
@@ -765,7 +789,11 @@ describe('SubscriptionService', () => {
 
     it('should disable AI addon', async () => {
       // Arrange
-      const subscriptionWithAi = { ...mockSubscription, aiAddonEnabled: true, aiAddonPrice: AI_ADDON.monthlyPrice };
+      const subscriptionWithAi = {
+        ...mockSubscription,
+        aiAddonEnabled: true,
+        aiAddonPrice: AI_ADDON.monthlyPrice,
+      };
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(subscriptionWithAi);
 
@@ -806,9 +834,7 @@ describe('SubscriptionService', () => {
       findUniqueMock.findUnique.mockResolvedValue(mockSmallSubscription);
 
       // Act & Assert
-      await expect(service.toggleAiAddon(TENANT_ID, true)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.toggleAiAddon(TENANT_ID, true)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when subscription does not exist', async () => {
@@ -817,9 +843,7 @@ describe('SubscriptionService', () => {
       findUniqueMock.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.toggleAiAddon(TENANT_ID, true)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.toggleAiAddon(TENANT_ID, true)).rejects.toThrow(NotFoundException);
     });
 
     it('should log AI_ADDON_ENABLED change when enabling', async () => {
@@ -961,9 +985,7 @@ describe('SubscriptionService', () => {
       findUniqueMock.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.cancelSubscription(TENANT_ID)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.cancelSubscription(TENANT_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('should log CANCEL change with correct statuses for immediate cancellation', async () => {
@@ -1065,7 +1087,9 @@ describe('SubscriptionService', () => {
         async (callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
           const tx = {
             subscription: {
-              update: jest.fn().mockResolvedValue({ ...expiredSub, status: SubscriptionStatus.ACTIVE }),
+              update: jest
+                .fn()
+                .mockResolvedValue({ ...expiredSub, status: SubscriptionStatus.ACTIVE }),
             },
             subscriptionChange: {
               create: jest.fn().mockResolvedValue({ id: 'change-react-2' }),
@@ -1085,9 +1109,7 @@ describe('SubscriptionService', () => {
       findUniqueMock.findUnique.mockResolvedValue(mockSubscription);
 
       // Act & Assert
-      await expect(service.reactivateSubscription(TENANT_ID)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.reactivateSubscription(TENANT_ID)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when subscription does not exist', async () => {
@@ -1096,9 +1118,7 @@ describe('SubscriptionService', () => {
       findUniqueMock.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.reactivateSubscription(TENANT_ID)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.reactivateSubscription(TENANT_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('should set new billing period of 30 days on reactivation', async () => {
@@ -1157,7 +1177,9 @@ describe('SubscriptionService', () => {
         async (callback: (tx: Record<string, Record<string, jest.Mock>>) => Promise<unknown>) => {
           const tx = {
             subscription: {
-              update: jest.fn().mockResolvedValue({ ...cancelledSub, status: SubscriptionStatus.ACTIVE }),
+              update: jest
+                .fn()
+                .mockResolvedValue({ ...cancelledSub, status: SubscriptionStatus.ACTIVE }),
             },
             subscriptionChange: {
               create: jest.fn().mockImplementation((args: { data: Record<string, unknown> }) => {
@@ -1319,8 +1341,10 @@ describe('SubscriptionService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockSubscription);
-      const deleteFeaturesMock = (prisma.subscriptionFeature as Record<string, jest.Mock>).deleteMany;
-      const createFeaturesMock = (prisma.subscriptionFeature as Record<string, jest.Mock>).createMany;
+      const deleteFeaturesMock = (prisma.subscriptionFeature as Record<string, jest.Mock>)
+        .deleteMany;
+      const createFeaturesMock = (prisma.subscriptionFeature as Record<string, jest.Mock>)
+        .createMany;
 
       // Act
       await service.adminUpdateSubscription(TENANT_ID, {
@@ -1346,7 +1370,8 @@ describe('SubscriptionService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockSubscription);
-      const deleteFeaturesMock = (prisma.subscriptionFeature as Record<string, jest.Mock>).deleteMany;
+      const deleteFeaturesMock = (prisma.subscriptionFeature as Record<string, jest.Mock>)
+        .deleteMany;
 
       // Act
       await service.adminUpdateSubscription(TENANT_ID, {

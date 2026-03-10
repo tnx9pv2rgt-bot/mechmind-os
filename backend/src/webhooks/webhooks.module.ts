@@ -16,18 +16,8 @@ import {
 @Module({
   imports: [ConfigModule],
   controllers: [WebhookController],
-  providers: [
-    SegmentWebhookService,
-    ZapierWebhookService,
-    SlackWebhookService,
-    CRMWebhookService,
-  ],
-  exports: [
-    SegmentWebhookService,
-    ZapierWebhookService,
-    SlackWebhookService,
-    CRMWebhookService,
-  ],
+  providers: [SegmentWebhookService, ZapierWebhookService, SlackWebhookService, CRMWebhookService],
+  exports: [SegmentWebhookService, ZapierWebhookService, SlackWebhookService, CRMWebhookService],
 })
 export class WebhooksModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

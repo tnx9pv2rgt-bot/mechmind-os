@@ -45,9 +45,7 @@ export class RedisService implements OnModuleDestroy {
       }
       return;
     }
-    const expiresAt = ttlSeconds
-      ? Date.now() + ttlSeconds * 1000
-      : Number.MAX_SAFE_INTEGER;
+    const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : Number.MAX_SAFE_INTEGER;
     this.memoryStore.set(key, { value, expiresAt });
   }
 

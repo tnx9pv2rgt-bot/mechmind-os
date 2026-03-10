@@ -46,15 +46,15 @@ export class GooglePlacesService {
   constructor(private readonly configService: ConfigService) {
     this.isDevelopment = this.configService.get('NODE_ENV') === 'development';
     this.apiKey = this.configService.get('GOOGLE_PLACES_API_KEY') || '';
-    
+
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
       db: parseInt(this.configService.get('REDIS_DB') || '0'),
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: times => Math.min(times * 50, 2000),
     });
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', err => {
       this.logger.error('Redis connection error:', err.message);
     });
   }
@@ -70,7 +70,7 @@ export class GooglePlacesService {
       types?: string;
       location?: { lat: number; lng: number };
       radius?: number;
-    }
+    },
   ): Promise<{ predictions: AddressPrediction[] }> {
     if (!input || input.length < 3) {
       return { predictions: [] };
@@ -106,9 +106,7 @@ export class GooglePlacesService {
         }
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/place/autocomplete/json?${params.toString()}`
-      );
+      const response = await fetch(`${this.baseUrl}/place/autocomplete/json?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Places API HTTP error: ${response.status}`);
@@ -134,11 +132,11 @@ export class GooglePlacesService {
       return { predictions };
     } catch (error) {
       this.logger.error('Autocomplete error:', error.message);
-      
+
       if (this.isDevelopment) {
         return this.getMockPredictions(input);
       }
-      
+
       throw error;
     }
   }
@@ -165,9 +163,7 @@ export class GooglePlacesService {
         fields: 'address_component,geometry,formatted_address',
       });
 
-      const response = await fetch(
-        `${this.baseUrl}/place/details/json?${params.toString()}`
-      );
+      const response = await fetch(`${this.baseUrl}/place/details/json?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Place Details API HTTP error: ${response.status}`);
@@ -183,7 +179,7 @@ export class GooglePlacesService {
       const details = this.parseAddressComponents(
         result.address_components,
         result.geometry?.location,
-        result.formatted_address
+        result.formatted_address,
       );
 
       await this.setCached(cacheKey, details);
@@ -191,11 +187,11 @@ export class GooglePlacesService {
       return details;
     } catch (error) {
       this.logger.error('Place details error:', error.message);
-      
+
       if (this.isDevelopment) {
         return this.getMockPlaceDetails(placeId);
       }
-      
+
       throw error;
     }
   }
@@ -222,9 +218,7 @@ export class GooglePlacesService {
         region: 'it',
       });
 
-      const response = await fetch(
-        `${this.baseUrl}/geocode/json?${params.toString()}`
-      );
+      const response = await fetch(`${this.baseUrl}/geocode/json?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Geocoding API HTTP error: ${response.status}`);
@@ -248,11 +242,11 @@ export class GooglePlacesService {
       return results;
     } catch (error) {
       this.logger.error('Geocoding error:', error.message);
-      
+
       if (this.isDevelopment) {
         return this.getMockGeocode(address);
       }
-      
+
       throw error;
     }
   }
@@ -260,10 +254,7 @@ export class GooglePlacesService {
   /**
    * Reverse Geocoding: coordinate -> indirizzo
    */
-  async reverseGeocode(
-    latitude: number,
-    longitude: number
-  ): Promise<AddressDetails[]> {
+  async reverseGeocode(latitude: number, longitude: number): Promise<AddressDetails[]> {
     const cacheKey = `places:reverse:${latitude.toFixed(6)},${longitude.toFixed(6)}`;
     const cached = await this.getCached<AddressDetails[]>(cacheKey);
     if (cached) {
@@ -281,9 +272,7 @@ export class GooglePlacesService {
         language: 'it',
       });
 
-      const response = await fetch(
-        `${this.baseUrl}/geocode/json?${params.toString()}`
-      );
+      const response = await fetch(`${this.baseUrl}/geocode/json?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Reverse Geocoding API HTTP error: ${response.status}`);
@@ -299,8 +288,8 @@ export class GooglePlacesService {
         this.parseAddressComponents(
           r.address_components,
           r.geometry?.location,
-          r.formatted_address
-        )
+          r.formatted_address,
+        ),
       );
 
       await this.setCached(cacheKey, results);
@@ -308,11 +297,11 @@ export class GooglePlacesService {
       return results;
     } catch (error) {
       this.logger.error('Reverse geocoding error:', error.message);
-      
+
       if (this.isDevelopment) {
         return [this.getMockReverseGeocode(latitude, longitude)];
       }
-      
+
       throw error;
     }
   }
@@ -332,15 +321,12 @@ export class GooglePlacesService {
 
     try {
       const results = await this.geocodeAddress(`${postalCode}, Italia`);
-      
+
       if (results.length === 0) {
         return { valid: false };
       }
 
-      const details = await this.reverseGeocode(
-        results[0].latitude,
-        results[0].longitude
-      );
+      const details = await this.reverseGeocode(results[0].latitude, results[0].longitude);
 
       if (details.length === 0) {
         return { valid: false };
@@ -364,10 +350,10 @@ export class GooglePlacesService {
   private parseAddressComponents(
     components: any[],
     geometry: { lat: number; lng: number },
-    formattedAddress: string
+    formattedAddress: string,
   ): AddressDetails {
     const getComponent = (type: string, useShort = false): string => {
-      const component = components.find((c) => c.types.includes(type));
+      const component = components.find(c => c.types.includes(type));
       return component ? (useShort ? component.short_name : component.long_name) : '';
     };
 
@@ -456,7 +442,7 @@ export class GooglePlacesService {
         longitude: 12.4964,
         formattedAddress: 'Via del Corso, 1, 00186 Roma RM, Italia',
       },
-      'ChIJt2CZLXWIekgRWJmKRK3U_zA': {
+      ChIJt2CZLXWIekgRWJmKRK3U_zA: {
         street: 'Via Montenapoleone',
         number: '1',
         city: 'Milano',
@@ -469,26 +455,30 @@ export class GooglePlacesService {
       },
     };
 
-    return mocks[placeId] || {
-      street: 'Via Example',
-      number: '1',
-      city: 'Roma',
-      postalCode: '00100',
-      province: 'RM',
-      country: 'Italia',
-      latitude: 41.9,
-      longitude: 12.5,
-      formattedAddress: 'Via Example, 1, 00100 Roma RM, Italia',
-    };
+    return (
+      mocks[placeId] || {
+        street: 'Via Example',
+        number: '1',
+        city: 'Roma',
+        postalCode: '00100',
+        province: 'RM',
+        country: 'Italia',
+        latitude: 41.9,
+        longitude: 12.5,
+        formattedAddress: 'Via Example, 1, 00100 Roma RM, Italia',
+      }
+    );
   }
 
   private getMockGeocode(address: string): GeocodeResult[] {
-    return [{
-      latitude: 41.9028,
-      longitude: 12.4964,
-      formattedAddress: address,
-      placeId: 'ChIJrTLJRciLekgRQtA7-sQq2Qc',
-    }];
+    return [
+      {
+        latitude: 41.9028,
+        longitude: 12.4964,
+        formattedAddress: address,
+        placeId: 'ChIJrTLJRciLekgRQtA7-sQq2Qc',
+      },
+    ];
   }
 
   private getMockReverseGeocode(lat: number, lng: number): AddressDetails {
@@ -513,7 +503,7 @@ export class GooglePlacesService {
 // Standalone functions
 export async function autocompleteAddress(
   input: string,
-  apiKey?: string
+  apiKey?: string,
 ): Promise<{ predictions: AddressPrediction[] }> {
   const service = new GooglePlacesService({
     get: (key: string) => {
@@ -533,10 +523,7 @@ export async function autocompleteAddress(
   }
 }
 
-export async function getPlaceDetails(
-  placeId: string,
-  apiKey?: string
-): Promise<AddressDetails> {
+export async function getPlaceDetails(placeId: string, apiKey?: string): Promise<AddressDetails> {
   const service = new GooglePlacesService({
     get: (key: string) => {
       const configs: Record<string, string> = {

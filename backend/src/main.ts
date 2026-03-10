@@ -16,17 +16,19 @@ async function bootstrap() {
   const logger = new LoggerService(configService);
 
   // Security middleware
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-    crossOriginEmbedderPolicy: false,
-  }));
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // Body size limit
   app.use(json({ limit: '1mb' }));
@@ -40,9 +42,7 @@ async function bootstrap() {
     logger.warn('CORS_ORIGIN not configured - defaulting to localhost only');
   }
   app.enableCors({
-    origin: corsOrigin
-      ? corsOrigin.split(',').map(o => o.trim())
-      : ['http://localhost:3001'],
+    origin: corsOrigin ? corsOrigin.split(',').map(o => o.trim()) : ['http://localhost:3001'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
@@ -85,9 +85,12 @@ async function bootstrap() {
 
   // Health check endpoint (before global prefix, no auth required)
   const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get('/health', (_req: unknown, res: { json: (body: Record<string, unknown>) => void }) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
+  httpAdapter.get(
+    '/health',
+    (_req: unknown, res: { json: (body: Record<string, unknown>) => void }) => {
+      res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    },
+  );
 
   // Start server
   const port = configService.get<number>('PORT', 3000);
@@ -99,7 +102,7 @@ async function bootstrap() {
   logger.log(`🔒 Environment: ${configService.get('NODE_ENV', 'development')}`);
 }
 
-bootstrap().catch((error) => {
+bootstrap().catch(error => {
   console.error('Failed to start application:', error);
   process.exit(1);
 });

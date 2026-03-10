@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   generateRegistrationOptions,
@@ -6,10 +11,7 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
-import type {
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from '@simplewebauthn/server';
+import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -35,7 +37,9 @@ export class PasskeyService {
     this.origin = this.config.get<string>('WEBAUTHN_ORIGIN', 'http://localhost:3001');
   }
 
-  async generateRegistrationOptions(userId: string): Promise<{ options: Record<string, unknown>; sessionId: string }> {
+  async generateRegistrationOptions(
+    userId: string,
+  ): Promise<{ options: Record<string, unknown>; sessionId: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, name: true, passkeys: { select: { credentialId: true } } },
@@ -51,7 +55,7 @@ export class PasskeyService {
       userName: user.email,
       userDisplayName: user.name,
       attestationType: 'none',
-      excludeCredentials: user.passkeys.map((pk) => ({
+      excludeCredentials: user.passkeys.map(pk => ({
         id: pk.credentialId,
       })),
       authenticatorSelection: {
@@ -121,18 +125,17 @@ export class PasskeyService {
     return { id: passkey.id };
   }
 
-  async generateAuthenticationOptions(): Promise<{ options: Record<string, unknown>; sessionId: string }> {
+  async generateAuthenticationOptions(): Promise<{
+    options: Record<string, unknown>;
+    sessionId: string;
+  }> {
     const options = await generateAuthenticationOptions({
       rpID: this.rpId,
       userVerification: 'preferred',
     });
 
     const sessionId = randomUUID();
-    await this.redis.set(
-      `passkey:auth:${sessionId}`,
-      options.challenge,
-      this.challengeTtl,
-    );
+    await this.redis.set(`passkey:auth:${sessionId}`, options.challenge, this.challengeTtl);
 
     return { options: options as unknown as Record<string, unknown>, sessionId };
   }
@@ -211,13 +214,15 @@ export class PasskeyService {
     return this.authService.generateTokens(userWithTenant);
   }
 
-  async listPasskeys(userId: string): Promise<Array<{
-    id: string;
-    deviceName: string | null;
-    deviceType: string;
-    lastUsedAt: Date | null;
-    registeredAt: Date;
-  }>> {
+  async listPasskeys(userId: string): Promise<
+    Array<{
+      id: string;
+      deviceName: string | null;
+      deviceType: string;
+      lastUsedAt: Date | null;
+      registeredAt: Date;
+    }>
+  > {
     return this.prisma.passkey.findMany({
       where: { userId },
       select: {

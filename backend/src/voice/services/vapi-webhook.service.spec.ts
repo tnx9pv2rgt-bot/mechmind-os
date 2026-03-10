@@ -5,11 +5,7 @@ import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
 import { IntentHandlerService } from './intent-handler.service';
 import { EscalationService } from './escalation.service';
-import {
-  VapiWebhookDto,
-  VapiEventType,
-  VoiceIntent,
-} from '../dto/vapi-webhook.dto';
+import { VapiWebhookDto, VapiEventType, VoiceIntent } from '../dto/vapi-webhook.dto';
 
 describe('VapiWebhookService', () => {
   let service: VapiWebhookService;
@@ -457,10 +453,7 @@ describe('VapiWebhookService', () => {
         await service.processWebhook(payload);
 
         // Assert
-        expect(escalationService.findAvailableAgent).toHaveBeenCalledWith(
-          tenantB,
-          undefined,
-        );
+        expect(escalationService.findAvailableAgent).toHaveBeenCalledWith(tenantB, undefined);
       });
 
       it('should store webhook event with correct tenantId', async () => {
@@ -484,9 +477,7 @@ describe('VapiWebhookService', () => {
     describe('error handling', () => {
       it('should not throw when storeWebhookEvent fails', async () => {
         // Arrange
-        prisma.voiceWebhookEvent.create.mockRejectedValue(
-          new Error('Database connection lost'),
-        );
+        prisma.voiceWebhookEvent.create.mockRejectedValue(new Error('Database connection lost'));
         const payload = buildPayload({ event: VapiEventType.CALL_STARTED });
 
         // Act & Assert - should not throw
@@ -558,10 +549,7 @@ describe('VapiWebhookService', () => {
       await service.handleTransfer(transferPayload);
 
       // Assert
-      expect(escalationService.findAvailableAgent).toHaveBeenCalledWith(
-        TENANT_ID,
-        'booking_issue',
-      );
+      expect(escalationService.findAvailableAgent).toHaveBeenCalledWith(TENANT_ID, 'booking_issue');
     });
   });
 

@@ -11,6 +11,14 @@ interface SseClient {
   heartbeatInterval?: NodeJS.Timeout;
 }
 
+/**
+ * SseService
+ *
+ * Server-Sent Events service for real-time push to browser clients.
+ * Manages per-tenant/per-user SSE connections with heartbeat keep-alive.
+ * Subscribes to Redis Pub/Sub channels to fan-out notifications across
+ * multiple server instances. Used by the dashboard for live updates.
+ */
 @Injectable()
 export class SseService {
   private readonly logger = new Logger(SseService.name);
@@ -27,7 +35,7 @@ export class SseService {
     tenantId: string,
     userId?: string,
   ): Observable<SseMessageEvent> {
-    return new Observable<SseMessageEvent>((observer) => {
+    return new Observable<SseMessageEvent>(observer => {
       // Register client
       const client: SseClient = {
         id: clientId,
@@ -46,10 +54,10 @@ export class SseService {
       const redisSub = this.redisPubSub.getTenantObservable(tenantId);
       if (redisSub) {
         const subscription = redisSub.subscribe({
-          next: (data) => {
+          next: data => {
             this.handleNotification(client, data);
           },
-          error: (err) => {
+          error: err => {
             this.logger.error(`Redis subscription error for ${tenantId}:`, err);
           },
         });
@@ -108,9 +116,7 @@ export class SseService {
    */
   private async subscribeToTenant(tenantId: string): Promise<void> {
     // Check if we already have clients for this tenant
-    const hasExistingClients = Array.from(this.clients.values()).some(
-      (c) => c.tenantId === tenantId,
-    );
+    const hasExistingClients = Array.from(this.clients.values()).some(c => c.tenantId === tenantId);
 
     if (!hasExistingClients) {
       await this.redisPubSub.subscribeToTenant(tenantId);
@@ -137,7 +143,7 @@ export class SseService {
 
     // Check if this was the last client for the tenant
     const remainingClients = Array.from(this.clients.values()).filter(
-      (c) => c.tenantId === client.tenantId && c.id !== clientId,
+      c => c.tenantId === client.tenantId && c.id !== clientId,
     );
 
     if (remainingClients.length === 0) {
@@ -151,21 +157,14 @@ export class SseService {
   /**
    * Broadcast notification to all clients in a tenant
    */
-  async broadcastToTenant(
-    tenantId: string,
-    data: NotificationEventData,
-  ): Promise<void> {
+  async broadcastToTenant(tenantId: string, data: NotificationEventData): Promise<void> {
     await this.redisPubSub.publishToTenant(tenantId, data);
   }
 
   /**
    * Send notification to specific user
    */
-  async sendToUser(
-    tenantId: string,
-    userId: string,
-    data: NotificationEventData,
-  ): Promise<void> {
+  async sendToUser(tenantId: string, userId: string, data: NotificationEventData): Promise<void> {
     await this.redisPubSub.publishToTenant(tenantId, {
       ...data,
       userId,
@@ -183,7 +182,7 @@ export class SseService {
    * Get connected clients count for a tenant
    */
   getTenantClientsCount(tenantId: string): number {
-    return Array.from(this.clients.values()).filter((c) => c.tenantId === tenantId).length;
+    return Array.from(this.clients.values()).filter(c => c.tenantId === tenantId).length;
   }
 
   /**

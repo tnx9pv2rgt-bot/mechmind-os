@@ -22,9 +22,9 @@ export class TenantContextMiddleware implements NestMiddleware {
       try {
         // Set tenant context for RLS
         await this.prisma.setTenantContext(tenantId);
-        
+
         this.logger.debug(`Tenant context set: ${tenantId}`, 'TenantContextMiddleware');
-        
+
         // Add response listener to clear context after request
         res.on('finish', async () => {
           try {
