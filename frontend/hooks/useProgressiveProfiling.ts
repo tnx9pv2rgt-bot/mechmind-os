@@ -99,7 +99,7 @@ export function useProgressiveProfiling(
   // Calcola la percentuale di completamento
   const completionPercentage = useMemo(() => {
     const completed = ALL_PROFILE_FIELDS.filter(field => {
-      const value = getNestedValue(profile, field)
+      const value = getNestedValue(profile as unknown as Record<string, unknown>, field)
       return value !== undefined && value !== null && value !== ''
     }).length
     
@@ -113,7 +113,7 @@ export function useProgressiveProfiling(
   const completedFields = Math.round((completionPercentage / 100) * totalFields)
   const isOnboardingComplete = useMemo(() => {
     return PROFILING_STAGES.onboarding.fields.every(field => {
-      const value = getNestedValue(profile, field)
+      const value = getNestedValue(profile as unknown as Record<string, unknown>, field)
       return value !== undefined && value !== null && value !== ''
     })
   }, [profile])
@@ -155,7 +155,7 @@ export function useProgressiveProfiling(
       
       // Calcola campi mancanti
       const missing = ALL_PROFILE_FIELDS.filter(field => {
-        const value = getNestedValue(mockData, field)
+        const value = getNestedValue(mockData as unknown as Record<string, unknown>, field)
         return value === undefined || value === null || value === ''
       })
       

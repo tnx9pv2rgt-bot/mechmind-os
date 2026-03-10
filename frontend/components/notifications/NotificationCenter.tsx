@@ -57,42 +57,44 @@ export function NotificationCenter({
   }, []);
 
   // Fetch unread count with polling
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: getUnreadCount,
-    refetchInterval: pollingInterval,
-    refetchIntervalInBackground: true,
-  });
+  const { data: unreadCount = 0 } = useQuery(
+    ['notifications', 'unread-count'],
+    () => getUnreadCount(),
+    {
+      refetchInterval: pollingInterval,
+      refetchIntervalInBackground: true,
+    }
+  );
 
   // Fetch recent notifications
-  const { data: notificationsData, isLoading } = useQuery({
-    queryKey: ['notifications', 'recent'],
-    queryFn: () =>
-      getNotificationHistory({
-        page: 1,
-        limit: maxItems,
-      }),
-    enabled: isOpen,
-  });
+  const { data: notificationsData, isLoading } = useQuery(
+    ['notifications', 'recent'],
+    () => getNotificationHistory({}, { page: 1, limit: maxItems }),
+    { enabled: isOpen }
+  );
 
   // Mark as read mutation
-  const markAsReadMutation = useMutation({
-    mutationFn: markAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
+  const markAsReadMutation = useMutation(
+    (id: string) => markAsRead(id),
+    {
+      onSuccess: () => {
+        void queryClient.invalidateQueries(['notifications']);
+      },
+    }
+  );
 
   // Mark all as read mutation
-  const markAllAsReadMutation = useMutation({
-    mutationFn: markAllAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
+  const markAllAsReadMutation = useMutation(
+    () => markAllAsRead(),
+    {
+      onSuccess: () => {
+        void queryClient.invalidateQueries(['notifications']);
+      },
+    }
+  );
 
   // Handle notification click
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: { id: string; status: string }) => {
     if (notification.status === NotificationStatus.PENDING) {
       markAsReadMutation.mutate(notification.id);
     }
@@ -104,7 +106,7 @@ export function NotificationCenter({
     markAllAsReadMutation.mutate();
   };
 
-  const recentNotifications = notificationsData?.notifications || [];
+  const recentNotifications = (notificationsData?.notifications || []) as unknown as Notification[];
 
   if (!mounted) {
     return (
@@ -241,10 +243,10 @@ export function NotificationCenter({
 
 // Hook for using notification center
 export function useNotificationCenter() {
-  const { data: unreadCount = 0, refetch } = useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: getUnreadCount,
-  });
+  const { data: unreadCount = 0, refetch } = useQuery(
+    ['notifications', 'unread-count'],
+    () => getUnreadCount()
+  );
 
   return {
     unreadCount,

@@ -54,13 +54,5 @@ export { DataRestoreModal, DataRestorePrompt } from './data-restore-modal';
 // Save buttons
 export { SaveButton, SaveAndContinueButton, SaveButtonGroup } from './save-button';
 
-// Types
-export type { FormResumeBannerProps } from './form-resume-banner';
-export type { ExitIntentModalProps, ExitIntentInlineProps } from './exit-intent-modal';
-export type { SessionTakeoverModalProps, CurrentDeviceBadgeProps } from './session-takeover-modal';
-export type { OfflineIndicatorProps, OfflineBadgeProps, SyncErrorToastProps } from './offline-indicator';
-export type { DataRestoreModalProps, DataRestorePromptProps } from './data-restore-modal';
-export type { SaveButtonProps, SaveAndContinueButtonProps, SaveButtonGroupProps } from './save-button';
-
 // Wrapper
-export { FormPersistenceWrapper, type FormPersistenceWrapperProps } from './form-persistence-wrapper';
+export { FormPersistenceWrapper } from './form-persistence-wrapper';

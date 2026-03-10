@@ -112,18 +112,19 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
       customerId: '',
       vehicleId: '',
       serviceType: undefined,
-      date: '',
-      time: '',
+      date: undefined,
+      timeSlot: '',
       mechanicId: '',
       notes: '',
-      estimatedDuration: 60,
-    },
+      duration: 60,
+      priority: 'normal',
+    } as unknown as BookingFormData,
     mode: 'onChange',
   })
 
   const selectedCustomerId = form.watch('customerId')
   const selectedServiceType = form.watch('serviceType')
-  const estimatedDuration = form.watch('estimatedDuration')
+  const estimatedDuration = form.watch('duration')
 
   // Focus first field on mount
   useEffect(() => {
@@ -165,7 +166,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
       
       toast({
         title: 'Prenotazione creata!',
-        description: `Appuntamento confermato per ${data.date} alle ${data.time}`,
+        description: `Appuntamento confermato per ${data.date} alle ${data.timeSlot}`,
         variant: 'success',
       })
       
@@ -476,6 +477,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                               min={getTodayString()}
                               className="h-14 rounded-2xl bg-white/60 border-gray-200/50 focus:bg-white focus:border-green-400 focus:ring-4 focus:ring-green-100 transition-all duration-300"
                               {...field}
+                              value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : String(field.value ?? '')}
+                              onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
                             />
                           </div>
                         </FormControl>
@@ -493,7 +496,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                 >
                   <FormField
                     control={form.control}
-                    name="time"
+                    name="timeSlot"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
                         <FormLabel className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -584,7 +587,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
               >
                 <FormField
                   control={form.control}
-                  name="estimatedDuration"
+                  name="duration"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel className="text-sm font-semibold text-gray-700 flex items-center gap-2">

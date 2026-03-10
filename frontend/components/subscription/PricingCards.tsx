@@ -239,7 +239,7 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
                 {/* Features */}
                 <div className="space-y-2">
                   {allFeatures.map((feature) => {
-                    const included = feature.plan?.includes(plan.id) ?? true;
+                    const included = (feature.plan as string[] | undefined)?.includes(plan.id) ?? true;
                     const isAddon = feature.addon;
                     const showWithAddon = isAddon && aiAddon;
 

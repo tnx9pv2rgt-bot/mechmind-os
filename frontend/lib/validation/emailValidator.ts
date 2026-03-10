@@ -4,6 +4,7 @@
  */
 
 import {
+  EmailDeliverability,
   EmailValidationResult,
   SimplifiedEmailValidation,
   ValidationOptions,
@@ -298,8 +299,8 @@ export function createDebouncedEmailValidator(
     }
     
     // Cancella richiesta precedente
-    if (abortController) {
-      abortController.abort();
+    if (abortController !== null) {
+      (abortController as AbortController).abort();
     }
 
     // Validazione immediata per sintassi

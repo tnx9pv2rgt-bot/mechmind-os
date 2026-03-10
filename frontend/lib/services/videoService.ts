@@ -345,7 +345,7 @@ export async function compressVideo(
 
   // Read compressed file
   const data = await ffmpeg.readFile(outputName)
-  const compressedBlob = new Blob([data], { type: `video/${opts.format}` })
+  const compressedBlob = new Blob([data as BlobPart], { type: `video/${opts.format}` })
   
   // Clean up
   await ffmpeg.deleteFile(inputName)
@@ -673,7 +673,7 @@ export async function extractFrame(
 
   // Read output
   const data = await ffmpeg.readFile(outputName)
-  const blob = new Blob([data], { type: 'image/jpeg' })
+  const blob = new Blob([data as BlobPart], { type: 'image/jpeg' })
 
   // Clean up
   await ffmpeg.deleteFile(inputName)

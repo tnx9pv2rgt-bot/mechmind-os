@@ -3,7 +3,6 @@
  */
 
 export { useConditionalFlow } from './useConditionalFlow';
-export { default as useConditionalFlow } from './useConditionalFlow';
 
 // Re-export types
 export type {

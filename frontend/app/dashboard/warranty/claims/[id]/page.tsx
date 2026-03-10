@@ -192,7 +192,7 @@ export default function ClaimDetailPage() {
     return null
   }
 
-  const status = statusConfig[claim.status]
+  const status = statusConfig[claim.status as ClaimStatus]
   const canReview = claim.status === ClaimStatus.SUBMITTED || claim.status === ClaimStatus.UNDER_REVIEW
   const canPay = claim.status === ClaimStatus.APPROVED
 

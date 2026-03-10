@@ -9,7 +9,13 @@
  * @requires @trpc/client
  */
 
-import { trpc, TRPCClientError, NetworkError, ServerError } from '../trpc-client'
+import { trpc as trpcClient, TRPCClientError, NetworkError, ServerError } from '../trpc-client'
+
+// Cast trpc to permissive type - the router stubs return `unknown` which needs casting at call sites
+const trpc = trpcClient as unknown as Record<string, Record<string, {
+  mutate: (data: unknown) => Promise<unknown>;
+  query: (data: unknown) => Promise<unknown>;
+}>>
 import type { 
   InspectionStatus, 
   InspectionItemStatus, 
@@ -450,8 +456,7 @@ export async function createInspection(data: CreateInspectionInput): Promise<Ins
 
     // Note: This assumes the backend has an inspection.create procedure
     // If using direct API calls instead of tRPC, replace this
-    const inspection = await trpc.inspection.create.mutate(data)
-    
+    const inspection = await trpc.inspection.create.mutate(data) as Inspection
     logger.info('Inspection created successfully', { inspectionId: inspection.id })
     return inspection
   } catch (error) {
@@ -491,12 +496,12 @@ export async function getInspectionById(id: string): Promise<Inspection> {
       throw new InspectionValidationError('Inspection ID is required')
     }
 
-    const inspection = await trpc.inspection.get.query({ id })
-    
+    const inspection = await trpc.inspection.get.query({ id }) as Inspection | null
+
     if (!inspection) {
       throw new InspectionNotFoundError(id)
     }
-    
+
     logger.debug('Inspection fetched successfully', { inspectionId: id })
     return inspection
   } catch (error) {
@@ -546,8 +551,8 @@ export async function updateInspection(
       throw new InspectionValidationError('Inspection ID is required')
     }
 
-    const inspection = await trpc.inspection.update.mutate({ id, data })
-    
+    const inspection = await trpc.inspection.update.mutate({ id, data }) as Inspection
+
     logger.info('Inspection updated successfully', { inspectionId: id })
     return inspection
   } catch (error) {
@@ -605,8 +610,8 @@ export async function listInspections(
       }
     }
 
-    const result = await trpc.inspection.list.query(params)
-    
+    const result = await trpc.inspection.list.query(params) as PaginatedInspections
+
     logger.debug('Inspections listed', { count: result.items.length, total: result.total })
     return result
   } catch (error) {
@@ -649,8 +654,8 @@ export async function deleteInspection(
       throw new InspectionValidationError('deletedBy user ID is required')
     }
 
-    const result = await trpc.inspection.delete.mutate({ id, deletedBy })
-    
+    const result = await trpc.inspection.delete.mutate({ id, deletedBy }) as { success: boolean; deletedAt: Date }
+
     logger.info('Inspection soft deleted successfully', { inspectionId: id })
     return result
   } catch (error) {
@@ -699,14 +704,15 @@ export async function submitInspection(id: string): Promise<Inspection> {
     const currentInspection = await getInspectionById(id)
     
     // Validate inspection can be submitted
-    if (currentInspection.status === 'APPROVED') {
+    const statusStr = currentInspection.status as string
+    if (statusStr === 'APPROVED') {
       throw new InspectionSubmissionError(
         'Inspection has already been approved',
         'ALREADY_APPROVED'
       )
     }
-    
-    if (currentInspection.status === 'DECLINED') {
+
+    if (statusStr === 'DECLINED') {
       throw new InspectionSubmissionError(
         'Inspection has been declined and cannot be submitted',
         'ALREADY_DECLINED'
@@ -720,11 +726,11 @@ export async function submitInspection(id: string): Promise<Inspection> {
       )
     }
 
-    const inspection = await trpc.inspection.submit.mutate({ id })
-    
-    logger.info('Inspection submitted successfully', { 
-      inspectionId: id, 
-      certificateId: inspection.certificateId 
+    const inspection = await trpc.inspection.submit.mutate({ id }) as Inspection
+
+    logger.info('Inspection submitted successfully', {
+      inspectionId: id,
+      certificateId: inspection.certificateId
     })
     
     return inspection
@@ -929,17 +935,22 @@ export function canSubmitInspection(inspection: Inspection): boolean {
 /**
  * Get inspection status label (Italian)
  */
-export function getInspectionStatusLabel(status: InspectionStatus): string {
-  const labels: Record<InspectionStatus, string> = {
+export function getInspectionStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
     'IN_PROGRESS': 'In Corso',
     'PENDING_REVIEW': 'In Attesa di Revisione',
     'READY_FOR_CUSTOMER': 'Pronto per il Cliente',
     'CUSTOMER_REVIEWING': 'Cliente in Revisione',
     'APPROVED': 'Approvato',
     'DECLINED': 'Rifiutato',
-    'ARCHIVED': 'Archiviato'
+    'ARCHIVED': 'Archiviato',
+    'SCHEDULED': 'Programmato',
+    'COMPLETED': 'Completato',
+    'CANCELLED': 'Annullato',
+    'PENDING_APPROVAL': 'In Attesa di Approvazione',
+    'REJECTED': 'Rifiutato',
   }
-  
+
   return labels[status] || status
 }
 
@@ -972,7 +983,7 @@ export async function addFinding(
   logger.info('Adding finding to inspection', { inspectionId, category: data.category })
   
   try {
-    const finding = await trpc.inspection.addFinding.mutate({ inspectionId, data })
+    const finding = await trpc.inspection.addFinding.mutate({ inspectionId, data }) as InspectionFinding
     logger.info('Finding added successfully', { findingId: finding.id })
     return finding
   } catch (error) {
@@ -1033,7 +1044,7 @@ export async function submitCustomerApproval(
   logger.info('Submitting customer approval', { inspectionId, email: data.email })
   
   try {
-    const result = await trpc.inspection.customerApproval.mutate({ inspectionId, data })
+    const result = await trpc.inspection.customerApproval.mutate({ inspectionId, data }) as { success: boolean }
     logger.info('Customer approval submitted', { inspectionId })
     return result
   } catch (error) {
@@ -1060,8 +1071,13 @@ export async function getInspectionStats(
     const stats = await trpc.inspection.stats.query({
       dateFrom: dateFrom?.toISOString(),
       dateTo: dateTo?.toISOString()
-    })
-    
+    }) as {
+      total: number
+      byStatus: Record<InspectionStatus, number>
+      averageScore: number
+      criticalIssuesCount: number
+    }
+
     return stats
   } catch (error) {
     logger.error('Failed to fetch inspection stats', error)

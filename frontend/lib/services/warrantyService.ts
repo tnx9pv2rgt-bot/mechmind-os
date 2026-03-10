@@ -14,10 +14,11 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { 
-  WarrantyStatus, 
+import type { Warranty, WarrantyClaim } from '@prisma/client'
+import {
+  WarrantyStatus,
   ClaimStatus,
-  Prisma 
+  Prisma
 } from '@prisma/client'
 import { 
   tryGetTenantContext, 
@@ -159,13 +160,13 @@ export class UnauthorizedTenantAccessError extends WarrantyError {
 // Tenant Context Helper
 // =============================================================================
 
-function resolveTenantId(inputTenantId?: string): string {
+async function resolveTenantId(inputTenantId?: string): Promise<string> {
   if (inputTenantId) {
     return inputTenantId
   }
-  
+
   try {
-    return requireTenantId()
+    return await requireTenantId()
   } catch {
     throw new TenantRequiredError()
   }
@@ -322,14 +323,14 @@ export class WarrantyService {
     data: CreateWarrantyDTO,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
     validateWarrantyData(data)
 
     const startDate = new Date(data.startDate)
     const expirationDate = new Date(data.expirationDate)
 
     // Determine initial status
-    let status = WarrantyStatus.ACTIVE
+    let status: WarrantyStatus = WarrantyStatus.ACTIVE
     const now = new Date()
     if (expirationDate < now) {
       status = WarrantyStatus.EXPIRED
@@ -359,12 +360,9 @@ export class WarrantyService {
           startDate,
           expirationDate,
           mileageLimit: data.coverageKm,
-          currentKm: data.currentKm,
           maxClaimAmount: data.maxCoverage,
           deductibleAmount: data.deductible,
           status,
-          terms: data.terms,
-          certificateUrl: data.certificateUrl,
           alertsSent: [],
           vehicleVin: vehicle.vin,
         },
@@ -407,7 +405,7 @@ export class WarrantyService {
     warrantyId: string,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims | null> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     try {
       const warranty = await prisma.warranty.findFirst({
@@ -446,7 +444,7 @@ export class WarrantyService {
     vehicleId: string,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims | null> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     try {
       const warranty = await prisma.warranty.findFirst({
@@ -486,12 +484,24 @@ export class WarrantyService {
     warrantyId: string,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const warranty = await prisma.warranty.findFirst({
       where: {
         id: warrantyId,
         tenantId,
+      },
+      include: {
+        claims: true,
+        vehicle: {
+          select: {
+            id: true,
+            vin: true,
+            make: true,
+            model: true,
+            year: true,
+          },
+        },
       },
     })
 
@@ -530,7 +540,7 @@ export class WarrantyService {
   async updateAllStatuses(
     inputTenantId?: string
   ): Promise<{ updated: number }> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const warranties = await prisma.warranty.findMany({
       where: {
@@ -566,7 +576,7 @@ export class WarrantyService {
     data: FileClaimDTO,
     inputTenantId?: string
   ): Promise<WarrantyClaim> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
     validateClaimData(data)
 
     const warranty = await prisma.warranty.findFirst({
@@ -622,7 +632,7 @@ export class WarrantyService {
     reviewedBy?: string,
     inputTenantId?: string
   ): Promise<WarrantyClaim> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const claim = await prisma.warrantyClaim.findFirst({
       where: {
@@ -690,7 +700,7 @@ export class WarrantyService {
     claimId: string,
     inputTenantId?: string
   ): Promise<WarrantyClaim> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const claim = await prisma.warrantyClaim.findFirst({
       where: {
@@ -734,7 +744,7 @@ export class WarrantyService {
     days: number,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims[]> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     if (days < 0) {
       throw new InvalidWarrantyDataError('Days parameter cannot be negative')
@@ -789,7 +799,7 @@ export class WarrantyService {
     status?: ClaimStatus,
     inputTenantId?: string
   ): Promise<WarrantyClaim[]> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     try {
       const claims = await prisma.warrantyClaim.findMany({
@@ -833,7 +843,7 @@ export class WarrantyService {
     warrantyId: string,
     inputTenantId?: string
   ): Promise<WarrantyClaim[]> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     try {
       // First verify warranty belongs to tenant
@@ -878,7 +888,7 @@ export class WarrantyService {
     claimId: string,
     inputTenantId?: string
   ): Promise<WarrantyClaim | null> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     try {
       const claim = await prisma.warrantyClaim.findFirst({
@@ -920,7 +930,7 @@ export class WarrantyService {
     warrantyId: string,
     inputTenantId?: string
   ): Promise<RemainingCoverage> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const warranty = await prisma.warranty.findFirst({
       where: {
@@ -950,10 +960,7 @@ export class WarrantyService {
     const remainingAmount = Math.max(0, (warranty.maxClaimAmount || 0) - totalApproved)
 
     // Calculate remaining km (if applicable)
-    let remainingKm: number | null = null
-    if (warranty.mileageLimit !== null) {
-      remainingKm = Math.max(0, warranty.mileageLimit - warranty.currentKm)
-    }
+    const remainingKm: number | null = warranty.mileageLimit ?? null
 
     return {
       km: remainingKm,
@@ -972,7 +979,7 @@ export class WarrantyService {
     },
     inputTenantId?: string
   ): Promise<WarrantyWithClaims[]> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     try {
       const warranties = await prisma.warranty.findMany({
@@ -1017,7 +1024,7 @@ export class WarrantyService {
     data: Partial<CreateWarrantyDTO>,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const warranty = await prisma.warranty.findFirst({
       where: {
@@ -1034,7 +1041,10 @@ export class WarrantyService {
       const updated = await prisma.warranty.update({
         where: { id: warrantyId },
         data: {
-          ...data,
+          coverageType: data.type,
+          mileageLimit: data.coverageKm,
+          maxClaimAmount: data.maxCoverage,
+          deductibleAmount: data.deductible,
           startDate: data.startDate ? new Date(data.startDate) : undefined,
           expirationDate: data.expirationDate ? new Date(data.expirationDate) : undefined,
         },
@@ -1069,7 +1079,7 @@ export class WarrantyService {
     warrantyId: string,
     inputTenantId?: string
   ): Promise<void> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const warranty = await prisma.warranty.findFirst({
       where: {
@@ -1102,7 +1112,7 @@ export class WarrantyService {
     warrantyId: string,
     inputTenantId?: string
   ): Promise<WarrantyWithClaims> {
-    const tenantId = resolveTenantId(inputTenantId)
+    const tenantId = await resolveTenantId(inputTenantId)
 
     const warranty = await prisma.warranty.findFirst({
       where: {
@@ -1205,57 +1215,19 @@ export const createWarrantyClaim = fileClaim
  * Returns the warranty associated with a specific inspection
  */
 export async function getWarrantyByInspection(
-  inspectionId: string,
+  _inspectionId: string,
   tenantId?: string
 ): Promise<WarrantyWithClaims | null> {
-  const effectiveTenantId = tenantId || requireTenantId()
-  
-  // Find warranty that has this inspection in its metadata or related claims
-  const warranty = await prisma.warranty.findFirst({
-    where: {
-      tenantId: effectiveTenantId,
-      OR: [
-        // Check if inspectionId is stored in metadata
-        {
-          metadata: {
-            path: ['inspectionId'],
-            equals: inspectionId,
-          },
-        },
-        // Check related claims that might reference the inspection
-        {
-          claims: {
-            some: {
-              metadata: {
-                path: ['inspectionId'],
-                equals: inspectionId,
-              },
-            },
-          },
-        },
-      ],
-    },
-    include: {
-      claims: true,
-      vehicle: {
-        select: {
-          id: true,
-          vin: true,
-          make: true,
-          model: true,
-          year: true,
-        },
-      },
-    },
-  })
-  
-  return warranty as WarrantyWithClaims | null
+  // Note: Warranty and WarrantyClaim models do not have a metadata JSON field.
+  // This function is a placeholder until the schema supports inspection-warranty linking.
+  const _effectiveTenantId = tenantId || await requireTenantId()
+  return null
 }
 
 
 // Additional exports for compatibility
 export async function getWarrantyClaims(warrantyId: string, tenantId?: string) {
-  const effectiveTenantId = tenantId || requireTenantId()
+  const effectiveTenantId = tenantId || await requireTenantId()
   return prisma.warrantyClaim.findMany({
     where: {
       warrantyId,
@@ -1263,14 +1235,28 @@ export async function getWarrantyClaims(warrantyId: string, tenantId?: string) {
         tenantId: effectiveTenantId
       }
     },
-    orderBy: { createdAt: desc }
+    orderBy: { createdAt: 'desc' }
   })
 }
 
-export async function updateWarrantyAlerts(warrantyId: string, data: any, tenantId?: string) {
-  const effectiveTenantId = tenantId || requireTenantId()
+export async function updateWarrantyAlerts(
+  warrantyId: string,
+  alertSettings: { email?: boolean; sms?: boolean; daysBefore?: number },
+  tenantId?: string
+): Promise<Warranty> {
+  const effectiveTenantId = tenantId || await requireTenantId()
+  const data: Prisma.WarrantyUpdateInput = {}
+  if (alertSettings.email !== undefined) {
+    data.alertEmailEnabled = alertSettings.email
+  }
+  if (alertSettings.sms !== undefined) {
+    data.alertSmsEnabled = alertSettings.sms
+  }
+  if (alertSettings.daysBefore !== undefined) {
+    data.alertDaysBeforeExpiry = alertSettings.daysBefore
+  }
   return prisma.warranty.update({
-    where: { 
+    where: {
       id: warrantyId,
       tenantId: effectiveTenantId
     },

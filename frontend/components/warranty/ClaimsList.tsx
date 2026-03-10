@@ -46,7 +46,7 @@ export function ClaimsList({
       // Filter by search term
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase()
-        const matchesDescription = claim.issueDescription.toLowerCase().includes(searchLower)
+        const matchesDescription = claim.description.toLowerCase().includes(searchLower)
         const matchesVehicle = showVehicle && claim.warranty?.vehicle
           ? `${claim.warranty.vehicle.make} ${claim.warranty.vehicle.model}`.toLowerCase().includes(searchLower)
           : false

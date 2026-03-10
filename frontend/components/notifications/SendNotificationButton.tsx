@@ -312,7 +312,7 @@ export function SendNotificationButton({
               {smsInfo.encoding === 'UCS-2' && (
                 <>
                   <span>•</span>
-                  <Badge variant="warning" className="text-xs">Unicode</Badge>
+                  <Badge variant="outline" className="text-xs">Unicode</Badge>
                 </>
               )}
             </div>

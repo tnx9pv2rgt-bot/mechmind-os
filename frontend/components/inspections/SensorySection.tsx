@@ -50,6 +50,7 @@ import {
   getMoldRiskDescription,
   FilterCondition,
   BlockageSeverity,
+  SmokeIntensity,
 } from '@/lib/services/sensoryService'
 
 // =============================================================================
@@ -318,7 +319,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
       },
       odors: {
         smokeDetected: formValues.smokeDetected,
-        smokeIntensity: formValues.smokeIntensity > 5 ? 'STRONG' : formValues.smokeIntensity > 0 ? 'LIGHT' : 'NONE',
+        smokeIntensity: formValues.smokeIntensity > 5 ? SmokeIntensity.STRONG : formValues.smokeIntensity > 0 ? SmokeIntensity.LIGHT : SmokeIntensity.NONE,
         petSmellDetected: formValues.petSmellDetected,
         moldDetected: formValues.moldDetected,
         mustyDetected: formValues.mustySmell,

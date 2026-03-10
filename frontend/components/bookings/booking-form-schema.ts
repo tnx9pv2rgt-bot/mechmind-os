@@ -47,6 +47,20 @@ export const serviceTypeLabels: Record<string, string> = {
   ALTRO: 'Altro',
 }
 
+// Service type icons for UI
+export const serviceTypeIcons: Record<string, string> = {
+  TAGLIANDO: '🔧',
+  FRENI: '🛑',
+  CAMBIO_OLIO: '🛢️',
+  GOMME: '🛞',
+  ELETTRICA: '⚡',
+  CARROZZERIA: '🚗',
+  DIAGNOSTICA: '🖥️',
+  CLIMA: '❄️',
+  SOSPENSIONI: '🔩',
+  ALTRO: '📋',
+}
+
 // Service type estimated costs (€)
 export const serviceTypeCosts: Record<string, { min: number; max: number; defaultDuration: number }> = {
   TAGLIANDO: { min: 150, max: 450, defaultDuration: 90 },

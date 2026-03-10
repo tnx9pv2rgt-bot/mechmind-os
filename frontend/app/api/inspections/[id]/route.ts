@@ -15,10 +15,7 @@ import {
 } from '@/lib/services/inspectionService'
 import { TRPCClientError, ServerError } from '@/lib/trpc-client'
 import type { UpdateInspectionInput } from '@/lib/services/inspectionService'
-import type { InspectionStatus } from '@prisma/client'
-type InspectionItemStatus = 'PENDING' | 'PASS' | 'FAIL' | 'NA'
-type FindingSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-type FuelLevel = 'EMPTY' | 'QUARTER' | 'HALF' | 'THREE_QUARTERS' | 'FULL'
+import type { InspectionStatus, InspectionItemStatus, FindingSeverity, FuelLevel } from '@prisma/client'
 
 interface RouteParams {
   params: Promise<{ id: string }>

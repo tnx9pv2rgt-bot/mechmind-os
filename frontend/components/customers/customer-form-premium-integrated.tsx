@@ -168,7 +168,7 @@ const zxcvbnTsOptions = {
   graphs: zxcvbnCommonPackage.adjacencyGraphs,
   useLevenshteinDistance: true,
 };
-zxcvbnTsOptions.setOptions?.(zxcvbnOptions);
+zxcvbnOptions.setOptions(zxcvbnTsOptions);
 
 // ============================================================================
 // TYPES
@@ -182,7 +182,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 interface PasswordStrength {
   score: number;
   feedback: {
-    warning: string;
+    warning: string | null;
     suggestions: string[];
   };
   crackTimeDisplay: string;
@@ -392,7 +392,7 @@ class FormErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Form Error:", error, errorInfo);
-    errorTracker.captureError(error, { errorInfo });
+    errorTracker.captureException(error, { extra: { errorInfo } });
     this.props.onError?.(error);
   }
 
@@ -1210,7 +1210,7 @@ export const CustomerFormPremiumIntegrated: React.FC<
         dispatch({ type: "SET_STATUS", status: "success" });
         dispatch({ type: "SET_CUSTOMER_NUMBER", number: customerNumber });
         announceFormSuccess();
-        funnel.completeForm(customerNumber, values.customerType);
+        funnel.completeForm(customerNumber, values.customerType === 'business' ? 'business' : 'individual');
         triggerCelebration();
         onSuccess?.();
         return;
@@ -1237,13 +1237,13 @@ export const CustomerFormPremiumIntegrated: React.FC<
       dispatch({ type: "SET_STATUS", status: "success" });
       dispatch({ type: "SET_CUSTOMER_NUMBER", number: customerNumber });
       announceFormSuccess();
-      funnel.completeForm(customerNumber, values.customerType);
+      funnel.completeForm(customerNumber, values.customerType === 'business' ? 'business' : 'individual');
       persistence.clearSavedData();
       onSuccess?.();
     } catch (error) {
       dispatch({ type: "SET_STATUS", status: "error" });
       announceFormError("Errore durante la registrazione");
-      errorTracker.captureError(error as Error, { step: state.step });
+      errorTracker.captureException(error as Error, { extra: { step: state.step } });
     }
   }, [
     form,
@@ -1500,10 +1500,10 @@ export const CustomerFormPremiumIntegrated: React.FC<
 
         {/* Restore Data Modal */}
         <DataRestoreModal
-          isOpen={persistence.showRestoreModal}
-          onClose={persistence.dismissRestoreModal}
-          onRestore={persistence.restoreForm}
-          onClear={persistence.clearSavedData}
+          showRestoreModal={persistence.showRestoreModal}
+          dismissRestoreModal={persistence.dismissRestoreModal}
+          restoreForm={persistence.restoreForm}
+          clearSavedData={persistence.clearSavedData}
           lastSavedText={persistence.lastSavedText}
           daysSinceSave={persistence.daysSinceSave}
         />
@@ -2246,7 +2246,7 @@ const Step3Privacy = memo(() => {
                   <FormField
                     key={key}
                     control={form.control}
-                    name={`marketingChannels.${key}` as const}
+                    name={`marketingChannels.${key}` as `marketingChannels.email`}
                     render={({ field: channelField }) => (
                       <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>

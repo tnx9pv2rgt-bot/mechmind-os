@@ -161,19 +161,19 @@ export function calculateSteps(answers: FormAnswers, config: FormFlowConfig = fo
   
   // Branch su customerType
   if (answers.customerType === 'private') {
-    steps.push(...branches.private.steps);
+    if (branches.private?.steps) steps.push(...branches.private.steps);
   } else if (answers.customerType === 'business') {
     // Verifica se mobile per usare step semplificato
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    
-    if (isMobile && branches.mobile) {
+
+    if (isMobile && branches.mobile?.steps) {
       steps.push(...branches.mobile.steps);
-    } else {
+    } else if (branches.business?.steps) {
       steps.push(...branches.business.steps);
     }
-    
+
     // Sub-branch per internazionale
-    if (branches.international?.condition?.(answers)) {
+    if (branches.international?.condition?.(answers) && branches.international.steps) {
       const addAfter = branches.international.addAfter || 'businessData';
       const idx = steps.indexOf(addAfter);
       if (idx !== -1) {

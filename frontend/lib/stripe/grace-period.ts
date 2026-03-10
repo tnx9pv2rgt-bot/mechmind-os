@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { SubscriptionStatus } from '@prisma/client'
 
 const GRACE_PERIOD_DAYS = 3
 
@@ -23,7 +24,7 @@ export async function isInGracePeriod(tenantId: string): Promise<boolean> {
   
   return (
     tenant.gracePeriodEnd > new Date() &&
-    (tenant.subscriptionStatus === 'past_due' || tenant.subscriptionStatus === 'unpaid')
+    (tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE)
   )
 }
 
@@ -45,7 +46,7 @@ export async function shouldSuspendTenant(tenantId: string): Promise<boolean> {
   
   return (
     tenant.gracePeriodEnd <= new Date() &&
-    (tenant.subscriptionStatus === 'past_due' || tenant.subscriptionStatus === 'unpaid')
+    (tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE)
   )
 }
 
@@ -60,7 +61,7 @@ export async function startGracePeriod(tenantId: string): Promise<void> {
     where: { id: tenantId },
     data: {
       gracePeriodEnd,
-      subscriptionStatus: 'past_due',
+      subscriptionStatus: SubscriptionStatus.PAST_DUE,
     },
   })
 
@@ -76,7 +77,7 @@ export async function suspendTenant(tenantId: string): Promise<void> {
     where: { id: tenantId },
     data: {
       isSuspended: true,
-      subscriptionStatus: 'suspended',
+      subscriptionStatus: SubscriptionStatus.SUSPENDED,
     },
   })
 
@@ -93,7 +94,7 @@ export async function reactivateTenant(tenantId: string): Promise<void> {
     data: {
       isSuspended: false,
       gracePeriodEnd: null,
-      subscriptionStatus: 'active',
+      subscriptionStatus: SubscriptionStatus.ACTIVE,
     },
   })
 
@@ -133,7 +134,7 @@ export async function processGracePeriods(): Promise<void> {
       },
       isSuspended: false,
       subscriptionStatus: {
-        in: ['past_due', 'unpaid'],
+        in: [SubscriptionStatus.PAST_DUE],
       },
     },
   })

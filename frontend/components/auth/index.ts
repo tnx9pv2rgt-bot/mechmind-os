@@ -9,7 +9,6 @@ export {
   LiquidGlassCardAnimated,
   AuthCard,
 } from './LiquidGlassCard';
-export type { LiquidGlassCardProps } from './LiquidGlassCard';
 
 // Passkey / WebAuthn Components
 export {
@@ -30,7 +29,6 @@ export {
   SignInWithApple,
   SignInWithAppleFull,
 } from './SignInWithApple';
-export type { SignInWithAppleProps } from './SignInWithApple';
 
 // Animated Background
 export { default as AnimatedBackground } from './AnimatedBackground';

@@ -432,6 +432,7 @@ class ABTestingManager {
         visitors,
         conversions,
         conversionRate,
+        isWinner: false,
       };
     });
 

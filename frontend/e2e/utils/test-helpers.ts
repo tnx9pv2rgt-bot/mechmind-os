@@ -43,7 +43,7 @@ export async function elementExists(page: Page, selector: string): Promise<boole
  * Wait for toast/notification to appear and disappear
  */
 export async function waitForToast(page: Page, text?: string, timeout = 5000): Promise<void> {
-  const toastSelector = '[data-testid="toast"], .toast, .notification, [role="alert"];
+  const toastSelector = '[data-testid="toast"], .toast, .notification, [role="alert"]';
   
   if (text) {
     await expect(page.locator(toastSelector).filter({ hasText: new RegExp(text, 'i') })).toBeVisible({ timeout });

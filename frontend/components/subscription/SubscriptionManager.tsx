@@ -126,11 +126,11 @@ export function SubscriptionManager() {
   });
 
   const getStatusBadge = (status: SubscriptionStatus) => {
-    const colors: Record<SubscriptionStatus, string> = {
+    const colors: Record<string, string> = {
       [SubscriptionStatus.ACTIVE]: 'bg-green-500',
       [SubscriptionStatus.TRIAL]: 'bg-blue-500',
       [SubscriptionStatus.PAST_DUE]: 'bg-yellow-500',
-      [SubscriptionStatus.UNPAID]: 'bg-red-500',
+      UNPAID: 'bg-red-500',
       [SubscriptionStatus.CANCELLED]: 'bg-gray-500',
       [SubscriptionStatus.SUSPENDED]: 'bg-orange-500',
       [SubscriptionStatus.EXPIRED]: 'bg-red-700',

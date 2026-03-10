@@ -704,9 +704,9 @@ export class BehavioralTracker {
   // ============================================
 
   private track(event: string, properties?: Record<string, unknown>): void {
-    const analytics = this.analyticsInstance || 
-      (typeof window !== 'undefined' && (window as unknown as { analytics?: AnalyticsStub }).analytics);
-    
+    const analytics: AnalyticsStub | undefined = this.analyticsInstance ||
+      (typeof window !== 'undefined' ? (window as unknown as { analytics?: AnalyticsStub }).analytics : undefined);
+
     if (analytics?.track) {
       analytics.track(event, properties);
     }

@@ -287,7 +287,7 @@ export function useFormPersistence<TFieldValues extends FieldValues = FieldValue
 
     // Restore form data
     Object.entries(stored.data).forEach(([key, value]) => {
-      setValue(key as keyof TFieldValues, value as TFieldValues[keyof TFieldValues], {
+      setValue(key as unknown as Parameters<typeof setValue>[0], value as Parameters<typeof setValue>[1], {
         shouldDirty: true,
         shouldTouch: true,
       });

@@ -14,7 +14,7 @@ export interface SubscriptionData {
   currentPeriodEnd: string;
   trialEndsAt?: string;
   aiAddonEnabled: boolean;
-  features: FeatureFlag[];
+  features: string[];
   limits: {
     maxUsers: number | null;
     maxLocations: number | null;

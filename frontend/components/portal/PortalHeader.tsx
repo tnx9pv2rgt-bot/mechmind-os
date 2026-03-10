@@ -13,7 +13,7 @@ import {
   Menu,
   ChevronDown
 } from 'lucide-react'
-import { portalAuth } from '@/lib/auth/portal-auth'
+// Portal auth service (class singleton used for full auth flow)
 import { Customer } from '@/lib/types/portal'
 
 // ============================================
@@ -40,7 +40,10 @@ export function PortalHeader({
   const router = useRouter()
 
   const handleLogout = () => {
-    portalAuth.logout()
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('portal_token')
+      localStorage.removeItem('portal_user')
+    }
     router.push('/portal/login')
   }
 

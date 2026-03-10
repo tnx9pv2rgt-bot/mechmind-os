@@ -22,7 +22,3 @@ export { MaintenanceCalendar } from './MaintenanceCalendar'
 // Maintenance Form - Create/edit/complete maintenance schedules
 export { MaintenanceForm } from './MaintenanceForm'
 
-// Re-export types for convenience
-export type { MaintenanceListProps } from './MaintenanceList'
-export type { MaintenanceCalendarProps } from './MaintenanceCalendar'
-export type { MaintenanceFormProps } from './MaintenanceForm'

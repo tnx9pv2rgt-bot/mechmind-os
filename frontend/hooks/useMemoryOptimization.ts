@@ -51,7 +51,7 @@ export function useMemoryOptimization(options: UseMemoryOptimizationOptions = {}
   const largeObjectsRef = useRef<Map<string, any>>(new Map())
   const observersRef = useRef<IntersectionObserver[]>([])
   const timeoutsRef = useRef<NodeJS.Timeout[]>([])
-  const intervalsRef = useRef<NodeJS.Timer[]>([])
+  const intervalsRef = useRef<ReturnType<typeof setInterval>[]>([])
   const abortControllersRef = useRef<AbortController[]>([])
 
   // Intersection Observer for lazy loading
@@ -112,11 +112,12 @@ export function useMemoryOptimization(options: UseMemoryOptimizationOptions = {}
    * Get current memory stats
    */
   const getMemoryStats = useCallback((): MemoryStats | null => {
-    if (typeof window === 'undefined' || !performance.memory) {
+    const perfWithMemory = performance as unknown as Record<string, unknown>
+    if (typeof window === 'undefined' || !perfWithMemory.memory) {
       return null
     }
 
-    const memory = performance.memory as any
+    const memory = perfWithMemory.memory as { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number }
     const usedMB = memory.usedJSHeapSize / 1048576
     const totalMB = memory.totalJSHeapSize / 1048576
     const limitMB = memory.jsHeapSizeLimit / 1048576
@@ -146,7 +147,7 @@ export function useMemoryOptimization(options: UseMemoryOptimizationOptions = {}
    */
   const forceGC = useCallback(() => {
     if (typeof window !== 'undefined' && (window as any).gc) {
-      ;(window as any).gc()
+      ;(window as unknown as Record<string, () => void>).gc()
       return true
     }
     return false
@@ -157,11 +158,11 @@ export function useMemoryOptimization(options: UseMemoryOptimizationOptions = {}
    */
   const cleanup = useCallback(() => {
     // Clear timeouts
-    timeoutsRef.current.forEach(clearTimeout)
+    timeoutsRef.current.forEach((t) => clearTimeout(t))
     timeoutsRef.current = []
 
     // Clear intervals
-    intervalsRef.current.forEach(clearInterval)
+    intervalsRef.current.forEach((i) => clearInterval(i))
     intervalsRef.current = []
 
     // Abort fetch requests

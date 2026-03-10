@@ -3,7 +3,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { UseFormReturn, FieldValues } from 'react-hook-form';
 import { useFormPersistence, useExitIntent, useOfflineQueue, useFormSession } from '@/hooks/form-persistence';
-import type { UseFormPersistenceOptions, UseExitIntentOptions, UseOfflineQueueOptions, UseFormSessionOptions } from '@/hooks/form-persistence';
+import type { UseFormPersistenceOptions, UseExitIntentOptions, OfflineQueueOptions, UseFormSessionOptions } from '@/hooks/form-persistence';
 import { FormResumeBanner } from './form-resume-banner';
 import { ExitIntentModal } from './exit-intent-modal';
 import { SessionTakeoverModal } from './session-takeover-modal';
@@ -36,7 +36,7 @@ interface FormPersistenceWrapperProps<TFieldValues extends FieldValues = FieldVa
   /** Opzioni aggiuntive per useExitIntent */
   exitIntentOptions?: Partial<UseExitIntentOptions>;
   /** Opzioni aggiuntive per useOfflineQueue */
-  offlineQueueOptions?: Partial<UseOfflineQueueOptions>;
+  offlineQueueOptions?: Partial<OfflineQueueOptions>;
   /** Opzioni aggiuntive per useFormSession */
   sessionOptions?: Partial<UseFormSessionOptions>;
   /** Se mostrare il banner di resume */
@@ -143,7 +143,7 @@ export function FormPersistenceWrapper<TFieldValues extends FieldValues = FieldV
   });
 
   const offlineQueue = useOfflineQueue({
-    persistQueue: true,
+    formId,
     maxRetries: 3,
     ...offlineQueueOptions,
   });
@@ -199,11 +199,8 @@ export function FormPersistenceWrapper<TFieldValues extends FieldValues = FieldV
       {showOfflineIndicator && (
         <OfflineIndicator
           isOnline={offlineQueue.isOnline}
-          queueLength={offlineQueue.queueLength}
-          isProcessing={offlineQueue.isProcessing}
-          processQueue={offlineQueue.processQueue}
-          completedRequests={offlineQueue.completedRequests}
-          failedRequests={offlineQueue.failedRequests}
+          isSyncing={offlineQueue.isSyncing}
+          pendingCount={offlineQueue.pendingCount}
         />
       )}
 
@@ -240,7 +237,7 @@ export function FormPersistenceWrapper<TFieldValues extends FieldValues = FieldV
           <div className="absolute top-2 right-2 z-10">
             <OfflineBadge 
               isOnline={offlineQueue.isOnline}
-              queueLength={offlineQueue.queueLength}
+              queueLength={offlineQueue.pendingCount}
             />
           </div>
         )}

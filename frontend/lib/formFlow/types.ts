@@ -107,12 +107,16 @@ export interface FormFlowActions {
   goToStep: (stepIndex: number) => void;
   /** Aggiorna le risposte */
   updateAnswers: (answers: Partial<FormAnswers>) => void;
+  /** Aggiorna le risposte immediatamente (senza debounce) */
+  updateAnswersImmediate: (answers: Partial<FormAnswers>) => void;
   /** Salta uno step */
   skipStep: (stepId: string) => void;
   /** Resetta il form */
   reset: () => void;
   /** Completa il form */
   complete: () => void;
+  /** Ottieni componente ottimizzato per dispositivo */
+  getStepComponent?: (stepId: string) => string;
 }
 
 /**

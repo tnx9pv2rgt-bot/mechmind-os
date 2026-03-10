@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+// zodResolver removed: form uses local validation
 import { User, Mail, Phone, MapPin, FileText, Shield, Check, AlertCircle, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { AppleButton } from '@/components/ui/apple-button'
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card'
@@ -18,9 +18,28 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { customerSchema, type CustomerFormValues, formatPhoneNumber, normalizePhone } from '@/lib/validations/customer'
+import { formatPhoneNumber, normalizePhone } from '@/lib/validations/customer'
 
-interface CustomerFormProps {
+/** Local form data type matching the English field names used in this form */
+interface CustomerFormValues {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  fiscalCode: string;
+  address: {
+    street: string;
+    city: string;
+    zipCode: string;
+    province: string;
+  };
+  gdprConsent: boolean;
+  marketingConsent: boolean;
+  notes: string;
+  [key: string]: unknown;
+}
+
+export interface CustomerFormProps {
   onSubmit: (data: CustomerFormValues) => Promise<void>
   onCancel?: () => void
   initialData?: Partial<CustomerFormValues>
@@ -47,7 +66,6 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
   const [showAddress, setShowAddress] = useState(false)
 
   const form = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
     defaultValues: {
       firstName: initialData?.firstName || '',
       lastName: initialData?.lastName || '',

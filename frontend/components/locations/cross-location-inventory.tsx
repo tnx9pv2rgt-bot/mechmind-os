@@ -21,7 +21,10 @@ import {
   ShoppingCart,
   ExternalLink,
   BarChart3,
-  MapPin
+  MapPin,
+  Mail,
+  Phone,
+  Star
 } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
 

@@ -87,12 +87,13 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
   const [isSuccess, setIsSuccess] = useState(false)
   const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState('')
 
-  const handleSubmit = async (data: InvoiceFormData) => {
+  const handleSubmit = async (data: Record<string, unknown>) => {
     // Simula chiamata API
     await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log('Fattura creata:', data)
-    setCreatedInvoiceNumber(data.invoiceNumber)
+
+    const invoiceData = data as InvoiceFormData
+    console.log('Fattura creata:', invoiceData)
+    setCreatedInvoiceNumber(invoiceData.invoiceNumber)
     setIsSuccess(true)
     
     // Reset dopo 3 secondi

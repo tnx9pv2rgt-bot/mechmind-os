@@ -316,7 +316,7 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
             <PieChart>
               <Pie
                 activeIndex={activeIndex}
-                activeShape={renderActiveShape}
+                activeShape={renderActiveShape as ((props: unknown) => React.JSX.Element)}
                 data={data}
                 cx="50%"
                 cy="50%"

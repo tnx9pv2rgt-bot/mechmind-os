@@ -90,12 +90,13 @@ export function LocationDialog({
   const [isSuccess, setIsSuccess] = useState(false)
   const [createdLocationName, setCreatedLocationName] = useState('')
 
-  const handleSubmit = async (data: LocationFormData) => {
+  const handleSubmit = async (data: Record<string, unknown>) => {
     // Simula chiamata API
     await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log('Location salvata:', data)
-    setCreatedLocationName(data.name)
+
+    const locationData = data as LocationFormData
+    console.log('Location salvata:', locationData)
+    setCreatedLocationName(locationData.name)
     setIsSuccess(true)
     
     // Reset dopo 3 secondi

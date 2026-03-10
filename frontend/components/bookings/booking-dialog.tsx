@@ -47,16 +47,9 @@ export function BookingDialog({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: BookingFormData) => {
-    setIsLoading(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log('Booking created:', data)
-    
-    onBookingCreated?.(data)
-    
+  const handleSubmit = () => {
+    onBookingCreated?.({} as BookingFormData)
+
     // Close dialog after success animation
     setTimeout(() => {
       setIsLoading(false)
@@ -128,10 +121,9 @@ export function BookingDialog({
 
           {/* Form Content */}
           <div className="relative px-6 py-5">
-            <BookingForm 
-              onSubmit={handleSubmit}
+            <BookingForm
+              onSuccess={handleSubmit}
               onCancel={handleCancel}
-              isLoading={isLoading}
             />
           </div>
         </motion.div>
@@ -162,10 +154,8 @@ export function BookingButton({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: BookingFormData) => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    onBookingCreated?.(data)
+  const handleSuccess = () => {
+    onBookingCreated?.({} as BookingFormData)
     setTimeout(() => {
       setIsLoading(false)
       setOpen(false)
@@ -185,8 +175,8 @@ export function BookingButton({
           Nuova Prenotazione
         </AppleButton>
       </DialogTrigger>
-      
-      <DialogContent 
+
+      <DialogContent
         className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-0"
       >
         <div className="relative rounded-[28px] bg-white/90 backdrop-blur-3xl shadow-apple-lg">
@@ -207,10 +197,9 @@ export function BookingButton({
           </DialogHeader>
 
           <div className="px-6 py-5">
-            <BookingForm 
-              onSubmit={handleSubmit}
+            <BookingForm
+              onSuccess={handleSuccess}
               onCancel={() => setOpen(false)}
-              isLoading={isLoading}
             />
           </div>
         </div>
@@ -232,10 +221,8 @@ export function BookingFormCard({ onBookingCreated, className }: BookingFormCard
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const handleSubmit = async (data: BookingFormData) => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    onBookingCreated?.(data)
+  const handleSubmit = () => {
+    onBookingCreated?.({} as BookingFormData)
     setIsLoading(false)
     setIsSuccess(true)
   }
@@ -306,10 +293,9 @@ export function BookingFormCard({ onBookingCreated, className }: BookingFormCard
 
       {/* Form */}
       <div className="px-6 py-5">
-        <BookingForm 
-          onSubmit={handleSubmit}
+        <BookingForm
+          onSuccess={handleSubmit}
           onCancel={() => {}}
-          isLoading={isLoading}
         />
       </div>
     </motion.div>

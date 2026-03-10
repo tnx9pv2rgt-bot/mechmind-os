@@ -180,7 +180,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
       const track = stream.getVideoTracks()[0]
       const capabilities = track.getCapabilities() as Record<string, unknown>
       if (flashlightOn && capabilities.torch) {
-        await track.applyConstraints({ advanced: [{ torch: true }] } as MediaTrackConstraints)
+        await track.applyConstraints({ advanced: [{ torch: true }] } as unknown as MediaTrackConstraints)
       }
 
       setError(null)
@@ -212,7 +212,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
       if (capabilities.torch) {
         try {
           const newState = !flashlightOn
-          await track.applyConstraints({ advanced: [{ torch: newState }] } as MediaTrackConstraints)
+          await track.applyConstraints({ advanced: [{ torch: newState }] } as unknown as MediaTrackConstraints)
           setFlashlightOn(newState)
         } catch {
           // Flashlight not supported on this device

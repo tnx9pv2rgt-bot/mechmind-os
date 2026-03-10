@@ -227,8 +227,14 @@ export async function authenticateCustomer(
 export async function registerCustomer(
   data: RegistrationData
 ): Promise<{ user: PortalUser; token: string }> {
-  const { email, password, firstName, lastName, phone, tenantId } = data
-  
+  const { email, password, firstName, lastName, phone, tenantId: rawTenantId } = data
+
+  if (!rawTenantId) {
+    throw new PortalAuthError('Tenant ID is required', 'TENANT_NOT_FOUND', 400)
+  }
+
+  const tenantId: string = rawTenantId
+
   // Verify tenant exists and is active
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },

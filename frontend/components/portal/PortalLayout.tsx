@@ -68,7 +68,10 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
   }, [])
 
   const handleLogout = () => {
-    portalAuth.logout()
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('portal_token')
+      localStorage.removeItem('portal_user')
+    }
     router.push('/portal/login')
   }
 

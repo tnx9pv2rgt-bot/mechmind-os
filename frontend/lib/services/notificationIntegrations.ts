@@ -12,8 +12,16 @@
 import {
   NotificationType,
   NotificationChannel,
-  SendNotificationResponse,
 } from '@/types/notifications';
+
+// The notification service returns this shape from createNotification
+type SendNotificationResponse = {
+  id: string
+  customerId: string | null
+  type: string
+  status: string
+  createdAt: Date
+}
 import {
   sendNotification,
   sendBookingConfirmation,
@@ -91,7 +99,11 @@ export async function onBookingCreated(
   const config = getConfig();
   if (!config.bookingCreated) return null;
 
-  return sendBookingConfirmation(customerId, bookingData);
+  return sendBookingConfirmation(customerId, {
+    bookingId: bookingData.bookingCode,
+    date: bookingData.date,
+    time: bookingData.time,
+  });
 }
 
 /**
@@ -122,8 +134,9 @@ export async function scheduleBookingReminder24h(
   if (reminderDate < new Date()) {
     // Send immediately if within 24h
     return sendBookingReminder(customerId, {
-      ...bookingData,
-      reminderType: '24h',
+      bookingId: bookingData.bookingCode,
+      date: bookingData.date,
+      time: bookingData.time,
     });
   }
 
@@ -216,7 +229,10 @@ export async function onInvoiceGenerated(
   const config = getConfig();
   if (!config.invoiceGenerated) return null;
 
-  return sendInvoiceReady(customerId, invoiceData);
+  return sendInvoiceReady(customerId, {
+    invoiceId: invoiceData.invoiceNumber,
+    amount: parseFloat(invoiceData.amount) || 0,
+  });
 }
 
 /**
@@ -264,7 +280,10 @@ export async function onInspectionCompleted(
   const config = getConfig();
   if (!config.inspectionCompleted) return null;
 
-  return sendInspectionComplete(customerId, inspectionData);
+  return sendInspectionComplete(customerId, {
+    inspectionId: inspectionData.reportUrl || '',
+    vehiclePlate: inspectionData.vehicle || '',
+  });
 }
 
 // ==========================================
@@ -288,7 +307,10 @@ export async function onVehicleReady(
   const config = getConfig();
   if (!config.vehicleReady) return null;
 
-  return sendVehicleReady(customerId, vehicleData);
+  return sendVehicleReady(customerId, {
+    vehiclePlate: vehicleData.vehicle,
+    totalCost: vehicleData.totalAmount ? parseFloat(vehicleData.totalAmount) : undefined,
+  });
 }
 
 /**
@@ -309,7 +331,11 @@ export async function onMaintenanceDue(
   const config = getConfig();
   if (!config.maintenanceDue) return null;
 
-  return sendMaintenanceDue(customerId, maintenanceData);
+  return sendMaintenanceDue(customerId, {
+    vehiclePlate: '',
+    maintenanceType: maintenanceData.service,
+    dueDate: maintenanceData.lastServiceDate || new Date().toISOString(),
+  });
 }
 
 // ==========================================
@@ -392,7 +418,7 @@ export async function batchBookingConfirmations(
 ) {
   const results = [];
   for (const booking of bookings) {
-    const result = await onBookingCreated(booking.customerId, booking.data, tenantId);
+    const result = await sendBookingConfirmation(booking.customerId, booking.data);
     results.push({ customerId: booking.customerId, result });
     // Rate limiting - small delay between sends
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -426,10 +452,9 @@ export async function batchUpcomingReminders(
 
   const results = [];
   for (const booking of tomorrowBookings) {
-    const result = await scheduleBookingReminder24h(
+    const result = await sendBookingReminder(
       booking.customerId,
-      booking.data,
-      tenantId
+      booking.data
     );
     results.push({ customerId: booking.customerId, result });
   }

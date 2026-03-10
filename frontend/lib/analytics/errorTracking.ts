@@ -478,7 +478,8 @@ class ErrorTracker {
       const entries = list.getEntries();
       entries.forEach((entry) => {
         if (entry.entryType === 'first-input') {
-          this.performanceMetrics.fid = entry.processingStart - entry.startTime;
+          const eventEntry = entry as unknown as { processingStart: number; startTime: number };
+          this.performanceMetrics.fid = eventEntry.processingStart - eventEntry.startTime;
         }
       });
     });
@@ -599,7 +600,7 @@ class ErrorTracker {
   trackFormError(error: Error, step: number, field?: string): void {
     this.captureException(error, {
       formStep: step,
-      tags: { type: 'form_error', field },
+      tags: { type: 'form_error', ...(field ? { field } : {}) },
     });
   }
 

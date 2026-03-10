@@ -48,9 +48,9 @@ export function renderTemplate(
   language: 'it' | 'en' | 'de',
   variables: TemplateVariables
 ): string {
-  const templates = getTemplatesByLanguage(language);
+  const templates = getTemplatesByLanguage(language) as Record<string, ((v: TemplateVariables) => string) | undefined>;
   const template = templates[type];
-  
+
   if (!template) {
     console.warn(`Template not found: ${type} for language ${language}`);
     // Fallback to status update

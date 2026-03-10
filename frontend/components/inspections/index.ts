@@ -29,7 +29,6 @@ export { InspectionReport } from './inspection-report'
 export { BlockchainVerification } from './BlockchainVerification'
 export { DamageAnalyzer } from './DamageAnalyzer'
 export { VideoRecorder } from './VideoRecorder'
-export type { AIAnalysisResult } from './DamageAnalyzer'
 export { SensorySection, getDefaultSensoryFormData } from './SensorySection'
 export type { SensoryFormData, SensorySectionProps } from './SensorySection'
 

@@ -37,12 +37,12 @@ export interface ReducedMotionReturn {
 }
 
 // Stili per motion ridotta
-const REDUCED_MOTION_STYLES: React.CSSProperties = {
+const REDUCED_MOTION_STYLES = {
   animationDuration: '0.01ms !important',
   animationIterationCount: '1 !important',
   transitionDuration: '0.01ms !important',
   scrollBehavior: 'auto !important',
-};
+} as unknown as React.CSSProperties;
 
 export function useReducedMotion(
   options: ReducedMotionOptions = {}

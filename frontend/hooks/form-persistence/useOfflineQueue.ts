@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // TYPES
 // ============================================================================
 
-interface OfflineQueueOptions {
+export interface OfflineQueueOptions {
   /** ID univoco del form */
   formId: string;
   /** Callback quando inizia la sincronizzazione */
@@ -28,7 +28,7 @@ interface OfflineQueueOptions {
   maxRetries?: number;
 }
 
-interface QueuedSubmission {
+export interface QueuedSubmission {
   id: string;
   formId: string;
   data: Record<string, unknown>;
@@ -37,7 +37,7 @@ interface QueuedSubmission {
   synced: boolean;
 }
 
-interface UseOfflineQueueReturn {
+export interface UseOfflineQueueReturn {
   /** Se il dispositivo è online */
   isOnline: boolean;
   /** Se c'è una sincronizzazione in corso */

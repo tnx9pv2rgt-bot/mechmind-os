@@ -216,7 +216,7 @@ async function checkClaimStatusChanges(dryRun: boolean): Promise<number> {
 
   const claims = await prisma.warrantyClaim.findMany({
     where: {
-      reviewedAt: {
+      reviewedDate: {
         gte: yesterday,
       },
     },

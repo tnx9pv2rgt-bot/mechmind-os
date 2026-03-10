@@ -299,7 +299,7 @@ export function RealtimeFormWrapper({
 // SIMPLE WRAPPER (senza render prop)
 // ============================================================================
 
-export interface SimpleRealtimeFormWrapperProps extends RealtimeFormWrapperProps {
+export interface SimpleRealtimeFormWrapperProps extends Omit<RealtimeFormWrapperProps, 'children'> {
   /** Children normale (non render prop) */
   children: ReactNode
 }

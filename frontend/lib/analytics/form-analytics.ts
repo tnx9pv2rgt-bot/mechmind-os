@@ -279,8 +279,10 @@ export class FormFunnel {
       eventType: 'conversion',
       timestamp: Date.now(),
       sessionId: getSessionId(),
-      totalTime,
-      stepsCompleted: this.stepCompletions.size,
+      metadata: {
+        totalTime,
+        stepsCompleted: this.stepCompletions.size,
+      },
     });
   }
 
@@ -444,9 +446,11 @@ export class ABTestFramework {
       eventType: 'conversion',
       timestamp: Date.now(),
       sessionId: getSessionId(),
-      experimentId: this.experimentId,
-      variant: this.variant,
-      ...metadata,
+      metadata: {
+        experimentId: this.experimentId,
+        variant: this.variant,
+        ...metadata,
+      },
     });
   }
 
@@ -455,13 +459,15 @@ export class ABTestFramework {
     
     analytics.track({
       formId: this.experimentId,
-      eventType: 'experiment_event' as any,
+      eventType: 'experiment_assigned',
       timestamp: Date.now(),
       sessionId: getSessionId(),
-      experimentId: this.experimentId,
-      variant: this.variant,
-      eventName,
-      ...metadata,
+      metadata: {
+        experimentId: this.experimentId,
+        variant: this.variant,
+        eventName,
+        ...metadata,
+      },
     });
   }
 
@@ -496,7 +502,7 @@ export const initSessionRecording = async (config: SessionRecordingConfig): Prom
       
       if (config.userId) {
         LogRocket.identify(config.userId, {
-          email: config.userEmail,
+          ...(config.userEmail ? { email: config.userEmail } : {}),
           ...config.userTraits,
         });
       }
@@ -661,11 +667,13 @@ export class PerformanceMonitor {
 
     analytics.track({
       formId: 'performance',
-      eventType: 'performance_report' as any,
+      eventType: 'conversion',
       timestamp: Date.now(),
       sessionId: getSessionId(),
-      ...this.metrics,
-      avgApiLatency: avgLatency,
+      metadata: {
+        ...this.metrics,
+        avgApiLatency: avgLatency,
+      },
     });
   }
 }

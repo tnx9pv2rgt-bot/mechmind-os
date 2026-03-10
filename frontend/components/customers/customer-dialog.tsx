@@ -11,11 +11,10 @@ import {
 } from '@/components/ui/dialog'
 import { AppleButton } from '@/components/ui/apple-button'
 import { CustomerForm } from './customer-form'
-import { CustomerFormData } from './customer-form-schema'
 import { cn } from '@/lib/utils'
 
 interface CustomerDialogProps {
-  onSuccess?: (customer: CustomerFormData) => void
+  onSuccess?: (customer: Record<string, unknown>) => void
   trigger?: React.ReactNode
   className?: string
 }
@@ -32,7 +31,7 @@ export function CustomerDialog({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: CustomerFormData) => {
+  const handleSubmit = async (data: Record<string, unknown>) => {
     setIsLoading(true)
     
     try {
@@ -83,7 +82,6 @@ export function CustomerDialog({
           <CustomerForm
             onSubmit={handleSubmit}
             onCancel={handleCancel}
-            isLoading={isLoading}
           />
         </div>
       </DialogContent>
@@ -96,13 +94,13 @@ export function CustomerDialogInline({
   onSuccess,
   children 
 }: { 
-  onSuccess?: (customer: CustomerFormData) => void
+  onSuccess?: (customer: Record<string, unknown>) => void
   children: React.ReactNode 
 }) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: CustomerFormData) => {
+  const handleSubmit = async (data: Record<string, unknown>) => {
     setIsLoading(true)
     
     try {
@@ -138,7 +136,6 @@ export function CustomerDialogInline({
           <CustomerForm
             onSubmit={handleSubmit}
             onCancel={() => setOpen(false)}
-            isLoading={isLoading}
           />
         </div>
       </DialogContent>
@@ -151,7 +148,7 @@ export function CustomerSuccessToast({
   customer,
   onClose 
 }: { 
-  customer: CustomerFormData
+  customer: Record<string, unknown>
   onClose?: () => void 
 }) {
   return (
@@ -172,7 +169,7 @@ export function CustomerSuccessToast({
             Cliente creato!
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {customer.nome} {customer.cognome} è stato aggiunto
+            {String(customer.nome ?? '')} {String(customer.cognome ?? '')} è stato aggiunto
           </p>
         </div>
         <button 

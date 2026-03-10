@@ -4,14 +4,14 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import {
-  validateEmailRealTime,
-  validateVatRealTime,
+import { validateEmailRealTime } from './emailValidator';
+import { validateVatRealTime } from './vatValidator';
+import type {
   SimplifiedEmailValidation,
   VATValidationResult,
   ValidationOptions,
   UseValidationReturn,
-} from './validation';
+} from './types';
 
 // ==================== EMAIL VALIDATION HOOK ====================
 
@@ -130,7 +130,7 @@ export function useEmailValidation(
     };
   }, []);
 
-  const isValid = result?.valid && !error;
+  const isValid = (result?.valid === true) && !error;
 
   return {
     value,
@@ -269,7 +269,7 @@ export function useVatValidation(
     };
   }, []);
 
-  const isValid = result?.valid && !error;
+  const isValid = (result?.valid === true) && !error;
 
   return {
     value,

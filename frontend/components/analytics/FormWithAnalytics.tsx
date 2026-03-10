@@ -8,7 +8,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useFormFunnel, useExperiment, heatmapTracker, errorTracker } from '../../lib/analytics';
+import { useExperiment, heatmapTracker, errorTracker } from '../../lib/analytics';
+import { useFormFunnel } from '../../hooks/useFormFunnel';
 
 // Tipi
 interface FormData {

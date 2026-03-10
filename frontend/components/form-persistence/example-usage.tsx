@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
@@ -255,7 +255,6 @@ export function CustomerFormWithPersistence() {
         }}
         offlineQueueOptions={{
           maxRetries: 3,
-          persistQueue: true,
         }}
         sessionOptions={{
           enableCrossTabSync: true,
@@ -566,8 +565,7 @@ function Step1Credentials({ form }: { form: UseFormReturn<CustomerFormData> }) {
   )
 }
 
-// Import mancante
-import { Mail } from 'lucide-react';
+// Mail already imported above
 
 function Step2Business({ form }: { form: UseFormReturn<CustomerFormData> }) {
   return (

@@ -70,7 +70,7 @@ const templateOptions = [
   { value: NotificationType.BOOKING_REMINDER, label: 'Promemoria Appuntamento' },
   { value: NotificationType.BOOKING_CANCELLED, label: 'Cancellazione Appuntamento' },
   { value: NotificationType.INVOICE_READY, label: 'Fattura Pronta' },
-  {NotificationType.INSPECTION_COMPLETE, label: 'Ispezione Completata' },
+  { value: NotificationType.INSPECTION_COMPLETE, label: 'Ispezione Completata' },
   { value: NotificationType.VEHICLE_READY, label: 'Veicolo Pronto' },
   { value: NotificationType.MAINTENANCE_DUE, label: 'Manutenzione Dovuta' },
   { value: NotificationType.CUSTOM, label: 'Messaggio Personalizzato' },
@@ -125,22 +125,26 @@ export function SendNotificationDialog({
   });
 
   // Send mutation
-  const sendMutation = useMutation({
-    mutationFn: sendNotification,
-    onSuccess: () => {
-      setOpen(false);
-      onSuccess?.();
-      resetForm();
-    },
-  });
+  const sendMutation = useMutation(
+    (data: Parameters<typeof sendNotification>[0]) => sendNotification(data),
+    {
+      onSuccess: () => {
+        setOpen(false);
+        onSuccess?.();
+        resetForm();
+      },
+    }
+  );
 
   // Preview mutation
-  const previewMutation = useMutation({
-    mutationFn: previewTemplate,
-    onSuccess: (message) => {
-      setPreview(message);
-    },
-  });
+  const previewMutation = useMutation(
+    (data: unknown) => previewTemplate(data),
+    {
+      onSuccess: (result) => {
+        setPreview((result as { preview: string }).preview);
+      },
+    }
+  );
 
   // Reset form
   const resetForm = () => {
@@ -181,11 +185,11 @@ export function SendNotificationDialog({
     await sendMutation.mutateAsync({
       customerId: recipient.customerId,
       tenantId: 'tenant-001', // Get from context
-      type: selectedType,
-      channel: selectedChannel,
+      type: selectedType as string,
+      channel: selectedChannel as string,
       message,
       metadata: variables,
-    });
+    } as unknown as Parameters<typeof sendNotification>[0]);
   };
 
   // Handle variable change

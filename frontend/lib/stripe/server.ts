@@ -17,7 +17,7 @@ if (!stripeSecretKey && !isBuildTime) {
 }
 
 export const stripe = new Stripe(effectiveKey || 'sk_test_dummy', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2026-02-25.clover',
   typescript: true,
 })
 
@@ -410,15 +410,15 @@ export async function getInvoices(
 export async function getUpcomingInvoice(
   customerId: string,
   subscriptionId?: string
-): Promise<Stripe.UpcomingInvoice | null> {
+): Promise<Stripe.Invoice | null> {
   try {
-    const params: Stripe.InvoiceRetrieveUpcomingParams = {
+    const params: Stripe.InvoiceCreatePreviewParams = {
       customer: customerId,
     }
     if (subscriptionId) {
       params.subscription = subscriptionId
     }
-    return await stripe.invoices.retrieveUpcoming(params)
+    return await stripe.invoices.createPreview(params)
   } catch (error) {
     // No upcoming invoice
     return null
@@ -496,7 +496,7 @@ export class StripeServerError extends Error {
   constructor(
     message: string,
     public code?: string,
-    public stripeError?: Stripe.StripeError
+    public stripeError?: unknown
   ) {
     super(message)
     this.name = 'StripeServerError'

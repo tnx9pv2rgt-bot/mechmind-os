@@ -17,7 +17,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect } from 'react'
-import { useForm, FormProvider, useWatch } from 'react-hook-form'
+import { useForm, FormProvider, useWatch, useFormContext } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -207,6 +207,18 @@ const engineMechanicalSchema = z.object({
   engineNotes: z.string().max(1000).optional(),
 })
 
+const tireSchema = z.object({
+  treadDepth: z.number().min(0).max(20),
+  pressure: z.number().min(0).max(100),
+  condition: z.enum(['excellent', 'good', 'fair', 'poor', 'replace']),
+  aiWearAnalysis: z.object({
+    wearPattern: z.enum(['even', 'inner_wear', 'outer_wear', 'cupping', 'flat_spots']),
+    estimatedRemainingLife: z.number().min(0).max(100),
+    recommendation: z.string(),
+  }).optional(),
+  photos: z.array(photoSchema),
+})
+
 const tiresSuspensionSchema = z.object({
   tires: z.object({
     frontLeft: tireSchema,
@@ -223,19 +235,6 @@ const tiresSuspensionSchema = z.object({
   }),
 })
 
-function tireSchema() {
-  return z.object({
-    treadDepth: z.number().min(0).max(20),
-    pressure: z.number().min(0).max(100),
-    condition: z.enum(['excellent', 'good', 'fair', 'poor', 'replace']),
-    aiWearAnalysis: z.object({
-      wearPattern: z.enum(['even', 'inner_wear', 'outer_wear', 'cupping', 'flat_spots']),
-      estimatedRemainingLife: z.number().min(0).max(100),
-      recommendation: z.string(),
-    }).optional(),
-    photos: z.array(photoSchema),
-  })
-}
 
 const electronicsOBDSchema = z.object({
   obdCodes: z.array(z.object({
@@ -273,7 +272,7 @@ export type DamageAnnotation = z.infer<typeof damageAnnotationSchema>
 // Default Values
 // =============================================================================
 
-const defaultFormValues: Partial<InspectionFormData> = {
+const defaultFormValues = {
   status: InspectionStatus.DRAFT,
   header: {
     location: {},
@@ -414,7 +413,7 @@ export function InspectionForm({
   const progress = (currentStep / totalSteps) * 100
 
   const handleNext = async () => {
-    const isValid = await form.trigger(getStepFields(currentStep))
+    const isValid = await form.trigger(getStepFields(currentStep) as Parameters<typeof form.trigger>[0])
     if (isValid && currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1)
     }
@@ -2019,4 +2018,3 @@ function getStepFields(step: number): string[] {
 
 export default InspectionForm
 export { inspectionFormSchema, defaultFormValues }
-export type { InspectionFormData, Photo, DamageAnnotation }

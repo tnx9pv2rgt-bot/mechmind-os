@@ -6,10 +6,8 @@ import { useNotificationContext } from '@/lib/notification-context';
 import { AppleCard } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { cn } from '@/lib/utils';
-import { NotificationType } from '@/hooks/useNotifications';
-
 // Icon mapping for notification types (emoji fallback)
-const notificationTypeEmojis: Record<NotificationType, string> = {
+const notificationTypeEmojis: Record<string, string> = {
   booking_created: '📅',
   booking_confirmed: '✅',
   booking_cancelled: '❌',
@@ -20,7 +18,7 @@ const notificationTypeEmojis: Record<NotificationType, string> = {
 };
 
 // Color mapping for notification types
-const notificationTypeColors: Record<NotificationType, string> = {
+const notificationTypeColors: Record<string, string> = {
   booking_created: 'text-blue-600 bg-blue-50',
   booking_confirmed: 'text-green-600 bg-green-50',
   booking_cancelled: 'text-red-600 bg-red-50',
@@ -30,16 +28,25 @@ const notificationTypeColors: Record<NotificationType, string> = {
   heartbeat: 'text-gray-600 bg-gray-50',
 };
 
+interface BellNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
 export function NotificationBell() {
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
-    isConnected,
-    reconnectAttempt,
-    reconnect,
-  } = useNotificationContext();
+  const ctx = useNotificationContext();
+  const notifications = ctx.notifications as unknown as BellNotification[];
+  const unreadCount = ctx.unreadCount;
+  const markAsRead = ctx.markAsRead;
+  const markAllAsRead = ctx.markAllAsRead;
+  const ctxRecord = ctx as unknown as Record<string, unknown>;
+  const isConnected = (ctxRecord.isConnected as boolean) ?? ctx.isRealtimeConnected ?? false;
+  const reconnectAttempt = (ctxRecord.reconnectAttempt as number) ?? 0;
+  const reconnect = (ctxRecord.reconnect as (() => void)) ?? ctx.refetch;
   
   const [isOpen, setIsOpen] = useState(false);
 

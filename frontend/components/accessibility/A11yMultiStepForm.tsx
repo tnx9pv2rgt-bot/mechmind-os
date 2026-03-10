@@ -148,7 +148,7 @@ export function A11yMultiStepForm({
 
   return (
     <div
-      ref={containerRef}
+      ref={containerRef as React.RefObject<HTMLDivElement>}
       className={`w-full max-w-3xl mx-auto ${className}`}
       role="form"
       aria-labelledby={title ? 'form-title' : undefined}

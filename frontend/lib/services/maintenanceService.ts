@@ -155,18 +155,18 @@ export class TenantRequiredError extends Error {
 // =============================================================================
 
 const logger = {
-  debug: (message: string, meta?: Record<string, unknown>) => {
+  debug: (message: string, meta?: object) => {
     if (process.env.NODE_ENV === 'development') {
       console.log(`[MaintenanceService] ${message}`, meta ? JSON.stringify(meta) : '')
     }
   },
-  info: (message: string, meta?: Record<string, unknown>) => {
+  info: (message: string, meta?: object) => {
     console.info(`[MaintenanceService] ${message}`, meta ? JSON.stringify(meta) : '')
   },
-  warn: (message: string, meta?: Record<string, unknown>) => {
+  warn: (message: string, meta?: object) => {
     console.warn(`[MaintenanceService] ${message}`, meta ? JSON.stringify(meta) : '')
   },
-  error: (message: string, error?: unknown, meta?: Record<string, unknown>) => {
+  error: (message: string, error?: unknown, meta?: object) => {
     console.error(`[MaintenanceService] ${message}`, error, meta ? JSON.stringify(meta) : '')
   }
 }
@@ -178,15 +178,15 @@ const logger = {
 /**
  * Get tenant ID from context or input
  */
-function resolveTenantId(inputTenantId?: string): string {
+async function resolveTenantId(inputTenantId?: string): Promise<string> {
   // If tenantId provided explicitly (e.g., for admin operations), use it
   if (inputTenantId) {
     return inputTenantId
   }
-  
+
   // Otherwise, get from context
   try {
-    return requireTenantId()
+    return await requireTenantId()
   } catch {
     throw new TenantRequiredError()
   }
@@ -235,7 +235,7 @@ export async function createMaintenanceSchedule(
   data: CreateMaintenanceScheduleInput,
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Creating maintenance schedule', { 
     tenantId,
@@ -329,7 +329,7 @@ export async function getMaintenanceScheduleById(
   id: string,
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.debug('Fetching maintenance schedule', { tenantId, scheduleId: id })
   
@@ -380,7 +380,7 @@ export async function updateMaintenanceSchedule(
   data: UpdateMaintenanceScheduleInput,
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Updating maintenance schedule', { tenantId, scheduleId: id })
   
@@ -457,7 +457,7 @@ export async function deleteMaintenanceSchedule(
   id: string,
   inputTenantId?: string
 ): Promise<{ success: boolean; deletedAt: Date }> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Deleting maintenance schedule', { tenantId, scheduleId: id })
   
@@ -501,7 +501,7 @@ export async function listMaintenanceSchedules(
   pagination: PaginationParams = {},
   inputTenantId?: string
 ): Promise<PaginatedMaintenance> {
-  const tenantId = filters.tenantId || resolveTenantId(inputTenantId)
+  const tenantId = filters.tenantId || await resolveTenantId(inputTenantId)
   
   logger.debug('Listing maintenance schedules', { tenantId, filters, pagination })
   
@@ -592,8 +592,9 @@ export async function getOverdueItems(
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle[]> {
   // Handle both signatures for backward compatibility
-  const actualTenantId = inputTenantId || 
-    (tryGetTenantContext()?.tenantId) || 
+  const tenantContext = await tryGetTenantContext()
+  const actualTenantId = inputTenantId ||
+    tenantContext?.tenantId ||
     tenantIdOrVehicleId
   
   const actualVehicleId = vehicleId || 
@@ -644,7 +645,7 @@ export async function getUpcomingItems(
   vehicleId?: string,
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle[]> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.debug('Fetching upcoming maintenance items', { tenantId, days, vehicleId })
   
@@ -701,7 +702,7 @@ export async function markAsCompleted(
   data: CompleteMaintenanceInput,
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Marking maintenance as completed', { tenantId, scheduleId, ...data })
   
@@ -782,7 +783,7 @@ export async function checkOverdueStatus(
   newlyOverdue: number
   alertsToSend: MaintenanceScheduleWithVehicle[]
 }> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Checking overdue status', { tenantId })
   
@@ -869,7 +870,7 @@ export async function checkOverdueStatus(
 export async function getMaintenanceSummary(
   inputTenantId?: string
 ): Promise<MaintenanceSummary> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.debug('Fetching maintenance summary', { tenantId })
   
@@ -1004,7 +1005,7 @@ export async function createFromInspection(
   findings: InspectionFinding[],
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle[]> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Creating maintenance from inspection findings', { 
     tenantId,

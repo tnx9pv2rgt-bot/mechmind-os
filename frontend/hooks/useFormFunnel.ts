@@ -186,6 +186,7 @@ export function useFormFunnel(formId: string = 'default-form') {
           height: window.innerHeight,
         },
         startTime: Date.now(),
+        totalDuration: 0,
         steps: [],
         currentStep: 0,
         isCompleted: false,
@@ -316,7 +317,7 @@ export function useFormFunnel(formId: string = 'default-form') {
         analytics.trackStepCompleted(stepId, step.name, step.duration);
         
         // Traccia evento A/B testing
-        abTesting.trackEvent('step_completed', { stepId, stepName: step.name });
+        abTesting.trackEvent('default', 'step_completed', { stepId, stepName: step.name });
       }
     }
   }, []);

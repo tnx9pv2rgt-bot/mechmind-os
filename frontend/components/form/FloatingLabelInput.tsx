@@ -11,7 +11,7 @@ interface FloatingLabelInputProps extends React.InputHTMLAttributes<HTMLInputEle
 }
 
 export const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
-  ({ label, error, icon, className, ...props }, ref) => {
+  ({ label, error, icon, className, onDrag, onDragStart, onDragEnd, onAnimationStart, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
     const isActive = isFocused || (props.value && String(props.value).length > 0);
 

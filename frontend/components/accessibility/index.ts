@@ -19,26 +19,16 @@ export { A11yFormField } from './A11yFormField';
 export { A11yModal, ConfirmDialog } from './A11yModal';
 
 // Types
-export type { 
-  AnnouncerProps, 
+export type {
   AnnouncePriority,
-  Announcement 
+  Announcement
 } from './Announcer';
 
-export type { 
-  SkipLinkProps, 
-  MainContentProps 
-} from './SkipLink';
-
-export type { 
-  LanguageSwitcherProps 
-} from './LanguageSwitcher';
-
-export type { 
-  A11yFormFieldProps 
+export type {
+  A11yFormFieldProps
 } from './A11yFormField';
 
-export type { 
-  A11yModalProps, 
-  ConfirmDialogProps 
+export type {
+  A11yModalProps,
+  ConfirmDialogProps
 } from './A11yModal';

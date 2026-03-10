@@ -17,15 +17,15 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Warranty, WarrantyStatus, WarrantyType, WarrantyClaim } from "@/lib/services/warrantyService"
+import { Warranty, WarrantyStatus, WarrantyType, WarrantyClaim, WarrantyWithClaims } from "@/lib/services/warrantyService"
 
 interface WarrantyCardProps {
-  warranty: any
+  warranty: WarrantyWithClaims
   onClick?: () => void
   className?: string
 }
 
-const statusConfig: Record<WarrantyStatus, { label: string; color: string; icon: React.ReactNode }> = {
+const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   ACTIVE: {
     label: "Active",
     color: "bg-green-100 text-green-800 border-green-200",
@@ -48,7 +48,7 @@ const statusConfig: Record<WarrantyStatus, { label: string; color: string; icon:
   },
 }
 
-const typeConfig: Record<WarrantyType, { label: string; color: string }> = {
+const typeConfig: Record<string, { label: string; color: string }> = {
   MANUFACTURER: {
     label: "Manufacturer",
     color: "bg-blue-100 text-blue-800",
@@ -88,15 +88,17 @@ function calculateDaysRemaining(expirationDate: Date | string): number {
 }
 
 export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps) {
+  const w = warranty as unknown as Record<string, unknown>
   const status = statusConfig[warranty.status]
-  const type = typeConfig[warranty.type]
+  const type = typeConfig[String(w.type ?? warranty.coverageType ?? '')]
   const progress = calculateProgress(warranty.startDate, warranty.expirationDate)
   const daysRemaining = calculateDaysRemaining(warranty.expirationDate)
-  
+
   const totalClaims = warranty.claims?.length || 0
   const approvedClaims = warranty.claims?.filter(c => c.status === 'APPROVED' || c.status === 'PAID').length || 0
-  const totalClaimed = warranty.claims?.reduce((sum, c) => sum + (c.approvedAmount || 0), 0) || 0
-  const remainingCoverage = warranty.maxCoverage - totalClaimed
+  const totalClaimed = warranty.claims?.reduce((sum, c) => sum + ((c as unknown as Record<string, number>).approvedAmount || c.amount || 0), 0) || 0
+  const maxCoverage = (w.maxCoverage as number) ?? warranty.maxClaimAmount ?? 0
+  const remainingCoverage = maxCoverage - totalClaimed
 
   return (
     <Card 
@@ -130,7 +132,7 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
                   "Vehicle Warranty"
                 }
               </h3>
-              <p className="text-sm text-gray-500">{warranty.provider}</p>
+              <p className="text-sm text-gray-500">{String(w.provider ?? '')}</p>
             </div>
           </div>
           <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -191,7 +193,7 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
               {formatCurrency(remainingCoverage)}
             </div>
             <div className="text-xs text-gray-500">
-              of {formatCurrency(warranty.maxCoverage)}
+              of {formatCurrency(maxCoverage)}
             </div>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
@@ -200,10 +202,10 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
               <span>Coverage</span>
             </div>
             <div className="font-semibold text-gray-900">
-              {warranty.coverageKm ? `${warranty.coverageKm.toLocaleString()} km` : "Unlimited"}
+              {warranty.mileageLimit ? `${warranty.mileageLimit.toLocaleString()} km` : "Unlimited"}
             </div>
             <div className="text-xs text-gray-500">
-              Deductible: {formatCurrency(warranty.deductible)}
+              Deductible: {formatCurrency((w.deductible as number) ?? warranty.deductibleAmount ?? 0)}
             </div>
           </div>
         </div>

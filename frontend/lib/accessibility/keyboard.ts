@@ -192,7 +192,7 @@ export function isFocusable(element: Element): boolean {
   const htmlElement = element as HTMLElement;
   
   // Verifica attributi
-  if (htmlElement.disabled) return false;
+  if ('disabled' in htmlElement && (htmlElement as HTMLInputElement).disabled) return false;
   if (htmlElement.getAttribute('tabindex') === '-1') return false;
   if (htmlElement.getAttribute('aria-hidden') === 'true') return false;
   

@@ -1,11 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, ReactNode } from 'react';
-import useNotifications, { 
-  Notification, 
+import useNotifications, {
   UseNotificationsOptions,
-  UseNotificationsReturn 
+  UseNotificationsReturn
 } from '@/hooks/useNotifications';
+import type { Notification } from '@/types/notifications';
 import { useToast } from '@/components/ui/use-toast';
 
 // Extended context type with toast integration
@@ -74,7 +74,7 @@ export function NotificationProvider({
     };
 
     toast({
-      title: notification.title,
+      title: String(notification.type).replace(/_/g, ' '),
       description: notification.message,
       variant: variantMap[notification.type] || 'default',
     });

@@ -17,7 +17,7 @@ const nextConfig = {
   
   // TypeScript and ESLint handling
   typescript: {
-    ignoreBuildErrors: true, // TODO: fix frontend TS errors then set to false
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: true, // TODO: fix frontend lint errors then set to false

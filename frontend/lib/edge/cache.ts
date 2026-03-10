@@ -184,7 +184,7 @@ export function parseCacheControl(header: string): Record<string, number | boole
       directives[key] = true
     } else {
       const numValue = parseInt(value, 10)
-      directives[key] = isNaN(numValue) ? value : numValue
+      directives[key] = isNaN(numValue) ? true : numValue
     }
   })
   

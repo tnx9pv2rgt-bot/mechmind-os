@@ -1114,8 +1114,8 @@ export async function getInspectionsByVIN(
     functionName: 'getInspectionsByVIN',
     args: [normalizeVIN(vin)]
   });
-  
-  return addresses;
+
+  return [...addresses] as `0x${string}`[];
 }
 
 /**
@@ -1381,18 +1381,3 @@ export default {
   BlockchainService
 };
 
-// Re-export types
-export type {
-  InspectionData,
-  ChecklistItem,
-  InspectionPhoto,
-  DeploymentResult,
-  VerificationResult,
-  BlockchainInspection,
-  IPFSUploadResult,
-  NFTMintResult,
-  NFTMetadata,
-  NFTAttribute,
-  BlockchainServiceConfig,
-  TransactionOptions
-};

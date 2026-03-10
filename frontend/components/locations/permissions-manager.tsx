@@ -26,7 +26,8 @@ import {
   History,
   AlertTriangle,
   CheckIcon,
-  XIcon
+  XIcon,
+  Download
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

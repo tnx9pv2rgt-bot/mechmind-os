@@ -361,11 +361,11 @@ export function BlockchainVerification({
             <Badge
               variant={
                 status === 'verified'
-                  ? 'success'
+                  ? 'default'
                   : status === 'not_found'
                   ? 'destructive'
                   : status === 'tampered'
-                  ? 'warning'
+                  ? 'outline'
                   : 'secondary'
               }
               className="text-sm px-3 py-1"

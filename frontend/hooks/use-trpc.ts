@@ -102,7 +102,7 @@ export function useVehicles(
     {
       enabled,
       // Keep previous data while fetching new page for smooth pagination
-      placeholderData: (previousData) => previousData,
+      keepPreviousData: true,
     }
   )
 }
@@ -213,7 +213,7 @@ export function useCustomers(
     { page, limit, filters },
     {
       enabled,
-      placeholderData: (previousData) => previousData,
+      keepPreviousData: true,
     }
   )
 }
@@ -327,7 +327,7 @@ export function useBookings(
     { page, limit, filters },
     {
       enabled,
-      placeholderData: (previousData) => previousData,
+      keepPreviousData: true,
     }
   )
 }
@@ -474,7 +474,7 @@ export function useInvoices(
     { page, limit, filters },
     {
       enabled,
-      placeholderData: (previousData) => previousData,
+      keepPreviousData: true,
     }
   )
 }
@@ -702,7 +702,7 @@ export function useOptimisticListUpdate<T extends { id: string }>() {
         if (!old) return old
         return {
           ...old,
-          items: [newItem, ...old.items],
+          items: [newItem as unknown as (typeof old.items)[number], ...old.items],
           total: old.total + 1,
         }
       })

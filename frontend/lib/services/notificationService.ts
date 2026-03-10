@@ -9,10 +9,9 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { 
+import {
   requireTenantId,
   NoTenantContextError,
-  hasTenantContext,
 } from '@/lib/tenant/context'
 
 // =============================================================================
@@ -38,7 +37,7 @@ export type NotificationType =
   | 'CUSTOMER_WELCOME'
   | 'MARKETING'
 
-export type NotificationChannel = 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH'
+export type NotificationChannel = 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH' | 'BOTH' | 'AUTO'
 
 export type NotificationStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED' | 'READ'
 
@@ -118,13 +117,13 @@ const logger = {
 // Helper Functions
 // =============================================================================
 
-function resolveTenantId(inputTenantId?: string): string {
+async function resolveTenantId(inputTenantId?: string): Promise<string> {
   if (inputTenantId) {
     return inputTenantId
   }
-  
+
   try {
-    return requireTenantId()
+    return await requireTenantId()
   } catch {
     throw new TenantRequiredError()
   }
@@ -147,7 +146,7 @@ export async function createNotification(
   status: string
   createdAt: Date
 }> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Creating notification', { tenantId, type: data.type, channel: data.channel })
   
@@ -174,7 +173,7 @@ export async function createNotification(
         channel: data.channel,
         title: data.title,
         message: data.message,
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as Record<string, string | number | boolean | null>,
         status: data.scheduledFor && data.scheduledFor > new Date() ? 'PENDING' : 'PENDING',
       },
     })
@@ -198,7 +197,7 @@ export async function sendToTenant(
   failed: number
   notifications: string[]
 }> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   logger.info('Sending notification to tenant', { 
     tenantId, 
@@ -209,7 +208,7 @@ export async function sendToTenant(
   
   try {
     // Build customer filter
-    const customerWhere: Parameters<typeof prisma.customer.findMany>[0]['where'] = {
+    const customerWhere: NonNullable<Parameters<typeof prisma.customer.findMany>[0]>['where'] = {
       tenantId,
     }
     
@@ -236,7 +235,7 @@ export async function sendToTenant(
             channel: data.channel,
             title: data.title,
             message: data.message,
-            metadata: data.metadata || {},
+            metadata: (data.metadata || {}) as Record<string, string | number | boolean | null>,
             status: 'PENDING',
           },
         })
@@ -268,7 +267,7 @@ export async function sendMaintenanceNotifications(
   sent: number
   maintenanceIds: string[]
 }> {
-  const effectiveTenantId = resolveTenantId(tenantId)
+  const effectiveTenantId = await resolveTenantId(tenantId)
   
   // Get upcoming maintenance items for tenant
   const maintenanceItems = await prisma.maintenanceSchedule.findMany({
@@ -338,7 +337,7 @@ export async function sendWarrantyNotifications(
   sent: number
   warrantyIds: string[]
 }> {
-  const effectiveTenantId = resolveTenantId(tenantId)
+  const effectiveTenantId = await resolveTenantId(tenantId)
   
   const cutoffDate = new Date()
   cutoffDate.setDate(cutoffDate.getDate() + daysThreshold)
@@ -436,13 +435,13 @@ export async function listNotifications(
   page: number
   totalPages: number
 }> {
-  const tenantId = filters.tenantId || resolveTenantId(inputTenantId)
+  const tenantId = filters.tenantId || await resolveTenantId(inputTenantId)
   
   const page = pagination.page ?? 1
   const limit = pagination.limit ?? 50
   const skip = (page - 1) * limit
   
-  const where: Parameters<typeof prisma.notification.findMany>[0]['where'] = {
+  const where: NonNullable<Parameters<typeof prisma.notification.findMany>[0]>['where'] = {
     tenantId,
   }
   
@@ -492,7 +491,10 @@ export async function listNotifications(
   ])
   
   return {
-    notifications,
+    notifications: notifications.map(n => ({
+      ...n,
+      customer: n.customer ?? undefined,
+    })),
     total,
     page,
     totalPages: Math.ceil(total / limit),
@@ -506,7 +508,7 @@ export async function markAsSent(
   notificationId: string,
   inputTenantId?: string
 ): Promise<void> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   await prisma.notification.updateMany({
     where: {
@@ -527,7 +529,7 @@ export async function markAsDelivered(
   notificationId: string,
   inputTenantId?: string
 ): Promise<void> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   await prisma.notification.updateMany({
     where: {
@@ -548,7 +550,7 @@ export async function markAsRead(
   notificationId: string,
   inputTenantId?: string
 ): Promise<void> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   await prisma.notification.updateMany({
     where: {
@@ -570,7 +572,7 @@ export async function markAsFailed(
   errorMessage: string,
   inputTenantId?: string
 ): Promise<void> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   await prisma.notification.updateMany({
     where: {
@@ -600,7 +602,7 @@ export async function getNotificationStats(
   byChannel: Record<string, number>
   byType: Record<string, number>
 }> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   const [
     total,
@@ -656,9 +658,9 @@ export async function getNotificationStats(
 
 export class NotificationService {
   private tenantId: string
-  
-  constructor(tenantId?: string) {
-    this.tenantId = tenantId || requireTenantId()
+
+  constructor(tenantId: string) {
+    this.tenantId = tenantId
   }
   
   async create(data: CreateNotificationInput) {
@@ -710,7 +712,27 @@ export const notificationService = {
 export { NotificationError as NotificationServiceError }
 
 // Aliases for hook compatibility
-export const sendNotification = createNotification
+export async function sendNotification(
+  data: {
+    customerId?: string
+    tenantId?: string
+    type: NotificationType | string
+    channel: NotificationChannel | string
+    title?: string
+    message?: string
+    metadata?: Record<string, unknown>
+  }
+) {
+  const typeStr = String(data.type).replace(/_/g, ' ')
+  return createNotification({
+    customerId: data.customerId,
+    type: data.type as NotificationType,
+    channel: data.channel as NotificationChannel,
+    title: data.title || typeStr,
+    message: data.message || `Notification: ${typeStr}`,
+    metadata: data.metadata,
+  }, data.tenantId)
+}
 export const sendBatchNotifications = sendToTenant
 export const getNotificationHistory = listNotifications
 
@@ -739,7 +761,7 @@ export async function getNotificationById(
     email: string
   }
 } | null> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   const notification = await prisma.notification.findFirst({
     where: {
@@ -757,14 +779,20 @@ export async function getNotificationById(
     },
   })
   
-  return notification
+  if (!notification) return null
+
+  return {
+    ...notification,
+    metadata: (notification.metadata as Record<string, unknown>) ?? {},
+    customer: notification.customer ?? undefined,
+  }
 }
 
 /**
  * Get unread notifications count
  */
 export async function getUnreadCount(inputTenantId?: string): Promise<number> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   return prisma.notification.count({
     where: {
@@ -778,7 +806,7 @@ export async function getUnreadCount(inputTenantId?: string): Promise<number> {
  * Mark all notifications as read
  */
 export async function markAllAsRead(inputTenantId?: string): Promise<{ count: number }> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   const result = await prisma.notification.updateMany({
     where: {
@@ -801,7 +829,7 @@ export async function deleteNotification(
   id: string,
   inputTenantId?: string
 ): Promise<void> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   await prisma.notification.deleteMany({
     where: {
@@ -818,7 +846,7 @@ export async function retryNotification(
   id: string,
   inputTenantId?: string
 ): Promise<void> {
-  const tenantId = resolveTenantId(inputTenantId)
+  const tenantId = await resolveTenantId(inputTenantId)
   
   await prisma.notification.updateMany({
     where: {
@@ -947,3 +975,31 @@ export async function sendMaintenanceDue(
     metadata: { vehiclePlate: data.vehiclePlate, maintenanceType: data.maintenanceType },
   })
 }
+
+/**
+ * Queue a notification for later delivery (alias for createNotification with scheduledAt)
+ */
+export async function queueNotification(
+  data: {
+    customerId?: string
+    tenantId?: string
+    type: NotificationType | string
+    channel: NotificationChannel | string
+    title?: string
+    message?: string
+    metadata?: Record<string, unknown>
+    scheduledAt?: string
+  },
+  inputTenantId?: string
+) {
+  const typeStr = String(data.type).replace(/_/g, ' ')
+  return createNotification({
+    customerId: data.customerId,
+    type: data.type as NotificationType,
+    channel: data.channel as NotificationChannel,
+    title: data.title || typeStr,
+    message: data.message || `Notification: ${typeStr}`,
+    metadata: data.metadata,
+  }, inputTenantId || data.tenantId)
+}
+

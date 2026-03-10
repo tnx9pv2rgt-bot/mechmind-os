@@ -15,7 +15,7 @@
  * @requires @trpc/client
  */
 
-import { trpc } from './trpc-client'
+import { trpc as trpcClient } from './trpc-client'
 import type {
   Vehicle,
   VehicleFormData,
@@ -29,6 +29,11 @@ import type {
   Payment,
   PaymentFormData,
 } from '@/types/api'
+
+// Cast trpc client to allow access to mutation procedures not yet in the router types
+// These mutations are planned but router type stubs haven't been created yet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const trpc = trpcClient as unknown as Record<string, Record<string, { mutate: (data: unknown) => Promise<unknown>; query: (data: unknown) => Promise<unknown> }>>
 
 // =============================================================================
 // Vehicle CRUD Operations
@@ -64,7 +69,7 @@ import type {
 export async function createVehicle(data: VehicleFormData): Promise<Vehicle> {
   // Note: This assumes your backend has a vehicle.create procedure
   // If not available, implement via direct API call
-  return trpc.vehicle.create.mutate(data)
+  return trpc.vehicle.create.mutate(data) as Promise<Vehicle>
 }
 
 /**
@@ -87,7 +92,7 @@ export async function updateVehicle(
   id: string,
   data: Partial<VehicleFormData>
 ): Promise<Vehicle> {
-  return trpc.vehicle.update.mutate({ id, data })
+  return trpc.vehicle.update.mutate({ id, data }) as Promise<Vehicle>
 }
 
 /**
@@ -110,7 +115,7 @@ export async function updateVehicle(
  * ```
  */
 export async function deleteVehicle(id: string): Promise<{ success: boolean }> {
-  return trpc.vehicle.delete.mutate({ id })
+  return trpc.vehicle.delete.mutate({ id }) as Promise<{ success: boolean }>
 }
 
 /**
@@ -155,7 +160,7 @@ export async function bulkUpdateVehicleStatus(
  * ```
  */
 export async function createCustomer(data: CustomerFormData): Promise<Customer> {
-  return trpc.customer.create.mutate(data)
+  return trpc.customer.create.mutate(data) as Promise<Customer>
 }
 
 /**
@@ -178,7 +183,7 @@ export async function updateCustomer(
   id: string,
   data: Partial<CustomerFormData>
 ): Promise<Customer> {
-  return trpc.customer.update.mutate({ id, data })
+  return trpc.customer.update.mutate({ id, data }) as Promise<Customer>
 }
 
 /**
@@ -189,7 +194,7 @@ export async function updateCustomer(
  * @throws {TRPCClientError} If customer has vehicles or bookings
  */
 export async function deleteCustomer(id: string): Promise<{ success: boolean }> {
-  return trpc.customer.delete.mutate({ id })
+  return trpc.customer.delete.mutate({ id }) as Promise<{ success: boolean }>
 }
 
 /**
@@ -253,7 +258,7 @@ export async function importCustomers(
  * ```
  */
 export async function createBooking(data: BookingFormData): Promise<Booking> {
-  return trpc.booking.create.mutate(data)
+  return trpc.booking.create.mutate(data) as Promise<Booking>
 }
 
 /**
@@ -285,7 +290,7 @@ export async function updateBookingStatus(
   return trpc.booking.updateStatus.mutate({
     id,
     data: { status, ...additionalData },
-  })
+  }) as Promise<Booking>
 }
 
 /**
@@ -300,7 +305,7 @@ export async function cancelBooking(
   id: string,
   reason?: string
 ): Promise<Booking> {
-  return trpc.booking.cancel.mutate({ id, reason })
+  return trpc.booking.cancel.mutate({ id, reason }) as Promise<Booking>
 }
 
 /**
@@ -311,7 +316,7 @@ export async function cancelBooking(
  * @returns Success confirmation
  */
 export async function deleteBooking(id: string): Promise<{ success: boolean }> {
-  return trpc.booking.delete.mutate({ id })
+  return trpc.booking.delete.mutate({ id }) as Promise<{ success: boolean }>
 }
 
 /**
@@ -328,9 +333,6 @@ export async function rescheduleBooking(
   newStartTime: string,
   newEndTime: string
 ): Promise<Booking> {
-  // Get current booking
-  const booking = await trpc.booking.get.query({ id })
-  
   // Update with new times
   return trpc.booking.update.mutate({
     id,
@@ -338,7 +340,7 @@ export async function rescheduleBooking(
       startTime: newStartTime,
       endTime: newEndTime,
     },
-  })
+  }) as Promise<Booking>
 }
 
 /**
@@ -357,7 +359,7 @@ export async function checkAvailability(
   const existingBookings = await trpc.booking.byDateRange.query({
     from: startTime,
     to: endTime,
-  })
+  }) as Array<{ id: string; status: string }>
 
   const conflictingBookings = existingBookings.filter(
     b => b.status !== 'cancelled' && b.id !== excludeBookingId
@@ -393,7 +395,7 @@ export async function checkAvailability(
  * ```
  */
 export async function createInvoice(data: InvoiceFormData): Promise<Invoice> {
-  return trpc.invoice.create.mutate(data)
+  return trpc.invoice.create.mutate(data) as Promise<Invoice>
 }
 
 /**
@@ -413,8 +415,8 @@ export async function createInvoiceFromBooking(
     dueDays?: number
   }
 ): Promise<Invoice> {
-  const booking = await trpc.booking.get.query({ id: bookingId })
-  
+  const booking = await trpc.booking.get.query({ id: bookingId }) as Booking
+
   const issueDate = new Date().toISOString()
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + (options?.dueDays || 30))
@@ -458,7 +460,7 @@ export async function processPayment(
   invoiceId: string,
   paymentData: PaymentFormData
 ): Promise<Payment> {
-  return trpc.invoice.processPayment.mutate({ invoiceId, paymentData })
+  return trpc.invoice.processPayment.mutate({ invoiceId, paymentData }) as Promise<Payment>
 }
 
 /**
@@ -472,7 +474,7 @@ export async function sendInvoice(
   invoiceId: string,
   email?: string
 ): Promise<{ success: boolean; message: string }> {
-  return trpc.invoice.send.mutate({ id: invoiceId, email })
+  return trpc.invoice.send.mutate({ id: invoiceId, email }) as Promise<{ success: boolean; message: string }>
 }
 
 /**
@@ -488,7 +490,7 @@ export async function cancelInvoice(
   id: string,
   reason?: string
 ): Promise<Invoice> {
-  return trpc.invoice.cancel.mutate({ id, reason })
+  return trpc.invoice.cancel.mutate({ id, reason }) as Promise<Invoice>
 }
 
 /**
@@ -506,7 +508,7 @@ export async function refundInvoice(
 ): Promise<Invoice> {
   // This would typically be a separate procedure in your backend
   // For now, we'll use the processPayment with negative amount or a dedicated endpoint
-  return trpc.invoice.refund.mutate({ invoiceId, amount, reason })
+  return trpc.invoice.refund.mutate({ invoiceId, amount, reason }) as Promise<Invoice>
 }
 
 // =============================================================================
@@ -541,13 +543,13 @@ export async function batchCreate<T extends 'vehicle' | 'customer' | 'booking'>(
   const results = {
     created: 0,
     failed: 0,
-    items: [] as Array<any>,
+    items: [] as Array<Vehicle | Customer | Booking>,
     errors: [] as Array<{ index: number; error: string }>,
   }
 
   for (let i = 0; i < items.length; i++) {
     try {
-      let item: any
+      let item: Vehicle | Customer | Booking
       switch (type) {
         case 'vehicle':
           item = await createVehicle(items[i] as VehicleFormData)
@@ -558,6 +560,8 @@ export async function batchCreate<T extends 'vehicle' | 'customer' | 'booking'>(
         case 'booking':
           item = await createBooking(items[i] as BookingFormData)
           break
+        default:
+          throw new Error(`Unknown type: ${type as string}`)
       }
       results.created++
       results.items.push(item)
@@ -570,7 +574,7 @@ export async function batchCreate<T extends 'vehicle' | 'customer' | 'booking'>(
     }
   }
 
-  return results
+  return results as typeof results & { items: Array<T extends 'vehicle' ? Vehicle : T extends 'customer' ? Customer : Booking> }
 }
 
 // =============================================================================

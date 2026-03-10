@@ -25,14 +25,15 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils"
 import {
   Warranty,
   WarrantyClaim,
+  WarrantyWithClaims,
   ClaimStatus,
   WarrantyType,
+  FileClaimDTO,
   getWarranty,
   getWarrantyClaims,
   getExpiringWarranties,
   createWarrantyClaim,
   updateWarrantyAlerts,
-  CreateWarrantyClaimData,
 } from "@/lib/services/warrantyService"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -113,12 +114,12 @@ function calculateProgress(startDate: string, expirationDate: string): number {
 /**
  * Determine warranty status based on days remaining
  */
-function getWarrantyStatus(daysRemaining: number, warrantyStatus: Warranty["status"]): {
+function getWarrantyStatus(daysRemaining: number, warrantyStatus: string): {
   label: string
   variant: "default" | "secondary" | "destructive" | "outline"
   color: string
 } {
-  if (warrantyStatus === "voided") {
+  if (warrantyStatus === "VOID") {
     return { label: "Voided", variant: "destructive", color: "text-red-600 bg-red-50" }
   }
   if (daysRemaining <= 0) {
@@ -139,57 +140,68 @@ function getClaimStatusConfig(status: ClaimStatus): {
   color: string
   bgColor: string
 } {
-  const configs: Record<ClaimStatus, { label: string; icon: React.ReactNode; color: string; bgColor: string }> = {
-    pending: {
-      label: "Pending",
+  const configs: Record<string, { label: string; icon: React.ReactNode; color: string; bgColor: string }> = {
+    SUBMITTED: {
+      label: "Submitted",
+      icon: <FileText className="h-4 w-4" />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50 border-blue-200",
+    },
+    UNDER_REVIEW: {
+      label: "Under Review",
       icon: <Clock className="h-4 w-4" />,
       color: "text-amber-600",
       bgColor: "bg-amber-50 border-amber-200",
     },
-    approved: {
+    APPROVED: {
       label: "Approved",
       icon: <CheckCircle2 className="h-4 w-4" />,
       color: "text-green-600",
       bgColor: "bg-green-50 border-green-200",
     },
-    rejected: {
+    REJECTED: {
       label: "Rejected",
       icon: <XCircle className="h-4 w-4" />,
       color: "text-red-600",
       bgColor: "bg-red-50 border-red-200",
     },
-    paid: {
+    PAID: {
       label: "Paid",
       icon: <DollarSign className="h-4 w-4" />,
       color: "text-blue-600",
       bgColor: "bg-blue-50 border-blue-200",
     },
   }
-  return configs[status]
+  return configs[status] || configs.SUBMITTED
 }
 
 /**
  * Get warranty type display info
  */
-function getWarrantyTypeInfo(type: WarrantyType): { label: string; description: string; color: string } {
-  const types: Record<WarrantyType, { label: string; description: string; color: string }> = {
-    manufacturer: {
+function getWarrantyTypeInfo(type: string): { label: string; description: string; color: string } {
+  const types: Record<string, { label: string; description: string; color: string }> = {
+    MANUFACTURER: {
       label: "Manufacturer",
       description: "Original equipment manufacturer warranty",
       color: "bg-purple-100 text-purple-700",
     },
-    extended: {
+    EXTENDED: {
       label: "Extended",
       description: "Extended coverage beyond manufacturer warranty",
       color: "bg-blue-100 text-blue-700",
     },
-    as_is: {
+    DEALER: {
+      label: "Dealer",
+      description: "Dealer-provided warranty coverage",
+      color: "bg-teal-100 text-teal-700",
+    },
+    AS_IS: {
       label: "As-Is",
       description: "No warranty - vehicle sold as-is",
       color: "bg-gray-100 text-gray-700",
     },
   }
-  return types[type]
+  return types[type] || types.AS_IS
 }
 
 // =============================================================================
@@ -259,9 +271,9 @@ function NewClaimForm({
 }) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [formData, setFormData] = React.useState<CreateWarrantyClaimData>({
-    amount: 0,
-    description: "",
+  const [formData, setFormData] = React.useState<FileClaimDTO>({
+    issueDescription: "",
+    estimatedCost: 0,
     evidence: [],
   })
   const [uploadedFiles, setUploadedFiles] = React.useState<string[]>([])
@@ -318,9 +330,9 @@ function NewClaimForm({
             step="0.01"
             placeholder="0.00"
             className="pl-10"
-            value={formData.amount || ""}
+            value={formData.estimatedCost || ""}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))
+              setFormData((prev) => ({ ...prev, estimatedCost: parseFloat(e.target.value) || 0 }))
             }
             required
           />
@@ -332,9 +344,9 @@ function NewClaimForm({
         <Textarea
           placeholder="Describe the issue in detail..."
           rows={4}
-          value={formData.description}
+          value={formData.issueDescription}
           onChange={(e) =>
-            setFormData((prev) => ({ ...prev, description: e.target.value }))
+            setFormData((prev) => ({ ...prev, issueDescription: e.target.value }))
           }
           required
         />
@@ -404,7 +416,7 @@ function ClaimDetailDialog({
             Claim Details
           </DialogTitle>
           <DialogDescription>
-            Submitted on {formatDate(claim.submittedAt)}
+            Submitted on {formatDate(claim.submittedDate)}
           </DialogDescription>
         </DialogHeader>
 
@@ -434,11 +446,11 @@ function ClaimDetailDialog({
             </p>
           </div>
 
-          {claim.evidence.length > 0 && (
+          {claim.documents.length > 0 && (
             <div className="space-y-2">
               <span className="text-sm font-medium text-gray-600">Evidence Photos</span>
               <div className="grid grid-cols-3 gap-2">
-                {claim.evidence.map((url, index) => (
+                {claim.documents.map((url, index) => (
                   <div
                     key={index}
                     className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden"
@@ -454,12 +466,9 @@ function ClaimDetailDialog({
             </div>
           )}
 
-          {claim.reviewedAt && (
+          {claim.reviewedDate && (
             <div className="text-sm text-gray-500">
-              Reviewed on {formatDate(claim.reviewedAt)}
-              {claim.rejectionReason && (
-                <p className="mt-1 text-red-600">Reason: {claim.rejectionReason}</p>
-              )}
+              Reviewed on {formatDate(claim.reviewedDate)}
             </div>
           )}
         </div>
@@ -584,9 +593,9 @@ function BlockchainVerificationCard({
 
 export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboardProps) {
   const { toast } = useToast()
-  const [warranty, setWarranty] = React.useState<Warranty | null>(null)
+  const [warranty, setWarranty] = React.useState<WarrantyWithClaims | null>(null)
   const [claims, setClaims] = React.useState<WarrantyClaim[]>([])
-  const [expiringWarranties, setExpiringWarranties] = React.useState<Warranty[]>([])
+  const [expiringWarranties, setExpiringWarranties] = React.useState<WarrantyWithClaims[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [selectedClaim, setSelectedClaim] = React.useState<WarrantyClaim | null>(null)
   const [isClaimDialogOpen, setIsClaimDialogOpen] = React.useState(false)
@@ -609,10 +618,11 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
         setWarranty(warrantyData)
         setClaims(claimsData)
         setExpiringWarranties(expiringData)
+        const wd = warrantyData as unknown as Record<string, unknown>
         setAlertSettings({
-          email: warrantyData.sendEmail,
-          sms: warrantyData.sendSMS,
-          daysBefore: warrantyData.alertDaysBeforeExpiry,
+          email: (wd.alertEmailEnabled as boolean) ?? true,
+          sms: (wd.alertSmsEnabled as boolean) ?? false,
+          daysBefore: (wd.alertDaysBeforeExpiry as number) ?? 30,
         })
       } catch (error) {
         toast({
@@ -667,11 +677,14 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
     )
   }
 
-  const daysRemaining = calculateCountdown(warranty.expirationDate).days
-  const status = getWarrantyStatus(daysRemaining, warranty.status)
-  const progress = calculateProgress(warranty.startDate, warranty.expirationDate)
-  const warrantyType = getWarrantyTypeInfo(warranty.type)
-  const remainingCoverage = warranty.maxCoverage - warranty.totalClaimsAmount
+  const w = warranty as unknown as Record<string, unknown>
+  const daysRemaining = calculateCountdown(String(warranty.expirationDate)).days
+  const status = getWarrantyStatus(daysRemaining, String(warranty.status))
+  const progress = calculateProgress(String(warranty.startDate), String(warranty.expirationDate))
+  const warrantyType = getWarrantyTypeInfo(String(w.coverageType ?? ''))
+  const maxCoverage = (w.maxClaimAmount as number) ?? 0
+  const totalClaimsAmount = (w.totalClaimsAmount as number) ?? 0
+  const remainingCoverage = maxCoverage - totalClaimsAmount
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -723,7 +736,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                     Warranty Coverage
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    {formatDate(warranty.startDate)} - {formatDate(warranty.expirationDate)}
+                    {formatDate(String(warranty.startDate))} - {formatDate(String(warranty.expirationDate))}
                   </CardDescription>
                 </div>
                 <Badge
@@ -740,7 +753,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                 <h3 className="text-sm font-medium text-gray-600 text-center mb-4">
                   Time Remaining
                 </h3>
-                <CountdownTimer expirationDate={warranty.expirationDate} />
+                <CountdownTimer expirationDate={String(warranty.expirationDate)} />
               </div>
 
               {/* Progress Bar */}
@@ -751,8 +764,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                 </div>
                 <Progress value={progress} className="h-2" />
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{formatDate(warranty.startDate)}</span>
-                  <span>{formatDate(warranty.expirationDate)}</span>
+                  <span>{formatDate(String(warranty.startDate))}</span>
+                  <span>{formatDate(String(warranty.expirationDate))}</span>
                 </div>
               </div>
 
@@ -767,7 +780,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                     {formatCurrency(remainingCoverage)}
                   </div>
                   <div className="text-xs text-gray-500">
-                    of {formatCurrency(warranty.maxCoverage)} total
+                    of {formatCurrency(maxCoverage)} total
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -840,7 +853,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                               {claim.description}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
-                              {formatDate(claim.submittedAt)}
+                              {formatDate(claim.submittedDate)}
                             </p>
                           </div>
                           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
@@ -882,25 +895,25 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                   <TabsContent key={days} value={days} className="mt-4">
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {expiringWarranties
-                        .filter((w) => {
-                          const daysLeft = calculateCountdown(w.expirationDate).days
+                        .filter((ew) => {
+                          const daysLeft = calculateCountdown(String(ew.expirationDate)).days
                           return daysLeft <= parseInt(days) && daysLeft > parseInt(days) - 30
                         })
-                        .map((w) => (
+                        .map((ew) => (
                           <div
-                            key={w.id}
+                            key={ew.id}
                             className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm"
                           >
                             <span className="text-gray-600 truncate flex-1">
-                              {w.id.slice(0, 8)}...
+                              {ew.id.slice(0, 8)}...
                             </span>
                             <Badge variant="outline" className="text-xs ml-2">
-                              {calculateCountdown(w.expirationDate).days}d
+                              {calculateCountdown(String(ew.expirationDate)).days}d
                             </Badge>
                           </div>
                         ))}
-                      {expiringWarranties.filter((w) => {
-                        const daysLeft = calculateCountdown(w.expirationDate).days
+                      {expiringWarranties.filter((ew) => {
+                        const daysLeft = calculateCountdown(String(ew.expirationDate)).days
                         return daysLeft <= parseInt(days) && daysLeft > parseInt(days) - 30
                       }).length === 0 && (
                         <p className="text-sm text-gray-500 text-center py-4">

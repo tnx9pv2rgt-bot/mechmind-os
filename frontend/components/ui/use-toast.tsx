@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';
+type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info' | 'destructive';
 
 interface Toast {
   id: string;

@@ -802,7 +802,7 @@ function Step2AppointmentDetails({
     { value: 'urgent', label: 'Urgente', color: 'bg-red-500', desc: 'Entro 48 ore' },
   ]
   
-  const serviceTypeLabels: any = {
+  const serviceTypeLabels: Record<string, string> = {
     'maintenance': 'Tagliando',
     'repair': 'Riparazione',
     'inspection': 'Ispezione',
@@ -812,8 +812,8 @@ function Step2AppointmentDetails({
     'revision': 'Revisione',
     'other': 'Altro',
   }
-  
-  const serviceDurations: any = {
+
+  const serviceDurations: Record<string, number> = {
     'maintenance': 90,
     'repair': 120,
     'inspection': 60,

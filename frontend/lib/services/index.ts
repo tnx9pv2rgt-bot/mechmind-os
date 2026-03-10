@@ -113,11 +113,6 @@ export {
   createFromInspection,
   getMaintenanceSummary,
   
-  // Helper functions
-  getMaintenanceTypeLabel,
-  getNotificationLevelLabel,
-  getNotificationLevelColor,
-  
   // Error classes
   MaintenanceNotFoundError,
   MaintenanceValidationError,

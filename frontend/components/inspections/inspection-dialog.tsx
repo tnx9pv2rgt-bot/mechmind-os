@@ -126,7 +126,9 @@ export function InspectionDialog({
                 <div className="p-6">
                   <InspectionForm
                     onSubmit={handleSubmit}
-                    onCancel={handleCancel}
+                    onSaveDraft={handleSubmit}
+                    vehicles={[]}
+                    inspectors={[]}
                     isLoading={isSubmitting}
                   />
                 </div>
@@ -172,7 +174,9 @@ export function InspectionDialogCompact({
         <div className="p-6">
           <InspectionForm
             onSubmit={handleSubmit}
-            onCancel={() => setIsOpen(false)}
+            onSaveDraft={handleSubmit}
+            vehicles={[]}
+            inspectors={[]}
             isLoading={isSubmitting}
           />
         </div>

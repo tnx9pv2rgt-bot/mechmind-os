@@ -170,10 +170,12 @@ const errorHandlingLink: TRPCLink<AppRouter> = () => {
         error: (err) => {
           // Transform error into standardized format
           let error: TRPCClientError
+          const errData = (err as unknown as { data?: { httpStatus?: number; code?: string } }).data
+          const errCode = errData?.code || (err as unknown as { code?: string }).code
 
-          if (err.code === 'TIMEOUT_ERROR' || err.message?.includes('fetch failed')) {
+          if (errCode === 'TIMEOUT_ERROR' || err.message?.includes('fetch failed')) {
             error = new NetworkError('Connection to server failed. Please check your internet connection.')
-          } else if (err.data?.httpStatus === 401) {
+          } else if (errData?.httpStatus === 401) {
             error = new AuthError('Your session has expired. Please log in again.')
             // Clear auth on 401
             clearAuth()
@@ -181,22 +183,22 @@ const errorHandlingLink: TRPCLink<AppRouter> = () => {
             if (typeof window !== 'undefined') {
               window.location.href = '/auth/login?expired=true'
             }
-          } else if (err.data?.httpStatus >= 500) {
+          } else if ((errData?.httpStatus ?? 0) >= 500) {
             error = new ServerError(
               'Server error occurred. Please try again later.',
-              err.data.httpStatus
+              errData?.httpStatus ?? 500
             )
           } else {
             error = new TRPCClientError(
               err.message || 'An unexpected error occurred',
-              err.code || 'UNKNOWN_ERROR',
-              err.data?.httpStatus,
-              err.data,
+              errCode || 'UNKNOWN_ERROR',
+              errData?.httpStatus,
+              errData,
               op.path
             )
           }
 
-          observer.error(error)
+          observer.error(error as unknown as typeof err)
         },
         complete: () => {
           observer.complete()
@@ -239,7 +241,7 @@ const retryLink: TRPCLink<AppRouter> = () => {
   return ({ next, op }) => {
     return observable((observer) => {
       let attemptNumber = 0
-      let unsubscribe: () => void
+      let unsubscribe: { unsubscribe(): void }
 
       const tryRequest = () => {
         attemptNumber++
@@ -249,19 +251,21 @@ const retryLink: TRPCLink<AppRouter> = () => {
             observer.next(value)
           },
           error: (err) => {
-            const error = err instanceof TRPCClientError 
-              ? err 
+            const errData = (err as unknown as { data?: { httpStatus?: number; code?: string } }).data
+            const errCode = errData?.code || (err as unknown as { code?: string }).code
+            const error = err instanceof TRPCClientError
+              ? err
               : new TRPCClientError(
                   err.message || 'Request failed',
-                  err.code || 'UNKNOWN_ERROR',
-                  err.data?.httpStatus,
-                  err.data,
+                  errCode || 'UNKNOWN_ERROR',
+                  errData?.httpStatus,
+                  errData,
                   op.path
                 )
 
             if (shouldRetry(error, attemptNumber)) {
               const delay = getRetryDelay(attemptNumber)
-              
+
               // Log retry attempt in development
               if (process.env.NODE_ENV === 'development') {
                 console.warn(
@@ -271,7 +275,7 @@ const retryLink: TRPCLink<AppRouter> = () => {
 
               setTimeout(tryRequest, delay)
             } else {
-              observer.error(error)
+              observer.error(error as unknown as typeof err)
             }
           },
           complete: () => {
@@ -283,7 +287,7 @@ const retryLink: TRPCLink<AppRouter> = () => {
       tryRequest()
 
       return () => {
-        unsubscribe?.()
+        unsubscribe?.unsubscribe()
       }
     })
   }

@@ -44,7 +44,7 @@ export function useCSRF(): UseCSRFReturn {
     fetchToken()
   }, [fetchToken])
   
-  const getHeaders = useCallback(() => {
+  const getHeaders = useCallback((): Record<string, string> => {
     return token ? { 'X-CSRF-Token': token } : {}
   }, [token])
   

@@ -3,9 +3,17 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, Wifi, RefreshCw, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UseOfflineQueueReturn } from '@/hooks/form-persistence';
+// OfflineIndicator uses its own props interface
 
-interface OfflineIndicatorProps extends Partial<UseOfflineQueueReturn> {
+interface OfflineIndicatorProps {
+  isOnline?: boolean;
+  isSyncing?: boolean;
+  pendingCount?: number;
+  queueLength?: number;
+  isProcessing?: boolean;
+  processQueue?: () => void;
+  completedRequests?: unknown[];
+  failedRequests?: unknown[];
   /** Messaggio quando offline */
   offlineMessage?: string;
   /** Messaggio quando online con coda */

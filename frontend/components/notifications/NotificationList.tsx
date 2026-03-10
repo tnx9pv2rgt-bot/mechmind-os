@@ -89,29 +89,30 @@ export function NotificationList({
   const [searchQuery, setSearchQuery] = useState('');
 
   // Build query params
-  const queryParams = {
+  const queryFilters = {
     customerId,
-    page,
-    limit: pageSize,
-    type: filters.type?.[0],
-    status: filters.status?.[0],
-    channel: filters.channel?.[0],
+    type: filters.type,
+    status: filters.status,
+    channel: filters.channel,
   };
+  const queryPagination = { page, limit: pageSize };
 
   // Fetch notifications
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['notifications', queryParams],
-    queryFn: () => getNotificationHistory(queryParams),
-    enabled: !customerId || !!customerId,
-  });
+  const { data, isLoading, isError, refetch } = useQuery(
+    ['notifications', queryFilters, queryPagination],
+    () => getNotificationHistory(queryFilters as Parameters<typeof getNotificationHistory>[0], queryPagination),
+    { enabled: !customerId || !!customerId }
+  );
 
   // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: deleteNotification,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
+  const deleteMutation = useMutation(
+    (id: string) => deleteNotification(id),
+    {
+      onSuccess: () => {
+        void queryClient.invalidateQueries(['notifications']);
+      },
+    }
+  );
 
   // Retry mutation
   const retryMutation = useMutation({
@@ -145,13 +146,13 @@ export function NotificationList({
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       return (
-        notification.message.toLowerCase().includes(query) ||
+        notification.title.toLowerCase().includes(query) ||
         notification.type.toLowerCase().includes(query)
       );
     }) || [];
 
   // Pagination
-  const totalPages = data?.pagination.totalPages || 1;
+  const totalPages = data?.totalPages || 1;
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
@@ -271,7 +272,7 @@ export function NotificationList({
             filteredNotifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
-                notification={notification}
+                notification={notification as unknown as Notification}
                 onDelete={deleteMutation.mutate}
                 onRetry={retryMutation.mutate}
                 compact={compact}

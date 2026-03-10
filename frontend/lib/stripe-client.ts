@@ -1,4 +1,5 @@
 import { loadStripe, Stripe } from '@stripe/stripe-js'
+import { useState } from 'react'
 
 // Stripe configuration
 const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY

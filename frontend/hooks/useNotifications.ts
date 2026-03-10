@@ -73,13 +73,13 @@ export const notificationKeys = {
  */
 export function useNotificationHistory(
   params: NotificationHistoryParams = {},
-  options?: UseQueryOptions<NotificationHistory, NotificationServiceError>
+  options?: Omit<UseQueryOptions<NotificationHistory, NotificationServiceError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery({
-    queryKey: notificationKeys.list(params),
-    queryFn: () => getNotificationHistory(params),
-    ...options,
-  });
+  return useQuery(
+    notificationKeys.list(params),
+    () => getNotificationHistory(params as unknown as Parameters<typeof getNotificationHistory>[0]),
+    options as Record<string, unknown>
+  );
 }
 
 /**
@@ -87,27 +87,29 @@ export function useNotificationHistory(
  */
 export function useNotification(
   id: string,
-  options?: UseQueryOptions<Notification, NotificationServiceError>
+  options?: Omit<UseQueryOptions<Notification, NotificationServiceError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery({
-    queryKey: notificationKeys.detail(id),
-    queryFn: () => getNotificationById(id),
-    enabled: !!id,
-    ...options,
-  });
+  return useQuery(
+    notificationKeys.detail(id),
+    () => getNotificationById(id),
+    {
+      enabled: !!id,
+      ...(options as Record<string, unknown>),
+    }
+  );
 }
 
 /**
  * Hook to fetch unread count
  */
 export function useUnreadCount(
-  options?: UseQueryOptions<number, NotificationServiceError>
+  options?: Omit<UseQueryOptions<number, NotificationServiceError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery({
-    queryKey: notificationKeys.unread(),
-    queryFn: getUnreadCount,
-    ...options,
-  });
+  return useQuery(
+    notificationKeys.unread(),
+    () => getUnreadCount(),
+    options as Record<string, unknown>
+  );
 }
 
 /**
@@ -115,27 +117,29 @@ export function useUnreadCount(
  */
 export function useNotificationPreferences(
   customerId: string,
-  options?: UseQueryOptions<NotificationPreferences, NotificationServiceError>
+  options?: Omit<UseQueryOptions<NotificationPreferences, NotificationServiceError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery({
-    queryKey: notificationKeys.preferences(customerId),
-    queryFn: () => getNotificationPreferences(customerId),
-    enabled: !!customerId,
-    ...options,
-  });
+  return useQuery(
+    notificationKeys.preferences(customerId),
+    () => getNotificationPreferences(customerId),
+    {
+      enabled: !!customerId,
+      ...(options as Record<string, unknown>),
+    }
+  );
 }
 
 /**
  * Hook to fetch message templates
  */
 export function useMessageTemplates(
-  options?: UseQueryOptions<NotificationTemplate[], NotificationServiceError>
+  options?: Omit<UseQueryOptions<NotificationTemplate[], NotificationServiceError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery({
-    queryKey: notificationKeys.templates(),
-    queryFn: getMessageTemplates,
-    ...options,
-  });
+  return useQuery(
+    notificationKeys.templates(),
+    () => getMessageTemplates(),
+    options as Record<string, unknown>
+  );
 }
 
 // ==========================================
@@ -148,11 +152,10 @@ export function useMessageTemplates(
 export function useSendNotification() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: sendNotification,
+  return useMutation(sendNotification, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });
+      queryClient.invalidateQueries(notificationKeys.lists());
+      queryClient.invalidateQueries(notificationKeys.unread());
     },
   });
 }
@@ -163,11 +166,10 @@ export function useSendNotification() {
 export function useSendBatchNotifications() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: sendBatchNotifications,
+  return useMutation(sendBatchNotifications, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });
+      queryClient.invalidateQueries(notificationKeys.lists());
+      queryClient.invalidateQueries(notificationKeys.unread());
     },
   });
 }
@@ -178,11 +180,10 @@ export function useSendBatchNotifications() {
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: markAsRead,
+  return useMutation(markAsRead, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });
+      queryClient.invalidateQueries(notificationKeys.lists());
+      queryClient.invalidateQueries(notificationKeys.unread());
     },
   });
 }
@@ -193,11 +194,10 @@ export function useMarkAsRead() {
 export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: markAllAsRead,
+  return useMutation(markAllAsRead, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });
+      queryClient.invalidateQueries(notificationKeys.lists());
+      queryClient.invalidateQueries(notificationKeys.unread());
     },
   });
 }
@@ -208,11 +208,10 @@ export function useMarkAllAsRead() {
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: deleteNotification,
+  return useMutation(deleteNotification, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });
+      queryClient.invalidateQueries(notificationKeys.lists());
+      queryClient.invalidateQueries(notificationKeys.unread());
     },
   });
 }
@@ -223,10 +222,9 @@ export function useDeleteNotification() {
 export function useRetryNotification() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: retryNotification,
+  return useMutation(retryNotification, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
+      queryClient.invalidateQueries(notificationKeys.lists());
     },
   });
 }
@@ -237,12 +235,11 @@ export function useRetryNotification() {
 export function useUpdateNotificationPreferences() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: updateNotificationPreferences,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: notificationKeys.preferences(variables.customerId),
-      });
+  return useMutation(updateNotificationPreferences, {
+    onSuccess: (_, variables: { customerId: string }) => {
+      queryClient.invalidateQueries(
+        notificationKeys.preferences(variables.customerId)
+      );
     },
   });
 }
@@ -257,8 +254,8 @@ export function useUpdateNotificationPreferences() {
 export function useBookingNotifications() {
   const queryClient = useQueryClient();
 
-  const sendConfirmation = useMutation({
-    mutationFn: ({
+  const sendConfirmation = useMutation(
+    ({
       customerId,
       data,
       channel,
@@ -267,13 +264,15 @@ export function useBookingNotifications() {
       data: Parameters<typeof sendBookingConfirmation>[1];
       channel?: NotificationChannel;
     }) => sendBookingConfirmation(customerId, data, channel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(notificationKeys.lists());
+      },
+    }
+  );
 
-  const sendReminder = useMutation({
-    mutationFn: ({
+  const sendReminder = useMutation(
+    ({
       customerId,
       data,
       channel,
@@ -282,10 +281,12 @@ export function useBookingNotifications() {
       data: Parameters<typeof sendBookingReminder>[1];
       channel?: NotificationChannel;
     }) => sendBookingReminder(customerId, data, channel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(notificationKeys.lists());
+      },
+    }
+  );
 
   return {
     sendConfirmation,
@@ -299,8 +300,8 @@ export function useBookingNotifications() {
 export function useInvoiceNotifications() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
+  return useMutation(
+    ({
       customerId,
       data,
       channel,
@@ -309,10 +310,12 @@ export function useInvoiceNotifications() {
       data: Parameters<typeof sendInvoiceReady>[1];
       channel?: NotificationChannel;
     }) => sendInvoiceReady(customerId, data, channel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(notificationKeys.lists());
+      },
+    }
+  );
 }
 
 /**
@@ -321,8 +324,8 @@ export function useInvoiceNotifications() {
 export function useInspectionNotifications() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
+  return useMutation(
+    ({
       customerId,
       data,
       channel,
@@ -331,10 +334,12 @@ export function useInspectionNotifications() {
       data: Parameters<typeof sendInspectionComplete>[1];
       channel?: NotificationChannel;
     }) => sendInspectionComplete(customerId, data, channel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(notificationKeys.lists());
+      },
+    }
+  );
 }
 
 /**
@@ -343,8 +348,8 @@ export function useInspectionNotifications() {
 export function useVehicleReadyNotifications() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
+  return useMutation(
+    ({
       customerId,
       data,
       channel,
@@ -353,10 +358,12 @@ export function useVehicleReadyNotifications() {
       data: Parameters<typeof sendVehicleReady>[1];
       channel?: NotificationChannel;
     }) => sendVehicleReady(customerId, data, channel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(notificationKeys.lists());
+      },
+    }
+  );
 }
 
 /**
@@ -365,8 +372,8 @@ export function useVehicleReadyNotifications() {
 export function useMaintenanceNotifications() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
+  return useMutation(
+    ({
       customerId,
       data,
       channel,
@@ -375,10 +382,12 @@ export function useMaintenanceNotifications() {
       data: Parameters<typeof sendMaintenanceDue>[1];
       channel?: NotificationChannel;
     }) => sendMaintenanceDue(customerId, data, channel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(notificationKeys.lists());
+      },
+    }
+  );
 }
 
 // ==========================================
@@ -414,23 +423,23 @@ export function useRealtimeNotifications(
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    
+
     try {
       const eventSource = new EventSource(
         `/api/notifications/sse?userId=${encodeURIComponent(userId)}&tenantId=${encodeURIComponent(tenantId)}`
       );
-      
+
       eventSourceRef.current = eventSource;
 
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
+
           if (data.type === 'notification:new') {
             // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });
-            
+            queryClient.invalidateQueries(notificationKeys.lists());
+            queryClient.invalidateQueries(notificationKeys.unread());
+
             // Call callback if provided
             onNotification?.(data);
           }
@@ -443,7 +452,7 @@ export function useRealtimeNotifications(
         console.error('SSE error:', error);
         eventSource.close();
         eventSourceRef.current = null;
-        
+
         // Attempt to reconnect after 5 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
           if (isBrowser) {
@@ -495,17 +504,17 @@ export function usePrefetchNotifications() {
   const queryClient = useQueryClient();
 
   const prefetchNotification = async (id: string) => {
-    await queryClient.prefetchQuery({
-      queryKey: notificationKeys.detail(id),
-      queryFn: () => getNotificationById(id),
-    });
+    await queryClient.prefetchQuery(
+      notificationKeys.detail(id),
+      () => getNotificationById(id)
+    );
   };
 
   const prefetchHistory = async (params: NotificationHistoryParams = {}) => {
-    await queryClient.prefetchQuery({
-      queryKey: notificationKeys.list(params),
-      queryFn: () => getNotificationHistory(params),
-    });
+    await queryClient.prefetchQuery(
+      notificationKeys.list(params),
+      () => getNotificationHistory(params as unknown as Parameters<typeof getNotificationHistory>[0])
+    );
   };
 
   return {
@@ -545,30 +554,30 @@ export interface UseNotificationsReturn {
  * Safe for SSR - all client-side effects are guarded
  */
 function useNotifications(options: UseNotificationsOptions = {}): UseNotificationsReturn {
-  const { 
-    userOnly = false, 
-    onNotification, 
+  const {
+    userOnly = false,
+    onNotification,
     userId,
     tenantId,
-    enableRealtime = false 
+    enableRealtime = false
   } = options;
-  
+
   const [isRealtimeConnected, setIsRealtimeConnected] = React.useState(false);
-  
+
   // Get notification history
   const { data: historyData, isLoading, error, refetch } = useNotificationHistory({});
-  
+
   // Get unread count
   const { data: unreadCountData } = useUnreadCount();
-  
+
   // Get mutations
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
   const deleteNotificationMutation = useDeleteNotification();
-  
+
   // Setup real-time notifications
   const { connect } = useRealtimeNotifications(onNotification);
-  
+
   // Connect to SSE on mount (client-side only) - with proper guards
   useEffect(() => {
     // Only connect if explicitly enabled and we have required IDs
@@ -580,29 +589,30 @@ function useNotifications(options: UseNotificationsOptions = {}): UseNotificatio
     if (!isBrowser) {
       return;
     }
-    
+
     setIsRealtimeConnected(true);
     const disconnect = connect(userId, tenantId);
-    
+
     return () => {
       disconnect();
       setIsRealtimeConnected(false);
     };
   }, [connect, userId, tenantId, enableRealtime]);
-  
-  const notifications = historyData?.notifications || [];
-  const unreadCount = unreadCountData || 0;
-  
+
+  const historyRecord = historyData as unknown as Record<string, unknown> | undefined;
+  const notifications = ((historyRecord?.notifications || []) as unknown as Notification[]);
+  const unreadCount = (unreadCountData as number) || 0;
+
   return {
     notifications,
     unreadCount,
     isLoading,
-    error: error || null,
+    error: (error as Error) || null,
     markAsRead: async (id: string) => {
       await markAsReadMutation.mutateAsync(id);
     },
     markAllAsRead: async () => {
-      await markAllAsReadMutation.mutateAsync();
+      await markAllAsReadMutation.mutateAsync(undefined);
     },
     deleteNotification: async (id: string) => {
       await deleteNotificationMutation.mutateAsync(id);

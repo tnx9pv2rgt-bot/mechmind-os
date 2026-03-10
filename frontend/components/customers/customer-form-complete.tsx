@@ -551,7 +551,9 @@ export function CustomerFormComplete() {
 // STEP 0: CUSTOMER TYPE SELECTOR
 // ============================================================================
 
-function Step0CustomerType({ watch, setValue }: { watch: any; setValue: any }) {
+function Step0CustomerType(props: Record<string, unknown>) {
+  const watch = props.watch as (name: string) => string;
+  const setValue = props.setValue as (name: string, value: unknown) => void;
   const customerType = watch('customerType')
   
   return (

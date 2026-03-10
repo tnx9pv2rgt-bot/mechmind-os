@@ -320,8 +320,8 @@ export function buildStepperAria(props: {
   totalSteps: number;
   stepTitles: string[];
 }): {
-  container: React.HTMLAttributes<HTMLDivElement>;
-  step: (index: number) => React.HTMLAttributes<HTMLDivElement>;
+  container: React.HTMLAttributes<HTMLElement>;
+  step: (index: number) => React.HTMLAttributes<HTMLElement>;
 } {
   const { stepperId, currentStep, totalSteps, stepTitles } = props;
 

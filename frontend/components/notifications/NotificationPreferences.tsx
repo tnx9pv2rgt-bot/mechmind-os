@@ -126,22 +126,25 @@ export function NotificationPreferences({
   const [hasChanges, setHasChanges] = useState(false);
 
   // Fetch preferences
-  const { data: preferences, isLoading } = useQuery({
-    queryKey: ['notification-preferences', customerId],
-    queryFn: () => getNotificationPreferences(customerId),
-    enabled: !!customerId,
-  });
+  const { data: preferences, isLoading } = useQuery(
+    ['notification-preferences', customerId],
+    async () => {
+      const data = await getNotificationPreferences(customerId);
+      return data as unknown as NotificationPreferencesType;
+    },
+    { enabled: !!customerId }
+  );
 
   // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: updateNotificationPreferences,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['notification-preferences', customerId],
-      });
-      setHasChanges(false);
-    },
-  });
+  const updateMutation = useMutation(
+    (data: unknown) => updateNotificationPreferences(data),
+    {
+      onSuccess: () => {
+        void queryClient.invalidateQueries(['notification-preferences', customerId]);
+        setHasChanges(false);
+      },
+    }
+  );
 
   // Initialize local state
   useEffect(() => {

@@ -306,7 +306,6 @@ export function FinancialDashboard() {
         <StatCard
           title="Crediti da Incassare"
           value={formatCurrency(totalOutstanding)}
-          count={mockOutstandingReceivables.length}
           icon={AlertCircle}
           changeType="negative"
           description={`${mockOutstandingReceivables.length} fatture scadute`}

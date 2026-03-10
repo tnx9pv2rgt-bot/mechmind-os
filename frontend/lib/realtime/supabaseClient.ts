@@ -67,7 +67,7 @@ const supabaseOptions = {
  *   .subscribe()
  * ```
  */
-export const supabase: SupabaseClient = createClient(
+export const supabase = createClient(
   supabaseUrl || '',
   supabaseAnonKey || '',
   supabaseOptions

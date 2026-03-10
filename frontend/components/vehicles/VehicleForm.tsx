@@ -39,10 +39,30 @@ import {
   type VINLookupResult
 } from '@/lib/validations/vehicle'
 
-interface VehicleFormProps {
-  onSubmit: (data: VehicleFormValues) => Promise<void>
+/** Local form values with English field names matching the form */
+interface VehicleFormLocalValues {
+  customerId: string;
+  licensePlate: string;
+  make: string;
+  model: string;
+  year?: number;
+  vin: string;
+  mileage?: number;
+  fuelType?: string;
+  engineSize?: number;
+  powerKw?: number;
+  color: string;
+  lastServiceDate: string;
+  nextServiceDate: string;
+  registrationDate: string;
+  insuranceExpiry: string;
+  notes: string;
+}
+
+export interface VehicleFormProps {
+  onSubmit: (data: VehicleFormLocalValues) => Promise<void>
   onCancel?: () => void
-  initialData?: Partial<VehicleFormValues>
+  initialData?: Partial<VehicleFormLocalValues>
   customers?: Array<{ id: string; name: string }>
 }
 
@@ -86,8 +106,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
   const [vinResult, setVinResult] = useState<VINLookupResult | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const form = useForm<VehicleFormValues>({
-    resolver: zodResolver(vehicleSchema),
+  const form = useForm({
     defaultValues: {
       customerId: initialData?.customerId || '',
       licensePlate: initialData?.licensePlate || '',
@@ -130,7 +149,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
         if (result.make) form.setValue('make', result.make)
         if (result.model) form.setValue('model', result.model)
         if (result.year) form.setValue('year', result.year)
-        if (result.fuelType) form.setValue('fuelType', result.fuelType as any)
+        if (result.fuelType) form.setValue('fuelType', result.fuelType)
         if (result.engineSize) form.setValue('engineSize', result.engineSize)
         if (result.powerKw) form.setValue('powerKw', result.powerKw)
       } else {
@@ -141,7 +160,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
     }
   }
 
-  const handleSubmit = async (data: VehicleFormValues) => {
+  const handleSubmit = async (data: VehicleFormLocalValues) => {
     setStatus('loading')
     setErrorMessage('')
     

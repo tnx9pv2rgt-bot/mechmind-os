@@ -138,7 +138,7 @@ export const ConditionalStepRenderer: React.FC<ConditionalStepRendererProps> = (
   );
 
   // Ottieni il componente per lo step corrente
-  const StepComponent = stepComponents[currentStepId] || DefaultStepComponent;
+  const StepComponent = (stepComponents as unknown as Record<string, React.FC<Record<string, unknown>>>)[currentStepId] || DefaultStepComponent;
 
   // Handler per next con direction
   const handleNext = useCallback(() => {

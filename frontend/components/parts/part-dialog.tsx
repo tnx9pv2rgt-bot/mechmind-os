@@ -31,7 +31,7 @@ export function PartDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const handleSubmit = async (data: PartFormData) => {
+  const handleSubmit = async (data: Record<string, unknown>) => {
     setIsSubmitting(true)
     
     // Simula chiamata API
@@ -43,7 +43,7 @@ export function PartDialog({
     setShowSuccess(true)
     
     // Notifica il parent
-    onPartCreated?.(data)
+    onPartCreated?.(data as PartFormData)
     
     // Chiudi dopo 2 secondi
     setTimeout(() => {
@@ -142,7 +142,6 @@ export function PartDialog({
                     initialData={initialData}
                     onSubmit={handleSubmit}
                     onCancel={handleCancel}
-                    isLoading={isSubmitting}
                   />
                 </div>
               </motion.div>
@@ -163,10 +162,10 @@ export function PartDialogCompact({
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (data: PartFormData) => {
+  const handleSubmit = async (data: Record<string, unknown>) => {
     setIsSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    onPartCreated?.(data)
+    onPartCreated?.(data as PartFormData)
     setIsSubmitting(false)
     setIsOpen(false)
   }
@@ -188,7 +187,6 @@ export function PartDialogCompact({
           <PartForm
             onSubmit={handleSubmit}
             onCancel={() => setIsOpen(false)}
-            isLoading={isSubmitting}
           />
         </div>
       </DialogContent>

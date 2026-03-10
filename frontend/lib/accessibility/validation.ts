@@ -299,7 +299,7 @@ export function validateForm<T extends Record<string, unknown>>(
     ValidationRule<unknown>[]
   ][]) {
     const result = validateField(values[field], rules);
-    results[field] = result;
+    (results as Record<string, ValidationResult>)[field as string] = result;
     if (!result.isValid) {
       formIsValid = false;
     }

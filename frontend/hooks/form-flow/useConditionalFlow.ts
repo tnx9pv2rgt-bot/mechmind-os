@@ -23,7 +23,6 @@ import {
   getPreviousValidStep,
   getNextValidStep,
   validateStep,
-  getOptimizedStepId,
 } from '@/lib/formFlow/conditionalLogic';
 import {
   syncWithURL,
@@ -39,6 +38,7 @@ import {
   saveFormState,
   loadFormState,
   clearFormState,
+  getOptimizedStepId,
 } from '@/lib/formFlow/utils';
 
 const DEFAULT_URL_SYNC: URLSyncOptions = {

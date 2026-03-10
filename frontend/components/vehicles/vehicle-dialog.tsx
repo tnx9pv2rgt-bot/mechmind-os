@@ -32,7 +32,7 @@ export function VehicleDialog({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: VehicleFormData) => {
+  const handleSubmit = async (data: unknown) => {
     setIsLoading(true)
     
     try {
@@ -40,7 +40,7 @@ export function VehicleDialog({
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       console.log('New vehicle:', data)
-      onSuccess?.(data)
+      onSuccess?.(data as VehicleFormData)
       setOpen(false)
     } catch (error) {
       console.error('Error creating vehicle:', error)
@@ -83,7 +83,6 @@ export function VehicleDialog({
           <VehicleForm
             onSubmit={handleSubmit}
             onCancel={handleCancel}
-            isLoading={isLoading}
           />
         </div>
       </DialogContent>
@@ -102,12 +101,12 @@ export function VehicleDialogInline({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: VehicleFormData) => {
+  const handleSubmit = async (data: unknown) => {
     setIsLoading(true)
     
     try {
       await new Promise(resolve => setTimeout(resolve, 1000))
-      onSuccess?.(data)
+      onSuccess?.(data as VehicleFormData)
       setOpen(false)
     } catch (error) {
       console.error('Error:', error)
@@ -138,7 +137,6 @@ export function VehicleDialogInline({
           <VehicleForm
             onSubmit={handleSubmit}
             onCancel={() => setOpen(false)}
-            isLoading={isLoading}
           />
         </div>
       </DialogContent>
@@ -159,12 +157,12 @@ export function VehicleQuickAddDialog({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: VehicleFormData) => {
+  const handleSubmit = async (data: unknown) => {
     setIsLoading(true)
     
     try {
       await new Promise(resolve => setTimeout(resolve, 1000))
-      onSuccess?.(data)
+      onSuccess?.(data as VehicleFormData)
       setOpen(false)
     } catch (error) {
       console.error('Error:', error)
@@ -193,10 +191,9 @@ export function VehicleQuickAddDialog({
         
         <div className="p-6 md:p-8">
           <VehicleForm
-            initialData={{ clienteId: customerId }}
+            initialData={{ customerId: customerId }}
             onSubmit={handleSubmit}
             onCancel={() => setOpen(false)}
-            isLoading={isLoading}
           />
         </div>
       </DialogContent>

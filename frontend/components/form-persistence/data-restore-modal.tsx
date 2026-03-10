@@ -53,6 +53,7 @@ export function DataRestoreModal({
   if (!showRestoreModal) return null;
 
   const getTimeMessage = (): string => {
+    if (daysSinceSave == null) return '';
     if (daysSinceSave === 0) return 'Oggi';
     if (daysSinceSave === 1) return 'Ieri';
     if (daysSinceSave < 7) return `${daysSinceSave} giorni fa`;

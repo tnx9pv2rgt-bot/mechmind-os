@@ -37,7 +37,7 @@ import { WarrantyType, WarrantyTypeValues } from "@/lib/services/warrantyService
 
 const warrantyFormSchema = z.object({
   vehicleId: z.string().min(1, "Vehicle is required"),
-  type: z.enum(WarrantyTypeValues),
+  type: z.enum(WarrantyTypeValues as [string, ...string[]]),
   provider: z.string().min(1, "Provider is required"),
   startDate: z.date({
     required_error: "Start date is required",

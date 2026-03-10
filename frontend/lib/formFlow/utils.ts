@@ -109,28 +109,30 @@ export function createFormFlowEvents(): {
   ) => void;
   emit: <K extends keyof FormFlowEvents>(event: K, data: FormFlowEvents[K]) => void;
 } {
-  const handlers: { [K in keyof FormFlowEvents]?: Set<(data: FormFlowEvents[K]) => void> } = {};
-  
+  // Use Record with unknown handler sets to avoid generic indexing issues
+  const handlers: Record<string, Set<(data: unknown) => void>> = {};
+
   return {
     on: <K extends keyof FormFlowEvents>(
       event: K,
       handler: (data: FormFlowEvents[K]) => void
     ) => {
-      if (!handlers[event]) {
-        handlers[event] = new Set();
+      const key = event as string;
+      if (!handlers[key]) {
+        handlers[key] = new Set();
       }
-      handlers[event]!.add(handler);
+      handlers[key].add(handler as (data: unknown) => void);
     },
-    
+
     off: <K extends keyof FormFlowEvents>(
       event: K,
       handler: (data: FormFlowEvents[K]) => void
     ) => {
-      handlers[event]?.delete(handler);
+      handlers[event as string]?.delete(handler as (data: unknown) => void);
     },
-    
+
     emit: <K extends keyof FormFlowEvents>(event: K, data: FormFlowEvents[K]) => {
-      handlers[event]?.forEach((handler) => handler(data));
+      handlers[event as string]?.forEach((handler) => handler(data));
     },
   };
 }

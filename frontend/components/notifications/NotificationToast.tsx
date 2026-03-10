@@ -11,23 +11,31 @@ import {
   X,
   Bell
 } from 'lucide-react';
-import { Notification, NotificationType } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
+interface ToastNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead?: boolean;
+}
+
 interface NotificationToastProps {
-  notification: Notification;
+  notification: ToastNotification;
   onClose: () => void;
   duration?: number;
 }
 
 interface ToastContainerProps {
-  notifications: Notification[];
+  notifications: ToastNotification[];
   onDismiss: (id: string) => void;
   maxVisible?: number;
 }
 
 // Icon mapping for notification types
-const notificationIcons: Record<NotificationType, React.ElementType> = {
+const notificationIcons: Record<string, React.ElementType> = {
   booking_created: Calendar,
   booking_confirmed: CheckCircle,
   booking_cancelled: XCircle,
@@ -38,7 +46,7 @@ const notificationIcons: Record<NotificationType, React.ElementType> = {
 };
 
 // Color mapping for notification types
-const notificationColors: Record<NotificationType, string> = {
+const notificationColors: Record<string, string> = {
   booking_created: 'bg-blue-500',
   booking_confirmed: 'bg-green-500',
   booking_cancelled: 'bg-red-500',
@@ -49,7 +57,7 @@ const notificationColors: Record<NotificationType, string> = {
 };
 
 // Border color mapping
-const notificationBorderColors: Record<NotificationType, string> = {
+const notificationBorderColors: Record<string, string> = {
   booking_created: 'border-blue-200',
   booking_confirmed: 'border-green-200',
   booking_cancelled: 'border-red-200',
@@ -60,7 +68,7 @@ const notificationBorderColors: Record<NotificationType, string> = {
 };
 
 // Background color mapping
-const notificationBgColors: Record<NotificationType, string> = {
+const notificationBgColors: Record<string, string> = {
   booking_created: 'bg-blue-50',
   booking_confirmed: 'bg-green-50',
   booking_cancelled: 'bg-red-50',
@@ -210,7 +218,7 @@ export function ToastContainer({
  * Hook to manage toast notifications
  */
 export function useToastNotifications(
-  notifications: Notification[],
+  notifications: ToastNotification[],
   onMarkAsRead: (id: string) => void
 ) {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());

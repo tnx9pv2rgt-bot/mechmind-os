@@ -94,7 +94,7 @@ export function base64URLToBuffer(base64URL: string): ArrayBuffer {
  * Converte stringa in ArrayBuffer (per user ID)
  */
 export function stringToBuffer(str: string): ArrayBuffer {
-  return new TextEncoder().encode(str)
+  return new TextEncoder().encode(str).buffer as ArrayBuffer
 }
 
 // ============================================

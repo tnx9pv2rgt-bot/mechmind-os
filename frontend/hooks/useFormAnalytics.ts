@@ -19,6 +19,9 @@ import {
   type FormPerformanceMetrics,
 } from '../lib/analytics/form-analytics';
 
+// Re-export types for consumers
+export type { AnalyticsMetrics, FormPerformanceMetrics } from '../lib/analytics/form-analytics';
+
 // ============================================
 // USE FORM FUNNEL
 // ============================================
@@ -148,7 +151,7 @@ export const useABTest = (options: UseABTestOptions): UseABTestReturn => {
     abTestRef.current = new ABTestFramework({
       experimentId: options.experimentId,
       ...options.config,
-    });
+    } as ABTestConfig);
   }
 
   const variant = abTestRef.current.getVariant();

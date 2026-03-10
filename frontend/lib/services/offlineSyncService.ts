@@ -522,7 +522,6 @@ async function processSingleItem(item: OfflineSyncQueueItem): Promise<SyncResult
       await markItemCompleted(item.id)
     } else if (result.conflict) {
       await markItemConflict(item.id)
-      conflicts++
     } else {
       await markItemFailed(item.id, result.error || 'Unknown error')
     }
@@ -981,7 +980,7 @@ export async function registerBackgroundSync(tag = 'inspection-sync'): Promise<b
 
   try {
     const registration = await navigator.serviceWorker.ready
-    await registration.sync.register(tag)
+    await (registration as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register(tag)
     return true
   } catch (error) {
     console.error('[OfflineSync] Background sync registration failed:', error)
