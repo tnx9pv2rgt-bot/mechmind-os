@@ -26,7 +26,7 @@ interface CallRecording {
   recordedAt: Date;
   durationSeconds: number;
   direction: string;
-  customerId: string;
+  customerId: string | null;
   tenantId: string;
 }
 
@@ -55,8 +55,8 @@ type VehicleWithServiceTracking = Vehicle & {
  * Extended Booking with invoice relation and extra fields
  */
 type BookingWithInvoices = Booking & {
-  invoices: Invoice[];
-  // Extended fields not in current schema
+  Invoice: Invoice[];
+  invoices?: Invoice[]; // alias
   estimatedDurationMinutes?: number;
   totalCostCents?: bigint | null;
   paymentStatus?: string;
@@ -227,13 +227,16 @@ export class GdprExportService {
           vehicles: true,
           bookings: {
             include: {
-              invoices: true,
+              Invoice: true,
             },
             orderBy: { createdAt: 'desc' },
           },
         },
       });
-    });
+    }) as (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
+      vehicles: VehicleWithServiceTracking[];
+      bookings: BookingWithInvoices[];
+    }) | null;
 
     if (!customer) {
       throw new NotFoundException(`Customer ${customerId} not found`);
@@ -256,12 +259,14 @@ export class GdprExportService {
     });
 
     // Decrypt PII for export
-    const decryptedPhone = this.encryption.decrypt(customer.phoneEncrypted);
+    const decryptedPhone = customer.phoneEncrypted
+      ? this.encryption.decrypt(customer.phoneEncrypted.toString())
+      : undefined;
     const decryptedEmail = customer.emailEncrypted
-      ? this.encryption.decrypt(customer.emailEncrypted)
+      ? this.encryption.decrypt(customer.emailEncrypted.toString())
       : undefined;
     const decryptedName = customer.nameEncrypted
-      ? this.encryption.decrypt(customer.nameEncrypted)
+      ? this.encryption.decrypt(customer.nameEncrypted.toString())
       : undefined;
 
     const exportId = `export-${Date.now()}-${customerId.substring(0, 8)}`;
@@ -309,7 +314,7 @@ export class GdprExportService {
       })),
 
       invoices: customer.bookings.flatMap((b: BookingWithInvoices) =>
-        b.invoices.map((i: Invoice) => ({
+        (b.Invoice || []).map((i: Invoice) => ({
           id: i.id,
           createdAt: i.createdAt,
           totalCents: i.totalCents,
@@ -355,12 +360,12 @@ export class GdprExportService {
           action: 'DATA_EXPORT_CREATED',
           tableName: 'customers_encrypted',
           recordId: customerId,
-          newValues: {
+          newValues: JSON.stringify({
             exportId,
             format,
             requestId,
             recordCount: exportData.metadata.totalRecords,
-          },
+          }),
           createdAt: exportDate,
         },
       });
@@ -404,19 +409,24 @@ export class GdprExportService {
           bookings: true,
         },
       });
-    });
+    }) as (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
+      vehicles: Vehicle[];
+      bookings: Booking[];
+    }) | null;
 
     if (!customer) {
       throw new NotFoundException(`Customer ${customerId} not found`);
     }
 
     // Decrypt PII
-    const decryptedPhone = this.encryption.decrypt(customer.phoneEncrypted);
+    const decryptedPhone = customer.phoneEncrypted
+      ? this.encryption.decrypt(customer.phoneEncrypted.toString())
+      : undefined;
     const decryptedEmail = customer.emailEncrypted
-      ? this.encryption.decrypt(customer.emailEncrypted)
+      ? this.encryption.decrypt(customer.emailEncrypted.toString())
       : undefined;
     const decryptedName = customer.nameEncrypted
-      ? this.encryption.decrypt(customer.nameEncrypted)
+      ? this.encryption.decrypt(customer.nameEncrypted.toString())
       : undefined;
 
     return {

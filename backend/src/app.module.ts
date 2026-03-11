@@ -15,11 +15,12 @@ import { ObdModule } from './obd/obd.module';
 import { PartsModule } from './parts/parts.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { IotModule } from './iot/iot.module';
-import { FleetModule } from './fleet/fleet.module';
-import { TireModule } from './tire/tire.module';
-import { EstimateModule } from './estimate/estimate.module';
-import { LaborGuideModule } from './labor-guide/labor-guide.module';
-import { AccountingModule } from './accounting/accounting.module';
+// TODO: Enable when Prisma models are added
+// import { FleetModule } from './fleet/fleet.module';
+// import { TireModule } from './tire/tire.module';
+// import { EstimateModule } from './estimate/estimate.module';
+// import { LaborGuideModule } from './labor-guide/labor-guide.module';
+// import { AccountingModule } from './accounting/accounting.module';
 import { AdminModule } from './admin/admin.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -57,11 +58,12 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     PartsModule,
     SubscriptionModule,
     IotModule,
-    FleetModule,
-    TireModule,
-    EstimateModule,
-    LaborGuideModule,
-    AccountingModule,
+    // TODO: Enable when Prisma models are added
+    // FleetModule,
+    // TireModule,
+    // EstimateModule,
+    // LaborGuideModule,
+    // AccountingModule,
     AdminModule,
   ],
   providers: [

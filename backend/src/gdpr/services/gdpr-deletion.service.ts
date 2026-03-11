@@ -159,7 +159,6 @@ export class GdprDeletionService {
         where: { id: requestId },
         data: {
           status: 'IN_PROGRESS',
-          updatedAt: new Date(),
         },
       });
     });
@@ -292,12 +291,12 @@ export class GdprDeletionService {
           action: 'IDENTITY_VERIFICATION',
           tableName: 'customers_encrypted',
           recordId: customerId,
-          newValues: {
+          newValues: JSON.stringify({
             verified,
             confidence,
             methods,
             score: confidenceScore,
-          },
+          }),
           createdAt: verifiedAt,
         },
       });
@@ -341,12 +340,15 @@ export class GdprDeletionService {
           vehicles: true,
           bookings: {
             include: {
-              invoices: true,
+              Invoice: true,
             },
           },
         },
       });
-    });
+    }) as (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
+      vehicles: Vehicle[];
+      bookings: BookingWithCost[];
+    }) | null;
 
     if (!customerData) {
       throw new NotFoundException(`Customer ${customerId} not found`);
@@ -365,8 +367,6 @@ export class GdprDeletionService {
           createdAt: customerData.createdAt,
           gdprConsent: customerData.gdprConsent,
           gdprConsentDate: customerData.gdprConsentDate,
-          // Note: PII is not included in snapshot for security
-          // Only metadata and consent records are preserved
         },
         vehicles: customerData.vehicles.map((v: Vehicle) => ({
           id: v.id,
@@ -413,11 +413,11 @@ export class GdprDeletionService {
           action: 'DELETION_SNAPSHOT_CREATED',
           tableName: 'customers_encrypted',
           recordId: customerId,
-          newValues: {
+          newValues: JSON.stringify({
             snapshotId,
             expiresAt,
             recordCount: snapshotContent.data.totalRecords,
-          },
+          }),
           createdAt,
         },
       });
@@ -501,12 +501,12 @@ export class GdprDeletionService {
             action: 'CUSTOMER_ANONYMIZED',
             tableName: 'customers_encrypted',
             recordId: customerId,
-            oldValues: { wasActive: true },
-            newValues: {
+            oldValues: JSON.stringify({ wasActive: true }),
+            newValues: JSON.stringify({
               anonymized: true,
               anonymizedAt,
               requestId,
-            },
+            }),
             createdAt: anonymizedAt,
           },
         });
@@ -613,11 +613,11 @@ export class GdprDeletionService {
               action: 'CALL_RECORDINGS_DELETED',
               tableName: 'call_recordings',
               recordId: customerId,
-              newValues: {
+              newValues: JSON.stringify({
                 deletedCount,
                 storageReclaimedBytes: storageReclaimed,
                 failedCount: failedDeletions.length,
-              },
+              }),
               createdAt: new Date(),
             },
           });

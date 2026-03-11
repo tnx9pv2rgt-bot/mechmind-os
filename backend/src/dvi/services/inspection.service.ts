@@ -418,7 +418,7 @@ export class InspectionService {
       doc.fontSize(10);
 
       if (inspection.findings.length === 0) {
-        doc.text('No issues found.', { italic: true });
+        doc.font('Helvetica-Oblique').text('No issues found.').font('Helvetica');
       } else {
         for (const finding of inspection.findings) {
           const severityColor =

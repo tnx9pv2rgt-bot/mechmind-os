@@ -5,7 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": false,
-    "tsConfigPath": "tsconfig.json"
+    "tsConfigPath": "tsconfig.build.json"
   },
   "projects": {
     "mechmind-os-backend": {
@@ -14,7 +14,7 @@
       "entryFile": "main",
       "sourceRoot": "src",
       "compilerOptions": {
-        "tsConfigPath": "tsconfig.json"
+        "tsConfigPath": "tsconfig.build.json"
       }
     }
   }

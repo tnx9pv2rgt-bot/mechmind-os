@@ -12,12 +12,18 @@
   "exclude": [
     "node_modules",
     "test",
+    "tests",
     "dist",
     "**/*.spec.ts",
     "**/*.test.ts",
     "**/__tests__/**",
     "**/coverage/**",
     "**/templates/**",
-    "src/config/**"
+    "src/config/env.ts",
+    "src/accounting/**",
+    "src/estimate/**",
+    "src/fleet/**",
+    "src/labor-guide/**",
+    "src/tire/**"
   ]
 }

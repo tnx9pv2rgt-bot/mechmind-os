@@ -414,7 +414,7 @@ export class EstimateService {
 
     for (const line of lines) {
       subtotal += line.totalCents;
-      vat += BigInt(Math.round(Number(line.totalCents) * line.vatRate));
+      vat += BigInt(Math.round(Number(line.totalCents) * Number(line.vatRate)));
     }
 
     const discount = estimate?.discountCents ?? BigInt(0);

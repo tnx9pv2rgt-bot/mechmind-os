@@ -10,9 +10,13 @@ import {
   KeyRound, Car, Wrench, Users, BarChart3, Clock, ShieldCheck,
   Building2
 } from 'lucide-react';
-import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser';
+import Script from 'next/script';
+import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
+// Google Client ID from env
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 // Utility
 function cn(...inputs: ClassValue[]) {
@@ -199,6 +203,102 @@ function PasskeyButton({ onClick, isLoading, loadingText }: { onClick: () => voi
   );
 }
 
+// Google Sign-In Button
+function GoogleSignInButton({ onSuccess, isLoading }: { onSuccess: (credential: string) => void; isLoading: boolean }) {
+  const [gsiReady, setGsiReady] = useState(false);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || typeof window === 'undefined') return;
+
+    // Define the callback globally
+    (window as unknown as Record<string, unknown>).__handleGoogleSignIn = (response: { credential: string }) => {
+      onSuccess(response.credential);
+    };
+
+    // Check if GSI is already loaded
+    if ((window as unknown as Record<string, unknown>).google) {
+      setGsiReady(true);
+    }
+  }, [onSuccess]);
+
+  useEffect(() => {
+    if (!gsiReady || !GOOGLE_CLIENT_ID) return;
+
+    const google = (window as unknown as Record<string, unknown>).google as {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void;
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void;
+        };
+      };
+    };
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: (window as unknown as Record<string, unknown>).__handleGoogleSignIn,
+      auto_select: false,
+      itp_support: true,
+    });
+
+    const buttonEl = document.getElementById('google-signin-btn');
+    if (buttonEl) {
+      google.accounts.id.renderButton(buttonEl, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'pill',
+        width: 380,
+        logo_alignment: 'left',
+        locale: 'it',
+      });
+    }
+  }, [gsiReady]);
+
+  if (!GOOGLE_CLIENT_ID) return null;
+
+  return (
+    <>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onLoad={() => setGsiReady(true)}
+      />
+      <div className="w-full">
+        {isLoading ? (
+          <div className="flex h-11 w-full items-center justify-center rounded-full border border-foreground/10 bg-white">
+            <Loader2 className="h-5 w-5 animate-spin text-apple-gray" />
+          </div>
+        ) : (
+          <div id="google-signin-btn" className="flex justify-center [&>div]:w-full" />
+        )}
+      </div>
+    </>
+  );
+}
+
+// OAuth Buttons Section (Google only)
+function OAuthButtons({ onGoogleLogin, isLoadingGoogle }: {
+  onGoogleLogin: (credential: string) => void;
+  isLoadingGoogle: boolean;
+}) {
+  if (!GOOGLE_CLIENT_ID) return null;
+
+  return (
+    <div className="space-y-3">
+      <GoogleSignInButton onSuccess={onGoogleLogin} isLoading={isLoadingGoogle} />
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-foreground/10" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white/70 px-3 text-apple-gray">oppure</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Magic Link Form
 function MagicLinkForm() {
   const [email, setEmail] = useState('');
@@ -289,6 +389,54 @@ function MagicLinkForm() {
   );
 }
 
+// Passkey Registration Prompt (shown after successful password login)
+function PasskeyRegistrationPrompt({
+  onRegister,
+  onSkip,
+  isRegistering
+}: {
+  onRegister: () => void;
+  onSkip: () => void;
+  isRegistering: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-center space-y-4"
+    >
+      <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/30">
+        <Fingerprint className="h-8 w-8" />
+      </div>
+      <h3 className="text-lg font-semibold text-apple-dark">
+        Attiva accesso rapido
+      </h3>
+      <p className="text-sm text-apple-gray leading-relaxed">
+        Vuoi attivare Touch ID / Face ID per accedere più velocemente la prossima volta?
+      </p>
+      <div className="space-y-3 pt-2">
+        <AppleButton
+          onClick={onRegister}
+          isLoading={isRegistering}
+          variant="passkey"
+          size="lg"
+          className="w-full gap-2"
+        >
+          <Fingerprint className="h-5 w-5" />
+          Attiva Touch ID / Face ID
+        </AppleButton>
+        <button
+          onClick={onSkip}
+          disabled={isRegistering}
+          className="w-full text-sm text-apple-gray hover:text-apple-dark transition-colors py-2"
+        >
+          Forse dopo
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 // Password Form
 function PasswordForm() {
   const [tenantSlug, setTenantSlug] = useState('');
@@ -298,7 +446,61 @@ function PasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [coldStartHint, setColdStartHint] = useState(false);
+  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+  const [supportsPasskey, setSupportsPasskey] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSupportsPasskey(browserSupportsWebAuthn());
+    }
+  }, []);
+
+  const handleRegisterPasskey = async () => {
+    setIsRegisteringPasskey(true);
+    try {
+      // Get registration options (requires auth cookie set from login)
+      const optionsRes = await fetch('/api/auth/passkey/register-options', {
+        method: 'POST',
+      });
+      if (!optionsRes.ok) {
+        // Skip silently - user can register later from settings
+        router.push('/dashboard');
+        return;
+      }
+      const optionsData = (await optionsRes.json()) as { options: Parameters<typeof startRegistration>[0]; sessionId: string };
+
+      // Trigger biometric enrollment
+      const attestation = await startRegistration(optionsData.options);
+
+      // Verify and save
+      const verifyRes = await fetch('/api/auth/passkey/register-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attestation,
+          sessionId: optionsData.sessionId,
+          deviceName: navigator.userAgent.includes('iPhone') ? 'iPhone' :
+                      navigator.userAgent.includes('iPad') ? 'iPad' :
+                      navigator.userAgent.includes('Mac') ? 'Mac' : 'Dispositivo',
+        }),
+      });
+
+      if (verifyRes.ok) {
+        // Passkey registered - go to dashboard
+        router.push('/dashboard');
+      } else {
+        // Registration failed - just go to dashboard
+        router.push('/dashboard');
+      }
+    } catch {
+      // User cancelled or error - just go to dashboard
+      router.push('/dashboard');
+    } finally {
+      setIsRegisteringPasskey(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,6 +523,9 @@ function PasswordForm() {
       if (res.ok) {
         if (data.requiresMFA) {
           router.push('/auth/mfa/verify?token=' + data.tempToken);
+        } else if (supportsPasskey) {
+          // Show passkey registration prompt before redirecting
+          setShowPasskeyPrompt(true);
         } else {
           router.push('/dashboard');
         }
@@ -336,6 +541,16 @@ function PasswordForm() {
       setIsLoading(false);
     }
   };
+
+  if (showPasskeyPrompt) {
+    return (
+      <PasskeyRegistrationPrompt
+        onRegister={handleRegisterPasskey}
+        onSkip={() => router.push('/dashboard')}
+        isRegistering={isRegisteringPasskey}
+      />
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -518,6 +733,9 @@ interface AuthFormProps {
   passkeyLoadingText: string;
   passkeyError: string;
   handlePasskeyLogin: () => void;
+  handleGoogleLogin: (credential: string) => void;
+  isLoadingGoogle: boolean;
+  oauthError: string;
 }
 
 function AuthForm({
@@ -526,7 +744,10 @@ function AuthForm({
   isLoadingPasskey,
   passkeyLoadingText,
   passkeyError,
-  handlePasskeyLogin
+  handlePasskeyLogin,
+  handleGoogleLogin,
+  isLoadingGoogle,
+  oauthError,
 }: AuthFormProps) {
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible" className="w-full max-w-[420px]">
@@ -544,11 +765,14 @@ function AuthForm({
             <p className="mt-2 text-body text-apple-gray">Accedi al tuo gestionale</p>
           </motion.div>
 
-          {/* Passkey Primary Button */}
+          {/* Google Sign-In (primary) */}
           <motion.div variants={itemVariants} className="mb-6">
-            <PasskeyButton onClick={handlePasskeyLogin} isLoading={isLoadingPasskey} loadingText={passkeyLoadingText} />
-            {passkeyError && (
-              <p className="mt-3 text-center text-sm text-apple-red">{passkeyError}</p>
+            <OAuthButtons
+              onGoogleLogin={handleGoogleLogin}
+              isLoadingGoogle={isLoadingGoogle}
+            />
+            {oauthError && (
+              <p className="mt-2 text-center text-sm text-apple-red">{oauthError}</p>
             )}
           </motion.div>
 
@@ -628,12 +852,38 @@ export default function AuthPage() {
   const [isLoadingPasskey, setIsLoadingPasskey] = useState(false);
   const [passkeyLoadingText, setPasskeyLoadingText] = useState('');
   const [passkeyError, setPasskeyError] = useState('');
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const [oauthError, setOauthError] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const handleGoogleLogin = useCallback(async (credential: string) => {
+    setIsLoadingGoogle(true);
+    setOauthError('');
+    try {
+      const res = await fetch('/api/auth/oauth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      });
+      const data = (await res.json()) as { success?: boolean; error?: string | { message?: string } };
+      if (res.ok && data.success) {
+        router.push('/dashboard');
+      } else {
+        const errMsg = typeof data.error === 'string' ? data.error : (data.error as { message?: string })?.message;
+        setOauthError(errMsg || 'Account non trovato. Contatta l\'amministratore.');
+      }
+    } catch {
+      setOauthError('Errore di rete. Riprova.');
+    } finally {
+      setIsLoadingGoogle(false);
+    }
+  }, [router]);
+
 
   const attemptPasskeyLogin = useCallback(async (isRetry: boolean): Promise<boolean> => {
     setPasskeyLoadingText('Connessione al server...');
@@ -696,8 +946,25 @@ export default function AuthPage() {
     try {
       await attemptPasskeyLogin(false);
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'NotAllowedError') {
-        setPasskeyError('Autenticazione annullata. Riprova.');
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          setPasskeyError('Autenticazione annullata. Riprova.');
+        } else if (
+          err.name === 'AbortError' ||
+          err.message?.includes('No credentials') ||
+          err.message?.includes('not found') ||
+          err.message?.includes('no matching') ||
+          err.message?.includes('empty') ||
+          err.name === 'InvalidStateError'
+        ) {
+          setPasskeyError(
+            'Nessuna passkey trovata su questo dispositivo. Accedi con email e password, poi potrai attivare Touch ID / Face ID dalle impostazioni.'
+          );
+        } else {
+          setPasskeyError(
+            'Nessuna passkey registrata per questo dispositivo. Accedi con password e attiva Touch ID / Face ID.'
+          );
+        }
       } else {
         setPasskeyError('Errore durante l\'accesso. Riprova.');
       }
@@ -727,6 +994,9 @@ export default function AuthPage() {
             passkeyLoadingText={passkeyLoadingText}
             passkeyError={passkeyError}
             handlePasskeyLogin={handlePasskeyLogin}
+            handleGoogleLogin={handleGoogleLogin}
+            isLoadingGoogle={isLoadingGoogle}
+            oauthError={oauthError}
           />
         </div>
       </div>

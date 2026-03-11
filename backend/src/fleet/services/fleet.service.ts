@@ -58,7 +58,7 @@ export class FleetService {
         tenantId,
       },
       include: {
-        fleetVehicles: {
+        vehicles: {
           where: { removedAt: null },
           include: { vehicle: true },
         },
@@ -119,7 +119,7 @@ export class FleetService {
 
     // Check vehicle exists for this tenant
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { id: vehicleId, tenantId },
+      where: { id: vehicleId },
     });
 
     if (!vehicle) {

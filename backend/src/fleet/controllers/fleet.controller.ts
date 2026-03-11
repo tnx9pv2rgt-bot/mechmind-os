@@ -43,7 +43,7 @@ export class FleetController {
     @Body() dto: CreateFleetDto,
   ): Promise<FleetResponseDto> {
     const fleet = await this.fleetService.create(tenantId, dto);
-    return fleet as FleetResponseDto;
+    return fleet as unknown as FleetResponseDto;
   }
 
   @Get()
@@ -51,7 +51,7 @@ export class FleetController {
   @ApiResponse({ status: 200, description: 'List of fleets', type: [FleetResponseDto] })
   async findAll(@CurrentUser('tenantId') tenantId: string): Promise<FleetResponseDto[]> {
     const fleets = await this.fleetService.findAll(tenantId);
-    return fleets as FleetResponseDto[];
+    return fleets as unknown as FleetResponseDto[];
   }
 
   @Get(':id')
@@ -64,7 +64,7 @@ export class FleetController {
     @Param('id') id: string,
   ): Promise<FleetResponseDto> {
     const fleet = await this.fleetService.findById(tenantId, id);
-    return fleet as FleetResponseDto;
+    return fleet as unknown as FleetResponseDto;
   }
 
   @Patch(':id')
@@ -79,7 +79,7 @@ export class FleetController {
     @Body() dto: UpdateFleetDto,
   ): Promise<FleetResponseDto> {
     const fleet = await this.fleetService.update(tenantId, id, dto);
-    return fleet as FleetResponseDto;
+    return fleet as unknown as FleetResponseDto;
   }
 
   @Delete(':id')
@@ -94,7 +94,7 @@ export class FleetController {
     @Param('id') id: string,
   ): Promise<FleetResponseDto> {
     const fleet = await this.fleetService.delete(tenantId, id);
-    return fleet as FleetResponseDto;
+    return fleet as unknown as FleetResponseDto;
   }
 
   @Post(':fleetId/vehicles')

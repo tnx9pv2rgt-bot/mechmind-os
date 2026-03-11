@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../common/services/prisma.service';
 import { LoggerService } from '../../common/services/logger.service';
-import { AccountingProvider, AccountingSyncStatus, AccountingSync } from '@prisma/client';
+import { AccountingProvider, AccountingSyncStatus, AccountingSync, Prisma } from '@prisma/client';
 import { AccountingSyncFilterDto } from '../dto/accounting.dto';
 
 // ==================== PROVIDER INTERFACE ====================
@@ -129,7 +129,7 @@ export class AccountingService {
         entityId: invoiceId,
         status: AccountingSyncStatus.PENDING,
         direction: 'OUTBOUND',
-        payload: { invoiceId } as Record<string, unknown>,
+        payload: { invoiceId } as Prisma.InputJsonValue,
       },
     });
 
@@ -165,7 +165,7 @@ export class AccountingService {
         entityId: customerId,
         status: AccountingSyncStatus.PENDING,
         direction: 'OUTBOUND',
-        payload: { customerId } as Record<string, unknown>,
+        payload: { customerId } as Prisma.InputJsonValue,
       },
     });
 
@@ -327,7 +327,7 @@ export class AccountingService {
           externalId: result.externalId ?? syncRecord.externalId,
           syncedAt: result.success ? new Date() : undefined,
           error: result.error ?? null,
-          response: result.response as Record<string, unknown> | undefined,
+          response: (result.response as Prisma.InputJsonValue) ?? undefined,
         },
       });
 

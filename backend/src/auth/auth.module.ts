@@ -15,6 +15,8 @@ import { PasskeyService } from './passkey/passkey.service';
 import { PasskeyController } from './passkey/passkey.controller';
 import { MagicLinkService } from './magic-link/magic-link.service';
 import { MagicLinkController } from './magic-link/magic-link.controller';
+import { OAuthService } from './oauth/oauth.service';
+import { OAuthController } from './oauth/oauth.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
@@ -34,12 +36,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, MfaController, PasskeyController, MagicLinkController],
+  controllers: [AuthController, MfaController, PasskeyController, MagicLinkController, OAuthController],
   providers: [
     AuthService,
     MfaService,
     PasskeyService,
     MagicLinkService,
+    OAuthService,
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
@@ -49,6 +52,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     MfaService,
     PasskeyService,
     MagicLinkService,
+    OAuthService,
     JwtAuthGuard,
     RolesGuard,
     JwtModule,
