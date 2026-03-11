@@ -72,3 +72,4 @@ terraform.rc
 
 # Embedded repos
 mechmind-os/
+frontend/.env.vercel

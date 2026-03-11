@@ -39,10 +39,13 @@ async function bootstrap() {
   // CORS - require explicit origin, no wildcard with credentials
   const corsOrigin = configService.get<string>('CORS_ORIGIN');
   if (!corsOrigin) {
-    logger.warn('CORS_ORIGIN not configured - defaulting to localhost only');
+    logger.warn('CORS_ORIGIN not configured - defaulting to localhost + Vercel');
   }
+  const corsOrigins = corsOrigin
+    ? corsOrigin.split(',').map(o => o.trim())
+    : ['http://localhost:3001', 'https://mechmind-os.vercel.app'];
   app.enableCors({
-    origin: corsOrigin ? corsOrigin.split(',').map(o => o.trim()) : ['http://localhost:3001'],
+    origin: corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

@@ -20,6 +20,7 @@ import { TireModule } from './tire/tire.module';
 import { EstimateModule } from './estimate/estimate.module';
 import { LaborGuideModule } from './labor-guide/labor-guide.module';
 import { AccountingModule } from './accounting/accounting.module';
+import { AdminModule } from './admin/admin.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
@@ -61,6 +62,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     EstimateModule,
     LaborGuideModule,
     AccountingModule,
+    AdminModule,
   ],
   providers: [
     // Global validation pipe
