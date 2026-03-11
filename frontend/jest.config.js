@@ -45,9 +45,11 @@ module.exports = {
   // Coverage
   collectCoverageFrom: [
     'lib/accessibility/**/*.{ts,tsx}',
+    'lib/auth/**/*.{ts,tsx}',
     'lib/services/**/*.{ts,tsx}',
     'components/accessibility/**/*.{ts,tsx}',
     'hooks/**/*.{ts,tsx}',
+    'app/auth/**/*.{ts,tsx}',
     '!**/node_modules/**',
     '!**/*.d.ts',
     '!**/__tests__/**',

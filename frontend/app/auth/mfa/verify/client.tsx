@@ -83,26 +83,27 @@ export function MFAVerifyPageClient() {
   const handleVerify = async () => {
     setIsLoading(true)
     setError('')
-    
+
     try {
-      const userId = searchParams.get('userId')
+      const tempToken = searchParams.get('token')
       const res = await fetch('/api/auth/mfa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token: code })
+        body: JSON.stringify({ tempToken, token: code })
       })
-      
-      const data = await res.json()
-      
+
+      const data = (await res.json()) as { success?: boolean; error?: string | { code?: string; message?: string } }
+
       if (data.success) {
         router.push('/dashboard')
       } else {
-        setError('Codice non valido. Riprova.')
+        const errMsg = typeof data.error === 'string' ? data.error : data.error?.message
+        setError(errMsg || 'Codice non valido. Riprova.')
       }
     } catch (e) {
-      setError('Errore di connessione')
+      setError('Errore di connessione. Riprova.')
     }
-    
+
     setIsLoading(false)
   }
 

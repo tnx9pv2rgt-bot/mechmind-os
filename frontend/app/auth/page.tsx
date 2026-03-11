@@ -143,19 +143,27 @@ function AppleButton({ children, variant = 'primary', size = 'default', isLoadin
 }
 
 // Passkey Button (56px - dirty hands friendly)
-function PasskeyButton({ onClick, isLoading }: { onClick: () => void; isLoading: boolean }) {
+function PasskeyButton({ onClick, isLoading, loadingText }: { onClick: () => void; isLoading: boolean; loadingText?: string }) {
   const [supportsPasskey, setSupportsPasskey] = useState(false);
-  
+  const [checked, setChecked] = useState(false);
+
   useEffect(() => {
     // Check passkey support only on client
     if (typeof window !== 'undefined') {
       import('@simplewebauthn/browser').then(({ browserSupportsWebAuthn }) => {
         setSupportsPasskey(browserSupportsWebAuthn());
+        setChecked(true);
       });
     }
   }, []);
-  
-  // Don't render until we know the support status to avoid hydration mismatch
+
+  // Show skeleton while checking support
+  if (!checked) {
+    return (
+      <div className="h-16 w-full animate-pulse rounded-2xl bg-blue-100/50" />
+    );
+  }
+
   if (!supportsPasskey) {
     return (
       <div className="rounded-2xl bg-amber-50 p-4 text-center text-sm text-amber-700">
@@ -168,12 +176,17 @@ function PasskeyButton({ onClick, isLoading }: { onClick: () => void; isLoading:
   return (
     <AppleButton
       onClick={onClick}
-      isLoading={isLoading}
+      disabled={isLoading}
       variant="passkey"
       size="xl"
       className="w-full gap-3"
     >
-      {!isLoading && (
+      {isLoading ? (
+        <>
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm">{loadingText || 'Caricamento...'}</span>
+        </>
+      ) : (
         <>
           <Fingerprint className="h-6 w-6" />
           <div className="flex flex-col items-start">
@@ -193,6 +206,7 @@ function MagicLinkForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState('');
+  const [coldStartHint, setColdStartHint] = useState(false);
 
   const handleSend = async () => {
     if (!email) {
@@ -206,6 +220,10 @@ function MagicLinkForm() {
 
     setIsLoading(true);
     setError('');
+    setColdStartHint(false);
+
+    // Show cold start hint after 5 seconds
+    const coldStartTimer = setTimeout(() => setColdStartHint(true), 5000);
 
     try {
       const res = await fetch('/api/auth/magic-link/send', {
@@ -217,12 +235,15 @@ function MagicLinkForm() {
       if (res.ok) {
         setIsSent(true);
       } else {
-        const data = await res.json();
-        setError(data.error || 'Errore durante l\'invio');
+        const data = (await res.json()) as { error?: string | { code?: string; message?: string } };
+        const errMsg = typeof data.error === 'string' ? data.error : data.error?.message;
+        setError(errMsg || 'Errore durante l\'invio');
       }
     } catch (err) {
       setError('Errore di rete. Riprova.');
     } finally {
+      clearTimeout(coldStartTimer);
+      setColdStartHint(false);
       setIsLoading(false);
     }
   };
@@ -259,6 +280,11 @@ function MagicLinkForm() {
       <AppleButton onClick={handleSend} isLoading={isLoading} disabled={!email || !tenantSlug} className="w-full">
         Invia link di accesso <ArrowRight className="ml-2 h-5 w-5" />
       </AppleButton>
+      {coldStartHint && (
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-xs text-apple-gray">
+          Il server si sta avviando...
+        </motion.p>
+      )}
     </div>
   );
 }
@@ -271,12 +297,17 @@ function PasswordForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [coldStartHint, setColdStartHint] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setColdStartHint(false);
+
+    // Show cold start hint after 5 seconds
+    const coldStartTimer = setTimeout(() => setColdStartHint(true), 5000);
 
     try {
       const res = await fetch('/api/auth/password/login', {
@@ -285,7 +316,7 @@ function PasswordForm() {
         body: JSON.stringify({ email, password, tenantSlug }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { requiresMFA?: boolean; tempToken?: string; error?: string | { code?: string; message?: string } };
 
       if (res.ok) {
         if (data.requiresMFA) {
@@ -294,11 +325,14 @@ function PasswordForm() {
           router.push('/dashboard');
         }
       } else {
-        setError(data.error || 'Credenziali non valide');
+        const errMsg = typeof data.error === 'string' ? data.error : data.error?.message;
+        setError(errMsg || 'Credenziali non valide');
       }
     } catch (err) {
       setError('Errore di rete. Riprova.');
     } finally {
+      clearTimeout(coldStartTimer);
+      setColdStartHint(false);
       setIsLoading(false);
     }
   };
@@ -354,6 +388,11 @@ function PasswordForm() {
       <AppleButton type="submit" size="lg" isLoading={isLoading} className="w-full">
         {isLoading ? 'Accesso in corso...' : 'Accedi con password'}
       </AppleButton>
+      {coldStartHint && (
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-xs text-apple-gray">
+          Il server si sta avviando...
+        </motion.p>
+      )}
     </form>
   );
 }
@@ -476,6 +515,7 @@ interface AuthFormProps {
   activeMethod: 'passkey' | 'magic' | 'password';
   setActiveMethod: (method: 'passkey' | 'magic' | 'password') => void;
   isLoadingPasskey: boolean;
+  passkeyLoadingText: string;
   passkeyError: string;
   handlePasskeyLogin: () => void;
 }
@@ -484,6 +524,7 @@ function AuthForm({
   activeMethod,
   setActiveMethod,
   isLoadingPasskey,
+  passkeyLoadingText,
   passkeyError,
   handlePasskeyLogin
 }: AuthFormProps) {
@@ -505,7 +546,7 @@ function AuthForm({
 
           {/* Passkey Primary Button */}
           <motion.div variants={itemVariants} className="mb-6">
-            <PasskeyButton onClick={handlePasskeyLogin} isLoading={isLoadingPasskey} />
+            <PasskeyButton onClick={handlePasskeyLogin} isLoading={isLoadingPasskey} loadingText={passkeyLoadingText} />
             {passkeyError && (
               <p className="mt-3 text-center text-sm text-apple-red">{passkeyError}</p>
             )}
@@ -585,6 +626,7 @@ function AuthForm({
 export default function AuthPage() {
   const [activeMethod, setActiveMethod] = useState<'passkey' | 'magic' | 'password'>('passkey');
   const [isLoadingPasskey, setIsLoadingPasskey] = useState(false);
+  const [passkeyLoadingText, setPasskeyLoadingText] = useState('');
   const [passkeyError, setPasskeyError] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
@@ -593,34 +635,66 @@ export default function AuthPage() {
     setIsMounted(true);
   }, []);
 
+  const attemptPasskeyLogin = useCallback(async (isRetry: boolean): Promise<boolean> => {
+    setPasskeyLoadingText('Connessione al server...');
+
+    // Get authentication options
+    const optionsRes = await fetch('/api/auth/passkey/authenticate-options');
+
+    if (optionsRes.status === 502 || optionsRes.status === 503) {
+      if (!isRetry) {
+        // Auto-retry once after 3 seconds on backend unavailable
+        setPasskeyLoadingText('Il server si sta avviando. Nuovo tentativo...');
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        return attemptPasskeyLogin(true);
+      }
+      setPasskeyError('Il server si sta avviando. Riprova tra qualche secondo.');
+      return false;
+    }
+
+    if (!optionsRes.ok) {
+      const optionsData = (await optionsRes.json().catch(() => ({}))) as { error?: string | { message?: string } };
+      const errMsg = typeof optionsData.error === 'string' ? optionsData.error : optionsData.error?.message;
+      if (errMsg && errMsg.toLowerCase().includes('no passkey')) {
+        setPasskeyError('Nessuna passkey registrata. Accedi con un altro metodo e registra una passkey dalle impostazioni.');
+      } else {
+        setPasskeyError(errMsg || 'Impossibile avviare l\'autenticazione.');
+      }
+      return false;
+    }
+
+    const options = await optionsRes.json();
+
+    // Start authentication (triggers FaceID/TouchID)
+    setPasskeyLoadingText('Attivazione biometrica...');
+    const { startAuthentication } = await import('@simplewebauthn/browser');
+    const assertion = await startAuthentication(options as Parameters<typeof startAuthentication>[0]);
+
+    // Verify
+    setPasskeyLoadingText('Verifica in corso...');
+    const verifyRes = await fetch('/api/auth/passkey/authenticate-verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assertion, sessionId: (options as Record<string, unknown>).sessionId }),
+    });
+
+    const data = (await verifyRes.json()) as { success?: boolean; error?: string };
+
+    if (verifyRes.ok && data.success) {
+      router.push('/dashboard');
+      return true;
+    }
+
+    setPasskeyError(data.error || 'Autenticazione fallita');
+    return false;
+  }, [router]);
+
   const handlePasskeyLogin = useCallback(async () => {
     setIsLoadingPasskey(true);
     setPasskeyError('');
 
     try {
-      // Get authentication options
-      const optionsRes = await fetch('/api/auth/passkey/authenticate-options');
-      if (!optionsRes.ok) throw new Error('Failed to get options');
-      const options = await optionsRes.json();
-
-      // Start authentication (triggers FaceID/TouchID)
-      const { startAuthentication } = await import('@simplewebauthn/browser');
-      const assertion = await startAuthentication(options);
-
-      // Verify
-      const verifyRes = await fetch('/api/auth/passkey/authenticate-verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assertion, sessionId: options.sessionId }),
-      });
-
-      const data = await verifyRes.json();
-
-      if (verifyRes.ok && data.success) {
-        router.push('/dashboard');
-      } else {
-        setPasskeyError(data.error || 'Autenticazione fallita');
-      }
+      await attemptPasskeyLogin(false);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'NotAllowedError') {
         setPasskeyError('Autenticazione annullata. Riprova.');
@@ -629,8 +703,9 @@ export default function AuthPage() {
       }
     } finally {
       setIsLoadingPasskey(false);
+      setPasskeyLoadingText('');
     }
-  }, [router]);
+  }, [attemptPasskeyLogin]);
 
   // During SSR and initial hydration, render a consistent layout
   // that doesn't depend on window dimensions
@@ -645,10 +720,11 @@ export default function AuthPage() {
         }} />
         
         <div className="relative z-10 w-full max-w-md">
-          <AuthForm 
+          <AuthForm
             activeMethod={activeMethod}
             setActiveMethod={setActiveMethod}
             isLoadingPasskey={isLoadingPasskey}
+            passkeyLoadingText={passkeyLoadingText}
             passkeyError={passkeyError}
             handlePasskeyLogin={handlePasskeyLogin}
           />
