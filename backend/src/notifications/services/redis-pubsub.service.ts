@@ -39,6 +39,22 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getRedisConfig(): RedisConfig {
+    // Parse REDIS_URL if available, otherwise fall back to individual vars
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+    if (redisUrl) {
+      try {
+        const url = new URL(redisUrl);
+        return {
+          host: url.hostname,
+          port: parseInt(url.port, 10) || 6379,
+          password: url.password || undefined,
+          db: parseInt(url.pathname.slice(1), 10) || 0,
+          tls: url.protocol === 'rediss:',
+        };
+      } catch {
+        // Fall through to individual config
+      }
+    }
     return {
       host: this.configService.get<string>('REDIS_HOST', 'localhost'),
       port: this.configService.get<number>('REDIS_PORT', 6379),
