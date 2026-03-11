@@ -15,22 +15,39 @@ import { TenantGuard } from './guard/tenant.guard';
     ConfigModule,
     BullModule.forRootAsync({
       useFactory: () => {
-        const redisHost = process.env.REDIS_HOST;
-        if (!redisHost) {
-          console.warn('[BullMQ] REDIS_HOST not configured - queues will not process jobs');
-        }
-
         const connection: Record<string, unknown> = {
-          host: redisHost || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD || undefined,
-          db: parseInt(process.env.REDIS_DB || '0'),
           lazyConnect: true,
           maxRetriesPerRequest: 3,
         };
 
-        if (process.env.REDIS_TLS === 'true') {
-          connection.tls = {};
+        const redisUrl = process.env.REDIS_URL;
+        if (redisUrl) {
+          try {
+            const url = new URL(redisUrl);
+            connection.host = url.hostname;
+            connection.port = parseInt(url.port, 10) || 6379;
+            connection.password = url.password || undefined;
+            connection.db = parseInt(url.pathname.slice(1), 10) || 0;
+            if (url.protocol === 'rediss:') {
+              connection.tls = {};
+            }
+          } catch {
+            console.warn('[BullMQ] Invalid REDIS_URL, falling back to individual vars');
+          }
+        }
+
+        if (!connection.host) {
+          const redisHost = process.env.REDIS_HOST;
+          if (!redisHost) {
+            console.warn('[BullMQ] REDIS_HOST not configured - queues will not process jobs');
+          }
+          connection.host = redisHost || 'localhost';
+          connection.port = parseInt(process.env.REDIS_PORT || '6379');
+          connection.password = process.env.REDIS_PASSWORD || undefined;
+          connection.db = parseInt(process.env.REDIS_DB || '0');
+          if (process.env.REDIS_TLS === 'true') {
+            connection.tls = {};
+          }
         }
 
         return {
