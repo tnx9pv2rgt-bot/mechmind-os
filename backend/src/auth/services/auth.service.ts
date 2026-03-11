@@ -75,6 +75,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid tenant or tenant is inactive');
     }
 
+    // Set tenant context for RLS before querying users
+    await this.prisma.setTenantContext(tenant.id);
+
     // Find user within tenant
     const user = await this.prisma.user.findFirst({
       where: {
