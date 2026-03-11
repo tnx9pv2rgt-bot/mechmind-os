@@ -3,6 +3,8 @@
  * Get all overdue maintenance schedules
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getOverdueItems } from '@/lib/services/maintenanceService'
 

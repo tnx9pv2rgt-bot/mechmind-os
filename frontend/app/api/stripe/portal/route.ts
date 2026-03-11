@@ -3,6 +3,8 @@
  * Create a Stripe customer portal session
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createPortalSession } from '@/lib/stripe/server'
 import { prisma } from '@/lib/prisma'

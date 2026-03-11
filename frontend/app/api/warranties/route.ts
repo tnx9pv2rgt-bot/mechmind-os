@@ -1,10 +1,12 @@
 /**
  * GET /api/warranties
  * List all warranties with optional filters
- * 
+ *
  * POST /api/warranties
  * Create a new warranty
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server'
 import { 

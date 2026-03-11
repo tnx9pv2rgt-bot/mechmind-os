@@ -3,6 +3,8 @@
  * Create a Stripe checkout session for subscription
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { 
   createCheckoutSession, 

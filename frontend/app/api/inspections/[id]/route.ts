@@ -5,6 +5,8 @@
  * DELETE /api/inspections/[id] - Delete inspection
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getInspectionById,

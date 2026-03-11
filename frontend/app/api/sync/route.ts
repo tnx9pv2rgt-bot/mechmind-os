@@ -3,6 +3,8 @@
  * Process the offline sync queue
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import {
   processSyncQueue,

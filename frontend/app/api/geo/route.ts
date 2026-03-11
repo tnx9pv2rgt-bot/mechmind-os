@@ -5,6 +5,7 @@ export const runtime = 'edge'
 
 // Revalidation interval (1 hour)
 export const revalidate = 3600
+export const dynamic = 'force-dynamic';
 
 // Edge regions for optimal performance
 export const preferredRegion = ['iad1', 'fra1', 'hkg1', 'syd1']

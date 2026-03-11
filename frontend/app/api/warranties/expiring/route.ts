@@ -3,6 +3,8 @@
  * Get warranties expiring within specified days
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { 
   warrantyService,

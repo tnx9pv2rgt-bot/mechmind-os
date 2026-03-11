@@ -4,6 +4,8 @@
  * Should be called daily by a scheduler (Vercel Cron, etc.)
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { processGracePeriods } from '@/lib/stripe/grace-period'
 

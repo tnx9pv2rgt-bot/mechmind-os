@@ -4,6 +4,8 @@
  * PUT: Update customer profile
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'

@@ -3,6 +3,8 @@
  * Resolve tenant by subdomain, domain, or ID
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 

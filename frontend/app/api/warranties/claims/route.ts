@@ -3,6 +3,8 @@
  * Get all claims with optional status filter
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { 
   warrantyService,

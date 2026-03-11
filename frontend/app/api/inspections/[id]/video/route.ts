@@ -3,6 +3,8 @@
  * Upload and process video for inspection
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import {
   uploadVideo,

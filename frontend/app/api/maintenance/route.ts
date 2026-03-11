@@ -1,10 +1,12 @@
 /**
  * GET /api/maintenance
  * List maintenance schedules with filtering and pagination
- * 
+ *
  * POST /api/maintenance
  * Create a new maintenance schedule
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server'
 import {

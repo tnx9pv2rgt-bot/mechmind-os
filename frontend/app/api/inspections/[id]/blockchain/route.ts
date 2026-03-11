@@ -4,6 +4,8 @@
  * GET /api/inspections/[id]/blockchain - Verify inspection on blockchain
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import {
   deployInspectionContract,

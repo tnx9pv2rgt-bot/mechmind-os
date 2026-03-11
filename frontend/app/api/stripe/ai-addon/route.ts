@@ -3,6 +3,8 @@
  * Toggle AI addon on/off
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { toggleAiAddon } from '@/lib/stripe/server'
 import { prisma } from '@/lib/prisma'

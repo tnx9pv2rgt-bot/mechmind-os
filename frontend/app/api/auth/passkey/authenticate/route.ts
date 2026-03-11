@@ -3,6 +3,8 @@
  * Verifica l'autenticazione con passkey
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 

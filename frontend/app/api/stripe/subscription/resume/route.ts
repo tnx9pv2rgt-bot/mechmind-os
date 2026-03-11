@@ -3,6 +3,8 @@
  * Resume a canceled subscription
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { resumeSubscription } from '@/lib/stripe/server'
 import { prisma } from '@/lib/prisma'
