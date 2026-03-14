@@ -738,7 +738,11 @@ export class VehicleTwinService {
     for (const component of components) {
       const serviceHistory = historiesByComponent.get(component.componentId) || [];
 
-      const prediction = this.predictComponentFailure(component, serviceHistory, mileage);
+      const prediction = this.predictComponentFailure(
+        component,
+        serviceHistory as { eventType: string; odometer?: number }[],
+        mileage,
+      );
 
       if (prediction.shouldAlert) {
         alerts.push({
