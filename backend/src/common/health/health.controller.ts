@@ -46,16 +46,18 @@ export class HealthController {
         : { status: 'down', error: 'Check failed' };
 
     const allUp = Object.values(checks).every(c => c.status === 'up');
-    const allDown = Object.values(checks).every(c => c.status === 'down');
+    const dbUp = checks.database?.status === 'up';
 
     const result: HealthCheckResult = {
-      status: allUp ? 'ok' : allDown ? 'unhealthy' : 'degraded',
+      status: allUp ? 'ok' : dbUp ? 'degraded' : 'unhealthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       checks,
     };
 
-    const statusCode = allUp ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
+    // Return 200 if DB is up (even with Redis down = degraded)
+    // Only 503 if database is unreachable
+    const statusCode = dbUp ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
     res.status(statusCode).json(result);
   }
 
