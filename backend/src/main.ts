@@ -110,6 +110,17 @@ async function bootstrap() {
   logger.log(`🔒 Environment: ${configService.get('NODE_ENV', 'development')}`);
 }
 
+// Catch unhandled rejections and uncaught exceptions to prevent silent crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', error => {
+  console.error('Uncaught Exception:', error);
+  // Give time for the log to flush, then exit
+  setTimeout(() => process.exit(1), 1000);
+});
+
 bootstrap().catch(error => {
   console.error('Failed to start application:', error);
   process.exit(1);
