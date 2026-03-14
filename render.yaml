@@ -41,3 +41,4 @@ services:
     plan: free
     maxmemoryPolicy: allkeys-lru
     region: frankfurt
+    ipAllowList: []
