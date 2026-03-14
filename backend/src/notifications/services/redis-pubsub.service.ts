@@ -115,10 +115,11 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Redis Pub/Sub service initialized');
     } catch (error) {
       this.logger.error(
-        'Failed to connect to Redis:',
+        'Failed to connect to Redis Pub/Sub:',
         error instanceof Error ? error.message : 'Unknown error',
       );
-      throw error;
+      this.isConnected = false;
+      // Don't throw — app can start without Pub/Sub (SSE/WS will be unavailable)
     }
   }
 
