@@ -29,12 +29,12 @@ services:
         sync: false
       - key: ENCRYPTION_KEY
         sync: false
-      # Redis — uses Render internal service
+      # Redis — uses Render internal service (internal = no TLS, no auth, private network)
       - key: REDIS_URL
         fromService:
           name: nexo-redis
           type: redis
-          property: connectionString
+          property: internalConnectionString
 
   - type: redis
     name: nexo-redis
