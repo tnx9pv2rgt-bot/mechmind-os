@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -34,14 +34,17 @@ export class IntentHandlerService {
     extractedData: ExtractedDataDto,
     vapiCallId: string,
   ): Promise<BookingResult> {
-    this.logger.log(`Handling booking intent for ${customerPhone}`, 'IntentHandlerService');
+    this.logger.log(
+      `Handling booking intent for ${customerPhone.slice(0, 4)}***`,
+      'IntentHandlerService',
+    );
 
     try {
       // Find or create customer
       let customer = await this.customerService.findByPhone(tenantId, customerPhone);
 
       if (!customer) {
-        this.logger.log(`Creating new customer for ${customerPhone}`);
+        this.logger.log(`Creating new customer for ${customerPhone.slice(0, 4)}***`);
         customer = await this.customerService.createFromVoiceCall(
           tenantId,
           customerPhone,
@@ -140,10 +143,11 @@ export class IntentHandlerService {
         message: 'Booking created successfully',
       };
     } catch (error) {
-      this.logger.error(`Failed to handle booking intent: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to handle booking intent: ${errorMessage}`);
       return {
         success: false,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -154,14 +158,17 @@ export class IntentHandlerService {
   async handleStatusCheckIntent(
     tenantId: string,
     customerPhone: string,
-    extractedData: ExtractedDataDto,
+    _extractedData: ExtractedDataDto,
   ): Promise<void> {
-    this.logger.log(`Handling status check for ${customerPhone}`, 'IntentHandlerService');
+    this.logger.log(
+      `Handling status check for ${customerPhone.slice(0, 4)}***`,
+      'IntentHandlerService',
+    );
 
     const customer = await this.customerService.findByPhone(tenantId, customerPhone);
 
     if (!customer) {
-      this.logger.warn(`Customer not found for ${customerPhone}`);
+      this.logger.warn(`Customer not found for ${customerPhone.slice(0, 4)}***`);
       return;
     }
 
@@ -208,7 +215,10 @@ export class IntentHandlerService {
     transcript: string | undefined,
     extractedData: ExtractedDataDto,
   ): Promise<void> {
-    this.logger.log(`Handling complaint from ${customerPhone}`, 'IntentHandlerService');
+    this.logger.log(
+      `Handling complaint from ${customerPhone.slice(0, 4)}***`,
+      'IntentHandlerService',
+    );
 
     const customer = await this.customerService.findByPhone(tenantId, customerPhone);
 
@@ -243,8 +253,8 @@ export class IntentHandlerService {
   private async findNearestAvailableSlot(
     tenantId: string,
     preferredDate: Date,
-    serviceType?: string,
-  ): Promise<any | null> {
+    _serviceType?: string,
+  ): Promise<{ id: string; startTime: Date; endTime: Date; status: string } | null> {
     // Look for slots within 3 days of preferred date
     const startDate = new Date(preferredDate);
     startDate.setHours(0, 0, 0, 0);

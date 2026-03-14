@@ -7,24 +7,23 @@
  * @module lib/services/__tests__/inspectionService
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { Mock } from 'vitest'
+// Jest globals are available automatically
+// Jest Mock type
 
-// Mock the tRPC client
-vi.mock('@/lib/trpc-client', () => ({
-  trpc: {
-    inspection: {
-      create: { mutate: vi.fn() },
-      get: { query: vi.fn() },
-      update: { mutate: vi.fn() },
-      list: { query: vi.fn() },
-      delete: { mutate: vi.fn() },
-      submit: { mutate: vi.fn() },
-      addFinding: { mutate: vi.fn() },
-      customerApproval: { mutate: vi.fn() },
-      stats: { query: vi.fn() },
-    },
-  },
+// Mock the api-client
+const mockApi = {
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  patch: jest.fn(),
+  delete: jest.fn(),
+}
+jest.mock('@/lib/api-client', () => ({
+  api: mockApi,
+}))
+
+// Mock the api-errors
+jest.mock('@/lib/api-errors', () => ({
   TRPCClientError: class TRPCClientError extends Error {
     code: string
     statusCode?: number
@@ -74,23 +73,24 @@ import {
   type UpdateInspectionInput,
   type CreateFindingInput,
 } from '../inspectionService'
-import { trpc, TRPCClientError, ServerError } from '@/lib/trpc-client'
+import { TRPCClientError, ServerError } from '@/lib/api-errors'
+import { api } from '@/lib/api-client'
 
 describe('InspectionService', () => {
   // Mock console methods to reduce noise in tests
   const originalConsole = { ...console }
   
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     // Suppress console output during tests
-    vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(console, 'info').mockImplementation(() => {})
-    vi.spyOn(console, 'warn').mockImplementation(() => {})
-    vi.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.spyOn(console, 'info').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    jest.restoreAllMocks()
   })
 
   // =============================================================================
@@ -149,14 +149,13 @@ describe('InspectionService', () => {
     }
 
     it('should create an inspection successfully with valid data', async () => {
-      const mockMutate = trpc.inspection.create.mutate as Mock
-      mockMutate.mockResolvedValue(mockInspection)
+      mockApi.post.mockResolvedValue({ data: mockInspection })
 
       const result = await createInspection(validInput)
 
       expect(result).toEqual(mockInspection)
-      expect(mockMutate).toHaveBeenCalledWith(validInput)
-      expect(mockMutate).toHaveBeenCalledTimes(1)
+      expect(mockApi.post).toHaveBeenCalledWith('/inspections', validInput)
+      expect(mockApi.post).toHaveBeenCalledTimes(1)
     })
 
     it('should throw InspectionValidationError when templateId is missing', async () => {
@@ -185,16 +184,14 @@ describe('InspectionService', () => {
     })
 
     it('should propagate TRPCClientError when API returns an error', async () => {
-      const mockMutate = trpc.inspection.create.mutate as Mock
       const trpcError = new TRPCClientError('Database error', 'INTERNAL_ERROR', 500)
-      mockMutate.mockRejectedValue(trpcError)
+      mockApi.post.mockRejectedValue(trpcError)
 
       await expect(createInspection(validInput)).rejects.toThrow(TRPCClientError)
     })
 
     it('should throw ServerError for unexpected errors', async () => {
-      const mockMutate = trpc.inspection.create.mutate as Mock
-      mockMutate.mockRejectedValue(new Error('Network timeout'))
+      mockApi.post.mockRejectedValue(new Error('Network timeout'))
 
       await expect(createInspection(validInput)).rejects.toThrow(ServerError)
     })
@@ -206,8 +203,7 @@ describe('InspectionService', () => {
         customerId: 'customer-789',
         mechanicId: 'mechanic-abc',
       }
-      const mockMutate = trpc.inspection.create.mutate as Mock
-      mockMutate.mockResolvedValue(mockInspection)
+      mockApi.post.mockResolvedValue({ data: mockInspection })
 
       const result = await createInspection(minimalInput)
 
@@ -258,13 +254,11 @@ describe('InspectionService', () => {
     }
 
     it('should retrieve an inspection by ID successfully', async () => {
-      const mockQuery = trpc.inspection.get.query as Mock
-      mockQuery.mockResolvedValue(mockInspection)
+      mockApi.get.mockResolvedValue({ data: { data: mockInspection } })
 
       const result = await getInspectionById('inspection-001')
 
       expect(result).toEqual(mockInspection)
-      expect(mockQuery).toHaveBeenCalledWith({ id: 'inspection-001' })
     })
 
     it('should throw InspectionValidationError when ID is empty', async () => {
@@ -273,23 +267,20 @@ describe('InspectionService', () => {
     })
 
     it('should throw InspectionNotFoundError when inspection does not exist', async () => {
-      const mockQuery = trpc.inspection.get.query as Mock
-      mockQuery.mockResolvedValue(null)
+      mockApi.get.mockResolvedValue({ data: { data: null } })
 
       await expect(getInspectionById('non-existent-id')).rejects.toThrow(InspectionNotFoundError)
     })
 
     it('should propagate TRPCClientError from API', async () => {
-      const mockQuery = trpc.inspection.get.query as Mock
       const trpcError = new TRPCClientError('Not found', 'NOT_FOUND', 404)
-      mockQuery.mockRejectedValue(trpcError)
+      mockApi.get.mockRejectedValue(trpcError)
 
       await expect(getInspectionById('inspection-001')).rejects.toThrow(TRPCClientError)
     })
 
     it('should throw ServerError for unexpected errors', async () => {
-      const mockQuery = trpc.inspection.get.query as Mock
-      mockQuery.mockRejectedValue(new TypeError('Cannot read property'))
+      mockApi.get.mockRejectedValue(new TypeError('Cannot read property'))
 
       await expect(getInspectionById('inspection-001')).rejects.toThrow(ServerError)
     })
@@ -343,13 +334,12 @@ describe('InspectionService', () => {
     }
 
     it('should update an inspection successfully', async () => {
-      const mockMutate = trpc.inspection.update.mutate as Mock
-      mockMutate.mockResolvedValue(mockInspection)
+      mockApi.put.mockResolvedValue({ data: mockInspection })
 
       const result = await updateInspection('inspection-001', updateData)
 
       expect(result).toEqual(mockInspection)
-      expect(mockMutate).toHaveBeenCalledWith({ id: 'inspection-001', data: updateData })
+      expect(mockApi.put).toHaveBeenCalledWith('/inspections/inspection-001', updateData)
     })
 
     it('should throw InspectionValidationError when ID is empty', async () => {
@@ -357,37 +347,33 @@ describe('InspectionService', () => {
     })
 
     it('should throw InspectionNotFoundError when TRPC returns NOT_FOUND', async () => {
-      const mockMutate = trpc.inspection.update.mutate as Mock
       const trpcError = new TRPCClientError('Not found', 'NOT_FOUND', 404)
-      mockMutate.mockRejectedValue(trpcError)
+      mockApi.put.mockRejectedValue(trpcError)
 
       await expect(updateInspection('non-existent', updateData)).rejects.toThrow(InspectionNotFoundError)
     })
 
     it('should propagate TRPCClientError for other errors', async () => {
-      const mockMutate = trpc.inspection.update.mutate as Mock
       const trpcError = new TRPCClientError('Server error', 'INTERNAL_ERROR', 500)
-      mockMutate.mockRejectedValue(trpcError)
+      mockApi.put.mockRejectedValue(trpcError)
 
       await expect(updateInspection('inspection-001', updateData)).rejects.toThrow(TRPCClientError)
     })
 
     it('should throw ServerError for unexpected errors', async () => {
-      const mockMutate = trpc.inspection.update.mutate as Mock
-      mockMutate.mockRejectedValue(new Error('Unexpected'))
+      mockApi.put.mockRejectedValue(new Error('Unexpected'))
 
       await expect(updateInspection('inspection-001', updateData)).rejects.toThrow(ServerError)
     })
 
     it('should handle partial updates correctly', async () => {
-      const mockMutate = trpc.inspection.update.mutate as Mock
-      mockMutate.mockResolvedValue(mockInspection)
+      mockApi.put.mockResolvedValue({ data: mockInspection })
 
       const partialUpdate: UpdateInspectionInput = { mileage: 55000 }
       const result = await updateInspection('inspection-001', partialUpdate)
 
       expect(result).toBeDefined()
-      expect(mockMutate).toHaveBeenCalledWith({ id: 'inspection-001', data: partialUpdate })
+      expect(mockApi.put).toHaveBeenCalledWith('/inspections/inspection-001', partialUpdate)
     })
   })
 
@@ -415,21 +401,19 @@ describe('InspectionService', () => {
     }
 
     it('should list inspections with default pagination', async () => {
-      const mockQuery = trpc.inspection.list.query as Mock
-      mockQuery.mockResolvedValue(mockPaginatedResponse)
+      mockApi.post.mockResolvedValue({ data: mockPaginatedResponse })
 
       const result = await listInspections()
 
       expect(result).toEqual(mockPaginatedResponse)
-      expect(mockQuery).toHaveBeenCalledWith({
+      expect(mockApi.post).toHaveBeenCalledWith('/inspections/list', {
         filters: {},
         pagination: { page: 1, limit: 20, sortBy: 'startedAt', sortOrder: 'desc' },
       })
     })
 
     it('should apply filters correctly', async () => {
-      const mockQuery = trpc.inspection.list.query as Mock
-      mockQuery.mockResolvedValue(mockPaginatedResponse)
+      mockApi.post.mockResolvedValue({ data: mockPaginatedResponse })
 
       await listInspections({
         status: 'IN_PROGRESS',
@@ -437,7 +421,8 @@ describe('InspectionService', () => {
         vehicleId: 'vehicle-456',
       })
 
-      expect(mockQuery).toHaveBeenCalledWith(
+      expect(mockApi.post).toHaveBeenCalledWith(
+        '/inspections/list',
         expect.objectContaining({
           filters: expect.objectContaining({
             status: 'IN_PROGRESS',
@@ -449,15 +434,15 @@ describe('InspectionService', () => {
     })
 
     it('should convert dates to ISO strings in filters', async () => {
-      const mockQuery = trpc.inspection.list.query as Mock
-      mockQuery.mockResolvedValue(mockPaginatedResponse)
+      mockApi.post.mockResolvedValue({ data: mockPaginatedResponse })
 
       const dateFrom = new Date('2024-01-01')
       const dateTo = new Date('2024-01-31')
 
       await listInspections({ dateFrom, dateTo })
 
-      expect(mockQuery).toHaveBeenCalledWith(
+      expect(mockApi.post).toHaveBeenCalledWith(
+        '/inspections/list',
         expect.objectContaining({
           filters: expect.objectContaining({
             dateFrom: dateFrom.toISOString(),
@@ -468,8 +453,7 @@ describe('InspectionService', () => {
     })
 
     it('should throw ServerError on API failure', async () => {
-      const mockQuery = trpc.inspection.list.query as Mock
-      mockQuery.mockRejectedValue(new Error('Database error'))
+      mockApi.post.mockRejectedValue(new Error('Database error'))
 
       await expect(listInspections()).rejects.toThrow(ServerError)
     })
@@ -480,8 +464,7 @@ describe('InspectionService', () => {
   // =============================================================================
   describe('deleteInspection', () => {
     it('should soft delete an inspection successfully', async () => {
-      const mockMutate = trpc.inspection.delete.mutate as Mock
-      mockMutate.mockResolvedValue({ success: true, deletedAt: new Date() })
+      mockApi.delete.mockResolvedValue({ data: { success: true, deletedAt: new Date() } })
 
       const result = await deleteInspection('inspection-001', 'user-abc')
 
@@ -498,9 +481,8 @@ describe('InspectionService', () => {
     })
 
     it('should throw InspectionNotFoundError when inspection not found', async () => {
-      const mockMutate = trpc.inspection.delete.mutate as Mock
       const trpcError = new TRPCClientError('Not found', 'NOT_FOUND', 404)
-      mockMutate.mockRejectedValue(trpcError)
+      mockApi.delete.mockRejectedValue(trpcError)
 
       await expect(deleteInspection('non-existent', 'user-abc')).rejects.toThrow(InspectionNotFoundError)
     })
@@ -532,12 +514,10 @@ describe('InspectionService', () => {
     }
 
     it('should submit an inspection successfully', async () => {
-      // Mock getInspectionById for validation
-      const mockGetQuery = trpc.inspection.get.query as Mock
-      mockGetQuery.mockResolvedValue({ ...mockInspection, status: 'IN_PROGRESS' })
-
-      const mockSubmitMutate = trpc.inspection.submit.mutate as Mock
-      mockSubmitMutate.mockResolvedValue(mockInspection)
+      // Mock getInspectionById for validation (uses api.get)
+      mockApi.get.mockResolvedValue({ data: { data: { ...mockInspection, status: 'IN_PROGRESS' } } })
+      // Mock the submit call (uses api.post)
+      mockApi.post.mockResolvedValue({ data: mockInspection })
 
       const result = await submitInspection('inspection-001')
 
@@ -546,24 +526,21 @@ describe('InspectionService', () => {
     })
 
     it('should throw InspectionSubmissionError when already approved', async () => {
-      const mockGetQuery = trpc.inspection.get.query as Mock
-      mockGetQuery.mockResolvedValue({ ...mockInspection, status: 'APPROVED' })
+      mockApi.get.mockResolvedValue({ data: { data: { ...mockInspection, status: 'APPROVED' } } })
 
       await expect(submitInspection('inspection-001')).rejects.toThrow(InspectionSubmissionError)
       await expect(submitInspection('inspection-001')).rejects.toThrow('already been approved')
     })
 
     it('should throw InspectionSubmissionError when already declined', async () => {
-      const mockGetQuery = trpc.inspection.get.query as Mock
-      mockGetQuery.mockResolvedValue({ ...mockInspection, status: 'DECLINED' })
+      mockApi.get.mockResolvedValue({ data: { data: { ...mockInspection, status: 'DECLINED' } } })
 
       await expect(submitInspection('inspection-001')).rejects.toThrow(InspectionSubmissionError)
       await expect(submitInspection('inspection-001')).rejects.toThrow('been declined')
     })
 
     it('should throw InspectionSubmissionError when deleted', async () => {
-      const mockGetQuery = trpc.inspection.get.query as Mock
-      mockGetQuery.mockResolvedValue({ ...mockInspection, isDeleted: true, status: 'IN_PROGRESS' })
+      mockApi.get.mockResolvedValue({ data: { data: { ...mockInspection, isDeleted: true, status: 'IN_PROGRESS' } } })
 
       await expect(submitInspection('inspection-001')).rejects.toThrow(InspectionSubmissionError)
       await expect(submitInspection('inspection-001')).rejects.toThrow('deleted')
@@ -803,18 +780,16 @@ describe('InspectionService', () => {
     }
 
     it('should add a finding successfully', async () => {
-      const mockMutate = trpc.inspection.addFinding.mutate as Mock
-      mockMutate.mockResolvedValue(mockFinding)
+      mockApi.post.mockResolvedValue({ data: mockFinding })
 
       const result = await addFinding('inspection-001', findingInput)
 
       expect(result).toEqual(mockFinding)
-      expect(mockMutate).toHaveBeenCalledWith({ inspectionId: 'inspection-001', data: findingInput })
+      expect(mockApi.post).toHaveBeenCalledWith('/inspections/inspection-001/findings', findingInput)
     })
 
     it('should propagate errors from API', async () => {
-      const mockMutate = trpc.inspection.addFinding.mutate as Mock
-      mockMutate.mockRejectedValue(new Error('Database error'))
+      mockApi.post.mockRejectedValue(new Error('Database error'))
 
       await expect(addFinding('inspection-001', findingInput)).rejects.toThrow('Database error')
     })

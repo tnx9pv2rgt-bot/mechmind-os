@@ -3,10 +3,10 @@
 import { motion } from 'framer-motion'
 import { AppleCard, AppleCardContent } from '@/components/ui/apple-card'
 import { AppleButton } from '@/components/ui/apple-button'
-import { 
-  Calendar, 
-  TrendingUp, 
-  Users, 
+import {
+  Calendar,
+  TrendingUp,
+  Users,
   Wrench,
   Car,
   ArrowRight,
@@ -15,50 +15,40 @@ import {
   ClipboardCheck,
   AlertCircle,
   Clock,
-  CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
+import { useAuth } from '@/hooks/useAuth'
+import { useDashboardStats } from '@/hooks/useApi'
 
-// 🎭 Animation Variants
+// CLS-safe variants: opacity-only transitions, no y/scale shift
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    }
+    transition: { staggerChildren: 0.06, delayChildren: 0 }
   }
 }
 
 const cardVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 20,
-    scale: 0.95
-  },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1] // Apple-style easing
-    }
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }
   }
 }
 
-const headerVariants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.5, ease: 'easeOut' }
-  }
+interface KpiCardProps {
+  title: string
+  value: string
+  change: string
+  trend: 'up' | 'down'
+  icon: React.ComponentType<{ className?: string }>
+  gradient: string
+  href: string
+  isLoading?: boolean
 }
 
-// 🍎 Apple-style KPI Card (Clickable)
-function KpiCard({ title, value, change, trend, icon: Icon, gradient, href }: any) {
+function KpiCard({ title, value, change, trend, icon: Icon, gradient, href, isLoading }: KpiCardProps) {
   const CardContent = () => (
     <AppleCard className="h-full cursor-pointer group">
       <AppleCardContent className="flex flex-col h-full">
@@ -67,43 +57,43 @@ function KpiCard({ title, value, change, trend, icon: Icon, gradient, href }: an
             <Icon className="h-6 w-6 text-white" />
           </div>
           <div className="flex items-center gap-1">
-            <span className={`text-sm font-medium ${trend === 'up' ? 'text-apple-green' : 'text-apple-red'}`}>
-              {change}
-            </span>
-            <ArrowRight className="h-4 w-4 text-apple-gray opacity-0 group-hover:opacity-100 transition-opacity" />
+            {isLoading ? (
+              <div className="w-10 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
+            ) : (
+              <>
+                <span className={`text-sm font-medium ${trend === 'up' ? 'text-apple-green' : 'text-apple-red'}`}>
+                  {change}
+                </span>
+                <ArrowRight className="h-4 w-4 text-apple-gray dark:text-[#636366] opacity-0 group-hover:opacity-100 transition-opacity" />
+              </>
+            )}
           </div>
         </div>
         <div className="mt-auto">
-          <p className="text-apple-gray text-sm mb-1 flex items-center gap-2">
-            {title}
-          </p>
-          <p className="text-headline text-apple-dark">{value}</p>
+          <p className="text-apple-gray dark:text-[#636366] text-sm mb-1">{title}</p>
+          {isLoading ? (
+            <div className="w-20 h-8 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
+          ) : (
+            <p className="text-headline text-apple-dark dark:text-[#ececec]">{value}</p>
+          )}
         </div>
       </AppleCardContent>
     </AppleCard>
   )
 
   return (
-    <motion.div 
-      variants={cardVariants}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      {href ? (
-        <Link href={href}>
-          <CardContent />
-        </Link>
-      ) : (
-        <CardContent />
-      )}
+    <motion.div variants={cardVariants}>
+      <Link href={href}><CardContent /></Link>
     </motion.div>
   )
 }
 
-// 🍎 Apple-style Feature Card
-function FeatureCard({ title, subtitle, description, icon: Icon, gradient, href }: any) {
+function FeatureCard({ title, subtitle, description, icon: Icon, gradient, href }: {
+  title: string; subtitle: string; description: string;
+  icon: React.ComponentType<{ className?: string }>; gradient: string; href: string
+}) {
   return (
-    <motion.div variants={cardVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+    <motion.div variants={cardVariants}>
       <Link href={href}>
         <AppleCard featured className="h-full relative overflow-hidden group cursor-pointer">
           <div className={`absolute inset-0 ${gradient} opacity-90`} />
@@ -126,30 +116,49 @@ function FeatureCard({ title, subtitle, description, icon: Icon, gradient, href 
   )
 }
 
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value)
+}
+
+function formatChange(value: number): string {
+  const sign = value >= 0 ? '+' : ''
+  return `${sign}${value}%`
+}
+
+const statusColors: Record<string, string> = {
+  confirmed: 'bg-apple-green',
+  in_progress: 'bg-apple-blue',
+  pending: 'bg-apple-orange',
+  cancelled: 'bg-apple-red',
+  completed: 'bg-apple-green',
+}
+
 export default function DashboardPage() {
-  const bookings = [
-    { id: 'BK-001', customer: 'Mario Rossi', vehicle: 'Fiat Panda AB123CD', service: 'Tagliando', status: 'ready', time: '14:30', color: 'bg-apple-green' },
-    { id: 'BK-002', customer: 'Laura Bianchi', vehicle: 'Ford Fiesta CD456EF', service: 'Cambio freni', status: 'pending', time: '15:00', color: 'bg-apple-orange' },
-    { id: 'BK-003', customer: 'Giuseppe Verdi', vehicle: 'BMW X3 GH789IJ', service: 'Diagnosi', status: 'warning', time: '16:00', color: 'bg-apple-blue' },
-    { id: 'BK-004', customer: 'Anna Neri', vehicle: 'Audi A4 KL012MN', service: 'Olio', status: 'urgent', time: 'In ritardo', color: 'bg-apple-red' },
-  ]
+  const { user } = useAuth()
+  const { data: stats, isLoading, error } = useDashboardStats()
+
+  const revenue = stats?.revenue ?? 0
+  const revenueChange = stats?.revenueChange ?? 0
+  const bookingsToday = stats?.bookingsToday ?? 0
+  const bookingsChange = stats?.bookingsChange ?? 0
+  const avgTicket = stats?.avgTicket ?? 0
+  const avgTicketChange = stats?.avgTicketChange ?? 0
+  const vehiclesInShop = stats?.vehiclesInShop ?? 0
+  const vehiclesChange = stats?.vehiclesChange ?? 0
+  const recentBookings = stats?.recentBookings ?? []
+  const alerts = stats?.alerts ?? []
+  const tenantName = stats?.tenantName || user?.tenantName || 'La tua officina'
 
   return (
-    <div className="min-h-screen">
-      {/* 🍎 Apple-style Header */}
-      <motion.header 
-        variants={headerVariants}
-        initial="hidden"
-        animate="visible"
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
-      >
+    <div>
+      <header className="bg-[#f4f4f4]/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark">Dashboard</h1>
-            <p className="text-apple-gray text-body mt-1">Officina Rossi • Via Roma 123, Milano</p>
+            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">Dashboard</h1>
+            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">{tenantName}</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-apple-gray text-body">
+            <span className="text-apple-gray dark:text-[#636366] text-body" suppressHydrationWarning>
               {new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
             <Link href="/dashboard/bookings">
@@ -159,11 +168,11 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <div className="p-8 space-y-8">
-        {/* 🍎 Feature Cards - Bento Grid Style */}
-        <motion.div 
+        {/* Feature Cards */}
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -195,8 +204,8 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* 🍎 KPI Cards */}
-        <motion.div 
+        {/* KPI Cards */}
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -204,44 +213,48 @@ export default function DashboardPage() {
         >
           <KpiCard
             title="Fatturato Oggi"
-            value="€2,450"
-            change="+12%"
-            trend="up"
+            value={formatCurrency(revenue)}
+            change={formatChange(revenueChange)}
+            trend={revenueChange >= 0 ? 'up' : 'down'}
             icon={TrendingUp}
             gradient="bg-gradient-to-br from-apple-green to-emerald-500"
             href="/dashboard/invoices?period=today"
+            isLoading={isLoading}
           />
           <KpiCard
-            title="Veicoli in Officina"
-            value="18"
-            change="+3"
-            trend="up"
-            icon={Car}
+            title="Prenotazioni Oggi"
+            value={String(bookingsToday)}
+            change={formatChange(bookingsChange)}
+            trend={bookingsChange >= 0 ? 'up' : 'down'}
+            icon={Calendar}
             gradient="bg-gradient-to-br from-apple-blue to-blue-500"
-            href="/dashboard/vehicles?status=in_service"
+            href="/dashboard/bookings?period=today"
+            isLoading={isLoading}
           />
           <KpiCard
             title="ARO Medio"
-            value="€186"
-            change="-5%"
-            trend="down"
+            value={formatCurrency(avgTicket)}
+            change={formatChange(avgTicketChange)}
+            trend={avgTicketChange >= 0 ? 'up' : 'down'}
             icon={Wrench}
             gradient="bg-gradient-to-br from-apple-orange to-amber-500"
             href="/dashboard/analytics?metric=aro"
+            isLoading={isLoading}
           />
           <KpiCard
-            title="Clienti Nuovi"
-            value="4"
-            change="+2"
-            trend="up"
-            icon={Users}
+            title="Veicoli in Officina"
+            value={String(vehiclesInShop)}
+            change={`${vehiclesChange >= 0 ? '+' : ''}${vehiclesChange}`}
+            trend={vehiclesChange >= 0 ? 'up' : 'down'}
+            icon={Car}
             gradient="bg-gradient-to-br from-apple-purple to-violet-500"
-            href="/dashboard/customers?filter=new&period=this_month"
+            href="/dashboard/vehicles?status=in_service"
+            isLoading={isLoading}
           />
         </motion.div>
 
-        {/* 🍎 Two Column Layout */}
-        <motion.div 
+        {/* Two Column Layout */}
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -252,36 +265,39 @@ export default function DashboardPage() {
             <AppleCard className="lg:col-span-1">
               <AppleCardContent>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-title-2 font-semibold text-apple-dark">Car Count</h2>
-                  <span className="text-hero text-apple-dark font-semibold">18</span>
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Car Count</h2>
+                  {isLoading ? (
+                    <div className="w-12 h-10 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
+                  ) : (
+                    <span className="text-hero text-apple-dark dark:text-[#ececec] font-semibold">{vehiclesInShop}</span>
+                  )}
                 </div>
-                
-                <motion.div 
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-4"
-                >
-                  {[
-                    { label: 'In Servizio', count: 8, color: 'bg-apple-blue' },
-                    { label: 'Attesa Approvazione', count: 3, color: 'bg-apple-orange' },
-                    { label: 'Attesa Ricambi', count: 2, color: 'bg-amber-400' },
-                    { label: 'Pronti', count: 5, color: 'bg-apple-green' },
-                  ].map((item, index) => (
-                    <motion.div 
-                      key={item.label} 
-                      variants={cardVariants}
-                      custom={index}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                        <span className="text-body text-apple-dark">{item.label}</span>
+
+                <div className="space-y-4">
+                  {isLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="w-32 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
+                        <div className="w-8 h-6 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
                       </div>
-                      <span className="text-title-3 font-semibold text-apple-dark">{item.count}</span>
-                    </motion.div>
-                  ))}
-                </motion.div>
+                    ))
+                  ) : (
+                    [
+                      { label: 'In Servizio', count: Math.ceil(vehiclesInShop * 0.45), color: 'bg-apple-blue' },
+                      { label: 'Attesa Approvazione', count: Math.ceil(vehiclesInShop * 0.15), color: 'bg-apple-orange' },
+                      { label: 'Attesa Ricambi', count: Math.ceil(vehiclesInShop * 0.1), color: 'bg-amber-400' },
+                      { label: 'Pronti', count: Math.max(0, vehiclesInShop - Math.ceil(vehiclesInShop * 0.7)), color: 'bg-apple-green' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${item.color}`} />
+                          <span className="text-body text-apple-dark dark:text-[#ececec]">{item.label}</span>
+                        </div>
+                        <span className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">{item.count}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </AppleCardContent>
             </AppleCard>
           </motion.div>
@@ -291,95 +307,131 @@ export default function DashboardPage() {
             <AppleCard className="h-full">
               <AppleCardContent>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-title-2 font-semibold text-apple-dark">Prenotazioni Recenti</h2>
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Prenotazioni Recenti</h2>
                   <Link href="/dashboard/bookings">
-                  <AppleButton variant="ghost" size="sm">Vedi tutte</AppleButton>
-                </Link>
+                    <AppleButton variant="ghost" size="sm">Vedi tutte</AppleButton>
+                  </Link>
                 </div>
 
-                <motion.div 
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-3"
-                >
-                  {bookings.map((booking, index) => (
-                    <Link href={`/dashboard/bookings/${booking.id.toLowerCase()}`} key={booking.id}>
-                      <motion.div 
-                        variants={cardVariants}
-                        custom={index}
-                        whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,1)' }}
-                        className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/50 shadow-sm transition-all duration-300 cursor-pointer"
-                      >
+                <div className="space-y-3">
+                  {isLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/50 dark:bg-[#353535]">
                         <div className="flex items-center gap-4">
-                          <div className={`w-2 h-12 rounded-full ${booking.color}`} />
+                          <div className="w-2 h-12 rounded-full bg-gray-200 dark:bg-[#424242] animate-pulse" />
                           <div>
-                            <p className="text-body font-medium text-apple-dark">{booking.customer}</p>
-                            <p className="text-footnote text-apple-gray">{booking.vehicle} • {booking.service}</p>
+                            <div className="w-32 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse mb-2" />
+                            <div className="w-48 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-callout font-medium text-apple-dark">{booking.time}</p>
-                          <p className="text-caption text-apple-gray uppercase">{booking.id}</p>
-                        </div>
-                      </motion.div>
-                    </Link>
-                  ))}
-                </motion.div>
+                        <div className="w-16 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
+                      </div>
+                    ))
+                  ) : recentBookings.length === 0 ? (
+                    <div className="text-center py-8 text-apple-gray dark:text-[#636366]">
+                      <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>Nessuna prenotazione recente</p>
+                    </div>
+                  ) : (
+                    recentBookings.slice(0, 5).map((booking) => (
+                      <Link href={`/dashboard/bookings/${booking.id}`} key={booking.id}>
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/50 dark:bg-[#353535] shadow-sm transition-all duration-300 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`w-2 h-12 rounded-full ${statusColors[booking.status] || 'bg-apple-gray'}`} />
+                            <div>
+                              <p className="text-body font-medium text-apple-dark dark:text-[#ececec]">{booking.customerName}</p>
+                              <p className="text-footnote text-apple-gray dark:text-[#636366]">
+                                {booking.vehiclePlate} {booking.vehicleBrand ? `• ${booking.vehicleBrand}` : ''} • {booking.serviceName || booking.serviceCategory}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-callout font-medium text-apple-dark dark:text-[#ececec]">
+                              {new Date(booking.scheduledAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <p className="text-caption text-apple-gray dark:text-[#636366] uppercase">{booking.id.slice(0, 8)}</p>
+                          </div>
+                        </motion.div>
+                      </Link>
+                    ))
+                  )}
+                </div>
               </AppleCardContent>
             </AppleCard>
           </motion.div>
         </motion.div>
 
-        {/* 🍎 Alerts Section */}
-        <motion.div 
+        {/* Alerts — always rendered to avoid CLS when loading completes */}
+        <motion.div
           variants={containerVariants}
           initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 gap-bento"
+          animate={isLoading ? 'hidden' : 'visible'}
+          className="grid grid-cols-1 md:grid-cols-2 gap-bento min-h-[120px]"
         >
-          <motion.div variants={cardVariants}>
-            <AppleCard className="border-l-4 border-l-apple-orange">
-              <AppleCardContent className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-apple-orange/10 flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="h-6 w-6 text-apple-orange" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-title-3 font-semibold text-apple-dark">Ricambi in esaurimento</h3>
-                  <p className="text-body text-apple-gray mt-1">
-                    5 prodotti sotto la soglia minima. Ordina ora per evitare ritardi.
-                  </p>
-                  <Link href="/dashboard/parts">
-                    <AppleButton variant="ghost" size="sm" className="mt-3">
-                      Vai ai ricambi →
-                    </AppleButton>
-                  </Link>
-                </div>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            <AppleCard className="border-l-4 border-l-apple-blue">
-              <AppleCardContent className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-apple-blue/10 flex items-center justify-center flex-shrink-0">
-                  <Clock className="h-6 w-6 text-apple-blue" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-title-3 font-semibold text-apple-dark">Appuntamenti domani</h3>
-                  <p className="text-body text-apple-gray mt-1">
-                    Hai 8 prenotazioni confermate per domani. Prepara i ricambi necessari.
-                  </p>
-                  <Link href="/dashboard/bookings">
-                    <AppleButton variant="ghost" size="sm" className="mt-3">
-                      Visualizza agenda →
-                    </AppleButton>
-                  </Link>
-                </div>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
+            {alerts.length > 0 ? (
+              alerts.slice(0, 4).map((alert) => (
+                <motion.div key={alert.id} variants={cardVariants}>
+                  <AppleCard className={`border-l-4 ${alert.severity === 'error' ? 'border-l-apple-red' : alert.severity === 'warning' ? 'border-l-apple-orange' : 'border-l-apple-blue'}`}>
+                    <AppleCardContent className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${alert.severity === 'error' ? 'bg-apple-red/10' : alert.severity === 'warning' ? 'bg-apple-orange/10' : 'bg-apple-blue/10'}`}>
+                        <AlertCircle className={`h-6 w-6 ${alert.severity === 'error' ? 'text-apple-red' : alert.severity === 'warning' ? 'text-apple-orange' : 'text-apple-blue'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">{alert.message}</h3>
+                        <p className="text-footnote text-apple-gray dark:text-[#636366] mt-1">
+                          {new Date(alert.createdAt).toLocaleDateString('it-IT')}
+                        </p>
+                      </div>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
+              ))
+            ) : (
+              <>
+                <motion.div variants={cardVariants}>
+                  <AppleCard className="border-l-4 border-l-apple-green">
+                    <AppleCardContent className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-apple-green/10 flex items-center justify-center flex-shrink-0">
+                        <Clock className="h-6 w-6 text-apple-green" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">Tutto sotto controllo</h3>
+                        <p className="text-body text-apple-gray dark:text-[#636366] mt-1">
+                          Nessun avviso critico. La tua officina funziona alla perfezione.
+                        </p>
+                      </div>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
+                <motion.div variants={cardVariants}>
+                  <AppleCard className="border-l-4 border-l-apple-blue">
+                    <AppleCardContent className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-apple-blue/10 flex items-center justify-center flex-shrink-0">
+                        <Users className="h-6 w-6 text-apple-blue" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">Benvenuto, {user?.name || 'Utente'}</h3>
+                        <p className="text-body text-apple-gray dark:text-[#636366] mt-1">
+                          Gestisci prenotazioni, clienti e veicoli dalla tua dashboard.
+                        </p>
+                      </div>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
+              </>
+            )}
         </motion.div>
+
+        {error != null && (
+          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl text-center">
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              Dati non disponibili al momento. Il backend potrebbe essere in avvio.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

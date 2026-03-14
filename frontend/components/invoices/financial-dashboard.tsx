@@ -203,12 +203,18 @@ function StatCard({
 }
 
 // Chart Tooltip Component
-function CustomTooltip({ active, payload, label }: any) {
+interface ChartTooltipEntry {
+  name: string
+  value: number
+  color: string
+}
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: ChartTooltipEntry[]; label?: string }) {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
         <p className="font-medium text-gray-900 dark:text-white">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry: ChartTooltipEntry, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.name}: {formatCurrency(entry.value)}
           </p>
@@ -220,7 +226,7 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 // Pie Chart Tooltip
-function PieTooltip({ active, payload }: any) {
+function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: PaymentMethodData }> }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     return (
@@ -265,7 +271,7 @@ export function FinancialDashboard() {
             Panoramica dei ricavi, pagamenti e performance
           </p>
         </div>
-        <Select value={period} onValueChange={(v) => setPeriod(v as any)}>
+        <Select value={period} onValueChange={(v) => setPeriod(v as 'daily' | 'weekly' | 'monthly')}>
           <SelectTrigger className="w-40">
             <Calendar className="mr-2 h-4 w-4" />
             <SelectValue />
@@ -327,7 +333,7 @@ export function FinancialDashboard() {
                   Confronto ricavi, spese e profitto nel tempo
                 </CardDescription>
               </div>
-              <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)}>
+              <Tabs value={chartType} onValueChange={(v) => setChartType(v as 'revenue' | 'profit')}>
                 <TabsList>
                   <TabsTrigger value="revenue">Ricavi</TabsTrigger>
                   <TabsTrigger value="profit">Profitto</TabsTrigger>

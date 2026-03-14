@@ -16,7 +16,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     private readonly logger: LoggerService,
   ) {
     const databaseUrl = configService.get<string>('DATABASE_URL') || '';
-    const connectionLimit = configService.get<number>('DATABASE_CONNECTION_LIMIT', 10);
+    const isProduction = configService.get<string>('NODE_ENV') === 'production';
+    const defaultPoolSize = isProduction ? 20 : 10;
+    const connectionLimit = configService.get<number>('DATABASE_CONNECTION_LIMIT', defaultPoolSize);
 
     // Append connection_limit if not already in the URL
     const separator = databaseUrl.includes('?') ? '&' : '?';
@@ -53,9 +55,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         this.logger.debug(`Query: ${e.query}, Duration: ${e.duration}ms`);
       });
     }
-
-    // Setup RLS for multi-tenancy
-    await this.setupRLS();
   }
 
   async onModuleDestroy() {
@@ -208,102 +207,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       hash = hash & 0xffffffff; // Keep 32-bit
     }
     return Math.abs(hash);
-  }
-
-  /**
-   * Setup RLS policies (run migrations)
-   */
-  private async setupRLS(): Promise<void> {
-    // Enable RLS on tenant-scoped tables
-    const tables = [
-      // Core
-      'users',
-      'customers',
-      'vehicles',
-      'bookings',
-      'booking_slots',
-      'services',
-      // DVI
-      'inspections',
-      'inspection_templates',
-      // OBD
-      'obd_devices',
-      'obd_readings',
-      // Parts & Inventory
-      'parts',
-      'suppliers',
-      'inventory_items',
-      'inventory_movements',
-      'purchase_orders',
-      // Notifications
-      'notifications',
-      // Subscription & Pricing
-      'subscriptions',
-      'usage_tracking',
-      'subscription_changes',
-      'locations',
-      // Voice
-      'voice_webhook_events',
-      'call_recordings',
-      // GDPR
-      'customers_encrypted',
-      'audit_logs',
-      'consent_audit_logs',
-      'data_subject_requests',
-      'data_retention_execution_logs',
-      // LPR
-      'license_plate_detections',
-      'vehicle_entry_exits',
-      'parking_sessions',
-      'lpr_cameras',
-      // Shop Floor
-      'shop_floors',
-      'shop_floor_events',
-      'work_orders',
-      'technicians',
-      // Vehicle Twin
-      'vehicle_twin_configs',
-      'vehicle_twin_components',
-      'component_histories',
-      'vehicle_health_histories',
-      'vehicle_damages',
-      // Auth
-      'auth_audit_logs',
-      // New modules
-      'fleets',
-      'fleet_vehicles',
-      'tire_sets',
-      'estimates',
-      'estimate_lines',
-      'labor_guides',
-      'labor_guide_entries',
-      'accounting_syncs',
-    ];
-
-    for (const table of tables) {
-      try {
-        await this.$executeRawUnsafe(`
-          ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
-        `);
-
-        // Create policy if not exists
-        await this.$executeRawUnsafe(`
-          DO $$
-          BEGIN
-            IF NOT EXISTS (
-              SELECT 1 FROM pg_policies 
-              WHERE tablename = '${table}' AND policyname = '${table}_tenant_isolation'
-            ) THEN
-              CREATE POLICY ${table}_tenant_isolation ON ${table}
-                USING (tenant_id = current_setting('app.current_tenant', true)::text);
-            END IF;
-          END
-          $$;
-        `);
-      } catch (error) {
-        this.logger.warn(`RLS setup for ${table}: ${error.message}`);
-      }
-    }
   }
 
   private delay(ms: number): Promise<void> {

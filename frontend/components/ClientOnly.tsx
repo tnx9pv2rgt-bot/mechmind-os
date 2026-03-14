@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 
 interface ClientOnlyProps {
   children: ReactNode;
@@ -55,7 +55,7 @@ export function ClientOnlyWrapper({
     setIsClient(true);
   }, []);
 
-  const Wrapper = Component as any;
+  const Wrapper = Component as React.ElementType;
 
   return (
     <Wrapper className={className}>

@@ -7,7 +7,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useContext, createContext } from 'react';
-import { SubscriptionPlan, FeatureFlag, SubscriptionStatus } from '@prisma/client';
+type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+type FeatureFlag = 'BASIC' | 'STANDARD' | 'PREMIUM' | 'AI_ANALYSIS' | 'UNLIMITED_USERS' | 'API_ACCESS' | 'PRIORITY_SUPPORT';
+type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED';
 import subscriptionService, { 
   SubscriptionData, 
   UsageStats, 

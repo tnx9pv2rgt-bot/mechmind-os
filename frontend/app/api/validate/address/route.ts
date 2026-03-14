@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const CACHE_DURATION_AUTOCOMPLETE = 24 * 60 * 60 * 1000; // 24 ore
 const CACHE_DURATION_DETAILS = 30 * 24 * 60 * 60 * 1000; // 30 giorni
 
@@ -48,7 +48,7 @@ function getClientIp(request: NextRequest): string {
 // GET per autocomplete
 export async function GET(request: NextRequest) {
   const clientIp = getClientIp(request);
-  
+
   // Rate limiting
   if (!checkRateLimit(clientIp)) {
     return NextResponse.json(
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    
+
     // Cache
     cache.set(cacheKey, { data, timestamp: Date.now() });
 
@@ -139,24 +139,21 @@ async function getAddressDetails(placeId: string, clientIp: string) {
     }
 
     const data = await response.json();
-    
+
     // Cache
     cache.set(cacheKey, { data, timestamp: Date.now() });
 
     return NextResponse.json(data);
   } catch (error) {
     console.error('Address details error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch address details' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch address details' }, { status: 500 });
   }
 }
 
 // POST per validazione CAP
 export async function POST(request: NextRequest) {
   const clientIp = getClientIp(request);
-  
+
   // Rate limiting
   if (!checkRateLimit(clientIp)) {
     return NextResponse.json(
@@ -166,14 +163,11 @@ export async function POST(request: NextRequest) {
   }
 
   let body: { postalCode?: string };
-  
+
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: 'Invalid JSON body' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
   const { postalCode } = body;
@@ -205,7 +199,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    
+
     // Cache
     cache.set(cacheKey, { data, timestamp: Date.now() });
 

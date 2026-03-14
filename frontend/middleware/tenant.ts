@@ -1,17 +1,22 @@
 /**
  * Multi-Tenant Middleware
- * 
+ *
  * Extracts tenant from subdomain, custom domain, or headers.
  * Validates tenant subscription status.
  * Sets tenant context for downstream request handling.
- * 
+ *
  * @module middleware/tenant
  * @version 1.0.0
  */
 
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { extractTenantFromRequest, TenantNotFoundError, TenantSuspendedError, TenantExpiredError } from '@/lib/tenant/context'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import {
+  extractTenantFromRequest,
+  TenantNotFoundError,
+  TenantSuspendedError,
+  TenantExpiredError,
+} from '@/lib/tenant/context';
 
 // =============================================================================
 // Configuration
@@ -29,14 +34,10 @@ const CONFIG = {
     '/favicon.ico',
     '/robots.txt',
   ],
-  
+
   // Routes that bypass tenant validation
-  bypassRoutes: [
-    '/api/webhooks',
-    '/api/health',
-    '/api/status',
-  ],
-  
+  bypassRoutes: ['/api/webhooks', '/api/health', '/api/status'],
+
   // Subscription tiers and their features
   tiers: {
     FREE: { maxUsers: 2, maxVehicles: 10 },
@@ -44,63 +45,63 @@ const CONFIG = {
     PROFESSIONAL: { maxUsers: 20, maxVehicles: 500 },
     ENTERPRISE: { maxUsers: Infinity, maxVehicles: Infinity },
   },
-  
+
   // Cookie settings
   cookieName: 'tenant_id',
   cookieMaxAge: 60 * 60 * 24 * 7, // 7 days
-}
+};
 
 // =============================================================================
 // Main Middleware Function
 // =============================================================================
 
 export async function tenantMiddleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  
+  const { pathname } = request.nextUrl;
+
   // Skip middleware for public and bypass routes
   if (isPublicRoute(pathname) || isBypassRoute(pathname)) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
-  
+
   try {
     // Extract tenant identifier from request
-    const tenantIdentifier = await extractTenantFromRequest(request)
-    
+    const tenantIdentifier = await extractTenantFromRequest(request);
+
     if (!tenantIdentifier) {
       // No tenant found - check if this is an API route
       if (pathname.startsWith('/api/')) {
-        return createErrorResponse('TENANT_REQUIRED', 'Tenant identifier is required', 400)
+        return createErrorResponse('TENANT_REQUIRED', 'Tenant identifier is required', 400);
       }
-      
+
       // For page routes, redirect to tenant selection or onboarding
-      return redirectToTenantSelection(request)
+      return redirectToTenantSelection(request);
     }
-    
+
     // Validate tenant with backend
-    const tenant = await validateTenant(tenantIdentifier.value, tenantIdentifier.type)
-    
+    const tenant = await validateTenant(tenantIdentifier.value, tenantIdentifier.type);
+
     if (!tenant) {
-      return createErrorResponse('TENANT_NOT_FOUND', 'Tenant not found', 404)
+      return createErrorResponse('TENANT_NOT_FOUND', 'Tenant not found', 404);
     }
-    
+
     // Check subscription status
-    const subscriptionError = checkSubscriptionStatus(tenant)
+    const subscriptionError = checkSubscriptionStatus(tenant);
     if (subscriptionError) {
       if (pathname.startsWith('/api/')) {
-        return subscriptionError
+        return subscriptionError;
       }
       // Redirect to subscription page for web routes
-      return redirectToSubscriptionPage(request, tenant)
+      return redirectToSubscriptionPage(request, tenant);
     }
-    
+
     // Clone the response to add tenant headers
-    const response = NextResponse.next()
-    
+    const response = NextResponse.next();
+
     // Add tenant context headers for downstream use
-    response.headers.set('x-tenant-id', tenant.id)
-    response.headers.set('x-tenant-slug', tenant.slug)
-    response.headers.set('x-tenant-tier', tenant.subscriptionTier)
-    
+    response.headers.set('x-tenant-id', tenant.id);
+    response.headers.set('x-tenant-slug', tenant.slug);
+    response.headers.set('x-tenant-tier', tenant.subscriptionTier);
+
     // Set tenant cookie for subsequent requests
     response.cookies.set({
       name: CONFIG.cookieName,
@@ -109,8 +110,8 @@ export async function tenantMiddleware(request: NextRequest) {
       path: '/',
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
-    })
-    
+    });
+
     // Also set slug cookie
     response.cookies.set({
       name: 'tenant_slug',
@@ -119,26 +120,25 @@ export async function tenantMiddleware(request: NextRequest) {
       path: '/',
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
-    })
-    
-    return response
-    
+    });
+
+    return response;
   } catch (error) {
-    console.error('Tenant middleware error:', error)
-    
+    console.error('Tenant middleware error:', error);
+
     if (error instanceof TenantNotFoundError) {
-      return createErrorResponse('TENANT_NOT_FOUND', error.message, 404)
+      return createErrorResponse('TENANT_NOT_FOUND', error.message, 404);
     }
-    
+
     if (error instanceof TenantSuspendedError) {
-      return createErrorResponse('TENANT_SUSPENDED', error.message, 403)
+      return createErrorResponse('TENANT_SUSPENDED', error.message, 403);
     }
-    
+
     if (error instanceof TenantExpiredError) {
-      return createErrorResponse('TENANT_EXPIRED', error.message, 403)
+      return createErrorResponse('TENANT_EXPIRED', error.message, 403);
     }
-    
-    return createErrorResponse('INTERNAL_ERROR', 'Failed to process tenant context', 500)
+
+    return createErrorResponse('INTERNAL_ERROR', 'Failed to process tenant context', 500);
   }
 }
 
@@ -147,15 +147,11 @@ export async function tenantMiddleware(request: NextRequest) {
 // =============================================================================
 
 function isPublicRoute(pathname: string): boolean {
-  return CONFIG.publicRoutes.some(route => 
-    pathname === route || pathname.startsWith(`${route}/`)
-  )
+  return CONFIG.publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
 }
 
 function isBypassRoute(pathname: string): boolean {
-  return CONFIG.bypassRoutes.some(route => 
-    pathname.startsWith(route)
-  )
+  return CONFIG.bypassRoutes.some(route => pathname.startsWith(route));
 }
 
 function createErrorResponse(code: string, message: string, status: number): NextResponse {
@@ -168,23 +164,23 @@ function createErrorResponse(code: string, message: string, status: number): Nex
       },
     },
     { status }
-  )
+  );
 }
 
 function redirectToTenantSelection(request: NextRequest): NextResponse {
   // If on localhost/development, show tenant selection
-  const url = request.nextUrl.clone()
-  url.pathname = '/tenant-select'
-  url.searchParams.set('redirect', request.nextUrl.pathname)
-  return NextResponse.redirect(url)
+  const url = request.nextUrl.clone();
+  url.pathname = '/tenant-select';
+  url.searchParams.set('redirect', request.nextUrl.pathname);
+  return NextResponse.redirect(url);
 }
 
 function redirectToSubscriptionPage(request: NextRequest, tenant: TenantInfo): NextResponse {
-  const url = request.nextUrl.clone()
-  url.pathname = '/subscription'
-  url.searchParams.set('tenant', tenant.slug)
-  url.searchParams.set('status', tenant.subscriptionStatus)
-  return NextResponse.redirect(url)
+  const url = request.nextUrl.clone();
+  url.pathname = '/subscription';
+  url.searchParams.set('tenant', tenant.slug);
+  url.searchParams.set('status', tenant.subscriptionStatus);
+  return NextResponse.redirect(url);
 }
 
 // =============================================================================
@@ -192,14 +188,14 @@ function redirectToSubscriptionPage(request: NextRequest, tenant: TenantInfo): N
 // =============================================================================
 
 interface TenantInfo {
-  id: string
-  slug: string
-  name: string
-  status: string
-  subscriptionTier: string
-  subscriptionStatus: string
-  trialEndsAt?: string | null
-  subscriptionEndsAt?: string | null
+  id: string;
+  slug: string;
+  name: string;
+  status: string;
+  subscriptionTier: string;
+  subscriptionStatus: string;
+  trialEndsAt?: string | null;
+  subscriptionEndsAt?: string | null;
 }
 
 async function validateTenant(
@@ -208,23 +204,23 @@ async function validateTenant(
 ): Promise<TenantInfo | null> {
   // In production, this would call your backend API or database
   // For now, we'll use a fetch to the tenant API
-  
+
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-    
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
     // Build query based on identifier type
-    let queryParam = ''
+    let queryParam = '';
     switch (type) {
       case 'subdomain':
-        queryParam = `subdomain=${encodeURIComponent(identifier)}`
-        break
+        queryParam = `subdomain=${encodeURIComponent(identifier)}`;
+        break;
       case 'domain':
-        queryParam = `domain=${encodeURIComponent(identifier)}`
-        break
+        queryParam = `domain=${encodeURIComponent(identifier)}`;
+        break;
       default:
-        queryParam = `id=${encodeURIComponent(identifier)}`
+        queryParam = `id=${encodeURIComponent(identifier)}`;
     }
-    
+
     const response = await fetch(`${backendUrl}/api/tenant/resolve?${queryParam}`, {
       method: 'GET',
       headers: {
@@ -232,22 +228,21 @@ async function validateTenant(
       },
       // Short timeout to avoid blocking requests
       signal: AbortSignal.timeout(3000),
-    })
-    
+    });
+
     if (!response.ok) {
       if (response.status === 404) {
-        return null
+        return null;
       }
-      throw new Error(`Failed to validate tenant: ${response.statusText}`)
+      throw new Error(`Failed to validate tenant: ${response.statusText}`);
     }
-    
-    const data = await response.json()
-    return data.tenant as TenantInfo
-    
+
+    const data = await response.json();
+    return data.tenant as TenantInfo;
   } catch (error) {
     // If backend is unavailable, check local cache or fallback
-    console.error('Tenant validation error:', error)
-    
+    console.error('Tenant validation error:', error);
+
     // For development: allow fallback to mock tenant
     if (process.env.NODE_ENV === 'development' && identifier === 'demo') {
       return {
@@ -257,10 +252,10 @@ async function validateTenant(
         status: 'ACTIVE',
         subscriptionTier: 'PROFESSIONAL',
         subscriptionStatus: 'ACTIVE',
-      }
+      };
     }
-    
-    return null
+
+    return null;
   }
 }
 
@@ -271,51 +266,47 @@ function checkSubscriptionStatus(tenant: TenantInfo): NextResponse | null {
       'TENANT_SUSPENDED',
       'This account has been suspended. Please contact support.',
       403
-    )
+    );
   }
-  
+
   if (tenant.status === 'CANCELLED') {
-    return createErrorResponse(
-      'TENANT_CANCELLED',
-      'This account has been cancelled.',
-      403
-    )
+    return createErrorResponse('TENANT_CANCELLED', 'This account has been cancelled.', 403);
   }
-  
+
   // Check subscription status
   if (tenant.subscriptionStatus === 'EXPIRED') {
-    const gracePeriodEnd = tenant.subscriptionEndsAt 
+    const gracePeriodEnd = tenant.subscriptionEndsAt
       ? new Date(new Date(tenant.subscriptionEndsAt).getTime() + 7 * 24 * 60 * 60 * 1000)
-      : null
-    
+      : null;
+
     if (!gracePeriodEnd || new Date() > gracePeriodEnd) {
       return createErrorResponse(
         'SUBSCRIPTION_EXPIRED',
         'Your subscription has expired. Please renew to continue.',
         403
-      )
+      );
     }
   }
-  
+
   if (tenant.subscriptionStatus === 'PAST_DUE') {
     // Allow access but flag for notification
     // This could set a header that the frontend checks
-    return null
+    return null;
   }
-  
+
   // Check trial expiration
   if (tenant.subscriptionStatus === 'TRIAL' && tenant.trialEndsAt) {
-    const trialEnd = new Date(tenant.trialEndsAt)
+    const trialEnd = new Date(tenant.trialEndsAt);
     if (new Date() > trialEnd) {
       return createErrorResponse(
         'TRIAL_EXPIRED',
         'Your trial has expired. Please upgrade to continue.',
         403
-      )
+      );
     }
   }
-  
-  return null
+
+  return null;
 }
 
 // =============================================================================
@@ -327,7 +318,7 @@ export const config = {
     // Apply to all routes except static files
     '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
   ],
-}
+};
 
 // =============================================================================
 // Edge Runtime Handler
@@ -338,46 +329,46 @@ export const config = {
  * Can be used directly in middleware.ts
  */
 export function createTenantMiddleware(options?: {
-  publicRoutes?: string[]
-  bypassRoutes?: string[]
-  onTenantNotFound?: (request: NextRequest) => NextResponse
-  onSubscriptionExpired?: (request: NextRequest, tenant: TenantInfo) => NextResponse
+  publicRoutes?: string[];
+  bypassRoutes?: string[];
+  onTenantNotFound?: (request: NextRequest) => NextResponse;
+  onSubscriptionExpired?: (request: NextRequest, tenant: TenantInfo) => NextResponse;
 }) {
   const mergedConfig = {
     ...CONFIG,
     ...options,
     publicRoutes: [...CONFIG.publicRoutes, ...(options?.publicRoutes || [])],
     bypassRoutes: [...CONFIG.bypassRoutes, ...(options?.bypassRoutes || [])],
-  }
-  
-  return async function(request: NextRequest) {
-    const { pathname } = request.nextUrl
-    
+  };
+
+  return async function (request: NextRequest) {
+    const { pathname } = request.nextUrl;
+
     // Check public routes
     if (mergedConfig.publicRoutes.some(route => pathname.startsWith(route))) {
-      return NextResponse.next()
+      return NextResponse.next();
     }
-    
+
     // Check bypass routes
     if (mergedConfig.bypassRoutes.some(route => pathname.startsWith(route))) {
-      return NextResponse.next()
+      return NextResponse.next();
     }
-    
+
     // Extract tenant
-    const tenantIdentifier = await extractTenantFromRequest(request)
-    
+    const tenantIdentifier = await extractTenantFromRequest(request);
+
     if (!tenantIdentifier) {
       if (options?.onTenantNotFound) {
-        return options.onTenantNotFound(request)
+        return options.onTenantNotFound(request);
       }
-      return redirectToTenantSelection(request)
+      return redirectToTenantSelection(request);
     }
-    
+
     // Set tenant headers
-    const response = NextResponse.next()
-    response.headers.set('x-tenant-identifier', tenantIdentifier.value)
-    response.headers.set('x-tenant-type', tenantIdentifier.type)
-    
-    return response
-  }
+    const response = NextResponse.next();
+    response.headers.set('x-tenant-identifier', tenantIdentifier.value);
+    response.headers.set('x-tenant-type', tenantIdentifier.type);
+
+    return response;
+  };
 }

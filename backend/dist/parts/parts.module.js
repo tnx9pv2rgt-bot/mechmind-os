@@ -20,9 +20,7 @@ exports.PartsModule = PartsModule = __decorate([
     (0, common_1.Module)({
         imports: [common_module_1.CommonModule, notifications_module_1.NotificationsModule, auth_module_1.AuthModule],
         controllers: [parts_controller_1.PartsController],
-        providers: [
-            parts_service_1.PartsService,
-        ],
+        providers: [parts_service_1.PartsService],
         exports: [parts_service_1.PartsService],
     })
 ], PartsModule);

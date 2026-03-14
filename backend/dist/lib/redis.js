@@ -22,9 +22,7 @@ exports.redisFallback = {
         return item.value;
     },
     async set(key, value, options) {
-        const expiresAt = options?.ex
-            ? Date.now() + options.ex * 1000
-            : Number.MAX_SAFE_INTEGER;
+        const expiresAt = options?.ex ? Date.now() + options.ex * 1000 : Number.MAX_SAFE_INTEGER;
         memoryStore.set(key, { value, expiresAt });
     },
     async del(key) {

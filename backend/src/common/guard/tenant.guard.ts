@@ -32,7 +32,7 @@ export class TenantGuard implements CanActivate {
     }
 
     // Check user authentication and tenant membership
-    const user = (request as any).user;
+    const user = (request as RequestWithTenant & { user?: { tenantId?: string } }).user;
     if (user) {
       // If user is authenticated, verify they belong to the requested tenant
       if (user.tenantId && user.tenantId !== tenantId) {

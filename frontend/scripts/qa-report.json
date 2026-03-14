@@ -1,0 +1,522 @@
+{
+  "auth": true,
+  "results": [
+    {
+      "page": "/auth",
+      "name": "auth-login",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 164
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/auth/forgot-password",
+      "name": "auth-forgot",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 229
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard",
+      "name": "dashboard-home",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 1123
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/analytics",
+      "name": "dashboard-analytics",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 1796
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/billing",
+      "name": "dashboard-billing",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 783
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/bookings",
+      "name": "dashboard-bookings",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 790
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/customers",
+      "name": "dashboard-customers",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 703
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/customers/new/landing",
+      "name": "customers-new-landing",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 806
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/customers/new/step1",
+      "name": "customers-new-step1",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 932
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/customers/new/step2",
+      "name": "customers-new-step2",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 453
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/customers/new/step3",
+      "name": "customers-new-step3",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 904
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/customers/new/step4",
+      "name": "customers-new-step4",
+      "status": 200,
+      "redirected": true,
+      "finalUrl": "http://localhost:3001/dashboard/customers/new/step1",
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 932
+      },
+      "pass": true,
+      "expectedRedirect": true
+    },
+    {
+      "page": "/dashboard/inspections",
+      "name": "dashboard-inspections",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 922
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/inspections/new",
+      "name": "inspections-new",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 470
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/invoices",
+      "name": "dashboard-invoices",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 758
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/invoices/quotes",
+      "name": "dashboard-quotes",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 1268
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/locations",
+      "name": "dashboard-locations",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 740
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/obd",
+      "name": "dashboard-obd",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 1277
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/parts",
+      "name": "dashboard-parts",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 328
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/settings",
+      "name": "dashboard-settings",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 362
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/subscription",
+      "name": "dashboard-subscription",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 496
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/vehicles",
+      "name": "dashboard-vehicles",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 1031
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/warranty",
+      "name": "dashboard-warranty",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 401
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/warranty/claims",
+      "name": "warranty-claims",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 397
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/dashboard/admin/subscriptions",
+      "name": "admin-subscriptions",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 466
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/portal/login",
+      "name": "portal-login",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 161
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/portal/register",
+      "name": "portal-register",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 150
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/portal/dashboard",
+      "name": "portal-dashboard",
+      "status": 200,
+      "redirected": true,
+      "finalUrl": "http://localhost:3001/portal/login",
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 161
+      },
+      "pass": true,
+      "expectedRedirect": true
+    },
+    {
+      "page": "/portal/bookings",
+      "name": "portal-bookings",
+      "status": 200,
+      "redirected": true,
+      "finalUrl": "http://localhost:3001/portal/login",
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 161
+      },
+      "pass": true,
+      "expectedRedirect": true
+    },
+    {
+      "page": "/billing/success",
+      "name": "billing-success",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 137
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/billing/cancel",
+      "name": "billing-cancel",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 0,
+        "bodyLen": 259
+      },
+      "pass": true,
+      "expectedRedirect": false
+    },
+    {
+      "page": "/demo",
+      "name": "demo-entry",
+      "status": 200,
+      "redirected": false,
+      "consoleErrors": 0,
+      "pageCheck": {
+        "hasVisibleError": false,
+        "is500": false,
+        "is404": false,
+        "skeletonCount": 33,
+        "bodyLen": 767
+      },
+      "pass": true,
+      "expectedRedirect": false
+    }
+  ],
+  "errors": {},
+  "timestamp": "2026-03-14T11:29:25.605Z"
+}

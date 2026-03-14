@@ -1,85 +1,77 @@
-# MechMind OS v10 - Claude Code Instructions
+# MechMind OS v10
 
-## Build & Test Commands
-```bash
-# Backend (NestJS)
-cd backend && npm run start:dev       # Dev server :3000
-cd backend && npm run test            # Unit tests
-cd backend && npm run test:cov        # Coverage
-cd backend && npm run test:integration # Integration
-cd backend && npm run lint            # ESLint
-cd backend && npx prisma studio       # DB GUI
+See @backend/package.json for dependencies. See @backend/prisma/schema.prisma for DB models.
 
-# Frontend (Next.js 14)
-cd frontend && npm run dev            # Dev server :3001
-cd frontend && npm run test           # Jest
-cd frontend && npm run test:e2e       # Playwright
-cd frontend && npm run lint           # ESLint
+## ⚠️ CHECKLIST — Prima di OGNI modifica:
+1. **Cosa fai?** (una frase in italiano)
+2. **Quali file tocchi?**
+3. **Cosa rischi di rompere?**
+4. **C'è un modo più sicuro?**
+5. **Rollback plan?**
+6. **Hai letto i file coinvolti?**
 
-# Docker
-docker compose up -d                  # Full local stack
-docker compose -f docker-compose.test.yml up -d  # Test env
+## REGOLE INVIOLABILI
 
-# Verify before commit
-cd backend && npm run test && npm run lint
-cd frontend && npm run test && npm run lint
+### Multi-Tenancy — CRITICAL
+- JWT payload: `userId:tenantId`. `TenantContextMiddleware` imposta `app.current_tenant` su PostgreSQL
+- RLS isola i dati tra tenant — **NEVER query senza contesto tenant**
+- Tutti gli 80 modelli hanno `tenantId` — **NEVER creare un modello senza**
+
+### Sicurezza Dati — CRITICAL
+- PII crittografati SOLO tramite `EncryptionService` (AES-256-CBC) — **NEVER crittografare manualmente**
+- Campi: `encryptedPhone`, `encryptedEmail`, nome/cognome + hash per ricerca
+- **NEVER leggere/scrivere `.env`**
+- Secret obbligatori: `JWT_SECRET`, `ENCRYPTION_KEY`, `DATABASE_URL`, `REDIS_URL`
+
+### Database
+- Tutte le tabelle: `tenantId`, `createdAt`, `updatedAt`
+- Soft delete con `deletedAt DateTime?` per dati personali
+- Transazioni per mutazioni multi-modello
+
+### DOPO OGNI SESSIONE CHE RIMUOVE FILE, PACCHETTI O PROVIDER
+
+Esegui SEMPRE questi 5 step nell'ordine esatto prima di dichiarare
+la sessione completata:
+
+1. `rm -rf .next`          → pulisce cache webpack (evita runtime crash)
+2. `npm run lint`          → rileva import rotti verso file eliminati
+3. `npx tsc --noEmit`      → rileva errori TypeScript
+4. `npm run build`         → build pulita da zero
+5. `npm run dev` + apri browser → zero errori runtime in console
+
+Se uno dei 5 step fallisce: non dichiarare la sessione completata.
+Risolvi prima di andare avanti.
+
+MOTIVO: la cache `.next` contiene riferimenti ai moduli eliminati.
+TypeScript non la vede, ma il browser crasha con:
+`TypeError: undefined is not an object (evaluating 'originalFactory.call')`
+
+## Architettura Backend (14 moduli attivi)
+
+```
+CommonModule (@Global) — PrismaService, EncryptionService, RedisService, QueueService, LoggerService, S3Service, AdvisoryLockService
 ```
 
-## Architecture Overview
-```
-backend/          NestJS 10 API (TypeScript, Prisma, PostgreSQL, Redis)
-frontend/         Next.js 14 App Router (TailwindCSS, Radix UI, tRPC)
-mobile/           React Native (customer-app, manager-app, technician-app)
-ml/               Python ML models (churn, predictive maintenance, labor)
-infrastructure/   Terraform AWS (Lambda, RDS, SQS, S3)
-database/         Seeds & migrations
-docs/             Technical documentation
-```
+Dipendenze critiche:
+- **AuthModule** → CommonModule, NotificationsModule (JWT, MFA, Passkey, OAuth, Magic Link)
+- **BookingModule** → CommonModule, CustomerModule (advisory lock + SERIALIZABLE)
+- **GdprModule** → CommonModule, CustomerModule, ScheduleModule (BullMQ: gdpr-deletion, gdpr-retention, gdpr-export)
+- **SubscriptionModule** → CommonModule, AuthModule (FeatureGuard, LimitGuard, Stripe)
+- **NotificationsModule** → ConfigModule, BullModule (email-queue, notification-queue)
+- **IotModule** → CommonModule, AuthModule, NotificationsModule, RedisModule
+- **VoiceModule** → CommonModule, CustomerModule, BookingModule
+- CustomerModule, DviModule, ObdModule, PartsModule, AnalyticsModule, AdminModule → CommonModule
 
-## Key Backend Modules
-- `auth/` - JWT + MFA + Passkeys (WebAuthn)
-- `booking/` - Advisory locks, SERIALIZABLE isolation
-- `customer/` - PII encryption (AES-256-CBC)
-- `voice/` - Vapi.ai webhook integration
-- `gdpr/` - Data deletion, export, retention
-- `notifications/` - Email (Resend), SMS (Twilio), SSE
-- `analytics/` - Unit economics, KPI metrics
-- `parts/` - Inventory, suppliers, purchase orders
-- `iot/` & `obd/` - Vehicle diagnostics
+## ⚠️ Punti Fragili
 
-## Conventions (STRICT)
-- TypeScript strict: **no `any`**, no `@ts-ignore`, explicit return types
-- TDD: failing test first, 100% service coverage target
-- `kebab-case` files, `PascalCase` classes, `camelCase` methods
-- Prisma only, **no raw SQL** ever
-- RLS + `tenant_id` on ALL tables
-- `@TenantId()` decorator on all tenant-scoped endpoints
-- Controllers: class-validator DTOs only
-- Services: throw domain exceptions (never HTTP exceptions)
-- Audit all mutations via domain events (EventEmitter2)
-
-## Multi-Tenancy Pattern
-- JWT contains `userId:tenantId`
-- TenantContextMiddleware sets `app.current_tenant` on PostgreSQL
-- Row-Level Security policies isolate all tenant data
-- NEVER query without tenant context
-
-## PII Encryption Pattern
-- AES-256-CBC for customer name, phone, email
-- Encrypted fields: `encryptedPhone`, `encryptedEmail`
-- Hash-based lookup fields for search without decryption
-- Use `EncryptionService` - never encrypt manually
-
-## Database
-- PostgreSQL 15 + Prisma 5.22
-- Schema: `backend/prisma/schema.prisma`
-- Migrations: `backend/database/migrations/`
-- Key models: Tenant, User, Customer, Booking, Vehicle, Inspection, WorkOrder, Part
-
-## Environment
-- `.env.example` for all required variables
-- NEVER read/write `.env` files directly
-- Required secrets: JWT_SECRET, ENCRYPTION_KEY, DATABASE_URL, REDIS_URL
+1. **CommonModule** — PrismaService o EncryptionService down = tutto il backend crolla
+2. **RLS Policies** — Errore = data leak tra tenant. Verificare SEMPRE dopo modifiche schema
+3. **ENCRYPTION_KEY** — Se cambia, tutti i PII crittografati diventano illeggibili. Zero key rotation
+4. **Redis** — SPOF: BullMQ, cache, pub/sub, rate limiting tutti dipendono da Redis
+5. **Booking concurrency** — Advisory lock + SERIALIZABLE: toccare = rischio deadlock
+6. **`mechmind-os/`** — Mirror del progetto. **NEVER modificare**
 
 ## Compact Instructions
-When compacting, preserve: test output, code changes made, file paths modified, architectural decisions, current task context, and error messages being debugged.
+Preserve: test output, code changes, file paths, architectural decisions, current task context, error messages, checklist answers.
+
+IMPORTANT: NEVER query senza contesto tenant. NEVER PII senza EncryptionService.

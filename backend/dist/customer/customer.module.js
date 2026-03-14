@@ -10,6 +10,7 @@ exports.CustomerModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const customer_controller_1 = require("./controllers/customer.controller");
+const vehicle_controller_1 = require("./controllers/vehicle.controller");
 const customer_service_1 = require("./services/customer.service");
 const vehicle_service_1 = require("./services/vehicle.service");
 const common_module_1 = require("../common/common.module");
@@ -19,7 +20,7 @@ exports.CustomerModule = CustomerModule;
 exports.CustomerModule = CustomerModule = __decorate([
     (0, common_1.Module)({
         imports: [config_1.ConfigModule, common_module_1.CommonModule],
-        controllers: [customer_controller_1.CustomerController],
+        controllers: [customer_controller_1.CustomerController, vehicle_controller_1.VehicleController],
         providers: [customer_service_1.CustomerService, vehicle_service_1.VehicleService],
         exports: [customer_service_1.CustomerService, vehicle_service_1.VehicleService],
     })

@@ -26,16 +26,8 @@ let SubscriptionModule = class SubscriptionModule {
 exports.SubscriptionModule = SubscriptionModule;
 exports.SubscriptionModule = SubscriptionModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule,
-            common_module_1.CommonModule,
-            auth_module_1.AuthModule,
-        ],
-        controllers: [
-            subscription_controller_1.SubscriptionController,
-            subscription_controller_1.AdminSubscriptionController,
-            subscription_controller_1.StripeWebhookController,
-        ],
+        imports: [config_1.ConfigModule, common_module_1.CommonModule, auth_module_1.AuthModule],
+        controllers: [subscription_controller_1.SubscriptionController, subscription_controller_1.AdminSubscriptionController, subscription_controller_1.StripeWebhookController],
         providers: [
             subscription_service_1.SubscriptionService,
             feature_access_service_1.FeatureAccessService,
@@ -43,11 +35,6 @@ exports.SubscriptionModule = SubscriptionModule = __decorate([
             limit_guard_1.LimitGuard,
             limit_guard_1.ApiUsageMiddleware,
         ],
-        exports: [
-            subscription_service_1.SubscriptionService,
-            feature_access_service_1.FeatureAccessService,
-            feature_guard_1.FeatureGuard,
-            limit_guard_1.LimitGuard,
-        ],
+        exports: [subscription_service_1.SubscriptionService, feature_access_service_1.FeatureAccessService, feature_guard_1.FeatureGuard, limit_guard_1.LimitGuard],
     })
 ], SubscriptionModule);

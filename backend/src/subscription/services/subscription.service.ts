@@ -10,7 +10,6 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/services/prisma.service';
 import { SubscriptionPlan, SubscriptionStatus, FeatureFlag, Prisma } from '@prisma/client';
 import {
-  PLAN_PRICING,
   AI_ADDON,
   PLAN_LIMITS,
   PLAN_FEATURES,
@@ -204,7 +203,7 @@ export class SubscriptionService {
     // }
 
     // Update subscription in database
-    const updatedSubscription = await this.prisma.$transaction(async tx => {
+    await this.prisma.$transaction(async tx => {
       // Log the change
       await tx.subscriptionChange.create({
         data: {
@@ -560,12 +559,12 @@ export class SubscriptionService {
   // ==========================================
 
   async createStripeCheckoutSession(
-    tenantId: string,
-    plan: SubscriptionPlan,
-    billingCycle: 'monthly' | 'yearly',
-    aiAddon: boolean,
-    successUrl: string,
-    cancelUrl: string,
+    _tenantId: string,
+    _plan: SubscriptionPlan,
+    _billingCycle: 'monthly' | 'yearly',
+    _aiAddon: boolean,
+    _successUrl: string,
+    _cancelUrl: string,
   ): Promise<{ sessionId: string; url: string }> {
     throw new BadRequestException('Stripe is not configured - install stripe package');
     // if (!this.stripe) {
@@ -574,7 +573,7 @@ export class SubscriptionService {
     // ... resto del metodo commentato
   }
 
-  async handleStripeWebhook(event: any): Promise<void> {
+  async handleStripeWebhook(_event: unknown): Promise<void> {
     // COMMENTATO: stripe non installato
     // if (!this.stripe) return;
     // ... resto del metodo commentato

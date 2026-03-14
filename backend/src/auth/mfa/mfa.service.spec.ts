@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
 import { MfaService } from './mfa.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
+import { RedisService } from '@common/services/redis.service';
 
 jest.mock('speakeasy');
 jest.mock('qrcode');
@@ -36,6 +36,12 @@ const mockConfig = {
   get: jest.fn(),
 };
 
+const mockRedis = {
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
+};
+
 describe('MfaService', () => {
   let service: MfaService;
 
@@ -59,6 +65,7 @@ describe('MfaService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EncryptionService, useValue: mockEncryption },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
@@ -771,6 +778,70 @@ describe('MfaService', () => {
       expect(bcrypt.compare).not.toHaveBeenCalled();
       expect(speakeasy.totp.verify).not.toHaveBeenCalled();
       expect(mockEncryption.decrypt).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================
+  // MFA Session (server-side Redis token)
+  // ============================================================
+  describe('createMfaSession', () => {
+    beforeEach(() => {
+      mockRedis.set.mockResolvedValue(undefined);
+    });
+
+    it('should create a 64-char hex token and store in Redis with TTL', async () => {
+      const result = await service.createMfaSession(userId);
+
+      expect(result.mfaSessionToken).toMatch(/^[0-9a-f]{64}$/);
+      expect(result.expiresIn).toBe(600);
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        `mfa:session:${result.mfaSessionToken}`,
+        userId,
+        600,
+      );
+    });
+
+    it('should generate unique tokens for each call', async () => {
+      const result1 = await service.createMfaSession(userId);
+      const result2 = await service.createMfaSession(userId);
+
+      expect(result1.mfaSessionToken).not.toBe(result2.mfaSessionToken);
+    });
+  });
+
+  describe('validateMfaSession', () => {
+    it('should return userId for valid token', async () => {
+      mockRedis.get.mockResolvedValue(userId);
+
+      const result = await service.validateMfaSession('valid-token');
+
+      expect(result).toBe(userId);
+      expect(mockRedis.get).toHaveBeenCalledWith('mfa:session:valid-token');
+    });
+
+    it('should return null for invalid token', async () => {
+      mockRedis.get.mockResolvedValue(null);
+
+      const result = await service.validateMfaSession('bad-token');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null for empty token', async () => {
+      const result = await service.validateMfaSession('');
+
+      expect(result).toBeNull();
+      expect(mockRedis.get).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('revokeMfaSession', () => {
+    it('should delete the token from Redis', async () => {
+      mockRedis.del.mockResolvedValue(undefined);
+
+      await service.revokeMfaSession('some-token');
+
+      expect(mockRedis.del).toHaveBeenCalledWith('mfa:session:some-token');
     });
   });
 

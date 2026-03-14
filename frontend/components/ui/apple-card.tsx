@@ -22,9 +22,9 @@ export function AppleCard({
     <div
       onClick={onClick}
       className={cn(
-        'bg-white overflow-hidden transition-all duration-300 ease-apple',
-        featured ? 'rounded-[28px] shadow-apple-lg' : 'rounded-[20px] shadow-apple',
-        hover && 'hover:shadow-apple-hover hover:-translate-y-0.5 cursor-pointer',
+        'bg-white dark:bg-[#2f2f2f] overflow-hidden transition-all duration-300 ease-apple',
+        featured ? 'rounded-[28px] shadow-apple-lg dark:shadow-none' : 'rounded-[20px] shadow-apple dark:shadow-none',
+        hover && 'hover:shadow-apple-hover dark:hover:shadow-none hover:-translate-y-0.5 cursor-pointer',
         onClick && 'cursor-pointer',
         className
       )}
@@ -41,7 +41,7 @@ interface AppleCardHeaderProps {
 
 export function AppleCardHeader({ children, className }: AppleCardHeaderProps) {
   return (
-    <div className={cn('px-6 py-5 border-b border-apple-border/30', className)}>
+    <div className={cn('px-6 py-5 border-b border-apple-border/30 dark:border-[#424242]', className)}>
       {children}
     </div>
   )
@@ -67,7 +67,7 @@ interface AppleCardFooterProps {
 
 export function AppleCardFooter({ children, className }: AppleCardFooterProps) {
   return (
-    <div className={cn('px-6 py-4 border-t border-apple-border/30 bg-apple-light-gray/30', className)}>
+    <div className={cn('px-6 py-4 border-t border-apple-border/30 dark:border-[#424242] bg-apple-light-gray/30 dark:bg-[#353535]', className)}>
       {children}
     </div>
   )

@@ -7,7 +7,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SubscriptionTier as SubscriptionPlan, SubscriptionStatus, FeatureFlag } from '@prisma/client';
+type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE' | 'FREE';
+const SUBSCRIPTION_PLANS: SubscriptionPlan[] = ['TRIAL', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE', 'FREE'];
+type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED' | 'SUSPENDED' | 'UNPAID';
+const SUBSCRIPTION_STATUSES: SubscriptionStatus[] = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'CANCELLED', 'EXPIRED', 'SUSPENDED', 'UNPAID'];
+type FeatureFlag = 'BASIC' | 'STANDARD' | 'PREMIUM' | 'AI_ANALYSIS' | 'UNLIMITED_USERS' | 'API_ACCESS' | 'PRIORITY_SUPPORT';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,8 +61,8 @@ interface Subscription {
 
 interface Analytics {
   totalSubscriptions: number;
-  byPlan: Record<SubscriptionPlan, number>;
-  byStatus: Record<SubscriptionStatus, number>;
+  byPlan: Record<string, number>;
+  byStatus: Record<string, number>;
   trialConversions: number;
   aiAddonRevenue: number;
 }
@@ -127,13 +131,13 @@ export function SubscriptionManager() {
 
   const getStatusBadge = (status: SubscriptionStatus) => {
     const colors: Record<string, string> = {
-      [SubscriptionStatus.ACTIVE]: 'bg-green-500',
-      [SubscriptionStatus.TRIAL]: 'bg-blue-500',
-      [SubscriptionStatus.PAST_DUE]: 'bg-yellow-500',
+      'ACTIVE': 'bg-green-500',
+      'TRIAL': 'bg-blue-500',
+      'PAST_DUE': 'bg-yellow-500',
       UNPAID: 'bg-red-500',
-      [SubscriptionStatus.CANCELLED]: 'bg-gray-500',
-      [SubscriptionStatus.SUSPENDED]: 'bg-orange-500',
-      [SubscriptionStatus.EXPIRED]: 'bg-red-700',
+      'CANCELLED': 'bg-gray-500',
+      'SUSPENDED': 'bg-orange-500',
+      'EXPIRED': 'bg-red-700',
     };
 
     return (
@@ -144,12 +148,12 @@ export function SubscriptionManager() {
   };
 
   const getPlanBadge = (plan: SubscriptionPlan) => {
-    const colors: Record<SubscriptionPlan, string> = {
-      [SubscriptionPlan.STARTER]: 'bg-emerald-500',
-      [SubscriptionPlan.PROFESSIONAL]: 'bg-blue-500',
-      [SubscriptionPlan.ENTERPRISE]: 'bg-purple-500',
-      [SubscriptionPlan.TRIAL]: 'bg-gray-500',
-      [SubscriptionPlan.FREE]: 'bg-slate-500',
+    const colors: Record<string, string> = {
+      'STARTER': 'bg-emerald-500',
+      'PROFESSIONAL': 'bg-blue-500',
+      'ENTERPRISE': 'bg-purple-500',
+      'TRIAL': 'bg-gray-500',
+      'FREE': 'bg-slate-500',
     };
 
     return (
@@ -203,7 +207,7 @@ export function SubscriptionManager() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {analytics.byStatus[SubscriptionStatus.ACTIVE] || 0}
+                {analytics.byStatus['ACTIVE'] || 0}
               </div>
             </CardContent>
           </Card>
@@ -240,7 +244,7 @@ export function SubscriptionManager() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                {Object.values(SubscriptionStatus).map((status) => (
+                {SUBSCRIPTION_STATUSES.map((status) => (
                   <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
               </SelectContent>
@@ -252,7 +256,7 @@ export function SubscriptionManager() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Plans</SelectItem>
-                {Object.values(SubscriptionPlan).map((plan) => (
+                {SUBSCRIPTION_PLANS.map((plan) => (
                   <SelectItem key={plan} value={plan}>{plan}</SelectItem>
                 ))}
               </SelectContent>
@@ -369,7 +373,7 @@ export function SubscriptionManager() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.values(SubscriptionPlan).map((plan) => (
+                    {SUBSCRIPTION_PLANS.map((plan) => (
                       <SelectItem key={plan} value={plan}>{plan}</SelectItem>
                     ))}
                   </SelectContent>
@@ -386,7 +390,7 @@ export function SubscriptionManager() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.values(SubscriptionStatus).map((status) => (
+                    {SUBSCRIPTION_STATUSES.map((status) => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
                   </SelectContent>

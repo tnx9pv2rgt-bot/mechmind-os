@@ -44,7 +44,7 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
     this.setupRedisSubscription();
   }
 
-  afterInit(server: Server) {
+  afterInit(_server: Server) {
     this.logger.log('Shop Floor Gateway initialized');
   }
 
@@ -66,7 +66,9 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
         clientId: client.id,
       });
     } catch (error) {
-      this.logger.error(`Connection error: ${error.message}`);
+      this.logger.error(
+        `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       client.disconnect();
     }
   }
@@ -96,7 +98,7 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
       client.emit('bay-subscribed', { bayId: payload.bayId });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -111,7 +113,7 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
       client.emit('bay-unsubscribed', { bayId: payload.bayId });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -124,7 +126,7 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
       await this.redisSubscriber.subscribe('shopfloor:technicians');
       client.emit('technicians-subscribed', {});
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -137,7 +139,7 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
       await this.redisSubscriber.subscribe('shopfloor:events');
       client.emit('events-subscribed', {});
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 

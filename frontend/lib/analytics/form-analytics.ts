@@ -9,7 +9,13 @@
 
 export interface FormEvent {
   formId: string;
-  eventType: 'step_start' | 'step_complete' | 'field_error' | 'abandoned' | 'conversion' | 'experiment_assigned';
+  eventType:
+    | 'step_start'
+    | 'step_complete'
+    | 'field_error'
+    | 'abandoned'
+    | 'conversion'
+    | 'experiment_assigned';
   timestamp: number;
   sessionId: string;
   userId?: string;
@@ -87,7 +93,7 @@ const generateSessionId = (): string => {
 
 const getSessionId = (): string => {
   if (typeof window === 'undefined') return '';
-  
+
   let sessionId = sessionStorage.getItem('form_analytics_session_id');
   if (!sessionId) {
     sessionId = generateSessionId();
@@ -110,7 +116,7 @@ class AnalyticsEngine {
   constructor() {
     this.apiEndpoint = process.env.NEXT_PUBLIC_ANALYTICS_API || '/api/analytics';
     this.isEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
-    
+
     if (this.isEnabled && typeof window !== 'undefined') {
       this.startFlushInterval();
       this.setupBeforeUnload();
@@ -131,12 +137,12 @@ class AnalyticsEngine {
 
   track(event: FormEvent): void {
     if (!this.isEnabled) return;
-    
+
     event.sessionId = getSessionId();
     event.timestamp = Date.now();
-    
+
     this.eventQueue.push(event);
-    
+
     if (this.eventQueue.length >= this.maxBatchSize) {
       this.flush();
     }
@@ -144,10 +150,10 @@ class AnalyticsEngine {
 
   private async flush(): Promise<void> {
     if (this.eventQueue.length === 0) return;
-    
+
     const events = [...this.eventQueue];
     this.eventQueue = [];
-    
+
     try {
       await fetch(this.apiEndpoint, {
         method: 'POST',
@@ -165,7 +171,7 @@ class AnalyticsEngine {
   private flushSync(): void {
     // Synchronous flush for beforeunload
     const events = [...this.eventQueue];
-    
+
     try {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', this.apiEndpoint, false); // Synchronous
@@ -180,7 +186,7 @@ class AnalyticsEngine {
   enableDebugMode(): void {
     const originalTrack = this.track.bind(this);
     this.track = (event: FormEvent) => {
-      console.log('[Analytics]', event);
+      console.info('[Analytics]', event);
       originalTrack(event);
     };
   }
@@ -218,7 +224,7 @@ export class FormFunnel {
   trackStepStart(step: number, stepName?: string): void {
     this.currentStep = step;
     this.stepStartTime = Date.now();
-    
+
     analytics.track({
       formId: this.formId,
       eventType: 'step_start',
@@ -232,7 +238,7 @@ export class FormFunnel {
   trackStepComplete(step: number, stepName?: string): void {
     const timeSpent = Date.now() - this.stepStartTime;
     this.stepCompletions.set(step, true);
-    
+
     analytics.track({
       formId: this.formId,
       eventType: 'step_complete',
@@ -259,7 +265,7 @@ export class FormFunnel {
 
   trackAbandonment(lastField: string): void {
     const timeOnForm = Date.now() - this.startTime;
-    
+
     analytics.track({
       formId: this.formId,
       eventType: 'abandoned',
@@ -273,7 +279,7 @@ export class FormFunnel {
 
   trackConversion(): void {
     const totalTime = Date.now() - this.startTime;
-    
+
     analytics.track({
       formId: this.formId,
       eventType: 'conversion',
@@ -313,15 +319,15 @@ export class HeatmapCollector {
 
   start(): () => void {
     if (typeof window === 'undefined' || this.isActive) return () => {};
-    
+
     this.isActive = true;
-    
+
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      
+
       // Skip clicks on the analytics dashboard itself
       if (target.closest('[data-analytics-dashboard]')) return;
-      
+
       this.clicks.push({
         x: e.clientX,
         y: e.clientY,
@@ -335,7 +341,7 @@ export class HeatmapCollector {
     };
 
     window.addEventListener('click', handleClick, { passive: true });
-    
+
     // Flush periodically
     this.intervalId = setInterval(() => {
       this.flush();
@@ -350,15 +356,15 @@ export class HeatmapCollector {
 
   private async flush(): Promise<void> {
     if (this.clicks.length === 0) return;
-    
+
     const batch = [...this.clicks];
     this.clicks = [];
-    
+
     try {
       await fetch('/api/analytics/heatmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           clicks: batch,
           sessionId: getSessionId(),
           url: window.location.pathname,
@@ -409,7 +415,7 @@ export class ABTestFramework {
 
     const storageKey = `exp:${this.experimentId}`;
     const assigned = localStorage.getItem(storageKey) as 'A' | 'B' | null;
-    
+
     if (assigned) {
       this.variant = assigned;
     } else {
@@ -417,7 +423,7 @@ export class ABTestFramework {
       const newVariant = randomValue > (this.config.trafficSplit || 0.5) ? 'A' : 'B';
       localStorage.setItem(storageKey, newVariant);
       this.variant = newVariant;
-      
+
       // Track assignment
       analytics.track({
         formId: this.experimentId,
@@ -440,7 +446,7 @@ export class ABTestFramework {
 
   trackConversion(metadata?: Record<string, unknown>): void {
     if (!this.variant) return;
-    
+
     analytics.track({
       formId: this.experimentId,
       eventType: 'conversion',
@@ -456,7 +462,7 @@ export class ABTestFramework {
 
   trackEvent(eventName: string, metadata?: Record<string, unknown>): void {
     if (!this.variant) return;
-    
+
     analytics.track({
       formId: this.experimentId,
       eventType: 'experiment_assigned',
@@ -499,7 +505,7 @@ export const initSessionRecording = async (config: SessionRecordingConfig): Prom
     try {
       const LogRocket = (await import('logrocket')).default;
       LogRocket.init(config.logRocketId);
-      
+
       if (config.userId) {
         LogRocket.identify(config.userId, {
           ...(config.userEmail ? { email: config.userEmail } : {}),
@@ -545,8 +551,8 @@ export class RealtimeMetricsFetcher {
     if (typeof WebSocket !== 'undefined') {
       try {
         this.ws = new WebSocket(`wss://api.mechmind.com/analytics?formId=${this.formId}`);
-        
-        this.ws.onmessage = (event) => {
+
+        this.ws.onmessage = event => {
           const data = JSON.parse(event.data);
           this.notifyListeners(data);
         };
@@ -645,7 +651,7 @@ export class PerformanceMonitor {
   async measureApiCall<T>(fn: () => Promise<T>): Promise<T> {
     const start = performance.now();
     this.metrics.apiCalls++;
-    
+
     try {
       const result = await fn();
       this.metrics.apiLatency.push(performance.now() - start);
@@ -661,9 +667,10 @@ export class PerformanceMonitor {
   }
 
   report(): void {
-    const avgLatency = this.metrics.apiLatency.length > 0
-      ? this.metrics.apiLatency.reduce((a, b) => a + b, 0) / this.metrics.apiLatency.length
-      : 0;
+    const avgLatency =
+      this.metrics.apiLatency.length > 0
+        ? this.metrics.apiLatency.reduce((a, b) => a + b, 0) / this.metrics.apiLatency.length
+        : 0;
 
     analytics.track({
       formId: 'performance',

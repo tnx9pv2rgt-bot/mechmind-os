@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * SaveStatusIndicator Component
  * 

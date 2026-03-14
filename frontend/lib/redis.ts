@@ -1,58 +1,50 @@
 /**
  * Redis Client for WebAuthn Challenge Storage
- * 
- * Uses Upstash Redis for storing temporary WebAuthn challenges
- * with automatic expiration.
- * 
+ *
+ * In-memory store with TTL for temporary challenges.
+ * Backend handles persistent Redis operations via RedisService (ioredis).
+ *
  * @module lib/redis
  */
 
-import { Redis } from '@upstash/redis';
+// In-memory store with expiration
+const memoryStore = new Map<string, { value: string; expires: number }>();
 
-// =============================================================================
-// Configuration
-// =============================================================================
-
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-// =============================================================================
-// Redis Client
-// =============================================================================
-
-let redis: Redis;
-
-if (REDIS_URL && REDIS_TOKEN) {
-  redis = new Redis({
-    url: REDIS_URL,
-    token: REDIS_TOKEN,
-  });
-} else {
-  // Fallback to in-memory store for development
-  console.warn('Redis credentials not found, using in-memory store for development');
-  
-  const memoryStore = new Map<string, { value: string; expires: number }>();
-  
-  redis = {
-    get: async (key: string) => {
-      const item = memoryStore.get(key);
-      if (!item) return null;
-      if (Date.now() > item.expires) {
+// Cleanup expired entries every 60 seconds
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of memoryStore.entries()) {
+      if (now > entry.expires) {
         memoryStore.delete(key);
-        return null;
       }
-      return item.value;
-    },
-    setex: async (key: string, seconds: number, value: string) => {
-      memoryStore.set(key, { value, expires: Date.now() + seconds * 1000 });
-      return 'OK';
-    },
-    del: async (key: string) => {
-      memoryStore.delete(key);
-      return 1;
-    },
-  } as unknown as Redis;
+    }
+  }, 60000);
 }
 
-export { redis };
+export const redis = {
+  async get(key: string): Promise<string | null> {
+    const item = memoryStore.get(key);
+    if (!item) return null;
+    if (Date.now() > item.expires) {
+      memoryStore.delete(key);
+      return null;
+    }
+    return item.value;
+  },
+  async setex(key: string, seconds: number, value: string): Promise<string> {
+    memoryStore.set(key, { value, expires: Date.now() + seconds * 1000 });
+    return 'OK';
+  },
+  async del(key: string): Promise<number> {
+    memoryStore.delete(key);
+    return 1;
+  },
+  async set(key: string, value: string, options?: { ex?: number }): Promise<string> {
+    const expires = options?.ex ? Date.now() + options.ex * 1000 : Date.now() + 86400000;
+    memoryStore.set(key, { value, expires });
+    return 'OK';
+  },
+};
+
 export default redis;

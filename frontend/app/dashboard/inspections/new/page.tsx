@@ -62,7 +62,7 @@ export default function NewInspectionPage() {
   const progress = (step / totalSteps) * 100
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#2f2f2f] flex items-center justify-center p-4 overflow-hidden">
       <div className="relative w-[min(900px,95vw)] h-[min(900px,95vh)]">
         
         {/* Background Icon/Illustration */}
@@ -82,7 +82,7 @@ export default function NewInspectionPage() {
 
         {/* Glass Card Container */}
         <motion.div 
-          className="relative z-10 w-full h-full bg-white/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 overflow-hidden flex flex-col"
+          className="relative z-10 w-full h-full bg-white/70 dark:bg-[#2f2f2f]/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 dark:border-[#424242]/50 overflow-hidden flex flex-col"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -91,10 +91,10 @@ export default function NewInspectionPage() {
           <div className="px-10 pt-8 pb-4">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-[#ececec] tracking-tight">
                   Nuova Ispezione
                 </h1>
-                <p className="text-gray-500 mt-1">Wizard 7 step - AI + Blockchain</p>
+                <p className="text-gray-500 dark:text-[#636366] mt-1">Wizard 7 step - AI + Blockchain</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400">Step</span>
@@ -105,7 +105,7 @@ export default function NewInspectionPage() {
             </div>
             
             {/* Progress Bar */}
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-200 dark:bg-[#424242] rounded-full overflow-hidden">
               <motion.div 
                 className="h-full bg-green-500"
                 initial={{ width: 0 }}
@@ -124,15 +124,15 @@ export default function NewInspectionPage() {
                       ? 'text-green-600 cursor-default' 
                       : s.num < step 
                         ? 'text-green-600 hover:text-green-700 cursor-pointer hover:scale-105' 
-                        : 'text-gray-400 cursor-not-allowed'
+                        : 'text-gray-400 dark:text-[#6e6e6e] cursor-not-allowed'
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                     s.num < step 
                       ? 'bg-green-500 text-white' 
                       : s.num === step 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-gray-200 text-gray-500'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
                   }`}>
                     {s.num < step ? '✓' : s.num}
                   </div>
@@ -159,14 +159,14 @@ export default function NewInspectionPage() {
                       <Car className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900">Dati Veicolo</h2>
-                      <p className="text-gray-500 text-sm">Inserisci i dati del veicolo da ispezionare</p>
+                      <h2 className="text-xl font-semibold text-gray-900 dark:text-[#ececec]">Dati Veicolo</h2>
+                      <p className="text-gray-500 dark:text-[#636366] text-sm">Inserisci i dati del veicolo da ispezionare</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Targa</Label>
+                      <Label className="text-sm font-medium text-gray-700 dark:text-[#636366]">Targa</Label>
                       <Input 
                         placeholder="AB123CD"
                         className="h-14 rounded-xl border-gray-200 focus:border-blue-500"
@@ -175,7 +175,7 @@ export default function NewInspectionPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Veicolo</Label>
+                      <Label className="text-sm font-medium text-gray-700 dark:text-[#636366]">Veicolo</Label>
                       <Input 
                         placeholder="BMW X5"
                         className="h-14 rounded-xl border-gray-200 focus:border-blue-500"
@@ -224,16 +224,16 @@ export default function NewInspectionPage() {
               {/* Steps 2-7: Placeholder */}
               {step > 1 && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-[#353535] flex items-center justify-center mx-auto mb-4">
                     {(() => {
                       const Icon = steps[step - 1].icon
                       return <Icon className="w-8 h-8 text-gray-400" />
                     })()}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-[#ececec] mb-2">
                     {steps[step - 1].label}
                   </h3>
-                  <p className="text-gray-500 max-w-md mx-auto">
+                  <p className="text-gray-500 dark:text-[#636366] max-w-md mx-auto">
                     Questa sezione include {steps[step - 1].label.toLowerCase()} inspection 
                     con AI detection, foto e annotazioni.
                   </p>
@@ -265,7 +265,7 @@ export default function NewInspectionPage() {
           </div>
 
           {/* Footer */}
-          <div className="absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 backdrop-blur-xl border-t border-gray-200/50">
+          <div className="absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-[#424242]/50">
             <div className="flex items-center justify-between">
               <Button
                 onClick={handleBack}

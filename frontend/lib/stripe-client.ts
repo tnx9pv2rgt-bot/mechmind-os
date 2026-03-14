@@ -1,4 +1,4 @@
-import { loadStripe, Stripe } from '@stripe/stripe-js'
+import { loadStripe, Stripe, StripeCardElement, StripeCardNumberElement, PaymentIntentResult } from '@stripe/stripe-js'
 import { useState } from 'react'
 
 // Stripe configuration
@@ -105,11 +105,41 @@ export interface Refund {
   createdAt: string
 }
 
+/**
+ * Stripe webhook event data object.
+ * The object varies by event type (PaymentIntent, Charge, Invoice, Account, etc.)
+ * so we use a structural type capturing common fields.
+ */
+export interface WebhookEventDataObject {
+  id: string
+  object: string
+  amount?: number
+  amount_refunded?: number
+  currency?: string
+  metadata?: Record<string, string>
+  payment_intent?: string
+  subscription?: string
+  amount_paid?: number
+  charges_enabled?: boolean
+  payouts_enabled?: boolean
+  requirements?: {
+    currently_due: string[]
+    eventually_due: string[]
+    past_due: string[]
+    disabled_reason?: string
+  }
+  last_payment_error?: {
+    message?: string
+    code?: string
+    type?: string
+  }
+}
+
 export interface WebhookEvent {
   id: string
   type: WebhookEventType
   data: {
-    object: any
+    object: WebhookEventDataObject
   }
   created: number
 }
@@ -202,10 +232,10 @@ export async function confirmPayment(
   stripe: Stripe,
   clientSecret: string,
   paymentMethod: {
-    card?: any
+    card: StripeCardElement | StripeCardNumberElement | { token: string }
     billingDetails?: PaymentMethod['billingDetails']
   }
-): Promise<{ error?: any; paymentIntent?: any }> {
+): Promise<PaymentIntentResult> {
   return stripe.confirmCardPayment(clientSecret, {
     payment_method: {
       card: paymentMethod.card,
@@ -355,12 +385,23 @@ export function verifyWebhookSignature(
 /**
  * Handle webhook event
  */
-export function handleWebhookEvent(event: WebhookEvent): {
+interface WebhookHandlerResultData {
+  [key: string]: string | number | boolean | undefined | WebhookEventDataObject['last_payment_error'] | WebhookEventDataObject['requirements']
+}
+
+interface WebhookHandlerResult {
+  action: string
+  data: WebhookHandlerResultData
+}
+
+interface WebhookEventResult {
   type: string
-  data: any
+  data: WebhookHandlerResultData | WebhookEventDataObject
   action?: string
-} {
-  const handlers: Record<string, (data: any) => { action: string; data: any }> = {
+}
+
+export function handleWebhookEvent(event: WebhookEvent): WebhookEventResult {
+  const handlers: Record<string, (data: WebhookEventDataObject) => WebhookHandlerResult> = {
     'payment_intent.succeeded': (data) => ({
       action: 'mark_invoice_paid',
       data: {
@@ -502,8 +543,8 @@ export function useStripePayment() {
       })
 
       return paymentIntent
-    } catch (err: any) {
-      setError(err.message || 'Payment failed')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Payment failed')
       throw err
     } finally {
       setIsLoading(false)
@@ -530,8 +571,8 @@ export function useStripePayment() {
       })
 
       return refund
-    } catch (err: any) {
-      setError(err.message || 'Refund failed')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Refund failed')
       throw err
     } finally {
       setIsLoading(false)
@@ -562,11 +603,25 @@ export class StripeError extends Error {
 /**
  * Parse Stripe error
  */
-export function parseStripeError(error: any): StripeError {
+function isStripeErrorLike(error: unknown): error is { message: string; code?: string; type?: string; decline_code?: string } {
+  if (typeof error !== 'object' || error === null) return false
+  if (!('message' in error)) return false
+  const obj = error as Record<string, unknown>
+  return typeof obj.message === 'string'
+}
+
+export function parseStripeError(error: unknown): StripeError {
+  if (isStripeErrorLike(error)) {
+    return new StripeError(
+      error.message,
+      error.code || 'unknown',
+      error.type || 'api_error',
+      error.decline_code
+    )
+  }
   return new StripeError(
-    error.message || 'An unknown error occurred',
-    error.code || 'unknown',
-    error.type || 'api_error',
-    error.decline_code
+    String(error),
+    'unknown',
+    'api_error'
   )
 }

@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now()
   
   // Extract Cloudflare/Vercel geolocation headers
-  const cf = (request as any).cf || {}
-  const geo = (request as any).geo || {}
+  const cf = (request as NextRequest & { cf?: Record<string, string> }).cf || {}
+  const geo = (request as NextRequest & { geo?: Record<string, string> }).geo || {}
   
   // Build geolocation response
   const geoData: GeoData = {
@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
     region: cf?.region || geo?.region,
     
     // Coordinates
-    latitude: cf?.latitude || geo?.latitude,
-    longitude: cf?.longitude || geo?.longitude,
+    latitude: cf?.latitude ? parseFloat(cf.latitude) : geo?.latitude ? parseFloat(geo.latitude) : undefined,
+    longitude: cf?.longitude ? parseFloat(cf.longitude) : geo?.longitude ? parseFloat(geo.longitude) : undefined,
     
     // Timezone
     timezone: cf?.timezone || geo?.timezone,

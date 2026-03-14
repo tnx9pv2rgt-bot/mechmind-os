@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { CustomerService, CustomerWithDecryptedData } from './customer.service';
+import { CustomerService } from './customer.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -34,21 +34,6 @@ describe('CustomerService', () => {
     encryptedFirstName: 'enc_Mario',
     encryptedLastName: 'enc_Rossi',
     phoneHash: 'hash_+390123456789',
-    gdprConsent: true,
-    gdprConsentAt: NOW,
-    marketingConsent: false,
-    notes: 'Preferred morning',
-    createdAt: NOW,
-    updatedAt: NOW,
-  };
-
-  // What decryptCustomer should produce from mockDbCustomer
-  const expectedDecryptedCustomer: CustomerWithDecryptedData = {
-    id: CUSTOMER_ID,
-    phone: '+390123456789',
-    email: 'mario@rossi.it',
-    firstName: 'Mario',
-    lastName: 'Rossi',
     gdprConsent: true,
     gdprConsentAt: NOW,
     marketingConsent: false,
@@ -327,10 +312,10 @@ describe('CustomerService', () => {
       expect(result.phone).toBe('+390123456789');
       expect(result.email).toBe('mario@rossi.it');
       // Relations should be included
-      expect((result as Record<string, unknown>).vehicles).toEqual([
+      expect((result as unknown as Record<string, unknown>).vehicles).toEqual([
         { id: 'vehicle-001', licensePlate: 'AB123CD' },
       ]);
-      expect((result as Record<string, unknown>).bookings).toEqual([
+      expect((result as unknown as Record<string, unknown>).bookings).toEqual([
         { id: 'booking-001', scheduledDate: NOW },
       ]);
     });
@@ -429,7 +414,7 @@ describe('CustomerService', () => {
       // Assert - returns decrypted
       expect(result).not.toBeNull();
       expect(result!.phone).toBe('+390123456789');
-      expect((result as Record<string, unknown>).vehicles).toEqual([{ id: 'v-001' }]);
+      expect((result as unknown as Record<string, unknown>).vehicles).toEqual([{ id: 'v-001' }]);
     });
 
     it('should return null when no customer matches the phone hash', async () => {
@@ -1067,7 +1052,7 @@ describe('CustomerService', () => {
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
 
       // Assert
-      expect((result as Record<string, unknown>).vehicles).toEqual([
+      expect((result as unknown as Record<string, unknown>).vehicles).toEqual([
         { id: 'v-1', licensePlate: 'AB123CD' },
       ]);
     });
@@ -1084,7 +1069,7 @@ describe('CustomerService', () => {
       const result = await service.findById(TENANT_ID, CUSTOMER_ID);
 
       // Assert
-      expect((result as Record<string, unknown>).bookings).toEqual([
+      expect((result as unknown as Record<string, unknown>).bookings).toEqual([
         { id: 'b-1', scheduledDate: NOW },
       ]);
     });

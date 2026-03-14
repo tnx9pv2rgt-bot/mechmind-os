@@ -1,14 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsUUID,
-  IsOptional,
-  IsBoolean,
-  IsDateString,
-  IsEmail,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsDateString, IsEmail, Length } from 'class-validator';
 
 export class CreateCustomerDto {
   @ApiProperty({
@@ -209,11 +200,11 @@ export class CustomerWithBookingsDto extends CustomerResponseDto {
     description: 'Customer bookings',
     type: 'array',
   })
-  bookings: any[];
+  bookings: unknown[];
 
   @ApiProperty({
     description: 'Customer vehicles',
     type: 'array',
   })
-  vehicles: any[];
+  vehicles: unknown[];
 }

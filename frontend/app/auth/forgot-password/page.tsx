@@ -91,10 +91,10 @@ function IOSInput({ label, icon, error, className, type, ...props }: InputProps)
       )}
       <div
         className={cn(
-          'group relative flex items-center overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm transition-all duration-300',
-          'border border-white/30 shadow-sm',
-          'focus-within:border-apple-blue/50 focus-within:bg-white/80 focus-within:shadow-md',
-          'hover:bg-white/60',
+          'group relative flex items-center overflow-hidden rounded-2xl bg-white/50 dark:bg-[#2f2f2f]/50 backdrop-blur-sm transition-all duration-300',
+          'border border-white/30 dark:border-[#424242]/30 shadow-sm',
+          'focus-within:border-apple-blue/50 focus-within:bg-white/80 dark:focus-within:bg-[#2f2f2f]/80 focus-within:shadow-md',
+          'hover:bg-white/60 dark:hover:bg-[#353535]/60',
           error && 'border-apple-red/50 focus-within:border-apple-red/50',
           className
         )}
@@ -157,8 +157,8 @@ function AppleButton({
 }: AppleButtonProps) {
   const variants = {
     primary: 'bg-apple-blue text-white hover:bg-apple-blue-hover shadow-lg shadow-apple-blue/25',
-    secondary: 'bg-white/80 text-apple-dark hover:bg-white shadow-md backdrop-blur-sm',
-    outline: 'bg-transparent text-apple-dark border border-foreground/20 hover:bg-foreground/5',
+    secondary: 'bg-white/80 text-apple-dark dark:text-[#ececec] hover:bg-white shadow-md backdrop-blur-sm',
+    outline: 'bg-transparent text-apple-dark dark:text-[#ececec] border border-foreground/20 hover:bg-foreground/5',
   }
 
   const sizes = {
@@ -239,7 +239,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-apple-light-gray">
+    <div className="relative min-h-screen w-full overflow-hidden bg-apple-light-gray dark:bg-[#212121]">
       {/* Background Gradient Orbs - Liquid Glass Effect (identico a /auth) */}
       <motion.div
         variants={backgroundVariants}
@@ -270,7 +270,7 @@ export default function ForgotPasswordPage() {
           className="w-full max-w-[420px]"
         >
           {/* Glass Card */}
-          <div className="relative overflow-hidden rounded-[32px] bg-white/70 p-8 shadow-2xl shadow-apple-dark/5 backdrop-blur-3xl ring-1 ring-white/50 sm:p-10">
+          <div className="relative overflow-hidden rounded-[32px] bg-white/70 dark:bg-[#2f2f2f]/70 p-8 shadow-2xl shadow-apple-dark/5 backdrop-blur-3xl ring-1 ring-white/50 dark:ring-[#424242]/50 sm:p-10">
             {/* Card Shine Effect */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent" />
             
@@ -288,7 +288,7 @@ export default function ForgotPasswordPage() {
               <motion.div variants={itemVariants} className="mb-6">
                 <Link
                   href="/auth"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-apple-gray transition-colors hover:text-apple-blue"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-apple-gray dark:text-[#636366] transition-colors hover:text-apple-blue"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Torna al login
@@ -297,10 +297,10 @@ export default function ForgotPasswordPage() {
 
               {/* Title & Description */}
               <motion.div variants={itemVariants} className="mb-8 text-center">
-                <h1 className="text-title-1 font-semibold tracking-tight text-apple-dark">
+                <h1 className="text-title-1 font-semibold tracking-tight text-apple-dark dark:text-[#ececec]">
                   Password dimenticata?
                 </h1>
-                <p className="mt-2 text-body text-apple-gray">
+                <p className="mt-2 text-body text-apple-gray dark:text-[#636366]">
                   Inserisci la tua email e ti invieremo un link per reimpostare la password
                 </p>
               </motion.div>
@@ -313,14 +313,14 @@ export default function ForgotPasswordPage() {
                   className="text-center"
                 >
                   <div className="mb-4 flex justify-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                       <CheckCircle2 className="h-8 w-8 text-green-600" />
                     </div>
                   </div>
-                  <h2 className="mb-2 text-lg font-semibold text-apple-dark">
+                  <h2 className="mb-2 text-lg font-semibold text-apple-dark dark:text-[#ececec]">
                     Email inviata!
                   </h2>
-                  <p className="mb-6 text-sm text-apple-gray">
+                  <p className="mb-6 text-sm text-apple-gray dark:text-[#636366]">
                     Controlla la tua casella di posta per il link di reset. Se non trovi l&apos;email, controlla anche nella cartella spam.
                   </p>
                   <Link href="/auth">
@@ -369,7 +369,7 @@ export default function ForgotPasswordPage() {
                   {/* Help Text */}
                   <motion.p 
                     variants={itemVariants}
-                    className="text-center text-xs text-apple-gray"
+                    className="text-center text-xs text-apple-gray dark:text-[#636366]"
                   >
                     Non ricordi l&apos;email?{' '}
                     <Link 
@@ -385,7 +385,7 @@ export default function ForgotPasswordPage() {
               {/* Footer Links */}
               {!isSuccess && (
                 <motion.div variants={itemVariants} className="mt-8 text-center">
-                  <p className="text-sm text-apple-gray">
+                  <p className="text-sm text-apple-gray dark:text-[#636366]">
                     Ricordi la password?{' '}
                     <Link
                       href="/auth"

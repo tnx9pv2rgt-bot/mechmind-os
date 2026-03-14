@@ -34,7 +34,6 @@ let LicensePlateService = LicensePlateService_1 = class LicensePlateService {
     }
     async detectLicensePlate(imageBuffer, options = {}) {
         const provider = options.provider || license_plate_interface_1.OcrProvider.GOOGLE_VISION;
-        const minConfidence = options.minConfidence || 0.8;
         const imageKey = `lpr/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
         await this.s3Service.uploadBuffer(imageBuffer, imageKey, 'image/jpeg');
         const imageUrl = await this.s3Service.getSignedUrlForKey(imageKey, 3600);
@@ -161,8 +160,26 @@ let LicensePlateService = LicensePlateService_1 = class LicensePlateService {
             },
         });
         return {
-            vehicle,
-            recentHistory: recentHistory.map((h) => ({
+            vehicle: vehicle
+                ? {
+                    id: vehicle.id,
+                    make: vehicle.make,
+                    model: vehicle.model,
+                    year: vehicle.year || 0,
+                    licensePlate: vehicle.licensePlate,
+                    customer: vehicle.customer
+                        ? {
+                            id: vehicle.customer.id,
+                            name: [vehicle.customer.encryptedFirstName, vehicle.customer.encryptedLastName]
+                                .filter(Boolean)
+                                .join(' ') || 'Unknown',
+                            phone: vehicle.customer.encryptedPhone || undefined,
+                        }
+                        : { id: '', name: '' },
+                    workOrders: [],
+                }
+                : undefined,
+            recentHistory: recentHistory.map(h => ({
                 id: h.id,
                 type: h.type,
                 licensePlate: h.licensePlate,
@@ -175,14 +192,16 @@ let LicensePlateService = LicensePlateService_1 = class LicensePlateService {
                 vehicleId: h.vehicleId || undefined,
                 isAuthorized: h.isAuthorized,
             })),
-            activeSession: activeSession ? {
-                id: activeSession.id,
-                licensePlate: activeSession.licensePlate,
-                entry: {},
-                status: activeSession.status,
-                entryTime: activeSession.entryTime,
-                parkingSpotId: activeSession.parkingSpotId || undefined,
-            } : undefined,
+            activeSession: activeSession
+                ? {
+                    id: activeSession.id,
+                    licensePlate: activeSession.licensePlate,
+                    entry: {},
+                    status: activeSession.status,
+                    entryTime: activeSession.entryTime,
+                    parkingSpotId: activeSession.parkingSpotId || undefined,
+                }
+                : undefined,
         };
     }
     async getActiveSessions(tenantId) {
@@ -200,7 +219,7 @@ let LicensePlateService = LicensePlateService_1 = class LicensePlateService {
             },
             orderBy: { entryTime: 'desc' },
         });
-        return sessions.map((s) => ({
+        return sessions.map(s => ({
             id: s.id,
             licensePlate: s.licensePlate,
             entry: {
@@ -267,7 +286,7 @@ let LicensePlateService = LicensePlateService_1 = class LicensePlateService {
         const cameras = await this.prisma.lprCamera.findMany({
             where: { tenantId },
         });
-        return cameras.map((c) => ({
+        return cameras.map(c => ({
             id: c.id,
             name: c.name,
             location: c.location,
@@ -307,11 +326,12 @@ let LicensePlateService = LicensePlateService_1 = class LicensePlateService {
             : 0;
         const byProvider = {};
         for (const provider of Object.values(license_plate_interface_1.OcrProvider)) {
-            const providerDetections = detections.filter((d) => d.provider === provider);
+            const providerDetections = detections.filter(d => d.provider === provider);
             byProvider[provider] = {
                 count: providerDetections.length,
                 avgConfidence: providerDetections.length > 0
-                    ? providerDetections.reduce((sum, d) => sum + d.confidence, 0) / providerDetections.length
+                    ? providerDetections.reduce((sum, d) => sum + d.confidence, 0) /
+                        providerDetections.length
                     : 0,
             };
         }

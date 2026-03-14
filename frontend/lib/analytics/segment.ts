@@ -1,6 +1,6 @@
 /**
  * Segment/Mixpanel Analytics Integration
- * 
+ *
  * Questo modulo fornisce un'interfaccia unificata per tracciare eventi
  * con Segment (che può inoltrare a Mixpanel, Google Analytics, ecc.)
  */
@@ -70,6 +70,12 @@ type FormEventProperties = {
 
 type FormEventName = keyof FormEventProperties;
 
+// Tipo per Segment Analytics (compatibile con Window.analytics da types.ts)
+type SegmentAnalytics = NonNullable<Window['analytics']>;
+
+// Tipo per Mixpanel (compatibile con Window.mixpanel da types.ts)
+type MixpanelLike = NonNullable<Window['mixpanel']>;
+
 // Interfaccia per il provider di analytics
 interface AnalyticsProvider {
   identify: (userId: string, traits?: UserTraits) => void;
@@ -84,37 +90,37 @@ interface AnalyticsProvider {
 const consoleProvider: AnalyticsProvider = {
   identify: (userId, traits) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Identify:', { userId, traits });
+      console.info('[Analytics] Identify:', { userId, traits });
     }
   },
   track: (event, properties) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Track:', { event, properties });
+      console.info('[Analytics] Track:', { event, properties });
     }
   },
   page: (name, properties) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Page:', { name, properties });
+      console.info('[Analytics] Page:', { name, properties });
     }
   },
   group: (groupId, traits) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Group:', { groupId, traits });
+      console.info('[Analytics] Group:', { groupId, traits });
     }
   },
   reset: () => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Reset');
+      console.info('[Analytics] Reset');
     }
   },
 };
 
 // Provider Segment.js
 class SegmentProvider implements AnalyticsProvider {
-  private analytics: any;
+  private analytics: SegmentAnalytics | null;
 
   constructor() {
-    this.analytics = (typeof window !== 'undefined' && (window as any).analytics) || null;
+    this.analytics = (typeof window !== 'undefined' && window.analytics) || null;
   }
 
   identify(userId: string, traits?: UserTraits): void {
@@ -156,10 +162,10 @@ class SegmentProvider implements AnalyticsProvider {
 
 // Provider Mixpanel
 class MixpanelProvider implements AnalyticsProvider {
-  private mixpanel: any;
+  private mixpanel: MixpanelLike | null;
 
   constructor() {
-    this.mixpanel = (typeof window !== 'undefined' && (window as any).mixpanel) || null;
+    this.mixpanel = (typeof window !== 'undefined' && window.mixpanel) || null;
   }
 
   identify(userId: string, traits?: UserTraits): void {
@@ -239,13 +245,23 @@ class Analytics {
   }
 
   private processQueue(): void {
+    type QueueableMethod = 'identify' | 'track' | 'page' | 'group';
+    const methodMap: Record<QueueableMethod, (...args: unknown[]) => void> = {
+      identify: (userId: unknown, traits?: unknown) =>
+        this.identify(userId as string, traits as UserTraits | undefined),
+      track: (event: unknown, properties?: unknown) =>
+        this.track(event as string, properties as EventProperties | undefined),
+      page: (name?: unknown, properties?: unknown) =>
+        this.page(name as string | undefined, properties as EventProperties | undefined),
+      group: (groupId: unknown, traits?: unknown) =>
+        this.group(groupId as string, traits as EventProperties | undefined),
+    };
+
     while (this.queue.length > 0) {
       const item = this.queue.shift();
-      if (item) {
-        const method = (this as any)[item.method];
-        if (typeof method === 'function') {
-          method.apply(this, item.args);
-        }
+      if (item && item.method in methodMap) {
+        const method = methodMap[item.method as QueueableMethod];
+        method(...item.args);
       }
     }
   }
@@ -265,7 +281,7 @@ class Analytics {
     }
 
     this.userId = userId;
-    
+
     const enrichedTraits = {
       ...traits,
       sessionId: this.sessionId,
@@ -336,7 +352,7 @@ class Analytics {
   reset(): void {
     this.userId = null;
     this.sessionId = this.generateSessionId();
-    
+
     this.providers.forEach(provider => {
       provider.reset();
     });
@@ -348,10 +364,7 @@ class Analytics {
   }
 
   // Metodi specifici per il form
-  trackFormEvent<T extends FormEventName>(
-    event: T,
-    properties?: FormEventProperties[T]
-  ): void {
+  trackFormEvent<T extends FormEventName>(event: T, properties?: FormEventProperties[T]): void {
     this.track(event, properties as EventProperties);
   }
 
@@ -471,13 +484,7 @@ export function useAnalytics() {
 }
 
 // Tipi esportati
-export type { 
-  EventProperties, 
-  UserTraits, 
-  FormEventProperties, 
-  FormEventName,
-  AnalyticsProvider 
-};
+export type { EventProperties, UserTraits, FormEventProperties, FormEventName, AnalyticsProvider };
 
 // Inizializzazione script Segment
 export function getSegmentScript(writeKey: string): string {

@@ -61,8 +61,7 @@ describe('SseService', () => {
 
       // Use a variable to hold the subscription so it can be unsubscribed
       // after the synchronous 'connected' event is received.
-      let sub: { unsubscribe: () => void } | undefined;
-      sub = stream.subscribe({
+      const sub = stream.subscribe({
         next: event => {
           if (event.event === 'connected') {
             const data = JSON.parse(event.data);

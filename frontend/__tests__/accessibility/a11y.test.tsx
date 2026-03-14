@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n';
@@ -102,7 +102,11 @@ describe('WCAG 1.3.2 - Meaningful Sequence', () => {
 
     const buttons = container.querySelectorAll('button');
     buttons.forEach((button) => {
-      expect(button).toHaveAttribute('tabindex', '-1'); // Or 0 for focusable
+      // Buttons are natively focusable, tabindex is optional
+      const tabindex = button.getAttribute('tabindex');
+      if (tabindex !== null) {
+        expect(['-1', '0']).toContain(tabindex);
+      }
     });
   });
 
@@ -348,8 +352,11 @@ describe('WCAG 4.1.3 - Status Messages', () => {
  */
 describe('Accessibility Hooks', () => {
   describe('useReducedMotion', () => {
-    it('should respect prefers-reduced-motion media query', () => {
-      // Mock matchMedia
+    it('should respect prefers-reduced-motion media query', async () => {
+      // Clear any persisted preference
+      localStorage.removeItem('a11y_reduced_motion');
+
+      // Mock matchMedia before render
       Object.defineProperty(window, 'matchMedia', {
         writable: true,
         value: jest.fn().mockImplementation((query: string) => ({
@@ -365,12 +372,15 @@ describe('Accessibility Hooks', () => {
       });
 
       const TestComponent = () => {
-        const { prefersReducedMotion } = useReducedMotion();
+        const { prefersReducedMotion } = useReducedMotion({ persist: false });
         return <div data-testid="motion">{prefersReducedMotion ? 'reduced' : 'normal'}</div>;
       };
 
       const { getByTestId } = render(<TestComponent />);
-      expect(getByTestId('motion')).toHaveTextContent('reduced');
+      // Hook reads matchMedia in useEffect, wait for state update
+      await waitFor(() => {
+        expect(getByTestId('motion')).toHaveTextContent('reduced');
+      });
     });
   });
 

@@ -1,3 +1,7 @@
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Image optimization
@@ -25,13 +29,15 @@ const nextConfig = {
   
   // Experimental features
   experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',
       '@radix-ui/react-icons',
       'recharts',
       'react-phone-number-input',
-      '@simplewebauthn/browser',
+      // NOTE: @simplewebauthn/browser removed — barrel optimization breaks
+      // dynamic import of startAuthentication (vercel/next.js#61995)
     ],
     serverActions: {
       bodySizeLimit: '2mb',
@@ -40,45 +46,9 @@ const nextConfig = {
   
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
-    // Split chunks optimization
-    config.optimization.splitChunks = {
-      chunks: 'all',
-      cacheGroups: {
-        default: {
-          minChunks: 2,
-          priority: -20,
-          reuseExistingChunk: true,
-        },
-        // AI vendors chunk
-        ai: {
-          test: /[\\/]node_modules[\\/](openai|@anthropic|langchain)[\\/]/,
-          name: 'ai-vendor',
-          priority: 10,
-          chunks: 'all',
-        },
-        // Auth vendors chunk
-        auth: {
-          test: /[\\/]node_modules[\\/](@simplewebauthn|@auth)[\\/]/,
-          name: 'auth-vendor',
-          priority: 10,
-          chunks: 'all',
-        },
-        // Charts/analytics chunk
-        analytics: {
-          test: /[\\/]node_modules[\\/](recharts|d3|chart\.js)[\\/]/,
-          name: 'analytics-vendor',
-          priority: 10,
-          chunks: 'all',
-        },
-        // UI components chunk
-        ui: {
-          test: /[\\/]components[\\/]ui[\\/]/,
-          name: 'ui-components',
-          priority: 5,
-          chunks: 'all',
-        },
-      },
-    };
+    // NOTE: Do NOT override splitChunks — Next.js manages chunk splitting
+    // internally. Custom splitChunks causes "Cannot read properties of
+    // undefined (reading 'call')" at runtime (vercel/next.js#61995).
 
     // Node.js polyfills for client-side
     if (!isServer) {
@@ -142,19 +112,18 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://js.stripe.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.stripe.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co blob:",
-              "connect-src 'self' https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://mechmind-os.vercel.app",
-              "frame-src 'self' https://www.google.com https://js.stripe.com https://hooks.stripe.com",
+              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://mechmind-os.vercel.app http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
+              "frame-src 'self' https://accounts.google.com https://www.google.com https://js.stripe.com https://hooks.stripe.com",
               "media-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'none'",
-              "upgrade-insecure-requests",
-              "block-all-mixed-content",
+              ...(process.env.NODE_ENV === 'production' && process.env.VERCEL ? ["upgrade-insecure-requests", "block-all-mixed-content"] : []),
             ].join('; '),
           },
           // Security headers
@@ -174,10 +143,10 @@ const nextConfig = {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
           },
-          {
+          ...(process.env.NODE_ENV === 'production' ? [{
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
-          },
+          }] : []),
           {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
@@ -216,13 +185,15 @@ const nextConfig = {
           },
         ],
       },
-      // Static assets - Long cache
+      // Static assets - Long cache in production, no cache in dev
       {
         source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: process.env.NODE_ENV === 'production'
+              ? 'public, max-age=31536000, immutable'
+              : 'no-store, must-revalidate',
           },
         ],
       },
@@ -263,12 +234,10 @@ const nextConfig = {
   // Transpile packages if needed
   transpilePackages: [],
   
-  // Modularize imports for tree shaking
-  modularizeImports: {
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{ kebabCase member }}',
-    },
-  },
+  // NOTE: lucide-react tree-shaking is handled by optimizePackageImports above.
+  // Do NOT use modularizeImports for lucide-react — it conflicts with
+  // optimizePackageImports and causes webpack module resolution errors
+  // (lucide-icons/lucide#1482, vercel/next.js#53668).
 }
 
-module.exports = nextConfig
+module.exports = withBundleAnalyzer(nextConfig)

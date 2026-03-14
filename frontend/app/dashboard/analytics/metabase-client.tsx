@@ -108,7 +108,7 @@ interface MetabaseConfigResponse {
 // API client functions
 async function fetchDashboardUrl(dashboard: DashboardType, expiryMinutes = 10): Promise<MetabaseUrlResponse> {
   const response = await fetch(
-    `/api/v1/analytics/metabase/dashboard-url?dashboard=${dashboard}&expiryMinutes=${expiryMinutes}`
+    `/api/analytics/metabase/dashboard-url?dashboard=${dashboard}&expiryMinutes=${expiryMinutes}`
   )
   
   if (!response.ok) {
@@ -120,7 +120,7 @@ async function fetchDashboardUrl(dashboard: DashboardType, expiryMinutes = 10): 
 }
 
 async function fetchMetabaseConfig(): Promise<MetabaseConfigResponse> {
-  const response = await fetch('/api/v1/analytics/metabase/config')
+  const response = await fetch('/api/analytics/metabase/config')
   
   if (!response.ok) {
     throw new Error('Failed to fetch Metabase configuration')
@@ -223,6 +223,7 @@ export function MetabaseClient({
     queryKey: ['metabase-config'],
     queryFn: fetchMetabaseConfig,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
   })
 
   // Fetch dashboard URL
@@ -303,8 +304,8 @@ export function MetabaseClient({
     )
   }
 
-  // Not configured state
-  if (!isEnabled) {
+  // Not configured state or config fetch failed (Metabase not available)
+  if (!isEnabled || configError) {
     return <NotConfiguredDisplay />
   }
 

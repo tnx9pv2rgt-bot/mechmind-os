@@ -56,7 +56,15 @@ class UpdateRequestStatusDto {
 }
 exports.UpdateRequestStatusDto = UpdateRequestStatusDto;
 __decorate([
-    (0, class_validator_1.IsEnum)(['RECEIVED', 'VERIFICATION_PENDING', 'VERIFIED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'CANCELLED']),
+    (0, class_validator_1.IsEnum)([
+        'RECEIVED',
+        'VERIFICATION_PENDING',
+        'VERIFIED',
+        'IN_PROGRESS',
+        'COMPLETED',
+        'REJECTED',
+        'CANCELLED',
+    ]),
     __metadata("design:type", String)
 ], UpdateRequestStatusDto.prototype, "status", void 0);
 __decorate([

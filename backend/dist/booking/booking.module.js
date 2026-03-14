@@ -21,18 +21,9 @@ let BookingModule = class BookingModule {
 exports.BookingModule = BookingModule;
 exports.BookingModule = BookingModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule,
-            event_emitter_1.EventEmitterModule.forRoot(),
-            common_module_1.CommonModule,
-            customer_module_1.CustomerModule,
-        ],
+        imports: [config_1.ConfigModule, event_emitter_1.EventEmitterModule.forRoot(), common_module_1.CommonModule, customer_module_1.CustomerModule],
         controllers: [booking_controller_1.BookingController],
-        providers: [
-            booking_service_1.BookingService,
-            booking_slot_service_1.BookingSlotService,
-            booking_event_listener_1.BookingEventListener,
-        ],
+        providers: [booking_service_1.BookingService, booking_slot_service_1.BookingSlotService, booking_event_listener_1.BookingEventListener],
         exports: [booking_service_1.BookingService, booking_slot_service_1.BookingSlotService],
     })
 ], BookingModule);

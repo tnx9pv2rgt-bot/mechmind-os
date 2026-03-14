@@ -6,11 +6,17 @@
 import { generateId } from '@/lib/utils';
 
 // Types
+export interface UserHistoryEntry {
+  field: string;
+  value: string | number | boolean | null;
+  timestamp: number;
+}
+
 export interface ProactiveContext {
   currentField: string;
   currentValue: string;
-  formData: Record<string, any>;
-  userHistory?: any;
+  formData: Record<string, unknown>;
+  userHistory?: UserHistoryEntry[];
   step: number;
 }
 
@@ -30,10 +36,18 @@ export interface Suggestion {
   field?: string;
 }
 
-export type FillFieldFn = (field: string, value: any) => void;
+export type FillFieldFn = (field: string, value: string | number | boolean | null) => void;
 
 // Cache per le chiamate API
-const apiCache = new Map<string, { data: any; timestamp: number }>();
+interface CompanyData {
+  name: string;
+  address: string;
+  city: string;
+  cap: string;
+  province: string;
+}
+
+const apiCache = new Map<string, { data: CompanyData | null; timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 ore
 
 /**
@@ -287,7 +301,7 @@ export class ProactiveAI {
     if (context.currentField !== 'companyName' && context.currentField !== 'ragioneSociale') return null;
     
     const email = context.formData.email;
-    if (!email) return null;
+    if (!email || typeof email !== 'string') return null;
 
     const domain = email.split('@')[1];
     if (!domain) return null;
@@ -465,13 +479,7 @@ export class ProactiveAI {
   /**
    * Recupera dati aziendali dalla Partita IVA
    */
-  private async fetchCompanyData(vat: string): Promise<{
-    name: string;
-    address: string;
-    city: string;
-    cap: string;
-    province: string;
-  } | null> {
+  private async fetchCompanyData(vat: string): Promise<CompanyData | null> {
     const cacheKey = `vat:${vat}`;
     const cached = apiCache.get(cacheKey);
     
@@ -565,7 +573,7 @@ export class ProactiveAI {
 /**
  * Hook utility per debounce
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {

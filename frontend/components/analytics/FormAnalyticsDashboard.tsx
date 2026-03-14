@@ -29,6 +29,29 @@ import { heatmapTracker } from '../../lib/analytics/heatmap';
 import { abTesting } from '../../lib/analytics/abTesting';
 import { errorTracker } from '../../lib/analytics/errorTracking';
 
+// Tipi heatmap (mirrored from heatmap.ts since they are not exported)
+interface HeatmapPoint {
+  x: number;
+  y: number;
+  timestamp: number;
+  element?: string;
+  type: 'click' | 'move' | 'scroll' | 'focus' | 'hover';
+  value?: number;
+}
+
+interface FieldInteractionData {
+  fieldName: string;
+  fieldType: string;
+  clicks: number;
+  hovers: number;
+  focusTime: number;
+  focusEvents: Array<{ start: number; end: number }>;
+  firstInteraction?: number;
+  lastInteraction?: number;
+  errors: number;
+  corrections: number;
+}
+
 // Tipi
 interface RealTimeMetrics {
   activeUsers: number;
@@ -70,7 +93,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
   const { metrics: historicalMetrics } = useFunnelMetrics(formId);
   const [realTimeMetrics, setRealTimeMetrics] = useState<RealTimeMetrics | null>(null);
   const [abTests, setAbTests] = useState<ABTestResult[]>([]);
-  const [heatmapData, setHeatmapData] = useState<{ points: any[]; fieldData: any[] } | null>(null);
+  const [heatmapData, setHeatmapData] = useState<{ points: HeatmapPoint[]; fieldData: FieldInteractionData[] } | null>(null);
   const [selectedView, setSelectedView] = useState<'overview' | 'funnel' | 'heatmap' | 'abtests' | 'errors'>('overview');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 

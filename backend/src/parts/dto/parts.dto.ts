@@ -8,10 +8,8 @@ import {
   IsNumber,
   IsInt,
   IsBoolean,
-  IsEnum,
   IsUUID,
   IsArray,
-  IsDecimal,
   Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';

@@ -14,7 +14,8 @@ import {
   createMaintenanceSchedule,
   getMaintenanceSummary,
   MaintenanceValidationError,
-  VehicleNotFoundError
+  VehicleNotFoundError,
+  type PaginationParams,
 } from '@/lib/services/maintenanceService'
 import type { MaintenanceType, NotificationLevel } from '@prisma/client'
 
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
       ...(dueAfter && { dueAfter })
     }
     
-    const pagination = { page, limit, sortBy: sortBy as any, sortOrder }
+    const pagination: PaginationParams = { page, limit, sortBy: sortBy as PaginationParams['sortBy'], sortOrder }
     
     const result = await listMaintenanceSchedules(filters, pagination)
     

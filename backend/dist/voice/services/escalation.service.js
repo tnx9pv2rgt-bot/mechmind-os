@@ -22,7 +22,7 @@ let EscalationService = EscalationService_1 = class EscalationService {
         this.loggerService = loggerService;
         this.logger = new common_1.Logger(EscalationService_1.name);
     }
-    async findAvailableAgent(tenantId, category) {
+    async findAvailableAgent(tenantId, _category) {
         this.logger.log(`Finding available agent for tenant ${tenantId}`, 'EscalationService');
         const agent = await this.prisma.user.findFirst({
             where: {
@@ -62,7 +62,7 @@ let EscalationService = EscalationService_1 = class EscalationService {
         };
     }
     async queueForCallback(tenantId, customerPhone, reason) {
-        this.logger.log(`Queuing ${customerPhone} for callback`, 'EscalationService');
+        this.logger.log(`Queuing ${customerPhone.slice(0, 4)}*** for callback`, 'EscalationService');
         await this.queueService.addVoiceJob('schedule-callback', {
             type: 'schedule-callback',
             payload: {
@@ -84,7 +84,7 @@ let EscalationService = EscalationService_1 = class EscalationService {
             tenantId,
         });
     }
-    async getEscalationStats(tenantId, fromDate, toDate) {
+    async getEscalationStats(_tenantId, _fromDate, _toDate) {
         return {
             totalEscalations: 0,
             averageWaitTime: 0,

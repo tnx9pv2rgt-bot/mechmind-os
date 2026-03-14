@@ -67,7 +67,7 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
   private async connect(): Promise<void> {
     try {
       const config = this.getRedisConfig();
-      const redisOptions: any = {
+      const redisOptions: Record<string, unknown> = {
         host: config.host,
         port: config.port,
         password: config.password,
@@ -114,7 +114,10 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log('Redis Pub/Sub service initialized');
     } catch (error) {
-      this.logger.error('Failed to connect to Redis:', error.message);
+      this.logger.error(
+        'Failed to connect to Redis:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }
@@ -148,7 +151,10 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
         subject.next(data);
       }
     } catch (error) {
-      this.logger.error('Failed to parse Redis message:', error.message);
+      this.logger.error(
+        'Failed to parse Redis message:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -199,7 +205,10 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
       this.logger.debug(`Published to ${channel}: ${result} subscribers`);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to publish to ${channel}:`, error.message);
+      this.logger.error(
+        `Failed to publish to ${channel}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }

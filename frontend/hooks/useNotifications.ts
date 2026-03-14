@@ -5,12 +5,7 @@
 
 import * as React from 'react';
 import { useEffect, useRef, useCallback } from 'react';
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import {
   Notification,
   NotificationHistory,
@@ -45,7 +40,7 @@ import {
   sendVehicleReady,
   sendMaintenanceDue,
   NotificationServiceError,
-} from '@/lib/services/notificationService';
+} from '@/lib/services/notificationService.client';
 
 // Safe window check helper
 const isBrowser = typeof window !== 'undefined';
@@ -54,8 +49,7 @@ const isBrowser = typeof window !== 'undefined';
 export const notificationKeys = {
   all: ['notifications'] as const,
   lists: () => [...notificationKeys.all, 'list'] as const,
-  list: (params: NotificationHistoryParams) =>
-    [...notificationKeys.lists(), params] as const,
+  list: (params: NotificationHistoryParams) => [...notificationKeys.lists(), params] as const,
   details: () => [...notificationKeys.all, 'detail'] as const,
   detail: (id: string) => [...notificationKeys.details(), id] as const,
   unread: () => [...notificationKeys.all, 'unread'] as const,
@@ -73,7 +67,10 @@ export const notificationKeys = {
  */
 export function useNotificationHistory(
   params: NotificationHistoryParams = {},
-  options?: Omit<UseQueryOptions<NotificationHistory, NotificationServiceError>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<NotificationHistory, NotificationServiceError>,
+    'queryKey' | 'queryFn'
+  >
 ) {
   return useQuery(
     notificationKeys.list(params),
@@ -89,14 +86,10 @@ export function useNotification(
   id: string,
   options?: Omit<UseQueryOptions<Notification, NotificationServiceError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery(
-    notificationKeys.detail(id),
-    () => getNotificationById(id),
-    {
-      enabled: !!id,
-      ...(options as Record<string, unknown>),
-    }
-  );
+  return useQuery(notificationKeys.detail(id), () => getNotificationById(id), {
+    enabled: !!id,
+    ...(options as Record<string, unknown>),
+  });
 }
 
 /**
@@ -117,7 +110,10 @@ export function useUnreadCount(
  */
 export function useNotificationPreferences(
   customerId: string,
-  options?: Omit<UseQueryOptions<NotificationPreferences, NotificationServiceError>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<NotificationPreferences, NotificationServiceError>,
+    'queryKey' | 'queryFn'
+  >
 ) {
   return useQuery(
     notificationKeys.preferences(customerId),
@@ -133,7 +129,10 @@ export function useNotificationPreferences(
  * Hook to fetch message templates
  */
 export function useMessageTemplates(
-  options?: Omit<UseQueryOptions<NotificationTemplate[], NotificationServiceError>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<NotificationTemplate[], NotificationServiceError>,
+    'queryKey' | 'queryFn'
+  >
 ) {
   return useQuery(
     notificationKeys.templates(),
@@ -237,9 +236,7 @@ export function useUpdateNotificationPreferences() {
 
   return useMutation(updateNotificationPreferences, {
     onSuccess: (_, variables: { customerId: string }) => {
-      queryClient.invalidateQueries(
-        notificationKeys.preferences(variables.customerId)
-      );
+      queryClient.invalidateQueries(notificationKeys.preferences(variables.customerId));
     },
   });
 }
@@ -398,85 +395,86 @@ export function useMaintenanceNotifications() {
  * Hook for SSE real-time notifications
  * Only runs on client-side to prevent hydration errors
  */
-export function useRealtimeNotifications(
-  onNotification?: (notification: Notification) => void
-) {
+export function useRealtimeNotifications(onNotification?: (notification: Notification) => void) {
   const queryClient = useQueryClient();
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Connect to SSE endpoint - only in browser
-  const connect = useCallback((userId: string, tenantId: string) => {
-    // Guard: Only run in browser environment
-    if (!isBrowser) {
-      return () => {};
-    }
+  const connect = useCallback(
+    (userId: string, tenantId: string) => {
+      // Guard: Only run in browser environment
+      if (!isBrowser) {
+        return () => {};
+      }
 
-    // Close existing connection if any
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
-
-    // Clear any pending reconnect
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-
-    try {
-      const eventSource = new EventSource(
-        `/api/notifications/sse?userId=${encodeURIComponent(userId)}&tenantId=${encodeURIComponent(tenantId)}`
-      );
-
-      eventSourceRef.current = eventSource;
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          if (data.type === 'notification:new') {
-            // Invalidate queries to refresh data
-            queryClient.invalidateQueries(notificationKeys.lists());
-            queryClient.invalidateQueries(notificationKeys.unread());
-
-            // Call callback if provided
-            onNotification?.(data);
-          }
-        } catch (error) {
-          console.error('Error parsing SSE message:', error);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('SSE error:', error);
-        eventSource.close();
+      // Close existing connection if any
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
         eventSourceRef.current = null;
+      }
 
-        // Attempt to reconnect after 5 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (isBrowser) {
-            connect(userId, tenantId);
+      // Clear any pending reconnect
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
+      try {
+        const eventSource = new EventSource(
+          `/api/notifications/sse?userId=${encodeURIComponent(userId)}&tenantId=${encodeURIComponent(tenantId)}`
+        );
+
+        eventSourceRef.current = eventSource;
+
+        eventSource.onmessage = event => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'notification:new') {
+              // Invalidate queries to refresh data
+              queryClient.invalidateQueries(notificationKeys.lists());
+              queryClient.invalidateQueries(notificationKeys.unread());
+
+              // Call callback if provided
+              onNotification?.(data);
+            }
+          } catch (error) {
+            console.error('Error parsing SSE message:', error);
           }
-        }, 5000);
-      };
+        };
 
-      eventSource.onopen = () => {
-        console.log('[SSE] Connected successfully');
-      };
+        eventSource.onerror = error => {
+          console.error('SSE error:', error);
+          eventSource.close();
+          eventSourceRef.current = null;
 
-      return () => {
-        eventSource.close();
-        eventSourceRef.current = null;
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
-      };
-    } catch (error) {
-      console.error('Failed to create EventSource:', error);
-      return () => {};
-    }
-  }, [queryClient, onNotification]);
+          // Attempt to reconnect after 5 seconds
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (isBrowser) {
+              connect(userId, tenantId);
+            }
+          }, 5000);
+        };
+
+        eventSource.onopen = () => {
+          // SSE connected successfully
+        };
+
+        return () => {
+          eventSource.close();
+          eventSourceRef.current = null;
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+        };
+      } catch (error) {
+        console.error('Failed to create EventSource:', error);
+        return () => {};
+      }
+    },
+    [queryClient, onNotification]
+  );
 
   // Cleanup on unmount
   useEffect(() => {
@@ -504,16 +502,12 @@ export function usePrefetchNotifications() {
   const queryClient = useQueryClient();
 
   const prefetchNotification = async (id: string) => {
-    await queryClient.prefetchQuery(
-      notificationKeys.detail(id),
-      () => getNotificationById(id)
-    );
+    await queryClient.prefetchQuery(notificationKeys.detail(id), () => getNotificationById(id));
   };
 
   const prefetchHistory = async (params: NotificationHistoryParams = {}) => {
-    await queryClient.prefetchQuery(
-      notificationKeys.list(params),
-      () => getNotificationHistory(params as unknown as Parameters<typeof getNotificationHistory>[0])
+    await queryClient.prefetchQuery(notificationKeys.list(params), () =>
+      getNotificationHistory(params as unknown as Parameters<typeof getNotificationHistory>[0])
     );
   };
 
@@ -554,21 +548,30 @@ export interface UseNotificationsReturn {
  * Safe for SSR - all client-side effects are guarded
  */
 function useNotifications(options: UseNotificationsOptions = {}): UseNotificationsReturn {
-  const {
-    userOnly = false,
-    onNotification,
-    userId,
-    tenantId,
-    enableRealtime = false
-  } = options;
+  const { userOnly = false, onNotification, userId, tenantId, enableRealtime = false } = options;
 
   const [isRealtimeConnected, setIsRealtimeConnected] = React.useState(false);
 
+  // Only fetch notifications if user is authenticated (has userId/tenantId)
+  const isAuthenticated = !!userId && !!tenantId;
+
   // Get notification history
-  const { data: historyData, isLoading, error, refetch } = useNotificationHistory({});
+  const {
+    data: historyData,
+    isLoading,
+    error,
+    refetch,
+  } = useNotificationHistory(
+    {},
+    {
+      enabled: isAuthenticated,
+    }
+  );
 
   // Get unread count
-  const { data: unreadCountData } = useUnreadCount();
+  const { data: unreadCountData } = useUnreadCount({
+    enabled: isAuthenticated,
+  });
 
   // Get mutations
   const markAsReadMutation = useMarkAsRead();
@@ -600,7 +603,7 @@ function useNotifications(options: UseNotificationsOptions = {}): UseNotificatio
   }, [connect, userId, tenantId, enableRealtime]);
 
   const historyRecord = historyData as unknown as Record<string, unknown> | undefined;
-  const notifications = ((historyRecord?.notifications || []) as unknown as Notification[]);
+  const notifications = (historyRecord?.notifications || []) as unknown as Notification[];
   const unreadCount = (unreadCountData as number) || 0;
 
   return {

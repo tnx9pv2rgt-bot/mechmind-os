@@ -70,6 +70,27 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateVehicleDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Vehicle status',
+        example: 'active',
+        enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['active', 'in_service', 'waiting_parts', 'ready']),
+    __metadata("design:type", String)
+], CreateVehicleDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Current mileage in km',
+        example: 45000,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateVehicleDto.prototype, "mileage", void 0);
 class UpdateVehicleDto {
 }
 exports.UpdateVehicleDto = UpdateVehicleDto;
@@ -109,6 +130,27 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateVehicleDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Vehicle status',
+        example: 'active',
+        enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['active', 'in_service', 'waiting_parts', 'ready']),
+    __metadata("design:type", String)
+], UpdateVehicleDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Current mileage in km',
+        example: 45000,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], UpdateVehicleDto.prototype, "mileage", void 0);
 class VehicleResponseDto {
 }
 exports.VehicleResponseDto = VehicleResponseDto;
@@ -140,6 +182,14 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: 'Previous accident on left side' }),
     __metadata("design:type", String)
 ], VehicleResponseDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'active' }),
+    __metadata("design:type", String)
+], VehicleResponseDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 45000 }),
+    __metadata("design:type", Number)
+], VehicleResponseDto.prototype, "mileage", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '2024-01-10T08:30:00Z' }),
     __metadata("design:type", Date)

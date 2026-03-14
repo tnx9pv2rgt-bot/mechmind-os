@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("./instrument");
 const core_1 = require("@nestjs/core");
 const config_1 = require("@nestjs/config");
 const swagger_1 = require("@nestjs/swagger");
@@ -12,6 +13,10 @@ const express_1 = require("express");
 const app_module_1 = require("./app.module");
 const logger_service_1 = require("./common/services/logger.service");
 async function bootstrap() {
+    if (!process.env.SETUP_SECRET) {
+        console.error('❌ SETUP_SECRET environment variable is required. Server cannot start without it.');
+        process.exit(1);
+    }
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: new logger_service_1.LoggerService(),
     });
@@ -23,7 +28,7 @@ async function bootstrap() {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:", "https:"],
+                imgSrc: ["'self'", 'data:', 'https:'],
             },
         },
         crossOriginEmbedderPolicy: false,
@@ -32,17 +37,20 @@ async function bootstrap() {
     app.use((0, compression_1.default)());
     const corsOrigin = configService.get('CORS_ORIGIN');
     if (!corsOrigin) {
-        logger.warn('CORS_ORIGIN not configured - defaulting to localhost only');
+        logger.warn('CORS_ORIGIN not configured - defaulting to localhost + Vercel');
     }
+    const corsOrigins = corsOrigin
+        ? corsOrigin.split(',').map(o => o.trim())
+        : ['http://localhost:3001', 'https://mechmind-os.vercel.app'];
     app.enableCors({
-        origin: corsOrigin
-            ? corsOrigin.split(',').map(o => o.trim())
-            : ['http://localhost:3001'],
+        origin: corsOrigins,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
     const apiVersion = configService.get('API_VERSION', 'v1');
-    app.setGlobalPrefix(apiVersion);
+    app.setGlobalPrefix(apiVersion, {
+        exclude: ['health', 'liveness', 'readiness'],
+    });
     const swaggerConfig = new swagger_1.DocumentBuilder()
         .setTitle('MechMind OS API')
         .setDescription('Multi-tenant SaaS for automotive repair shops with AI voice booking')
@@ -69,17 +77,14 @@ async function bootstrap() {
             showRequestDuration: true,
         },
     });
-    const httpAdapter = app.getHttpAdapter();
-    httpAdapter.get('/health', (_req, res) => {
-        res.json({ status: 'ok', timestamp: new Date().toISOString() });
-    });
+    app.enableShutdownHooks();
     const port = configService.get('PORT', 3000);
     await app.listen(port);
     logger.log(`🚀 MechMind OS v10 API running on port ${port}`);
     logger.log(`📚 Swagger documentation available at /api/docs`);
     logger.log(`🔒 Environment: ${configService.get('NODE_ENV', 'development')}`);
 }
-bootstrap().catch((error) => {
+bootstrap().catch(error => {
     console.error('Failed to start application:', error);
     process.exit(1);
 });

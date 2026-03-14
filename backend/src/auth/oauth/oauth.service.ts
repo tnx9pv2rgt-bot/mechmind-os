@@ -33,7 +33,7 @@ export class OAuthService {
   /**
    * Verify Google ID token and login the user
    */
-  async loginWithGoogle(credential: string, tenantSlug?: string, ip?: string): Promise<AuthTokens> {
+  async loginWithGoogle(credential: string, tenantSlug: string, ip?: string): Promise<AuthTokens> {
     if (!this.googleClientId) {
       throw new BadRequestException('Google OAuth not configured');
     }
@@ -66,9 +66,7 @@ export class OAuthService {
    */
   private async verifyGoogleToken(credential: string): Promise<GoogleTokenPayload> {
     try {
-      const JWKS = jose.createRemoteJWKSet(
-        new URL('https://www.googleapis.com/oauth2/v3/certs'),
-      );
+      const JWKS = jose.createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
       const { payload } = await jose.jwtVerify(credential, JWKS, {
         issuer: ['https://accounts.google.com', 'accounts.google.com'],
@@ -86,42 +84,23 @@ export class OAuthService {
    * Find user by email from OAuth provider.
    * For multi-tenant: searches across tenants or within specific tenant.
    */
-  private async findUserByOAuthEmail(
-    email: string,
-    tenantSlug?: string,
-  ): Promise<UserWithTenant> {
-    if (tenantSlug) {
-      const tenant = await this.prisma.tenant.findUnique({
-        where: { slug: tenantSlug },
-      });
+  private async findUserByOAuthEmail(email: string, tenantSlug: string): Promise<UserWithTenant> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: tenantSlug },
+    });
 
-      if (!tenant || !tenant.isActive) {
-        throw new UnauthorizedException('Tenant not found or inactive');
-      }
-
-      await this.prisma.setTenantContext(tenant.id);
-
-      const user = await this.prisma.user.findFirst({
-        where: { email, tenantId: tenant.id, isActive: true },
-        include: { tenant: true },
-      });
-
-      if (!user) {
-        throw new UnauthorizedException(
-          'No account found with this email. Contact your administrator.',
-        );
-      }
-
-      return this.mapUserWithTenant(user);
+    if (!tenant || !tenant.isActive) {
+      throw new UnauthorizedException('Tenant not found or inactive');
     }
 
-    // No tenant specified: find user by email across all tenants
+    await this.prisma.setTenantContext(tenant.id);
+
     const user = await this.prisma.user.findFirst({
-      where: { email, isActive: true },
+      where: { email, tenantId: tenant.id, isActive: true },
       include: { tenant: true },
     });
 
-    if (!user || !user.tenant.isActive) {
+    if (!user) {
       throw new UnauthorizedException(
         'No account found with this email. Contact your administrator.',
       );

@@ -8,11 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var SubscriptionRateLimitMiddleware_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionRateLimitMiddleware = exports.SubscriptionMiddleware = void 0;
 exports.requireFeature = requireFeature;
 const common_1 = require("@nestjs/common");
 const feature_access_service_1 = require("../services/feature-access.service");
+const redis_service_1 = require("../../common/services/redis.service");
 let SubscriptionMiddleware = class SubscriptionMiddleware {
     constructor(featureAccessService) {
         this.featureAccessService = featureAccessService;
@@ -40,7 +42,7 @@ exports.SubscriptionMiddleware = SubscriptionMiddleware = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [feature_access_service_1.FeatureAccessService])
 ], SubscriptionMiddleware);
-function requireFeature(feature) {
+function requireFeature(_feature) {
     return async (req, res, next) => {
         const tenantId = req.tenantId;
         if (!tenantId) {
@@ -49,31 +51,34 @@ function requireFeature(feature) {
         next();
     };
 }
-let SubscriptionRateLimitMiddleware = class SubscriptionRateLimitMiddleware {
-    constructor() {
-        this.apiCallCounts = new Map();
+let SubscriptionRateLimitMiddleware = SubscriptionRateLimitMiddleware_1 = class SubscriptionRateLimitMiddleware {
+    constructor(redis) {
+        this.redis = redis;
     }
     async use(req, res, next) {
         const tenantId = req.tenantId;
         if (!tenantId) {
             return next();
         }
-        const now = Date.now();
-        const key = `${tenantId}:${new Date().toISOString().slice(0, 7)}`;
-        const current = this.apiCallCounts.get(key) || { count: 0, resetAt: now + 24 * 60 * 60 * 1000 };
-        if (now > current.resetAt) {
-            current.count = 0;
-            current.resetAt = now + 24 * 60 * 60 * 1000;
-        }
-        current.count++;
-        this.apiCallCounts.set(key, current);
-        res.setHeader('X-RateLimit-Limit', '25000');
-        res.setHeader('X-RateLimit-Remaining', Math.max(0, 25000 - current.count).toString());
-        res.setHeader('X-RateLimit-Reset', new Date(current.resetAt).toISOString());
+        const monthKey = new Date().toISOString().slice(0, 7);
+        const redisKey = `rate:monthly:${tenantId}:${monthKey}`;
+        const currentStr = await this.redis.get(redisKey);
+        const currentCount = currentStr ? parseInt(currentStr, 10) : 0;
+        const newCount = currentCount + 1;
+        const now = new Date();
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const ttlSeconds = Math.ceil((endOfMonth.getTime() - now.getTime()) / 1000);
+        await this.redis.set(redisKey, newCount.toString(), ttlSeconds);
+        const limit = SubscriptionRateLimitMiddleware_1.DEFAULT_MONTHLY_LIMIT;
+        res.setHeader('X-RateLimit-Limit', limit.toString());
+        res.setHeader('X-RateLimit-Remaining', Math.max(0, limit - newCount).toString());
+        res.setHeader('X-RateLimit-Reset', endOfMonth.toISOString());
         next();
     }
 };
 exports.SubscriptionRateLimitMiddleware = SubscriptionRateLimitMiddleware;
-exports.SubscriptionRateLimitMiddleware = SubscriptionRateLimitMiddleware = __decorate([
-    (0, common_1.Injectable)()
+SubscriptionRateLimitMiddleware.DEFAULT_MONTHLY_LIMIT = 25000;
+exports.SubscriptionRateLimitMiddleware = SubscriptionRateLimitMiddleware = SubscriptionRateLimitMiddleware_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [redis_service_1.RedisService])
 ], SubscriptionRateLimitMiddleware);

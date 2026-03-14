@@ -8,13 +8,7 @@
  * - Rate limiting for verification attempts
  */
 
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import * as speakeasy from 'speakeasy';
@@ -22,6 +16,7 @@ import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
+import { RedisService } from '@common/services/redis.service';
 
 export interface MFAEnrollResult {
   secret: string;
@@ -35,9 +30,9 @@ export interface MFAVerifyResult {
   remainingAttempts?: number;
 }
 
-interface MFAMetadata {
-  verifyAttempts?: number;
-  lastVerifyAttempt?: string;
+export interface MfaSessionResult {
+  mfaSessionToken: string;
+  expiresIn: number;
 }
 
 @Injectable()
@@ -46,11 +41,14 @@ export class MfaService {
   private readonly BACKUP_CODES_COUNT = 10;
   private readonly MAX_VERIFY_ATTEMPTS = 5;
   private readonly VERIFY_WINDOW_MINUTES = 15;
+  private readonly MFA_SESSION_TTL_SECONDS = 600; // 10 minutes
+  private readonly MFA_SESSION_PREFIX = 'mfa:session:';
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
     private readonly config: ConfigService,
+    private readonly redis: RedisService,
   ) {}
 
   /**
@@ -356,6 +354,43 @@ export class MfaService {
     ]);
   }
 
+  /**
+   * Create a server-side MFA session token stored in Redis
+   * Returns a cryptographically random token that proves MFA was verified
+   */
+  async createMfaSession(userId: string): Promise<MfaSessionResult> {
+    const token = crypto.randomBytes(32).toString('hex');
+    const key = `${this.MFA_SESSION_PREFIX}${token}`;
+
+    await this.redis.set(key, userId, this.MFA_SESSION_TTL_SECONDS);
+
+    return {
+      mfaSessionToken: token,
+      expiresIn: this.MFA_SESSION_TTL_SECONDS,
+    };
+  }
+
+  /**
+   * Validate a server-side MFA session token from Redis
+   * Returns the userId if valid, null otherwise
+   */
+  async validateMfaSession(token: string): Promise<string | null> {
+    if (!token) {
+      return null;
+    }
+
+    const key = `${this.MFA_SESSION_PREFIX}${token}`;
+    return this.redis.get(key);
+  }
+
+  /**
+   * Revoke a MFA session token
+   */
+  async revokeMfaSession(token: string): Promise<void> {
+    const key = `${this.MFA_SESSION_PREFIX}${token}`;
+    await this.redis.del(key);
+  }
+
   // ============== PRIVATE METHODS ==============
 
   /**
@@ -378,8 +413,6 @@ export class MfaService {
    * Verify backup code
    */
   private async verifyBackupCode(userId: string, code: string): Promise<boolean> {
-    const hashedInput = await bcrypt.hash(code.toUpperCase(), 10);
-
     // Find matching backup code
     const backupCodes = await this.prisma.backupCode.findMany({
       where: { userId },

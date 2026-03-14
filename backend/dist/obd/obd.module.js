@@ -20,9 +20,7 @@ exports.ObdModule = ObdModule = __decorate([
     (0, common_1.Module)({
         imports: [common_module_1.CommonModule, notifications_module_1.NotificationsModule, auth_module_1.AuthModule],
         controllers: [obd_controller_1.ObdController],
-        providers: [
-            obd_service_1.ObdService,
-        ],
+        providers: [obd_service_1.ObdService],
         exports: [obd_service_1.ObdService],
     })
 ], ObdModule);

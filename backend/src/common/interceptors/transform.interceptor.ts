@@ -13,14 +13,12 @@ export interface Response<T> {
     pages?: number;
   };
   timestamp: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
-    const request = context.switchToHttp().getRequest();
-
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     return next.handle().pipe(
       map(data => {
         // If response already has standard format, pass through

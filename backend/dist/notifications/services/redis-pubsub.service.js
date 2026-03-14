@@ -32,6 +32,21 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
         await this.disconnect();
     }
     getRedisConfig() {
+        const redisUrl = this.configService.get('REDIS_URL');
+        if (redisUrl) {
+            try {
+                const url = new URL(redisUrl);
+                return {
+                    host: url.hostname,
+                    port: parseInt(url.port, 10) || 6379,
+                    password: url.password || undefined,
+                    db: parseInt(url.pathname.slice(1), 10) || 0,
+                    tls: url.protocol === 'rediss:',
+                };
+            }
+            catch {
+            }
+        }
         return {
             host: this.configService.get('REDIS_HOST', 'localhost'),
             port: this.configService.get('REDIS_PORT', 6379),
@@ -67,10 +82,10 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
                 this.logger.log('Redis subscriber connected');
                 this.isConnected = true;
             });
-            this.publisher.on('error', (err) => {
+            this.publisher.on('error', err => {
                 this.logger.error('Redis publisher error:', err.message);
             });
-            this.subscriber.on('error', (err) => {
+            this.subscriber.on('error', err => {
                 this.logger.error('Redis subscriber error:', err.message);
                 this.isConnected = false;
             });
@@ -80,7 +95,7 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
             this.logger.log('Redis Pub/Sub service initialized');
         }
         catch (error) {
-            this.logger.error('Failed to connect to Redis:', error.message);
+            this.logger.error('Failed to connect to Redis:', error instanceof Error ? error.message : 'Unknown error');
             throw error;
         }
     }
@@ -108,7 +123,7 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
             }
         }
         catch (error) {
-            this.logger.error('Failed to parse Redis message:', error.message);
+            this.logger.error('Failed to parse Redis message:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
     async subscribeToTenant(tenantId) {
@@ -141,7 +156,7 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
             return result;
         }
         catch (error) {
-            this.logger.error(`Failed to publish to ${channel}:`, error.message);
+            this.logger.error(`Failed to publish to ${channel}:`, error instanceof Error ? error.message : 'Unknown error');
             throw error;
         }
     }

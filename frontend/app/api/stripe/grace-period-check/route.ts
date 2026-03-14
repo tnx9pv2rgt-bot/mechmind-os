@@ -30,13 +30,13 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Grace period check completed',
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Grace period check error:', error)
 
     return NextResponse.json(
-      { 
+      {
         error: 'Grace period check failed',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )
@@ -59,10 +59,10 @@ export async function GET(request: NextRequest) {
       success: true,
       message: 'Grace period check completed (dev mode)',
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Grace period check error:', error)
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

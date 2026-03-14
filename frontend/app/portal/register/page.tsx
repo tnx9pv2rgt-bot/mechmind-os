@@ -22,7 +22,7 @@ import { AppleButton } from '@/components/ui/apple-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { portalAuth, PortalAuthError } from '@/lib/auth/portal-auth'
+import { PortalAuthService } from '@/lib/auth/portal-auth-client'
 
 export default function PortalRegisterPage() {
   const [formData, setFormData] = useState({
@@ -95,29 +95,36 @@ export default function PortalRegisterPage() {
     setIsLoading(true)
 
     try {
-      await portalAuth.registerCustomer({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        gdprConsent: formData.gdprConsent,
-        marketingConsent: formData.marketingConsent,
+      const res = await fetch('/api/portal/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          gdprConsent: formData.gdprConsent,
+          marketingConsent: formData.marketingConsent,
+        }),
       })
-      router.push('/portal/dashboard')
-    } catch (err) {
-      if (err instanceof PortalAuthError) {
-        setError(err.message)
-      } else {
-        setError('Errore durante la registrazione. Riprova.')
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error?.message || 'Errore durante la registrazione')
+        return
       }
+      const auth = PortalAuthService.getInstance()
+      auth.setAuth(data.token, data.customer)
+      router.push('/portal/dashboard')
+    } catch {
+      setError('Errore durante la registrazione. Riprova.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <motion.div
@@ -128,20 +135,20 @@ export default function PortalRegisterPage() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4">
             <Car className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-apple-dark">Crea il tuo account</h1>
-          <p className="text-apple-gray mt-1">Inizia a gestire i tuoi veicoli</p>
+          <h1 className="text-2xl font-bold text-apple-dark dark:text-[#ececec]">Crea il tuo account</h1>
+          <p className="text-apple-gray dark:text-[#636366] mt-1">Inizia a gestire i tuoi veicoli</p>
         </motion.div>
 
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 1 ? 'bg-apple-blue text-white' : 'bg-gray-200 text-gray-500'
+            step >= 1 ? 'bg-apple-blue text-white' : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
           }`}>
             {step > 1 ? <CheckCircle className="h-4 w-4" /> : '1'}
           </div>
-          <div className={`w-12 h-0.5 ${step > 1 ? 'bg-apple-blue' : 'bg-gray-200'}`} />
+          <div className={`w-12 h-0.5 ${step > 1 ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[#424242]'}`} />
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 2 ? 'bg-apple-blue text-white' : 'bg-gray-200 text-gray-500'
+            step >= 2 ? 'bg-apple-blue text-white' : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
           }`}>
             2
           </div>
@@ -159,7 +166,7 @@ export default function PortalRegisterPage() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
+                  className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-3"
                 >
                   <AlertCircle className="h-5 w-5 text-apple-red flex-shrink-0" />
                   <p className="text-sm text-apple-red">{error}</p>
@@ -259,12 +266,13 @@ export default function PortalRegisterPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark p-1 min-w-[24px] min-h-[24px] flex items-center justify-center"
+                          aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
-                      <p className="text-xs text-apple-gray">Minimo 8 caratteri</p>
+                      <p className="text-xs text-apple-gray dark:text-[#636366]">Minimo 8 caratteri</p>
                     </div>
 
                     {/* Confirm Password */}
@@ -284,7 +292,7 @@ export default function PortalRegisterPage() {
                     </div>
 
                     {/* GDPR Consent */}
-                    <div className="flex items-start gap-3 p-4 bg-apple-light-gray/50 rounded-xl">
+                    <div className="flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl">
                       <Shield className="h-5 w-5 text-apple-blue flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <div className="flex items-start gap-3">
@@ -295,7 +303,7 @@ export default function PortalRegisterPage() {
                               setFormData({ ...formData, gdprConsent: checked as boolean })
                             }
                           />
-                          <Label htmlFor="gdpr" className="text-sm text-apple-dark cursor-pointer">
+                          <Label htmlFor="gdpr" className="text-sm text-apple-dark dark:text-[#ececec] cursor-pointer">
                             Accetto l&apos;{' '}
                             <Link href="/privacy" className="text-apple-blue hover:underline">
                               informativa sulla privacy
@@ -315,7 +323,7 @@ export default function PortalRegisterPage() {
                           setFormData({ ...formData, marketingConsent: checked as boolean })
                         }
                       />
-                      <Label htmlFor="marketing" className="text-sm text-apple-gray cursor-pointer">
+                      <Label htmlFor="marketing" className="text-sm text-apple-gray dark:text-[#636366] cursor-pointer">
                         Voglio ricevere offerte e novità (facoltativo)
                       </Label>
                     </div>
@@ -342,8 +350,8 @@ export default function PortalRegisterPage() {
               </form>
 
               {/* Login Link */}
-              <div className="mt-6 pt-6 border-t border-apple-border/30 text-center">
-                <p className="text-apple-gray text-sm">
+              <div className="mt-6 pt-6 border-t border-apple-border/30 dark:border-[#424242]/30 text-center">
+                <p className="text-apple-gray dark:text-[#636366] text-sm">
                   Hai già un account?{' '}
                   <Link href="/portal/login" className="text-apple-blue font-medium hover:underline">
                     Accedi
@@ -360,7 +368,7 @@ export default function PortalRegisterPage() {
           transition={{ delay: 0.2 }}
           className="text-center mt-6"
         >
-          <Link href="/" className="text-sm text-apple-gray hover:text-apple-dark transition-colors">
+          <Link href="/" className="text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors">
             ← Torna al sito principale
           </Link>
         </motion.p>

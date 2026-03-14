@@ -60,13 +60,13 @@ export async function PATCH(request: NextRequest) {
         status: subscription.status,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update subscription error:', error)
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to update subscription',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )
@@ -98,7 +98,7 @@ export async function DELETE(request: NextRequest) {
     await prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        subscriptionStatus: 'CANCELLED' as any,
+        subscriptionStatus: 'CANCELLED',
         cancelAtPeriodEnd: true,
       },
     })
@@ -106,15 +106,15 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Subscription will be canceled at the end of the current period',
-      cancelAt: new Date((subscription as any).current_period_end * 1000).toISOString(),
+      cancelAt: new Date((subscription.items.data[0]?.current_period_end ?? 0) * 1000).toISOString(),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cancel subscription error:', error)
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to cancel subscription',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

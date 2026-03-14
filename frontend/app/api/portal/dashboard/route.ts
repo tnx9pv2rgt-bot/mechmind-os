@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.PORTAL_JWT_SECRET || 'portal-secret-key-change-in-production')
+const JWT_SECRET = new TextEncoder().encode(process.env.PORTAL_JWT_SECRET || process.env.JWT_SECRET || 'portal-secret-key-change-in-production')
 
 // Helper to verify token and get customer ID
 async function verifyAuth(request: NextRequest): Promise<string | null> {

@@ -26,7 +26,7 @@ export interface MFARequest {
  * Usage: @RequireMFA()
  */
 export const RequireMFA = () => {
-  return (target: any, propertyKey?: string, descriptor?: PropertyDescriptor) => {
+  return (_target: object, propertyKey?: string, descriptor?: PropertyDescriptor) => {
     if (descriptor) {
       Reflect.defineMetadata('requireMFA', true, descriptor.value);
     }
@@ -85,19 +85,23 @@ export class MfaGuard implements CanActivate {
 }
 
 /**
- * Middleware to verify MFA session from header
- * Usage: X-MFA-Verified: <timestamp>
+ * Middleware to verify MFA session from server-side Redis token
+ * Usage: X-MFA-Token: <server-generated-token>
  */
 @Injectable()
 export class MfaSessionMiddleware {
   constructor(private readonly mfaService: MfaService) {}
 
-  async use(req: MFARequest, res: any, next: () => void) {
-    const mfaVerified = req.headers['x-mfa-verified'] as string;
+  async use(req: MFARequest, _res: unknown, next: () => void): Promise<void> {
+    const mfaToken = req.headers['x-mfa-token'] as string;
 
-    if (mfaVerified) {
-      req.mfaVerified = true;
-      req.mfaVerifiedAt = new Date(parseInt(mfaVerified, 10));
+    if (mfaToken) {
+      const userId = await this.mfaService.validateMfaSession(mfaToken);
+
+      if (userId && req.user && userId === req.user.userId) {
+        req.mfaVerified = true;
+        req.mfaVerifiedAt = new Date();
+      }
     }
 
     next();
@@ -106,6 +110,7 @@ export class MfaSessionMiddleware {
 
 // Type augmentation for Express Request
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       mfaVerified?: boolean;

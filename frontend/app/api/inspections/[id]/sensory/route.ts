@@ -10,7 +10,7 @@ import {
   FilterCondition,
   SmokeIntensity,
 } from '@/lib/services/sensoryService'
-import { TRPCClientError } from '@/lib/trpc-client'
+import { TRPCClientError } from '@/lib/api-errors'
 import type { 
   UpdateSensoryInspectionInput,
   OdorData,

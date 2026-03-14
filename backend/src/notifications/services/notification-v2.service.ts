@@ -9,6 +9,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import twilio from 'twilio';
 import type { Twilio } from 'twilio';
@@ -18,6 +19,7 @@ import {
   NotificationChannel,
   NotificationStatus,
   Customer,
+  Prisma,
 } from '@prisma/client';
 
 export interface CreateNotificationDTO {
@@ -26,7 +28,7 @@ export interface CreateNotificationDTO {
   type: NotificationType;
   channel: NotificationChannel;
   message?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   maxRetries?: number;
 }
 
@@ -66,6 +68,7 @@ export class NotificationV2Service {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly encryption: EncryptionService,
   ) {
     const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
@@ -90,7 +93,7 @@ export class NotificationV2Service {
    */
   async sendSMS(phone: string, message: string): Promise<string> {
     if (!this.twilioClient) {
-      this.logger.warn(`[DEV] SMS to ${phone}: ${message.substring(0, 50)}...`);
+      this.logger.warn(`[DEV] SMS to ${phone.slice(0, 4)}***: ${message.substring(0, 50)}...`);
       return 'mock-sms-id-' + Date.now();
     }
 
@@ -107,10 +110,12 @@ export class NotificationV2Service {
         statusCallback: this.configService.get<string>('TWILIO_STATUS_CALLBACK_URL'),
       });
 
-      this.logger.log(`SMS sent: ${result.sid} to ${formattedPhone}`);
+      this.logger.log(`SMS sent: ${result.sid} to ${formattedPhone.slice(0, 4)}***`);
       return result.sid;
     } catch (error) {
-      this.logger.error(`Failed to send SMS: ${error.message}`);
+      this.logger.error(
+        `Failed to send SMS: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw error;
     }
   }
@@ -120,7 +125,7 @@ export class NotificationV2Service {
    */
   async sendWhatsApp(phone: string, message: string): Promise<string> {
     if (!this.twilioClient) {
-      this.logger.warn(`[DEV] WhatsApp to ${phone}: ${message.substring(0, 50)}...`);
+      this.logger.warn(`[DEV] WhatsApp to ${phone.slice(0, 4)}***: ${message.substring(0, 50)}...`);
       return 'mock-whatsapp-id-' + Date.now();
     }
 
@@ -137,10 +142,12 @@ export class NotificationV2Service {
         statusCallback: this.configService.get<string>('TWILIO_STATUS_CALLBACK_URL'),
       });
 
-      this.logger.log(`WhatsApp sent: ${result.sid} to ${formattedPhone}`);
+      this.logger.log(`WhatsApp sent: ${result.sid} to ${formattedPhone.slice(0, 4)}***`);
       return result.sid;
     } catch (error) {
-      this.logger.error(`Failed to send WhatsApp: ${error.message}`);
+      this.logger.error(
+        `Failed to send WhatsApp: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw error;
     }
   }
@@ -169,7 +176,7 @@ export class NotificationV2Service {
         channel: data.channel,
         status: NotificationStatus.PENDING,
         message: message || '', // Will be updated during processing
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as Prisma.InputJsonValue,
         maxRetries: data.maxRetries || this.maxRetries,
       },
     });
@@ -245,7 +252,7 @@ export class NotificationV2Service {
           message,
           messageId,
           sentAt: new Date(),
-          metadata: data.metadata || {},
+          metadata: (data.metadata || {}) as Prisma.InputJsonValue,
         },
       });
 
@@ -258,7 +265,8 @@ export class NotificationV2Service {
         messageId,
       };
     } catch (error) {
-      this.logger.error(`Failed to send notification: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to send notification: ${errorMessage}`);
 
       // Create failed notification record
       const notification = await this.prisma.notification.create({
@@ -269,15 +277,15 @@ export class NotificationV2Service {
           channel: data.channel,
           status: NotificationStatus.FAILED,
           message: data.message || '',
-          error: error.message,
-          metadata: data.metadata || {},
+          error: errorMessage,
+          metadata: (data.metadata || {}) as Prisma.InputJsonValue,
         },
       });
 
       return {
         success: false,
         notificationId: notification.id,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -309,8 +317,9 @@ export class NotificationV2Service {
         await this.processNotification(notification);
         processed++;
       } catch (error) {
-        this.logger.error(`Failed to process notification ${notification.id}: ${error.message}`);
-        await this.markFailed(notification.id, error.message);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.logger.error(`Failed to process notification ${notification.id}: ${errorMessage}`);
+        await this.markFailed(notification.id, errorMessage);
         failed++;
       }
     }
@@ -548,7 +557,7 @@ export class NotificationV2Service {
       existingMessage ||
       this.generateMessage(type, 'it', {
         customerName: await this.getCustomerName(customer),
-        ...((notification.metadata as any) || {}),
+        ...((notification.metadata as Record<string, unknown>) || {}),
       });
 
     // Send based on channel
@@ -639,14 +648,24 @@ export class NotificationV2Service {
   }
 
   private async decryptPhone(encryptedPhone: string): Promise<string> {
-    // TODO: Implement actual decryption using EncryptionService
-    // For now, assume phone is stored in plain text format for testing
-    return encryptedPhone;
+    try {
+      return this.encryption.decrypt(encryptedPhone);
+    } catch {
+      this.logger.warn('Failed to decrypt phone, using raw value');
+      return encryptedPhone;
+    }
   }
 
   private async getCustomerName(customer: Customer): Promise<string> {
-    // TODO: Decrypt first name
-    return 'Cliente';
+    const encrypted = (customer as Record<string, unknown>).encryptedFirstName as string | null;
+    if (!encrypted) {
+      return 'Cliente';
+    }
+    try {
+      return this.encryption.decrypt(encrypted);
+    } catch {
+      return 'Cliente';
+    }
   }
 
   private delay(ms: number): Promise<void> {

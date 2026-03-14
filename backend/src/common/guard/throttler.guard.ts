@@ -9,7 +9,7 @@
  */
 
 import { Injectable, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
-import { ThrottlerGuard as NestThrottlerGuard, ThrottlerException } from '@nestjs/throttler';
+import { ThrottlerGuard as NestThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
     const ip = this.getClientIp(req);
 
     // If user is authenticated, include user ID for per-user limiting
-    const userId = (req as any).user?.sub;
+    const userId = (req as Request & { user?: { sub?: string } }).user?.sub;
     if (userId) {
       return `user:${userId}`;
     }
@@ -64,7 +64,7 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
   /**
    * Define rate limits per endpoint type
    */
-  private getLimitsForPath(path: string, method: string): { ttl: number; limit: number } {
+  private getLimitsForPath(path: string, _method: string): { ttl: number; limit: number } {
     // Authentication endpoints - stricter limits
     if (path.includes('/auth/login') || path.includes('/auth/verify-2fa')) {
       return { ttl: 60, limit: 5 }; // 5 attempts per minute

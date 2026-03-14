@@ -80,7 +80,7 @@ export default function Step2Page() {
 
   if (!isLoaded) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#212121] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
@@ -106,14 +106,14 @@ export default function Step2Page() {
             <MapPin className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Indirizzo</h2>
-            <p className="text-gray-500 text-sm">Dati di residenza del cliente</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-[#ececec]">Indirizzo</h2>
+            <p className="text-gray-500 dark:text-[#636366] text-sm">Dati di residenza del cliente</p>
           </div>
         </div>
 
         {/* Indirizzo */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-          <Label className="text-sm font-medium text-gray-700 mb-2 block">Indirizzo</Label>
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Indirizzo</Label>
           <div className="relative">
             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
@@ -122,39 +122,39 @@ export default function Step2Page() {
               placeholder="Via Roma 123"
             />
           </div>
-          {errors.address && <p className="text-red-500 text-sm mt-2">{errors.address.message}</p>}
+          {errors.address && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.address.message}</p>}
         </div>
 
         {/* Città, CAP, Provincia */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">Provincia</Label>
+          <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Provincia</Label>
             <Input
               {...register('province')}
               className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
               placeholder="MI"
               maxLength={2}
             />
-            {errors.province && <p className="text-red-500 text-sm mt-2">{errors.province.message}</p>}
+            {errors.province && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.province.message}</p>}
           </div>
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">CAP</Label>
+          <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">CAP</Label>
             <Input
               {...register('zipCode')}
               className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
               placeholder="20100"
               maxLength={5}
             />
-            {errors.zipCode && <p className="text-red-500 text-sm mt-2">{errors.zipCode.message}</p>}
+            {errors.zipCode && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.zipCode.message}</p>}
           </div>
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">Città</Label>
+          <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Città</Label>
             <Input
               {...register('city')}
               className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
               placeholder="Milano"
             />
-            {errors.city && <p className="text-red-500 text-sm mt-2">{errors.city.message}</p>}
+            {errors.city && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.city.message}</p>}
           </div>
         </div>
 
@@ -164,14 +164,14 @@ export default function Step2Page() {
             <CreditCard className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Dati Fiscali</h2>
-            <p className="text-gray-500 text-sm">Informazioni fiscali del cliente</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-[#ececec]">Dati Fiscali</h2>
+            <p className="text-gray-500 dark:text-[#636366] text-sm">Informazioni fiscali del cliente</p>
           </div>
         </div>
 
         {/* Codice Fiscale */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-          <Label className="text-sm font-medium text-gray-700 mb-2 block">Codice Fiscale</Label>
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Codice Fiscale</Label>
           <div className="relative">
             <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
@@ -181,12 +181,12 @@ export default function Step2Page() {
               maxLength={16}
             />
           </div>
-          {errors.fiscalCode && <p className="text-red-500 text-sm mt-2">{errors.fiscalCode.message}</p>}
+          {errors.fiscalCode && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.fiscalCode.message}</p>}
         </div>
 
         {/* P.IVA */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">
             Partita IVA {isBusiness && <span className="text-red-500">*</span>}
           </Label>
           <Input
@@ -194,7 +194,7 @@ export default function Step2Page() {
             className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
             placeholder="IT12345678901"
           />
-          {errors.vatNumber && <p className="text-red-500 text-sm mt-2">Partita IVA richiesta per aziende</p>}
+          {errors.vatNumber && <p className="text-red-500 dark:text-red-400 text-sm mt-2">Partita IVA richiesta per aziende</p>}
         </div>
 
         {/* SDI e PEC (solo se azienda) */}
@@ -202,7 +202,7 @@ export default function Step2Page() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100"
+            className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]"
           >
             <div className="flex items-center gap-2 text-sm text-blue-600 mb-4">
               <Building2 className="w-4 h-4" />
@@ -211,7 +211,7 @@ export default function Step2Page() {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Codice SDI</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Codice SDI</Label>
                 <Input
                   {...register('sdiCode')}
                   className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
@@ -220,7 +220,7 @@ export default function Step2Page() {
                 />
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">PEC</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">PEC</Label>
                 <Input
                   type="email"
                   {...register('pec')}

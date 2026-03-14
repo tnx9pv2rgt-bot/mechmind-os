@@ -21,7 +21,6 @@ import {
   Bell
 } from 'lucide-react'
 import { AppleButton } from '@/components/ui/apple-button'
-import { portalAuth } from '@/lib/auth/portal-auth'
 import { Customer } from '@/lib/types/portal'
 
 // ============================================
@@ -80,18 +79,18 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
     : '??'
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#212121]">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-apple border-b border-apple-border/50 h-14">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#212121]/90 backdrop-blur-apple border-b border-apple-border/50 dark:border-[#424242]/50 h-14">
         <div className="flex items-center justify-between h-full px-4">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 -ml-2 rounded-xl hover:bg-apple-light-gray transition-colors"
+            className="p-2 -ml-2 rounded-xl hover:bg-apple-light-gray dark:hover:bg-[#353535] transition-colors"
           >
-            <Menu className="h-5 w-5 text-apple-dark" />
+            <Menu className="h-5 w-5 text-apple-dark dark:text-[#ececec]" />
           </button>
           
-          <Link href="/portal/dashboard" className="font-semibold text-apple-dark">
+          <Link href="/portal/dashboard" className="font-semibold text-apple-dark dark:text-[#ececec]">
             MechMind Portal
           </Link>
           
@@ -117,7 +116,7 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
       {/* Sidebar */}
       <motion.aside
         className={`
-          fixed top-0 left-0 z-50 h-full bg-white border-r border-apple-border/50
+          fixed top-0 left-0 z-50 h-full bg-white dark:bg-[#2f2f2f] border-r border-apple-border/50 dark:border-[#424242]/50
           lg:translate-x-0 lg:static lg:h-screen
           ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : ''}
         `}
@@ -130,39 +129,39 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-5 border-b border-apple-border/30">
+          <div className="flex items-center justify-between p-5 border-b border-apple-border/30 dark:border-[#424242]/30">
             <Link href="/portal/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center">
                 <Car className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-apple-dark leading-tight">MechMind</p>
-                <p className="text-xs text-apple-gray">Customer Portal</p>
+                <p className="font-semibold text-apple-dark dark:text-[#ececec] leading-tight">MechMind</p>
+                <p className="text-xs text-apple-gray dark:text-[#636366]">Customer Portal</p>
               </div>
             </Link>
             
             {isMobile && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-2 rounded-xl hover:bg-apple-light-gray transition-colors"
+                className="p-2 rounded-xl hover:bg-apple-light-gray dark:hover:bg-[#353535] transition-colors"
               >
-                <X className="h-5 w-5 text-apple-dark" />
+                <X className="h-5 w-5 text-apple-dark dark:text-[#ececec]" />
               </button>
             )}
           </div>
 
           {/* Customer Info */}
           {customer && (
-            <div className="p-5 border-b border-apple-border/30">
+            <div className="p-5 border-b border-apple-border/30 dark:border-[#424242]/30">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center text-white font-semibold">
                   {customerInitials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-apple-dark truncate">
+                  <p className="font-medium text-apple-dark dark:text-[#ececec] truncate">
                     {customer.firstName} {customer.lastName}
                   </p>
-                  <p className="text-xs text-apple-gray truncate">{customer.email}</p>
+                  <p className="text-xs text-apple-gray dark:text-[#636366] truncate">{customer.email}</p>
                 </div>
               </div>
             </div>
@@ -183,8 +182,8 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
                       className={`
                         flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
                         ${isActive 
-                          ? 'bg-apple-blue text-white shadow-apple' 
-                          : 'text-apple-dark hover:bg-apple-light-gray'
+                          ? 'bg-apple-blue text-white shadow-apple'
+                          : 'text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray dark:hover:bg-[#353535]'
                         }
                       `}
                     >
@@ -209,10 +208,10 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
           </nav>
 
           {/* Logout Button */}
-          <div className="p-4 border-t border-apple-border/30">
+          <div className="p-4 border-t border-apple-border/30 dark:border-[#424242]/30">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-apple-red hover:bg-red-50 transition-all"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
             >
               <LogOut className="h-5 w-5" />
               <span>Esci</span>
@@ -231,7 +230,7 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
 
       {/* Mobile Bottom Navigation */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-apple border-t border-apple-border/50 px-2 pb-safe">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#212121]/90 backdrop-blur-apple border-t border-apple-border/50 dark:border-[#424242]/50 px-2 pb-safe">
           <div className="flex items-center justify-around h-16">
             {navigation.slice(0, 5).map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -291,8 +290,8 @@ export function PortalPageWrapper({
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-apple-dark">{title}</h1>
-              {subtitle && <p className="text-apple-gray mt-1">{subtitle}</p>}
+              <h1 className="text-2xl sm:text-3xl font-semibold text-apple-dark dark:text-[#ececec]">{title}</h1>
+              {subtitle && <p className="text-apple-gray dark:text-[#636366] mt-1">{subtitle}</p>}
             </div>
             {action && <div className="flex-shrink-0">{action}</div>}
           </div>

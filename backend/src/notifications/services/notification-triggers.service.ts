@@ -10,7 +10,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationV2Service, CreateNotificationDTO } from './notification-v2.service';
+import { NotificationV2Service } from './notification-v2.service';
 import { NotificationType, NotificationChannel } from '@prisma/client';
 
 @Injectable()
@@ -50,7 +50,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send booking confirmation: ${error.message}`);
+      this.logger.error(
+        `Failed to send booking confirmation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -59,7 +61,7 @@ export class NotificationTriggersService {
     bookingId: string;
     tenantId: string;
     customerId: string;
-    changes: Record<string, any>;
+    changes: Record<string, unknown>;
   }) {
     this.logger.log(`Booking updated: ${event.bookingId}`);
 
@@ -73,11 +75,13 @@ export class NotificationTriggersService {
           channel: NotificationChannel.SMS,
           metadata: {
             bookingId: event.bookingId,
-            status: this.getStatusLabel(event.changes.status),
+            status: this.getStatusLabel(String(event.changes.status)),
           },
         });
       } catch (error) {
-        this.logger.error(`Failed to send status update: ${error.message}`);
+        this.logger.error(
+          `Failed to send status update: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
   }
@@ -103,7 +107,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send cancellation notification: ${error.message}`);
+      this.logger.error(
+        `Failed to send cancellation notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -134,7 +140,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send inspection complete notification: ${error.message}`);
+      this.logger.error(
+        `Failed to send inspection complete notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -159,7 +167,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send inspection review notification: ${error.message}`);
+      this.logger.error(
+        `Failed to send inspection review notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -191,7 +201,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send invoice notification: ${error.message}`);
+      this.logger.error(
+        `Failed to send invoice notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -219,7 +231,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send payment reminder: ${error.message}`);
+      this.logger.error(
+        `Failed to send payment reminder: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -251,7 +265,9 @@ export class NotificationTriggersService {
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to send maintenance reminder: ${error.message}`);
+      this.logger.error(
+        `Failed to send maintenance reminder: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 

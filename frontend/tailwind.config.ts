@@ -16,7 +16,7 @@ const config: Config = {
           blue: '#0071e3',
           'blue-hover': '#0077ed',
           dark: '#1d1d1f',
-          gray: '#86868b',
+          gray: '#6e6e73',
           'light-gray': '#f5f5f7',
           'border': '#d2d2d7',
           green: '#34c759',
@@ -41,7 +41,7 @@ const config: Config = {
         },
         muted: {
           DEFAULT: '#f5f5f7',
-          foreground: '#86868b',
+          foreground: '#6e6e73',
         },
         accent: {
           DEFAULT: '#0071e3',

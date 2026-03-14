@@ -16,6 +16,12 @@ const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../common/services/prisma.service");
 const queue_service_1 = require("../../common/services/queue.service");
 const logger_service_1 = require("../../common/services/logger.service");
+const bookingInclude = {
+    customer: true,
+    vehicle: true,
+    services: { include: { service: true } },
+    slot: true,
+};
 class BookingCreatedEvent {
     constructor(bookingId, tenantId, customerId, scheduledDate, source) {
         this.bookingId = bookingId;
@@ -39,7 +45,7 @@ let BookingService = class BookingService {
         const lockAcquired = await this.prisma.acquireAdvisoryLock(tenantId, slotId);
         if (!lockAcquired) {
             this.logger.warn(`Could not acquire lock for slot ${slotId}`);
-            const job = await this.queueService.addBookingJob('reserve-slot-retry', {
+            await this.queueService.addBookingJob('reserve-slot-retry', {
                 type: 'reserve-slot-retry',
                 payload: dto,
                 tenantId,
@@ -111,7 +117,7 @@ let BookingService = class BookingService {
                         }),
                         ...(serviceIds?.length && {
                             services: {
-                                create: serviceIds.map((serviceId) => ({
+                                create: serviceIds.map(serviceId => ({
                                     service: { connect: { id: serviceId } },
                                     price: 0,
                                 })),
@@ -145,7 +151,8 @@ let BookingService = class BookingService {
             };
         }
         catch (error) {
-            this.logger.error(`Failed to create booking: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Failed to create booking: ${errorMessage}`);
             if (error instanceof common_1.ConflictException || error instanceof common_1.NotFoundException) {
                 throw error;
             }
@@ -154,7 +161,7 @@ let BookingService = class BookingService {
                     throw new common_1.ConflictException('Booking conflict detected. Please try again.');
                 }
             }
-            throw new common_1.BadRequestException(`Failed to create booking: ${error.message}`);
+            throw new common_1.BadRequestException(`Failed to create booking: ${errorMessage}`);
         }
         finally {
             await this.prisma.releaseAdvisoryLock(tenantId, slotId);
@@ -162,7 +169,7 @@ let BookingService = class BookingService {
         }
     }
     async createBooking(tenantId, dto) {
-        const { customerId, vehicleId, slotId, scheduledDate, durationMinutes, serviceIds, notes, source, vapiCallId } = dto;
+        const { customerId, vehicleId, slotId, scheduledDate, durationMinutes, notes, source, vapiCallId, technicianId, liftPosition, } = dto;
         return this.prisma.withTenant(tenantId, async (prisma) => {
             const slot = await prisma.bookingSlot.findUnique({
                 where: { id: slotId },
@@ -178,6 +185,8 @@ let BookingService = class BookingService {
                     notes: notes || null,
                     source: source || 'WEB',
                     vapiCallId: vapiCallId || null,
+                    technicianId: technicianId || null,
+                    liftPosition: liftPosition || null,
                     tenant: { connect: { id: tenantId } },
                     customer: { connect: { id: customerId } },
                     slot: { connect: { id: slotId } },
@@ -244,7 +253,8 @@ let BookingService = class BookingService {
                 tenantId,
                 ...(filters?.status && { status: filters.status }),
                 ...(filters?.customerId && { customerId: filters.customerId }),
-                ...(filters?.fromDate && filters?.toDate && {
+                ...(filters?.fromDate &&
+                    filters?.toDate && {
                     scheduledDate: {
                         gte: filters.fromDate,
                         lte: filters.toDate,
@@ -355,13 +365,15 @@ let BookingService = class BookingService {
     }
     async getStats(tenantId, fromDate, toDate) {
         return this.prisma.withTenant(tenantId, async (prisma) => {
-            const dateFilter = fromDate && toDate ? {
-                scheduledDate: {
-                    gte: fromDate,
-                    lte: toDate,
-                },
-            } : {};
-            const [totalBookings, statusCounts, sourceCounts,] = await Promise.all([
+            const dateFilter = fromDate && toDate
+                ? {
+                    scheduledDate: {
+                        gte: fromDate,
+                        lte: toDate,
+                    },
+                }
+                : {};
+            const [totalBookings, statusCounts, sourceCounts] = await Promise.all([
                 prisma.booking.count({
                     where: { tenantId, ...dateFilter },
                 }),

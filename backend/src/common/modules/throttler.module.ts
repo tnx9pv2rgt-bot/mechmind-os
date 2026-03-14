@@ -14,7 +14,7 @@ import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '
     NestThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService): ThrottlerModuleOptions => {
+      useFactory: (_config: ConfigService): ThrottlerModuleOptions => {
         return {
           throttlers: [
             {

@@ -37,7 +37,7 @@ let RolesGuard = class RolesGuard {
         if (!user) {
             throw new common_1.ForbiddenException('User not authenticated');
         }
-        const hasRole = requiredRoles.some((role) => user.role === role);
+        const hasRole = requiredRoles.some(role => user.role === role);
         if (!hasRole) {
             throw new common_1.ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
         }

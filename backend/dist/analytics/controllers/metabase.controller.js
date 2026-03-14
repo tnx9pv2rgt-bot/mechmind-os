@@ -179,7 +179,10 @@ The returned URL expires in 10 minutes by default.
                 data: {
                     type: 'object',
                     properties: {
-                        url: { type: 'string', example: 'http://localhost:3001/embed/dashboard/eyJhbGciOiJIUzI1NiIs...' },
+                        url: {
+                            type: 'string',
+                            example: 'http://localhost:3001/embed/dashboard/eyJhbGciOiJIUzI1NiIs...',
+                        },
                         expiresAt: { type: 'string', format: 'date-time' },
                         dashboardId: { type: 'number', example: 1 },
                     },

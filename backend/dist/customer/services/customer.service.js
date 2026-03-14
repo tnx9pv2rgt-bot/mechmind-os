@@ -34,12 +34,8 @@ let CustomerService = class CustomerService {
             }
             const encryptedPhone = this.encryption.encrypt(dto.phone);
             const encryptedEmail = dto.email ? this.encryption.encrypt(dto.email) : null;
-            const encryptedFirstName = dto.firstName
-                ? this.encryption.encrypt(dto.firstName)
-                : null;
-            const encryptedLastName = dto.lastName
-                ? this.encryption.encrypt(dto.lastName)
-                : null;
+            const encryptedFirstName = dto.firstName ? this.encryption.encrypt(dto.firstName) : null;
+            const encryptedLastName = dto.lastName ? this.encryption.encrypt(dto.lastName) : null;
             const phoneHash = this.encryption.hash(dto.phone);
             const customer = await prisma.customer.create({
                 data: {
@@ -59,7 +55,7 @@ let CustomerService = class CustomerService {
             return this.decryptCustomer(customer);
         });
     }
-    async createFromVoiceCall(tenantId, phone, extractedData) {
+    async createFromVoiceCall(tenantId, phone, _extractedData) {
         return this.create(tenantId, {
             phone,
             gdprConsent: false,
@@ -118,16 +114,16 @@ let CustomerService = class CustomerService {
             const total = await prisma.customer.count({
                 where: { tenantId },
             });
-            const decryptedCustomers = customers.map((c) => this.decryptCustomer(c));
+            const decryptedCustomers = customers.map(c => this.decryptCustomer(c));
             let filtered = decryptedCustomers;
             if (query.name) {
                 const nameLower = query.name.toLowerCase();
-                filtered = filtered.filter((c) => c.firstName?.toLowerCase().includes(nameLower) ||
+                filtered = filtered.filter(c => c.firstName?.toLowerCase().includes(nameLower) ||
                     c.lastName?.toLowerCase().includes(nameLower));
             }
             if (query.email) {
                 const emailLower = query.email.toLowerCase();
-                filtered = filtered.filter((c) => c.email?.toLowerCase().includes(emailLower));
+                filtered = filtered.filter(c => c.email?.toLowerCase().includes(emailLower));
             }
             return { customers: filtered, total };
         });
@@ -146,9 +142,7 @@ let CustomerService = class CustomerService {
                 updateData.phoneHash = this.encryption.hash(dto.phone);
             }
             if (dto.email !== undefined) {
-                updateData.encryptedEmail = dto.email
-                    ? this.encryption.encrypt(dto.email)
-                    : null;
+                updateData.encryptedEmail = dto.email ? this.encryption.encrypt(dto.email) : null;
             }
             if (dto.firstName !== undefined) {
                 updateData.encryptedFirstName = dto.firstName
@@ -156,9 +150,7 @@ let CustomerService = class CustomerService {
                     : null;
             }
             if (dto.lastName !== undefined) {
-                updateData.encryptedLastName = dto.lastName
-                    ? this.encryption.encrypt(dto.lastName)
-                    : null;
+                updateData.encryptedLastName = dto.lastName ? this.encryption.encrypt(dto.lastName) : null;
             }
             if (dto.notes !== undefined) {
                 updateData.notes = dto.notes;
@@ -205,7 +197,7 @@ let CustomerService = class CustomerService {
                 prisma.customer.count({ where: { tenantId } }),
             ]);
             return {
-                customers: customers.map((c) => this.decryptCustomer(c)),
+                customers: customers.map(c => this.decryptCustomer(c)),
                 total,
             };
         });
@@ -213,12 +205,8 @@ let CustomerService = class CustomerService {
     decryptCustomer(customer) {
         return {
             id: customer.id,
-            phone: customer.encryptedPhone
-                ? this.encryption.decrypt(customer.encryptedPhone)
-                : '',
-            email: customer.encryptedEmail
-                ? this.encryption.decrypt(customer.encryptedEmail)
-                : undefined,
+            phone: customer.encryptedPhone ? this.encryption.decrypt(customer.encryptedPhone) : '',
+            email: customer.encryptedEmail ? this.encryption.decrypt(customer.encryptedEmail) : undefined,
             firstName: customer.encryptedFirstName
                 ? this.encryption.decrypt(customer.encryptedFirstName)
                 : undefined,
@@ -226,9 +214,9 @@ let CustomerService = class CustomerService {
                 ? this.encryption.decrypt(customer.encryptedLastName)
                 : undefined,
             gdprConsent: customer.gdprConsent,
-            gdprConsentAt: customer.gdprConsentAt,
+            gdprConsentAt: customer.gdprConsentAt ?? undefined,
             marketingConsent: customer.marketingConsent,
-            notes: customer.notes,
+            notes: customer.notes ?? undefined,
             createdAt: customer.createdAt,
             updatedAt: customer.updatedAt,
             ...(customer.vehicles && { vehicles: customer.vehicles }),

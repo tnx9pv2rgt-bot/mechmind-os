@@ -52,7 +52,7 @@ export class ObdStreamingGateway
     this.setupRedisSubscription();
   }
 
-  afterInit(server: Server) {
+  afterInit(_server: Server) {
     this.logger.log('OBD Streaming Gateway initialized');
   }
 
@@ -74,7 +74,9 @@ export class ObdStreamingGateway
         clientId: client.id,
       });
     } catch (error) {
-      this.logger.error(`Connection error: ${error.message}`);
+      this.logger.error(
+        `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       client.disconnect();
     }
   }
@@ -128,7 +130,7 @@ export class ObdStreamingGateway
 
       this.logger.log(`Streaming started: ${stream.id} for device ${payload.deviceId}`);
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -152,7 +154,7 @@ export class ObdStreamingGateway
 
       client.emit('streaming-stopped', { streamId: payload.streamId });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -173,7 +175,7 @@ export class ObdStreamingGateway
 
       client.emit('subscribed', { deviceId: payload.deviceId });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -188,7 +190,7 @@ export class ObdStreamingGateway
 
       client.emit('unsubscribed', { deviceId: payload.deviceId });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -203,7 +205,7 @@ export class ObdStreamingGateway
     try {
       await this.streamingService.processSensorData(payload.streamId, payload.data);
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -217,7 +219,7 @@ export class ObdStreamingGateway
 
       client.emit('freeze-frame-captured', freezeFrame);
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -227,7 +229,7 @@ export class ObdStreamingGateway
       const results = await this.streamingService.getMode06Tests(payload.deviceId);
       client.emit('mode06-results', { deviceId: payload.deviceId, results });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -241,7 +243,7 @@ export class ObdStreamingGateway
 
       client.emit('evap-test-started', test);
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -257,7 +259,7 @@ export class ObdStreamingGateway
         timestamp: new Date(),
       });
     } catch (error) {
-      client.emit('error', { message: error.message });
+      client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 

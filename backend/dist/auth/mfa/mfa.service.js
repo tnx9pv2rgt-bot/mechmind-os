@@ -51,15 +51,19 @@ const QRCode = __importStar(require("qrcode"));
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../../common/services/prisma.service");
 const encryption_service_1 = require("../../common/services/encryption.service");
+const redis_service_1 = require("../../common/services/redis.service");
 let MfaService = class MfaService {
-    constructor(prisma, encryption, config) {
+    constructor(prisma, encryption, config, redis) {
         this.prisma = prisma;
         this.encryption = encryption;
         this.config = config;
+        this.redis = redis;
         this.ISSUER = 'MechMind OS';
         this.BACKUP_CODES_COUNT = 10;
         this.MAX_VERIFY_ATTEMPTS = 5;
         this.VERIFY_WINDOW_MINUTES = 15;
+        this.MFA_SESSION_TTL_SECONDS = 600;
+        this.MFA_SESSION_PREFIX = 'mfa:session:';
     }
     async enroll(userId, userEmail) {
         const user = await this.prisma.user.findUnique({
@@ -158,7 +162,7 @@ let MfaService = class MfaService {
         if (!valid) {
             return {
                 valid: false,
-                remainingAttempts: this.MAX_VERIFY_ATTEMPTS - 1
+                remainingAttempts: this.MAX_VERIFY_ATTEMPTS - 1,
             };
         }
         return { valid: true };
@@ -275,6 +279,26 @@ let MfaService = class MfaService {
             }),
         ]);
     }
+    async createMfaSession(userId) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const key = `${this.MFA_SESSION_PREFIX}${token}`;
+        await this.redis.set(key, userId, this.MFA_SESSION_TTL_SECONDS);
+        return {
+            mfaSessionToken: token,
+            expiresIn: this.MFA_SESSION_TTL_SECONDS,
+        };
+    }
+    async validateMfaSession(token) {
+        if (!token) {
+            return null;
+        }
+        const key = `${this.MFA_SESSION_PREFIX}${token}`;
+        return this.redis.get(key);
+    }
+    async revokeMfaSession(token) {
+        const key = `${this.MFA_SESSION_PREFIX}${token}`;
+        await this.redis.del(key);
+    }
     generateBackupCodesInternal() {
         const codes = [];
         for (let i = 0; i < this.BACKUP_CODES_COUNT; i++) {
@@ -285,7 +309,6 @@ let MfaService = class MfaService {
         return codes;
     }
     async verifyBackupCode(userId, code) {
-        const hashedInput = await bcrypt.hash(code.toUpperCase(), 10);
         const backupCodes = await this.prisma.backupCode.findMany({
             where: { userId },
         });
@@ -306,5 +329,6 @@ exports.MfaService = MfaService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         encryption_service_1.EncryptionService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        redis_service_1.RedisService])
 ], MfaService);

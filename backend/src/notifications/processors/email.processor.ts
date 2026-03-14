@@ -29,7 +29,9 @@ export class EmailProcessor extends WorkerHost {
   }
 
   async process(job: Job<EmailJobData>): Promise<void> {
-    this.logger.log(`Processing email job ${job.id} for ${job.data.to}`);
+    this.logger.log(
+      `Processing email job ${job.id} for ${job.data.to.replace(/(.{2}).*(@.*)/, '$1***$2')}`,
+    );
 
     const { to, subject, template, variables } = job.data;
 
@@ -66,7 +68,9 @@ export class EmailProcessor extends WorkerHost {
 
       this.logger.log(`Email sent successfully: ${result.MessageId}`);
     } catch (error) {
-      this.logger.error(`Failed to send email: ${error.message}`);
+      this.logger.error(
+        `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw error; // Trigger retry
     }
   }
@@ -123,12 +127,23 @@ export class EmailProcessor extends WorkerHost {
 
     let html = templates[template] || templates.booking_confirmation;
 
-    // Replace variables
+    // Replace variables with HTML-escaped values
     Object.entries(variables).forEach(([key, value]) => {
-      html = html.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedValue = this.escapeHtml(String(value));
+      html = html.replace(new RegExp(`\\{\\{${escapedKey}\\}\\}`, 'g'), escapedValue);
     });
 
     return html;
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   private stripHtml(html: string): string {

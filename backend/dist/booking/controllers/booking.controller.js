@@ -185,7 +185,11 @@ __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(roles_guard_1.UserRole.MECHANIC, roles_guard_1.UserRole.RECEPTIONIST, roles_guard_1.UserRole.MANAGER, roles_guard_1.UserRole.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Get all bookings' }),
-    (0, swagger_1.ApiQuery)({ name: 'status', required: false, enum: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] }),
+    (0, swagger_1.ApiQuery)({
+        name: 'status',
+        required: false,
+        enum: ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
+    }),
     (0, swagger_1.ApiQuery)({ name: 'customerId', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'fromDate', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'toDate', required: false }),

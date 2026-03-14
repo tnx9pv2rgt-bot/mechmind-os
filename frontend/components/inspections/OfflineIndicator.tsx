@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * OfflineIndicator Component - MechMind OS Inspections
  * 

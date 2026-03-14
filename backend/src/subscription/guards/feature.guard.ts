@@ -19,7 +19,7 @@ import { FeatureAccessService } from '../services/feature-access.service';
 export const REQUIRED_FEATURE_KEY = 'requiredFeature';
 
 export function RequireFeature(...features: FeatureFlag[]) {
-  return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
+  return function (target: object, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     if (descriptor) {
       // Method decorator
       Reflect.defineMetadata(REQUIRED_FEATURE_KEY, features, descriptor.value);

@@ -173,7 +173,7 @@ let AdvisoryLockService = class AdvisoryLockService {
         }
     }
     async withLock(tenantId, slotId, fn, options = {}) {
-        const lockResult = await this.acquireLockWithRetry(tenantId, slotId, options);
+        await this.acquireLockWithRetry(tenantId, slotId, options);
         try {
             return await fn();
         }

@@ -139,7 +139,7 @@ export interface ConditionalStepRendererProps {
   /** Configurazione personalizzata */
   config?: FormFlowConfig;
   /** Componenti custom per gli step */
-  customComponents?: Record<string, React.ComponentType<any>>;
+  customComponents?: Record<string, React.ComponentType<Record<string, unknown>>>;
   /** Classe CSS wrapper */
   className?: string;
 }

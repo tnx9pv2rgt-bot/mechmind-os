@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SubscriptionTier as SubscriptionPlan } from '@prisma/client';
+type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -45,20 +45,20 @@ interface PricingCardsProps {
   loading?: boolean;
 }
 
-const PLAN_ICONS: Record<SubscriptionPlan, typeof Sparkles> = {
-  [SubscriptionPlan.STARTER]: Building2,
-  [SubscriptionPlan.PROFESSIONAL]: Building2,
-  [SubscriptionPlan.ENTERPRISE]: Crown,
-  [SubscriptionPlan.TRIAL]: Sparkles,
-  [SubscriptionPlan.FREE]: Sparkles,
+const PLAN_ICONS: Record<string, typeof Sparkles> = {
+  'STARTER': Building2,
+  'PROFESSIONAL': Building2,
+  'ENTERPRISE': Crown,
+  'TRIAL': Sparkles,
+  'FREE': Sparkles,
 };
 
-const PLAN_COLORS: Record<SubscriptionPlan, string> = {
-  [SubscriptionPlan.STARTER]: 'from-emerald-500 to-teal-600',
-  [SubscriptionPlan.PROFESSIONAL]: 'from-blue-500 to-indigo-600',
-  [SubscriptionPlan.ENTERPRISE]: 'from-purple-500 to-pink-600',
-  [SubscriptionPlan.TRIAL]: 'from-gray-400 to-gray-500',
-  [SubscriptionPlan.FREE]: 'from-slate-400 to-slate-500',
+const PLAN_COLORS: Record<string, string> = {
+  'STARTER': 'from-emerald-500 to-teal-600',
+  'PROFESSIONAL': 'from-blue-500 to-indigo-600',
+  'ENTERPRISE': 'from-purple-500 to-pink-600',
+  'TRIAL': 'from-gray-400 to-gray-500',
+  'FREE': 'from-slate-400 to-slate-500',
 };
 
 export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: PricingCardsProps) {
@@ -67,7 +67,7 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
   // Filter out trial from display plans
-  const displayPlans = plans.filter(p => p.id !== SubscriptionPlan.TRIAL);
+  const displayPlans = plans.filter(p => p.id !== 'TRIAL');
 
   const handleSelectPlan = (plan: SubscriptionPlan) => {
     setSelectedPlan(plan);
@@ -78,28 +78,28 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
     { name: 'Vehicle Inspections', key: 'inspections' },
     { name: 'Customer Management', key: 'customers' },
     { name: 'Booking System', key: 'bookings' },
-    { name: 'OBD Integration', key: 'obd', plan: [SubscriptionPlan.STARTER, SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'Inventory Management', key: 'inventory', plan: [SubscriptionPlan.STARTER, SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'Multi-Location Support', key: 'multi_location', plan: [SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'API Access', key: 'api', plan: [SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'Advanced Analytics', key: 'analytics', plan: [SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'Custom Branding', key: 'branding', plan: [SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'Priority Support', key: 'support', plan: [SubscriptionPlan.PROFESSIONAL, SubscriptionPlan.ENTERPRISE] },
-    { name: 'AI Vehicle Inspections', key: 'ai', plan: [SubscriptionPlan.ENTERPRISE], addon: true },
-    { name: 'Voice AI Assistant', key: 'voice', plan: [SubscriptionPlan.ENTERPRISE], addon: true },
-    { name: 'White Label', key: 'white_label', plan: [SubscriptionPlan.ENTERPRISE] },
-    { name: 'Blockchain Verification', key: 'blockchain', plan: [SubscriptionPlan.ENTERPRISE] },
-    { name: 'Custom Integrations', key: 'integrations', plan: [SubscriptionPlan.ENTERPRISE] },
-    { name: 'Dedicated Account Manager', key: 'manager', plan: [SubscriptionPlan.ENTERPRISE] },
+    { name: 'OBD Integration', key: 'obd', plan: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Inventory Management', key: 'inventory', plan: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Multi-Location Support', key: 'multi_location', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'API Access', key: 'api', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Advanced Analytics', key: 'analytics', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Custom Branding', key: 'branding', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Priority Support', key: 'support', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'AI Vehicle Inspections', key: 'ai', plan: 'ENTERPRISE', addon: true },
+    { name: 'Voice AI Assistant', key: 'voice', plan: 'ENTERPRISE', addon: true },
+    { name: 'White Label', key: 'white_label', plan: 'ENTERPRISE' },
+    { name: 'Blockchain Verification', key: 'blockchain', plan: 'ENTERPRISE' },
+    { name: 'Custom Integrations', key: 'integrations', plan: 'ENTERPRISE' },
+    { name: 'Dedicated Account Manager', key: 'manager', plan: 'ENTERPRISE' },
   ];
 
   const getPlanLimits = (plan: SubscriptionPlan) => {
     switch (plan) {
-      case SubscriptionPlan.STARTER:
+      case 'STARTER':
         return { users: '3', locations: '1', apiCalls: '5,000/mo', storage: '10 GB' };
-      case SubscriptionPlan.PROFESSIONAL:
+      case 'PROFESSIONAL':
         return { users: '10', locations: '2', apiCalls: '25,000/mo', storage: '50 GB' };
-      case SubscriptionPlan.ENTERPRISE:
+      case 'ENTERPRISE':
         return { users: 'Unlimited', locations: 'Unlimited', apiCalls: 'Unlimited', storage: 'Unlimited' };
       default:
         return { users: '-', locations: '-', apiCalls: '-', storage: '-' };

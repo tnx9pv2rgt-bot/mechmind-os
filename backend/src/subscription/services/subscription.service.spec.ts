@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { SubscriptionService } from './subscription.service';
 import { SubscriptionPlan, SubscriptionStatus, FeatureFlag } from '@prisma/client';
-import { PLAN_LIMITS, AI_ADDON, PLAN_FEATURES } from '../config/pricing.config';
+import { PLAN_LIMITS, AI_ADDON } from '../config/pricing.config';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;

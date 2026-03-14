@@ -21,11 +21,7 @@ let AnalyticsModule = class AnalyticsModule {
 exports.AnalyticsModule = AnalyticsModule;
 exports.AnalyticsModule = AnalyticsModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            common_module_1.CommonModule,
-            config_1.ConfigModule,
-            schedule_1.ScheduleModule.forRoot(),
-        ],
+        imports: [common_module_1.CommonModule, config_1.ConfigModule, schedule_1.ScheduleModule.forRoot()],
         controllers: [metrics_controller_1.MetricsController, reporting_controller_1.ReportingController, metabase_controller_1.MetabaseController],
         providers: [unit_economics_service_1.UnitEconomicsService, reporting_service_1.ReportingService],
         exports: [unit_economics_service_1.UnitEconomicsService, reporting_service_1.ReportingService],

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { LaborGuideService } from './labor-guide.service';
 import { PrismaService } from '../../common/services/prisma.service';
 
@@ -46,6 +46,26 @@ describe('LaborGuideService', () => {
       const result = await service.createGuide('t1', dto as never);
       expect(result).toEqual(expected);
     });
+
+    it('should throw BadRequestException if guide name already exists', async () => {
+      mockPrisma.laborGuide.findUnique.mockResolvedValue({ id: '1', name: 'BMW Standard' });
+      await expect(service.createGuide('t1', { name: 'BMW Standard' } as never)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('findAllGuides', () => {
+    it('should return all active guides', async () => {
+      const guides = [{ id: '1', name: 'BMW Standard' }];
+      mockPrisma.laborGuide.findMany.mockResolvedValue(guides);
+
+      const result = await service.findAllGuides('t1');
+      expect(result).toEqual(guides);
+      expect(mockPrisma.laborGuide.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { tenantId: 't1', isActive: true } }),
+      );
+    });
   });
 
   describe('findGuideById', () => {
@@ -82,6 +102,54 @@ describe('LaborGuideService', () => {
     });
   });
 
+  describe('updateGuide', () => {
+    it('should update a guide', async () => {
+      mockPrisma.laborGuide.findFirst.mockResolvedValue({ id: '1', entries: [] });
+      mockPrisma.laborGuide.update.mockResolvedValue({ id: '1', name: 'Updated' });
+
+      const result = await service.updateGuide('t1', '1', { description: 'New desc' } as never);
+      expect(result).toEqual({ id: '1', name: 'Updated' });
+    });
+
+    it('should check name uniqueness when updating name', async () => {
+      mockPrisma.laborGuide.findFirst
+        .mockResolvedValueOnce({ id: '1', entries: [] }) // findGuideById
+        .mockResolvedValueOnce({ id: '2', name: 'Existing Name' }); // name uniqueness check
+      await expect(
+        service.updateGuide('t1', '1', { name: 'Existing Name' } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow updating name if no conflict', async () => {
+      mockPrisma.laborGuide.findFirst
+        .mockResolvedValueOnce({ id: '1', entries: [] }) // findGuideById
+        .mockResolvedValueOnce(null); // no conflict
+      mockPrisma.laborGuide.update.mockResolvedValue({ id: '1', name: 'New Name' });
+
+      const result = await service.updateGuide('t1', '1', { name: 'New Name' } as never);
+      expect(result.name).toBe('New Name');
+    });
+  });
+
+  describe('deleteGuide', () => {
+    it('should soft-delete a guide', async () => {
+      mockPrisma.laborGuide.findFirst.mockResolvedValue({ id: '1', entries: [] });
+      mockPrisma.laborGuide.update.mockResolvedValue({ id: '1', isActive: false });
+
+      const result = await service.deleteGuide('t1', '1');
+      expect(result.isActive).toBe(false);
+      expect(mockPrisma.laborGuide.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { isActive: false },
+      });
+    });
+
+    it('should throw NotFoundException if guide not found', async () => {
+      mockPrisma.laborGuide.findFirst.mockResolvedValue(null);
+      await expect(service.deleteGuide('t1', 'x')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('addEntry', () => {
     it('should add entry to guide', async () => {
       mockPrisma.laborGuide.findFirst.mockResolvedValue({ id: '1', entries: [] });
@@ -97,6 +165,89 @@ describe('LaborGuideService', () => {
 
       const result = await service.addEntry('t1', '1', dto as never);
       expect(result).toEqual(expected);
+    });
+
+    it('should throw BadRequestException if yearFrom > yearTo', async () => {
+      mockPrisma.laborGuide.findFirst.mockResolvedValue({ id: '1', entries: [] });
+      await expect(
+        service.addEntry('t1', '1', {
+          make: 'BMW',
+          operationCode: 'X',
+          operationName: 'X',
+          category: 'X',
+          laborTimeMinutes: 60,
+          yearFrom: 2025,
+          yearTo: 2020,
+        } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('updateEntry', () => {
+    it('should update an entry', async () => {
+      const entry = { id: 'e1', tenantId: 't1', yearFrom: 2020, yearTo: 2025 };
+      mockPrisma.laborGuideEntry.findFirst.mockResolvedValue(entry);
+      mockPrisma.laborGuideEntry.update.mockResolvedValue({ ...entry, laborTimeMinutes: 120 });
+
+      const result = await service.updateEntry('t1', 'e1', { laborTimeMinutes: 120 } as never);
+      expect(result.laborTimeMinutes).toBe(120);
+    });
+
+    it('should throw NotFoundException if entry not found', async () => {
+      mockPrisma.laborGuideEntry.findFirst.mockResolvedValue(null);
+      await expect(service.updateEntry('t1', 'x', {} as never)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if yearFrom > yearTo after merge', async () => {
+      const entry = { id: 'e1', tenantId: 't1', yearFrom: 2020, yearTo: 2025 };
+      mockPrisma.laborGuideEntry.findFirst.mockResolvedValue(entry);
+      await expect(service.updateEntry('t1', 'e1', { yearFrom: 2030 } as never)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('deleteEntry', () => {
+    it('should delete an entry', async () => {
+      const entry = { id: 'e1', tenantId: 't1' };
+      mockPrisma.laborGuideEntry.findFirst.mockResolvedValue(entry);
+      mockPrisma.laborGuideEntry.delete.mockResolvedValue(entry);
+
+      const result = await service.deleteEntry('t1', 'e1');
+      expect(result).toEqual(entry);
+      expect(mockPrisma.laborGuideEntry.delete).toHaveBeenCalledWith({ where: { id: 'e1' } });
+    });
+
+    it('should throw NotFoundException if entry not found', async () => {
+      mockPrisma.laborGuideEntry.findFirst.mockResolvedValue(null);
+      await expect(service.deleteEntry('t1', 'x')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('searchEntries', () => {
+    it('should search by make only', async () => {
+      mockPrisma.laborGuideEntry.findMany.mockResolvedValue([]);
+      await service.searchEntries('t1', 'BMW');
+      expect(mockPrisma.laborGuideEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 't1',
+            make: { equals: 'BMW', mode: 'insensitive' },
+          }),
+        }),
+      );
+    });
+
+    it('should search by make and model', async () => {
+      mockPrisma.laborGuideEntry.findMany.mockResolvedValue([]);
+      await service.searchEntries('t1', 'BMW', '3 Series');
+      expect(mockPrisma.laborGuideEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            model: { equals: '3 Series', mode: 'insensitive' },
+          }),
+        }),
+      );
     });
   });
 });

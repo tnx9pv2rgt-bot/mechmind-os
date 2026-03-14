@@ -23,7 +23,9 @@ function generateJWT(user) {
     }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 }
 function generateRefreshToken(user) {
-    return jsonwebtoken_1.default.sign({ sub: user.id, jti: (0, crypto_1.randomBytes)(16).toString('hex') }, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+    return jsonwebtoken_1.default.sign({ sub: user.id, jti: (0, crypto_1.randomBytes)(16).toString('hex') }, JWT_SECRET, {
+        expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
 }
 function verifyJWT(token) {
     try {

@@ -208,7 +208,7 @@ class MockOfflineSyncService {
         this.updateItemStatus(item.id, 'completed', { syncedAt: Date.now() })
       } else if (result.conflict) {
         this.updateItemStatus(item.id, 'conflict')
-        conflicts++
+        // conflict is tracked by the caller (processSyncQueue)
       } else {
         throw new Error(result.error || 'Unknown error')
       }
@@ -511,7 +511,8 @@ describe('Offline Sync Integration Tests', () => {
 
       const queueItemId = await testDatabase.syncService.queueAction(
         'CREATE_INSPECTION',
-        { vehicleId: 'veh_fail_001', simulateError: true }
+        { vehicleId: 'veh_fail_001', simulateError: true },
+        { maxRetries: 1 } // Set maxRetries to 1 so first failure marks it as failed
       )
 
       // Process with simulated errors
@@ -521,7 +522,7 @@ describe('Offline Sync Integration Tests', () => {
       expect(result.total).toBe(1)
       expect(result.failed).toBe(1)
 
-      // Check that retry count was incremented
+      // Check that retry count was incremented and item is now failed
       const failedItems = await testDatabase.syncService.getFailedItems()
       expect(failedItems.length).toBe(1)
       expect(failedItems[0].retryCount).toBe(1)
@@ -586,8 +587,8 @@ describe('Offline Sync Integration Tests', () => {
       testDatabase.syncService.setOnlineStatus(true)
       await testDatabase.syncService.processSyncQueue()
 
-      // Clear completed items older than now
-      const cleared = await testDatabase.syncService.clearSyncQueue(Date.now())
+      // Clear completed items older than now (+1ms to account for same-tick timing)
+      const cleared = await testDatabase.syncService.clearSyncQueue(Date.now() + 1)
       expect(cleared).toBe(1)
 
       // Queue should be empty
@@ -600,14 +601,15 @@ describe('Offline Sync Integration Tests', () => {
 
       const itemId = await testDatabase.syncService.queueAction(
         'CREATE_INSPECTION',
-        { vehicleId: 'veh_retry_001', simulateError: true }
+        { vehicleId: 'veh_retry_001', simulateError: true },
+        { maxRetries: 1 } // Set maxRetries to 1 so first failure marks it as failed
       )
 
       // Process to failure
       testDatabase.syncService.setOnlineStatus(true)
       await testDatabase.syncService.processSyncQueue()
 
-      let failedItems = await testDatabase.syncService.getFailedItems()
+      const failedItems = await testDatabase.syncService.getFailedItems()
       expect(failedItems.length).toBe(1)
 
       // Retry the failed item

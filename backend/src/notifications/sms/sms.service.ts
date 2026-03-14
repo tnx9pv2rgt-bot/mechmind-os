@@ -273,7 +273,7 @@ export class SmsService {
         type: lookup.lineTypeIntelligence?.type,
       };
     } catch (error) {
-      this.logger.warn(`Phone validation failed for ${phone}: ${error.message}`);
+      this.logger.warn(`Phone validation failed for ${phone.slice(0, 4)}***: ${error.message}`);
       return { valid: false };
     }
   }
@@ -380,7 +380,7 @@ export class SmsService {
   private async sendSms(phone: string, message: string, category: string): Promise<SmsResult> {
     if (!this.twilioClient) {
       this.logger.warn('SMS service not initialized, logging message instead');
-      this.logger.debug(`SMS to ${phone} [${category}]: ${message}`);
+      this.logger.debug(`SMS to ${phone.slice(0, 4)}*** [${category}]: ${message}`);
       return { success: true, messageId: 'mock-sms-id' };
     }
 
@@ -399,7 +399,7 @@ export class SmsService {
       });
 
       this.logger.log(
-        `SMS sent successfully: ${twilioMessage.sid} to ${formattedPhone} (${category})`,
+        `SMS sent successfully: ${twilioMessage.sid} to ${formattedPhone.slice(0, 4)}*** (${category})`,
       );
 
       return {

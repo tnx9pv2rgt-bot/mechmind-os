@@ -139,9 +139,12 @@ export class TwilioService {
 
       return result;
     } catch (error) {
-      this.logger.error(`Phone validation error for ${formattedNumber}:`, error.message);
+      this.logger.error(
+        `Phone validation error for ${formattedNumber}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
-      if (error.code === 20404) {
+      if ((error as Record<string, unknown>).code === 20404) {
         return {
           phoneNumber: formattedNumber,
           formattedNumber,
@@ -200,7 +203,10 @@ export class TwilioService {
           status: 'pending',
         };
       } catch (error) {
-        this.logger.error('Twilio Verify error:', error.message);
+        this.logger.error(
+          'Twilio Verify error:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
         // Fallback to custom SMS
       }
     }
@@ -232,11 +238,14 @@ export class TwilioService {
         status: 'pending',
       };
     } catch (error) {
-      this.logger.error('SMS sending error:', error.message);
+      this.logger.error(
+        'SMS sending error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return {
         success: false,
         status: 'error',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -259,7 +268,10 @@ export class TwilioService {
           valid: verification.status === 'approved',
         };
       } catch (error) {
-        this.logger.error('Twilio Verify check error:', error.message);
+        this.logger.error(
+          'Twilio Verify check error:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
         // Fallback to custom verification
       }
     }
@@ -354,11 +366,14 @@ export class TwilioService {
         status: 'pending',
       };
     } catch (error) {
-      this.logger.error('SMS resend error:', error.message);
+      this.logger.error(
+        'SMS resend error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return {
         success: false,
         status: 'error',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -391,11 +406,14 @@ export class TwilioService {
         status: 'pending',
       };
     } catch (error) {
-      this.logger.error('SMS send error:', error.message);
+      this.logger.error(
+        'SMS send error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return {
         success: false,
         status: 'error',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -413,7 +431,10 @@ export class TwilioService {
         const result = await this.validatePhoneNumber(phone);
         results.set(phone, result);
       } catch (error) {
-        this.logger.error(`Validation error for ${phone}:`, error.message);
+        this.logger.error(
+          `Validation error for ${phone}:`,
+          error instanceof Error ? error.message : 'Unknown error',
+        );
         results.set(phone, {
           phoneNumber: phone,
           formattedNumber: this.formatE164(phone),
@@ -438,7 +459,8 @@ export class TwilioService {
     formattedNumber: string,
     lookup: PhoneNumberInstance,
   ): PhoneValidationResult {
-    const lineType = (lookup as any).lineTypeIntelligence?.type;
+    const lookupRecord = lookup as unknown as Record<string, Record<string, string>>;
+    const lineType = lookupRecord.lineTypeIntelligence?.type;
 
     return {
       phoneNumber: lookup.phoneNumber,
@@ -447,11 +469,11 @@ export class TwilioService {
       isMobile: lineType === 'mobile',
       isLandline: lineType === 'landline',
       isVoip: lineType === 'voip',
-      carrier: (lookup as any).carrier?.name,
+      carrier: lookupRecord.carrier?.name,
       countryCode: lookup.countryCode || '',
       countryName: lookup.countryCode || '',
       nationalFormat: lookup.nationalFormat || '',
-      callerName: (lookup as any).callerName?.callerName,
+      callerName: lookupRecord.callerName?.callerName,
     };
   }
 
@@ -509,7 +531,10 @@ export class TwilioService {
       const cached = await this.redis.get(key);
       return cached ? JSON.parse(cached) : null;
     } catch (error) {
-      this.logger.warn('Cache get error:', error.message);
+      this.logger.warn(
+        'Cache get error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return null;
     }
   }
@@ -518,7 +543,10 @@ export class TwilioService {
     try {
       await this.redis.setex(key, ttl, JSON.stringify(value));
     } catch (error) {
-      this.logger.warn('Cache set error:', error.message);
+      this.logger.warn(
+        'Cache set error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 

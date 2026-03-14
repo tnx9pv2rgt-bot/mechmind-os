@@ -19,18 +19,18 @@ let ObdService = class ObdService {
         this.prisma = prisma;
         this.notifications = notifications;
         this.DTC_SEVERITY_MAP = {
-            'P01': client_1.TroubleCodeSeverity.MEDIUM,
-            'P02': client_1.TroubleCodeSeverity.HIGH,
-            'P03': client_1.TroubleCodeSeverity.HIGH,
-            'P04': client_1.TroubleCodeSeverity.MEDIUM,
-            'P05': client_1.TroubleCodeSeverity.LOW,
-            'P06': client_1.TroubleCodeSeverity.HIGH,
-            'P07': client_1.TroubleCodeSeverity.MEDIUM,
-            'P08': client_1.TroubleCodeSeverity.HIGH,
-            'P0A': client_1.TroubleCodeSeverity.HIGH,
-            'B00': client_1.TroubleCodeSeverity.MEDIUM,
-            'C00': client_1.TroubleCodeSeverity.HIGH,
-            'U00': client_1.TroubleCodeSeverity.HIGH,
+            P01: client_1.TroubleCodeSeverity.MEDIUM,
+            P02: client_1.TroubleCodeSeverity.HIGH,
+            P03: client_1.TroubleCodeSeverity.HIGH,
+            P04: client_1.TroubleCodeSeverity.MEDIUM,
+            P05: client_1.TroubleCodeSeverity.LOW,
+            P06: client_1.TroubleCodeSeverity.HIGH,
+            P07: client_1.TroubleCodeSeverity.MEDIUM,
+            P08: client_1.TroubleCodeSeverity.HIGH,
+            P0A: client_1.TroubleCodeSeverity.HIGH,
+            B00: client_1.TroubleCodeSeverity.MEDIUM,
+            C00: client_1.TroubleCodeSeverity.HIGH,
+            U00: client_1.TroubleCodeSeverity.HIGH,
         };
     }
     async registerDevice(tenantId, dto) {
@@ -128,7 +128,7 @@ let ObdService = class ObdService {
         });
         return reading ? this.mapReadingToDto(reading) : null;
     }
-    async recordTroubleCodes(deviceId, codes, tenantId) {
+    async recordTroubleCodes(deviceId, codes, _tenantId) {
         const device = await this.prisma.obdDevice.findUnique({
             where: { id: deviceId },
             include: { tenant: true, vehicle: true },
@@ -281,7 +281,9 @@ let ObdService = class ObdService {
             activeCodes,
             pendingCodes,
             lastReading: latestReading ? this.mapReadingToDto(latestReading) : undefined,
-            recommendations: recommendations.length > 0 ? recommendations : ['No issues detected. Vehicle is in good condition.'],
+            recommendations: recommendations.length > 0
+                ? recommendations
+                : ['No issues detected. Vehicle is in good condition.'],
         };
     }
     getSeverityFromCode(code) {
@@ -291,11 +293,16 @@ let ObdService = class ObdService {
     getCategoryFromCode(code) {
         const type = code.charAt(0);
         switch (type) {
-            case 'P': return 'POWERTRAIN';
-            case 'B': return 'BODY';
-            case 'C': return 'CHASSIS';
-            case 'U': return 'NETWORK';
-            default: return 'UNKNOWN';
+            case 'P':
+                return 'POWERTRAIN';
+            case 'B':
+                return 'BODY';
+            case 'C':
+                return 'CHASSIS';
+            case 'U':
+                return 'NETWORK';
+            default:
+                return 'UNKNOWN';
         }
     }
     async checkAnomalies(deviceId, reading) {
@@ -323,12 +330,14 @@ let ObdService = class ObdService {
             isActive: device.isActive,
             lastConnected: device.lastConnected ?? undefined,
             batteryLevel: device.batteryLevel ?? undefined,
-            vehicle: device.vehicle ? {
-                id: device.vehicle.id,
-                make: device.vehicle.make,
-                model: device.vehicle.model,
-                licensePlate: device.vehicle.licensePlate,
-            } : undefined,
+            vehicle: device.vehicle
+                ? {
+                    id: device.vehicle.id,
+                    make: device.vehicle.make,
+                    model: device.vehicle.model,
+                    licensePlate: device.vehicle.licensePlate,
+                }
+                : undefined,
         };
     }
     mapReadingToDto(reading) {

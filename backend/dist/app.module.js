@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const core_1 = require("@nestjs/core");
+const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
 const throttler_1 = require("@nestjs/throttler");
 const common_module_1 = require("./common/common.module");
 const auth_module_1 = require("./auth/auth.module");
@@ -24,6 +25,7 @@ const obd_module_1 = require("./obd/obd.module");
 const parts_module_1 = require("./parts/parts.module");
 const subscription_module_1 = require("./subscription/subscription.module");
 const iot_module_1 = require("./iot/iot.module");
+const admin_module_1 = require("./admin/admin.module");
 const logger_interceptor_1 = require("./common/interceptors/logger.interceptor");
 const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
 let AppModule = class AppModule {
@@ -58,8 +60,13 @@ exports.AppModule = AppModule = __decorate([
             parts_module_1.PartsModule,
             subscription_module_1.SubscriptionModule,
             iot_module_1.IotModule,
+            admin_module_1.AdminModule,
         ],
         providers: [
+            {
+                provide: core_1.APP_FILTER,
+                useClass: all_exceptions_filter_1.AllExceptionsFilter,
+            },
             {
                 provide: core_1.APP_PIPE,
                 useFactory: () => new common_1.ValidationPipe({

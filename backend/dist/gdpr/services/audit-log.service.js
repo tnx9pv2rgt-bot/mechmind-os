@@ -56,13 +56,14 @@ let AuditLogService = class AuditLogService {
             where.performedBy = query.performedBy;
         }
         if (query.startDate || query.endDate) {
-            where.createdAt = {};
+            const createdAt = {};
             if (query.startDate) {
-                where.createdAt.gte = query.startDate;
+                createdAt.gte = query.startDate;
             }
             if (query.endDate) {
-                where.createdAt.lte = query.endDate;
+                createdAt.lte = query.endDate;
             }
+            where.createdAt = createdAt;
         }
         const skip = (pagination.page - 1) * pagination.limit;
         const [entries, total] = await Promise.all([

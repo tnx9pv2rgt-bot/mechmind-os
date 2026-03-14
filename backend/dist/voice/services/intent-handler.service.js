@@ -27,11 +27,11 @@ let IntentHandlerService = IntentHandlerService_1 = class IntentHandlerService {
         this.logger = new common_1.Logger(IntentHandlerService_1.name);
     }
     async handleBookingIntent(tenantId, customerPhone, extractedData, vapiCallId) {
-        this.logger.log(`Handling booking intent for ${customerPhone}`, 'IntentHandlerService');
+        this.logger.log(`Handling booking intent for ${customerPhone.slice(0, 4)}***`, 'IntentHandlerService');
         try {
             let customer = await this.customerService.findByPhone(tenantId, customerPhone);
             if (!customer) {
-                this.logger.log(`Creating new customer for ${customerPhone}`);
+                this.logger.log(`Creating new customer for ${customerPhone.slice(0, 4)}***`);
                 customer = await this.customerService.createFromVoiceCall(tenantId, customerPhone, extractedData);
             }
             const preferredDate = new Date(extractedData.preferredDate);
@@ -106,18 +106,19 @@ let IntentHandlerService = IntentHandlerService_1 = class IntentHandlerService {
             };
         }
         catch (error) {
-            this.logger.error(`Failed to handle booking intent: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Failed to handle booking intent: ${errorMessage}`);
             return {
                 success: false,
-                error: error.message,
+                error: errorMessage,
             };
         }
     }
-    async handleStatusCheckIntent(tenantId, customerPhone, extractedData) {
-        this.logger.log(`Handling status check for ${customerPhone}`, 'IntentHandlerService');
+    async handleStatusCheckIntent(tenantId, customerPhone, _extractedData) {
+        this.logger.log(`Handling status check for ${customerPhone.slice(0, 4)}***`, 'IntentHandlerService');
         const customer = await this.customerService.findByPhone(tenantId, customerPhone);
         if (!customer) {
-            this.logger.warn(`Customer not found for ${customerPhone}`);
+            this.logger.warn(`Customer not found for ${customerPhone.slice(0, 4)}***`);
             return;
         }
         const bookings = await this.prisma.booking.findMany({
@@ -140,18 +141,18 @@ let IntentHandlerService = IntentHandlerService_1 = class IntentHandlerService {
             type: 'status-update',
             payload: {
                 customerId: customer.id,
-                bookings: bookings.map((b) => ({
+                bookings: bookings.map(b => ({
                     id: b.id,
                     status: b.status,
                     scheduledDate: b.scheduledDate,
-                    services: b.services.map((s) => s.service.name),
+                    services: b.services.map(s => s.service.name),
                 })),
             },
             tenantId,
         });
     }
     async handleComplaintIntent(tenantId, customerPhone, transcript, extractedData) {
-        this.logger.log(`Handling complaint from ${customerPhone}`, 'IntentHandlerService');
+        this.logger.log(`Handling complaint from ${customerPhone.slice(0, 4)}***`, 'IntentHandlerService');
         const customer = await this.customerService.findByPhone(tenantId, customerPhone);
         await this.queueService.addVoiceJob('complaint-review', {
             type: 'complaint-review',
@@ -174,7 +175,7 @@ let IntentHandlerService = IntentHandlerService_1 = class IntentHandlerService {
             });
         }
     }
-    async findNearestAvailableSlot(tenantId, preferredDate, serviceType) {
+    async findNearestAvailableSlot(tenantId, preferredDate, _serviceType) {
         const startDate = new Date(preferredDate);
         startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(preferredDate);
@@ -226,7 +227,7 @@ let IntentHandlerService = IntentHandlerService_1 = class IntentHandlerService {
             },
         ];
         for (const { keywords, intent } of intents) {
-            const matches = keywords.filter((k) => lowerTranscript.includes(k));
+            const matches = keywords.filter(k => lowerTranscript.includes(k));
             if (matches.length > 0) {
                 const confidence = Math.min(matches.length / keywords.length + 0.3, 1);
                 return { intent, confidence };

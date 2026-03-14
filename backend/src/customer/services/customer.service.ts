@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Customer, Prisma } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -82,7 +82,7 @@ export class CustomerService {
   async createFromVoiceCall(
     tenantId: string,
     phone: string,
-    extractedData?: { licensePlate?: string; serviceType?: string },
+    _extractedData?: { licensePlate?: string; serviceType?: string },
   ): Promise<CustomerWithDecryptedData> {
     return this.create(tenantId, {
       phone,
@@ -308,7 +308,9 @@ export class CustomerService {
   /**
    * Decrypt customer PII fields
    */
-  private decryptCustomer(customer: any): CustomerWithDecryptedData {
+  private decryptCustomer(
+    customer: Customer & { vehicles?: unknown[]; bookings?: unknown[] },
+  ): CustomerWithDecryptedData {
     return {
       id: customer.id,
       phone: customer.encryptedPhone ? this.encryption.decrypt(customer.encryptedPhone) : '',
@@ -320,9 +322,9 @@ export class CustomerService {
         ? this.encryption.decrypt(customer.encryptedLastName)
         : undefined,
       gdprConsent: customer.gdprConsent,
-      gdprConsentAt: customer.gdprConsentAt,
+      gdprConsentAt: customer.gdprConsentAt ?? undefined,
       marketingConsent: customer.marketingConsent,
-      notes: customer.notes,
+      notes: customer.notes ?? undefined,
       createdAt: customer.createdAt,
       updatedAt: customer.updatedAt,
       // Include relations if present

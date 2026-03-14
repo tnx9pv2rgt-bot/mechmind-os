@@ -9,7 +9,7 @@ import {
   InspectionNotFoundError,
   InspectionValidationError,
 } from '@/lib/services/inspectionService'
-import { TRPCClientError } from '@/lib/trpc-client'
+import { TRPCClientError } from '@/lib/api-errors'
 import type { CustomerApprovalInput } from '@/lib/services/inspectionService'
 
 interface RouteParams {

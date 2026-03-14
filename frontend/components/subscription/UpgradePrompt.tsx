@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SubscriptionTier as SubscriptionPlan } from '@prisma/client';
+type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -47,18 +47,18 @@ const LIMIT_CONFIG: Record<LimitType, {
   icon: typeof Users; 
   name: string; 
   description: string;
-  nextPlanLimit: Record<SubscriptionPlan, string>;
+  nextPlanLimit: Record<string, string>;
 }> = {
   users: {
     icon: Users,
     name: 'Users',
     description: 'Team members who can access the system',
     nextPlanLimit: {
-      [SubscriptionPlan.STARTER]: '10 users',
-      [SubscriptionPlan.PROFESSIONAL]: 'Unlimited users',
-      [SubscriptionPlan.ENTERPRISE]: 'Already unlimited',
-      [SubscriptionPlan.TRIAL]: '3 users',
-      [SubscriptionPlan.FREE]: '1 user',
+      'STARTER': '10 users',
+      'PROFESSIONAL': 'Unlimited users',
+      'ENTERPRISE': 'Already unlimited',
+      'TRIAL': '3 users',
+      'FREE': '1 user',
     },
   },
   locations: {
@@ -66,11 +66,11 @@ const LIMIT_CONFIG: Record<LimitType, {
     name: 'Locations',
     description: 'Workshop locations you can manage',
     nextPlanLimit: {
-      [SubscriptionPlan.STARTER]: '2 locations',
-      [SubscriptionPlan.PROFESSIONAL]: 'Unlimited locations',
-      [SubscriptionPlan.ENTERPRISE]: 'Already unlimited',
-      [SubscriptionPlan.TRIAL]: '1 location',
-      [SubscriptionPlan.FREE]: '1 location',
+      'STARTER': '2 locations',
+      'PROFESSIONAL': 'Unlimited locations',
+      'ENTERPRISE': 'Already unlimited',
+      'TRIAL': '1 location',
+      'FREE': '1 location',
     },
   },
   apiCalls: {
@@ -78,11 +78,11 @@ const LIMIT_CONFIG: Record<LimitType, {
     name: 'API Calls',
     description: 'Monthly API usage limit',
     nextPlanLimit: {
-      [SubscriptionPlan.STARTER]: '25,000/month',
-      [SubscriptionPlan.PROFESSIONAL]: 'Unlimited',
-      [SubscriptionPlan.ENTERPRISE]: 'Already unlimited',
-      [SubscriptionPlan.TRIAL]: '5,000/month',
-      [SubscriptionPlan.FREE]: '1,000/month',
+      'STARTER': '25,000/month',
+      'PROFESSIONAL': 'Unlimited',
+      'ENTERPRISE': 'Already unlimited',
+      'TRIAL': '5,000/month',
+      'FREE': '1,000/month',
     },
   },
   storage: {
@@ -90,11 +90,11 @@ const LIMIT_CONFIG: Record<LimitType, {
     name: 'Storage',
     description: 'File and data storage limit',
     nextPlanLimit: {
-      [SubscriptionPlan.STARTER]: '50 GB',
-      [SubscriptionPlan.PROFESSIONAL]: 'Unlimited',
-      [SubscriptionPlan.ENTERPRISE]: 'Already unlimited',
-      [SubscriptionPlan.TRIAL]: '10 GB',
-      [SubscriptionPlan.FREE]: '5 GB',
+      'STARTER': '50 GB',
+      'PROFESSIONAL': 'Unlimited',
+      'ENTERPRISE': 'Already unlimited',
+      'TRIAL': '10 GB',
+      'FREE': '5 GB',
     },
   },
   customers: {
@@ -102,11 +102,11 @@ const LIMIT_CONFIG: Record<LimitType, {
     name: 'Customers',
     description: 'Maximum customers you can store',
     nextPlanLimit: {
-      [SubscriptionPlan.STARTER]: '2,500 customers',
-      [SubscriptionPlan.PROFESSIONAL]: 'Unlimited customers',
-      [SubscriptionPlan.ENTERPRISE]: 'Already unlimited',
-      [SubscriptionPlan.TRIAL]: '500 customers',
-      [SubscriptionPlan.FREE]: '100 customers',
+      'STARTER': '2,500 customers',
+      'PROFESSIONAL': 'Unlimited customers',
+      'ENTERPRISE': 'Already unlimited',
+      'TRIAL': '500 customers',
+      'FREE': '100 customers',
     },
   },
   inspections: {
@@ -114,11 +114,11 @@ const LIMIT_CONFIG: Record<LimitType, {
     name: 'Inspections',
     description: 'Monthly vehicle inspection limit',
     nextPlanLimit: {
-      [SubscriptionPlan.STARTER]: '1,000/month',
-      [SubscriptionPlan.PROFESSIONAL]: 'Unlimited',
-      [SubscriptionPlan.ENTERPRISE]: 'Already unlimited',
-      [SubscriptionPlan.TRIAL]: '200/month',
-      [SubscriptionPlan.FREE]: '50/month',
+      'STARTER': '1,000/month',
+      'PROFESSIONAL': 'Unlimited',
+      'ENTERPRISE': 'Already unlimited',
+      'TRIAL': '200/month',
+      'FREE': '50/month',
     },
   },
 };
@@ -136,7 +136,7 @@ export function UpgradePrompt({
   const Icon = config.icon;
 
   // Don't show if at enterprise or unlimited
-  if (currentPlan === SubscriptionPlan.ENTERPRISE || limit.limit === null) {
+  if (currentPlan === 'ENTERPRISE' || limit.limit === null) {
     return null;
   }
 
@@ -309,7 +309,7 @@ export function UpgradePrompt({
             <div>
               <h4 className="font-medium mb-3">Upgrade Options</h4>
               <div className="space-y-2">
-                {currentPlan === SubscriptionPlan.TRIAL && (
+                {currentPlan === 'TRIAL' && (
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Piccole Plan</p>
@@ -318,7 +318,7 @@ export function UpgradePrompt({
                     <Badge>€100/mo</Badge>
                   </div>
                 )}
-                {(currentPlan === SubscriptionPlan.TRIAL || currentPlan === SubscriptionPlan.STARTER) && (
+                {(currentPlan === 'TRIAL' || currentPlan === 'STARTER') && (
                   <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-50 border-blue-200">
                     <div>
                       <p className="font-medium">Medie Plan</p>

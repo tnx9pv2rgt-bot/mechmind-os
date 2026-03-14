@@ -15,18 +15,15 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { MfaService } from './mfa.service';
 import { AuthService } from '../services/auth.service';
 import { PrismaService } from '@common/services/prisma.service';
 import {
-  EnrollMfaDto,
   VerifyMfaDto,
   DisableMfaDto,
   MfaStatusResponseDto,
@@ -105,7 +102,12 @@ export class MfaController {
   async verifyLogin(
     @Body() dto: VerifyLoginMfaDto,
     @Req() req: Request,
-  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    mfaSessionToken: string;
+  }> {
     // Verify temp token
     const userId = await this.authService.verifyTwoFactorTempToken(dto.tempToken);
 
@@ -123,7 +125,11 @@ export class MfaController {
     // Update last login
     await this.authService.updateLastLogin(userId, req.ip);
 
-    return this.authService.generateTokens(user);
+    // Create server-side MFA session token
+    const mfaSession = await this.mfaService.createMfaSession(userId);
+
+    const tokens = await this.authService.generateTokens(user);
+    return { ...tokens, mfaSessionToken: mfaSession.mfaSessionToken };
   }
 
   @Delete('disable')

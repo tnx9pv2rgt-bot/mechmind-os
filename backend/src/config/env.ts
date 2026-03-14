@@ -8,21 +8,21 @@ dotenv.config();
 const envSchema = z.object({
   // Server
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().regex(/^\d+$/).transform(Number).default('3000'),
+  PORT: z.string().regex(/^\d+$/).default('3000').transform(Number),
   API_VERSION: z.string().default('v1'),
 
   // Database
   DB_HOST: z.string().default('localhost'),
-  DB_PORT: z.string().regex(/^\d+$/).transform(Number).default('5432'),
+  DB_PORT: z.string().regex(/^\d+$/).default('5432').transform(Number),
   DB_NAME: z.string().default('nexo_customers'),
   DB_USER: z.string().default('postgres'),
   DB_PASSWORD: z.string().min(1, 'Database password is required'),
   DB_SSL: z
     .string()
-    .transform(val => val === 'true')
-    .default('false'),
-  DB_POOL_MIN: z.string().regex(/^\d+$/).transform(Number).default('2'),
-  DB_POOL_MAX: z.string().regex(/^\d+$/).transform(Number).default('10'),
+    .default('false')
+    .transform((val: string) => val === 'true'),
+  DB_POOL_MIN: z.string().regex(/^\d+$/).default('2').transform(Number),
+  DB_POOL_MAX: z.string().regex(/^\d+$/).default('10').transform(Number),
 
   // JWT
   JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters'),
@@ -37,9 +37,9 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
   // Security
-  BCRYPT_ROUNDS: z.string().regex(/^\d+$/).transform(Number).default('12'),
-  RATE_LIMIT_WINDOW_MS: z.string().regex(/^\d+$/).transform(Number).default('900000'),
-  RATE_LIMIT_MAX_REQUESTS: z.string().regex(/^\d+$/).transform(Number).default('100'),
+  BCRYPT_ROUNDS: z.string().regex(/^\d+$/).default('12').transform(Number),
+  RATE_LIMIT_WINDOW_MS: z.string().regex(/^\d+$/).default('900000').transform(Number),
+  RATE_LIMIT_MAX_REQUESTS: z.string().regex(/^\d+$/).default('100').transform(Number),
 
   // CSRF
   CSRF_SECRET: z.string().min(16, 'CSRF secret must be at least 16 characters'),
@@ -53,6 +53,9 @@ const envSchema = z.object({
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   LOG_FILE: z.string().default('logs/app.log'),
+
+  // Admin
+  SETUP_SECRET: z.string().min(16, 'SETUP_SECRET is required and must be at least 16 characters'),
 });
 
 // Validate and parse environment variables
@@ -60,7 +63,7 @@ const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {
   console.error('❌ Invalid environment variables:');
-  parsedEnv.error.issues.forEach(issue => {
+  parsedEnv.error.issues.forEach((issue: z.ZodIssue) => {
     console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
   });
   process.exit(1);

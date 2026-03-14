@@ -18,15 +18,9 @@ let DviModule = class DviModule {
 exports.DviModule = DviModule;
 exports.DviModule = DviModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            common_module_1.CommonModule,
-            auth_module_1.AuthModule,
-            notifications_module_1.NotificationsModule,
-        ],
+        imports: [common_module_1.CommonModule, auth_module_1.AuthModule, notifications_module_1.NotificationsModule],
         controllers: [inspection_controller_1.InspectionController],
-        providers: [
-            inspection_service_1.InspectionService,
-        ],
+        providers: [inspection_service_1.InspectionService],
         exports: [inspection_service_1.InspectionService],
     })
 ], DviModule);

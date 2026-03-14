@@ -20,7 +20,7 @@ import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/ap
 import { AppleButton } from '@/components/ui/apple-button'
 import { PortalLayout } from '@/components/portal'
 import { BookingCard, InspectionCard, MaintenanceItem, WarrantySummary } from '@/components/portal'
-import { portalAuth } from '@/lib/auth/portal-auth'
+import { PortalAuthService } from '@/lib/auth/portal-auth-client'
 import { DashboardData, Customer, Booking, CustomerInspection, MaintenanceSchedule, WarrantyInfo } from '@/lib/types/portal'
 
 // ============================================
@@ -136,7 +136,7 @@ export default function PortalDashboardPage() {
 
   useEffect(() => {
     const loadDashboard = async () => {
-      const auth = portalAuth
+      const _auth = PortalAuthService.getInstance()
       const currentCustomer = null // TODO: Get from auth context
       setCustomer(currentCustomer)
 
@@ -183,8 +183,8 @@ export default function PortalDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 sm:mb-8"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-apple-dark">{welcomeMessage}</h1>
-          <p className="text-apple-gray mt-1">Ecco cosa c&apos;è di nuovo con i tuoi veicoli</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[#ececec]">{welcomeMessage}</h1>
+          <p className="text-apple-gray dark:text-[#636366] mt-1">Ecco cosa c&apos;è di nuovo con i tuoi veicoli</p>
         </motion.div>
 
         {/* Quick Actions */}
@@ -204,28 +204,28 @@ export default function PortalDashboardPage() {
           </Link>
           
           <Link href="/portal/documents">
-            <div className="p-4 bg-white rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group">
+            <div className="p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group">
               <FileText className="h-6 w-6 mb-2 text-apple-blue" />
-              <p className="font-medium text-sm text-apple-dark">Documenti</p>
-              <p className="text-xs text-apple-gray">Fatture e report</p>
+              <p className="font-medium text-sm text-apple-dark dark:text-[#ececec]">Documenti</p>
+              <p className="text-xs text-apple-gray dark:text-[#636366]">Fatture e report</p>
               <ArrowRight className="h-4 w-4 mt-2 text-apple-blue opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </Link>
           
           <Link href="/portal/maintenance">
-            <div className="p-4 bg-white rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group">
+            <div className="p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group">
               <Wrench className="h-6 w-6 mb-2 text-apple-orange" />
-              <p className="font-medium text-sm text-apple-dark">Manutenzione</p>
-              <p className="text-xs text-apple-gray">Scadenze</p>
+              <p className="font-medium text-sm text-apple-dark dark:text-[#ececec]">Manutenzione</p>
+              <p className="text-xs text-apple-gray dark:text-[#636366]">Scadenze</p>
               <ArrowRight className="h-4 w-4 mt-2 text-apple-orange opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </Link>
           
           <a href="tel:+390212345678" className="block">
-            <div className="p-4 bg-white rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group">
+            <div className="p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group">
               <Phone className="h-6 w-6 mb-2 text-apple-green" />
-              <p className="font-medium text-sm text-apple-dark">Contatta</p>
-              <p className="text-xs text-apple-gray">Assistenza</p>
+              <p className="font-medium text-sm text-apple-dark dark:text-[#ececec]">Contatta</p>
+              <p className="text-xs text-apple-gray dark:text-[#636366]">Assistenza</p>
               <ArrowRight className="h-4 w-4 mt-2 text-apple-green opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </a>
@@ -243,7 +243,7 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.2 }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-apple-dark">Prossima Prenotazione</h2>
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">Prossima Prenotazione</h2>
                   <Link href="/portal/bookings" className="text-sm text-apple-blue hover:underline flex items-center gap-1">
                     Tutte <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -260,7 +260,7 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.3 }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-apple-dark">Manutenzione in Scadenza</h2>
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">Manutenzione in Scadenza</h2>
                   <Link href="/portal/maintenance" className="text-sm text-apple-blue hover:underline flex items-center gap-1">
                     Tutte <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -277,7 +277,7 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.4 }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-apple-dark">Ultima Ispezione</h2>
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">Ultima Ispezione</h2>
                   <Link href="/portal/inspections" className="text-sm text-apple-blue hover:underline flex items-center gap-1">
                     Tutte <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -299,12 +299,12 @@ export default function PortalDashboardPage() {
                 <AppleCardContent className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
                         <Shield className="h-6 w-6 text-apple-green" />
                       </div>
                       <div>
-                        <h2 className="font-semibold text-apple-dark">Garanzie Attive</h2>
-                        <p className="text-sm text-apple-gray">{data.warrantyStatus.total} polizze totali</p>
+                        <h2 className="font-semibold text-apple-dark dark:text-[#ececec]">Garanzie Attive</h2>
+                        <p className="text-sm text-apple-gray dark:text-[#636366]">{data.warrantyStatus.total} polizze totali</p>
                       </div>
                     </div>
                     <Link href="/portal/warranty">
@@ -315,17 +315,17 @@ export default function PortalDashboardPage() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-3 bg-green-50 rounded-xl">
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
                       <p className="text-2xl font-bold text-apple-green">{data.warrantyStatus.active}</p>
-                      <p className="text-xs text-apple-gray">Attive</p>
+                      <p className="text-xs text-apple-gray dark:text-[#636366]">Attive</p>
                     </div>
-                    <div className="text-center p-3 bg-orange-50 rounded-xl">
+                    <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                       <p className="text-2xl font-bold text-apple-orange">{data.warrantyStatus.expiringSoon}</p>
-                      <p className="text-xs text-apple-gray">In scadenza</p>
+                      <p className="text-xs text-apple-gray dark:text-[#636366]">In scadenza</p>
                     </div>
-                    <div className="text-center p-3 bg-gray-100 rounded-xl">
+                    <div className="text-center p-3 bg-gray-100 dark:bg-[#353535] rounded-xl">
                       <p className="text-2xl font-bold text-apple-gray">{data.warrantyStatus.expired}</p>
-                      <p className="text-xs text-apple-gray">Scadute</p>
+                      <p className="text-xs text-apple-gray dark:text-[#636366]">Scadute</p>
                     </div>
                   </div>
                 </AppleCardContent>
@@ -342,24 +342,24 @@ export default function PortalDashboardPage() {
                 <AppleCardContent className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                         <Car className="h-6 w-6 text-apple-blue" />
                       </div>
                       <div>
-                        <h2 className="font-semibold text-apple-dark">I tuoi veicoli</h2>
-                        <p className="text-sm text-apple-gray">1 veicolo registrato</p>
+                        <h2 className="font-semibold text-apple-dark dark:text-[#ececec]">I tuoi veicoli</h2>
+                        <p className="text-sm text-apple-gray dark:text-[#636366]">1 veicolo registrato</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-apple-light-gray/50 rounded-2xl">
+                  <div className="p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-2xl">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                      <div className="w-14 h-14 rounded-xl bg-white dark:bg-[#2f2f2f] flex items-center justify-center shadow-sm">
                         <Car className="h-7 w-7 text-apple-gray" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-apple-dark">Volkswagen Golf</p>
-                        <p className="text-sm text-apple-gray">AB123CD • 45,000 km</p>
+                        <p className="font-medium text-apple-dark dark:text-[#ececec]">Volkswagen Golf</p>
+                        <p className="text-sm text-apple-gray dark:text-[#636366]">AB123CD • 45,000 km</p>
                       </div>
                     </div>
                   </div>

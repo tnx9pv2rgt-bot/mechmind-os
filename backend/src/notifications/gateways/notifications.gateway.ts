@@ -3,10 +3,14 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { Redis } from 'ioredis';
 
 @WebSocketGateway({
   namespace: 'notifications',
@@ -16,11 +20,46 @@ import { Logger } from '@nestjs/common';
   },
   transports: ['websocket', 'polling'],
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(NotificationsGateway.name);
+
+  constructor(private readonly configService: ConfigService) {}
 
   @WebSocketServer()
   server: Server;
+
+  afterInit(): void {
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+    if (redisUrl && this.server) {
+      try {
+        const pubClient = new Redis(redisUrl);
+        const subClient = pubClient.duplicate();
+
+        // Access the underlying server (this.server may be a Namespace in namespaced gateways)
+        const ioServer = (this.server as unknown as { server?: Server }).server || this.server;
+        if (typeof ioServer.adapter === 'function') {
+          ioServer.adapter(createAdapter(pubClient, subClient));
+          this.logger.log('Socket.io Redis adapter configured for multi-instance support');
+        } else {
+          this.logger.warn(
+            'Socket.io server.adapter not available — running in single-instance mode',
+          );
+          pubClient.disconnect();
+          subClient.disconnect();
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Failed to configure Redis adapter: ${error}. Running in single-instance mode.`,
+        );
+      }
+    } else {
+      this.logger.warn(
+        'REDIS_URL not configured — Socket.io running without Redis adapter (single instance only)',
+      );
+    }
+  }
 
   async handleConnection(client: Socket): Promise<void> {
     try {

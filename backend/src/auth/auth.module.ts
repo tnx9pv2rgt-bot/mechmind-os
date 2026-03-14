@@ -30,13 +30,19 @@ import { NotificationsModule } from '../notifications/notifications.module';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h'),
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '1h'),
         },
       }),
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, MfaController, PasskeyController, MagicLinkController, OAuthController],
+  controllers: [
+    AuthController,
+    MfaController,
+    PasskeyController,
+    MagicLinkController,
+    OAuthController,
+  ],
   providers: [
     AuthService,
     MfaService,

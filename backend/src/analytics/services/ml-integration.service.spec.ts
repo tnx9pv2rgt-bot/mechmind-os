@@ -120,4 +120,157 @@ describe('MlIntegrationService', () => {
       expect(result.healthy).toBe(false);
     });
   });
+
+  describe('callMlApi (integration via public methods)', () => {
+    let fetchSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      fetchSpy = jest.spyOn(global, 'fetch');
+    });
+
+    afterEach(() => {
+      fetchSpy.mockRestore();
+    });
+
+    it('should call fetch with correct URL, POST method, headers, and body', async () => {
+      const mockJson = {
+        probability: 0.5,
+        risk_level: 'MEDIUM',
+        factors: ['inactivity'],
+      };
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockJson),
+        text: jest.fn(),
+      } as unknown as Response);
+
+      const result = await service.predictChurn('t1', 'c1', {
+        daysSinceLastVisit: 30,
+        totalBookings: 5,
+        averageSpend: 100,
+        cancellationRate: 0.1,
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('http://localhost:8000/predict/churn');
+      expect(options.method).toBe('POST');
+      expect(options.headers).toEqual({ 'Content-Type': 'application/json' });
+      expect(options.body).toBe(
+        JSON.stringify({
+          tenantId: 't1',
+          customerId: 'c1',
+          features: {
+            daysSinceLastVisit: 30,
+            totalBookings: 5,
+            averageSpend: 100,
+            cancellationRate: 0.1,
+          },
+        }),
+      );
+      expect(result.probability).toBe(0.5);
+      expect(result.riskLevel).toBe('MEDIUM');
+    });
+
+    it('should use GET method and no body for healthCheck', async () => {
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ status: 'ok' }),
+        text: jest.fn(),
+      } as unknown as Response);
+
+      const result = await service.healthCheck();
+
+      expect(result.healthy).toBe(true);
+      const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('http://localhost:8000/health');
+      expect(options.method).toBe('GET');
+      expect(options.body).toBeUndefined();
+    });
+
+    it('should throw and log error when response is not ok', async () => {
+      fetchSpy.mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: jest.fn().mockResolvedValue('Internal Server Error'),
+        json: jest.fn(),
+      } as unknown as Response);
+
+      await expect(service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto')).rejects.toThrow(
+        'ML API error 500: Internal Server Error',
+      );
+    });
+
+    it('should throw and log error when fetch rejects (e.g., network error)', async () => {
+      fetchSpy.mockRejectedValue(new Error('fetch failed'));
+
+      await expect(service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto')).rejects.toThrow(
+        'fetch failed',
+      );
+    });
+
+    it('should throw when request is aborted (timeout)', async () => {
+      fetchSpy.mockRejectedValue(new DOMException('The operation was aborted.', 'AbortError'));
+
+      await expect(service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto')).rejects.toThrow(
+        'The operation was aborted.',
+      );
+    });
+
+    it('should handle non-Error thrown values', async () => {
+      fetchSpy.mockRejectedValue('string error');
+
+      await expect(service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto')).rejects.toBe(
+        'string error',
+      );
+    });
+  });
+
+  describe('callMlApi with API key configured', () => {
+    let serviceWithKey: MlIntegrationService;
+    let fetchSpy: jest.SpyInstance;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          MlIntegrationService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: (key: string, defaultValue?: unknown): unknown => {
+                if (key === 'ML_API_KEY') return 'test-api-key-123';
+                return defaultValue;
+              },
+            },
+          },
+        ],
+      }).compile();
+
+      serviceWithKey = module.get<MlIntegrationService>(MlIntegrationService);
+      fetchSpy = jest.spyOn(global, 'fetch');
+    });
+
+    afterEach(() => {
+      fetchSpy.mockRestore();
+    });
+
+    it('should include Authorization header when API key is set', async () => {
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          estimated_minutes: 60,
+          confidence: 0.8,
+          based_on: 'HISTORICAL',
+        }),
+        text: jest.fn(),
+      } as unknown as Response);
+
+      await serviceWithKey.estimateLabor('t1', 'TIRE_ROTATE', 'Toyota', 'Corolla');
+
+      const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = options.headers as Record<string, string>;
+      expect(headers['Authorization']).toBe('Bearer test-api-key-123');
+      expect(headers['Content-Type']).toBe('application/json');
+    });
+  });
 });

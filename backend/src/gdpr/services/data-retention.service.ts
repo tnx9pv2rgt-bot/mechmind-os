@@ -553,11 +553,16 @@ export class DataRetentionService {
     // Note: Using raw query for VoiceWebhookEvent if not in Prisma client
     // This assumes the table exists from voice module
     try {
-      const result = await this.prisma.$executeRaw`
-        DELETE FROM voice_webhook_events 
-        WHERE created_at < ${cutoffDate}
-        ${tenantId ? `AND tenant_id = ${tenantId}` : ''}
-      `;
+      const result = tenantId
+        ? await this.prisma.$executeRaw`
+            DELETE FROM voice_webhook_events
+            WHERE created_at < ${cutoffDate}
+            AND tenant_id = ${tenantId}
+          `
+        : await this.prisma.$executeRaw`
+            DELETE FROM voice_webhook_events
+            WHERE created_at < ${cutoffDate}
+          `;
 
       return { count: result };
     } catch (error) {

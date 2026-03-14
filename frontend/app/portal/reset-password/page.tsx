@@ -46,7 +46,7 @@ export default function PortalResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <motion.div
@@ -57,8 +57,8 @@ export default function PortalResetPasswordPage() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4">
             <Car className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-apple-dark">Recupera Password</h1>
-          <p className="text-apple-gray mt-1">
+          <h1 className="text-2xl font-bold text-apple-dark dark:text-[#ececec]">Recupera Password</h1>
+          <p className="text-apple-gray dark:text-[#636366] mt-1">
             Inserisci la tua email per ricevere il link di reset
           </p>
         </motion.div>
@@ -78,10 +78,10 @@ export default function PortalResetPasswordPage() {
                   className="text-center py-4"
                 >
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                  <h2 className="text-lg font-semibold text-apple-dark mb-2">
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec] mb-2">
                     Email inviata
                   </h2>
-                  <p className="text-apple-gray text-sm mb-6">
+                  <p className="text-apple-gray dark:text-[#636366] text-sm mb-6">
                     Se l&apos;indirizzo email corrisponde a un account esistente,
                     riceverai un link per reimpostare la password.
                   </p>
@@ -98,7 +98,7 @@ export default function PortalResetPasswordPage() {
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
+                      className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-3"
                     >
                       <AlertCircle className="h-5 w-5 text-apple-red flex-shrink-0" />
                       <p className="text-sm text-apple-red">{error}</p>
@@ -107,7 +107,7 @@ export default function PortalResetPasswordPage() {
 
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-apple-dark">
+                      <Label htmlFor="email" className="text-apple-dark dark:text-[#ececec]">
                         Email
                       </Label>
                       <div className="relative">
@@ -119,7 +119,7 @@ export default function PortalResetPasswordPage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
-                          className="pl-12 h-12 rounded-xl border-apple-border bg-white text-apple-dark placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20"
+                          className="pl-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20"
                         />
                       </div>
                     </div>
@@ -148,7 +148,7 @@ export default function PortalResetPasswordPage() {
         >
           <Link
             href="/portal/login"
-            className="text-sm text-apple-gray hover:text-apple-dark transition-colors inline-flex items-center gap-1"
+            className="text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors inline-flex items-center gap-1"
           >
             <ArrowLeft className="h-4 w-4" />
             Torna al login

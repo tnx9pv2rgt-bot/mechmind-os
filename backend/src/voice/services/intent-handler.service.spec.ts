@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { IntentHandlerService, BookingResult } from './intent-handler.service';
+import { IntentHandlerService } from './intent-handler.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';

@@ -1,13 +1,12 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { FileText, Search, Calendar } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { PortalPageWrapper } from '@/components/portal'
-import { DocumentList } from '@/components/portal'
-import { portalAuth } from '@/lib/auth/portal-auth'
-import { Document, Customer } from '@/lib/types/portal'
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, Search, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { PortalPageWrapper } from '@/components/portal';
+import { DocumentList } from '@/components/portal';
+import { Document, Customer } from '@/lib/types/portal';
 
 // ============================================
 // MOCK DATA
@@ -22,7 +21,7 @@ const mockDocuments: Document[] = [
     documentNumber: 'FAT-2024-001',
     title: 'Fattura Tagliando Gennaio',
     description: 'Tagliando ordinario e sostituzione filtri',
-    amount: 350.00,
+    amount: 350.0,
     issueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     paidAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
@@ -73,37 +72,39 @@ const mockDocuments: Document[] = [
     fileType: 'application/pdf',
     status: 'paid',
   },
-]
+];
 
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
 export default function PortalDocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'maintenance' | 'inspections'>('all')
-  const [isLoading, setIsLoading] = useState(true)
-  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'maintenance' | 'inspections'>(
+    'all'
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const currentCustomer = null // TODO: Get from auth context
-      setCustomer(currentCustomer)
+      const currentCustomer = null; // TODO: Get from auth context
+      setCustomer(currentCustomer);
 
       setTimeout(() => {
-        setDocuments(mockDocuments)
-        setFilteredDocuments(mockDocuments)
-        setIsLoading(false)
-      }, 500)
-    }
+        setDocuments(mockDocuments);
+        setFilteredDocuments(mockDocuments);
+        setIsLoading(false);
+      }, 500);
+    };
 
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   useEffect(() => {
-    let filtered = documents
+    let filtered = documents;
 
     // Filter by tab
     if (activeTab !== 'all') {
@@ -111,79 +112,79 @@ export default function PortalDocumentsPage() {
         invoices: ['invoice', 'receipt'],
         maintenance: ['maintenance_record'],
         inspections: ['inspection_report', 'warranty_claim'],
-      }
-      filtered = filtered.filter(d => typeMap[activeTab].includes(d.type))
+      };
+      filtered = filtered.filter(d => typeMap[activeTab].includes(d.type));
     }
 
     // Filter by search
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(d =>
-        d.title.toLowerCase().includes(query) ||
-        d.documentNumber.toLowerCase().includes(query)
-      )
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        d => d.title.toLowerCase().includes(query) || d.documentNumber.toLowerCase().includes(query)
+      );
     }
 
-    setFilteredDocuments(filtered)
-  }, [activeTab, searchQuery, documents])
+    setFilteredDocuments(filtered);
+  }, [activeTab, searchQuery, documents]);
 
   const handleDownload = (id: string) => {
-    console.log('Download document:', id)
-  }
+    window.open(`/api/portal/documents/${id}/download`, '_blank');
+  };
 
   const handleView = (id: string) => {
-    console.log('View document:', id)
-  }
+    window.open(`/api/portal/documents/${id}`, '_blank');
+  };
 
   if (isLoading) {
     return (
-      <PortalPageWrapper title="Documenti" customer={customer || undefined}>
-        <div className="flex items-center justify-center h-64">
+      <PortalPageWrapper title='Documenti' customer={customer || undefined}>
+        <div className='flex items-center justify-center h-64'>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full"
+            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
-    )
+    );
   }
 
   return (
-    <PortalPageWrapper 
-      title="Documenti"
-      subtitle="Fatture, ricevute e report di ispezione"
+    <PortalPageWrapper
+      title='Documenti'
+      subtitle='Fatture, ricevute e report di ispezione'
       customer={customer || undefined}
     >
       {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
+      <div className='mb-6'>
+        <div className='relative'>
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
           <Input
-            placeholder="Cerca per numero documento o titolo..."
+            placeholder='Cerca per numero documento o titolo...'
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 rounded-xl bg-white"
+            onChange={e => setSearchQuery(e.target.value)}
+            className='pl-12 h-12 rounded-xl bg-white dark:bg-[#2f2f2f]'
           />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
+      <div className='flex flex-wrap items-center gap-2 mb-6'>
         {[
           { key: 'all', label: 'Tutti' },
           { key: 'invoices', label: 'Fatture' },
           { key: 'maintenance', label: 'Manutenzione' },
           { key: 'inspections', label: 'Ispezioni' },
-        ].map((tab) => (
+        ].map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as typeof activeTab)}
             className={`
               px-4 py-2 rounded-xl text-sm font-medium transition-all
-              ${activeTab === tab.key
-                ? 'bg-apple-blue text-white shadow-apple'
-                : 'bg-white text-apple-gray hover:text-apple-dark shadow-apple'
+              ${
+                activeTab === tab.key
+                  ? 'bg-apple-blue text-white shadow-apple'
+                  : 'bg-white dark:bg-[#2f2f2f] text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] shadow-apple'
               }
             `}
           >
@@ -193,11 +194,7 @@ export default function PortalDocumentsPage() {
       </div>
 
       {/* Documents List */}
-      <DocumentList
-        documents={filteredDocuments}
-        onDownload={handleDownload}
-        onView={handleView}
-      />
+      <DocumentList documents={filteredDocuments} onDownload={handleDownload} onView={handleView} />
     </PortalPageWrapper>
-  )
+  );
 }

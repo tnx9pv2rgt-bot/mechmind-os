@@ -115,8 +115,8 @@ export function verifyAccessToken(token: string): TokenVerificationResult {
       valid: true,
       payload,
     };
-  } catch (error: any) {
-    if (error.name === 'TokenExpiredError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
       // Prova a decodificare per ottenere il payload scaduto
       try {
         const decoded = jwt.decode(token) as DecodedToken;
@@ -137,7 +137,7 @@ export function verifyAccessToken(token: string): TokenVerificationResult {
 
     return {
       valid: false,
-      error: error.message || 'Invalid token',
+      error: error instanceof Error ? error.message : 'Invalid token',
     };
   }
 }
@@ -163,8 +163,8 @@ export function verifyRefreshToken(token: string): TokenVerificationResult {
       valid: true,
       payload,
     };
-  } catch (error: any) {
-    if (error.name === 'TokenExpiredError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
       return {
         valid: false,
         expired: true,
@@ -174,7 +174,7 @@ export function verifyRefreshToken(token: string): TokenVerificationResult {
 
     return {
       valid: false,
-      error: error.message || 'Invalid refresh token',
+      error: error instanceof Error ? error.message : 'Invalid refresh token',
     };
   }
 }
@@ -296,11 +296,11 @@ export function verifyTwoFactorTempToken(token: string): TokenVerificationResult
       valid: true,
       payload,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       valid: false,
-      expired: error.name === 'TokenExpiredError',
-      error: error.message || 'Invalid 2FA token',
+      expired: error instanceof Error && error.name === 'TokenExpiredError',
+      error: error instanceof Error ? error.message : 'Invalid 2FA token',
     };
   }
 }
@@ -343,11 +343,11 @@ export function verifyEmailVerificationToken(token: string): TokenVerificationRe
       valid: true,
       payload,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       valid: false,
-      expired: error.name === 'TokenExpiredError',
-      error: error.message || 'Invalid verification token',
+      expired: error instanceof Error && error.name === 'TokenExpiredError',
+      error: error instanceof Error ? error.message : 'Invalid verification token',
     };
   }
 }
@@ -390,11 +390,11 @@ export function verifyPasswordResetToken(token: string): TokenVerificationResult
       valid: true,
       payload,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       valid: false,
-      expired: error.name === 'TokenExpiredError',
-      error: error.message || 'Invalid reset token',
+      expired: error instanceof Error && error.name === 'TokenExpiredError',
+      error: error instanceof Error ? error.message : 'Invalid reset token',
     };
   }
 }

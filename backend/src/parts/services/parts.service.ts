@@ -16,7 +16,6 @@ import {
   UpdatePartDto,
   CreateSupplierDto,
   AdjustStockDto,
-  TransferStockDto,
   CreatePurchaseOrderDto,
   ReceiveOrderDto,
   PartResponseDto,
@@ -25,6 +24,14 @@ import {
   InventoryMovementResponseDto,
 } from '../dto/parts.dto';
 import { MovementType, OrderStatus, Prisma } from '@prisma/client';
+
+type PartWithRelations = Prisma.PartGetPayload<{
+  include: { supplier: true; inventory: true };
+}>;
+
+type OrderWithRelations = Prisma.PurchaseOrderGetPayload<{
+  include: { supplier: true; items: { include: { part: true } } };
+}>;
 
 @Injectable()
 export class PartsService {
@@ -86,7 +93,7 @@ export class PartsService {
     tenantId: string,
     filters: { category?: string; supplierId?: string; lowStock?: boolean; search?: string },
   ): Promise<PartResponseDto[]> {
-    const where: any = { tenantId, isActive: true };
+    const where: Record<string, unknown> = { tenantId, isActive: true };
 
     if (filters.category) {
       where.category = filters.category;
@@ -428,7 +435,7 @@ export class PartsService {
 
   // ============== PRIVATE METHODS ==============
 
-  private mapPartToDto(part: any): PartResponseDto {
+  private mapPartToDto(part: PartWithRelations): PartResponseDto {
     const inventory = part.inventory?.[0];
     const stockQuantity = inventory?.quantity || 0;
     const reservedQuantity = inventory?.reserved || 0;
@@ -451,7 +458,7 @@ export class PartsService {
     };
   }
 
-  private mapOrderToDto(order: any): PurchaseOrderResponseDto {
+  private mapOrderToDto(order: OrderWithRelations): PurchaseOrderResponseDto {
     return {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -460,7 +467,7 @@ export class PartsService {
       total: Number(order.total),
       orderDate: order.orderDate,
       expectedDate: order.expectedDate ?? undefined,
-      items: order.items.map((item: any) => ({
+      items: order.items.map(item => ({
         partName: item.part.name,
         quantity: item.quantity,
         receivedQty: item.receivedQty,

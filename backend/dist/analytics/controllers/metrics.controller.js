@@ -88,8 +88,10 @@ let MetricsController = class MetricsController {
         const segments = await this.unitEconomicsService.calculateGrossMarginBySegment(start, end);
         const overall = segments.length > 0
             ? segments.reduce((sum, s) => sum + s.revenue, 0) > 0
-                ? ((segments.reduce((sum, s) => sum + s.revenue, 0) - segments.reduce((sum, s) => sum + s.cogs, 0)) /
-                    segments.reduce((sum, s) => sum + s.revenue, 0)) * 100
+                ? ((segments.reduce((sum, s) => sum + s.revenue, 0) -
+                    segments.reduce((sum, s) => sum + s.cogs, 0)) /
+                    segments.reduce((sum, s) => sum + s.revenue, 0)) *
+                    100
                 : 0
             : 0;
         return {
@@ -120,9 +122,7 @@ let MetricsController = class MetricsController {
         const tenantResult = await this.prisma.$queryRaw `
       SELECT COUNT(*) as count FROM tenants
     `;
-        const currentShops = Array.isArray(tenantResult) && tenantResult[0]
-            ? Number(tenantResult[0].count)
-            : 0;
+        const currentShops = Array.isArray(tenantResult) && tenantResult[0] ? Number(tenantResult[0].count) : 0;
         const monthsToBreakEven = currentShops >= breakEvenShops
             ? 0
             : Math.ceil(Math.log(breakEvenShops / Math.max(currentShops, 1)) / Math.log(1 + monthlyGrowthRate));

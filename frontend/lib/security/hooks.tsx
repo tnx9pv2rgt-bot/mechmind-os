@@ -5,6 +5,21 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+// Window augmentation for bot detection and reCAPTCHA
+interface GrecaptchaLike {
+  ready(cb: () => void): void
+  execute(siteKey: string, opts: { action: string }): Promise<string>
+}
+
+declare global {
+  interface Window {
+    grecaptcha?: GrecaptchaLike
+    __nightmare?: unknown
+    callPhantom?: unknown
+    _phantom?: unknown
+  }
+}
+
 // ============================================
 // CSRF Token Hook
 // ============================================
@@ -109,9 +124,9 @@ export function useFormProtection(
     setFormStartTime(Date.now())
     
     // Load reCAPTCHA if enabled
-    if (recaptchaSiteKey && typeof window !== 'undefined' && (window as any).grecaptcha) {
-      ;(window as any).grecaptcha.ready(() => {
-        ;(window as any).grecaptcha
+    if (recaptchaSiteKey && typeof window !== 'undefined' && window.grecaptcha) {
+      window.grecaptcha.ready(() => {
+        window.grecaptcha!
           .execute(recaptchaSiteKey, { action: 'submit' })
           .then((token: string) => {
             setRecaptchaToken(token)
@@ -299,17 +314,17 @@ export function useBotDetection(): BotDetectionState {
     let score = 0
     
     // Check for automation indicators
-    if ((window as any).__nightmare) {
+    if (window.__nightmare) {
       indicators.push('Nightmare.js detected')
       score += 40
     }
-    
-    if ((window as any).callPhantom) {
+
+    if (window.callPhantom) {
       indicators.push('PhantomJS detected')
       score += 40
     }
-    
-    if ((window as any)._phantom) {
+
+    if (window._phantom) {
       indicators.push('PhantomJS detected')
       score += 40
     }
@@ -372,7 +387,7 @@ export interface UseSecureFetchReturn<T> {
 /**
  * Hook for making secure API calls with automatic CSRF handling
  */
-export function useSecureFetch<T = any>(): UseSecureFetchReturn<T> {
+export function useSecureFetch<T = unknown>(): UseSecureFetchReturn<T> {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)

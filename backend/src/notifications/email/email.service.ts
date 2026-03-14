@@ -235,10 +235,14 @@ export class EmailService {
 
       return {
         status: data?.last_event || 'unknown',
-        deliveredAt: (data as any)?.delivered_at ? new Date((data as any).delivered_at) : undefined,
+        deliveredAt: (data as unknown as Record<string, unknown>)?.delivered_at
+          ? new Date(String((data as unknown as Record<string, unknown>).delivered_at))
+          : undefined,
       };
     } catch (error) {
-      this.logger.error(`Error getting email status: ${error.message}`);
+      this.logger.error(
+        `Error getting email status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return null;
     }
   }
@@ -246,7 +250,7 @@ export class EmailService {
   /**
    * Verify domain configuration
    */
-  async verifyDomain(domain: string): Promise<{ valid: boolean; records?: any[] }> {
+  async verifyDomain(domain: string): Promise<{ valid: boolean; records?: unknown[] }> {
     if (!this.resend) {
       return { valid: false };
     }
@@ -259,9 +263,14 @@ export class EmailService {
         return { valid: false };
       }
 
-      return { valid: true, records: (data as any)?.records };
+      return {
+        valid: true,
+        records: (data as unknown as Record<string, unknown>)?.records as unknown[],
+      };
     } catch (error) {
-      this.logger.error(`Domain verification error: ${error.message}`);
+      this.logger.error(
+        `Domain verification error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return { valid: false };
     }
   }
@@ -400,7 +409,9 @@ export class EmailService {
   }): Promise<EmailResult> {
     if (!this.resend) {
       this.logger.warn('Email service not initialized, logging email instead');
-      this.logger.debug(`Email to ${options.to}: ${options.subject}`);
+      this.logger.debug(
+        `Email to ${options.to.replace(/(.{2}).*(@.*)/, '$1***$2')}: ${options.subject}`,
+      );
       return { success: true, messageId: 'mock-email-id' };
     }
 
@@ -423,11 +434,14 @@ export class EmailService {
         return { success: false, error: error.message };
       }
 
-      this.logger.log(`Email sent successfully: ${data?.id} to ${options.to}`);
+      this.logger.log(
+        `Email sent successfully: ${data?.id} to ${options.to.replace(/(.{2}).*(@.*)/, '$1***$2')}`,
+      );
       return { success: true, messageId: data?.id };
     } catch (error) {
-      this.logger.error(`Failed to send email: ${error.message}`);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to send email: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   }
 

@@ -68,7 +68,7 @@ let NotificationsV2Controller = class NotificationsV2Controller {
     async retry(id) {
         return this.notificationService.retryNotification(id);
     }
-    async delete(id) {
+    async delete(_id) {
         return { success: true };
     }
 };

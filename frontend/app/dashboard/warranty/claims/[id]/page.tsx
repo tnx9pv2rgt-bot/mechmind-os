@@ -48,33 +48,33 @@ const statusConfig: Record<ClaimStatus, {
 }> = {
   SUBMITTED: {
     label: "Submitted",
-    color: "text-blue-700",
+    color: "text-blue-700 dark:text-blue-300",
     icon: <FileText className="h-5 w-5" />,
-    bgColor: "bg-blue-50",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20",
   },
   UNDER_REVIEW: {
     label: "Under Review",
-    color: "text-amber-700",
+    color: "text-amber-700 dark:text-amber-300",
     icon: <Clock className="h-5 w-5" />,
-    bgColor: "bg-amber-50",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
   },
   APPROVED: {
     label: "Approved",
-    color: "text-green-700",
+    color: "text-green-700 dark:text-green-300",
     icon: <CheckCircle2 className="h-5 w-5" />,
-    bgColor: "bg-green-50",
+    bgColor: "bg-green-50 dark:bg-green-900/20",
   },
   REJECTED: {
     label: "Rejected",
-    color: "text-red-700",
+    color: "text-red-700 dark:text-red-300",
     icon: <XCircle className="h-5 w-5" />,
-    bgColor: "bg-red-50",
+    bgColor: "bg-red-50 dark:bg-red-900/20",
   },
   PAID: {
     label: "Paid",
-    color: "text-purple-700",
+    color: "text-purple-700 dark:text-purple-300",
     icon: <DollarSign className="h-5 w-5" />,
-    bgColor: "bg-purple-50",
+    bgColor: "bg-purple-50 dark:bg-purple-900/20",
   },
 }
 
@@ -205,8 +205,8 @@ export default function ClaimDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Claim Details</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">Claim Details</h1>
+            <p className="text-sm text-gray-500 dark:text-[#636366]">
               Submitted on {formatDate(claim.submittedDate)}
             </p>
           </div>
@@ -248,9 +248,9 @@ export default function ClaimDetailPage() {
             <CardContent className="space-y-6">
               {/* Amounts */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">Estimated Cost</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="bg-gray-50 dark:bg-[#353535] rounded-lg p-4">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Estimated Cost</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">
                     {formatCurrency(claim.amount)}
                   </div>
                 </div>
@@ -259,19 +259,19 @@ export default function ClaimDetailPage() {
 
               {/* Description */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   <MessageSquare className="h-4 w-4" />
                   <span>Issue Description</span>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-800 whitespace-pre-wrap">{claim.description}</p>
+                <div className="bg-gray-50 dark:bg-[#353535] p-4 rounded-lg">
+                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{claim.description}</p>
                 </div>
               </div>
 
               {/* Evidence */}
               {claim.evidencePhotos && claim.evidencePhotos.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                     <Eye className="h-4 w-4" />
                     <span>Photo Evidence ({claim.evidencePhotos.length})</span>
                   </div>
@@ -306,12 +306,12 @@ export default function ClaimDetailPage() {
               <CardContent className="space-y-4">
                 {claim.reviewedDate && (
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <User className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">Reviewed</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-gray-900 dark:text-[#ececec]">Reviewed</p>
+                      <p className="text-sm text-gray-500 dark:text-[#636366]">
                         on {formatDate(claim.reviewedDate)}
                       </p>
                     </div>
@@ -319,12 +319,12 @@ export default function ClaimDetailPage() {
                 )}
                 {claim.resolvedDate && (
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-50 rounded-lg">
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">Resolved</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-gray-900 dark:text-[#ececec]">Resolved</p>
+                      <p className="text-sm text-gray-500 dark:text-[#636366]">
                         on {formatDate(claim.resolvedDate)}
                       </p>
                     </div>
@@ -346,7 +346,7 @@ export default function ClaimDetailPage() {
               {claim.warranty?.vehicle && (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Vehicle</span>
+                    <span className="text-gray-600 dark:text-gray-400">Vehicle</span>
                     <span className="font-medium">
                       {claim.warranty.vehicle.make} {claim.warranty.vehicle.model}
                     </span>
@@ -355,11 +355,11 @@ export default function ClaimDetailPage() {
                 </>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-600">Provider</span>
+                <span className="text-gray-600 dark:text-gray-400">Provider</span>
                 <span className="font-medium">{claim.warranty?.provider}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Max Coverage</span>
+                <span className="text-gray-600 dark:text-gray-400">Max Coverage</span>
                 <span className="font-medium">
                   {formatCurrency(claim.warranty?.maxCoverage || 0)}
                 </span>
@@ -393,9 +393,9 @@ export default function ClaimDetailPage() {
                 onClick={() => setReviewDecision('APPROVE')}
                 className={cn(
                   "p-4 rounded-lg border-2 text-center transition-all",
-                  reviewDecision === 'APPROVE' 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-200 hover:border-green-300"
+                  reviewDecision === 'APPROVE'
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-200 dark:border-gray-600 hover:border-green-300"
                 )}
               >
                 <Check className={cn(
@@ -413,9 +413,9 @@ export default function ClaimDetailPage() {
                 onClick={() => setReviewDecision('REJECT')}
                 className={cn(
                   "p-4 rounded-lg border-2 text-center transition-all",
-                  reviewDecision === 'REJECT' 
-                    ? "border-red-500 bg-red-50" 
-                    : "border-gray-200 hover:border-red-300"
+                  reviewDecision === 'REJECT'
+                    ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                    : "border-gray-200 dark:border-gray-600 hover:border-red-300"
                 )}
               >
                 <X className={cn(

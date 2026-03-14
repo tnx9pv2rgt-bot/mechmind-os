@@ -2,17 +2,13 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { NotificationOrchestratorService } from '../services/notification.service';
-import {
-  SendNotificationDto,
-  NotificationType,
-  NotificationChannel,
-} from '../dto/send-notification.dto';
+import { NotificationType, NotificationChannel } from '../dto/send-notification.dto';
 
 interface NotificationJobData {
   type: NotificationType;
   customerId: string;
   tenantId: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   channel?: NotificationChannel;
   priority?: 'low' | 'normal' | 'high' | 'urgent';
 }
@@ -25,7 +21,12 @@ export class NotificationProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<NotificationJobData>): Promise<any> {
+  async process(job: Job<NotificationJobData>): Promise<{
+    success: boolean;
+    channel: string;
+    messageId?: string;
+    fallbackUsed?: boolean;
+  }> {
     this.logger.log(`Processing notification job ${job.id} (${job.name})`);
 
     const { type, customerId, tenantId, data, channel } = job.data;
@@ -52,7 +53,10 @@ export class NotificationProcessor extends WorkerHost {
         fallbackUsed: result.fallbackUsed,
       };
     } catch (error) {
-      this.logger.error(`Notification job ${job.id} failed: ${error.message}`, error.stack);
+      this.logger.error(
+        `Notification job ${job.id} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw error; // Trigger retry
     }
   }

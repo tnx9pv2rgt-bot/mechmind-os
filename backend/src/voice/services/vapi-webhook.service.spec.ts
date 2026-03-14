@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { VapiWebhookService, WebhookProcessingResult } from './vapi-webhook.service';
+import { VapiWebhookService } from './vapi-webhook.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';

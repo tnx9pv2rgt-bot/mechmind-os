@@ -3,22 +3,15 @@
  * API endpoints for enhanced notification system
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
-import { NotificationV2Service, CreateNotificationDTO } from '../services/notification-v2.service';
+import {
+  NotificationV2Service,
+  CreateNotificationDTO,
+  NotificationTemplateData,
+} from '../services/notification-v2.service';
 import { NotificationType, NotificationChannel } from '@prisma/client';
 import { UserRole } from '@auth/guards/roles.guard';
 
@@ -28,7 +21,7 @@ class SendNotificationDto implements CreateNotificationDTO {
   type: NotificationType;
   channel: NotificationChannel;
   message?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 class UpdatePreferenceDto {
@@ -94,7 +87,7 @@ export class NotificationsV2Controller {
     const message = this.notificationService.generateMessage(
       dto.type,
       dto.language,
-      dto.vars as any,
+      dto.vars as unknown as NotificationTemplateData,
     );
     return { message };
   }
@@ -125,7 +118,7 @@ export class NotificationsV2Controller {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id') _id: string) {
     // Implementation would delete notification
     return { success: true };
   }

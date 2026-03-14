@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Proactive Suggestions Component
  * UI per visualizzare i suggerimenti AI proattivi in stile GitHub Copilot

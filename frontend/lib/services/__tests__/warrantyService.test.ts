@@ -7,31 +7,69 @@
  * @module lib/services/__tests__/warrantyService
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { Mock } from 'vitest'
+// Jest globals are available automatically
+// Jest Mock type
+
+// Mock @prisma/client
+jest.mock('@prisma/client', () => {
+  const actual = jest.requireActual('@prisma/client') as Record<string, unknown>
+  return {
+    ...actual,
+    Prisma: {
+      ...(actual.Prisma as Record<string, unknown> || {}),
+      PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+        code: string
+        constructor(message: string, { code }: { code: string; clientVersion?: string }) {
+          super(message)
+          this.code = code
+          this.name = 'PrismaClientKnownRequestError'
+        }
+      },
+    },
+  }
+})
+
+// Mock tenant context
+jest.mock('@/lib/tenant/context', () => ({
+  tryGetTenantContext: jest.fn().mockReturnValue({ tenantId: 'test-tenant-id' }),
+  requireTenantId: jest.fn().mockResolvedValue('test-tenant-id'),
+  NoTenantContextError: class NoTenantContextError extends Error {
+    constructor() { super('No tenant context'); this.name = 'NoTenantContextError' }
+  },
+  setTenantContext: jest.fn(),
+  clearTenantContext: jest.fn(),
+  TenantContext: {},
+}))
 
 // Mock Prisma
 const mockPrismaWarranty = {
-  create: vi.fn(),
-  findUnique: vi.fn(),
-  findFirst: vi.fn(),
-  findMany: vi.fn(),
-  update: vi.fn(),
-  delete: vi.fn(),
+  create: jest.fn(),
+  findUnique: jest.fn(),
+  findFirst: jest.fn(),
+  findMany: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
 }
 
 const mockPrismaWarrantyClaim = {
-  create: vi.fn(),
-  findUnique: vi.fn(),
-  findMany: vi.fn(),
-  update: vi.fn(),
+  create: jest.fn(),
+  findUnique: jest.fn(),
+  findFirst: jest.fn(),
+  findMany: jest.fn(),
+  update: jest.fn(),
 }
 
-vi.mock('@/lib/prisma', () => ({
+const mockPrismaVehicle = {
+  findFirst: jest.fn().mockResolvedValue({ id: 'vehicle-001', vin: 'VIN123', tenantId: 'test-tenant-id', make: 'Toyota', model: 'Corolla', year: 2020 }),
+  findUnique: jest.fn(),
+}
+
+jest.mock('@/lib/prisma', () => ({
   prisma: {
     warranty: mockPrismaWarranty,
     warrantyClaim: mockPrismaWarrantyClaim,
-    $disconnect: vi.fn(),
+    vehicle: mockPrismaVehicle,
+    $disconnect: jest.fn(),
   },
 }))
 
@@ -55,11 +93,11 @@ describe('WarrantyService', () => {
 
   beforeEach(() => {
     service = new WarrantyService()
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    jest.restoreAllMocks()
   })
 
   // =============================================================================
@@ -95,15 +133,16 @@ describe('WarrantyService', () => {
       const result = await service.createWarranty(validWarrantyData)
 
       expect(result).toEqual(mockWarranty)
-      expect(mockPrismaWarranty.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          vehicleId: validWarrantyData.vehicleId,
-          type: validWarrantyData.type,
-          provider: validWarrantyData.provider,
-          maxCoverage: validWarrantyData.maxCoverage,
-          deductible: validWarrantyData.deductible,
-        }),
-      })
+      expect(mockPrismaWarranty.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            vehicleId: validWarrantyData.vehicleId,
+            coverageType: validWarrantyData.type,
+            maxClaimAmount: validWarrantyData.maxCoverage,
+            deductibleAmount: validWarrantyData.deductible,
+          }),
+        })
+      )
     })
 
     it('should throw InvalidWarrantyDataError for missing vehicleId', async () => {
@@ -204,11 +243,12 @@ describe('WarrantyService', () => {
     }
 
     it('should file a claim with valid data', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue(mockActiveWarranty)
+      mockPrismaWarranty.findFirst.mockResolvedValue(mockActiveWarranty)
       mockPrismaWarrantyClaim.create.mockResolvedValue({
         id: 'claim-001',
         warrantyId,
-        ...validClaimData,
+        description: validClaimData.issueDescription,
+        amount: validClaimData.estimatedCost,
         status: ClaimStatus.SUBMITTED,
         submittedAt: new Date(),
       })
@@ -216,18 +256,18 @@ describe('WarrantyService', () => {
       const result = await service.fileClaim(warrantyId, validClaimData)
 
       expect(result.status).toBe(ClaimStatus.SUBMITTED)
-      expect(result.estimatedCost).toBe(validClaimData.estimatedCost)
+      expect(result.amount).toBe(validClaimData.estimatedCost)
     })
 
     it('should throw WarrantyNotFoundError if warranty not found', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue(null)
+      mockPrismaWarranty.findFirst.mockResolvedValue(null)
 
       await expect(service.fileClaim(warrantyId, validClaimData))
         .rejects.toThrow(WarrantyNotFoundError)
     })
 
     it('should throw InvalidClaimDataError if warranty is expired', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue({
+      mockPrismaWarranty.findFirst.mockResolvedValue({
         ...mockActiveWarranty,
         status: WarrantyStatus.EXPIRED,
       })
@@ -237,7 +277,7 @@ describe('WarrantyService', () => {
     })
 
     it('should throw InvalidClaimDataError if warranty is void', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue({
+      mockPrismaWarranty.findFirst.mockResolvedValue({
         ...mockActiveWarranty,
         status: WarrantyStatus.VOID,
       })
@@ -247,7 +287,7 @@ describe('WarrantyService', () => {
     })
 
     it('should throw InvalidClaimDataError for missing description', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue(mockActiveWarranty)
+      mockPrismaWarranty.findFirst.mockResolvedValue(mockActiveWarranty)
 
       const invalidData = { ...validClaimData, issueDescription: '' }
       await expect(service.fileClaim(warrantyId, invalidData))
@@ -255,7 +295,7 @@ describe('WarrantyService', () => {
     })
 
     it('should throw InvalidClaimDataError for zero estimated cost', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue(mockActiveWarranty)
+      mockPrismaWarranty.findFirst.mockResolvedValue(mockActiveWarranty)
 
       const invalidData = { ...validClaimData, estimatedCost: 0 }
       await expect(service.fileClaim(warrantyId, invalidData))
@@ -281,27 +321,26 @@ describe('WarrantyService', () => {
     }
 
     it('should approve a claim with valid amount', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue(mockSubmittedClaim)
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(mockSubmittedClaim)
       mockPrismaWarrantyClaim.update.mockResolvedValue({
         ...mockSubmittedClaim,
         status: ClaimStatus.APPROVED,
-        approvedAmount: 450,
-        reviewedAt: new Date(),
+        amount: 450,
+        reviewedDate: new Date(),
       })
 
       const result = await service.reviewClaim(claimId, 'APPROVE', 450, 'Looks good', 'admin-001')
 
       expect(result.status).toBe(ClaimStatus.APPROVED)
-      expect(result.approvedAmount).toBe(450)
+      expect(result.amount).toBe(450)
     })
 
     it('should reject a claim', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue(mockSubmittedClaim)
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(mockSubmittedClaim)
       mockPrismaWarrantyClaim.update.mockResolvedValue({
         ...mockSubmittedClaim,
         status: ClaimStatus.REJECTED,
-        reviewedAt: new Date(),
-        reviewNotes: 'Not covered',
+        reviewedDate: new Date(),
       })
 
       const result = await service.reviewClaim(claimId, 'REJECT', undefined, 'Not covered', 'admin-001')
@@ -310,21 +349,21 @@ describe('WarrantyService', () => {
     })
 
     it('should throw ClaimNotFoundError if claim not found', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue(null)
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(null)
 
       await expect(service.reviewClaim(claimId, 'APPROVE', 100))
         .rejects.toThrow(ClaimNotFoundError)
     })
 
     it('should throw InvalidClaimDataError when approving without amount', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue(mockSubmittedClaim)
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(mockSubmittedClaim)
 
       await expect(service.reviewClaim(claimId, 'APPROVE'))
         .rejects.toThrow(InvalidClaimDataError)
     })
 
     it('should throw InvalidClaimDataError for already processed claim', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue({
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue({
         ...mockSubmittedClaim,
         status: ClaimStatus.APPROVED,
       })
@@ -341,15 +380,15 @@ describe('WarrantyService', () => {
     const claimId = 'claim-001'
 
     it('should mark an approved claim as paid', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue({
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue({
         id: claimId,
         status: ClaimStatus.APPROVED,
-        approvedAmount: 450,
+        amount: 450,
       })
       mockPrismaWarrantyClaim.update.mockResolvedValue({
         id: claimId,
         status: ClaimStatus.PAID,
-        paidAt: new Date(),
+        resolvedDate: new Date(),
       })
 
       const result = await service.markClaimPaid(claimId)
@@ -358,14 +397,14 @@ describe('WarrantyService', () => {
     })
 
     it('should throw ClaimNotFoundError if claim not found', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue(null)
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(null)
 
       await expect(service.markClaimPaid(claimId))
         .rejects.toThrow(ClaimNotFoundError)
     })
 
     it('should throw InvalidClaimDataError if claim is not approved', async () => {
-      mockPrismaWarrantyClaim.findUnique.mockResolvedValue({
+      mockPrismaWarrantyClaim.findFirst.mockResolvedValue({
         id: claimId,
         status: ClaimStatus.SUBMITTED,
       })
@@ -382,29 +421,27 @@ describe('WarrantyService', () => {
     const warrantyId = 'warranty-001'
 
     it('should calculate remaining coverage correctly', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue({
+      mockPrismaWarranty.findFirst.mockResolvedValue({
         id: warrantyId,
-        maxCoverage: 5000,
-        currentKm: 10000,
-        coverageKm: 50000,
+        maxClaimAmount: 5000,
+        mileageLimit: 50000,
         claims: [
-          { approvedAmount: 1000 },
-          { approvedAmount: 500 },
+          { amount: 1000 },
+          { amount: 500 },
         ],
       })
 
       const result = await service.getRemainingCoverage(warrantyId)
 
       expect(result.amount).toBe(3500) // 5000 - 1500
-      expect(result.km).toBe(50000) // Unlimited since we're not tracking current vehicle km
+      expect(result.km).toBe(50000)
     })
 
     it('should return null km if no coverage limit', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue({
+      mockPrismaWarranty.findFirst.mockResolvedValue({
         id: warrantyId,
-        maxCoverage: 5000,
-        currentKm: 10000,
-        coverageKm: null,
+        maxClaimAmount: 5000,
+        mileageLimit: null,
         claims: [],
       })
 
@@ -415,7 +452,7 @@ describe('WarrantyService', () => {
     })
 
     it('should throw WarrantyNotFoundError if warranty not found', async () => {
-      mockPrismaWarranty.findUnique.mockResolvedValue(null)
+      mockPrismaWarranty.findFirst.mockResolvedValue(null)
 
       await expect(service.getRemainingCoverage(warrantyId))
         .rejects.toThrow(WarrantyNotFoundError)
@@ -471,14 +508,19 @@ describe('WarrantyService', () => {
       const expirationDate = new Date()
       expirationDate.setDate(expirationDate.getDate() - 1) // Yesterday
 
-      mockPrismaWarranty.findUnique.mockResolvedValue({
+      mockPrismaWarranty.findFirst.mockResolvedValue({
         id: 'warranty-001',
+        tenantId: 'test-tenant-id',
         status: WarrantyStatus.ACTIVE,
         expirationDate,
+        claims: [],
+        vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
       })
       mockPrismaWarranty.update.mockResolvedValue({
         id: 'warranty-001',
         status: WarrantyStatus.EXPIRED,
+        claims: [],
+        vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
       })
 
       const result = await service.updateStatus('warranty-001')
@@ -490,10 +532,13 @@ describe('WarrantyService', () => {
       const expirationDate = new Date()
       expirationDate.setDate(expirationDate.getDate() + 100) // Far future
 
-      mockPrismaWarranty.findUnique.mockResolvedValue({
+      mockPrismaWarranty.findFirst.mockResolvedValue({
         id: 'warranty-001',
+        tenantId: 'test-tenant-id',
         status: WarrantyStatus.ACTIVE,
         expirationDate,
+        claims: [],
+        vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
       })
 
       const result = await service.updateStatus('warranty-001')
@@ -512,8 +557,8 @@ describe('WarrantyService', () => {
       yesterday.setDate(yesterday.getDate() - 1)
 
       mockPrismaWarranty.findMany.mockResolvedValue([
-        { id: 'warranty-001', status: WarrantyStatus.ACTIVE, expirationDate: yesterday },
-        { id: 'warranty-002', status: WarrantyStatus.EXPIRING_SOON, expirationDate: yesterday },
+        { id: 'warranty-001', status: WarrantyStatus.ACTIVE, expirationDate: yesterday, tenantId: 'test-tenant-id' },
+        { id: 'warranty-002', status: WarrantyStatus.EXPIRING_SOON, expirationDate: yesterday, tenantId: 'test-tenant-id' },
       ])
       mockPrismaWarranty.update.mockResolvedValue({})
 

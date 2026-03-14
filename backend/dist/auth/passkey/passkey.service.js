@@ -44,7 +44,7 @@ let PasskeyService = class PasskeyService {
             userName: user.email,
             userDisplayName: user.name,
             attestationType: 'none',
-            excludeCredentials: user.passkeys.map((pk) => ({
+            excludeCredentials: user.passkeys.map(pk => ({
                 id: pk.credentialId,
             })),
             authenticatorSelection: {
@@ -117,6 +117,9 @@ let PasskeyService = class PasskeyService {
         });
         if (!passkey || !passkey.user) {
             throw new common_1.BadRequestException('Passkey not found');
+        }
+        if (!passkey.user.isActive || !passkey.user.tenant?.isActive) {
+            throw new common_1.BadRequestException('User or tenant is inactive');
         }
         const verification = await (0, server_1.verifyAuthenticationResponse)({
             response: assertion,

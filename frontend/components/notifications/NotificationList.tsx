@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * NotificationList Component
  * List component with filters and pagination

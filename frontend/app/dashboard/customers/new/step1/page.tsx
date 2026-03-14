@@ -193,7 +193,7 @@ export default function Step1Page() {
 
   if (!isLoaded) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#212121] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-green-500" />
       </div>
     );
@@ -218,19 +218,20 @@ export default function Step1Page() {
             <User className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Informazioni Cliente</h2>
-            <p className="text-gray-500 text-sm">Dati principali e anagrafici</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-[#ececec]">Informazioni Cliente</h2>
+
+            <p className="text-gray-500 dark:text-[#636366] text-sm">Dati principali e anagrafici</p>
           </div>
         </div>
 
         {/* Tipo Cliente Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
-          <Label className="text-sm font-medium text-gray-700 mb-3 block">Tipo Cliente</Label>
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
+          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-3 block">Tipo Cliente</Label>
           <Select 
             defaultValue="private" 
             onValueChange={(v) => setValue('customerType', v as 'private' | 'business')}
           >
-            <SelectTrigger className="h-14 rounded-xl bg-white/80 border-gray-200">
+            <SelectTrigger className="h-14 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-gray-200 dark:border-[#424242]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -255,14 +256,14 @@ export default function Step1Page() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100"
+            className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]"
           >
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">Ragione Sociale</Label>
+            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Ragione Sociale</Label>
             <div className="relative">
               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 {...register('companyName')}
-                className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="pl-12 h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                 placeholder="Rossi Srl"
               />
             </div>
@@ -270,20 +271,20 @@ export default function Step1Page() {
         )}
 
         {/* === SEZIONE: Dati Anagrafici Base === */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
               <UserCircle className="w-4 h-4 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900">Dati Anagrafici</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-[#ececec]">Dati Anagrafici</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {/* Titolo */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Titolo</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Titolo</Label>
               <Select onValueChange={(v) => setValue('title', (v === 'none' ? '' : v) as FormData['title'])} defaultValue="none">
-                <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
+                <SelectTrigger className="h-14 rounded-xl border-gray-200 dark:border-[#424242] bg-white/80 dark:bg-[#2f2f2f]/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -297,25 +298,25 @@ export default function Step1Page() {
 
             {/* Data di nascita */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Data di Nascita</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Data di Nascita</Label>
               <div className="relative">
                 <Cake className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="date"
                   {...register('dateOfBirth')}
-                  className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="pl-12 h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                 />
               </div>
             </div>
 
             {/* Nome */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Nome</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Nome</Label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   {...register('firstName')}
-                  className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="pl-12 h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                   placeholder="Mario"
                 />
               </div>
@@ -323,19 +324,19 @@ export default function Step1Page() {
 
             {/* Cognome */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Cognome</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Cognome</Label>
               <Input
                 {...register('lastName')}
-                className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                 placeholder="Rossi"
               />
             </div>
 
             {/* Sesso */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Sesso</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Sesso</Label>
               <Select onValueChange={(v) => setValue('gender', (v === 'not_specified' ? '' : v) as FormData['gender'])} defaultValue="not_specified">
-                <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
+                <SelectTrigger className="h-14 rounded-xl border-gray-200 dark:border-[#424242] bg-white/80 dark:bg-[#2f2f2f]/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -349,9 +350,9 @@ export default function Step1Page() {
 
             {/* Stato civile */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Stato Civile</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Stato Civile</Label>
               <Select onValueChange={(v) => setValue('maritalStatus', (v === 'not_specified' ? '' : v) as FormData['maritalStatus'])} defaultValue="not_specified">
-                <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
+                <SelectTrigger className="h-14 rounded-xl border-gray-200 dark:border-[#424242] bg-white/80 dark:bg-[#2f2f2f]/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -366,23 +367,23 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Contatti === */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
               <Phone className="w-4 h-4 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900">Contatti</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-[#ececec]">Contatti</h3>
           </div>
 
           <div className="space-y-4">
             {/* Telefono */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Telefono</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Telefono</Label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   {...register('phone')}
-                  className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="pl-12 h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                   placeholder="+39 333 1234567"
                   type="tel"
                 />
@@ -393,8 +394,8 @@ export default function Step1Page() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium text-gray-700">Email</Label>
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                  <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec]">Email</Label>
+                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
                     Consigliato
                   </span>
                 </div>
@@ -442,7 +443,7 @@ export default function Step1Page() {
                 <Input
                   type="email"
                   {...register('email')}
-                  className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="pl-12 h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                   placeholder="mario.rossi@email.it"
                 />
               </div>
@@ -451,20 +452,20 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Preferenze === */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
               <Heart className="w-4 h-4 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900">Preferenze</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-[#ececec]">Preferenze</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {/* Canale preferito */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Canale Preferito</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Canale Preferito</Label>
               <Select onValueChange={(v) => setValue('preferredChannel', (v === 'none' ? '' : v) as FormData['preferredChannel'])} defaultValue="none">
-                <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
+                <SelectTrigger className="h-14 rounded-xl border-gray-200 dark:border-[#424242] bg-white/80 dark:bg-[#2f2f2f]/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -483,9 +484,9 @@ export default function Step1Page() {
 
             {/* Lingua */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Lingua</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Lingua</Label>
               <Select onValueChange={(v) => setValue('language', v as FormData['language'])} defaultValue="italiano">
-                <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
+                <SelectTrigger className="h-14 rounded-xl border-gray-200 dark:border-[#424242] bg-white/80 dark:bg-[#2f2f2f]/80">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -498,9 +499,9 @@ export default function Step1Page() {
 
             {/* Fonte */}
             <div className="col-span-2">
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Come ci hai conosciuto?</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Come ci hai conosciuto?</Label>
               <Select onValueChange={(v) => setValue('source', (v === 'not_specified' ? '' : v) as FormData['source'])} defaultValue="not_specified">
-                <SelectTrigger className="h-14 rounded-xl border-gray-200 bg-white/80">
+                <SelectTrigger className="h-14 rounded-xl border-gray-200 dark:border-[#424242] bg-white/80 dark:bg-[#2f2f2f]/80">
                   <SelectValue placeholder="Seleziona..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -514,32 +515,32 @@ export default function Step1Page() {
 
             {/* Tag */}
             <div className="col-span-2">
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Tag / Categorie</Label>
+              <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Tag / Categorie</Label>
               <div className="relative">
                 <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   {...register('tags')}
-                  className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="pl-12 h-14 rounded-xl border-gray-200 dark:border-[#424242] focus:border-blue-500 focus:ring-blue-500/20"
                   placeholder="VIP, Sconto 10%, Cliente storico, ecc."
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Separare i tag con virgola</p>
+              <p className="text-xs text-gray-500 dark:text-[#636366] mt-1">Separare i tag con virgola</p>
             </div>
           </div>
         </div>
 
         {/* === SEZIONE: Privacy & Marketing === */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
               <Bell className="w-4 h-4 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900">Privacy & Marketing</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-[#ececec]">Privacy & Marketing</h3>
           </div>
 
           <div className="space-y-4">
             {/* Marketing consent */}
-            <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-2xl border border-green-100">
+            <div className="flex items-start space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-100 dark:border-green-700/30">
               <Checkbox
                 id="marketingConsent"
                 checked={marketingConsent}
@@ -547,50 +548,50 @@ export default function Step1Page() {
                 className="mt-1 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
               />
               <div className="flex-1">
-                <Label htmlFor="marketingConsent" className="font-medium text-gray-900 cursor-pointer">
+                <Label htmlFor="marketingConsent" className="font-medium text-gray-900 dark:text-[#ececec] cursor-pointer">
                   Consenso marketing
                 </Label>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 dark:text-[#636366] mt-1">
                   Acconsento a ricevere comunicazioni commerciali, offerte e promozioni
                 </p>
               </div>
             </div>
 
             {/* Do not call */}
-            <div className="flex items-start space-x-3 p-4 bg-red-50 rounded-2xl border border-red-100">
+            <div className="flex items-start space-x-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-700/30">
               <Checkbox
                 id="doNotCall"
                 {...register('doNotCall')}
                 className="mt-1 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
               />
               <div className="flex-1">
-                <Label htmlFor="doNotCall" className="font-medium text-gray-900 cursor-pointer">
+                <Label htmlFor="doNotCall" className="font-medium text-gray-900 dark:text-[#ececec] cursor-pointer">
                   <span className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-red-500" />
                     Non chiamare
                   </span>
                 </Label>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 dark:text-[#636366] mt-1">
                   Il cliente non desidera essere contattato telefonicamente
                 </p>
               </div>
             </div>
 
             {/* Do not email */}
-            <div className="flex items-start space-x-3 p-4 bg-orange-50 rounded-2xl border border-orange-100">
+            <div className="flex items-start space-x-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-700/30">
               <Checkbox
                 id="doNotEmail"
                 {...register('doNotEmail')}
                 className="mt-1 data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
               />
               <div className="flex-1">
-                <Label htmlFor="doNotEmail" className="font-medium text-gray-900 cursor-pointer">
+                <Label htmlFor="doNotEmail" className="font-medium text-gray-900 dark:text-[#ececec] cursor-pointer">
                   <span className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-orange-500" />
                     Non inviare email
                   </span>
                 </Label>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 dark:text-[#636366] mt-1">
                   Il cliente non desidera ricevere comunicazioni via email
                 </p>
               </div>
@@ -599,18 +600,18 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Note === */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
               <Info className="w-4 h-4 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900">Note</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-[#ececec]">Note</h3>
           </div>
 
           <div>
             <textarea
               {...register('notes')}
-              className="w-full h-32 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 resize-none"
+              className="w-full h-32 px-4 py-3 rounded-xl border border-gray-200 dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec] focus:border-blue-500 focus:ring-blue-500/20 resize-none"
               placeholder="Inserisci qui eventuali note sul cliente: preferenze, richieste speciali, storico interazioni..."
             />
           </div>

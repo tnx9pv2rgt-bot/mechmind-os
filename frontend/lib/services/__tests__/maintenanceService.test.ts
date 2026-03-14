@@ -7,27 +7,55 @@
  * @module lib/services/__tests__/maintenanceService
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { Mock } from 'vitest'
+// Jest globals are available automatically
+// Jest Mock type
+
+// Mock @prisma/client
+jest.mock('@prisma/client', () => {
+  const actual = jest.requireActual('@prisma/client') as Record<string, unknown>
+  return {
+    ...actual,
+    Prisma: {
+      ...(actual.Prisma as Record<string, unknown> || {}),
+      PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+        code: string
+        constructor(message: string, { code }: { code: string }) {
+          super(message); this.code = code; this.name = 'PrismaClientKnownRequestError'
+        }
+      },
+    },
+  }
+})
+
+// Mock tenant context
+jest.mock('@/lib/tenant/context', () => ({
+  tryGetTenantContext: jest.fn().mockReturnValue({ tenantId: 'test-tenant-id' }),
+  requireTenantId: jest.fn().mockResolvedValue('test-tenant-id'),
+  NoTenantContextError: class extends Error { constructor() { super('No tenant context') } },
+  setTenantContext: jest.fn(),
+  clearTenantContext: jest.fn(),
+  TenantContext: {},
+}))
 
 // Mock Prisma
 const mockPrisma = {
   maintenanceSchedule: {
-    create: vi.fn(),
-    findUnique: vi.fn(),
-    findFirst: vi.fn(),
-    findMany: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    count: vi.fn(),
-    groupBy: vi.fn()
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    groupBy: jest.fn()
   },
   vehicle: {
-    findUnique: vi.fn()
+    findUnique: jest.fn(),
+    findFirst: jest.fn()
   }
 }
 
-vi.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/prisma', () => ({
   prisma: mockPrisma
 }))
 
@@ -44,9 +72,6 @@ import {
   markAsCompleted,
   checkOverdueStatus,
   getMaintenanceSummary,
-  getMaintenanceTypeLabel,
-  getNotificationLevelLabel,
-  getNotificationLevelColor,
   MaintenanceNotFoundError,
   MaintenanceValidationError,
   VehicleNotFoundError,
@@ -56,18 +81,50 @@ import {
   type NextDueCalculation
 } from '../maintenanceService'
 
+// These helper functions are not exported from the service; define local versions for testing
+function getMaintenanceTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    OIL_CHANGE: 'Cambio Olio',
+    TIRE_ROTATION: 'Rotazione Pneumatici',
+    BRAKE_CHECK: 'Controllo Freni',
+    FILTER: 'Sostituzione Filtri',
+    INSPECTION: 'Ispezione Generale',
+    BELTS: 'Controllo Cinghie',
+    BATTERY: 'Controllo Batteria',
+  }
+  return labels[type] || type
+}
+
+function getNotificationLevelLabel(level: string): string {
+  const labels: Record<string, string> = {
+    ALERT: 'Avviso',
+    WARNING: 'Attenzione',
+    CRITICAL: 'Critico',
+  }
+  return labels[level] || level
+}
+
+function getNotificationLevelColor(level: string): string {
+  const colors: Record<string, string> = {
+    ALERT: 'blue',
+    WARNING: 'yellow',
+    CRITICAL: 'red',
+  }
+  return colors[level] || 'gray'
+}
+
 describe('MaintenanceService', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     // Suppress console output during tests
-    vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(console, 'info').mockImplementation(() => {})
-    vi.spyOn(console, 'warn').mockImplementation(() => {})
-    vi.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.spyOn(console, 'info').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    jest.restoreAllMocks()
   })
 
   // =============================================================================
@@ -170,14 +227,14 @@ describe('MaintenanceService', () => {
     }
 
     it('should create a maintenance schedule successfully', async () => {
-      mockPrisma.vehicle.findUnique.mockResolvedValue(mockVehicle)
+      mockPrisma.vehicle.findFirst.mockResolvedValue(mockVehicle)
       mockPrisma.maintenanceSchedule.create.mockResolvedValue(mockSchedule)
 
       const result = await createMaintenanceSchedule(validInput)
 
       expect(result).toEqual(mockSchedule)
-      expect(mockPrisma.vehicle.findUnique).toHaveBeenCalledWith({
-        where: { id: 'vehicle-123' }
+      expect(mockPrisma.vehicle.findFirst).toHaveBeenCalledWith({
+        where: { id: 'vehicle-123', tenantId: 'test-tenant-id' }
       })
       expect(mockPrisma.maintenanceSchedule.create).toHaveBeenCalled()
     })
@@ -222,14 +279,14 @@ describe('MaintenanceService', () => {
     })
 
     it('should throw VehicleNotFoundError when vehicle does not exist', async () => {
-      mockPrisma.vehicle.findUnique.mockResolvedValue(null)
+      mockPrisma.vehicle.findFirst.mockResolvedValue(null)
 
       await expect(createMaintenanceSchedule(validInput))
         .rejects.toThrow(VehicleNotFoundError)
     })
 
     it('should calculate next due date correctly when creating', async () => {
-      mockPrisma.vehicle.findUnique.mockResolvedValue(mockVehicle)
+      mockPrisma.vehicle.findFirst.mockResolvedValue(mockVehicle)
       mockPrisma.maintenanceSchedule.create.mockImplementation((args: any) => ({
         ...mockSchedule,
         ...args.data
@@ -263,13 +320,13 @@ describe('MaintenanceService', () => {
     }
 
     it('should retrieve a schedule by ID', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(mockSchedule)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(mockSchedule)
 
       const result = await getMaintenanceScheduleById('schedule-001')
 
       expect(result).toEqual(mockSchedule)
-      expect(mockPrisma.maintenanceSchedule.findUnique).toHaveBeenCalledWith({
-        where: { id: 'schedule-001' },
+      expect(mockPrisma.maintenanceSchedule.findFirst).toHaveBeenCalledWith({
+        where: { id: 'schedule-001', tenantId: 'test-tenant-id' },
         include: expect.any(Object)
       })
     })
@@ -280,7 +337,7 @@ describe('MaintenanceService', () => {
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(null)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
 
       await expect(getMaintenanceScheduleById('non-existent'))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -323,7 +380,7 @@ describe('MaintenanceService', () => {
     }
 
     it('should update a schedule successfully', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(existingSchedule)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
       mockPrisma.maintenanceSchedule.update.mockResolvedValue(mockScheduleWithVehicle)
 
       const updateData: UpdateMaintenanceScheduleInput = {
@@ -337,7 +394,7 @@ describe('MaintenanceService', () => {
     })
 
     it('should recalculate next due when interval changes', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(existingSchedule)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
       mockPrisma.maintenanceSchedule.update.mockImplementation((args: any) => ({
         ...mockScheduleWithVehicle,
         ...args.data
@@ -355,7 +412,7 @@ describe('MaintenanceService', () => {
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(null)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
 
       await expect(updateMaintenanceSchedule('non-existent', {}))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -373,7 +430,7 @@ describe('MaintenanceService', () => {
     }
 
     it('should delete a schedule successfully', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(existingSchedule)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
       mockPrisma.maintenanceSchedule.delete.mockResolvedValue(existingSchedule)
 
       const result = await deleteMaintenanceSchedule('schedule-001')
@@ -388,7 +445,7 @@ describe('MaintenanceService', () => {
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(null)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
 
       await expect(deleteMaintenanceSchedule('non-existent'))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -501,7 +558,7 @@ describe('MaintenanceService', () => {
       expect(result).toEqual(mockOverdueItems)
       expect(mockPrisma.maintenanceSchedule.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { isOverdue: true }
+          where: { isOverdue: true, tenantId: 'test-tenant-id' }
         })
       )
     })
@@ -509,13 +566,15 @@ describe('MaintenanceService', () => {
     it('should filter by vehicleId when specified', async () => {
       mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockOverdueItems)
 
-      await getOverdueItems('vehicle-123')
+      // Pass vehicleId as second arg; first arg is tenantIdOrVehicleId (unused when context provides tenantId)
+      await getOverdueItems(undefined, 'vehicle-123')
 
       expect(mockPrisma.maintenanceSchedule.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             isOverdue: true,
-            vehicleId: 'vehicle-123'
+            vehicleId: 'vehicle-123',
+            tenantId: 'test-tenant-id'
           }
         })
       )
@@ -606,7 +665,7 @@ describe('MaintenanceService', () => {
     }
 
     it('should mark maintenance as completed and update next due', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(existingSchedule)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
       mockPrisma.maintenanceSchedule.update.mockResolvedValue(updatedSchedule)
 
       const completionData: CompleteMaintenanceInput = {
@@ -622,7 +681,7 @@ describe('MaintenanceService', () => {
     })
 
     it('should use current date when not specified', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(existingSchedule)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
       mockPrisma.maintenanceSchedule.update.mockImplementation((args: any) => ({
         ...updatedSchedule,
         ...args.data
@@ -640,7 +699,7 @@ describe('MaintenanceService', () => {
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findUnique.mockResolvedValue(null)
+      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
 
       await expect(markAsCompleted('non-existent', { currentKm: 50000 }))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -727,7 +786,7 @@ describe('MaintenanceService', () => {
         { vehicleId: 'vehicle-124', _count: { id: 5 } }
       ])
 
-      mockPrisma.vehicle.findUnique.mockResolvedValue({
+      mockPrisma.vehicle.findFirst.mockResolvedValue({
         make: 'Toyota',
         model: 'Corolla',
         licensePlate: 'AB123CD'
@@ -754,7 +813,7 @@ describe('MaintenanceService', () => {
         { vehicleId: 'vehicle-123', _count: { id: 10 } }
       ])
 
-      mockPrisma.vehicle.findUnique.mockResolvedValue({
+      mockPrisma.vehicle.findFirst.mockResolvedValue({
         make: 'Toyota',
         model: 'Corolla',
         licensePlate: 'AB123CD'

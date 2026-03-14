@@ -1,8 +1,9 @@
+import * as crypto from 'crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
-import { Customer, Vehicle, Booking } from '@prisma/client';
+import { Vehicle, Booking } from '@prisma/client';
 
 /**
  * Consent Audit Log entry
@@ -154,10 +155,10 @@ export interface DataPortabilityExport {
   };
   customer: {
     id: string;
-    personalData: Record<string, any>;
-    vehicles: any[];
-    bookings: any[];
-    services: any[];
+    personalData: Record<string, unknown>;
+    vehicles: Record<string, unknown>[];
+    bookings: Record<string, unknown>[];
+    services: Record<string, unknown>[];
   };
 }
 
@@ -220,7 +221,7 @@ export class GdprExportService {
     );
 
     // Fetch customer with all related data
-    const customer = await this.prisma.withTenant(tenantId, async prisma => {
+    const customer = (await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
@@ -233,10 +234,12 @@ export class GdprExportService {
           },
         },
       });
-    }) as (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
-      vehicles: VehicleWithServiceTracking[];
-      bookings: BookingWithInvoices[];
-    }) | null;
+    })) as
+      | (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
+          vehicles: VehicleWithServiceTracking[];
+          bookings: BookingWithInvoices[];
+        })
+      | null;
 
     if (!customer) {
       throw new NotFoundException(`Customer ${customerId} not found`);
@@ -401,7 +404,7 @@ export class GdprExportService {
    * @returns Structured data in portable format
    */
   async exportPortableData(customerId: string, tenantId: string): Promise<DataPortabilityExport> {
-    const customer = await this.prisma.withTenant(tenantId, async prisma => {
+    const customer = (await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
@@ -409,10 +412,12 @@ export class GdprExportService {
           bookings: true,
         },
       });
-    }) as (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
-      vehicles: Vehicle[];
-      bookings: Booking[];
-    }) | null;
+    })) as
+      | (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
+          vehicles: Vehicle[];
+          bookings: Booking[];
+        })
+      | null;
 
     if (!customer) {
       throw new NotFoundException(`Customer ${customerId} not found`);
@@ -487,16 +492,13 @@ export class GdprExportService {
 
       // Serialize based on format
       let serialized: string;
-      let contentType: string;
 
       switch (format) {
         case 'JSON':
           serialized = JSON.stringify(data, null, 2);
-          contentType = 'application/json';
           break;
         case 'CSV':
           serialized = this.convertToCSV(data);
-          contentType = 'text/csv';
           break;
         case 'PDF':
           // PDF generation would require a PDF library
@@ -529,7 +531,7 @@ export class GdprExportService {
         exportId,
         status: 'FAILED',
         format,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -540,7 +542,7 @@ export class GdprExportService {
    * @param exportId - Export ID
    * @returns Export job status
    */
-  async getExportStatus(exportId: string): Promise<ExportJobResult | null> {
+  async getExportStatus(_exportId: string): Promise<ExportJobResult | null> {
     // In production: Query from database or cache
     // Placeholder implementation
     return null;
@@ -586,7 +588,6 @@ export class GdprExportService {
    * Generate checksum for export integrity
    */
   private generateChecksum(data: string): string {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 }

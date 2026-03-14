@@ -23,7 +23,11 @@ import {
   TroubleCodeResponseDto,
   VehicleHealthReportDto,
 } from '../dto/obd.dto';
-import { TroubleCodeSeverity } from '@prisma/client';
+import { TroubleCodeSeverity, Prisma, ObdReading, ObdTroubleCode } from '@prisma/client';
+
+type ObdDeviceWithVehicle = Prisma.ObdDeviceGetPayload<{
+  include: { vehicle: true };
+}>;
 
 @Injectable()
 export class ObdService {
@@ -199,7 +203,7 @@ export class ObdService {
   async recordTroubleCodes(
     deviceId: string,
     codes: TroubleCodeDto[],
-    tenantId: string,
+    _tenantId: string,
   ): Promise<void> {
     const device = await this.prisma.obdDevice.findUnique({
       where: { id: deviceId },
@@ -450,7 +454,7 @@ export class ObdService {
     }
   }
 
-  private mapDeviceToDto(device: any): ObdDeviceResponseDto {
+  private mapDeviceToDto(device: ObdDeviceWithVehicle): ObdDeviceResponseDto {
     return {
       id: device.id,
       serialNumber: device.serialNumber,
@@ -470,7 +474,7 @@ export class ObdService {
     };
   }
 
-  private mapReadingToDto(reading: any): ObdReadingResponseDto {
+  private mapReadingToDto(reading: ObdReading): ObdReadingResponseDto {
     return {
       id: reading.id,
       recordedAt: reading.recordedAt,
@@ -487,7 +491,7 @@ export class ObdService {
     };
   }
 
-  private mapTroubleCodeToDto(code: any): TroubleCodeResponseDto {
+  private mapTroubleCodeToDto(code: ObdTroubleCode): TroubleCodeResponseDto {
     return {
       id: code.id,
       code: code.code,

@@ -22,19 +22,9 @@ let VoiceModule = class VoiceModule {
 exports.VoiceModule = VoiceModule;
 exports.VoiceModule = VoiceModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule,
-            common_module_1.CommonModule,
-            customer_module_1.CustomerModule,
-            booking_module_1.BookingModule,
-        ],
+        imports: [config_1.ConfigModule, common_module_1.CommonModule, customer_module_1.CustomerModule, booking_module_1.BookingModule],
         controllers: [voice_webhook_controller_1.VoiceWebhookController],
-        providers: [
-            vapi_webhook_service_1.VapiWebhookService,
-            intent_handler_service_1.IntentHandlerService,
-            escalation_service_1.EscalationService,
-            voice_event_listener_1.VoiceEventListener,
-        ],
+        providers: [vapi_webhook_service_1.VapiWebhookService, intent_handler_service_1.IntentHandlerService, escalation_service_1.EscalationService, voice_event_listener_1.VoiceEventListener],
         exports: [vapi_webhook_service_1.VapiWebhookService, intent_handler_service_1.IntentHandlerService, escalation_service_1.EscalationService],
     })
 ], VoiceModule);

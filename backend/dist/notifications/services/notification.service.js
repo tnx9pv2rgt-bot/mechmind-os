@@ -20,6 +20,7 @@ const event_emitter_1 = require("@nestjs/event-emitter");
 const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 const prisma_service_1 = require("../../common/services/prisma.service");
+const encryption_service_1 = require("../../common/services/encryption.service");
 const email_service_1 = require("../email/email.service");
 const sms_service_1 = require("../sms/sms.service");
 const send_notification_dto_1 = require("../dto/send-notification.dto");
@@ -47,10 +48,11 @@ class NotificationFailedEvent {
 }
 exports.NotificationFailedEvent = NotificationFailedEvent;
 let NotificationOrchestratorService = NotificationOrchestratorService_1 = class NotificationOrchestratorService {
-    constructor(emailService, smsService, prisma, configService, eventEmitter, notificationQueue) {
+    constructor(emailService, smsService, prisma, encryption, configService, eventEmitter, notificationQueue) {
         this.emailService = emailService;
         this.smsService = smsService;
         this.prisma = prisma;
+        this.encryption = encryption;
         this.configService = configService;
         this.eventEmitter = eventEmitter;
         this.notificationQueue = notificationQueue;
@@ -146,16 +148,26 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
     async sendBoth(customer, workshop, type, data, notificationId) {
         this.logger.log(`[${notificationId}] Sending both SMS and Email notifications`);
         const results = await Promise.allSettled([
-            customer.phone ? this.sendSmsNotification(customer, workshop, type, data) : Promise.resolve({ success: false, error: 'No phone' }),
-            customer.email ? this.sendEmailNotification(customer, workshop, type, data) : Promise.resolve({ success: false, error: 'No email' }),
+            customer.phone
+                ? this.sendSmsNotification(customer, workshop, type, data)
+                : Promise.resolve({ success: false, error: 'No phone' }),
+            customer.email
+                ? this.sendEmailNotification(customer, workshop, type, data)
+                : Promise.resolve({ success: false, error: 'No email' }),
         ]);
-        const smsResult = results[0].status === 'fulfilled' ? results[0].value : { success: false, error: 'SMS promise rejected' };
-        const emailResult = results[1].status === 'fulfilled' ? results[1].value : { success: false, error: 'Email promise rejected' };
+        const smsResult = results[0].status === 'fulfilled'
+            ? results[0].value
+            : { success: false, error: 'SMS promise rejected' };
+        const emailResult = results[1].status === 'fulfilled'
+            ? results[1].value
+            : { success: false, error: 'Email promise rejected' };
         const success = smsResult.success || emailResult.success;
         return {
             success,
             channel: send_notification_dto_1.NotificationChannel.BOTH,
-            messageId: smsResult.success ? smsResult.messageId : emailResult?.messageId,
+            messageId: smsResult.success
+                ? smsResult.messageId
+                : emailResult?.messageId,
             error: !success ? `SMS: ${smsResult.error}, Email: ${emailResult.error}` : undefined,
         };
     }
@@ -163,37 +175,38 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
         if (!customer.phone) {
             return { success: false, error: 'No phone number' };
         }
+        const s = data;
         try {
             switch (type) {
                 case send_notification_dto_1.NotificationType.BOOKING_CONFIRMATION:
                     return await this.smsService.sendBookingConfirmation(customer.phone, {
-                        date: data.date,
-                        time: data.time,
-                        service: data.service,
+                        date: s.date,
+                        time: s.time,
+                        service: s.service,
                         workshopName: workshop.name,
-                        bookingCode: data.bookingCode,
+                        bookingCode: s.bookingCode,
                     });
                 case send_notification_dto_1.NotificationType.BOOKING_REMINDER:
                     return await this.smsService.sendBookingReminder(customer.phone, {
-                        date: data.date,
-                        time: data.time,
-                        service: data.service,
+                        date: s.date,
+                        time: s.time,
+                        service: s.service,
                         workshopName: workshop.name,
-                        bookingCode: data.bookingCode,
+                        bookingCode: s.bookingCode,
                     });
                 case send_notification_dto_1.NotificationType.BOOKING_CANCELLED:
                     return await this.smsService.sendBookingCancelled(customer.phone, {
-                        date: data.date,
-                        service: data.service,
+                        date: s.date,
+                        service: s.service,
                         workshopName: workshop.name,
-                        bookingCode: data.bookingCode,
-                        cancellationReason: data.cancellationReason,
+                        bookingCode: s.bookingCode,
+                        cancellationReason: s.cancellationReason,
                     });
                 case send_notification_dto_1.NotificationType.INVOICE_READY:
                     return await this.smsService.sendInvoiceReady(customer.phone, {
-                        invoiceNumber: data.invoiceNumber,
-                        amount: data.amount,
-                        downloadUrl: data.downloadUrl,
+                        invoiceNumber: s.invoiceNumber,
+                        amount: s.amount,
+                        downloadUrl: s.downloadUrl,
                         workshopName: workshop.name,
                     });
                 default:
@@ -201,39 +214,41 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
             }
         }
         catch (error) {
-            this.logger.error(`SMS sending failed: ${error.message}`);
-            return { success: false, error: error.message };
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`SMS sending failed: ${errorMessage}`);
+            return { success: false, error: errorMessage };
         }
     }
     async sendEmailNotification(customer, workshop, type, data) {
         if (!customer.email) {
             return { success: false, error: 'No email address' };
         }
+        const s = data;
         try {
             switch (type) {
                 case send_notification_dto_1.NotificationType.BOOKING_CONFIRMATION:
                     return await this.emailService.sendBookingConfirmation({
                         customerName: customer.name,
                         customerEmail: customer.email,
-                        service: data.service,
-                        date: data.date,
-                        time: data.time,
-                        vehicle: data.vehicle,
-                        bookingCode: data.bookingCode,
+                        service: s.service,
+                        date: s.date,
+                        time: s.time,
+                        vehicle: s.vehicle,
+                        bookingCode: s.bookingCode,
                         workshopName: workshop.name,
                         workshopAddress: workshop.address,
                         workshopPhone: workshop.phone,
-                        notes: data.notes,
+                        notes: s.notes,
                     });
                 case send_notification_dto_1.NotificationType.BOOKING_REMINDER:
                     return await this.emailService.sendBookingReminder({
                         customerName: customer.name,
                         customerEmail: customer.email,
-                        service: data.service,
-                        date: data.date,
-                        time: data.time,
-                        vehicle: data.vehicle,
-                        bookingCode: data.bookingCode,
+                        service: s.service,
+                        date: s.date,
+                        time: s.time,
+                        vehicle: s.vehicle,
+                        bookingCode: s.bookingCode,
                         workshopName: workshop.name,
                         workshopAddress: workshop.address,
                     });
@@ -241,56 +256,57 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
                     return await this.emailService.sendBookingCancelled({
                         customerName: customer.name,
                         customerEmail: customer.email,
-                        service: data.service,
-                        date: data.date,
-                        bookingCode: data.bookingCode,
+                        service: s.service,
+                        date: s.date,
+                        bookingCode: s.bookingCode,
                         workshopName: workshop.name,
-                        cancellationReason: data.cancellationReason,
+                        cancellationReason: s.cancellationReason,
                     });
                 case send_notification_dto_1.NotificationType.INVOICE_READY:
                     return await this.emailService.sendInvoiceReady({
                         customerName: customer.name,
                         customerEmail: customer.email,
-                        invoiceNumber: data.invoiceNumber,
-                        invoiceDate: data.invoiceDate,
-                        amount: data.amount,
-                        downloadUrl: data.downloadUrl,
+                        invoiceNumber: s.invoiceNumber,
+                        invoiceDate: s.invoiceDate,
+                        amount: s.amount,
+                        downloadUrl: s.downloadUrl,
                         workshopName: workshop.name,
                     });
                 case send_notification_dto_1.NotificationType.GDPR_EXPORT_READY:
                     return await this.emailService.sendGdprDataExport({
                         customerName: customer.name,
                         customerEmail: customer.email,
-                        downloadUrl: data.downloadUrl,
-                        expiryDate: data.expiryDate,
-                        requestId: data.requestId,
+                        downloadUrl: s.downloadUrl,
+                        expiryDate: s.expiryDate,
+                        requestId: s.requestId,
                     });
                 case send_notification_dto_1.NotificationType.WELCOME:
                     return await this.emailService.sendWelcome({
                         customerName: customer.name,
                         customerEmail: customer.email,
                         workshopName: workshop.name,
-                        loginUrl: data.loginUrl,
+                        loginUrl: s.loginUrl,
                     });
                 case send_notification_dto_1.NotificationType.PASSWORD_RESET:
                     return await this.emailService.sendPasswordReset({
                         customerName: customer.name,
                         customerEmail: customer.email,
-                        resetUrl: data.resetUrl,
-                        expiryHours: data.expiryHours || 24,
+                        resetUrl: s.resetUrl,
+                        expiryHours: Number(data.expiryHours) || 24,
                     });
                 default:
                     return { success: false, error: `Email not supported for type: ${type}` };
             }
         }
         catch (error) {
-            this.logger.error(`Email sending failed: ${error.message}`);
-            return { success: false, error: error.message };
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Email sending failed: ${errorMessage}`);
+            return { success: false, error: errorMessage };
         }
     }
     async queueNotification(dto, delayMs) {
         const jobId = `notif-${this.generateId()}`;
-        const job = await this.notificationQueue.add('send-notification', dto, {
+        await this.notificationQueue.add('send-notification', dto, {
             jobId,
             delay: delayMs,
             attempts: 3,
@@ -309,34 +325,44 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
         const results = [];
         let successful = 0;
         let failed = 0;
+        const BATCH_SIZE = 10;
         const throttleMs = options.throttleMs || 100;
-        for (const notification of notifications) {
-            try {
-                const result = await this.notifyCustomer(notification.customerId, notification.tenantId, notification.type, notification.data, notification.channel);
-                results.push(result);
-                if (result.success) {
-                    successful++;
+        for (let i = 0; i < notifications.length; i += BATCH_SIZE) {
+            const batch = notifications.slice(i, i + BATCH_SIZE);
+            const batchResults = await Promise.allSettled(batch.map(notification => this.notifyCustomer(notification.customerId, notification.tenantId, notification.type, notification.data, notification.channel)));
+            let shouldBreak = false;
+            for (let j = 0; j < batchResults.length; j++) {
+                const settled = batchResults[j];
+                if (settled.status === 'fulfilled') {
+                    results.push(settled.value);
+                    if (settled.value.success) {
+                        successful++;
+                    }
+                    else {
+                        failed++;
+                        if (!options.continueOnError) {
+                            shouldBreak = true;
+                            break;
+                        }
+                    }
                 }
                 else {
                     failed++;
+                    results.push({
+                        success: false,
+                        channel: batch[j].channel,
+                        error: settled.reason instanceof Error ? settled.reason.message : 'Unknown error',
+                    });
                     if (!options.continueOnError) {
+                        shouldBreak = true;
                         break;
                     }
                 }
-                if (throttleMs > 0) {
-                    await this.delay(throttleMs);
-                }
             }
-            catch (error) {
-                failed++;
-                results.push({
-                    success: false,
-                    channel: notification.channel,
-                    error: error.message,
-                });
-                if (!options.continueOnError) {
-                    break;
-                }
+            if (shouldBreak)
+                break;
+            if (throttleMs > 0 && i + BATCH_SIZE < notifications.length) {
+                await this.delay(throttleMs);
             }
         }
         return {
@@ -346,7 +372,7 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
             results,
         };
     }
-    async getCustomerPreferences(customerId, tenantId) {
+    async getCustomerPreferences(_customerId, _tenantId) {
         const defaults = {
             preferredChannel: send_notification_dto_1.NotificationChannel.AUTO,
             bookingConfirmations: true,
@@ -357,12 +383,12 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
         try {
             return defaults;
         }
-        catch (error) {
-            this.logger.warn(`Could not fetch preferences for customer ${customerId}`);
+        catch (_error) {
+            this.logger.warn(`Could not fetch preferences for customer ${_customerId}`);
             return defaults;
         }
     }
-    async updateCustomerPreferences(customerId, tenantId, preferences) {
+    async updateCustomerPreferences(customerId, _tenantId, _preferences) {
         this.logger.log(`Updated preferences for customer ${customerId}`);
     }
     determineChannel(customer, preference) {
@@ -390,15 +416,27 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
             });
             if (!customer)
                 return null;
+            const firstName = customer.encryptedFirstName
+                ? await this.encryption.decrypt(customer.encryptedFirstName)
+                : '';
+            const lastName = customer.encryptedLastName
+                ? await this.encryption.decrypt(customer.encryptedLastName)
+                : '';
+            const email = customer.encryptedEmail
+                ? await this.encryption.decrypt(customer.encryptedEmail)
+                : '';
+            const phone = customer.encryptedPhone
+                ? await this.encryption.decrypt(customer.encryptedPhone)
+                : undefined;
             return {
                 id: customer.id,
-                name: `${customer.encryptedFirstName || ''} ${customer.encryptedLastName || ''}`.trim() || 'Customer',
-                email: customer.encryptedEmail || '',
-                phone: customer.encryptedPhone || undefined,
+                name: `${firstName} ${lastName}`.trim() || 'Customer',
+                email,
+                phone,
             };
         }
         catch (error) {
-            this.logger.error(`Error fetching customer: ${error.message}`);
+            this.logger.error(`Error fetching customer: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return null;
         }
     }
@@ -423,10 +461,11 @@ let NotificationOrchestratorService = NotificationOrchestratorService_1 = class 
 exports.NotificationOrchestratorService = NotificationOrchestratorService;
 exports.NotificationOrchestratorService = NotificationOrchestratorService = NotificationOrchestratorService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __param(5, (0, bullmq_1.InjectQueue)('notification-queue')),
+    __param(6, (0, bullmq_1.InjectQueue)('notification-queue')),
     __metadata("design:paramtypes", [email_service_1.EmailService,
         sms_service_1.SmsService,
         prisma_service_1.PrismaService,
+        encryption_service_1.EncryptionService,
         config_1.ConfigService,
         event_emitter_1.EventEmitter2,
         bullmq_2.Queue])

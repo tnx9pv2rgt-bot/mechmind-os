@@ -263,6 +263,8 @@ model Vehicle {
   year         Int?
   vin          String?
   notes        String?
+  status       String   @default("active") // active, in_service, waiting_parts, ready
+  mileage      Int?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -316,6 +318,8 @@ model Booking {
   notes           String?
   source          BookingSource @default(WEB)
   vapiCallId      String?       @map("vapi_call_id")
+  technicianId    String?       @map("technician_id")
+  liftPosition    String?       @map("lift_position")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 

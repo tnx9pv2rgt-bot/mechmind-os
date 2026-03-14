@@ -41,7 +41,7 @@ export class CreateDataSubjectRequestDto {
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -107,7 +107,7 @@ export class CreateConsentDto {
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -161,7 +161,7 @@ export class DataRectificationDto {
   tenantId: string;
 
   @IsObject()
-  changes: Record<string, any>;
+  changes: Record<string, unknown>;
 
   @IsOptional()
   @IsString()
@@ -179,7 +179,7 @@ export class GdprWebhookPayloadDto {
   timestamp: string;
 
   @IsObject()
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 
   @IsOptional()
   @IsString()

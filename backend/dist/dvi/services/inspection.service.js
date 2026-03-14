@@ -1,10 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -16,6 +49,14 @@ const prisma_service_1 = require("../../common/services/prisma.service");
 const s3_service_1 = require("../../common/services/s3.service");
 const notifications_service_1 = require("../../notifications/services/notifications.service");
 const client_1 = require("@prisma/client");
+const inspectionInclude = {
+    vehicle: true,
+    customer: true,
+    mechanic: { select: { id: true, name: true } },
+    items: { include: { templateItem: true, photos: true } },
+    findings: true,
+    photos: true,
+};
 let InspectionService = class InspectionService {
     constructor(prisma, config, s3, notifications) {
         this.prisma = prisma;
@@ -256,7 +297,84 @@ let InspectionService = class InspectionService {
     }
     async generateReport(tenantId, inspectionId) {
         const inspection = await this.findById(tenantId, inspectionId);
-        throw new Error('PDF generation not yet implemented');
+        const PDFDocument = (await Promise.resolve().then(() => __importStar(require('pdfkit')))).default;
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            const doc = new PDFDocument({ size: 'A4', margin: 50 });
+            doc.on('data', (chunk) => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+            doc.fontSize(22).text('Digital Vehicle Inspection Report', { align: 'center' });
+            doc.moveDown(0.5);
+            doc.fontSize(10).fillColor('#666').text(`Report ID: ${inspection.id}`, { align: 'center' });
+            doc.moveDown(1);
+            doc.fontSize(14).fillColor('#000').text('Vehicle Information');
+            doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+            doc.moveDown(0.3);
+            doc.fontSize(10);
+            doc.text(`Make/Model: ${inspection.vehicle.make} ${inspection.vehicle.model}`);
+            doc.text(`License Plate: ${inspection.vehicle.licensePlate}`);
+            if (inspection.mileage)
+                doc.text(`Mileage: ${inspection.mileage.toLocaleString()} km`);
+            if (inspection.fuelLevel)
+                doc.text(`Fuel Level: ${inspection.fuelLevel}`);
+            doc.text(`Mechanic: ${inspection.mechanic.name}`);
+            doc.text(`Date: ${inspection.startedAt.toLocaleDateString('it-IT')}`);
+            doc.moveDown(1);
+            doc.fontSize(14).text('Findings Summary');
+            doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+            doc.moveDown(0.3);
+            doc.fontSize(10);
+            if (inspection.findings.length === 0) {
+                doc.font('Helvetica-Oblique').text('No issues found.').font('Helvetica');
+            }
+            else {
+                for (const finding of inspection.findings) {
+                    const severityColor = finding.severity === 'CRITICAL'
+                        ? '#dc2626'
+                        : finding.severity === 'HIGH'
+                            ? '#ea580c'
+                            : finding.severity === 'MEDIUM'
+                                ? '#ca8a04'
+                                : '#16a34a';
+                    doc.fillColor(severityColor).text(`[${finding.severity}] `, { continued: true });
+                    doc.fillColor('#000').text(`${finding.title} — ${finding.description}`);
+                    if (finding.recommendation) {
+                        doc.fillColor('#555').text(`  Recommendation: ${finding.recommendation}`);
+                    }
+                    if (finding.estimatedCost !== undefined) {
+                        doc.text(`  Estimated Cost: €${finding.estimatedCost.toFixed(2)}`);
+                    }
+                    doc.fillColor('#000');
+                    doc.moveDown(0.3);
+                }
+            }
+            doc.moveDown(1);
+            doc.fontSize(14).text('Inspection Items');
+            doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+            doc.moveDown(0.3);
+            doc.fontSize(10);
+            for (const item of inspection.items) {
+                const statusIcon = item.status === 'CHECKED'
+                    ? 'OK'
+                    : item.status === 'ISSUE_FOUND'
+                        ? 'ISSUE'
+                        : item.status === 'NOT_APPLICABLE'
+                            ? 'N/A'
+                            : 'PENDING';
+                doc.text(`${item.category} > ${item.name}: ${statusIcon}`);
+                if (item.notes)
+                    doc.fillColor('#555').text(`  Notes: ${item.notes}`).fillColor('#000');
+            }
+            doc.moveDown(2);
+            doc
+                .fontSize(8)
+                .fillColor('#999')
+                .text(`Generated by MechMind OS on ${new Date().toLocaleString('it-IT')}`, {
+                align: 'center',
+            });
+            doc.end();
+        });
     }
     async notifyCustomer(inspection) {
         await this.notifications.sendNotification({
@@ -272,7 +390,7 @@ let InspectionService = class InspectionService {
                 findingsCount: inspection.findings.length,
             },
             email: {
-                to: inspection.customer.encryptedEmail,
+                to: inspection.customer.encryptedEmail || '',
                 subject: 'Your Vehicle Inspection is Ready',
                 template: 'inspection-ready',
                 variables: {
@@ -304,20 +422,22 @@ let InspectionService = class InspectionService {
             },
             customer: {
                 id: inspection.customer.id,
-                name: inspection.customer.encryptedName || '',
+                name: [inspection.customer.encryptedFirstName, inspection.customer.encryptedLastName]
+                    .filter(Boolean)
+                    .join(' '),
             },
             mechanic: {
                 id: inspection.mechanic.id,
                 name: inspection.mechanic.name,
             },
-            items: inspection.items.map((item) => ({
+            items: inspection.items.map(item => ({
                 id: item.id,
                 category: item.templateItem.category,
                 name: item.templateItem.name,
                 status: item.status,
                 notes: item.notes ?? undefined,
                 severity: item.severity ?? undefined,
-                photos: item.photos.map((p) => ({
+                photos: item.photos.map(p => ({
                     id: p.id,
                     url: p.url,
                     thumbnailUrl: p.thumbnailUrl ?? undefined,
@@ -326,7 +446,7 @@ let InspectionService = class InspectionService {
                     takenAt: p.takenAt,
                 })),
             })),
-            findings: inspection.findings.map((f) => ({
+            findings: inspection.findings.map(f => ({
                 id: f.id,
                 category: f.category,
                 title: f.title,
@@ -337,7 +457,7 @@ let InspectionService = class InspectionService {
                 status: f.status,
                 approvedByCustomer: f.approvedByCustomer,
             })),
-            photos: inspection.photos.map((p) => ({
+            photos: inspection.photos.map(p => ({
                 id: p.id,
                 url: p.url,
                 thumbnailUrl: p.thumbnailUrl ?? undefined,

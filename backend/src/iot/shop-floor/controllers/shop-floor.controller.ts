@@ -23,6 +23,7 @@ import {
   ShopFloorEventDto,
   ShopFloorAnalyticsDto,
 } from '../dto/shop-floor.dto';
+import { BaySensor } from '../interfaces/shop-floor.interface';
 import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('Shop Floor')
@@ -61,7 +62,7 @@ export class ShopFloorController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Add sensor to bay' })
   @ApiResponse({ status: 201 })
-  async addBaySensor(@Param('id') bayId: string, @Body() dto: AddBaySensorDto): Promise<any> {
+  async addBaySensor(@Param('id') bayId: string, @Body() dto: AddBaySensorDto): Promise<BaySensor> {
     return await this.shopFloorService.addBaySensor(bayId, {
       type: dto.type,
       name: dto.name,

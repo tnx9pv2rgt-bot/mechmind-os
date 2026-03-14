@@ -11,29 +11,26 @@ export type BillingEmailType =
   | 'invoice_created'
   | 'invoice_paid'
   | 'grace_period_warning'
-  | 'account_suspended'
+  | 'account_suspended';
 
 interface EmailData {
-  tenantId: string
-  tenantName?: string
-  email: string
-  plan?: string
-  amount?: number
-  currency?: string
-  date?: string
-  invoiceId?: string
-  gracePeriodEnd?: string
+  tenantId: string;
+  tenantName?: string;
+  email: string;
+  plan?: string;
+  amount?: number;
+  currency?: string;
+  date?: string;
+  invoiceId?: string;
+  gracePeriodEnd?: string;
 }
 
 /**
  * Send billing-related email notification
  */
-export async function sendBillingEmail(
-  type: BillingEmailType,
-  data: EmailData
-): Promise<void> {
-  const template = getEmailTemplate(type, data)
-  
+export async function sendBillingEmail(type: BillingEmailType, data: EmailData): Promise<void> {
+  const template = getEmailTemplate(type, data);
+
   try {
     // Call the notifications API
     const response = await fetch('/api/notifications/send', {
@@ -49,16 +46,16 @@ export async function sendBillingEmail(
           text: template.text,
         },
       }),
-    })
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to send email')
+      throw new Error('Failed to send email');
     }
 
-    console.log(`📧 Billing email sent: ${type} to ${data.email}`)
+    console.info(`Billing email sent: ${type} to ${data.email}`);
   } catch (error) {
-    console.error('Failed to send billing email:', error)
-    throw error
+    console.error('Failed to send billing email:', error);
+    throw error;
   }
 }
 
@@ -83,7 +80,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: `Benvenuto in MechMind OS! Il tuo abbonamento ${data.plan} è stato attivato.`,
     },
-    
+
     subscription_canceled: {
       subject: '❌ Abbonamento Cancellato',
       html: `
@@ -96,7 +93,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: 'Il tuo abbonamento è stato cancellato. Accesso attivo fino alla fine del periodo.',
     },
-    
+
     payment_success: {
       subject: '✅ Pagamento Confermato',
       html: `
@@ -108,7 +105,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: `Pagamento di ${formatAmount(data.amount, data.currency)} ricevuto. Grazie!`,
     },
-    
+
     payment_failed: {
       subject: '⚠️ Pagamento Non Riuscito',
       html: `
@@ -123,7 +120,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: `Pagamento non riuscito. Aggiorna il metodo di pagamento entro 3 giorni.`,
     },
-    
+
     invoice_created: {
       subject: '📄 Nuova Fattura Disponibile',
       html: `
@@ -136,7 +133,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: `Nuova fattura disponibile: ${formatAmount(data.amount, data.currency)}`,
     },
-    
+
     invoice_paid: {
       subject: '✅ Fattura Pagata',
       html: `
@@ -147,7 +144,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: `Fattura #${data.invoiceId} pagata: ${formatAmount(data.amount, data.currency)}`,
     },
-    
+
     grace_period_warning: {
       subject: '⏰ Attenzione: Periodo di Grazia in Scadenza',
       html: `
@@ -160,7 +157,7 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: `Periodo di grazia in scadenza il ${formatDate(data.gracePeriodEnd)}. Aggiorna il pagamento.`,
     },
-    
+
     account_suspended: {
       subject: '🚫 Account Sospeso',
       html: `
@@ -173,30 +170,30 @@ function getEmailTemplate(type: BillingEmailType, data: EmailData) {
       `,
       text: 'Account sospeso. Aggiorna il metodo di pagamento per riattivare.',
     },
-  }
+  };
 
-  return templates[type]
+  return templates[type];
 }
 
 /**
  * Format amount for display
  */
 function formatAmount(amount?: number, currency?: string): string {
-  if (amount === undefined) return 'N/A'
+  if (amount === undefined) return 'N/A';
   return new Intl.NumberFormat('it-IT', {
     style: 'currency',
     currency: currency?.toUpperCase() || 'EUR',
-  }).format(amount / 100)
+  }).format(amount / 100);
 }
 
 /**
  * Format date for display
  */
 function formatDate(date?: string): string {
-  if (!date) return 'N/A'
+  if (!date) return 'N/A';
   return new Date(date).toLocaleDateString('it-IT', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  })
+  });
 }

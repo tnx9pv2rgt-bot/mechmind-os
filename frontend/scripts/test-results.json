@@ -1,0 +1,386 @@
+{
+  "/auth": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/auth/forgot-password": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/auth/magic-link/verify": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/auth/mfa/setup": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/auth/mfa/verify": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/login": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/register": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/reset-password": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/billing/cancel": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/billing/success": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/": {
+    "status": 200,
+    "finalUrl": null,
+    "redirected": false,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/analytics": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/billing": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/bookings": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/bookings/new": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers/new": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers/new/landing": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers/new/step1": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers/new/step2": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers/new/step3": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/customers/new/step4": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/inspections": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/inspections/new": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/invoices": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/invoices/financial": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/invoices/quotes": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/locations": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/maintenance": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/obd": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/parts": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/settings": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/subscription": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/vehicles": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/vehicles/new": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/warranty": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/warranty/claims": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/dashboard/admin/subscriptions": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/auth",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/dashboard": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/bookings": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/bookings/new": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/documents": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/inspections": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/maintenance": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/settings": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  },
+  "/portal/warranty": {
+    "status": 200,
+    "finalUrl": "http://localhost:3000/portal/login",
+    "redirected": true,
+    "errors": [],
+    "warnings": [],
+    "clean": true
+  }
+}

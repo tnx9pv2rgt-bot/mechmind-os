@@ -2,12 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@common/services/prisma.service';
-import {
-  NotificationV2Service,
-  CreateNotificationDTO,
-  NotificationResult,
-  NotificationTemplateData,
-} from './notification-v2.service';
+import { EncryptionService } from '@common/services/encryption.service';
+import { NotificationV2Service, CreateNotificationDTO } from './notification-v2.service';
 
 // Mock Twilio
 const mockTwilioCreate = jest.fn();
@@ -59,7 +55,6 @@ describe('NotificationV2Service', () => {
   let service: NotificationV2Service;
   let prisma: PrismaService;
   let eventEmitter: EventEmitter2;
-  let configService: ConfigService;
 
   const mockTenantId = 'tenant-uuid-1';
   const mockCustomerId = 'customer-uuid-1';
@@ -149,13 +144,21 @@ describe('NotificationV2Service', () => {
             emit: jest.fn(),
           },
         },
+        {
+          provide: EncryptionService,
+          useValue: {
+            encrypt: jest.fn((val: string) => `enc-${val}`),
+            decrypt: jest.fn((val: string) => val.replace('enc-', '')),
+            hash: jest.fn((val: string) => `hash-${val}`),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<NotificationV2Service>(NotificationV2Service);
     prisma = module.get<PrismaService>(PrismaService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
-    configService = module.get<ConfigService>(ConfigService);
+    module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -699,7 +702,7 @@ describe('NotificationV2Service', () => {
       (prisma.notification.update as jest.Mock).mockResolvedValue(mockNotification);
       mockTwilioCreate.mockResolvedValue({ sid: 'SM-RETRY-1' });
 
-      const result = await service.retryNotification(mockNotificationId);
+      await service.retryNotification(mockNotificationId);
 
       expect(prisma.notification.update).toHaveBeenCalledWith({
         where: { id: mockNotificationId },
@@ -865,6 +868,14 @@ describe('NotificationV2Service', () => {
             provide: EventEmitter2,
             useValue: { emit: jest.fn() },
           },
+          {
+            provide: EncryptionService,
+            useValue: {
+              encrypt: jest.fn((val: string) => `enc-${val}`),
+              decrypt: jest.fn((val: string) => val.replace('enc-', '')),
+              hash: jest.fn((val: string) => `hash-${val}`),
+            },
+          },
         ],
       }).compile();
 
@@ -881,6 +892,350 @@ describe('NotificationV2Service', () => {
       const result = await devService.sendWhatsApp('+393331234567', 'Dev WhatsApp test');
 
       expect(result).toContain('mock-whatsapp-id-');
+    });
+  });
+
+  // =========================================================================
+  // sendWhatsApp() — error path (lines 148-151)
+  // =========================================================================
+  describe('sendWhatsApp error handling', () => {
+    it('should throw when Twilio WhatsApp send fails', async () => {
+      mockTwilioCreate.mockRejectedValue(new Error('WhatsApp Twilio error'));
+
+      await expect(service.sendWhatsApp('+393331234567', 'Test message')).rejects.toThrow(
+        'WhatsApp Twilio error',
+      );
+    });
+
+    it('should handle non-Error thrown from Twilio WhatsApp', async () => {
+      mockTwilioCreate.mockRejectedValue('string error');
+
+      await expect(service.sendWhatsApp('+393331234567', 'Test message')).rejects.toBe(
+        'string error',
+      );
+    });
+  });
+
+  // =========================================================================
+  // processPending() (lines 297-328)
+  // =========================================================================
+  describe('processPending', () => {
+    it('should process pending notifications and return counts', async () => {
+      const pendingNotification = {
+        ...mockNotification,
+        status: 'PENDING',
+        customer: mockCustomer,
+      };
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([pendingNotification]);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(pendingNotification);
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-PENDING-1' });
+
+      const result = await service.processPending();
+
+      expect(result.processed).toBe(1);
+      expect(result.failed).toBe(0);
+    });
+
+    it('should return zero counts when no pending notifications exist', async () => {
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.processPending();
+
+      expect(result.processed).toBe(0);
+      expect(result.failed).toBe(0);
+    });
+
+    it('should count failed notifications and call markFailed', async () => {
+      const pendingNotification = {
+        ...mockNotification,
+        status: 'PENDING',
+        customer: mockCustomer,
+      };
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([pendingNotification]);
+      mockTwilioCreate.mockRejectedValue(new Error('Send failed'));
+      (prisma.notification.update as jest.Mock).mockResolvedValue(pendingNotification);
+
+      const result = await service.processPending();
+
+      expect(result.processed).toBe(0);
+      expect(result.failed).toBe(1);
+      // markFailed should have been called (line 600)
+      expect(prisma.notification.update).toHaveBeenCalledWith({
+        where: { id: mockNotificationId },
+        data: expect.objectContaining({
+          status: 'FAILED',
+          error: 'Send failed',
+          failedAt: expect.any(Date),
+        }),
+      });
+    });
+
+    it('should handle non-Error objects in processPending catch', async () => {
+      const pendingNotification = {
+        ...mockNotification,
+        status: 'PENDING',
+        customer: mockCustomer,
+      };
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([pendingNotification]);
+      mockTwilioCreate.mockRejectedValue('string error');
+      (prisma.notification.update as jest.Mock).mockResolvedValue(pendingNotification);
+
+      const result = await service.processPending();
+
+      expect(result.failed).toBe(1);
+      expect(prisma.notification.update).toHaveBeenCalledWith({
+        where: { id: mockNotificationId },
+        data: expect.objectContaining({
+          error: 'Unknown error',
+        }),
+      });
+    });
+
+    it('should process multiple notifications with mixed results', async () => {
+      const notification1 = {
+        ...mockNotification,
+        id: 'notif-1',
+        status: 'PENDING',
+        customer: mockCustomer,
+      };
+      const notification2 = {
+        ...mockNotification,
+        id: 'notif-2',
+        status: 'PENDING',
+        customer: mockCustomer,
+      };
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([notification1, notification2]);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(notification1);
+      mockTwilioCreate
+        .mockResolvedValueOnce({ sid: 'SM-OK' })
+        .mockRejectedValueOnce(new Error('fail'));
+
+      const result = await service.processPending();
+
+      expect(result.processed).toBe(1);
+      expect(result.failed).toBe(1);
+    });
+  });
+
+  // =========================================================================
+  // processNotification() — WhatsApp + default branch (lines 570-573)
+  // =========================================================================
+  describe('processNotification via retryNotification', () => {
+    it('should process WhatsApp channel notification', async () => {
+      const whatsappNotification = {
+        ...mockNotification,
+        channel: 'WHATSAPP',
+        retries: 0,
+        maxRetries: 3,
+        customer: mockCustomer,
+      };
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(whatsappNotification);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(whatsappNotification);
+      mockTwilioCreate.mockResolvedValue({ sid: 'WA-RETRY-1' });
+
+      const result = await service.retryNotification(mockNotificationId);
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('WA-RETRY-1');
+    });
+
+    it('should throw for unsupported channel in processNotification', async () => {
+      const emailNotification = {
+        ...mockNotification,
+        channel: 'EMAIL',
+        retries: 0,
+        maxRetries: 3,
+        customer: mockCustomer,
+      };
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(emailNotification);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(emailNotification);
+
+      await expect(service.retryNotification(mockNotificationId)).rejects.toThrow(
+        'Unsupported channel',
+      );
+    });
+
+    it('should generate message from template when existing message is empty', async () => {
+      const notifNoMessage = {
+        ...mockNotification,
+        message: '',
+        retries: 0,
+        maxRetries: 3,
+        customer: mockCustomer,
+      };
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(notifNoMessage);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(notifNoMessage);
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-GEN-1' });
+
+      const result = await service.retryNotification(mockNotificationId);
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // formatPhoneNumber() — branches (lines 632, 634, 638)
+  // =========================================================================
+  describe('formatPhoneNumber edge cases', () => {
+    it('should format phone starting with 00 (international prefix)', async () => {
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-00-1' });
+
+      await service.sendSMS('0039333123456', 'Test');
+
+      expect(mockTwilioCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '+39333123456',
+        }),
+      );
+    });
+
+    it('should format phone starting with 3 (Italian mobile without prefix)', async () => {
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-3-1' });
+
+      await service.sendSMS('3331234567', 'Test');
+
+      expect(mockTwilioCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '+3331234567',
+        }),
+      );
+    });
+
+    it('should add +39 prefix for numbers not starting with +, 00, 3, or 0', async () => {
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-OTHER-1' });
+
+      await service.sendSMS('1234567890', 'Test');
+
+      expect(mockTwilioCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '+391234567890',
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
+  // decryptPhone() — catch block (lines 654-656)
+  // =========================================================================
+  describe('decryptPhone fallback', () => {
+    it('should return raw value when decryption fails', async () => {
+      // Access decryptPhone indirectly via sendImmediate
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedPhone: 'raw-phone-value',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'SENT',
+      });
+      // Make encryption.decrypt throw to trigger catch in decryptPhone
+      const encryptionService = service['encryption'] as unknown as { decrypt: jest.Mock };
+      encryptionService.decrypt.mockImplementationOnce(() => {
+        throw new Error('Decryption failed');
+      });
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-DECRYPT-1' });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        message: 'Test',
+      });
+
+      // Should still succeed using the raw phone value
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // getCustomerName() — all branches (lines 659-668)
+  // =========================================================================
+  describe('getCustomerName', () => {
+    it('should return "Cliente" when encryptedFirstName is null', async () => {
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedFirstName: null,
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'SENT',
+      });
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-NAME-1' });
+
+      // sendImmediate without a message triggers generateMessage which calls getCustomerName
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        // No message — forces template generation with getCustomerName
+      });
+
+      expect(result.success).toBe(true);
+      // The generated message should contain 'Cliente' (default)
+      const createCall = (prisma.notification.create as jest.Mock).mock.calls[0][0];
+      expect(createCall.data.message).toContain('Cliente');
+    });
+
+    it('should return "Cliente" when decrypting name fails', async () => {
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedFirstName: 'bad-encrypted-name',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'SENT',
+      });
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-NAME-2' });
+
+      // Make decrypt throw for the name (second call), succeed for phone (first call)
+      const encryptionService = service['encryption'] as unknown as { decrypt: jest.Mock };
+      encryptionService.decrypt
+        .mockImplementationOnce((val: string) => val.replace('enc-', '')) // phone decrypt ok
+        .mockImplementationOnce(() => {
+          throw new Error('Name decryption failed');
+        });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        // No message — forces getCustomerName call
+      });
+
+      expect(result.success).toBe(true);
+      const createCall = (prisma.notification.create as jest.Mock).mock.calls[0][0];
+      expect(createCall.data.message).toContain('Cliente');
+    });
+
+    it('should decrypt and use customer name when available', async () => {
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedFirstName: 'enc-Mario',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'SENT',
+      });
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-NAME-3' });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        // No message — forces getCustomerName call
+      });
+
+      expect(result.success).toBe(true);
+      const createCall = (prisma.notification.create as jest.Mock).mock.calls[0][0];
+      expect(createCall.data.message).toContain('Mario');
     });
   });
 });

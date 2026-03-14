@@ -5,6 +5,8 @@
  * In development, this prevents multiple instances from being created during hot reloading.
  */
 
+// Note: server-only guard removed because service files mix types and runtime code.
+// PrismaClient only works server-side at runtime regardless of this guard.
 import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {

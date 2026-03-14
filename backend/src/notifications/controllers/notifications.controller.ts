@@ -11,7 +11,7 @@ export class NotificationsController {
   async getNotifications(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20',
-    @Query('unreadOnly') unreadOnly: string = 'false',
+    @Query('unreadOnly') _unreadOnly: string = 'false',
   ) {
     // Mock implementation - in production query from database
     return {

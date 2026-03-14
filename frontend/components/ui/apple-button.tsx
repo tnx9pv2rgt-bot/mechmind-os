@@ -30,7 +30,7 @@ export const AppleButton = forwardRef<HTMLButtonElement, AppleButtonProps>(
     
     const variants = {
       primary: 'bg-apple-blue text-white hover:bg-apple-blue-hover hover:shadow-apple',
-      secondary: 'bg-white text-apple-dark border border-apple-border hover:bg-apple-light-gray',
+      secondary: 'bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] border border-apple-border dark:border-[#424242] hover:bg-apple-light-gray dark:hover:bg-[#3a3a3a]',
       ghost: 'bg-transparent text-apple-blue hover:bg-apple-blue/10',
       text: 'bg-transparent text-apple-blue hover:underline px-0',
     }

@@ -22,7 +22,7 @@ let SseService = SseService_1 = class SseService {
         this.HEARTBEAT_INTERVAL = 30000;
     }
     createEventStream(clientId, tenantId, userId) {
-        return new rxjs_1.Observable((observer) => {
+        return new rxjs_1.Observable(observer => {
             const client = {
                 id: clientId,
                 tenantId,
@@ -35,10 +35,10 @@ let SseService = SseService_1 = class SseService {
             const redisSub = this.redisPubSub.getTenantObservable(tenantId);
             if (redisSub) {
                 const subscription = redisSub.subscribe({
-                    next: (data) => {
+                    next: data => {
                         this.handleNotification(client, data);
                     },
-                    error: (err) => {
+                    error: err => {
                         this.logger.error(`Redis subscription error for ${tenantId}:`, err);
                     },
                 });
@@ -77,7 +77,7 @@ let SseService = SseService_1 = class SseService {
         });
     }
     async subscribeToTenant(tenantId) {
-        const hasExistingClients = Array.from(this.clients.values()).some((c) => c.tenantId === tenantId);
+        const hasExistingClients = Array.from(this.clients.values()).some(c => c.tenantId === tenantId);
         if (!hasExistingClients) {
             await this.redisPubSub.subscribeToTenant(tenantId);
         }
@@ -89,11 +89,10 @@ let SseService = SseService_1 = class SseService {
         if (client.heartbeatInterval) {
             clearInterval(client.heartbeatInterval);
         }
-        const redisSub = client.redisSubscription;
-        if (redisSub) {
-            redisSub.unsubscribe();
+        if (client.redisSubscription) {
+            client.redisSubscription.unsubscribe();
         }
-        const remainingClients = Array.from(this.clients.values()).filter((c) => c.tenantId === client.tenantId && c.id !== clientId);
+        const remainingClients = Array.from(this.clients.values()).filter(c => c.tenantId === client.tenantId && c.id !== clientId);
         if (remainingClients.length === 0) {
             await this.redisPubSub.unsubscribeFromTenant(client.tenantId);
         }
@@ -113,7 +112,7 @@ let SseService = SseService_1 = class SseService {
         return this.clients.size;
     }
     getTenantClientsCount(tenantId) {
-        return Array.from(this.clients.values()).filter((c) => c.tenantId === tenantId).length;
+        return Array.from(this.clients.values()).filter(c => c.tenantId === tenantId).length;
     }
     async disconnectAll() {
         for (const [clientId, client] of this.clients) {

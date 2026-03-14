@@ -34,11 +34,12 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { ClaimForm, ClaimCard, RemainingCoverage } from "@/components/warranty"
 import { 
-  warrantyService, 
-  WarrantyStatus, 
+  warrantyService,
+  WarrantyStatus,
   WarrantyType,
   ClaimStatus,
-  WarrantyWithClaims 
+  WarrantyWithClaims,
+  FileClaimDTO,
 } from "@/lib/services/warrantyService"
 
 const statusConfig: Partial<Record<WarrantyStatus, { label: string; color: string }>> = {
@@ -117,7 +118,7 @@ export default function WarrantyDetailPage() {
     }
   }
 
-  const handleFileClaim = async (data: any) => {
+  const handleFileClaim = async (data: FileClaimDTO) => {
     try {
       setIsSubmittingClaim(true)
       await warrantyService.fileClaim(warrantyId, data)
@@ -201,10 +202,10 @@ export default function WarrantyDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">
               {warranty.vehicle?.make} {warranty.vehicle?.model} Warranty
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-[#636366]">
               {type?.label || 'Warranty'}
             </p>
           </div>
@@ -245,8 +246,8 @@ export default function WarrantyDetailPage() {
               {/* Progress */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Coverage Period</span>
-                  <span className="font-medium text-gray-900">{progress}% elapsed</span>
+                  <span className="text-gray-600 dark:text-gray-400">Coverage Period</span>
+                  <span className="font-medium text-gray-900 dark:text-[#ececec]">{progress}% elapsed</span>
                 </div>
                 <Progress value={progress} className="h-2" />
                 <div className="flex items-center justify-between text-xs text-gray-500">
@@ -259,9 +260,9 @@ export default function WarrantyDetailPage() {
               {warranty.status !== WarrantyStatus.EXPIRED && warranty.status !== WarrantyStatus.VOID && (
                 <div className={cn(
                   "flex items-center gap-3 p-4 rounded-lg",
-                  daysRemaining <= 30 ? "bg-red-50" :
-                  daysRemaining <= 60 ? "bg-amber-50" :
-                  "bg-green-50"
+                  daysRemaining <= 30 ? "bg-red-50 dark:bg-red-900/20" :
+                  daysRemaining <= 60 ? "bg-amber-50 dark:bg-amber-900/20" :
+                  "bg-green-50 dark:bg-green-900/20"
                 )}>
                   <Calendar className={cn(
                     "h-5 w-5",
@@ -272,13 +273,13 @@ export default function WarrantyDetailPage() {
                   <div>
                     <p className={cn(
                       "font-medium",
-                      daysRemaining <= 30 ? "text-red-800" :
-                      daysRemaining <= 60 ? "text-amber-800" :
-                      "text-green-800"
+                      daysRemaining <= 30 ? "text-red-800 dark:text-red-300" :
+                      daysRemaining <= 60 ? "text-amber-800 dark:text-amber-300" :
+                      "text-green-800 dark:text-green-300"
                     )}>
                       {daysRemaining > 0 ? `${daysRemaining} days remaining` : "Expires today"}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Expires on {formatDate(warranty.expirationDate)}
                     </p>
                   </div>
@@ -287,39 +288,39 @@ export default function WarrantyDetailPage() {
 
               {/* Details Grid */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                <div className="bg-gray-50 dark:bg-[#353535] rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
                     <Euro className="h-4 w-4" />
                     <span>Max Coverage</span>
                   </div>
-                  <div className="text-xl font-bold text-gray-900">
+                  <div className="text-xl font-bold text-gray-900 dark:text-[#ececec]">
                     {formatCurrency(warranty.maxClaimAmount || 0)}
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                <div className="bg-gray-50 dark:bg-[#353535] rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
                     <Euro className="h-4 w-4" />
                     <span>Deductible</span>
                   </div>
-                  <div className="text-xl font-bold text-gray-900">
+                  <div className="text-xl font-bold text-gray-900 dark:text-[#ececec]">
                     {formatCurrency(warranty.deductibleAmount || 0)}
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                <div className="bg-gray-50 dark:bg-[#353535] rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
                     <Gauge className="h-4 w-4" />
                     <span>Coverage</span>
                   </div>
-                  <div className="text-xl font-bold text-gray-900">
+                  <div className="text-xl font-bold text-gray-900 dark:text-[#ececec]">
                     {warranty.mileageLimit ? `${warranty.mileageLimit.toLocaleString()} km` : "Unlimited"}
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                <div className="bg-gray-50 dark:bg-[#353535] rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
                     <FileText className="h-4 w-4" />
                     <span>Claims</span>
                   </div>
-                  <div className="text-xl font-bold text-gray-900">
+                  <div className="text-xl font-bold text-gray-900 dark:text-[#ececec]">
                     {warranty.claims?.length || 0}
                   </div>
                 </div>
@@ -451,20 +452,20 @@ export default function WarrantyDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Make</span>
+                  <span className="text-gray-600 dark:text-gray-400">Make</span>
                   <span className="font-medium">{warranty.vehicle.make}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Model</span>
+                  <span className="text-gray-600 dark:text-gray-400">Model</span>
                   <span className="font-medium">{warranty.vehicle.model}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Year</span>
+                  <span className="text-gray-600 dark:text-gray-400">Year</span>
                   <span className="font-medium">{warranty.vehicle.year}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-gray-600">VIN</span>
+                  <span className="text-gray-600 dark:text-gray-400">VIN</span>
                   <span className="font-medium font-mono text-sm">{warranty.vehicle.vin}</span>
                 </div>
               </CardContent>

@@ -88,8 +88,8 @@ function KPICard({ label, value, change, changeType = 'positive', icon: Icon, co
           </div>
           <span className={`text-footnote font-medium ${changeColor}`}>{change}</span>
         </div>
-        <p className="text-title-1 font-bold text-apple-dark">{value}</p>
-        <p className="text-footnote text-apple-gray">{label}</p>
+        <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">{value}</p>
+        <p className="text-footnote text-apple-gray dark:text-[#636366]">{label}</p>
       </AppleCardContent>
     </AppleCard>
   )
@@ -180,29 +180,26 @@ export default function AnalyticsPage() {
   const [selectedDashboard, setSelectedDashboard] = useState<DashboardType>('overview')
 
   return (
-    <div className="min-h-screen bg-apple-background">
+    <div>
       {/* Header */}
-      <motion.header
-        variants={headerVariants}
-        initial="hidden"
-        animate="visible"
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
+      <header
+        className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50"
       >
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark">Analytics BI</h1>
-            <p className="text-apple-gray text-body mt-1">
+            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">Analytics BI</h1>
+            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">
               Dashboard Metabase - Insight avanzati sulla tua officina
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-apple-light-gray/50 border border-apple-border">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-apple-light-gray/50 dark:bg-[#353535] border border-apple-border dark:border-[#424242]">
               <LayoutDashboard className="h-4 w-4 text-apple-gray" />
-              <span className="text-body text-apple-dark">Metabase BI</span>
+              <span className="text-body text-apple-dark dark:text-[#ececec]">Metabase BI</span>
             </div>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <div className="p-8 space-y-8">
         {/* KPI Summary Cards */}
@@ -264,10 +261,10 @@ export default function AnalyticsPage() {
                     <BarChart3 className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-title-2 font-semibold text-apple-dark">
+                    <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">
                       Dashboard Metabase
                     </h3>
-                    <p className="text-footnote text-apple-gray">
+                    <p className="text-footnote text-apple-gray dark:text-[#636366]">
                       Seleziona una dashboard per visualizzare le analisi dettagliate
                     </p>
                   </div>
@@ -287,25 +284,25 @@ export default function AnalyticsPage() {
                           p-4 rounded-2xl text-left transition-all duration-200 group
                           ${isActive 
                             ? 'bg-apple-blue text-white shadow-lg shadow-apple-blue/25' 
-                            : 'bg-apple-light-gray/50 hover:bg-apple-light-gray'
+                            : 'bg-apple-light-gray/50 dark:bg-[#353535] hover:bg-apple-light-gray dark:hover:bg-[#424242]'
                           }
                         `}
                       >
                         <div className={`
                           w-10 h-10 rounded-xl flex items-center justify-center mb-3
-                          ${isActive ? 'bg-white/20' : 'bg-white'}
+                          ${isActive ? 'bg-white/20' : 'bg-white dark:bg-[#2f2f2f]'}
                         `}>
                           <info.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-apple-blue'}`} />
                         </div>
                         <h4 className={`
                           text-sm font-semibold mb-1
-                          ${isActive ? 'text-white' : 'text-apple-dark'}
+                          ${isActive ? 'text-white' : 'text-apple-dark dark:text-[#ececec]'}
                         `}>
                           {info.title}
                         </h4>
                         <p className={`
                           text-xs
-                          ${isActive ? 'text-white/80' : 'text-apple-gray'}
+                          ${isActive ? 'text-white/80' : 'text-apple-gray dark:text-[#636366]'}
                         `}>
                           {info.description}
                         </p>
@@ -335,17 +332,17 @@ export default function AnalyticsPage() {
                     })()}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-title-2 font-semibold text-apple-dark mb-1">
+                    <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-1">
                       {DASHBOARD_INFO[selectedDashboard].title}
                     </h3>
-                    <p className="text-body text-apple-gray mb-4">
+                    <p className="text-body text-apple-gray dark:text-[#636366] mb-4">
                       {DASHBOARD_INFO[selectedDashboard].description}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {DASHBOARD_INFO[selectedDashboard].features.map((feature) => (
                         <span 
                           key={feature}
-                          className="px-3 py-1 rounded-full bg-white/80 text-xs text-apple-dark border border-apple-border"
+                          className="px-3 py-1 rounded-full bg-white/80 dark:bg-[#2f2f2f]/80 text-xs text-apple-dark dark:text-[#ececec] border border-apple-border dark:border-[#424242]"
                         >
                           {feature}
                         </span>
@@ -376,25 +373,25 @@ export default function AnalyticsPage() {
           animate="visible"
         >
           <motion.div variants={itemVariants}>
-            <AppleCard className="bg-amber-50/50 border-amber-200">
+            <AppleCard className="bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/30">
               <AppleCardHeader>
                 <div className="flex items-center gap-3">
                   <Settings className="h-5 w-5 text-amber-600" />
-                  <h3 className="text-title-3 font-semibold text-amber-800">
+                  <h3 className="text-title-3 font-semibold text-amber-800 dark:text-amber-300">
                     Configurazione Metabase
                   </h3>
                 </div>
               </AppleCardHeader>
               <AppleCardContent>
-                <div className="space-y-4 text-sm text-amber-700">
+                <div className="space-y-4 text-sm text-amber-700 dark:text-amber-300">
                   <p>
                     Per abilitare i dashboard Metabase, assicurati che:
                   </p>
                   <ol className="list-decimal list-inside space-y-2 ml-2">
-                    <li>Il container Metabase sia avviato: <code className="bg-amber-100 px-2 py-0.5 rounded">docker-compose -f infrastructure/docker-compose.metabase.yml up -d</code></li>
+                    <li>Il container Metabase sia avviato: <code className="bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded">docker-compose -f infrastructure/docker-compose.metabase.yml up -d</code></li>
                     <li>Le variabili d&apos;ambiente siano configurate nel backend (.env):</li>
                   </ol>
-                  <pre className="bg-amber-100 p-3 rounded-lg text-xs overflow-x-auto">
+                  <pre className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-lg text-xs overflow-x-auto">
 {`METABASE_URL=http://localhost:3001
 METABASE_SECRET_KEY=your-32-character-secret-key
 METABASE_EMBEDDING_ENABLED=true`}

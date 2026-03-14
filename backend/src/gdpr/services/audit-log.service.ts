@@ -12,8 +12,8 @@ export interface AuditLogEntry {
   action: string;
   tableName: string;
   recordId: string;
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
   performedBy?: string;
   ipAddress?: string;
   userAgent?: string;
@@ -87,8 +87,8 @@ export class AuditLogService {
     action: string;
     tableName: string;
     recordId: string;
-    oldValues?: Record<string, any>;
-    newValues?: Record<string, any>;
+    oldValues?: Record<string, unknown>;
+    newValues?: Record<string, unknown>;
     performedBy?: string;
     ipAddress?: string;
     userAgent?: string;
@@ -129,7 +129,7 @@ export class AuditLogService {
     query: AuditLogQuery,
     pagination: PaginationOptions = { page: 1, limit: 50 },
   ): Promise<PaginatedAuditLogResult> {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (query.tenantId) {
       where.tenantId = query.tenantId;
@@ -152,13 +152,14 @@ export class AuditLogService {
     }
 
     if (query.startDate || query.endDate) {
-      where.createdAt = {};
+      const createdAt: Record<string, Date> = {};
       if (query.startDate) {
-        where.createdAt.gte = query.startDate;
+        createdAt.gte = query.startDate;
       }
       if (query.endDate) {
-        where.createdAt.lte = query.endDate;
+        createdAt.lte = query.endDate;
       }
+      where.createdAt = createdAt;
     }
 
     const skip = (pagination.page - 1) * pagination.limit;
@@ -254,7 +255,7 @@ export class AuditLogService {
    * @returns Audit statistics
    */
   async getStats(tenantId?: string): Promise<AuditLogStats> {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (tenantId) {
       where.tenantId = tenantId;
     }
@@ -328,7 +329,7 @@ export class AuditLogService {
             dataSubjectRequestId: requestId,
             retentionDays: 2555, // 7 years legal retention
             anonymizedAtValue: new Date().toISOString(),
-          } as any,
+          } as unknown as string,
           createdAt: new Date(),
         },
       });
@@ -358,7 +359,7 @@ export class AuditLogService {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       createdAt: {
         lt: cutoffDate,
       },
@@ -415,7 +416,7 @@ export class AuditLogService {
   /**
    * Map database record to AuditLogEntry interface
    */
-  private mapToEntry(record: any): AuditLogEntry {
+  private mapToEntry(record: AuditLog): AuditLogEntry {
     return {
       id: record.id,
       tenantId: record.tenantId,

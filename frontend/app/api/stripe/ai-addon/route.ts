@@ -55,13 +55,13 @@ export async function POST(request: NextRequest) {
         status: subscription.status,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('AI addon toggle error:', error)
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to toggle AI addon',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

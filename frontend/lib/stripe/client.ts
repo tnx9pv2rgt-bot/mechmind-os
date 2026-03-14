@@ -385,11 +385,25 @@ export class StripeError extends Error {
 /**
  * Parse Stripe error
  */
-export function parseStripeError(error: any): StripeError {
+function isStripeErrorLike(error: unknown): error is { message: string; code?: string; type?: string; decline_code?: string } {
+  if (typeof error !== 'object' || error === null) return false
+  if (!('message' in error)) return false
+  const obj = error as Record<string, unknown>
+  return typeof obj.message === 'string'
+}
+
+export function parseStripeError(error: unknown): StripeError {
+  if (isStripeErrorLike(error)) {
+    return new StripeError(
+      error.message,
+      error.code || 'unknown',
+      error.type || 'api_error',
+      error.decline_code
+    )
+  }
   return new StripeError(
-    error.message || 'An unknown error occurred',
-    error.code || 'unknown',
-    error.type || 'api_error',
-    error.decline_code
+    String(error),
+    'unknown',
+    'api_error'
   )
 }

@@ -63,7 +63,7 @@ export interface CreateDataSubjectRequestDto {
   source?: 'EMAIL' | 'WEB_FORM' | 'PHONE' | 'MAIL';
   priority?: RequestPriority;
   notes?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -260,7 +260,7 @@ export class GdprRequestService {
       pending?: boolean;
     },
   ): Promise<DataSubjectRequestResponse[]> {
-    const where: any = { tenantId };
+    const where: Record<string, unknown> = { tenantId };
 
     if (filters?.status) {
       where.status = filters.status;
@@ -307,7 +307,7 @@ export class GdprRequestService {
       throw new BadRequestException('Cannot modify completed or rejected requests');
     }
 
-    const updateData: any = { status };
+    const updateData: Record<string, unknown> = { status };
 
     if (status === 'COMPLETED') {
       updateData.completedAt = new Date();
@@ -474,7 +474,7 @@ export class GdprRequestService {
     const now = new Date();
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       status: {
         notIn: ['COMPLETED', 'REJECTED', 'CANCELLED'],
       },
@@ -515,7 +515,7 @@ export class GdprRequestService {
    * @returns Statistics summary
    */
   async getStatistics(tenantId?: string): Promise<RequestStatistics> {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (tenantId) {
       where.tenantId = tenantId;
     }

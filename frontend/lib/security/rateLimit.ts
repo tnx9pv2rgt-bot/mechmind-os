@@ -1,90 +1,32 @@
 /**
- * Rate Limiting Multi-Layer - Cloudflare-style
- * Distributed rate limiting using Upstash Redis
+ * Rate Limiting Multi-Layer
+ * In-memory sliding window rate limiting.
+ * Primary rate limiting is enforced server-side by NestJS AdvancedThrottlerGuard.
+ * This module provides an additional layer for Next.js API routes.
  */
 
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
-
-// Redis client initialization
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
-})
-
-// Check if Redis is configured
-const isRedisConfigured = Boolean(
-  process.env.UPSTASH_REDIS_REST_URL && 
-  process.env.UPSTASH_REDIS_REST_TOKEN
-)
+// In-memory sliding window store
+const windowStore = new Map<string, { timestamps: number[] }>();
 
 // Rate limiter configurations per endpoint type
-export const rateLimiters = {
-  // Form submissions: 5 per hour per IP
-  formSubmit: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, '1 h'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/form-submit',
-  }),
-  
-  // Email validation: 10 per minute
-  emailValidation: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, '1 m'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/email-validation',
-  }),
-  
-  // VAT verification: 10 per minute
-  vatVerification: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, '1 m'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/vat-verification',
-  }),
-  
-  // IP geolocation: 100 per day
-  geoLookup: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(100, '1 d'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/geo-lookup',
-  }),
-  
-  // API general requests: 100 per minute
-  apiGeneral: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(100, '1 m'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/api-general',
-  }),
-  
-  // Authentication attempts: 5 per 15 minutes
-  authAttempt: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, '15 m'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/auth-attempt',
-  }),
-  
-  // Password reset: 3 per hour
-  passwordReset: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(3, '1 h'),
-    analytics: true,
-    prefix: '@upstash/ratelimit/password-reset',
-  }),
-}
+const RATE_LIMITS: Record<string, { maxRequests: number; windowMs: number }> = {
+  formSubmit: { maxRequests: 5, windowMs: 3600000 }, // 5 per hour
+  emailValidation: { maxRequests: 10, windowMs: 60000 }, // 10 per minute
+  vatVerification: { maxRequests: 10, windowMs: 60000 }, // 10 per minute
+  geoLookup: { maxRequests: 100, windowMs: 86400000 }, // 100 per day
+  apiGeneral: { maxRequests: 100, windowMs: 60000 }, // 100 per minute
+  authAttempt: { maxRequests: 5, windowMs: 900000 }, // 5 per 15 minutes
+  passwordReset: { maxRequests: 3, windowMs: 3600000 }, // 3 per hour
+};
 
-export type RateLimitType = keyof typeof rateLimiters
+export type RateLimitType = keyof typeof RATE_LIMITS;
 
 export interface RateLimitResult {
-  success: boolean
-  limit: number
-  remaining: number
-  reset: number
-  retryAfter?: number
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+  retryAfter?: number;
 }
 
 /**
@@ -92,26 +34,40 @@ export interface RateLimitResult {
  * Supports Cloudflare, Vercel, and standard headers
  */
 export function getClientIP(request: Request): string {
-  const headers = request.headers
-  
-  // Cloudflare
-  const cfConnectingIP = headers.get('cf-connecting-ip')
-  if (cfConnectingIP) return cfConnectingIP
-  
-  // Vercel
-  const vercelForwardedFor = headers.get('x-vercel-forwarded-for')
-  if (vercelForwardedFor) return vercelForwardedFor.split(',')[0].trim()
-  
-  // Standard forwarded-for
-  const forwardedFor = headers.get('x-forwarded-for')
-  if (forwardedFor) return forwardedFor.split(',')[0].trim()
-  
-  // Real IP
-  const realIP = headers.get('x-real-ip')
-  if (realIP) return realIP
-  
-  // Fallback
-  return '127.0.0.1'
+  const headers = request.headers;
+
+  const cfConnectingIP = headers.get('cf-connecting-ip');
+  if (cfConnectingIP) return cfConnectingIP;
+
+  const vercelForwardedFor = headers.get('x-vercel-forwarded-for');
+  if (vercelForwardedFor) return vercelForwardedFor.split(',')[0].trim();
+
+  const forwardedFor = headers.get('x-forwarded-for');
+  if (forwardedFor) return forwardedFor.split(',')[0].trim();
+
+  const realIP = headers.get('x-real-ip');
+  if (realIP) return realIP;
+
+  return '127.0.0.1';
+}
+
+/**
+ * Clean expired entries from the window store (runs periodically)
+ */
+function cleanExpiredEntries(): void {
+  const now = Date.now();
+  for (const [key, entry] of windowStore.entries()) {
+    const maxWindow = 86400000; // 24h max window
+    entry.timestamps = entry.timestamps.filter(ts => now - ts < maxWindow);
+    if (entry.timestamps.length === 0) {
+      windowStore.delete(key);
+    }
+  }
+}
+
+// Clean up every 5 minutes
+if (typeof setInterval !== 'undefined') {
+  setInterval(cleanExpiredEntries, 300000);
 }
 
 /**
@@ -122,40 +78,47 @@ export async function checkRateLimit(
   type: RateLimitType,
   identifier?: string
 ): Promise<RateLimitResult> {
-  // Fallback if Redis is not configured
-  if (!isRedisConfigured) {
-    console.warn('[RateLimit] Redis not configured, allowing request')
-    return {
-      success: true,
-      limit: 100,
-      remaining: 99,
-      reset: Date.now() + 60000,
-    }
+  const config = RATE_LIMITS[type];
+  if (!config) {
+    return { success: true, limit: 100, remaining: 99, reset: Date.now() + 60000 };
   }
-  
-  const ip = identifier || getClientIP(request)
-  const limiter = rateLimiters[type]
-  
-  try {
-    const result = await limiter.limit(ip)
-    
-    return {
-      success: result.success,
-      limit: result.limit,
-      remaining: result.remaining,
-      reset: result.reset,
-      retryAfter: Math.ceil((result.reset - Date.now()) / 1000),
-    }
-  } catch (error) {
-    console.error('[RateLimit] Error checking rate limit:', error)
-    // Fail open - allow request on error
-    return {
-      success: true,
-      limit: 100,
-      remaining: 99,
-      reset: Date.now() + 60000,
-    }
+
+  const ip = identifier || getClientIP(request);
+  const key = `${type}:${ip}`;
+  const now = Date.now();
+
+  let entry = windowStore.get(key);
+  if (!entry) {
+    entry = { timestamps: [] };
+    windowStore.set(key, entry);
   }
+
+  // Remove timestamps outside the window
+  entry.timestamps = entry.timestamps.filter(ts => now - ts < config.windowMs);
+
+  const remaining = Math.max(0, config.maxRequests - entry.timestamps.length);
+  const reset =
+    entry.timestamps.length > 0 ? entry.timestamps[0] + config.windowMs : now + config.windowMs;
+
+  if (entry.timestamps.length >= config.maxRequests) {
+    return {
+      success: false,
+      limit: config.maxRequests,
+      remaining: 0,
+      reset,
+      retryAfter: Math.ceil((reset - now) / 1000),
+    };
+  }
+
+  // Record this request
+  entry.timestamps.push(now);
+
+  return {
+    success: true,
+    limit: config.maxRequests,
+    remaining: remaining - 1,
+    reset,
+  };
 }
 
 /**
@@ -165,39 +128,35 @@ export async function rateLimitMiddleware(
   request: Request,
   type: RateLimitType
 ): Promise<Response | null> {
-  const result = await checkRateLimit(request, type)
-  
+  const result = await checkRateLimit(request, type);
+
   if (!result.success) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-RateLimit-Limit': result.limit.toString(),
       'X-RateLimit-Remaining': '0',
       'X-RateLimit-Reset': result.reset.toString(),
-    }
-    
+    };
+
     if (result.retryAfter) {
-      headers['Retry-After'] = result.retryAfter.toString()
+      headers['Retry-After'] = result.retryAfter.toString();
     }
-    
+
     return new Response(
       JSON.stringify({
         error: 'Too Many Requests',
         message: 'Rate limit exceeded. Please try again later.',
         retryAfter: result.retryAfter,
       }),
-      {
-        status: 429,
-        headers,
-      }
-    )
+      { status: 429, headers }
+    );
   }
-  
-  // Add rate limit headers to successful requests
-  request.headers.set('X-RateLimit-Limit', result.limit.toString())
-  request.headers.set('X-RateLimit-Remaining', result.remaining.toString())
-  
-  return null // Continue processing
+
+  return null; // Continue processing
 }
+
+// In-memory IP block store
+const blockedIPs = new Map<string, { blockedAt: number; reason: string; expiresAt: number }>();
 
 /**
  * Block an IP address for a specified duration
@@ -207,75 +166,72 @@ export async function blockIP(
   durationSeconds: number = 3600,
   reason: string = 'manual_block'
 ): Promise<void> {
-  if (!isRedisConfigured) return
-  
-  const key = `security:blocked-ip:${ip}`
-  await redis.setex(key, durationSeconds, JSON.stringify({
+  blockedIPs.set(`security:blocked-ip:${ip}`, {
     blockedAt: Date.now(),
     reason,
-    expiresAt: Date.now() + (durationSeconds * 1000),
-  }))
+    expiresAt: Date.now() + durationSeconds * 1000,
+  });
 }
 
 /**
  * Check if an IP is blocked
  */
 export async function isIPBlocked(ip: string): Promise<boolean> {
-  if (!isRedisConfigured) return false
-  
-  const key = `security:blocked-ip:${ip}`
-  const blocked = await redis.get(key)
-  return blocked !== null
+  const key = `security:blocked-ip:${ip}`;
+  const entry = blockedIPs.get(key);
+  if (!entry) return false;
+  if (Date.now() > entry.expiresAt) {
+    blockedIPs.delete(key);
+    return false;
+  }
+  return true;
 }
 
 /**
  * Get blocked IP information
  */
 export async function getBlockedIPInfo(ip: string): Promise<{
-  blockedAt: number
-  reason: string
-  expiresAt: number
+  blockedAt: number;
+  reason: string;
+  expiresAt: number;
 } | null> {
-  if (!isRedisConfigured) return null
-  
-  const key = `security:blocked-ip:${ip}`
-  const data = await redis.get<string>(key)
-  
-  if (!data) return null
-  
-  try {
-    return JSON.parse(data)
-  } catch {
-    return null
+  const key = `security:blocked-ip:${ip}`;
+  const entry = blockedIPs.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    blockedIPs.delete(key);
+    return null;
   }
+  return entry;
 }
 
 /**
  * Unblock an IP address
  */
 export async function unblockIP(ip: string): Promise<void> {
-  if (!isRedisConfigured) return
-  
-  const key = `security:blocked-ip:${ip}`
-  await redis.del(key)
+  blockedIPs.delete(`security:blocked-ip:${ip}`);
 }
 
 /**
- * Get rate limit analytics
+ * Get rate limit analytics (in-memory approximation)
  */
 export async function getRateLimitAnalytics(
   type: RateLimitType,
-  hours: number = 24
+  _hours: number = 24
 ): Promise<{
-  totalRequests: number
-  blockedRequests: number
-  uniqueIPs: number
+  totalRequests: number;
+  blockedRequests: number;
+  uniqueIPs: number;
 }> {
-  if (!isRedisConfigured) {
-    return { totalRequests: 0, blockedRequests: 0, uniqueIPs: 0 }
+  let totalRequests = 0;
+  const uniqueIPs = new Set<string>();
+
+  for (const [key, entry] of windowStore.entries()) {
+    if (key.startsWith(`${type}:`)) {
+      totalRequests += entry.timestamps.length;
+      uniqueIPs.add(key.replace(`${type}:`, ''));
+    }
   }
-  
-  const prefix = `@upstash/ratelimit/${type}`
-  // This is a simplified analytics - in production you'd use a proper analytics service
-  return { totalRequests: 0, blockedRequests: 0, uniqueIPs: 0 }
+
+  return { totalRequests, blockedRequests: 0, uniqueIPs: uniqueIPs.size };
 }

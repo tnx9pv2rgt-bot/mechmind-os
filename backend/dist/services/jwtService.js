@@ -28,8 +28,12 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 const ACCESS_TOKEN_EXPIRY_SECONDS = 15 * 60;
 const REFRESH_TOKEN_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
 function generateTokenPair(payload) {
-    const accessToken = jsonwebtoken_1.default.sign({ ...payload, type: 'access' }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
-    const refreshToken = jsonwebtoken_1.default.sign({ ...payload, type: 'refresh' }, JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+    const accessToken = jsonwebtoken_1.default.sign({ ...payload, type: 'access' }, JWT_SECRET, {
+        expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+    const refreshToken = jsonwebtoken_1.default.sign({ ...payload, type: 'refresh' }, JWT_REFRESH_SECRET, {
+        expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
     return {
         accessToken,
         refreshToken,
@@ -41,7 +45,9 @@ function generateAccessToken(payload) {
     return jsonwebtoken_1.default.sign({ ...payload, type: 'access' }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 function generateRefreshToken(payload) {
-    return jsonwebtoken_1.default.sign({ ...payload, type: 'refresh' }, JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+    return jsonwebtoken_1.default.sign({ ...payload, type: 'refresh' }, JWT_REFRESH_SECRET, {
+        expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
 }
 function verifyAccessToken(token) {
     try {
@@ -58,7 +64,7 @@ function verifyAccessToken(token) {
         };
     }
     catch (error) {
-        if (error.name === 'TokenExpiredError') {
+        if (error instanceof Error && error.name === 'TokenExpiredError') {
             try {
                 const decoded = jsonwebtoken_1.default.decode(token);
                 return {
@@ -78,7 +84,7 @@ function verifyAccessToken(token) {
         }
         return {
             valid: false,
-            error: error.message || 'Invalid token',
+            error: error instanceof Error ? error.message : 'Invalid token',
         };
     }
 }
@@ -97,7 +103,7 @@ function verifyRefreshToken(token) {
         };
     }
     catch (error) {
-        if (error.name === 'TokenExpiredError') {
+        if (error instanceof Error && error.name === 'TokenExpiredError') {
             return {
                 valid: false,
                 expired: true,
@@ -106,7 +112,7 @@ function verifyRefreshToken(token) {
         }
         return {
             valid: false,
-            error: error.message || 'Invalid refresh token',
+            error: error instanceof Error ? error.message : 'Invalid refresh token',
         };
     }
 }
@@ -153,7 +159,7 @@ function generateTwoFactorTempToken(userId, email) {
     return jsonwebtoken_1.default.sign({
         sub: userId,
         email,
-        type: '2fa_pending'
+        type: '2fa_pending',
     }, JWT_SECRET, { expiresIn: '5m' });
 }
 function verifyTwoFactorTempToken(token) {
@@ -173,8 +179,8 @@ function verifyTwoFactorTempToken(token) {
     catch (error) {
         return {
             valid: false,
-            expired: error.name === 'TokenExpiredError',
-            error: error.message || 'Invalid 2FA token',
+            expired: error instanceof Error && error.name === 'TokenExpiredError',
+            error: error instanceof Error ? error.message : 'Invalid 2FA token',
         };
     }
 }
@@ -182,7 +188,7 @@ function generateEmailVerificationToken(email, tenantId) {
     return jsonwebtoken_1.default.sign({
         email,
         tenantId,
-        type: 'email_verification'
+        type: 'email_verification',
     }, JWT_SECRET, { expiresIn: '24h' });
 }
 function verifyEmailVerificationToken(token) {
@@ -202,8 +208,8 @@ function verifyEmailVerificationToken(token) {
     catch (error) {
         return {
             valid: false,
-            expired: error.name === 'TokenExpiredError',
-            error: error.message || 'Invalid verification token',
+            expired: error instanceof Error && error.name === 'TokenExpiredError',
+            error: error instanceof Error ? error.message : 'Invalid verification token',
         };
     }
 }
@@ -211,7 +217,7 @@ function generatePasswordResetToken(email, tenantId) {
     return jsonwebtoken_1.default.sign({
         email,
         tenantId,
-        type: 'password_reset'
+        type: 'password_reset',
     }, JWT_SECRET, { expiresIn: '1h' });
 }
 function verifyPasswordResetToken(token) {
@@ -231,8 +237,8 @@ function verifyPasswordResetToken(token) {
     catch (error) {
         return {
             valid: false,
-            expired: error.name === 'TokenExpiredError',
-            error: error.message || 'Invalid reset token',
+            expired: error instanceof Error && error.name === 'TokenExpiredError',
+            error: error instanceof Error ? error.message : 'Invalid reset token',
         };
     }
 }

@@ -8,13 +8,7 @@
  * @version 1.0.0
  */
 
-import { trpc as trpcClient } from '@/lib/trpc-client'
-
-// Cast trpc to permissive type for procedures not yet in router stubs
-const trpc = trpcClient as unknown as Record<string, Record<string, Record<string, {
-  mutate: (data: unknown) => Promise<unknown>;
-  query: (data: unknown) => Promise<unknown>;
-}>>>
+import { api } from '@/lib/api-client'
 
 // =============================================================================
 // Enums and Constants
@@ -316,12 +310,11 @@ export async function createSensoryInspection(
     odors: data.odors,
   })
 
-  // Use tRPC to create the record
-  const result = await trpc.inspection.sensory.create.mutate({
-    inspectionId,
+  const res = await api.post<SensoryInspection>(`/inspections/${inspectionId}/sensory`, {
     ...data,
     moldRiskLevel,
-  }) as SensoryInspection
+  })
+  const result = res.data
 
   return result
 }
@@ -345,7 +338,8 @@ export async function getSensoryInspection(
   inspectionId: string
 ): Promise<SensoryInspection | null> {
   try {
-    const result = await trpc.inspection.sensory.get.query({ inspectionId }) as SensoryInspection | null
+    const res = await api.get<{ data: SensoryInspection | null }>(`/inspections/${inspectionId}/sensory`)
+    const result = res.data?.data ?? null
 
     return result ?? null
   } catch (error) {
@@ -389,7 +383,8 @@ export async function updateSensoryInspection(
 
   if (data.moisture || data.odors) {
     // Fetch current data to merge with updates
-    const current = await trpc.inspection.sensory.getById.query({ id }) as SensoryInspection
+    const currentRes = await api.get<{ data: SensoryInspection }>(`/inspections/sensory/${id}`)
+    const current = currentRes.data.data
 
     const mergedMoisture = {
       ...current.moisture,
@@ -406,11 +401,11 @@ export async function updateSensoryInspection(
     })
   }
 
-  const result = await trpc.inspection.sensory.update.mutate({
-    id,
+  const res = await api.put<SensoryInspection>(`/inspections/sensory/${id}`, {
     ...data,
     moldRiskLevel: updatedRiskLevel,
-  }) as SensoryInspection
+  })
+  const result = res.data
 
   return result
 }

@@ -519,11 +519,13 @@ describe('NotificationTriggersService', () => {
 
       for (const { handler, event } of events) {
         jest.clearAllMocks();
-        await (service as Record<string, Function>)[handler](event);
+        await (service as unknown as Record<string, (...args: unknown[]) => Promise<void>>)[
+          handler
+        ](event);
 
         if ((notificationService.sendImmediate as jest.Mock).mock.calls.length > 0) {
           const sentDto = (notificationService.sendImmediate as jest.Mock).mock.calls[0][0];
-          expect(sentDto.tenantId).toBe((event as Record<string, string>).tenantId);
+          expect(sentDto.tenantId).toBe((event as unknown as Record<string, string>).tenantId);
         }
       }
     });

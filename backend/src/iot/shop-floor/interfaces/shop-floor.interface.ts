@@ -62,7 +62,7 @@ export interface BaySensor {
   isActive: boolean;
   lastReading?: Date;
   batteryLevel?: number;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export interface SensorReading {
@@ -107,7 +107,7 @@ export interface ShopFloorEvent {
   workOrderId?: string;
   fromStatus?: string;
   toStatus?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface WorkOrderProgress {

@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/server'
+import Stripe from 'stripe'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,25 +25,28 @@ export async function GET(request: NextRequest) {
       expand: ['subscription', 'customer'],
     })
 
+    const subscription = session.subscription as Stripe.Subscription | null
+    const customer = session.customer as Stripe.Customer | null
+
     return NextResponse.json({
       status: session.status,
       paymentStatus: session.payment_status,
-      subscription: session.subscription ? {
-        id: (session.subscription as any).id,
-        status: (session.subscription as any).status,
+      subscription: subscription ? {
+        id: subscription.id,
+        status: subscription.status,
       } : null,
-      customer: session.customer ? {
-        id: (session.customer as any).id,
-        email: (session.customer as any).email,
+      customer: customer ? {
+        id: customer.id,
+        email: customer.email,
       } : null,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Verify session error:', error)
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to verify session',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

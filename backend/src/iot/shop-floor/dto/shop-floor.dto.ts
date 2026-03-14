@@ -10,7 +10,6 @@ import {
   IsNumber,
   IsArray,
   IsUUID,
-  IsJSON,
   IsObject,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -65,7 +64,7 @@ export class AddBaySensorDto {
   @ApiProperty({ description: 'Sensor configuration', required: false })
   @IsOptional()
   @IsObject()
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export class SensorReadingDto {
@@ -215,7 +214,7 @@ export class ShopFloorEventDto {
   workOrderId?: string;
   fromStatus?: string;
   toStatus?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ShopFloorAnalyticsDto {

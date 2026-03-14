@@ -14,7 +14,7 @@ const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
 const mfa_service_1 = require("../mfa/mfa.service");
 const RequireMFA = () => {
-    return (target, propertyKey, descriptor) => {
+    return (_target, propertyKey, descriptor) => {
         if (descriptor) {
             Reflect.defineMetadata('requireMFA', true, descriptor.value);
         }
@@ -67,11 +67,14 @@ let MfaSessionMiddleware = class MfaSessionMiddleware {
     constructor(mfaService) {
         this.mfaService = mfaService;
     }
-    async use(req, res, next) {
-        const mfaVerified = req.headers['x-mfa-verified'];
-        if (mfaVerified) {
-            req.mfaVerified = true;
-            req.mfaVerifiedAt = new Date(parseInt(mfaVerified, 10));
+    async use(req, _res, next) {
+        const mfaToken = req.headers['x-mfa-token'];
+        if (mfaToken) {
+            const userId = await this.mfaService.validateMfaSession(mfaToken);
+            if (userId && req.user && userId === req.user.userId) {
+                req.mfaVerified = true;
+                req.mfaVerifiedAt = new Date();
+            }
         }
         next();
     }

@@ -24,9 +24,12 @@
       "Bash(pwd)",
       "Bash(node *)",
       "Bash(npx ts-node *)",
+      "Bash(curl *)",
+      "Bash(render *)",
       "Read",
       "Glob",
-      "Grep"
+      "Grep",
+      "mcp__postgres__query"
     ],
     "deny": [
       "Bash(rm -rf /)",
@@ -53,5 +56,19 @@
   },
   "env": {
     "MAX_THINKING_TOKENS": "16000"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | while read -r f; do case \"$f\" in *.ts|*.tsx|*.js|*.jsx) npx prettier --write \"$f\" 2>/dev/null || true;; esac; done",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
   }
 }

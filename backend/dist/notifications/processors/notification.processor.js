@@ -39,7 +39,7 @@ let NotificationProcessor = NotificationProcessor_1 = class NotificationProcesso
             };
         }
         catch (error) {
-            this.logger.error(`Notification job ${job.id} failed: ${error.message}`, error.stack);
+            this.logger.error(`Notification job ${job.id} failed: ${error instanceof Error ? error.message : 'Unknown error'}`, error instanceof Error ? error.stack : undefined);
             throw error;
         }
     }

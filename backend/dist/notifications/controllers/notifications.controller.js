@@ -20,7 +20,7 @@ let NotificationsController = class NotificationsController {
     constructor(notificationsService) {
         this.notificationsService = notificationsService;
     }
-    async getNotifications(page = '1', limit = '20', unreadOnly = 'false') {
+    async getNotifications(page = '1', limit = '20', _unreadOnly = 'false') {
         return {
             notifications: [],
             pagination: {

@@ -276,7 +276,11 @@ let PartsService = class PartsService {
         transactions.push(this.prisma.purchaseOrder.update({
             where: { id: orderId },
             data: {
-                status: fullyReceived ? client_1.OrderStatus.RECEIVED : partiallyReceived ? client_1.OrderStatus.PARTIALLY_RECEIVED : client_1.OrderStatus.SENT,
+                status: fullyReceived
+                    ? client_1.OrderStatus.RECEIVED
+                    : partiallyReceived
+                        ? client_1.OrderStatus.PARTIALLY_RECEIVED
+                        : client_1.OrderStatus.SENT,
                 receivedAt: fullyReceived ? new Date() : undefined,
             },
         }));
@@ -337,7 +341,7 @@ let PartsService = class PartsService {
             total: Number(order.total),
             orderDate: order.orderDate,
             expectedDate: order.expectedDate ?? undefined,
-            items: order.items.map((item) => ({
+            items: order.items.map(item => ({
                 partName: item.part.name,
                 quantity: item.quantity,
                 receivedQty: item.receivedQty,

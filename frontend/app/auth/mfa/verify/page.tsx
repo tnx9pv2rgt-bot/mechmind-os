@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function MFAVerifyPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Caricamento...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center dark:bg-[#212121] dark:text-[#ececec]">Caricamento...</div>}>
       <MFAVerifyPageClient />
     </Suspense>
   )

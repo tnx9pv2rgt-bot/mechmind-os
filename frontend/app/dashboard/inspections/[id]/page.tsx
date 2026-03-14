@@ -54,13 +54,13 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 9) return 'text-green-600'
-    if (score >= 7) return 'text-yellow-600'
-    return 'text-red-600'
+    if (score >= 9) return 'text-green-600 dark:text-green-400'
+    if (score >= 7) return 'text-yellow-600 dark:text-yellow-400'
+    return 'text-red-600 dark:text-red-400'
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#2f2f2f] p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -72,10 +72,10 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
             </Link>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900">Ispezione {inspection.id}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">Ispezione {inspection.id}</h1>
                 <Badge className="bg-green-500">Completata</Badge>
               </div>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 dark:text-[#636366] text-sm">
                 {inspection.vehicle} • {inspection.plate} • {inspection.date}
               </p>
             </div>
@@ -97,7 +97,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
         </div>
 
         {/* Score Card */}
-        <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+        <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -107,11 +107,11 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Overall Score</p>
+                  <p className="text-sm text-gray-500 dark:text-[#636366] mb-1">Overall Score</p>
                   <p className={`text-3xl font-bold ${getScoreColor(inspection.score)}`}>
                     {inspection.score}/10
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">Ottime condizioni generali</p>
+                  <p className="text-sm text-gray-400 dark:text-[#6e6e6e] mt-1">Ottime condizioni generali</p>
                 </div>
               </div>
               <div className="text-right">
@@ -119,7 +119,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
                   <Shield className="w-5 h-5 text-blue-500" />
                   <Badge className="bg-blue-100 text-blue-700">Certificata Blockchain</Badge>
                 </div>
-                <p className="text-xs text-gray-400 font-mono">
+                <p className="text-xs text-gray-400 dark:text-[#6e6e6e] font-mono">
                   {inspection.blockchainHash.slice(0, 20)}...{inspection.blockchainHash.slice(-8)}
                 </p>
               </div>
@@ -129,7 +129,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
 
         {/* Tabs */}
         <Tabs defaultValue="summary" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-xl">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl">
             <TabsTrigger value="summary">Riepilogo</TabsTrigger>
             <TabsTrigger value="details">Dettagli</TabsTrigger>
             <TabsTrigger value="video">Video 360°</TabsTrigger>
@@ -140,7 +140,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
           {/* Summary Tab */}
           <TabsContent value="summary" className="mt-6">
             <div className="grid grid-cols-2 gap-6">
-              <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+              <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Car className="w-5 h-5" />
@@ -149,21 +149,21 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Modello</span>
+                    <span className="text-gray-500 dark:text-[#636366]">Modello</span>
                     <span className="font-medium">{inspection.vehicle}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Targa</span>
+                    <span className="text-gray-500 dark:text-[#636366]">Targa</span>
                     <span className="font-medium">{inspection.plate}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Chilometraggio</span>
+                    <span className="text-gray-500 dark:text-[#636366]">Chilometraggio</span>
                     <span className="font-medium">{inspection.mileage.toLocaleString()} km</span>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+              <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5" />
@@ -174,7 +174,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
                   <div className="space-y-3">
                     {inspection.findings.map((finding) => (
                       <div key={finding.category} className="flex items-center justify-between">
-                        <span className="text-gray-600">{finding.category}</span>
+                        <span className="text-gray-600 dark:text-[#636366]">{finding.category}</span>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{finding.count} voci</span>
                           <div className={`w-3 h-3 rounded-full ${
@@ -193,7 +193,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
 
           {/* Details Tab */}
           <TabsContent value="details" className="mt-6">
-            <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+            <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wind className="w-5 h-5" />
@@ -202,19 +202,19 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                    <p className="text-sm text-gray-500 mb-1">Umidità Interna</p>
-                    <p className="text-3xl font-bold text-gray-900">{inspection.sensory.humidity}%</p>
+                  <div className="bg-gray-50 dark:bg-[#353535] rounded-2xl p-4 text-center">
+                    <p className="text-sm text-gray-500 dark:text-[#636366] mb-1">Umidità Interna</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-[#ececec]">{inspection.sensory.humidity}%</p>
                     <Progress value={inspection.sensory.humidity} className="h-2 mt-2" />
                   </div>
-                  <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                    <p className="text-sm text-gray-500 mb-1">Rischio Muffa</p>
-                    <p className="text-3xl font-bold text-green-600">{inspection.sensory.moldRisk}</p>
+                  <div className="bg-gray-50 dark:bg-[#353535] rounded-2xl p-4 text-center">
+                    <p className="text-sm text-gray-500 dark:text-[#636366] mb-1">Rischio Muffa</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{inspection.sensory.moldRisk}</p>
                     <Badge className="mt-2 bg-green-100 text-green-700">Ottimale</Badge>
                   </div>
-                  <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                    <p className="text-sm text-gray-500 mb-1">Odori</p>
-                    <p className="text-3xl font-bold text-gray-900">{inspection.sensory.odors[0]}</p>
+                  <div className="bg-gray-50 dark:bg-[#353535] rounded-2xl p-4 text-center">
+                    <p className="text-sm text-gray-500 dark:text-[#636366] mb-1">Odori</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-[#ececec]">{inspection.sensory.odors[0]}</p>
                     <Badge className="mt-2 bg-green-100 text-green-700">Nessuno</Badge>
                   </div>
                 </div>
@@ -224,13 +224,13 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
 
           {/* Video Tab */}
           <TabsContent value="video" className="mt-6">
-            <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+            <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
               <CardContent className="p-8 text-center">
-                <div className="w-20 h-20 rounded-3xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-[#353535] flex items-center justify-center mx-auto mb-4">
                   <Camera className="w-10 h-10 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Video 360° Walkaround</h3>
-                <p className="text-gray-500 max-w-md mx-auto mb-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-[#ececec] mb-2">Video 360° Walkaround</h3>
+                <p className="text-gray-500 dark:text-[#636366] max-w-md mx-auto mb-6">
                   Video ispezione completo con annotazioni AI e hotspot interattivi.
                 </p>
                 <div className="flex justify-center gap-2">
@@ -244,7 +244,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
 
           {/* Blockchain Tab */}
           <TabsContent value="blockchain" className="mt-6">
-            <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+            <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-blue-500" />
@@ -253,24 +253,24 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-48 h-48 bg-gray-100 rounded-2xl flex items-center justify-center">
+                  <div className="w-48 h-48 bg-gray-100 dark:bg-[#353535] rounded-2xl flex items-center justify-center">
                     <QrCode className="w-32 h-32 text-gray-400" />
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500">Network</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-[#424242]">
+                    <span className="text-gray-500 dark:text-[#636366]">Network</span>
                     <Badge>Polygon Mainnet</Badge>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500">Contract Address</span>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-[#424242]">
+                    <span className="text-gray-500 dark:text-[#636366]">Contract Address</span>
+                    <code className="text-sm bg-gray-100 dark:bg-[#353535] px-2 py-1 rounded">
                       {inspection.blockchainHash.slice(0, 20)}...
                     </code>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500">IPFS CID</span>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-[#424242]">
+                    <span className="text-gray-500 dark:text-[#636366]">IPFS CID</span>
+                    <code className="text-sm bg-gray-100 dark:bg-[#353535] px-2 py-1 rounded">
                       {inspection.ipfsCID.slice(0, 20)}...
                     </code>
                   </div>
@@ -284,11 +284,11 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
 
           {/* Warranty Tab */}
           <TabsContent value="warranty" className="mt-6">
-            <Card className="bg-white/80 backdrop-blur-xl border-0 shadow-sm">
+            <Card className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm">
               <CardContent className="p-8 text-center">
                 <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Garanzia Estesa</h3>
-                <p className="text-gray-500 max-w-md mx-auto">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-[#ececec] mb-2">Garanzia Estesa</h3>
+                <p className="text-gray-500 dark:text-[#636366] max-w-md mx-auto">
                   Configura la garanzia estesa con tracciamento blockchain e gestione claims.
                 </p>
                 <Button className="mt-6 rounded-full">
@@ -307,7 +307,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Powered by</p>
+              <p className="text-sm text-gray-400 dark:text-gray-300">Powered by</p>
               <p className="font-medium">Vehicle Inspection System 2026</p>
             </div>
             <div className="flex gap-2">

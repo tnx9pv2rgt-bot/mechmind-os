@@ -4,7 +4,10 @@
  * Client-side subscription management and API calls
  */
 
-import { SubscriptionPlan, FeatureFlag, SubscriptionStatus } from '@prisma/client';
+// Local type definitions to avoid @prisma/client import in client-side code
+type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+type FeatureFlag = 'BASIC' | 'STANDARD' | 'PREMIUM' | 'AI_ANALYSIS' | 'UNLIMITED_USERS' | 'API_ACCESS' | 'PRIORITY_SUPPORT';
+type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED';
 
 export interface SubscriptionData {
   id: string;

@@ -115,7 +115,9 @@ export class NotificationWebhookController {
 
       return { received: true };
     } catch (error) {
-      this.logger.error(`Error processing Resend webhook: ${error.message}`);
+      this.logger.error(
+        `Error processing Resend webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw new BadRequestException('Failed to process webhook');
     }
   }
@@ -130,7 +132,7 @@ export class NotificationWebhookController {
   @ApiResponse({ status: 400, description: 'Invalid webhook payload' })
   async handleTwilioWebhook(
     @Body() payload: TwilioWebhookPayload,
-    @Headers('x-twilio-signature') signature: string,
+    @Headers('x-twilio-signature') _signature: string,
   ): Promise<{ received: boolean }> {
     if (!payload?.MessageSid || !payload?.MessageStatus) {
       return { received: true };
@@ -165,7 +167,9 @@ export class NotificationWebhookController {
 
       return { received: true };
     } catch (error) {
-      this.logger.error(`Error processing Twilio webhook: ${error.message}`);
+      this.logger.error(
+        `Error processing Twilio webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       // Twilio expects 200 even on error for delivery status callbacks
       return { received: true };
     }
@@ -193,7 +197,9 @@ export class NotificationWebhookController {
       // Return empty TwiML response
       return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
     } catch (error) {
-      this.logger.error(`Error processing incoming SMS: ${error.message}`);
+      this.logger.error(
+        `Error processing incoming SMS: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
     }
   }
@@ -283,7 +289,7 @@ export class NotificationWebhookController {
     // Track engagement (WhatsApp only)
   }
 
-  private async processIncomingSms(from: string, body: string, messageSid: string): Promise<void> {
+  private async processIncomingSms(from: string, body: string, _messageSid: string): Promise<void> {
     const normalizedBody = body.trim().toUpperCase();
 
     switch (normalizedBody) {
@@ -350,7 +356,9 @@ export class NotificationWebhookController {
 
       return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     } catch (error) {
-      this.logger.error(`Signature verification failed: ${error.message}`);
+      this.logger.error(
+        `Signature verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return false;
     }
   }
@@ -360,7 +368,7 @@ export class NotificationWebhookController {
   private async updateNotificationStatus(
     notificationId: string,
     status: string,
-    timestamp?: Date,
+    _timestamp?: Date,
   ): Promise<void> {
     // Implementation would update database
     this.logger.debug(`Update ${notificationId} status to ${status}`);

@@ -8,6 +8,7 @@ import { LoggerService } from './services/logger.service';
 import { S3Service } from './services/s3.service';
 import { RedisService } from './services/redis.service';
 import { TenantGuard } from './guard/tenant.guard';
+import { HealthController } from './health/health.controller';
 
 @Global()
 @Module({
@@ -64,6 +65,7 @@ import { TenantGuard } from './guard/tenant.guard';
     }),
     BullModule.registerQueue({ name: 'booking' }, { name: 'voice' }, { name: 'notification' }),
   ],
+  controllers: [HealthController],
   providers: [
     PrismaService,
     EncryptionService,

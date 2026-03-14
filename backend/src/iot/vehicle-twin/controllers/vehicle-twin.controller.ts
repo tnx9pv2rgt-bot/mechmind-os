@@ -19,7 +19,12 @@ import {
   PredictiveAlertDto,
   WearPredictionDto,
 } from '../dto/vehicle-twin.dto';
-import { ComponentHistory, DamageRecord } from '../interfaces/vehicle-twin.interface';
+import {
+  ComponentHistory,
+  DamageRecord,
+  TwinVisualizationConfig,
+  VehicleTwinState,
+} from '../interfaces/vehicle-twin.interface';
 import { UserRole } from '../../../auth/guards/roles.guard';
 
 @ApiTags('Vehicle Twin')
@@ -32,7 +37,7 @@ export class VehicleTwinController {
   @Get(':vehicleId')
   @ApiOperation({ summary: 'Get vehicle twin state' })
   @ApiResponse({ status: 200, type: VehicleTwinStateDto })
-  async getTwinState(@Param('vehicleId') vehicleId: string): Promise<VehicleTwinStateDto> {
+  async getTwinState(@Param('vehicleId') vehicleId: string): Promise<VehicleTwinState> {
     return await this.vehicleTwinService.getOrCreateTwin(vehicleId);
   }
 
@@ -55,7 +60,7 @@ export class VehicleTwinController {
   async recordHistory(
     @Param('vehicleId') vehicleId: string,
     @Body() dto: RecordHistoryDto,
-  ): Promise<any> {
+  ): Promise<ComponentHistory> {
     const history: Omit<ComponentHistory, 'id'> = {
       ...dto,
       date: dto.date ? new Date(dto.date) : new Date(),
@@ -73,7 +78,7 @@ export class VehicleTwinController {
   async recordDamage(
     @Param('vehicleId') vehicleId: string,
     @Body() dto: RecordDamageDto,
-  ): Promise<any> {
+  ): Promise<DamageRecord> {
     const damage: Omit<DamageRecord, 'id'> = {
       ...dto,
       location: dto.location || { x: 0, y: 0, z: 0 },
@@ -103,7 +108,9 @@ export class VehicleTwinController {
   @Get(':vehicleId/visualization-config')
   @ApiOperation({ summary: 'Get 3D visualization config' })
   @ApiResponse({ status: 200 })
-  async getVisualizationConfig(@Param('vehicleId') vehicleId: string): Promise<any> {
+  async getVisualizationConfig(
+    @Param('vehicleId') vehicleId: string,
+  ): Promise<TwinVisualizationConfig> {
     return await this.vehicleTwinService.getVisualizationConfig(vehicleId);
   }
 
@@ -114,7 +121,7 @@ export class VehicleTwinController {
   async updateVisualizationConfig(
     @Param('vehicleId') vehicleId: string,
     @Body() dto: UpdateVisualizationConfigDto,
-  ): Promise<any> {
+  ): Promise<TwinVisualizationConfig> {
     return await this.vehicleTwinService.updateVisualizationConfig(vehicleId, dto);
   }
 
@@ -124,7 +131,7 @@ export class VehicleTwinController {
   async getHealthTrend(
     @Param('vehicleId') vehicleId: string,
     @Query() query: HealthTrendQueryDto,
-  ): Promise<any> {
+  ): Promise<{ date: Date; overallHealth: number; componentHealth: Record<string, number> }[]> {
     return await this.vehicleTwinService.getHealthTrend(
       vehicleId,
       new Date(query.from),

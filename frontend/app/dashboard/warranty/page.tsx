@@ -27,11 +27,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { WarrantyCard, ClaimsList, ExpiringAlert, WarrantyForm } from "@/components/warranty"
 import { 
-  warrantyService, 
-  Warranty, 
-  WarrantyClaim, 
+  warrantyService,
+  Warranty,
+  WarrantyClaim,
   WarrantyStatus,
-  WarrantyWithClaims 
+  WarrantyWithClaims,
+  CreateWarrantyDTO,
 } from "@/lib/services/warrantyService"
 
 export default function WarrantyDashboardPage() {
@@ -71,10 +72,10 @@ export default function WarrantyDashboardPage() {
     }
   }
 
-  const handleCreateWarranty = async (data: any) => {
+  const handleCreateWarranty = async (data: { vehicleId: string; type: string; provider: string; startDate: Date; expirationDate: Date; currentKm: number; maxCoverage: number; deductible: number; coverageKm?: number | null; terms?: string; certificateUrl?: string }) => {
     try {
       setIsCreating(true)
-      await warrantyService.createWarranty(data)
+      await warrantyService.createWarranty(data as CreateWarrantyDTO)
       toast({
         title: "Warranty created",
         description: "The warranty has been created successfully",
@@ -115,8 +116,8 @@ export default function WarrantyDashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Warranty Management</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">Warranty Management</h1>
+          <p className="text-sm text-gray-500 dark:text-[#636366] mt-1">
             Track warranties and manage claims
           </p>
         </div>
@@ -162,7 +163,7 @@ export default function WarrantyDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.active}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>
@@ -173,7 +174,7 @@ export default function WarrantyDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.expiringSoon}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">{stats.expiringSoon}</div>
           </CardContent>
         </Card>
         <Card>
@@ -184,7 +185,7 @@ export default function WarrantyDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.expired}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">{stats.expired}</div>
           </CardContent>
         </Card>
         <Card>
@@ -195,7 +196,7 @@ export default function WarrantyDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.pendingClaims}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">{stats.pendingClaims}</div>
           </CardContent>
         </Card>
       </div>
@@ -209,10 +210,10 @@ export default function WarrantyDashboardPage() {
 
         <TabsContent value="warranties" className="space-y-4">
           {warranties.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <Shield className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No warranties yet</h3>
-              <p className="text-sm text-gray-500 mt-1">
+            <div className="text-center py-12 bg-gray-50 dark:bg-[#353535] rounded-lg">
+              <Shield className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-[#ececec]">No warranties yet</h3>
+              <p className="text-sm text-gray-500 dark:text-[#636366] mt-1">
                 Create a warranty to start tracking coverage
               </p>
               <Button 

@@ -8,7 +8,7 @@ import { AuthenticatedUser } from '../strategies/jwt.strategy';
 export const currentUserFactory = (
   data: keyof AuthenticatedUser | undefined,
   ctx: ExecutionContext,
-): AuthenticatedUser | any => {
+): AuthenticatedUser | AuthenticatedUser[keyof AuthenticatedUser] | null => {
   const request = ctx.switchToHttp().getRequest();
   const user = request.user as AuthenticatedUser;
 

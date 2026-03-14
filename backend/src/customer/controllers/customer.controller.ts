@@ -30,9 +30,8 @@ import {
   UpdateCustomerDto,
   CustomerResponseDto,
   CustomerSearchDto,
-  CustomerWithBookingsDto,
 } from '../dto/customer.dto';
-import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from '../dto/vehicle.dto';
+import { CreateVehicleDto, UpdateVehicleDto } from '../dto/vehicle.dto';
 
 @ApiTags('Customers')
 @ApiBearerAuth()

@@ -7,6 +7,47 @@
  * @version 1.0.0
  */
 
+// Polyfill Request/Response/Headers for jsdom test environments (Node 18+ has them natively)
+if (typeof globalThis.Request === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { Request: NR, Response: NRes, Headers: NH } = require('node:http') as Record<string, unknown>
+  // Fallback: minimal polyfill if node:http doesn't export them
+  if (!NR) {
+    // Use a minimal shim that the mock fetch handler can work with
+    (globalThis as Record<string, unknown>).Request = class Request {
+      url: string; method: string; headers: Record<string, string>; body: string | null
+      constructor(url: string, init?: RequestInit) {
+        this.url = url; this.method = init?.method || 'GET'
+        this.headers = {}; this.body = init?.body as string || null
+        if (init?.headers) {
+          const h = init.headers as Record<string, string>
+          for (const [k, v] of Object.entries(h)) { this.headers[k] = v }
+        }
+      }
+      async json() {
+        try { return JSON.parse(this.body || '{}') }
+        catch { return {} }
+      }
+      async text() { return this.body || '' }
+    } as unknown as typeof globalThis.Request
+  }
+}
+if (typeof globalThis.Response === 'undefined') {
+  (globalThis as Record<string, unknown>).Response = class Response {
+    _body: string; status: number; headers: Map<string, string>; ok: boolean
+    constructor(body?: string | null, init?: { status?: number; headers?: Record<string, string> }) {
+      this._body = body || ''; this.status = init?.status || 200
+      this.ok = this.status >= 200 && this.status < 300
+      this.headers = new Map(Object.entries(init?.headers || {}))
+    }
+    async json() { return JSON.parse(this._body) }
+    async text() { return this._body }
+  } as unknown as typeof globalThis.Response
+}
+if (typeof globalThis.Headers === 'undefined') {
+  (globalThis as Record<string, unknown>).Headers = Map as unknown as typeof globalThis.Headers
+}
+
 import { render, RenderOptions } from '@testing-library/react'
 import { ReactElement, ReactNode } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -18,9 +59,53 @@ import { z } from 'zod'
 // =============================================================================
 
 // Try to import MSW, but provide fallbacks if not installed
-let server: { listen: (options: unknown) => void; resetHandlers: () => void; close: () => void }
-let http: { post: unknown; get: unknown; put: unknown; delete: unknown }
-let HttpResponse: { json: (body: unknown, init?: unknown) => Response }
+type HandlerEntry = {
+  method: string
+  pattern: string
+  handler: (ctx: { params: Record<string, string>; request: Request }) => Response | Promise<Response>
+}
+
+let registeredHandlers: HandlerEntry[] = []
+let originalFetch: typeof global.fetch | null = null
+let mswAvailable = false
+
+let server: { listen: (options: unknown) => void; resetHandlers: () => void; close: () => void; use: (...handlers: unknown[]) => void }
+let http: { post: (path: string, handler: (ctx: { params: Record<string, string>; request: Request }) => Response | Promise<Response>) => HandlerEntry; get: (path: string, handler: (ctx: { params: Record<string, string>; request: Request }) => Response | Promise<Response>) => HandlerEntry; put: (path: string, handler: (ctx: { params: Record<string, string>; request: Request }) => Response | Promise<Response>) => HandlerEntry; delete: (path: string, handler: (ctx: { params: Record<string, string>; request: Request }) => Response | Promise<Response>) => HandlerEntry }
+let HttpResponse: { json: (body: unknown, init?: { status?: number }) => Response }
+
+function matchRoute(pattern: string, path: string): Record<string, string> | null {
+  const patternParts = pattern.split('/')
+  const pathParts = path.split('/')
+  if (patternParts.length !== pathParts.length) return null
+  const params: Record<string, string> = {}
+  for (let i = 0; i < patternParts.length; i++) {
+    if (patternParts[i].startsWith(':')) {
+      params[patternParts[i].slice(1)] = pathParts[i]
+    } else if (patternParts[i] !== pathParts[i]) {
+      return null
+    }
+  }
+  return params
+}
+
+function createMockFetch(): typeof global.fetch {
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+    const method = (init?.method || 'GET').toUpperCase()
+    const path = url.startsWith('http') ? new URL(url).pathname : url.split('?')[0]
+
+    for (const entry of registeredHandlers) {
+      if (entry.method !== method) continue
+      const params = matchRoute(entry.pattern, path)
+      if (params !== null) {
+        const request = new Request(url.startsWith('http') ? url : `http://localhost${url}`, init)
+        return await entry.handler({ params, request })
+      }
+    }
+    // No handler matched
+    return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+  }
+}
 
 try {
   const msw = require('msw/node')
@@ -28,30 +113,48 @@ try {
   server = msw.setupServer()
   http = mswHttp.http
   HttpResponse = mswHttp.HttpResponse
+  mswAvailable = true
 } catch {
-  // MSW not installed - provide mock implementations
-  server = {
-    listen: () => {},
-    resetHandlers: () => {},
-    close: () => {},
+  // MSW not installed - provide mock fetch-based implementations
+  const createHandler = (method: string) => (pattern: string, handler: (ctx: { params: Record<string, string>; request: Request }) => Response | Promise<Response>): HandlerEntry => {
+    return { method, pattern, handler }
   }
+
   http = {
-    post: () => {},
-    get: () => {},
-    put: () => {},
-    delete: () => {},
+    post: createHandler('POST'),
+    get: createHandler('GET'),
+    put: createHandler('PUT'),
+    delete: createHandler('DELETE'),
   }
+
   HttpResponse = {
-    json: (body: unknown) => new Response(JSON.stringify(body), {
-      status: 200,
+    json: (body: unknown, init?: { status?: number }) => new Response(JSON.stringify(body), {
+      status: init?.status || 200,
       headers: { 'Content-Type': 'application/json' },
     }),
+  }
+
+  server = {
+    listen: () => {
+      originalFetch = global.fetch
+      global.fetch = createMockFetch()
+    },
+    resetHandlers: () => {},
+    close: () => {
+      if (originalFetch) {
+        global.fetch = originalFetch
+        originalFetch = null
+      }
+    },
+    use: (...handlers: unknown[]) => {
+      registeredHandlers = handlers as HandlerEntry[]
+    },
   }
 }
 
 export { server, http, HttpResponse }
 
-// Start server before all tests (only if MSW is available)
+// Start server before all tests
 if (typeof beforeAll !== 'undefined') {
   beforeAll(() => {
     if (server && typeof server.listen === 'function') {

@@ -170,10 +170,7 @@ function requireTenant(req, res, next) {
     next();
 }
 function requireAuthWithRole(...roles) {
-    const middlewares = [
-        requireAuth(),
-        requireRoles(...roles),
-    ];
+    const middlewares = [requireAuth(), requireRoles(...roles)];
     return (req, res, next) => {
         let index = 0;
         function runNext() {
@@ -215,7 +212,6 @@ function verifyRefreshTokenMiddleware(req, res, next) {
 function tenantCorsMiddleware(allowedOrigins = []) {
     return (req, res, next) => {
         const origin = req.headers.origin;
-        const tenantId = req.tenantId || req.headers['x-tenant-id'];
         if (!origin || origin.includes('localhost') || origin.includes('postman')) {
             return next();
         }

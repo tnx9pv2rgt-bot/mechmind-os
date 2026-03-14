@@ -79,6 +79,8 @@ describe('AuthService', () => {
             authAuditLog: {
               create: jest.fn(),
             },
+            setTenantContext: jest.fn().mockResolvedValue(undefined),
+            clearTenantContext: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -88,9 +90,9 @@ describe('AuthService', () => {
               const configMap: Record<string, string> = {
                 JWT_SECRET: 'test-jwt-secret',
                 JWT_REFRESH_SECRET: 'test-jwt-refresh-secret',
-                JWT_EXPIRES_IN: '24h',
+                JWT_EXPIRES_IN: '1h',
                 JWT_REFRESH_EXPIRES_IN: '7d',
-                JWT_EXPIRES_IN_SECONDS: '86400',
+                JWT_EXPIRES_IN_SECONDS: '3600',
                 JWT_2FA_SECRET: 'test-2fa-secret',
               };
               return configMap[key] ?? defaultValue;
@@ -235,7 +237,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'mock-access-token',
         refreshToken: 'mock-refresh-token',
-        expiresIn: 86400,
+        expiresIn: 3600,
       });
     });
 
@@ -255,7 +257,7 @@ describe('AuthService', () => {
 
       expect(jwtService.signAsync).toHaveBeenCalledWith(expectedPayload, {
         secret: 'test-jwt-secret',
-        expiresIn: '24h',
+        expiresIn: '1h',
       });
       expect(jwtService.signAsync).toHaveBeenCalledWith(expectedPayload, {
         secret: 'test-jwt-refresh-secret',
@@ -278,9 +280,9 @@ describe('AuthService', () => {
 
       expect(configService.get).toHaveBeenCalledWith('JWT_SECRET');
       expect(configService.get).toHaveBeenCalledWith('JWT_REFRESH_SECRET');
-      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN', '24h');
+      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN', '1h');
       expect(configService.get).toHaveBeenCalledWith('JWT_REFRESH_EXPIRES_IN', '7d');
-      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN_SECONDS', '86400');
+      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN_SECONDS', '3600');
     });
   });
 
@@ -307,7 +309,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
-        expiresIn: 86400,
+        expiresIn: 3600,
       });
 
       expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-refresh-token', {
@@ -773,10 +775,72 @@ describe('AuthService', () => {
   // validateApiKey()
   // =========================================================================
   describe('validateApiKey', () => {
-    it('should return invalid result for malformed API key', async () => {
-      const result = await service.validateApiKey('some-api-key');
+    it('should return invalid result for empty API key', async () => {
+      const result = await service.validateApiKey('');
+      expect(result).toEqual({ tenantId: '', valid: false });
+    });
 
-      // API key format requires mk_tenantId_secret (3+ parts starting with 'mk')
+    it('should return invalid result for malformed API key (no mk prefix)', async () => {
+      const result = await service.validateApiKey('some-api-key');
+      expect(result).toEqual({ tenantId: '', valid: false });
+    });
+
+    it('should return invalid result for API key with wrong prefix', async () => {
+      const result = await service.validateApiKey('xx_tenant1_secret');
+      expect(result).toEqual({ tenantId: '', valid: false });
+    });
+
+    it('should return invalid result when tenant is not found', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.validateApiKey('mk_tenant1_secret');
+      expect(result).toEqual({ tenantId: '', valid: false });
+    });
+
+    it('should return invalid result when tenant is inactive', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tenant1',
+        isActive: false,
+        apiKeyHash: '$2b$12$hash',
+      });
+
+      const result = await service.validateApiKey('mk_tenant1_secret');
+      expect(result).toEqual({ tenantId: '', valid: false });
+    });
+
+    it('should return invalid result when tenant has no apiKeyHash', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tenant1',
+        isActive: true,
+        apiKeyHash: null,
+      });
+
+      const result = await service.validateApiKey('mk_tenant1_secret');
+      expect(result).toEqual({ tenantId: '', valid: false });
+    });
+
+    it('should return valid result when API key matches hash', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tenant1',
+        isActive: true,
+        apiKeyHash: '$2b$12$validhash',
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      const result = await service.validateApiKey('mk_tenant1_secretvalue');
+      expect(result).toEqual({ tenantId: 'tenant1', valid: true });
+      expect(bcrypt.compare).toHaveBeenCalledWith('mk_tenant1_secretvalue', '$2b$12$validhash');
+    });
+
+    it('should return invalid result when API key does not match hash', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tenant1',
+        isActive: true,
+        apiKeyHash: '$2b$12$validhash',
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      const result = await service.validateApiKey('mk_tenant1_wrongsecret');
       expect(result).toEqual({ tenantId: '', valid: false });
     });
   });
@@ -842,6 +906,120 @@ describe('AuthService', () => {
       };
 
       await expect(service.logAdminAction(action)).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  // =========================================================================
+  // logAuthEvent()
+  // =========================================================================
+  describe('logAuthEvent', () => {
+    it('should create audit log entry', async () => {
+      (prisma.authAuditLog.create as jest.Mock).mockResolvedValue({});
+
+      await service.logAuthEvent({
+        userId: 'user-uuid-1',
+        tenantId: 'tenant-uuid-1',
+        action: 'login',
+        status: 'success',
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        details: { method: 'password' },
+      });
+
+      expect(prisma.authAuditLog.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-uuid-1',
+          tenantId: 'tenant-uuid-1',
+          action: 'login',
+          status: 'success',
+          ipAddress: '192.168.1.1',
+          userAgent: 'Mozilla/5.0',
+          details: { method: 'password' },
+        },
+      });
+    });
+
+    it('should use empty object when details is undefined', async () => {
+      (prisma.authAuditLog.create as jest.Mock).mockResolvedValue({});
+
+      await service.logAuthEvent({
+        tenantId: 'tenant-uuid-1',
+        action: 'logout',
+        status: 'success',
+      });
+
+      expect(prisma.authAuditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          details: {},
+        }),
+      });
+    });
+
+    it('should not throw when audit log creation fails', async () => {
+      (prisma.authAuditLog.create as jest.Mock).mockRejectedValue(new Error('DB error'));
+
+      await expect(
+        service.logAuthEvent({
+          tenantId: 'tenant-uuid-1',
+          action: 'login',
+          status: 'failed',
+        }),
+      ).resolves.toBeUndefined();
+
+      expect(logger.error).toHaveBeenCalledWith('Failed to log auth event', expect.any(String));
+    });
+
+    it('should log failed and blocked statuses', async () => {
+      (prisma.authAuditLog.create as jest.Mock).mockResolvedValue({});
+
+      await service.logAuthEvent({
+        tenantId: 'tenant-uuid-1',
+        action: 'login',
+        status: 'blocked',
+        details: { reason: 'account_locked' },
+      });
+
+      expect(prisma.authAuditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          status: 'blocked',
+        }),
+      });
+    });
+  });
+
+  // =========================================================================
+  // findUserByEmailAndTenant()
+  // =========================================================================
+  describe('findUserByEmailAndTenant', () => {
+    it('should return user when found and active', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
+
+      const result = await service.findUserByEmailAndTenant('mario@test.com', 'tenant-uuid-1');
+
+      expect(result).toEqual(mockUserWithTenant);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: 'mario@test.com', tenantId: 'tenant-uuid-1', isActive: true },
+        include: { tenant: true },
+      });
+    });
+
+    it('should return null when user not found', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.findUserByEmailAndTenant('unknown@test.com', 'tenant-uuid-1');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when tenant is inactive', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        tenant: { ...mockTenant, isActive: false },
+      });
+
+      const result = await service.findUserByEmailAndTenant('mario@test.com', 'tenant-uuid-1');
+
+      expect(result).toBeNull();
     });
   });
 });

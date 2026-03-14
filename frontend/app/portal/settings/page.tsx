@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PortalPageWrapper } from '@/components/portal'
-import { portalAuth } from '@/lib/auth/portal-auth'
 import { Customer, NotificationPreferences } from '@/lib/types/portal'
 
 // ============================================
@@ -147,7 +146,7 @@ export default function PortalSettingsPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="mb-6 p-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3"
+          className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-2xl flex items-center gap-3"
         >
           <CheckCircle className="h-5 w-5 text-apple-green flex-shrink-0" />
           <p className="text-sm text-apple-green font-medium">Modifiche salvate con successo!</p>
@@ -178,7 +177,7 @@ export default function PortalSettingsPage() {
         <TabsContent value="profile">
           <AppleCard>
             <AppleCardHeader>
-              <h2 className="text-lg font-semibold text-apple-dark flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2">
                 <User className="h-5 w-5 text-apple-blue" />
                 Informazioni Personali
               </h2>
@@ -241,7 +240,7 @@ export default function PortalSettingsPage() {
         <TabsContent value="password">
           <AppleCard>
             <AppleCardHeader>
-              <h2 className="text-lg font-semibold text-apple-dark flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2">
                 <Lock className="h-5 w-5 text-apple-blue" />
                 Cambia Password
               </h2>
@@ -300,14 +299,14 @@ export default function PortalSettingsPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-apple-blue" />
-                  <h2 className="text-lg font-semibold text-apple-dark">Email</h2>
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">Email</h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-apple-dark">Notifiche email</p>
-                    <p className="text-sm text-apple-gray">Ricevi aggiornamenti via email</p>
+                    <p className="font-medium text-apple-dark dark:text-[#ececec]">Notifiche email</p>
+                    <p className="text-sm text-apple-gray dark:text-[#636366]">Ricevi aggiornamenti via email</p>
                   </div>
                   <Switch
                     checked={notifications.email.enabled}
@@ -320,7 +319,7 @@ export default function PortalSettingsPage() {
                   />
                 </div>
                 {notifications.email.enabled && (
-                  <div className="pl-4 border-l-2 border-apple-border space-y-3">
+                  <div className="pl-4 border-l-2 border-apple-border dark:border-[#424242] space-y-3">
                     <label className="flex items-center gap-3">
                       <input
                         type="checkbox"
@@ -331,7 +330,7 @@ export default function PortalSettingsPage() {
                         })}
                         className="rounded border-apple-border"
                       />
-                      <span className="text-sm text-apple-dark">Promemoria prenotazioni</span>
+                      <span className="text-sm text-apple-dark dark:text-[#ececec]">Promemoria prenotazioni</span>
                     </label>
                     <label className="flex items-center gap-3">
                       <input
@@ -343,7 +342,7 @@ export default function PortalSettingsPage() {
                         })}
                         className="rounded border-apple-border"
                       />
-                      <span className="text-sm text-apple-dark">Avvisi manutenzione</span>
+                      <span className="text-sm text-apple-dark dark:text-[#ececec]">Avvisi manutenzione</span>
                     </label>
                     <label className="flex items-center gap-3">
                       <input
@@ -355,7 +354,7 @@ export default function PortalSettingsPage() {
                         })}
                         className="rounded border-apple-border"
                       />
-                      <span className="text-sm text-apple-dark">Report ispezioni</span>
+                      <span className="text-sm text-apple-dark dark:text-[#ececec]">Report ispezioni</span>
                     </label>
                   </div>
                 )}
@@ -367,14 +366,14 @@ export default function PortalSettingsPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-3">
                   <Smartphone className="h-5 w-5 text-apple-green" />
-                  <h2 className="text-lg font-semibold text-apple-dark">SMS</h2>
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">SMS</h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-apple-dark">Notifiche SMS</p>
-                    <p className="text-sm text-apple-gray">Ricevi messaggi urgenti</p>
+                    <p className="font-medium text-apple-dark dark:text-[#ececec]">Notifiche SMS</p>
+                    <p className="text-sm text-apple-gray dark:text-[#636366]">Ricevi messaggi urgenti</p>
                   </div>
                   <Switch
                     checked={notifications.sms.enabled}
@@ -394,14 +393,14 @@ export default function PortalSettingsPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-3">
                   <MessageCircle className="h-5 w-5 text-apple-green" />
-                  <h2 className="text-lg font-semibold text-apple-dark">WhatsApp</h2>
+                  <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">WhatsApp</h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-apple-dark">Notifiche WhatsApp</p>
-                    <p className="text-sm text-apple-gray">Ricevi aggiornamenti su WhatsApp</p>
+                    <p className="font-medium text-apple-dark dark:text-[#ececec]">Notifiche WhatsApp</p>
+                    <p className="text-sm text-apple-gray dark:text-[#636366]">Ricevi aggiornamenti su WhatsApp</p>
                   </div>
                   <Switch
                     checked={notifications.whatsapp.enabled}
@@ -433,7 +432,7 @@ export default function PortalSettingsPage() {
           <div className="space-y-4">
             <AppleCard>
               <AppleCardHeader>
-                <h2 className="text-lg font-semibold text-apple-dark flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2">
                   <Shield className="h-5 w-5 text-apple-blue" />
                   Autenticazione a Due Fattori
                 </h2>
@@ -441,8 +440,8 @@ export default function PortalSettingsPage() {
               <AppleCardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-apple-dark">2FA non attivo</p>
-                    <p className="text-sm text-apple-gray">Aggiungi un livello di sicurezza extra</p>
+                    <p className="font-medium text-apple-dark dark:text-[#ececec]">2FA non attivo</p>
+                    <p className="text-sm text-apple-gray dark:text-[#636366]">Aggiungi un livello di sicurezza extra</p>
                   </div>
                   <AppleButton variant="secondary" size="sm">
                     Attiva
@@ -462,13 +461,13 @@ export default function PortalSettingsPage() {
                 <div className="flex items-start gap-4">
                   <AlertTriangle className="h-5 w-5 text-apple-red flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-apple-dark mb-2">
+                    <p className="text-sm text-apple-dark dark:text-[#ececec] mb-2">
                       L&apos;eliminazione dell&apos;account è irreversibile. Tutti i tuoi dati verranno cancellati 
                       in conformità con il GDPR.
                     </p>
                     <AppleButton
                       variant="ghost"
-                      className="text-apple-red hover:bg-red-50"
+                      className="text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20"
                       onClick={handleDeleteAccount}
                     >
                       Richiedi eliminazione account

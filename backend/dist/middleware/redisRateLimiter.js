@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var RedisRateLimiterMiddleware_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RedisRateLimiterMiddleware = void 0;
+exports.RedisRateLimiterMiddleware = exports.FixedWindowStore = void 0;
 exports.ApplyRateLimit = ApplyRateLimit;
 exports.createRateLimiter = createRateLimiter;
 exports.checkRateLimit = checkRateLimit;
@@ -43,7 +43,6 @@ class RedisRateLimitStore {
         };
     }
     async decrement(key) {
-        const now = Date.now();
         const entries = await this.redis.zrevrange(key, 0, 0);
         if (entries.length > 0) {
             await this.redis.zrem(key, entries[0]);
@@ -68,7 +67,7 @@ class RedisRateLimitStore {
         return {current, retryAfter}
       end
     `;
-        const result = await this.redis.eval(script, 1, key, windowStart, limit, now, `${now}-${Math.random()}`, this.windowMs);
+        const result = (await this.redis.eval(script, 1, key, windowStart, limit, now, `${now}-${Math.random()}`, this.windowMs));
         const current = result[0];
         const retryAfter = result[1];
         return {
@@ -105,6 +104,7 @@ class FixedWindowStore {
         await this.redis.del(key);
     }
 }
+exports.FixedWindowStore = FixedWindowStore;
 let RedisRateLimiterMiddleware = RedisRateLimiterMiddleware_1 = class RedisRateLimiterMiddleware {
     constructor(configService) {
         this.configService = configService;
@@ -114,10 +114,10 @@ let RedisRateLimiterMiddleware = RedisRateLimiterMiddleware_1 = class RedisRateL
         this.redis = new ioredis_1.default(redisUrl, {
             password: this.configService.get('REDIS_PASSWORD') || undefined,
             db: parseInt(this.configService.get('REDIS_DB') || '0'),
-            retryStrategy: (times) => Math.min(times * 50, 2000),
+            retryStrategy: times => Math.min(times * 50, 2000),
             enableOfflineQueue: false,
         });
-        this.redis.on('error', (err) => {
+        this.redis.on('error', err => {
             this.logger.error('Redis connection error:', err.message);
         });
     }
@@ -162,7 +162,7 @@ let RedisRateLimiterMiddleware = RedisRateLimiterMiddleware_1 = class RedisRateL
             next();
         }
         catch (error) {
-            this.logger.error('Rate limiter error:', error.message);
+            this.logger.error('Rate limiter error:', error instanceof Error ? error.message : 'Unknown error');
             next();
         }
     }
@@ -176,11 +176,13 @@ let RedisRateLimiterMiddleware = RedisRateLimiterMiddleware_1 = class RedisRateL
     getClientIp(req) {
         const forwarded = req.headers['x-forwarded-for'];
         const ip = forwarded
-            ? (typeof forwarded === 'string' ? forwarded.split(',')[0] : forwarded[0])
+            ? typeof forwarded === 'string'
+                ? forwarded.split(',')[0]
+                : forwarded[0]
             : req.socket?.remoteAddress;
         return ip || 'unknown';
     }
-    async handleResponse(req, res, body, store, key, config) {
+    async handleResponse(req, res, _body, store, key, config) {
         const statusCode = res.statusCode;
         const isSuccess = statusCode < 400;
         if (config.skipSuccessfulRequests && isSuccess) {
@@ -196,7 +198,6 @@ let RedisRateLimiterMiddleware = RedisRateLimiterMiddleware_1 = class RedisRateL
     }
     async getLimitStatus(key, config) {
         const fullKey = `${config.keyPrefix}:${key}`;
-        const store = new RedisRateLimitStore(this.redis, config.windowMs);
         try {
             const count = await this.redis.zcount(fullKey, Date.now() - config.windowMs, Date.now());
             const ttl = await this.redis.pttl(fullKey);
@@ -253,21 +254,19 @@ exports.RedisRateLimiterMiddleware = RedisRateLimiterMiddleware = RedisRateLimit
 ], RedisRateLimiterMiddleware);
 function ApplyRateLimit(config) {
     return function (target, propertyKey, descriptor) {
-        const limiterConfig = typeof config === 'string'
-            ? getPresetConfig(config)
-            : config;
+        const limiterConfig = typeof config === 'string' ? getPresetConfig(config) : config;
         Reflect.defineMetadata('RATE_LIMIT_CONFIG', limiterConfig, target, propertyKey || '');
         return descriptor || target;
     };
 }
 function getPresetConfig(name) {
     const presets = {
-        'registration': RedisRateLimiterMiddleware.REGISTRATION_LIMIT,
-        'vat': RedisRateLimiterMiddleware.VAT_VERIFICATION_LIMIT,
-        'email': RedisRateLimiterMiddleware.EMAIL_CHECK_LIMIT,
-        'phone': RedisRateLimiterMiddleware.PHONE_CHECK_LIMIT,
-        'login': RedisRateLimiterMiddleware.LOGIN_LIMIT,
-        'api': RedisRateLimiterMiddleware.API_GENERAL_LIMIT,
+        registration: RedisRateLimiterMiddleware.REGISTRATION_LIMIT,
+        vat: RedisRateLimiterMiddleware.VAT_VERIFICATION_LIMIT,
+        email: RedisRateLimiterMiddleware.EMAIL_CHECK_LIMIT,
+        phone: RedisRateLimiterMiddleware.PHONE_CHECK_LIMIT,
+        login: RedisRateLimiterMiddleware.LOGIN_LIMIT,
+        api: RedisRateLimiterMiddleware.API_GENERAL_LIMIT,
     };
     return presets[name] || RedisRateLimiterMiddleware.API_GENERAL_LIMIT;
 }
@@ -276,9 +275,10 @@ function createRateLimiter(redisUrl, config) {
     const logger = new common_1.Logger('RateLimiter');
     const store = new RedisRateLimitStore(redis, config.windowMs);
     return async (req, res, next) => {
-        const keyGenerator = config.keyGenerator || ((req) => {
-            return req.ip || req.socket?.remoteAddress || 'unknown';
-        });
+        const keyGenerator = config.keyGenerator ||
+            ((req) => {
+                return req.ip || req.socket?.remoteAddress || 'unknown';
+            });
         const key = `${config.keyPrefix || 'ratelimit'}:${keyGenerator(req)}`;
         try {
             const info = await store.incrementSlidingWindow(key, config.maxRequests);

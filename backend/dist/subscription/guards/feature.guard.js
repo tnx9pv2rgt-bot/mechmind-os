@@ -32,7 +32,10 @@ let FeatureGuard = class FeatureGuard {
         this.featureAccessService = featureAccessService;
     }
     async canActivate(context) {
-        const requiredFeatures = this.reflector.getAllAndOverride(exports.REQUIRED_FEATURE_KEY, [context.getHandler(), context.getClass()]);
+        const requiredFeatures = this.reflector.getAllAndOverride(exports.REQUIRED_FEATURE_KEY, [
+            context.getHandler(),
+            context.getClass(),
+        ]);
         if (!requiredFeatures || requiredFeatures.length === 0) {
             return true;
         }

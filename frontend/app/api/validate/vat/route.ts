@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 ore in ms
 
 // In-memory cache per il frontend
@@ -73,7 +73,7 @@ function validateItalianLuhn(vatNumber: string): boolean {
 
 export async function POST(request: NextRequest) {
   const clientIp = getClientIp(request);
-  
+
   // Rate limiting
   if (!checkRateLimit(clientIp)) {
     return NextResponse.json(
@@ -83,37 +83,33 @@ export async function POST(request: NextRequest) {
   }
 
   let body: { vat?: string; countryCode?: string };
-  
+
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: 'Invalid JSON body' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
   const { vat, countryCode: providedCountryCode } = body;
 
   if (!vat || typeof vat !== 'string') {
-    return NextResponse.json(
-      { error: 'VAT number is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'VAT number is required' }, { status: 400 });
   }
 
   const normalizedVat = normalizeVatNumber(vat);
-  const countryCode = providedCountryCode?.toUpperCase() || extractCountryCode(normalizedVat) || 'IT';
-  
+  const countryCode =
+    providedCountryCode?.toUpperCase() || extractCountryCode(normalizedVat) || 'IT';
+
   // Estrai il numero senza country code
-  const cleanVat = normalizedVat.startsWith(countryCode) 
-    ? normalizedVat.substring(2) 
+  const cleanVat = normalizedVat.startsWith(countryCode)
+    ? normalizedVat.substring(2)
     : normalizedVat;
 
   const fullVat = `${countryCode}${cleanVat}`;
 
   // Validazione formato italiano
-  const isValidFormat = countryCode === 'IT' ? /^\d{11}$/.test(cleanVat) : /^[A-Z0-9]{8,12}$/.test(cleanVat);
+  const isValidFormat =
+    countryCode === 'IT' ? /^\d{11}$/.test(cleanVat) : /^[A-Z0-9]{8,12}$/.test(cleanVat);
   const luhnValid = countryCode === 'IT' ? validateItalianLuhn(cleanVat) : true;
 
   if (!isValidFormat) {
@@ -146,7 +142,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      
+
       // Fallback: trust Luhn validation se l'API fallisce
       if (response.status >= 500) {
         const fallbackResult = {
@@ -162,7 +158,7 @@ export async function POST(request: NextRequest) {
         };
         return NextResponse.json(fallbackResult);
       }
-      
+
       return NextResponse.json(
         { error: errorData.error || 'Validation failed' },
         { status: response.status }
@@ -170,14 +166,14 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    
+
     // Cache il risultato
     cache.set(cacheKey, { data, timestamp: Date.now() });
 
     return NextResponse.json(data);
   } catch (error) {
     console.error('VAT validation error:', error);
-    
+
     // Fallback su errore di rete
     const fallbackResult = {
       valid: luhnValid,
@@ -188,7 +184,7 @@ export async function POST(request: NextRequest) {
       luhnValid,
       _fallback: true,
     };
-    
+
     return NextResponse.json(fallbackResult);
   }
 }

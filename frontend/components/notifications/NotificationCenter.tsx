@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * NotificationCenter Component
  * Bell icon with unread count and dropdown menu

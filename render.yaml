@@ -29,12 +29,15 @@ services:
         sync: false
       - key: ENCRYPTION_KEY
         sync: false
-      # Redis
-      - key: REDIS_HOST
-        sync: false
-      - key: REDIS_PORT
-        sync: false
-      - key: REDIS_PASSWORD
-        sync: false
-      - key: REDIS_TLS
-        value: "true"
+      # Redis — uses Render internal service
+      - key: REDIS_URL
+        fromService:
+          name: nexo-redis
+          type: redis
+          property: connectionString
+
+  - type: redis
+    name: nexo-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    region: frankfurt

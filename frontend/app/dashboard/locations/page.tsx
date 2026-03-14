@@ -6,11 +6,11 @@ import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/ap
 import { AppleButton } from '@/components/ui/apple-button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Building2, 
-  MapPin, 
-  TrendingUp, 
-  Users, 
+import {
+  Building2,
+  MapPin,
+  TrendingUp,
+  Users,
   Car,
   Star,
   Plus,
@@ -88,9 +88,9 @@ const staggerContainer = {
 
 const cardVariants = {
   initial: { opacity: 0, y: 20, scale: 0.95 },
-  animate: { 
-    opacity: 1, 
-    y: 0, 
+  animate: {
+    opacity: 1,
+    y: 0,
     scale: 1,
     transition: {
       type: "spring",
@@ -110,9 +110,9 @@ const cardVariants = {
 
 const statsCardVariants = {
   initial: { opacity: 0, y: 20, scale: 0.9 },
-  animate: { 
-    opacity: 1, 
-    y: 0, 
+  animate: {
+    opacity: 1,
+    y: 0,
     scale: 1,
     transition: {
       type: "spring",
@@ -124,9 +124,9 @@ const statsCardVariants = {
 
 const detailCardVariants = {
   initial: { opacity: 0, scale: 0.95, y: 30 },
-  animate: { 
-    opacity: 1, 
-    scale: 1, 
+  animate: {
+    opacity: 1,
+    scale: 1,
     y: 0,
     transition: {
       type: "spring",
@@ -134,9 +134,9 @@ const detailCardVariants = {
       damping: 20
     }
   },
-  exit: { 
-    opacity: 0, 
-    scale: 0.95, 
+  exit: {
+    opacity: 0,
+    scale: 0.95,
     y: -20,
     transition: {
       duration: 0.2
@@ -146,8 +146,8 @@ const detailCardVariants = {
 
 const comparisonItemVariants = {
   initial: { opacity: 0, x: -20 },
-  animate: { 
-    opacity: 1, 
+  animate: {
+    opacity: 1,
     x: 0,
     transition: {
       type: "spring",
@@ -167,17 +167,10 @@ export default function LocationsPage() {
   )
 
   return (
-    <div className="min-h-screen">
-      {/* Header with animation */}
-      <motion.header 
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ 
-          type: "spring",
-          stiffness: 100,
-          damping: 20
-        }}
+    <div>
+      {/* Header */}
+      <header
+        className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50"
       >
         <div className="px-8 py-5 flex items-center justify-between">
           <motion.div
@@ -185,8 +178,8 @@ export default function LocationsPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
-            <h1 className="text-headline text-apple-dark">Location</h1>
-            <p className="text-apple-gray text-body mt-1">Gestisci le tue sedi</p>
+            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">Location</h1>
+            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">Gestisci le tue sedi</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -198,11 +191,11 @@ export default function LocationsPage() {
             </AppleButton>
           </motion.div>
         </div>
-      </motion.header>
+      </header>
 
       <div className="p-8 space-y-6">
-        {/* Stats Overview with stagger animation */}
-        <motion.div 
+        {/* Stats Overview */}
+        <motion.div
           className="grid grid-cols-1 sm:grid-cols-4 gap-bento"
           variants={staggerContainer}
           initial="initial"
@@ -218,14 +211,11 @@ export default function LocationsPage() {
               key={stat.label}
               variants={statsCardVariants}
               custom={index}
-              whileHover={{ 
-                scale: 1.03,
-                transition: { type: "spring", stiffness: 400, damping: 25 }
-              }}
+              whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 25 } }}
             >
               <AppleCard>
                 <AppleCardContent className="flex items-center gap-4">
-                  <motion.div 
+                  <motion.div
                     className={`w-12 h-12 rounded-2xl ${stat.color} flex items-center justify-center`}
                     whileHover={{ rotate: 5 }}
                     transition={{ type: "spring", stiffness: 300 }}
@@ -233,8 +223,8 @@ export default function LocationsPage() {
                     <stat.icon className="h-6 w-6 text-white" />
                   </motion.div>
                   <div>
-                    <p className="text-title-1 font-semibold text-apple-dark">{stat.value}</p>
-                    <p className="text-apple-gray text-sm">{stat.label}</p>
+                    <p className="text-title-1 font-semibold text-apple-dark dark:text-[#ececec]">{stat.value}</p>
+                    <p className="text-apple-gray dark:text-[#636366] text-sm">{stat.label}</p>
                   </div>
                 </AppleCardContent>
               </AppleCard>
@@ -248,7 +238,7 @@ export default function LocationsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.3 }}
           >
-            <TabsList className="mb-6 bg-white p-1 rounded-2xl border border-apple-border/30 w-fit">
+            <TabsList className="mb-6 bg-white dark:bg-[#2f2f2f] p-1 rounded-2xl border border-apple-border/30 dark:border-[#424242] w-fit">
               <TabsTrigger value="locations" className="rounded-xl data-[state=active]:bg-apple-blue data-[state=active]:text-white px-6">
                 Sedi
               </TabsTrigger>
@@ -262,7 +252,7 @@ export default function LocationsPage() {
           </motion.div>
 
           <TabsContent value="locations" className="mt-0 space-y-6">
-            {/* Search with animation */}
+            {/* Search */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -276,15 +266,15 @@ export default function LocationsPage() {
                       placeholder="Cerca sede per nome o città..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 h-12 rounded-xl border-2 border-black bg-white text-gray-900 placeholder:text-gray-400 focus:border-black focus:ring-2 focus:ring-gray-200"
+                      className="pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]"
                     />
                   </div>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
 
-            {/* Locations Grid with stagger animation */}
-            <motion.div 
+            {/* Locations Grid */}
+            <motion.div
               className="grid grid-cols-1 lg:grid-cols-3 gap-bento"
               variants={staggerContainer}
               initial="initial"
@@ -298,14 +288,14 @@ export default function LocationsPage() {
                   whileHover="hover"
                   layoutId={`location-${location.id}`}
                 >
-                  <AppleCard 
-                    hover 
+                  <AppleCard
+                    hover
                     className={selectedLocation?.id === location.id ? 'ring-2 ring-apple-blue' : ''}
                   >
                     <AppleCardContent>
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <motion.div 
+                          <motion.div
                             className="w-12 h-12 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center"
                             whileHover={{ rotate: 5, scale: 1.1 }}
                             transition={{ type: "spring", stiffness: 300 }}
@@ -313,49 +303,45 @@ export default function LocationsPage() {
                             <Building2 className="h-6 w-6 text-white" />
                           </motion.div>
                           <div>
-                            <h3 className="text-body font-semibold text-apple-dark">{location.name}</h3>
-                            <p className="text-footnote text-apple-gray flex items-center gap-1">
+                            <h3 className="text-body font-semibold text-apple-dark dark:text-[#ececec]">{location.name}</h3>
+                            <p className="text-footnote text-apple-gray dark:text-[#636366] flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
                               {location.city}
                             </p>
                           </div>
                         </div>
-                        <motion.div 
+                        <motion.div
                           className={`w-2 h-2 rounded-full ${location.isActive ? 'bg-apple-green' : 'bg-apple-gray'}`}
                           animate={location.isActive ? {
                             scale: [1, 1.2, 1],
                             opacity: [1, 0.7, 1]
                           } : {}}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                         />
                       </div>
 
                       {/* Revenue Mini Stats */}
                       <div className="grid grid-cols-3 gap-2 mb-4">
-                        <motion.div 
-                          className="text-center p-2 bg-apple-light-gray/50 rounded-xl"
-                          whileHover={{ scale: 1.05, backgroundColor: "rgba(0,0,0,0.05)" }}
+                        <motion.div
+                          className="text-center p-2 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl"
+                          whileHover={{ scale: 1.05 }}
                         >
-                          <p className="text-caption text-apple-gray">Oggi</p>
-                          <p className="text-callout font-semibold text-apple-dark">€{location.revenue.today.toLocaleString()}</p>
+                          <p className="text-caption text-apple-gray dark:text-[#636366]">Oggi</p>
+                          <p className="text-callout font-semibold text-apple-dark dark:text-[#ececec]">€{location.revenue.today.toLocaleString()}</p>
                         </motion.div>
-                        <motion.div 
-                          className="text-center p-2 bg-apple-light-gray/50 rounded-xl"
-                          whileHover={{ scale: 1.05, backgroundColor: "rgba(0,0,0,0.05)" }}
+                        <motion.div
+                          className="text-center p-2 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl"
+                          whileHover={{ scale: 1.05 }}
                         >
-                          <p className="text-caption text-apple-gray">Sett.</p>
-                          <p className="text-callout font-semibold text-apple-dark">€{(location.revenue.week / 1000).toFixed(1)}k</p>
+                          <p className="text-caption text-apple-gray dark:text-[#636366]">Sett.</p>
+                          <p className="text-callout font-semibold text-apple-dark dark:text-[#ececec]">€{(location.revenue.week / 1000).toFixed(1)}k</p>
                         </motion.div>
-                        <motion.div 
-                          className="text-center p-2 bg-apple-light-gray/50 rounded-xl"
-                          whileHover={{ scale: 1.05, backgroundColor: "rgba(0,0,0,0.05)" }}
+                        <motion.div
+                          className="text-center p-2 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl"
+                          whileHover={{ scale: 1.05 }}
                         >
-                          <p className="text-caption text-apple-gray">Mese</p>
-                          <p className="text-callout font-semibold text-apple-dark">€{(location.revenue.month / 1000).toFixed(1)}k</p>
+                          <p className="text-caption text-apple-gray dark:text-[#636366]">Mese</p>
+                          <p className="text-callout font-semibold text-apple-dark dark:text-[#ececec]">€{(location.revenue.month / 1000).toFixed(1)}k</p>
                         </motion.div>
                       </div>
 
@@ -363,18 +349,18 @@ export default function LocationsPage() {
                       <div className="flex items-center gap-4 mb-4">
                         <div className="flex items-center gap-2">
                           <Car className="h-4 w-4 text-apple-blue" />
-                          <span className="text-footnote text-apple-dark">{location.carCount.inService} in servizio</span>
+                          <span className="text-footnote text-apple-dark dark:text-[#ececec]">{location.carCount.inService} in servizio</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 text-apple-orange" />
-                          <span className="text-footnote text-apple-dark">{location.satisfaction} ★</span>
+                          <span className="text-footnote text-apple-dark dark:text-[#ececec]">{location.satisfaction} ★</span>
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-apple-border/20">
-                        <AppleButton 
-                          variant="secondary" 
-                          fullWidth 
+                      <div className="pt-4 border-t border-apple-border/20 dark:border-[#424242]">
+                        <AppleButton
+                          variant="secondary"
+                          fullWidth
                           onClick={() => setSelectedLocation(location)}
                         >
                           {selectedLocation?.id === location.id ? 'Selezionata' : 'Seleziona'}
@@ -386,7 +372,7 @@ export default function LocationsPage() {
               ))}
             </motion.div>
 
-            {/* Selected Location Detail with animation */}
+            {/* Selected Location Detail */}
             {selectedLocation && (
               <motion.div
                 key={selectedLocation.id}
@@ -399,13 +385,13 @@ export default function LocationsPage() {
                 <AppleCard featured>
                   <AppleCardContent>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-                      <motion.div 
+                      <motion.div
                         className="flex items-center gap-4"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2, duration: 0.4 }}
                       >
-                        <motion.div 
+                        <motion.div
                           className="w-16 h-16 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center"
                           whileHover={{ rotate: 10, scale: 1.1 }}
                           transition={{ type: "spring", stiffness: 200 }}
@@ -413,8 +399,8 @@ export default function LocationsPage() {
                           <Building2 className="h-8 w-8 text-white" />
                         </motion.div>
                         <div>
-                          <h2 className="text-title-1 font-semibold text-apple-dark">{selectedLocation.name}</h2>
-                          <p className="text-body text-apple-gray">{selectedLocation.address}</p>
+                          <h2 className="text-title-1 font-semibold text-apple-dark dark:text-[#ececec]">{selectedLocation.name}</h2>
+                          <p className="text-body text-apple-gray dark:text-[#636366]">{selectedLocation.address}</p>
                         </div>
                       </motion.div>
                       <motion.div
@@ -426,7 +412,7 @@ export default function LocationsPage() {
                       </motion.div>
                     </div>
 
-                    <motion.div 
+                    <motion.div
                       className="grid grid-cols-2 md:grid-cols-4 gap-4"
                       variants={staggerContainer}
                       initial="initial"
@@ -438,18 +424,15 @@ export default function LocationsPage() {
                         { label: 'Tecnici', value: selectedLocation.technicians.toString() },
                         { label: 'Pronti', value: selectedLocation.carCount.ready.toString() },
                       ].map((item, index) => (
-                        <motion.div 
+                        <motion.div
                           key={item.label}
-                          className="p-4 bg-apple-light-gray/50 rounded-2xl text-center"
+                          className="p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-2xl text-center"
                           variants={statsCardVariants}
                           custom={index}
-                          whileHover={{ 
-                            scale: 1.05,
-                            backgroundColor: "rgba(0,0,0,0.06)"
-                          }}
+                          whileHover={{ scale: 1.05 }}
                         >
-                          <p className="text-caption text-apple-gray mb-1">{item.label}</p>
-                          <p className="text-title-2 font-bold text-apple-dark">{item.value}</p>
+                          <p className="text-caption text-apple-gray dark:text-[#636366] mb-1">{item.label}</p>
+                          <p className="text-title-2 font-bold text-apple-dark dark:text-[#ececec]">{item.value}</p>
                         </motion.div>
                       ))}
                     </motion.div>
@@ -467,30 +450,27 @@ export default function LocationsPage() {
             >
               <AppleCard>
                 <AppleCardHeader>
-                  <h2 className="text-title-2 font-semibold text-apple-dark">Confronto Performance</h2>
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Confronto Performance</h2>
                 </AppleCardHeader>
                 <AppleCardContent>
-                  <motion.div 
+                  <motion.div
                     className="space-y-4"
                     variants={staggerContainer}
                     initial="initial"
                     animate="animate"
                   >
                     {locations.map((location, index) => (
-                      <motion.div 
-                        key={location.id} 
-                        className="p-4 rounded-2xl bg-apple-light-gray/30"
+                      <motion.div
+                        key={location.id}
+                        className="p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535]"
                         variants={comparisonItemVariants}
                         custom={index}
-                        whileHover={{ 
-                          scale: 1.01,
-                          backgroundColor: "rgba(0,0,0,0.05)"
-                        }}
+                        whileHover={{ scale: 1.01 }}
                         transition={{ type: "spring", stiffness: 300 }}
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-body font-semibold text-apple-dark">{location.name}</h3>
-                          <motion.span 
+                          <h3 className="text-body font-semibold text-apple-dark dark:text-[#ececec]">{location.name}</h3>
+                          <motion.span
                             className="text-title-3 font-bold text-apple-blue"
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -506,14 +486,14 @@ export default function LocationsPage() {
                             { label: 'Veicoli', value: location.carCount.inService.toString() },
                             { label: 'Tecnici', value: location.technicians.toString() },
                           ].map((stat, statIndex) => (
-                            <motion.div 
+                            <motion.div
                               key={stat.label}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.4 + index * 0.1 + statIndex * 0.05 }}
                             >
-                              <p className="text-caption text-apple-gray">{stat.label}</p>
-                              <p className="text-callout font-semibold text-apple-dark">{stat.value}</p>
+                              <p className="text-caption text-apple-gray dark:text-[#636366]">{stat.label}</p>
+                              <p className="text-callout font-semibold text-apple-dark dark:text-[#ececec]">{stat.value}</p>
                             </motion.div>
                           ))}
                         </div>
@@ -533,39 +513,32 @@ export default function LocationsPage() {
             >
               <AppleCard>
                 <AppleCardHeader>
-                  <h2 className="text-title-2 font-semibold text-apple-dark">Magazzino Condiviso</h2>
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Magazzino Condiviso</h2>
                 </AppleCardHeader>
                 <AppleCardContent>
-                  <motion.div 
+                  <motion.div
                     className="text-center py-12"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    <motion.div 
-                      className="w-20 h-20 rounded-2xl bg-apple-light-gray flex items-center justify-center mx-auto mb-4"
-                      animate={{ 
-                        rotate: [0, 5, -5, 0],
-                        scale: [1, 1.05, 1]
-                      }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
+                    <motion.div
+                      className="w-20 h-20 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center mx-auto mb-4"
+                      animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     >
                       <Wrench className="h-10 w-10 text-apple-gray" />
                     </motion.div>
-                    <motion.h3 
-                      className="text-title-2 font-semibold text-apple-dark mb-2"
+                    <motion.h3
+                      className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
                     >
                       Gestione Magazzino
                     </motion.h3>
-                    <motion.p 
-                      className="text-body text-apple-gray max-w-md mx-auto"
+                    <motion.p
+                      className="text-body text-apple-gray dark:text-[#636366] max-w-md mx-auto"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 }}

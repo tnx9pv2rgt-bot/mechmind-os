@@ -50,11 +50,6 @@ exports.IotModule = IotModule = __decorate([
             shop_floor_gateway_1.ShopFloorGateway,
             license_plate_service_1.LicensePlateService,
         ],
-        exports: [
-            obd_streaming_service_1.ObdStreamingService,
-            vehicle_twin_service_1.VehicleTwinService,
-            shop_floor_service_1.ShopFloorService,
-            license_plate_service_1.LicensePlateService,
-        ],
+        exports: [obd_streaming_service_1.ObdStreamingService, vehicle_twin_service_1.VehicleTwinService, shop_floor_service_1.ShopFloorService, license_plate_service_1.LicensePlateService],
     })
 ], IotModule);

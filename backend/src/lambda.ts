@@ -33,7 +33,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Cache for Lambda container reuse (warm starts)
-let cachedApp: any = null;
+let cachedApp: express.Application | null = null;
 
 /**
  * Bootstrap NestJS application
@@ -86,7 +86,10 @@ async function bootstrap(): Promise<express.Application> {
  * 2. Local testing without Web Adapter
  * 3. SAM local testing
  */
-export const handler = async (event: any, context: any): Promise<any> => {
+export const handler = async (
+  _event: unknown,
+  _context: unknown,
+): Promise<{ statusCode: number; body: string }> => {
   // For Web Adapter: This should not be called
   // Web Adapter runs the app directly and proxies HTTP
 

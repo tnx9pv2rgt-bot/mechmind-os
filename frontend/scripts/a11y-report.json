@@ -1,0 +1,57 @@
+{
+  "/auth": {
+    "violations": [],
+    "passes": 20,
+    "clean": true
+  },
+  "/auth/forgot-password": {
+    "violations": [],
+    "passes": 23,
+    "clean": true
+  },
+  "/portal/login": {
+    "violations": [],
+    "passes": 24,
+    "clean": true
+  },
+  "/portal/register": {
+    "violations": [],
+    "passes": 24,
+    "clean": true
+  },
+  "/portal/reset-password": {
+    "violations": [],
+    "passes": 23,
+    "clean": true
+  },
+  "/billing/success": {
+    "violations": [],
+    "passes": 17,
+    "clean": true
+  },
+  "/billing/cancel": {
+    "violations": [],
+    "passes": 20,
+    "clean": true
+  },
+  "/terms": {
+    "violations": [],
+    "passes": 18,
+    "clean": true
+  },
+  "/privacy": {
+    "violations": [],
+    "passes": 18,
+    "clean": true
+  },
+  "/not-found": {
+    "violations": [],
+    "passes": 18,
+    "clean": true
+  },
+  "/": {
+    "violations": [],
+    "passes": 20,
+    "clean": true
+  }
+}

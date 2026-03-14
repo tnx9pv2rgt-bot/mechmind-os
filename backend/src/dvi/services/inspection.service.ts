@@ -8,7 +8,7 @@
  * - Customer approval workflow
  */
 
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/services/prisma.service';
 import { S3Service } from '../../common/services/s3.service';
@@ -27,7 +27,21 @@ import {
   InspectionItemStatus,
   FindingStatus,
   InspectionFinding,
+  Prisma,
 } from '@prisma/client';
+
+const inspectionInclude = {
+  vehicle: true,
+  customer: true,
+  mechanic: { select: { id: true, name: true } },
+  items: { include: { templateItem: true, photos: true } },
+  findings: true,
+  photos: true,
+} as const;
+
+type InspectionWithRelations = Prisma.InspectionGetPayload<{
+  include: typeof inspectionInclude;
+}>;
 
 @Injectable()
 export class InspectionService {
@@ -479,7 +493,7 @@ export class InspectionService {
 
   // ============== PRIVATE METHODS ==============
 
-  private async notifyCustomer(inspection: any): Promise<void> {
+  private async notifyCustomer(inspection: InspectionWithRelations): Promise<void> {
     // Send email/SMS notification to customer
     await this.notifications.sendNotification({
       tenantId: inspection.tenantId,
@@ -494,7 +508,7 @@ export class InspectionService {
         findingsCount: inspection.findings.length,
       },
       email: {
-        to: inspection.customer.encryptedEmail,
+        to: inspection.customer.encryptedEmail || '',
         subject: 'Your Vehicle Inspection is Ready',
         template: 'inspection-ready',
         variables: {
@@ -513,7 +527,7 @@ export class InspectionService {
     });
   }
 
-  private mapToResponseDto(inspection: any): InspectionResponseDto {
+  private mapToResponseDto(inspection: InspectionWithRelations): InspectionResponseDto {
     return {
       id: inspection.id,
       status: inspection.status,
@@ -529,20 +543,22 @@ export class InspectionService {
       },
       customer: {
         id: inspection.customer.id,
-        name: inspection.customer.encryptedName || '',
+        name: [inspection.customer.encryptedFirstName, inspection.customer.encryptedLastName]
+          .filter(Boolean)
+          .join(' '),
       },
       mechanic: {
         id: inspection.mechanic.id,
         name: inspection.mechanic.name,
       },
-      items: inspection.items.map((item: any) => ({
+      items: inspection.items.map(item => ({
         id: item.id,
         category: item.templateItem.category,
         name: item.templateItem.name,
         status: item.status,
         notes: item.notes ?? undefined,
         severity: item.severity ?? undefined,
-        photos: item.photos.map((p: any) => ({
+        photos: item.photos.map(p => ({
           id: p.id,
           url: p.url,
           thumbnailUrl: p.thumbnailUrl ?? undefined,
@@ -551,7 +567,7 @@ export class InspectionService {
           takenAt: p.takenAt,
         })),
       })),
-      findings: inspection.findings.map((f: any) => ({
+      findings: inspection.findings.map(f => ({
         id: f.id,
         category: f.category,
         title: f.title,
@@ -562,7 +578,7 @@ export class InspectionService {
         status: f.status,
         approvedByCustomer: f.approvedByCustomer,
       })),
-      photos: inspection.photos.map((p: any) => ({
+      photos: inspection.photos.map(p => ({
         id: p.id,
         url: p.url,
         thumbnailUrl: p.thumbnailUrl ?? undefined,

@@ -165,6 +165,10 @@ export class PasskeyService {
       throw new BadRequestException('Passkey not found');
     }
 
+    if (!passkey.user.isActive || !passkey.user.tenant?.isActive) {
+      throw new BadRequestException('User or tenant is inactive');
+    }
+
     const verification = await verifyAuthenticationResponse({
       response: assertion,
       expectedChallenge: challenge,

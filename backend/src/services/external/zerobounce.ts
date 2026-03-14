@@ -145,7 +145,10 @@ export class ZeroBounceService {
 
       return result;
     } catch (error) {
-      this.logger.error(`Email verification error for ${normalizedEmail}:`, error.message);
+      this.logger.error(
+        `Email verification error for ${normalizedEmail}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       if (this.isDevelopment) {
         return this.getMockResult(normalizedEmail);
@@ -243,7 +246,7 @@ export class ZeroBounceService {
           'Content-Type': `multipart/form-data; boundary=${boundary}`,
           'Content-Length': body.length.toString(),
         },
-        body: body as any,
+        body: body as unknown as BodyInit,
       });
 
       if (!response.ok) {
@@ -265,7 +268,10 @@ export class ZeroBounceService {
         invalidEmails: 0,
       };
     } catch (error) {
-      this.logger.error('Bulk upload error:', error.message);
+      this.logger.error(
+        'Bulk upload error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }
@@ -316,7 +322,10 @@ export class ZeroBounceService {
         invalidEmails: 0,
       };
     } catch (error) {
-      this.logger.error('Bulk status error:', error.message);
+      this.logger.error(
+        'Bulk status error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }
@@ -343,7 +352,10 @@ export class ZeroBounceService {
 
       return Buffer.from(await response.arrayBuffer());
     } catch (error) {
-      this.logger.error('Bulk download error:', error.message);
+      this.logger.error(
+        'Bulk download error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }
@@ -370,7 +382,10 @@ export class ZeroBounceService {
       const data = await response.json();
       return { credits: data.credits || 0 };
     } catch (error) {
-      this.logger.error('Get credits error:', error.message);
+      this.logger.error(
+        'Get credits error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return { credits: 0 };
     }
   }
@@ -438,7 +453,7 @@ export class ZeroBounceService {
 
   // ==================== PRIVATE HELPERS ====================
 
-  private parseApiResponse(email: string, data: any): EmailVerificationResult {
+  private parseApiResponse(email: string, data: Record<string, unknown>): EmailVerificationResult {
     const statusMap: Record<string, EmailVerificationResult['status']> = {
       valid: 'valid',
       invalid: 'invalid',
@@ -449,28 +464,31 @@ export class ZeroBounceService {
       do_not_mail: 'do_not_mail',
     };
 
+    const status = data.status as string;
+    const subStatus = data.sub_status as string | undefined;
+
     return {
       email,
-      status: statusMap[data.status] || 'unknown',
-      subStatus: data.sub_status,
-      isValid: data.status === 'valid',
-      isDeliverable: ['valid', 'catch-all'].includes(data.status),
+      status: statusMap[status] || 'unknown',
+      subStatus,
+      isValid: status === 'valid',
+      isDeliverable: ['valid', 'catch-all'].includes(status),
       isSyntaxValid: true, // Se arriva qui, la sintassi è valida
-      isDomainValid: !['invalid_domain', 'invalid_email'].includes(data.sub_status),
-      isDisposable: data.disposable || false,
-      isRoleBased: data.role || false,
-      isCatchAll: data.status === 'catch-all',
-      isFree: data.free || false,
-      score: parseInt(data.zerobounce_score) || 0,
-      mxRecord: data.mx_record,
-      smtpProvider: data.smtp_provider,
-      firstName: data.firstname,
-      lastName: data.lastname,
-      gender: data.gender,
-      country: data.country,
-      region: data.region,
-      city: data.city,
-      zipcode: data.zipcode,
+      isDomainValid: !['invalid_domain', 'invalid_email'].includes(subStatus || ''),
+      isDisposable: (data.disposable as boolean) || false,
+      isRoleBased: (data.role as boolean) || false,
+      isCatchAll: status === 'catch-all',
+      isFree: (data.free as boolean) || false,
+      score: parseInt(data.zerobounce_score as string) || 0,
+      mxRecord: data.mx_record as string | undefined,
+      smtpProvider: data.smtp_provider as string | undefined,
+      firstName: data.firstname as string | undefined,
+      lastName: data.lastname as string | undefined,
+      gender: data.gender as string | undefined,
+      country: data.country as string | undefined,
+      region: data.region as string | undefined,
+      city: data.city as string | undefined,
+      zipcode: data.zipcode as string | undefined,
       processedAt: new Date(),
     };
   }
@@ -503,7 +521,10 @@ export class ZeroBounceService {
       const cached = await this.redis.get(key);
       return cached ? JSON.parse(cached) : null;
     } catch (error) {
-      this.logger.warn('Cache get error:', error.message);
+      this.logger.warn(
+        'Cache get error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return null;
     }
   }
@@ -512,7 +533,10 @@ export class ZeroBounceService {
     try {
       await this.redis.setex(key, this.cacheTtlSeconds, JSON.stringify(value));
     } catch (error) {
-      this.logger.warn('Cache set error:', error.message);
+      this.logger.warn(
+        'Cache set error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 

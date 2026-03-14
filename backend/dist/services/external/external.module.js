@@ -22,17 +22,7 @@ exports.ExternalServicesModule = ExternalServicesModule = __decorate([
     (0, common_1.Module)({
         imports: [config_1.ConfigModule],
         controllers: [validation_controller_1.ValidationController],
-        providers: [
-            viesApi_1.ViesApiService,
-            googlePlaces_1.GooglePlacesService,
-            zerobounce_1.ZeroBounceService,
-            twilio_1.TwilioService,
-        ],
-        exports: [
-            viesApi_1.ViesApiService,
-            googlePlaces_1.GooglePlacesService,
-            zerobounce_1.ZeroBounceService,
-            twilio_1.TwilioService,
-        ],
+        providers: [viesApi_1.ViesApiService, googlePlaces_1.GooglePlacesService, zerobounce_1.ZeroBounceService, twilio_1.TwilioService],
+        exports: [viesApi_1.ViesApiService, googlePlaces_1.GooglePlacesService, zerobounce_1.ZeroBounceService, twilio_1.TwilioService],
     })
 ], ExternalServicesModule);

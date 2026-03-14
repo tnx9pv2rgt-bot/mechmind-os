@@ -3,7 +3,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { FeatureAccessService } from './feature-access.service';
 import { SubscriptionPlan, SubscriptionStatus, FeatureFlag } from '@prisma/client';
-import { PLAN_FEATURES, PLAN_LIMITS, AI_ADDON_FEATURES } from '../config/pricing.config';
+import { PLAN_FEATURES, PLAN_LIMITS } from '../config/pricing.config';
 
 describe('FeatureAccessService', () => {
   let service: FeatureAccessService;

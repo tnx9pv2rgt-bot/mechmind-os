@@ -104,7 +104,7 @@ export class GdprConsentService {
       collectionPoint?: string;
       legalBasis?: string;
       verifiedIdentity?: boolean;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     },
   ): Promise<ConsentRecord> {
     // Verify customer exists
@@ -412,7 +412,7 @@ export class GdprConsentService {
     consentType: ConsentRecord['consentType'],
     granted: boolean,
   ): Promise<void> {
-    const updateData: any = {};
+    const updateData: Record<string, boolean | Date | null> = {};
 
     switch (consentType) {
       case 'GDPR':

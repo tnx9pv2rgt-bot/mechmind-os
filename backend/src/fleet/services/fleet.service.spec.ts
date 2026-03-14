@@ -89,6 +89,54 @@ describe('FleetService', () => {
     });
   });
 
+  describe('update', () => {
+    it('should update a fleet', async () => {
+      const existing = { id: '1', tenantId: 't1', name: 'Old Fleet' };
+      mockPrisma.fleet.findFirst.mockResolvedValue(existing);
+      const updated = { ...existing, name: 'New Fleet' };
+      mockPrisma.fleet.update.mockResolvedValue(updated);
+
+      const result = await service.update('t1', '1', { name: 'New Fleet' } as never);
+      expect(result).toEqual(updated);
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'fleet.updated',
+        expect.objectContaining({ fleetId: '1', tenantId: 't1' }),
+      );
+    });
+
+    it('should throw NotFoundException if fleet not found', async () => {
+      mockPrisma.fleet.findFirst.mockResolvedValue(null);
+      await expect(service.update('t1', 'nonexistent', { name: 'X' } as never)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('delete', () => {
+    it('should soft-delete a fleet', async () => {
+      const existing = { id: '1', tenantId: 't1', name: 'Fleet' };
+      mockPrisma.fleet.findFirst.mockResolvedValue(existing);
+      const deleted = { ...existing, isActive: false };
+      mockPrisma.fleet.update.mockResolvedValue(deleted);
+
+      const result = await service.delete('t1', '1');
+      expect(result).toEqual(deleted);
+      expect(mockPrisma.fleet.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { isActive: false },
+      });
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'fleet.deleted',
+        expect.objectContaining({ fleetId: '1', tenantId: 't1' }),
+      );
+    });
+
+    it('should throw NotFoundException if fleet not found', async () => {
+      mockPrisma.fleet.findFirst.mockResolvedValue(null);
+      await expect(service.delete('t1', 'nonexistent')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('addVehicle', () => {
     it('should add vehicle to fleet', async () => {
       mockPrisma.fleet.findFirst.mockResolvedValue({ id: '1' });
@@ -100,6 +148,30 @@ describe('FleetService', () => {
       const result = await service.addVehicle('t1', '1', 'v1');
       expect(result).toEqual(expected);
       expect(mockEventEmitter.emit).toHaveBeenCalledWith('fleet.vehicle.added', expect.any(Object));
+    });
+
+    it('should throw NotFoundException if vehicle not found', async () => {
+      mockPrisma.fleet.findFirst.mockResolvedValue({ id: '1' });
+      mockPrisma.vehicle.findFirst.mockResolvedValue(null);
+
+      await expect(service.addVehicle('t1', '1', 'v-nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException if vehicle already assigned', async () => {
+      mockPrisma.fleet.findFirst.mockResolvedValue({ id: '1' });
+      mockPrisma.vehicle.findFirst.mockResolvedValue({ id: 'v1' });
+      mockPrisma.fleetVehicle.findFirst.mockResolvedValue({
+        id: 'fv1',
+        fleetId: '1',
+        vehicleId: 'v1',
+        removedAt: null,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { BadRequestException } = require('@nestjs/common');
+      await expect(service.addVehicle('t1', '1', 'v1')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -116,6 +188,13 @@ describe('FleetService', () => {
         'fleet.vehicle.removed',
         expect.any(Object),
       );
+    });
+
+    it('should throw NotFoundException if vehicle not assigned to fleet', async () => {
+      mockPrisma.fleet.findFirst.mockResolvedValue({ id: '1' });
+      mockPrisma.fleetVehicle.findFirst.mockResolvedValue(null);
+
+      await expect(service.removeVehicle('t1', '1', 'v1')).rejects.toThrow(NotFoundException);
     });
   });
 });

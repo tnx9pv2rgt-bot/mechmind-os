@@ -14,7 +14,6 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
@@ -136,7 +135,10 @@ export class ValidationController {
         return JSON.parse(cached);
       }
     } catch (error) {
-      this.logger.warn('Cache read error:', error.message);
+      this.logger.warn(
+        'Cache read error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
 
     try {
@@ -154,12 +156,18 @@ export class ValidationController {
       try {
         await this.redis.setex(cacheKey, 3600, JSON.stringify(resultWithSuggestion));
       } catch (error) {
-        this.logger.warn('Cache write error:', error.message);
+        this.logger.warn(
+          'Cache write error:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
 
       return resultWithSuggestion;
     } catch (error) {
-      this.logger.error(`Email validation error for ${normalizedEmail}:`, error.message);
+      this.logger.error(
+        `Email validation error for ${normalizedEmail}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       // Fallback response
       return {
@@ -231,7 +239,10 @@ export class ValidationController {
         return { ...parsed, isValidFormat, luhnValid };
       }
     } catch (error) {
-      this.logger.warn('Cache read error:', error.message);
+      this.logger.warn(
+        'Cache read error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
 
     try {
@@ -247,12 +258,18 @@ export class ValidationController {
       try {
         await this.redis.setex(cacheKey, 24 * 3600, JSON.stringify(response));
       } catch (error) {
-        this.logger.warn('Cache write error:', error.message);
+        this.logger.warn(
+          'Cache write error:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
 
       return response;
     } catch (error) {
-      this.logger.error(`VAT validation error for ${fullVat}:`, error.message);
+      this.logger.error(
+        `VAT validation error for ${fullVat}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       return {
         valid: luhnValid, // Trust Luhn if API fails
@@ -296,7 +313,10 @@ export class ValidationController {
         return JSON.parse(cached);
       }
     } catch (error) {
-      this.logger.warn('Cache read error:', error.message);
+      this.logger.warn(
+        'Cache read error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
 
     try {
@@ -309,12 +329,18 @@ export class ValidationController {
       try {
         await this.redis.setex(cacheKey, 24 * 3600, JSON.stringify(result));
       } catch (error) {
-        this.logger.warn('Cache write error:', error.message);
+        this.logger.warn(
+          'Cache write error:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
 
       return result;
     } catch (error) {
-      this.logger.error('Address autocomplete error:', error.message);
+      this.logger.error(
+        'Address autocomplete error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return { predictions: [] };
     }
   }
@@ -347,7 +373,10 @@ export class ValidationController {
         return JSON.parse(cached);
       }
     } catch (error) {
-      this.logger.warn('Cache read error:', error.message);
+      this.logger.warn(
+        'Cache read error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
 
     try {
@@ -357,12 +386,18 @@ export class ValidationController {
       try {
         await this.redis.setex(cacheKey, 30 * 24 * 3600, JSON.stringify(result));
       } catch (error) {
-        this.logger.warn('Cache write error:', error.message);
+        this.logger.warn(
+          'Cache write error:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
 
       return result;
     } catch (error) {
-      this.logger.error('Address details error:', error.message);
+      this.logger.error(
+        'Address details error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw new HttpException('Failed to fetch address details', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

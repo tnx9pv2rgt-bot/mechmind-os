@@ -19,7 +19,7 @@ let SesWebhookController = SesWebhookController_1 = class SesWebhookController {
     constructor() {
         this.logger = new common_1.Logger(SesWebhookController_1.name);
     }
-    async handleBounce(payload, messageType) {
+    async handleBounce(payload, _messageType) {
         this.logger.log('Received SES bounce notification');
         try {
             const message = JSON.parse(payload.Message);
@@ -37,10 +37,10 @@ let SesWebhookController = SesWebhookController_1 = class SesWebhookController {
             }
         }
         catch (error) {
-            this.logger.error('Error processing bounce:', error.message);
+            this.logger.error('Error processing bounce:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
-    async handleComplaint(payload, messageType) {
+    async handleComplaint(payload, _messageType) {
         this.logger.log('Received SES complaint notification');
         try {
             const message = JSON.parse(payload.Message);
@@ -55,7 +55,7 @@ let SesWebhookController = SesWebhookController_1 = class SesWebhookController {
             }
         }
         catch (error) {
-            this.logger.error('Error processing complaint:', error.message);
+            this.logger.error('Error processing complaint:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
     async handleDelivery(payload) {
@@ -69,10 +69,10 @@ let SesWebhookController = SesWebhookController_1 = class SesWebhookController {
             }
         }
         catch (error) {
-            this.logger.error('Error processing delivery:', error.message);
+            this.logger.error('Error processing delivery:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
-    async updateEmailStatus(messageId, status, metadata) {
+    async updateEmailStatus(messageId, status, _metadata) {
         this.logger.log(`Updating email ${messageId} status to ${status}`);
     }
     async markEmailAsInvalid(email) {

@@ -46,7 +46,7 @@ export class ExtractedDataDto {
   @ApiPropertyOptional({ type: 'object', additionalProperties: true })
   @IsOptional()
   @IsObject()
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 export class VapiWebhookDto {
@@ -126,7 +126,7 @@ export class VapiWebhookDto {
   })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class VoiceWebhookResponseDto {

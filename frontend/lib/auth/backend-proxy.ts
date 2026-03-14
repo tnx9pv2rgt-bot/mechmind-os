@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/v1';
+// Normalize: ensure BACKEND_URL always ends with /v1
+const RAW_BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/v1';
+const BACKEND_URL = RAW_BACKEND_URL.replace(/\/+$/, '').endsWith('/v1')
+  ? RAW_BACKEND_URL.replace(/\/+$/, '')
+  : `${RAW_BACKEND_URL.replace(/\/+$/, '')}/v1`;
 
 /** Timeout in ms for backend requests (Render free tier cold start ~30s) */
 const BACKEND_TIMEOUT_MS = 30_000;
@@ -105,35 +109,78 @@ export async function proxyAuthToBackend(
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
 
-    const data = (await res.json()) as Record<string, unknown>;
+    const raw = (await res.json()) as Record<string, unknown>;
 
     if (!res.ok) {
-      return NextResponse.json(data, { status: res.status });
+      return NextResponse.json(raw, { status: res.status });
     }
 
-    // If response contains tokens, set HttpOnly cookie
+    // Backend wraps responses in { success, data: { ... }, timestamp }
+    // Unwrap the envelope to access tokens directly
+    const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>;
+
+    // If response contains tokens, set HttpOnly cookies
     if (data.accessToken) {
+      // Decode JWT payload to extract tenantId and tenantSlug
+      let tenantId = '';
+      let tenantSlug = '';
+      try {
+        const parts = (data.accessToken as string).split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(
+            Buffer.from(parts[1], 'base64url').toString('utf-8'),
+          ) as { tenantId?: string; sub?: string };
+          tenantId = payload.tenantId || '';
+          // sub format is "userId:tenantId" — extract tenantId as fallback
+          if (!tenantId && payload.sub) {
+            const subParts = payload.sub.split(':');
+            if (subParts.length >= 2) tenantId = subParts[1];
+          }
+        }
+      } catch { /* ignore decode errors */ }
+
+      // If we got tenantId, look up slug from the login request body
+      if (!tenantSlug && options.body && 'tenantSlug' in options.body) {
+        tenantSlug = options.body.tenantSlug as string;
+      }
+
       const response = NextResponse.json({
         success: true,
         expiresIn: data.expiresIn,
         requiresMFA: false,
       });
 
-      response.cookies.set('auth_token', data.accessToken as string, {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: 'lax' as const,
         path: '/',
+      };
+
+      response.cookies.set('auth_token', data.accessToken as string, {
+        ...cookieOptions,
         maxAge: (data.expiresIn as number) || 86400,
       });
 
       response.cookies.set('refresh_token', data.refreshToken as string, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
+        ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
+
+      // Set tenant context cookies (needed by api-proxy for backend requests)
+      if (tenantId) {
+        response.cookies.set('tenant_id', tenantId, {
+          ...cookieOptions,
+          httpOnly: false, // frontend needs to read this
+        });
+      }
+      if (tenantSlug) {
+        response.cookies.set('tenant_slug', tenantSlug, {
+          ...cookieOptions,
+          httpOnly: false,
+        });
+      }
 
       return response;
     }
@@ -147,7 +194,7 @@ export async function proxyAuthToBackend(
       });
     }
 
-    return NextResponse.json(data, { status: res.status });
+    return NextResponse.json(raw, { status: res.status });
   } catch (error) {
     console.error(`Backend auth proxy error [${backendPath}]:`, error);
 

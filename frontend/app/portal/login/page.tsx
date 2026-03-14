@@ -17,7 +17,7 @@ import { AppleCard, AppleCardContent } from '@/components/ui/apple-card'
 import { AppleButton } from '@/components/ui/apple-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { portalAuth, PortalAuthError } from '@/lib/auth/portal-auth'
+import { PortalAuthService } from '@/lib/auth/portal-auth-client'
 
 // ============================================
 // MAIN COMPONENT
@@ -40,21 +40,28 @@ export default function PortalLoginPage() {
     setIsLoading(true)
 
     try {
-      await portalAuth.authenticateCustomer({ email, password })
-      router.push(redirectTo)
-    } catch (err) {
-      if (err instanceof PortalAuthError) {
-        setError(err.message)
-      } else {
-        setError('Errore durante il login. Riprova.')
+      const res = await fetch('/api/portal/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error?.message || 'Credenziali non valide')
+        return
       }
+      const auth = PortalAuthService.getInstance()
+      auth.setAuth(data.token, data.customer)
+      router.push(redirectTo)
+    } catch {
+      setError('Errore durante il login. Riprova.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <motion.div
@@ -65,8 +72,8 @@ export default function PortalLoginPage() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4">
             <Car className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-apple-dark">MechMind Portal</h1>
-          <p className="text-apple-gray mt-1">Accedi al tuo account cliente</p>
+          <h1 className="text-2xl font-bold text-apple-dark dark:text-[#ececec]">MechMind Portal</h1>
+          <p className="text-apple-gray dark:text-[#636366] mt-1">Accedi al tuo account cliente</p>
         </motion.div>
 
         {/* Login Form */}
@@ -81,7 +88,7 @@ export default function PortalLoginPage() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
+                  className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-3"
                 >
                   <AlertCircle className="h-5 w-5 text-apple-red flex-shrink-0" />
                   <p className="text-sm text-apple-red">{error}</p>
@@ -91,7 +98,7 @@ export default function PortalLoginPage() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-apple-dark">
+                  <Label htmlFor="email" className="text-apple-dark dark:text-[#ececec]">
                     Email
                   </Label>
                   <div className="relative">
@@ -103,14 +110,14 @@ export default function PortalLoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-12 h-12 rounded-xl border-apple-border bg-white text-apple-dark placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20"
+                      className="pl-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20"
                     />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-apple-dark">
+                  <Label htmlFor="password" className="text-apple-dark dark:text-[#ececec]">
                     Password
                   </Label>
                   <div className="relative">
@@ -123,12 +130,13 @@ export default function PortalLoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={8}
-                      className="pl-12 pr-12 h-12 rounded-xl border-apple-border bg-white text-apple-dark placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20"
+                      className="pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark transition-colors p-1 min-w-[24px] min-h-[24px] flex items-center justify-center"
+                      aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -143,7 +151,7 @@ export default function PortalLoginPage() {
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="rounded border-apple-border" />
-                    <span className="text-apple-gray">Ricordami</span>
+                    <span className="text-apple-gray dark:text-[#636366]">Ricordami</span>
                   </label>
                   <Link 
                     href="/portal/reset-password" 
@@ -167,8 +175,8 @@ export default function PortalLoginPage() {
               </form>
 
               {/* Register Link */}
-              <div className="mt-6 pt-6 border-t border-apple-border/30 text-center">
-                <p className="text-apple-gray text-sm">
+              <div className="mt-6 pt-6 border-t border-apple-border/30 dark:border-[#424242]/30 text-center">
+                <p className="text-apple-gray dark:text-[#636366] text-sm">
                   Non hai un account?{' '}
                   <Link 
                     href="/portal/register" 
@@ -191,7 +199,7 @@ export default function PortalLoginPage() {
         >
           <Link 
             href="/" 
-            className="text-sm text-apple-gray hover:text-apple-dark transition-colors"
+            className="text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors"
           >
             ← Torna al sito principale
           </Link>

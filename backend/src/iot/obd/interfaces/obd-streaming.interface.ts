@@ -41,7 +41,7 @@ export interface ObdSensorData {
   distance?: number | null;
   latitude?: number | null;
   longitude?: number | null;
-  rawData?: Record<string, any>;
+  rawData?: Record<string, unknown>;
 }
 
 export interface FreezeFrameData {

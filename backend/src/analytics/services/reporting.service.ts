@@ -10,7 +10,8 @@
  * - Data export (CSV/Excel)
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/services/prisma.service';
 import { createObjectCsvStringifier } from 'csv-writer';
 
@@ -27,7 +28,7 @@ export class ReportingService {
       LIMIT 1
     `;
 
-    return (result as any[])[0] || null;
+    return (result as Record<string, unknown>[])[0] || null;
   }
 
   async getBookingMetrics(tenantId: string, fromDate: Date, toDate: Date) {
@@ -41,22 +42,15 @@ export class ReportingService {
   }
 
   async getRevenueAnalytics(tenantId: string, year: number, month?: number) {
-    let query = `
+    const monthFilter = month ? Prisma.sql`AND EXTRACT(MONTH FROM date) = ${month}` : Prisma.empty;
+
+    return this.prisma.$queryRaw`
       SELECT * FROM mv_revenue_analytics
-      WHERE tenant_id = $1::uuid
-        AND EXTRACT(YEAR FROM date) = $2
+      WHERE tenant_id = ${tenantId}::uuid
+        AND EXTRACT(YEAR FROM date) = ${year}
+        ${monthFilter}
+      ORDER BY date DESC
     `;
-
-    const params: any[] = [tenantId, year];
-
-    if (month) {
-      query += ` AND EXTRACT(MONTH FROM date) = $3`;
-      params.push(month);
-    }
-
-    query += ` ORDER BY date DESC`;
-
-    return this.prisma.$queryRawUnsafe(query, ...params);
   }
 
   // ============== CUSTOMER ANALYTICS ==============
@@ -102,42 +96,28 @@ export class ReportingService {
   }
 
   async getMechanicPerformance(tenantId: string, year: number, month?: number) {
-    let query = `
+    const monthFilter = month ? Prisma.sql`AND EXTRACT(MONTH FROM month) = ${month}` : Prisma.empty;
+
+    return this.prisma.$queryRaw`
       SELECT * FROM mv_mechanic_performance
-      WHERE tenant_id = $1::uuid
-        AND EXTRACT(YEAR FROM month) = $2
+      WHERE tenant_id = ${tenantId}::uuid
+        AND EXTRACT(YEAR FROM month) = ${year}
+        ${monthFilter}
+      ORDER BY total_revenue_generated DESC
     `;
-
-    const params: any[] = [tenantId, year];
-
-    if (month) {
-      query += ` AND EXTRACT(MONTH FROM month) = $3`;
-      params.push(month);
-    }
-
-    query += ` ORDER BY total_revenue_generated DESC`;
-
-    return this.prisma.$queryRawUnsafe(query, ...params);
   }
 
   // ============== INVENTORY REPORTS ==============
 
   async getInventoryStatus(tenantId: string, status?: string) {
-    let query = `
+    const statusFilter = status ? Prisma.sql`AND stock_status = ${status}` : Prisma.empty;
+
+    return this.prisma.$queryRaw`
       SELECT * FROM mv_inventory_status
-      WHERE tenant_id = $1::uuid
+      WHERE tenant_id = ${tenantId}::uuid
+        ${statusFilter}
+      ORDER BY inventory_value DESC
     `;
-
-    const params: any[] = [tenantId];
-
-    if (status) {
-      query += ` AND stock_status = $2`;
-      params.push(status);
-    }
-
-    query += ` ORDER BY inventory_value DESC`;
-
-    return this.prisma.$queryRawUnsafe(query, ...params);
   }
 
   async getInventoryValuation(tenantId: string) {
@@ -211,10 +191,10 @@ export class ReportingService {
       ],
     });
 
-    const records = (bookings as any[]).map(b => ({
+    const records = (bookings as Record<string, unknown>[]).map(b => ({
       ...b,
-      scheduled_date: new Date(b.scheduled_date).toISOString().split('T')[0],
-      total: b.total?.toString(),
+      scheduled_date: new Date(b.scheduled_date as string).toISOString().split('T')[0],
+      total: (b.total as number | null)?.toString(),
     }));
 
     return csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
@@ -243,7 +223,7 @@ export class ReportingService {
       ],
     });
 
-    const records = (inventory as any[]).map(i => ({
+    const records = (inventory as Record<string, unknown>[]).map(i => ({
       ...i,
       cost_price: i.cost_price?.toString(),
       retail_price: i.retail_price?.toString(),
@@ -275,9 +255,9 @@ export class ReportingService {
       ],
     });
 
-    const records = (revenue as any[]).map(r => ({
+    const records = (revenue as Record<string, unknown>[]).map(r => ({
       ...r,
-      date: new Date(r.date).toISOString().split('T')[0],
+      date: new Date(r.date as string).toISOString().split('T')[0],
       total_revenue: r.total_revenue?.toString(),
       realized_revenue: r.realized_revenue?.toString(),
       lost_revenue: r.lost_revenue?.toString(),
@@ -336,10 +316,10 @@ export class ReportingService {
     ]);
 
     return {
-      bookings: (bookingMetrics as any[])[0],
-      revenue: (revenueMetrics as any[])[0],
-      customers: (customerMetrics as any[])[0] || {},
-      inventory: (inventoryMetrics as any[])[0],
+      bookings: (bookingMetrics as Record<string, unknown>[])[0],
+      revenue: (revenueMetrics as Record<string, unknown>[])[0],
+      customers: (customerMetrics as Record<string, unknown>[])[0] || {},
+      inventory: (inventoryMetrics as Record<string, unknown>[])[0],
     };
   }
 }

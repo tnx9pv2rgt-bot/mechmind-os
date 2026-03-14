@@ -31,13 +31,16 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
                 metadata: {
                     bookingId: event.bookingId,
                     date: event.scheduledDate.toLocaleDateString('it-IT'),
-                    time: event.scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+                    time: event.scheduledDate.toLocaleTimeString('it-IT', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    }),
                     bookingCode: event.bookingId.slice(-6).toUpperCase(),
                 },
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send booking confirmation: ${error.message}`);
+            this.logger.error(`Failed to send booking confirmation: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async onBookingUpdated(event) {
@@ -51,12 +54,12 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
                     channel: client_1.NotificationChannel.SMS,
                     metadata: {
                         bookingId: event.bookingId,
-                        status: this.getStatusLabel(event.changes.status),
+                        status: this.getStatusLabel(String(event.changes.status)),
                     },
                 });
             }
             catch (error) {
-                this.logger.error(`Failed to send status update: ${error.message}`);
+                this.logger.error(`Failed to send status update: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }
@@ -75,7 +78,7 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send cancellation notification: ${error.message}`);
+            this.logger.error(`Failed to send cancellation notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async onInspectionCompleted(event) {
@@ -94,7 +97,7 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send inspection complete notification: ${error.message}`);
+            this.logger.error(`Failed to send inspection complete notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async onInspectionReadyForReview(event) {
@@ -113,7 +116,7 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send inspection review notification: ${error.message}`);
+            this.logger.error(`Failed to send inspection review notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async onInvoiceGenerated(event) {
@@ -133,7 +136,7 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send invoice notification: ${error.message}`);
+            this.logger.error(`Failed to send invoice notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async onPaymentDue(event) {
@@ -153,7 +156,7 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send payment reminder: ${error.message}`);
+            this.logger.error(`Failed to send payment reminder: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async onMaintenanceDue(event) {
@@ -173,7 +176,7 @@ let NotificationTriggersService = NotificationTriggersService_1 = class Notifica
             });
         }
         catch (error) {
-            this.logger.error(`Failed to send maintenance reminder: ${error.message}`);
+            this.logger.error(`Failed to send maintenance reminder: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async queueBookingReminders() {

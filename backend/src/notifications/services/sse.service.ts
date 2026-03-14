@@ -9,6 +9,7 @@ interface SseClient {
   userId?: string;
   observer: Observer<SseMessageEvent>;
   heartbeatInterval?: NodeJS.Timeout;
+  redisSubscription?: { unsubscribe: () => void };
 }
 
 /**
@@ -63,7 +64,7 @@ export class SseService {
         });
 
         // Store subscription for cleanup
-        (client as any).redisSubscription = subscription;
+        client.redisSubscription = subscription;
       }
 
       // Send initial connection event
@@ -136,9 +137,8 @@ export class SseService {
     }
 
     // Unsubscribe from Redis
-    const redisSub = (client as any).redisSubscription;
-    if (redisSub) {
-      redisSub.unsubscribe();
+    if (client.redisSubscription) {
+      client.redisSubscription.unsubscribe();
     }
 
     // Check if this was the last client for the tenant

@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-  Ip,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { OAuthService } from './oauth.service';
@@ -26,10 +19,7 @@ export class OAuthController {
   })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid token or user not found' })
-  async loginWithGoogle(
-    @Body() dto: GoogleOAuthDto,
-    @Ip() ip: string,
-  ): Promise<AuthTokens> {
+  async loginWithGoogle(@Body() dto: GoogleOAuthDto, @Ip() ip: string): Promise<AuthTokens> {
     return this.oauthService.loginWithGoogle(dto.credential, dto.tenantSlug, ip);
   }
 }

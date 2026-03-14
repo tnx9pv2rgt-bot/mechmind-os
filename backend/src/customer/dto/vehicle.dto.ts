@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsUUID, IsOptional, IsInt, Min, Max, Length } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, Max, Length, IsIn } from 'class-validator';
 
 export class CreateVehicleDto {
   @ApiProperty({
@@ -50,6 +50,25 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({
+    description: 'Vehicle status',
+    example: 'active',
+    enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['active', 'in_service', 'waiting_parts', 'ready'])
+  status?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current mileage in km',
+    example: 45000,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  mileage?: number;
 }
 
 export class UpdateVehicleDto {
@@ -82,6 +101,25 @@ export class UpdateVehicleDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({
+    description: 'Vehicle status',
+    example: 'active',
+    enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['active', 'in_service', 'waiting_parts', 'ready'])
+  status?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current mileage in km',
+    example: 45000,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  mileage?: number;
 }
 
 export class VehicleResponseDto {
@@ -105,6 +143,12 @@ export class VehicleResponseDto {
 
   @ApiPropertyOptional({ example: 'Previous accident on left side' })
   notes?: string;
+
+  @ApiPropertyOptional({ example: 'active' })
+  status?: string;
+
+  @ApiPropertyOptional({ example: 45000 })
+  mileage?: number;
 
   @ApiProperty({ example: '2024-01-10T08:30:00Z' })
   createdAt: Date;

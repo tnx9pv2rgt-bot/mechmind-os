@@ -32,9 +32,9 @@ let ViesApiService = ViesApiService_1 = class ViesApiService {
         this.redis = new ioredis_1.default(redisUrl, {
             password: this.configService.get('REDIS_PASSWORD') || undefined,
             db: parseInt(this.configService.get('REDIS_DB') || '0'),
-            retryStrategy: (times) => Math.min(times * 50, 2000),
+            retryStrategy: times => Math.min(times * 50, 2000),
         });
-        this.redis.on('error', (err) => {
+        this.redis.on('error', err => {
             this.logger.error('Redis connection error:', err.message);
         });
     }
@@ -104,7 +104,7 @@ let ViesApiService = ViesApiService_1 = class ViesApiService {
             method: 'POST',
             headers: {
                 'Content-Type': 'text/xml;charset=UTF-8',
-                'SOAPAction': '',
+                SOAPAction: '',
             },
             body: soapEnvelope,
         });
@@ -188,11 +188,11 @@ let ViesApiService = ViesApiService_1 = class ViesApiService {
     getMockResult(countryCode, vatNumber) {
         this.logger.debug(`Using mock VIES result for ${countryCode}${vatNumber}`);
         const mockCompanies = {
-            'IT': { name: 'AZIENDA DEMO SRL', address: 'Via Roma 1, 00100 Roma (RM)' },
-            'DE': { name: 'Muster GmbH', address: 'Musterstraße 1, 10115 Berlin' },
-            'FR': { name: 'SARL Exemple', address: '1 Rue de la Paix, 75001 Paris' },
-            'ES': { name: 'Ejemplo SL', address: 'Calle Mayor 1, 28013 Madrid' },
-            'GB': { name: 'Example Ltd', address: '1 High Street, London SW1A 1AA' },
+            IT: { name: 'AZIENDA DEMO SRL', address: 'Via Roma 1, 00100 Roma (RM)' },
+            DE: { name: 'Muster GmbH', address: 'Musterstraße 1, 10115 Berlin' },
+            FR: { name: 'SARL Exemple', address: '1 Rue de la Paix, 75001 Paris' },
+            ES: { name: 'Ejemplo SL', address: 'Calle Mayor 1, 28013 Madrid' },
+            GB: { name: 'Example Ltd', address: '1 High Street, London SW1A 1AA' },
         };
         const mock = mockCompanies[countryCode] || { name: 'Test Company', address: 'Test Address' };
         return {

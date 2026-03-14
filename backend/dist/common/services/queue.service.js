@@ -61,7 +61,7 @@ let QueueService = class QueueService {
                 retriedJobs.push(job);
             }
             catch (error) {
-                this.logger.error(`Failed to retry job ${job.id}: ${error.message}`);
+                this.logger.error(`Failed to retry job ${job.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
         return retriedJobs;
@@ -90,7 +90,7 @@ let QueueService = class QueueService {
             return job;
         }
         catch (error) {
-            this.logger.error(`Failed to add job to ${queue.name} queue: ${error.message}`);
+            this.logger.error(`Failed to add job to ${queue.name} queue: ${error instanceof Error ? error.message : 'Unknown error'}`);
             throw error;
         }
     }

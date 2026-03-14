@@ -7,10 +7,12 @@
 import { Injectable, NestMiddleware, ForbiddenException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { FeatureAccessService } from '../services/feature-access.service';
+import { RedisService } from '../../common/services/redis.service';
 import { FeatureFlag } from '@prisma/client';
 
 // Extend Express Request to include tenant info
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       tenantId?: string;
@@ -57,7 +59,7 @@ export class SubscriptionMiddleware implements NestMiddleware {
 /**
  * Middleware factory for checking specific features
  */
-export function requireFeature(feature: FeatureFlag) {
+export function requireFeature(_feature: FeatureFlag) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const tenantId = req.tenantId;
 
@@ -72,11 +74,14 @@ export function requireFeature(feature: FeatureFlag) {
 }
 
 /**
- * Rate limiting middleware based on subscription plan
+ * Rate limiting middleware based on subscription plan.
+ * Uses Redis for tracking API calls with monthly window.
  */
 @Injectable()
 export class SubscriptionRateLimitMiddleware implements NestMiddleware {
-  private apiCallCounts = new Map<string, { count: number; resetAt: number }>();
+  private static readonly DEFAULT_MONTHLY_LIMIT = 25000;
+
+  constructor(private readonly redis: RedisService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
     const tenantId = req.tenantId;
@@ -85,24 +90,28 @@ export class SubscriptionRateLimitMiddleware implements NestMiddleware {
       return next();
     }
 
-    // Track API call
-    const now = Date.now();
-    const key = `${tenantId}:${new Date().toISOString().slice(0, 7)}`; // Monthly key
+    const monthKey = new Date().toISOString().slice(0, 7); // e.g. "2026-03"
+    const redisKey = `rate:monthly:${tenantId}:${monthKey}`;
 
-    const current = this.apiCallCounts.get(key) || { count: 0, resetAt: now + 24 * 60 * 60 * 1000 };
+    // Get current count from Redis
+    const currentStr = await this.redis.get(redisKey);
+    const currentCount = currentStr ? parseInt(currentStr, 10) : 0;
+    const newCount = currentCount + 1;
 
-    if (now > current.resetAt) {
-      current.count = 0;
-      current.resetAt = now + 24 * 60 * 60 * 1000;
-    }
+    // Calculate seconds until end of month for TTL
+    const now = new Date();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const ttlSeconds = Math.ceil((endOfMonth.getTime() - now.getTime()) / 1000);
 
-    current.count++;
-    this.apiCallCounts.set(key, current);
+    // Increment counter in Redis with monthly TTL
+    await this.redis.set(redisKey, newCount.toString(), ttlSeconds);
+
+    const limit = SubscriptionRateLimitMiddleware.DEFAULT_MONTHLY_LIMIT;
 
     // Add rate limit headers
-    res.setHeader('X-RateLimit-Limit', '25000'); // Default limit
-    res.setHeader('X-RateLimit-Remaining', Math.max(0, 25000 - current.count).toString());
-    res.setHeader('X-RateLimit-Reset', new Date(current.resetAt).toISOString());
+    res.setHeader('X-RateLimit-Limit', limit.toString());
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, limit - newCount).toString());
+    res.setHeader('X-RateLimit-Reset', endOfMonth.toISOString());
 
     next();
   }

@@ -354,7 +354,7 @@ export class AdvisoryLockService {
     fn: () => Promise<T>,
     options: AcquireLockOptions = {},
   ): Promise<T> {
-    const lockResult = await this.acquireLockWithRetry(tenantId, slotId, options);
+    await this.acquireLockWithRetry(tenantId, slotId, options);
 
     try {
       return await fn();

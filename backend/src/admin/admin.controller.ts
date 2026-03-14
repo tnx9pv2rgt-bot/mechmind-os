@@ -9,7 +9,11 @@ export class AdminController {
   async setup(
     @Headers('x-setup-key') setupKey: string,
   ): Promise<{ message: string; data: Awaited<ReturnType<AdminSetupService['seedDemoData']>> }> {
-    const expectedKey = process.env.SETUP_SECRET || 'mechmind-setup-2026';
+    const expectedKey = process.env.SETUP_SECRET;
+
+    if (!expectedKey) {
+      throw new HttpException('Server misconfiguration', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     if (setupKey !== expectedKey) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);

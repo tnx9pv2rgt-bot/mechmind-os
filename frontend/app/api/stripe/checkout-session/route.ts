@@ -91,13 +91,13 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
       url: session.url,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Checkout session error:', error)
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to create checkout session',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

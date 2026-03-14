@@ -36,8 +36,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       const tenantId = this.authService.extractTenantIdFromPayload(payload);
 
       // Store tenant context in request for middleware
-      (req as any).tenantId = tenantId;
-      (req as any).userId = userId;
+      (req as Request & { tenantId?: string; userId?: string }).tenantId = tenantId;
+      (req as Request & { tenantId?: string; userId?: string }).userId = userId;
 
       return {
         userId,

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * NotificationPreferences Component
  * Toggle SMS/WhatsApp/Email preferences

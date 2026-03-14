@@ -125,7 +125,7 @@ export function StaggerItem({
   hoverScale,
   hoverX
 }: StaggerItemProps) {
-  const hoverProps: any = {}
+  const hoverProps: { scale?: number; x?: number } = {}
   if (hoverScale) hoverProps.scale = hoverScale
   if (hoverX) hoverProps.x = hoverX
 

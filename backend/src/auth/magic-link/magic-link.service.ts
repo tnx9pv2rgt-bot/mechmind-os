@@ -72,7 +72,9 @@ export class MagicLinkService {
       html: this.getMagicLinkEmailHtml(user.name, verifyUrl, this.tokenExpiryMinutes),
     });
 
-    this.logger.log(`Magic link sent to ${email} for tenant ${tenantSlug}`);
+    this.logger.log(
+      `Magic link sent to ${email.replace(/(.{2}).*(@.*)/, '$1***$2')} for tenant ${tenantSlug}`,
+    );
 
     return { sent: true };
   }
@@ -94,11 +96,15 @@ export class MagicLinkService {
       throw new MagicLinkError('Link scaduto');
     }
 
-    // Mark as used
-    await this.prisma.magicLink.update({
-      where: { id: magicLink.id },
+    // Atomically mark as used to prevent TOCTOU race condition (token replay)
+    const updated = await this.prisma.magicLink.updateMany({
+      where: { id: magicLink.id, usedAt: null },
       data: { usedAt: new Date() },
     });
+
+    if (updated.count === 0) {
+      throw new MagicLinkError("Link gia' utilizzato");
+    }
 
     // Find user
     const user = await this.prisma.user.findFirst({

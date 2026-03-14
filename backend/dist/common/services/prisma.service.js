@@ -17,7 +17,9 @@ const logger_service_1 = require("./logger.service");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor(configService, logger) {
         const databaseUrl = configService.get('DATABASE_URL') || '';
-        const connectionLimit = configService.get('DATABASE_CONNECTION_LIMIT', 10);
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        const defaultPoolSize = isProduction ? 20 : 10;
+        const connectionLimit = configService.get('DATABASE_CONNECTION_LIMIT', defaultPoolSize);
         const separator = databaseUrl.includes('?') ? '&' : '?';
         const urlWithPooling = databaseUrl.includes('connection_limit')
             ? databaseUrl
@@ -51,7 +53,6 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
                 this.logger.debug(`Query: ${e.query}, Duration: ${e.duration}ms`);
             });
         }
-        await this.setupRLS();
     }
     async onModuleDestroy() {
         await this.$disconnect();
@@ -127,8 +128,8 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
     generateLockId(tenantId, resourceId) {
         const tenantHash = this.hashUUID(tenantId);
         const resourceHash = this.hashUUID(resourceId);
-        const lockId = (BigInt.asUintN(64, BigInt(tenantHash) << BigInt(32)) |
-            BigInt.asUintN(64, BigInt(resourceHash)));
+        const lockId = BigInt.asUintN(64, BigInt(tenantHash) << BigInt(32)) |
+            BigInt.asUintN(64, BigInt(resourceHash));
         return lockId.toString();
     }
     hashUUID(uuid) {
@@ -136,36 +137,10 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
         let hash = 0;
         for (let i = 0; i < clean.length; i++) {
             const char = clean.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & 0xFFFFFFFF;
+            hash = (hash << 5) - hash + char;
+            hash = hash & 0xffffffff;
         }
         return Math.abs(hash);
-    }
-    async setupRLS() {
-        const tables = ['users', 'customers', 'vehicles', 'bookings', 'booking_slots', 'services'];
-        for (const table of tables) {
-            try {
-                await this.$executeRawUnsafe(`
-          ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
-        `);
-                await this.$executeRawUnsafe(`
-          DO $$
-          BEGIN
-            IF NOT EXISTS (
-              SELECT 1 FROM pg_policies 
-              WHERE tablename = '${table}' AND policyname = '${table}_tenant_isolation'
-            ) THEN
-              CREATE POLICY ${table}_tenant_isolation ON ${table}
-                USING (tenant_id = current_setting('app.current_tenant', true)::text);
-            END IF;
-          END
-          $$;
-        `);
-            }
-            catch (error) {
-                this.logger.warn(`RLS setup for ${table}: ${error.message}`);
-            }
-        }
     }
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));

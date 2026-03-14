@@ -1,7 +1,7 @@
 /**
  * Notification Integration Service
  * Auto-send triggers for MechMind OS events
- * 
+ *
  * Integration Points:
  * - Auto-send on booking created
  * - Auto-send 24h before appointment
@@ -9,19 +9,16 @@
  * - Auto-send on inspection completed
  */
 
-import {
-  NotificationType,
-  NotificationChannel,
-} from '@/types/notifications';
+import { NotificationType, NotificationChannel } from '@/types/notifications';
 
 // The notification service returns this shape from createNotification
 type SendNotificationResponse = {
-  id: string
-  customerId: string | null
-  type: string
-  status: string
-  createdAt: Date
-}
+  id: string;
+  customerId: string | null;
+  type: string;
+  status: string;
+  createdAt: Date;
+};
 import {
   sendNotification,
   sendBookingConfirmation,
@@ -56,7 +53,7 @@ const defaultConfig: AutoSendConfig = {
 // Get configuration from localStorage or use defaults
 function getConfig(): AutoSendConfig {
   if (typeof window === 'undefined') return defaultConfig;
-  
+
   const stored = localStorage.getItem('notification_auto_send_config');
   if (stored) {
     try {
@@ -421,7 +418,7 @@ export async function batchBookingConfirmations(
     const result = await sendBookingConfirmation(booking.customerId, booking.data);
     results.push({ customerId: booking.customerId, result });
     // Rate limiting - small delay between sends
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
   return results;
 }
@@ -441,7 +438,7 @@ export async function batchUpcomingReminders(
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
   // Filter bookings for tomorrow
-  const tomorrowBookings = bookings.filter((booking) => {
+  const tomorrowBookings = bookings.filter(booking => {
     const date = new Date(booking.appointmentDate);
     return (
       date.getDate() === tomorrow.getDate() &&
@@ -452,10 +449,7 @@ export async function batchUpcomingReminders(
 
   const results = [];
   for (const booking of tomorrowBookings) {
-    const result = await sendBookingReminder(
-      booking.customerId,
-      booking.data
-    );
+    const result = await sendBookingReminder(booking.customerId, booking.data);
     results.push({ customerId: booking.customerId, result });
   }
 
@@ -473,14 +467,10 @@ export async function batchUpcomingReminders(
 /**
  * Handle Twilio status webhook
  */
-export function handleTwilioWebhook(
-  messageId: string,
-  status: string,
-  errorCode?: string
-): void {
+export function handleTwilioWebhook(messageId: string, status: string, errorCode?: string): void {
   // In a real implementation, this would update the notification status
   // in the database via the backend API
-  console.log('Twilio webhook:', { messageId, status, errorCode });
+  console.info('Twilio webhook:', { messageId, status, errorCode });
 }
 
 /**
@@ -490,7 +480,7 @@ export function handleSesWebhook(
   messageId: string,
   event: 'delivered' | 'bounced' | 'complaint' | 'opened' | 'clicked'
 ): void {
-  console.log('SES webhook:', { messageId, event });
+  console.info('SES webhook:', { messageId, event });
 }
 
 // ==========================================
@@ -500,10 +490,7 @@ export function handleSesWebhook(
 /**
  * Get message template for notification type
  */
-export function getMessageTemplate(
-  type: NotificationType,
-  language: 'it' | 'en' = 'it'
-): string {
+export function getMessageTemplate(type: NotificationType, language: 'it' | 'en' = 'it'): string {
   const templates: Record<string, Record<NotificationType, string>> = {
     it: {
       [NotificationType.BOOKING_CONFIRMATION]:
@@ -512,20 +499,17 @@ export function getMessageTemplate(
         "Ciao {customerName}, ti ricordiamo l'appuntamento domani {date} alle {time}.",
       [NotificationType.BOOKING_CANCELLED]:
         "Ciao {customerName}, l'appuntamento del {date} è stato cancellato.",
-      [NotificationType.INVOICE_READY]:
-        'Ciao {customerName}, fattura pronta. Importo: {amount}.',
+      [NotificationType.INVOICE_READY]: 'Ciao {customerName}, fattura pronta. Importo: {amount}.',
       [NotificationType.INSPECTION_COMPLETE]:
         'Ciao {customerName}, ispezione completata!{score, Score: {score}/10}',
       [NotificationType.MAINTENANCE_DUE]:
         'Ciao {customerName}, {service} dovuta tra {days} giorni.',
       [NotificationType.VEHICLE_READY]:
         'Ciao {customerName}, il tuo veicolo è pronto per il ritiro!',
-      [NotificationType.STATUS_UPDATE]:
-        'Ciao {customerName}, aggiornamento: {status}.',
+      [NotificationType.STATUS_UPDATE]: 'Ciao {customerName}, aggiornamento: {status}.',
       [NotificationType.PAYMENT_REMINDER]:
         'Ciao {customerName}, promemoria pagamento fattura {amount}.',
-      [NotificationType.WELCOME]:
-        'Benvenuto {customerName}! Grazie per esserti registrato.',
+      [NotificationType.WELCOME]: 'Benvenuto {customerName}! Grazie per esserti registrato.',
       [NotificationType.PASSWORD_RESET]:
         'Ciao {customerName}, per reimpostare la password clicca qui.',
       [NotificationType.CUSTOM]: '{message}',
@@ -543,21 +527,15 @@ export function getMessageTemplate(
         'Hi {customerName}, your invoice is ready. Amount: {amount}.',
       [NotificationType.INSPECTION_COMPLETE]:
         'Hi {customerName}, inspection completed!{score, Score: {score}/10}',
-      [NotificationType.MAINTENANCE_DUE]:
-        'Hi {customerName}, {service} due in {days} days.',
-      [NotificationType.VEHICLE_READY]:
-        'Hi {customerName}, your vehicle is ready for pickup!',
-      [NotificationType.STATUS_UPDATE]:
-        'Hi {customerName}, status update: {status}.',
+      [NotificationType.MAINTENANCE_DUE]: 'Hi {customerName}, {service} due in {days} days.',
+      [NotificationType.VEHICLE_READY]: 'Hi {customerName}, your vehicle is ready for pickup!',
+      [NotificationType.STATUS_UPDATE]: 'Hi {customerName}, status update: {status}.',
       [NotificationType.PAYMENT_REMINDER]:
         'Hi {customerName}, payment reminder for invoice {amount}.',
-      [NotificationType.WELCOME]:
-        'Welcome {customerName}! Thanks for registering.',
-      [NotificationType.PASSWORD_RESET]:
-        'Hi {customerName}, to reset your password click here.',
+      [NotificationType.WELCOME]: 'Welcome {customerName}! Thanks for registering.',
+      [NotificationType.PASSWORD_RESET]: 'Hi {customerName}, to reset your password click here.',
       [NotificationType.CUSTOM]: '{message}',
-      [NotificationType.GDPR_EXPORT_READY]:
-        'Hi {customerName}, your data is ready for download.',
+      [NotificationType.GDPR_EXPORT_READY]: 'Hi {customerName}, your data is ready for download.',
     },
   };
 

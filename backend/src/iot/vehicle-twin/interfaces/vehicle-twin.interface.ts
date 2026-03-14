@@ -26,7 +26,7 @@ export interface VehicleComponent {
     z: number;
   };
   modelPartId?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface ComponentHistory {

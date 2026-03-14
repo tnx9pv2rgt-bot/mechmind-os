@@ -1,7 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, Vehicle } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 import { CreateVehicleDto, UpdateVehicleDto } from '../dto/vehicle.dto';
+
+const vehicleWithCustomerAndBookings = {
+  customer: true,
+  bookings: {
+    orderBy: { scheduledDate: 'desc' as const },
+    take: 5,
+  },
+} as const;
+
+type VehicleWithRelations = Prisma.VehicleGetPayload<{
+  include: typeof vehicleWithCustomerAndBookings;
+}>;
+
+type VehicleWithCustomer = Prisma.VehicleGetPayload<{
+  include: { customer: true };
+}>;
 
 @Injectable()
 export class VehicleService {
@@ -13,7 +30,7 @@ export class VehicleService {
   /**
    * Create a new vehicle for a customer
    */
-  async create(tenantId: string, customerId: string, dto: CreateVehicleDto): Promise<any> {
+  async create(tenantId: string, customerId: string, dto: CreateVehicleDto): Promise<Vehicle> {
     return this.prisma.withTenant(tenantId, async prisma => {
       // Verify customer exists
       const customer = await prisma.customer.findFirst({
@@ -49,6 +66,8 @@ export class VehicleService {
           year: dto.year,
           vin: dto.vin?.toUpperCase(),
           notes: dto.notes,
+          status: dto.status || 'active',
+          mileage: dto.mileage,
           customer: { connect: { id: customerId } },
         },
       });
@@ -60,9 +79,45 @@ export class VehicleService {
   }
 
   /**
+   * Find all vehicles with pagination and filtering
+   */
+  async findAll(
+    tenantId: string,
+    options?: { limit?: number; offset?: number; search?: string; status?: string },
+  ): Promise<{ vehicles: Vehicle[]; total: number }> {
+    return this.prisma.withTenant(tenantId, async prisma => {
+      const where: Prisma.VehicleWhereInput = {};
+
+      if (options?.search) {
+        where.OR = [
+          { licensePlate: { contains: options.search.toUpperCase(), mode: 'insensitive' } },
+          { make: { contains: options.search, mode: 'insensitive' } },
+          { model: { contains: options.search, mode: 'insensitive' } },
+        ];
+      }
+      if (options?.status) {
+        where.status = options.status;
+      }
+
+      const [vehicles, total] = await Promise.all([
+        prisma.vehicle.findMany({
+          where,
+          include: { customer: true },
+          orderBy: { updatedAt: 'desc' },
+          take: options?.limit || 50,
+          skip: options?.offset || 0,
+        }),
+        prisma.vehicle.count({ where }),
+      ]);
+
+      return { vehicles, total };
+    });
+  }
+
+  /**
    * Find vehicle by ID
    */
-  async findById(tenantId: string, vehicleId: string): Promise<any> {
+  async findById(tenantId: string, vehicleId: string): Promise<VehicleWithRelations> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
         where: { id: vehicleId },
@@ -86,7 +141,7 @@ export class VehicleService {
   /**
    * Find vehicles by customer
    */
-  async findByCustomer(tenantId: string, customerId: string): Promise<any[]> {
+  async findByCustomer(tenantId: string, customerId: string): Promise<Vehicle[]> {
     return this.prisma.withTenant(tenantId, async prisma => {
       // Verify customer exists
       const customer = await prisma.customer.findFirst({
@@ -107,7 +162,10 @@ export class VehicleService {
   /**
    * Find vehicle by license plate
    */
-  async findByLicensePlate(tenantId: string, licensePlate: string): Promise<any | null> {
+  async findByLicensePlate(
+    tenantId: string,
+    licensePlate: string,
+  ): Promise<VehicleWithCustomer | null> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const normalizedPlate = licensePlate.toUpperCase().replace(/\s+/g, '');
 
@@ -123,7 +181,7 @@ export class VehicleService {
   /**
    * Update vehicle
    */
-  async update(tenantId: string, vehicleId: string, dto: UpdateVehicleDto): Promise<any> {
+  async update(tenantId: string, vehicleId: string, dto: UpdateVehicleDto): Promise<Vehicle> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
         where: { id: vehicleId },
@@ -133,7 +191,7 @@ export class VehicleService {
         throw new NotFoundException(`Vehicle ${vehicleId} not found`);
       }
 
-      const updateData: any = {};
+      const updateData: Prisma.VehicleUpdateInput = {};
 
       if (dto.licensePlate) {
         updateData.licensePlate = dto.licensePlate.toUpperCase().replace(/\s+/g, '');
@@ -143,6 +201,8 @@ export class VehicleService {
       if (dto.year !== undefined) updateData.year = dto.year;
       if (dto.vin) updateData.vin = dto.vin.toUpperCase();
       if (dto.notes !== undefined) updateData.notes = dto.notes;
+      if (dto.status) updateData.status = dto.status;
+      if (dto.mileage !== undefined) updateData.mileage = dto.mileage;
 
       const updated = await prisma.vehicle.update({
         where: { id: vehicleId },

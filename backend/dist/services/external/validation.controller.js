@@ -38,9 +38,9 @@ let ValidationController = ValidationController_1 = class ValidationController {
         this.redis = new ioredis_1.default(redisUrl, {
             password: this.configService.get('REDIS_PASSWORD') || undefined,
             db: parseInt(this.configService.get('REDIS_DB') || '0'),
-            retryStrategy: (times) => Math.min(times * 50, 2000),
+            retryStrategy: times => Math.min(times * 50, 2000),
         });
-        this.redis.on('error', (err) => {
+        this.redis.on('error', err => {
             this.logger.error('Redis connection error:', err.message);
         });
     }
@@ -80,7 +80,7 @@ let ValidationController = ValidationController_1 = class ValidationController {
             }
         }
         catch (error) {
-            this.logger.warn('Cache read error:', error.message);
+            this.logger.warn('Cache read error:', error instanceof Error ? error.message : 'Unknown error');
         }
         try {
             const result = await this.zeroBounceService.verifyEmail(normalizedEmail);
@@ -94,12 +94,12 @@ let ValidationController = ValidationController_1 = class ValidationController {
                 await this.redis.setex(cacheKey, 3600, JSON.stringify(resultWithSuggestion));
             }
             catch (error) {
-                this.logger.warn('Cache write error:', error.message);
+                this.logger.warn('Cache write error:', error instanceof Error ? error.message : 'Unknown error');
             }
             return resultWithSuggestion;
         }
         catch (error) {
-            this.logger.error(`Email validation error for ${normalizedEmail}:`, error.message);
+            this.logger.error(`Email validation error for ${normalizedEmail}:`, error instanceof Error ? error.message : 'Unknown error');
             return {
                 email: normalizedEmail,
                 status: 'unknown',
@@ -150,7 +150,7 @@ let ValidationController = ValidationController_1 = class ValidationController {
             }
         }
         catch (error) {
-            this.logger.warn('Cache read error:', error.message);
+            this.logger.warn('Cache read error:', error instanceof Error ? error.message : 'Unknown error');
         }
         try {
             const result = await this.viesApiService.verifyVatNumber(fullVat);
@@ -163,12 +163,12 @@ let ValidationController = ValidationController_1 = class ValidationController {
                 await this.redis.setex(cacheKey, 24 * 3600, JSON.stringify(response));
             }
             catch (error) {
-                this.logger.warn('Cache write error:', error.message);
+                this.logger.warn('Cache write error:', error instanceof Error ? error.message : 'Unknown error');
             }
             return response;
         }
         catch (error) {
-            this.logger.error(`VAT validation error for ${fullVat}:`, error.message);
+            this.logger.error(`VAT validation error for ${fullVat}:`, error instanceof Error ? error.message : 'Unknown error');
             return {
                 valid: luhnValid,
                 countryCode,
@@ -196,7 +196,7 @@ let ValidationController = ValidationController_1 = class ValidationController {
             }
         }
         catch (error) {
-            this.logger.warn('Cache read error:', error.message);
+            this.logger.warn('Cache read error:', error instanceof Error ? error.message : 'Unknown error');
         }
         try {
             const result = await this.googlePlacesService.autocompleteAddress(input, {
@@ -207,12 +207,12 @@ let ValidationController = ValidationController_1 = class ValidationController {
                 await this.redis.setex(cacheKey, 24 * 3600, JSON.stringify(result));
             }
             catch (error) {
-                this.logger.warn('Cache write error:', error.message);
+                this.logger.warn('Cache write error:', error instanceof Error ? error.message : 'Unknown error');
             }
             return result;
         }
         catch (error) {
-            this.logger.error('Address autocomplete error:', error.message);
+            this.logger.error('Address autocomplete error:', error instanceof Error ? error.message : 'Unknown error');
             return { predictions: [] };
         }
     }
@@ -233,7 +233,7 @@ let ValidationController = ValidationController_1 = class ValidationController {
             }
         }
         catch (error) {
-            this.logger.warn('Cache read error:', error.message);
+            this.logger.warn('Cache read error:', error instanceof Error ? error.message : 'Unknown error');
         }
         try {
             const result = await this.googlePlacesService.getPlaceDetails(placeId);
@@ -241,12 +241,12 @@ let ValidationController = ValidationController_1 = class ValidationController {
                 await this.redis.setex(cacheKey, 30 * 24 * 3600, JSON.stringify(result));
             }
             catch (error) {
-                this.logger.warn('Cache write error:', error.message);
+                this.logger.warn('Cache write error:', error instanceof Error ? error.message : 'Unknown error');
             }
             return result;
         }
         catch (error) {
-            this.logger.error('Address details error:', error.message);
+            this.logger.error('Address details error:', error instanceof Error ? error.message : 'Unknown error');
             throw new common_1.HttpException('Failed to fetch address details', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -325,10 +325,22 @@ let ValidationController = ValidationController_1 = class ValidationController {
     }
     isFreeEmailProvider(email) {
         const freeDomains = [
-            'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
-            'libero.it', 'virgilio.it', 'tiscali.it', 'alice.it',
-            'live.com', 'icloud.com', 'me.com', 'mac.com',
-            'protonmail.com', 'zoho.com', 'yandex.com', 'mail.com',
+            'gmail.com',
+            'yahoo.com',
+            'hotmail.com',
+            'outlook.com',
+            'libero.it',
+            'virgilio.it',
+            'tiscali.it',
+            'alice.it',
+            'live.com',
+            'icloud.com',
+            'me.com',
+            'mac.com',
+            'protonmail.com',
+            'zoho.com',
+            'yandex.com',
+            'mail.com',
         ];
         const domain = email.split('@')[1]?.toLowerCase();
         return domain ? freeDomains.includes(domain) : false;
@@ -350,11 +362,11 @@ let ValidationController = ValidationController_1 = class ValidationController {
     }
     isValidVatFormat(countryCode, vatNumber) {
         const patterns = {
-            'IT': /^\d{11}$/,
-            'DE': /^\d{9}$/,
-            'FR': /^[A-Z0-9]{2}\d{9}$/,
-            'ES': /^[A-Z]\d{8}$|^\d{8}[A-Z]$/,
-            'GB': /^\d{9}$|^\d{12}$|^GD\d{3}$|^HA\d{3}$/,
+            IT: /^\d{11}$/,
+            DE: /^\d{9}$/,
+            FR: /^[A-Z0-9]{2}\d{9}$/,
+            ES: /^[A-Z]\d{8}$|^\d{8}[A-Z]$/,
+            GB: /^\d{9}$|^\d{12}$|^GD\d{3}$|^HA\d{3}$/,
         };
         const pattern = patterns[countryCode];
         if (!pattern)

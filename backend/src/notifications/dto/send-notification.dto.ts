@@ -85,7 +85,7 @@ export class SendNotificationDto {
     },
   })
   @IsObject()
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override customer email',
@@ -117,7 +117,7 @@ export class SendNotificationDto {
   })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Booking Confirmation DTO
@@ -387,7 +387,7 @@ export class NotificationStatusDto {
   error?: string;
 
   @ApiPropertyOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Notification Preferences DTO
@@ -439,5 +439,5 @@ export class TestNotificationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsObject()
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }

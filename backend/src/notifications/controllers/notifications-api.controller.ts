@@ -26,7 +26,6 @@ import {
   TestNotificationDto,
   NotificationType,
   NotificationChannel,
-  NotificationStatusDto,
 } from '../dto/send-notification.dto';
 
 @ApiTags('Notifications')
@@ -401,7 +400,7 @@ export class NotificationsApiController {
   async updateCustomerPreferences(
     @Param('customerId') customerId: string,
     @Query('tenantId') tenantId: string,
-    @Body() preferences: any,
+    @Body() preferences: Record<string, unknown>,
   ) {
     await this.notificationService.updateCustomerPreferences(customerId, tenantId, preferences);
 

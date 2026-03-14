@@ -46,6 +46,7 @@ exports.S3Service = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const AWS = __importStar(require("aws-sdk"));
+const path = __importStar(require("path"));
 let S3Service = class S3Service {
     constructor(config) {
         this.config = config;
@@ -54,41 +55,64 @@ let S3Service = class S3Service {
         });
         this.defaultBucket = this.config.get('AWS_S3_BUCKET', 'mechmind-uploads');
     }
+    validateKey(key) {
+        const normalized = path.posix.normalize(key);
+        if (normalized.startsWith('..') || normalized.includes('/../') || key.includes('..')) {
+            throw new common_1.BadRequestException('Invalid file path: path traversal detected');
+        }
+    }
+    buildTenantKey(tenantId, key) {
+        this.validateKey(key);
+        return `tenants/${tenantId}/${key}`;
+    }
     async upload(bucket, key, body, contentType) {
-        return this.s3.upload({
+        this.validateKey(key);
+        return this.s3
+            .upload({
             Bucket: bucket,
             Key: key,
             Body: body,
             ContentType: contentType,
-        }).promise();
+        })
+            .promise();
     }
-    async uploadBuffer(body, key, contentType) {
-        return this.s3.upload({
+    async uploadBuffer(body, key, contentType, tenantId) {
+        const finalKey = tenantId ? this.buildTenantKey(tenantId, key) : key;
+        this.validateKey(finalKey);
+        return this.s3
+            .upload({
             Bucket: this.defaultBucket,
-            Key: key,
+            Key: finalKey,
             Body: body,
             ContentType: contentType,
-        }).promise();
+        })
+            .promise();
     }
     async getSignedUrl(bucket, key, expiresIn) {
+        this.validateKey(key);
         return this.s3.getSignedUrlPromise('getObject', {
             Bucket: bucket,
             Key: key,
             Expires: expiresIn,
         });
     }
-    async getSignedUrlForKey(key, expiresIn = 3600) {
+    async getSignedUrlForKey(key, expiresIn = 3600, tenantId) {
+        const finalKey = tenantId ? this.buildTenantKey(tenantId, key) : key;
+        this.validateKey(finalKey);
         return this.s3.getSignedUrlPromise('getObject', {
             Bucket: this.defaultBucket,
-            Key: key,
+            Key: finalKey,
             Expires: expiresIn,
         });
     }
     async delete(bucket, key) {
-        await this.s3.deleteObject({
+        this.validateKey(key);
+        await this.s3
+            .deleteObject({
             Bucket: bucket,
             Key: key,
-        }).promise();
+        })
+            .promise();
     }
 };
 exports.S3Service = S3Service;

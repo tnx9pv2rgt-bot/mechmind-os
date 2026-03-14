@@ -7,7 +7,9 @@
  * @module lib/services/__tests__/blockchainService
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+// Jest globals are available automatically
+
+// TextEncoder/TextDecoder polyfill is in __tests__/accessibility/setup.ts
 
 // Import the service functions
 import {
@@ -34,23 +36,33 @@ describe('BlockchainService', () => {
   const originalCrypto = global.crypto
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     
     // Mock crypto.subtle for testing
-    global.crypto = {
+    const mockCrypto = {
       ...originalCrypto,
       subtle: {
-        digest: vi.fn().mockImplementation(async (algorithm, data) => {
+        digest: jest.fn().mockImplementation(async (_algorithm: string, _data: ArrayBuffer) => {
           // Return a mock hash (32 bytes for SHA-256)
           return new Uint8Array(32).fill(0xAB).buffer
         }),
       },
-    } as any
+      getRandomValues: originalCrypto?.getRandomValues?.bind(originalCrypto),
+    }
+    Object.defineProperty(global, 'crypto', {
+      value: mockCrypto,
+      writable: true,
+      configurable: true,
+    })
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
-    global.crypto = originalCrypto
+    jest.restoreAllMocks()
+    Object.defineProperty(global, 'crypto', {
+      value: originalCrypto,
+      writable: true,
+      configurable: true,
+    })
   })
 
   // =============================================================================

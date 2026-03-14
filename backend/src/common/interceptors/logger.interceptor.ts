@@ -47,13 +47,13 @@ export class LoggerInterceptor implements NestInterceptor {
     );
   }
 
-  private sanitizeBody(body: any): any {
+  private sanitizeBody(body: unknown): unknown {
     if (!body || typeof body !== 'object') {
       return body;
     }
 
     const sensitiveFields = ['password', 'token', 'secret', 'creditCard', 'ssn'];
-    const sanitized = { ...body };
+    const sanitized = { ...(body as Record<string, unknown>) };
 
     for (const field of sensitiveFields) {
       if (field in sanitized) {

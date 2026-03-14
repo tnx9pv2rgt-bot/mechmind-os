@@ -71,8 +71,8 @@ export default function ClaimsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Warranty Claims</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#ececec]">Warranty Claims</h1>
+          <p className="text-sm text-gray-500 dark:text-[#636366] mt-1">
             Manage and review all warranty claims
           </p>
         </div>
@@ -85,15 +85,15 @@ export default function ClaimsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: "Total Claims", count: claims.length, color: "bg-blue-50 text-blue-700" },
-          { label: "Submitted", count: claims.filter(c => c.status === 'SUBMITTED').length, color: "bg-blue-50 text-blue-700" },
-          { label: "Under Review", count: claims.filter(c => c.status === 'UNDER_REVIEW').length, color: "bg-amber-50 text-amber-700" },
-          { label: "Approved", count: claims.filter(c => c.status === 'APPROVED').length, color: "bg-green-50 text-green-700" },
-          { label: "Paid", count: claims.filter(c => c.status === 'PAID').length, color: "bg-purple-50 text-purple-700" },
+          { label: "Total Claims", count: claims.length, color: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" },
+          { label: "Submitted", count: claims.filter(c => c.status === 'SUBMITTED').length, color: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" },
+          { label: "Under Review", count: claims.filter(c => c.status === 'UNDER_REVIEW').length, color: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300" },
+          { label: "Approved", count: claims.filter(c => c.status === 'APPROVED').length, color: "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300" },
+          { label: "Paid", count: claims.filter(c => c.status === 'PAID').length, color: "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300" },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-600">
+              <CardTitle className="text-xs font-medium text-gray-600 dark:text-[#636366]">
                 {stat.label}
               </CardTitle>
             </CardHeader>

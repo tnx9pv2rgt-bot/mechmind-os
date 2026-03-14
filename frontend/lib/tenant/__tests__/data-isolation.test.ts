@@ -11,9 +11,81 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+
+// Mock jose ESM module before any imports that use it
+jest.mock('jose', () => ({
+  SignJWT: jest.fn().mockImplementation(() => ({
+    setProtectedHeader: jest.fn().mockReturnThis(),
+    setIssuedAt: jest.fn().mockReturnThis(),
+    setExpirationTime: jest.fn().mockReturnThis(),
+    sign: jest.fn().mockResolvedValue('mock-jwt-token' as never),
+  })),
+  jwtVerify: jest.fn().mockResolvedValue({
+    payload: { sub: 'test', tenantId: 'test', role: 'customer' },
+  } as never),
+}))
+
+// The current context module does not export setTenantContext / clearTenantContext,
+// so we provide a local mock that the services can consume via tryGetTenantContext.
+let _tenantContext: TenantContext | null = null
+
+jest.mock('@/lib/tenant/context', () => {
+  const actual = jest.requireActual('@/lib/tenant/context')
+  return {
+    ...actual,
+    getTenantContext: jest.fn(async () => _tenantContext),
+    tryGetTenantContext: jest.fn(async () => _tenantContext),
+    requireTenantId: jest.fn(async () => {
+      if (!_tenantContext) throw new Error('No tenant context')
+      return _tenantContext.tenantId
+    }),
+  }
+})
+
+// Mock Prisma client to avoid PrismaClient browser-environment error
+const mockPrismaClient = {
+  maintenanceSchedule: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    groupBy: jest.fn(),
+  },
+  vehicle: {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+  },
+  customer: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+  },
+  warranty: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    count: jest.fn(),
+  },
+  notification: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    count: jest.fn(),
+  },
+  inspection: {
+    findMany: jest.fn(),
+  },
+}
+
+jest.mock('@/lib/prisma', () => ({
+  prisma: mockPrismaClient,
+}))
+
 import { prisma } from '@/lib/prisma'
-import { 
-  createMaintenanceSchedule, 
+import {
+  createMaintenanceSchedule,
   getOverdueItems,
   listMaintenanceSchedules,
   getMaintenanceScheduleById,
@@ -27,16 +99,28 @@ import {
   listNotifications,
 } from '@/lib/services/notificationService'
 import {
-  setTenantContext,
-  clearTenantContext,
-  TenantContext,
-} from '@/lib/tenant/context'
-import {
   authenticateCustomer,
   verifyResourceAccess,
   TenantMismatchError,
   InactiveTenantError,
 } from '@/lib/auth/portal-auth'
+
+interface TenantContext {
+  tenantId: string
+  tenantSlug: string
+  permissions: string[]
+  subscriptionTier: string
+  subscriptionStatus: string
+  features: string[]
+}
+
+function setTenantContext(ctx: TenantContext): void {
+  _tenantContext = ctx
+}
+
+function clearTenantContext(): void {
+  _tenantContext = null
+}
 
 // =============================================================================
 // Test Setup
@@ -286,18 +370,25 @@ describe('Multi-Tenant Data Isolation', () => {
     })
     
     it('should reject access to vehicle from different tenant', async () => {
+      // Must mock customer.findFirst so verifyResourceAccess proceeds past customer check
+      const mockCustomerFindFirst = jest.spyOn(prisma.customer, 'findFirst')
+      mockCustomerFindFirst.mockResolvedValue({
+        id: CUSTOMER_1_ID,
+        tenantId: TENANT_1_ID,
+      } as never)
+
       const mockVehicleFindFirst = jest.spyOn(prisma.vehicle, 'findFirst')
       mockVehicleFindFirst.mockResolvedValue(null) // Vehicle belongs to tenant 2
-      
+
       const hasAccess = await verifyResourceAccess(
         CUSTOMER_1_ID,
         TENANT_1_ID,
         'vehicle',
         VEHICLE_2_ID // Vehicle from tenant 2
       )
-      
+
       expect(hasAccess).toBe(false)
-      
+
       // Verify query included tenantId
       expect(mockVehicleFindFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -307,7 +398,8 @@ describe('Multi-Tenant Data Isolation', () => {
           }),
         })
       )
-      
+
+      mockCustomerFindFirst.mockRestore()
       mockVehicleFindFirst.mockRestore()
     })
     

@@ -70,7 +70,7 @@ const baseTemplate = (content: string, title: string): string => `
 const verificationEmailTemplate = (
   firstName: string,
   verificationLink: string,
-  token: string,
+  _token: string,
 ): string => {
   const content = `
     <h2>Ciao ${firstName}, benvenuto su MechMind! 👋</h2>
@@ -194,11 +194,12 @@ export async function sendVerificationEmail(
       success: true,
       messageId: response.headers['x-message-id'] as string,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Errore invio email di verifica:', error);
     return {
       success: false,
-      error: error.message || "Errore sconosciuto durante l'invio dell'email",
+      error:
+        error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }
@@ -238,11 +239,12 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
       success: true,
       messageId: response.headers['x-message-id'] as string,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Errore invio email di benvenuto:', error);
     return {
       success: false,
-      error: error.message || "Errore sconosciuto durante l'invio dell'email",
+      error:
+        error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }
@@ -284,11 +286,12 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
       success: true,
       messageId: response.headers['x-message-id'] as string,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Errore invio email reset password:', error);
     return {
       success: false,
-      error: error.message || "Errore sconosciuto durante l'invio dell'email",
+      error:
+        error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }
@@ -326,11 +329,12 @@ export async function sendEmail(options: sgMail.MailDataRequired): Promise<Email
       success: true,
       messageId: response.headers['x-message-id'] as string,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Errore invio email:', error);
     return {
       success: false,
-      error: error.message || "Errore sconosciuto durante l'invio dell'email",
+      error:
+        error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
     };
   }
 }

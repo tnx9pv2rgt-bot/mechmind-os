@@ -7,7 +7,7 @@ import { FormAnswers, FormFlowEvents } from './types';
 /**
  * Debounce function
  */
-export function debounce<T extends (...args: any[]) => void>(
+export function debounce<T extends (...args: Parameters<T>) => void>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -22,7 +22,7 @@ export function debounce<T extends (...args: any[]) => void>(
 /**
  * Throttle function
  */
-export function throttle<T extends (...args: any[]) => void>(
+export function throttle<T extends (...args: Parameters<T>) => void>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {

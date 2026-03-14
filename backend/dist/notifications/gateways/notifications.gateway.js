@@ -14,9 +14,38 @@ exports.NotificationsGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const redis_adapter_1 = require("@socket.io/redis-adapter");
+const ioredis_1 = require("ioredis");
 let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
-    constructor() {
+    constructor(configService) {
+        this.configService = configService;
         this.logger = new common_1.Logger(NotificationsGateway_1.name);
+    }
+    afterInit() {
+        const redisUrl = this.configService.get('REDIS_URL');
+        if (redisUrl && this.server) {
+            try {
+                const pubClient = new ioredis_1.Redis(redisUrl);
+                const subClient = pubClient.duplicate();
+                const ioServer = this.server.server || this.server;
+                if (typeof ioServer.adapter === 'function') {
+                    ioServer.adapter((0, redis_adapter_1.createAdapter)(pubClient, subClient));
+                    this.logger.log('Socket.io Redis adapter configured for multi-instance support');
+                }
+                else {
+                    this.logger.warn('Socket.io server.adapter not available — running in single-instance mode');
+                    pubClient.disconnect();
+                    subClient.disconnect();
+                }
+            }
+            catch (error) {
+                this.logger.warn(`Failed to configure Redis adapter: ${error}. Running in single-instance mode.`);
+            }
+        }
+        else {
+            this.logger.warn('REDIS_URL not configured — Socket.io running without Redis adapter (single instance only)');
+        }
     }
     async handleConnection(client) {
         try {
@@ -52,8 +81,8 @@ let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
         this.server.to(`user:${userId}`).emit(event, data);
     }
     extractToken(client) {
-        return client.handshake.auth?.token ||
-            (typeof client.handshake.query?.token === 'string' ? client.handshake.query.token : null);
+        return (client.handshake.auth?.token ||
+            (typeof client.handshake.query?.token === 'string' ? client.handshake.query.token : null));
     }
 };
 exports.NotificationsGateway = NotificationsGateway;
@@ -75,5 +104,6 @@ exports.NotificationsGateway = NotificationsGateway = NotificationsGateway_1 = _
             credentials: true,
         },
         transports: ['websocket', 'polling'],
-    })
+    }),
+    __metadata("design:paramtypes", [config_1.ConfigService])
 ], NotificationsGateway);

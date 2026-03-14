@@ -11,9 +11,34 @@ import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
 import { CreateBookingDto, ReserveSlotDto, UpdateBookingDto } from '../dto/create-booking.dto';
 
+const bookingInclude = {
+  customer: true,
+  vehicle: true,
+  services: { include: { service: true } },
+  slot: true,
+} as const;
+
+type BookingWithRelations = Prisma.BookingGetPayload<{
+  include: typeof bookingInclude;
+}>;
+
+type BookingWithRelationsAndEvents = Prisma.BookingGetPayload<{
+  include: {
+    customer: true;
+    vehicle: true;
+    services: { include: { service: true } };
+    slot: true;
+    events: true;
+  };
+}>;
+
+type BookingWithSlot = Prisma.BookingGetPayload<{
+  include: { customer: true; vehicle: true; slot: true };
+}>;
+
 export interface BookingReservationResult {
   success: boolean;
-  booking?: any;
+  booking?: BookingWithRelations;
   conflict?: boolean;
   retryAfter?: number;
   queuePosition?: number;
@@ -55,7 +80,7 @@ export class BookingService {
       this.logger.warn(`Could not acquire lock for slot ${slotId}`);
 
       // Queue for retry
-      const job = await this.queueService.addBookingJob(
+      await this.queueService.addBookingJob(
         'reserve-slot-retry',
         {
           type: 'reserve-slot-retry',
@@ -200,7 +225,8 @@ export class BookingService {
         booking: result,
       };
     } catch (error) {
-      this.logger.error(`Failed to create booking: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to create booking: ${errorMessage}`);
 
       if (error instanceof ConflictException || error instanceof NotFoundException) {
         throw error;
@@ -213,7 +239,7 @@ export class BookingService {
         }
       }
 
-      throw new BadRequestException(`Failed to create booking: ${error.message}`);
+      throw new BadRequestException(`Failed to create booking: ${errorMessage}`);
     } finally {
       // Step 10: Always release advisory lock
       await this.prisma.releaseAdvisoryLock(tenantId, slotId);
@@ -224,17 +250,18 @@ export class BookingService {
   /**
    * Create a new booking (without advisory lock - for internal use)
    */
-  async createBooking(tenantId: string, dto: CreateBookingDto): Promise<any> {
+  async createBooking(tenantId: string, dto: CreateBookingDto): Promise<BookingWithRelations> {
     const {
       customerId,
       vehicleId,
       slotId,
       scheduledDate,
       durationMinutes,
-      serviceIds,
       notes,
       source,
       vapiCallId,
+      technicianId,
+      liftPosition,
     } = dto;
 
     return this.prisma.withTenant(tenantId, async prisma => {
@@ -256,6 +283,8 @@ export class BookingService {
           notes: notes || null,
           source: source || 'WEB',
           vapiCallId: vapiCallId || null,
+          technicianId: technicianId || null,
+          liftPosition: liftPosition || null,
           tenant: { connect: { id: tenantId } },
           customer: { connect: { id: customerId } },
           slot: { connect: { id: slotId } },
@@ -285,7 +314,7 @@ export class BookingService {
       await prisma.bookingEvent.create({
         data: {
           eventType: 'booking_created',
-          payload: { ...dto } as any,
+          payload: { ...dto } as unknown as Prisma.InputJsonValue,
           booking: { connect: { id: booking.id } },
         },
       });
@@ -309,7 +338,7 @@ export class BookingService {
   /**
    * Find booking by ID
    */
-  async findById(tenantId: string, bookingId: string): Promise<any> {
+  async findById(tenantId: string, bookingId: string): Promise<BookingWithRelationsAndEvents> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const booking = await prisma.booking.findFirst({
         where: {
@@ -352,7 +381,7 @@ export class BookingService {
       limit?: number;
       offset?: number;
     },
-  ): Promise<{ bookings: any[]; total: number }> {
+  ): Promise<{ bookings: BookingWithRelations[]; total: number }> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const where: Prisma.BookingWhereInput = {
         tenantId,
@@ -394,7 +423,11 @@ export class BookingService {
   /**
    * Update booking
    */
-  async updateBooking(tenantId: string, bookingId: string, dto: UpdateBookingDto): Promise<any> {
+  async updateBooking(
+    tenantId: string,
+    bookingId: string,
+    dto: UpdateBookingDto,
+  ): Promise<BookingWithRelations> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const existing = await prisma.booking.findFirst({
         where: { id: bookingId, tenantId },
@@ -427,7 +460,7 @@ export class BookingService {
       await prisma.bookingEvent.create({
         data: {
           eventType: 'booking_updated',
-          payload: { ...dto } as any,
+          payload: { ...dto } as unknown as Prisma.InputJsonValue,
           booking: { connect: { id: booking.id } },
         },
       });
@@ -446,7 +479,11 @@ export class BookingService {
   /**
    * Cancel booking
    */
-  async cancelBooking(tenantId: string, bookingId: string, reason?: string): Promise<any> {
+  async cancelBooking(
+    tenantId: string,
+    bookingId: string,
+    reason?: string,
+  ): Promise<BookingWithSlot> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const booking = await prisma.booking.findFirst({
         where: { id: bookingId, tenantId },
@@ -499,7 +536,15 @@ export class BookingService {
   /**
    * Get booking statistics
    */
-  async getStats(tenantId: string, fromDate?: Date, toDate?: Date): Promise<any> {
+  async getStats(
+    tenantId: string,
+    fromDate?: Date,
+    toDate?: Date,
+  ): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+    bySource: Record<string, number>;
+  }> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const dateFilter =
         fromDate && toDate

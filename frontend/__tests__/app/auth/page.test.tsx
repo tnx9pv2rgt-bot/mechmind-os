@@ -1,12 +1,19 @@
 /**
  * Tests for Auth Page (app/auth/page.tsx)
  *
+ * The auth page uses a step-based flow:
+ *   'methods' -> 'email' -> 'password' -> 'passkey-prompt' | dashboard
+ *   'email' -> 'magic-sent' (via magic link)
+ *
+ * IMPORTANT: React 18 controlled inputs inside the framer-motion mock context
+ * get replaced on re-render. Always re-query the DOM for fresh element
+ * references after each input fill.
+ *
  * @module __tests__/app/auth/page.test
  */
 
 import React from 'react'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
 // =========================================================================
 // Mocks
@@ -20,7 +27,7 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock framer-motion to render children directly
+// Mock framer-motion: render children directly and fire onAnimationComplete
 jest.mock('framer-motion', () => {
   const React = require('react')
   return {
@@ -29,8 +36,13 @@ jest.mock('framer-motion', () => {
       {
         get: (_target: unknown, prop: string) => {
           return React.forwardRef(
-            ({ children, ...rest }: { children?: React.ReactNode; [key: string]: unknown }, ref: React.Ref<HTMLElement>) => {
-              // Filter out framer-motion specific props
+            ({ children, onAnimationComplete, ...rest }: { children?: React.ReactNode; onAnimationComplete?: () => void; [key: string]: unknown }, ref: React.Ref<HTMLElement>) => {
+              React.useEffect(() => {
+                if (onAnimationComplete) {
+                  onAnimationComplete()
+                }
+              }, [onAnimationComplete])
+
               const validProps: Record<string, unknown> = {}
               const htmlProps = [
                 'className', 'style', 'onClick', 'onSubmit', 'type', 'disabled',
@@ -57,27 +69,38 @@ jest.mock('framer-motion', () => {
   }
 })
 
-// Mock @simplewebauthn/browser
 const mockBrowserSupportsWebAuthn = jest.fn()
-const mockStartAuthentication = jest.fn()
-
 jest.mock('@simplewebauthn/browser', () => ({
   browserSupportsWebAuthn: () => mockBrowserSupportsWebAuthn(),
-  startAuthentication: (...args: unknown[]) => mockStartAuthentication(...args),
+  startAuthentication: jest.fn(),
+  startRegistration: jest.fn(),
 }))
 
-// Mock next/link
 jest.mock('next/link', () => {
-  return ({ children, href, ...rest }: { children: React.ReactNode; href: string; [key: string]: unknown }) => {
-    return React.createElement('a', { href, ...rest }, children)
+  return ({ children, href }: { children: React.ReactNode; href: string }) => {
+    return React.createElement('a', { href }, children)
   }
 })
 
-// Mock fetch
+jest.mock('next/script', () => {
+  return () => null
+})
+
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 
 import AuthPage from '@/app/auth/page'
+
+/**
+ * Fill a controlled React input by CSS selector. Each fill triggers a
+ * re-render which may replace DOM elements, so we always query fresh
+ * from the document. Uses fireEvent.input which reliably triggers
+ * React's onChange handler.
+ */
+function fillBySelector(selector: string, value: string): void {
+  const el = document.querySelector(selector) as HTMLInputElement
+  fireEvent.input(el, { target: { value } })
+}
 
 describe('AuthPage', () => {
   beforeEach(() => {
@@ -86,194 +109,84 @@ describe('AuthPage', () => {
     mockBrowserSupportsWebAuthn.mockReturnValue(false)
   })
 
-  // =========================================================================
-  // Rendering
-  // =========================================================================
+  /**
+   * Navigate to the email step by clicking "Accedi".
+   */
+  async function goToEmailStep(): Promise<void> {
+    fireEvent.click(screen.getByText('Accedi'))
+    await waitFor(() => {
+      expect(screen.getByText('Inserisci le tue credenziali')).toBeInTheDocument()
+    })
+  }
+
+  /**
+   * Navigate to the password step by filling slug + email and clicking Continua.
+   */
+  async function goToPasswordStep(): Promise<void> {
+    await goToEmailStep()
+    fillBySelector('input[type="text"]', 'my-garage')
+    fillBySelector('input[type="email"]', 'user@test.com')
+    fireEvent.click(screen.getByText('Continua'))
+    await waitFor(() => {
+      expect(screen.getByText('Inserisci la password')).toBeInTheDocument()
+    })
+  }
+
   describe('rendering', () => {
     it('should render the login page with title', () => {
       render(<AuthPage />)
-      // Multiple MechMind OS text nodes exist (header + desktop preview)
-      const titles = screen.getAllByText('MechMind OS')
-      expect(titles.length).toBeGreaterThanOrEqual(1)
-      expect(screen.getByText('Accedi al tuo gestionale')).toBeInTheDocument()
+      expect(screen.getByText('MechMind OS')).toBeInTheDocument()
+      expect(screen.getByText('Benvenuto in MechMind')).toBeInTheDocument()
     })
 
     it('should render the method selector tabs', () => {
       render(<AuthPage />)
-      expect(screen.getByText('Magic Link')).toBeInTheDocument()
-      expect(screen.getByText('Password')).toBeInTheDocument()
+      expect(screen.getByText('Accedi')).toBeInTheDocument()
+      expect(screen.getByText('Registrati')).toBeInTheDocument()
     })
 
     it('should render footer links', () => {
       render(<AuthPage />)
-      expect(screen.getByText('Registrati ora')).toBeInTheDocument()
-      expect(screen.getByText('GDPR Compliant')).toBeInTheDocument()
-      expect(screen.getByText('99.9% Uptime')).toBeInTheDocument()
+      expect(screen.getByText("Condizioni d'uso")).toBeInTheDocument()
+      expect(screen.getByText('Informativa sulla privacy')).toBeInTheDocument()
     })
 
     it('should render signup link', () => {
       render(<AuthPage />)
-      const signupLink = screen.getByText('Registrati ora')
-      expect(signupLink.closest('a')).toHaveAttribute('href', '/auth/signup')
+      expect(screen.getByText('Prima provalo')).toBeInTheDocument()
     })
   })
 
-  // =========================================================================
-  // PasskeyButton
-  // =========================================================================
-  describe('PasskeyButton', () => {
-    it('should show "not supported" message when WebAuthn is not supported', async () => {
-      mockBrowserSupportsWebAuthn.mockReturnValue(false)
+  describe('Email step', () => {
+    it('should render slug and email inputs', async () => {
       render(<AuthPage />)
+      await goToEmailStep()
+
+      expect(screen.getByText('Slug officina')).toBeInTheDocument()
+      expect(screen.getByText('Indirizzo e-mail')).toBeInTheDocument()
+    })
+
+    it('should show validation error when slug is empty', async () => {
+      render(<AuthPage />)
+      await goToEmailStep()
+
+      fireEvent.click(screen.getByText('Continua'))
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/non supporta l'accesso biometrico/i)
-        ).toBeInTheDocument()
+        expect(screen.getByText(/Inserisci lo slug/i)).toBeInTheDocument()
       })
     })
 
-    it('should show passkey button when WebAuthn is supported', async () => {
-      mockBrowserSupportsWebAuthn.mockReturnValue(true)
+    it('should show validation error when email is empty', async () => {
       render(<AuthPage />)
+      await goToEmailStep()
+
+      fillBySelector('input[type="text"]', 'test-garage')
+      fireEvent.click(screen.getByText('Continua'))
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Accedi con FaceID/i)
-        ).toBeInTheDocument()
+        expect(screen.getByText(/Inserisci la tua email/i)).toBeInTheDocument()
       })
-    })
-
-    it('should trigger authentication flow on click', async () => {
-      mockBrowserSupportsWebAuthn.mockReturnValue(true)
-
-      const optionsResponse = { challenge: 'test-challenge', sessionId: 'session-1' }
-      const assertion = { id: 'cred-1', response: {} }
-
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: jest.fn().mockResolvedValueOnce(optionsResponse),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: jest.fn().mockResolvedValueOnce({ success: true }),
-        })
-
-      mockStartAuthentication.mockResolvedValueOnce(assertion)
-
-      render(<AuthPage />)
-
-      await waitFor(() => {
-        expect(screen.getByText(/Accedi con FaceID/i)).toBeInTheDocument()
-      })
-
-      await act(async () => {
-        fireEvent.click(screen.getByText(/Accedi con FaceID/i))
-      })
-
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/auth/passkey/authenticate-options')
-        expect(mockStartAuthentication).toHaveBeenCalledWith(optionsResponse)
-        expect(mockPush).toHaveBeenCalledWith('/dashboard')
-      })
-    })
-
-    it('should handle user cancellation (NotAllowedError)', async () => {
-      mockBrowserSupportsWebAuthn.mockReturnValue(true)
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValueOnce({ challenge: 'test' }),
-      })
-
-      const notAllowedError = new Error('User cancelled')
-      notAllowedError.name = 'NotAllowedError'
-      mockStartAuthentication.mockRejectedValueOnce(notAllowedError)
-
-      render(<AuthPage />)
-
-      await waitFor(() => {
-        expect(screen.getByText(/Accedi con FaceID/i)).toBeInTheDocument()
-      })
-
-      await act(async () => {
-        fireEvent.click(screen.getByText(/Accedi con FaceID/i))
-      })
-
-      await waitFor(() => {
-        expect(screen.getByText(/Autenticazione annullata/i)).toBeInTheDocument()
-      })
-    })
-
-    it('should handle backend error during passkey flow', async () => {
-      mockBrowserSupportsWebAuthn.mockReturnValue(true)
-
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: jest.fn().mockResolvedValueOnce({}),
-      })
-
-      render(<AuthPage />)
-
-      await waitFor(() => {
-        expect(screen.getByText(/Accedi con FaceID/i)).toBeInTheDocument()
-      })
-
-      await act(async () => {
-        fireEvent.click(screen.getByText(/Accedi con FaceID/i))
-      })
-
-      await waitFor(() => {
-        // The error message is set from the catch block in handlePasskeyLogin
-        const errorElement = screen.getByText((content) => {
-          return content.includes('Errore') || content.includes('Impossibile') || content.includes('autenticazione')
-        })
-        expect(errorElement).toBeInTheDocument()
-      })
-    })
-  })
-
-  // =========================================================================
-  // MagicLinkForm
-  // =========================================================================
-  describe('MagicLinkForm', () => {
-    const switchToMagicLink = () => {
-      fireEvent.click(screen.getByText('Magic Link'))
-    }
-
-    it('should render slug and email inputs', () => {
-      render(<AuthPage />)
-      switchToMagicLink()
-
-      expect(screen.getByPlaceholderText('garage-roma')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('tu@officina.it')).toBeInTheDocument()
-    })
-
-    it('should validate required email field', async () => {
-      render(<AuthPage />)
-      switchToMagicLink()
-
-      // Set slug but not email, then click send
-      const slugInput = screen.getByPlaceholderText('garage-roma')
-      await userEvent.type(slugInput, 'test-garage')
-
-      // The button should be disabled when email is empty
-      const sendButton = screen.getByText(/Invia link di accesso/i)
-      expect(sendButton.closest('button')).toBeDisabled()
-    })
-
-    it('should validate required slug field', async () => {
-      render(<AuthPage />)
-      switchToMagicLink()
-
-      // Set email but not slug
-      const emailInput = screen.getByPlaceholderText('tu@officina.it')
-      await userEvent.type(emailInput, 'test@example.com')
-
-      // The button should be disabled when slug is empty
-      const sendButton = screen.getByText(/Invia link di accesso/i)
-      expect(sendButton.closest('button')).toBeDisabled()
     })
 
     it('should send magic link successfully and show success message', async () => {
@@ -283,66 +196,47 @@ describe('AuthPage', () => {
       })
 
       render(<AuthPage />)
-      switchToMagicLink()
+      await goToEmailStep()
 
-      const slugInput = screen.getByPlaceholderText('garage-roma')
-      const emailInput = screen.getByPlaceholderText('tu@officina.it')
+      fillBySelector('input[type="text"]', 'test-garage')
+      fillBySelector('input[type="email"]', 'test@example.com')
 
-      await userEvent.type(slugInput, 'test-garage')
-      await userEvent.type(emailInput, 'test@example.com')
-
-      const sendButton = screen.getByText(/Invia link di accesso/i)
-      await act(async () => {
-        fireEvent.click(sendButton)
-      })
+      fireEvent.click(screen.getByText('Invia magic link invece'))
 
       await waitFor(() => {
-        expect(screen.getByText('Email inviata!')).toBeInTheDocument()
-        expect(
-          screen.getByText(/Controlla la tua casella di posta/i)
-        ).toBeInTheDocument()
+        expect(screen.getByText('Controlla la tua email')).toBeInTheDocument()
       })
     })
 
-    it('should handle error response from API', async () => {
+    it('should handle error response from magic link API', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
-        json: jest.fn().mockResolvedValueOnce({ error: 'Utente non trovato' }),
+        json: jest.fn().mockResolvedValueOnce({ message: 'Utente non trovato' }),
       })
 
       render(<AuthPage />)
-      switchToMagicLink()
+      await goToEmailStep()
 
-      const slugInput = screen.getByPlaceholderText('garage-roma')
-      const emailInput = screen.getByPlaceholderText('tu@officina.it')
+      fillBySelector('input[type="text"]', 'test-garage')
+      fillBySelector('input[type="email"]', 'test@example.com')
 
-      await userEvent.type(slugInput, 'test-garage')
-      await userEvent.type(emailInput, 'test@example.com')
-
-      await act(async () => {
-        fireEvent.click(screen.getByText(/Invia link di accesso/i))
-      })
+      fireEvent.click(screen.getByText('Invia magic link invece'))
 
       await waitFor(() => {
         expect(screen.getByText('Utente non trovato')).toBeInTheDocument()
       })
     })
 
-    it('should handle network error', async () => {
+    it('should handle network error on magic link', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
       render(<AuthPage />)
-      switchToMagicLink()
+      await goToEmailStep()
 
-      const slugInput = screen.getByPlaceholderText('garage-roma')
-      const emailInput = screen.getByPlaceholderText('tu@officina.it')
+      fillBySelector('input[type="text"]', 'test-garage')
+      fillBySelector('input[type="email"]', 'test@example.com')
 
-      await userEvent.type(slugInput, 'test-garage')
-      await userEvent.type(emailInput, 'test@example.com')
-
-      await act(async () => {
-        fireEvent.click(screen.getByText(/Invia link di accesso/i))
-      })
+      fireEvent.click(screen.getByText('Invia magic link invece'))
 
       await waitFor(() => {
         expect(screen.getByText(/Errore di rete/i)).toBeInTheDocument()
@@ -350,52 +244,39 @@ describe('AuthPage', () => {
     })
   })
 
-  // =========================================================================
-  // PasswordForm
-  // =========================================================================
-  describe('PasswordForm', () => {
-    const switchToPassword = () => {
-      fireEvent.click(screen.getByText('Password'))
-    }
-
-    it('should render all password form inputs', () => {
+  describe('Password step', () => {
+    it('should render all password form inputs', async () => {
       render(<AuthPage />)
-      switchToPassword()
+      await goToPasswordStep()
 
-      expect(screen.getByPlaceholderText('garage-roma')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('tu@officina.it')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument()
+      expect(screen.getByText('Inserisci la password')).toBeInTheDocument()
+      expect(screen.getByText('user@test.com')).toBeInTheDocument()
     })
 
-    it('should render remember me checkbox and forgot password link', () => {
+    it('should render forgot password link', async () => {
       render(<AuthPage />)
-      switchToPassword()
+      await goToPasswordStep()
 
-      expect(screen.getByText('Ricordami')).toBeInTheDocument()
       expect(screen.getByText('Password dimenticata?')).toBeInTheDocument()
-
       const forgotLink = screen.getByText('Password dimenticata?')
-      expect(forgotLink.closest('a')).toHaveAttribute(
-        'href',
-        '/auth/forgot-password'
-      )
+      expect(forgotLink.closest('a')).toHaveAttribute('href', '/auth/forgot-password')
     })
 
     it('should submit credentials and redirect to dashboard on success', async () => {
+      mockBrowserSupportsWebAuthn.mockReturnValue(false)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: jest.fn().mockResolvedValueOnce({ success: true }),
       })
 
       render(<AuthPage />)
-      switchToPassword()
+      await goToPasswordStep()
 
-      await userEvent.type(screen.getByPlaceholderText('garage-roma'), 'my-garage')
-      await userEvent.type(screen.getByPlaceholderText('tu@officina.it'), 'user@test.com')
-      await userEvent.type(screen.getByPlaceholderText('••••••••'), 'mypassword')
+      fillBySelector('input[type="password"]', 'mypassword')
 
+      const form = document.querySelector('form') as HTMLFormElement
       await act(async () => {
-        fireEvent.submit(screen.getByPlaceholderText('••••••••').closest('form')!)
+        fireEvent.submit(form)
       })
 
       await waitFor(() => {
@@ -422,38 +303,34 @@ describe('AuthPage', () => {
       })
 
       render(<AuthPage />)
-      switchToPassword()
+      await goToPasswordStep()
 
-      await userEvent.type(screen.getByPlaceholderText('garage-roma'), 'my-garage')
-      await userEvent.type(screen.getByPlaceholderText('tu@officina.it'), 'user@test.com')
-      await userEvent.type(screen.getByPlaceholderText('••••••••'), 'mypassword')
+      fillBySelector('input[type="password"]', 'mypassword')
 
+      const form = document.querySelector('form') as HTMLFormElement
       await act(async () => {
-        fireEvent.submit(screen.getByPlaceholderText('••••••••').closest('form')!)
+        fireEvent.submit(form)
       })
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith(
-          '/auth/mfa/verify?token=temp-token-123'
-        )
+        expect(mockPush).toHaveBeenCalledWith('/auth/mfa/verify?token=temp-token-123')
       })
     })
 
     it('should show error on invalid credentials', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
-        json: jest.fn().mockResolvedValueOnce({ error: 'Credenziali non valide' }),
+        json: jest.fn().mockResolvedValueOnce({ message: 'Credenziali non valide' }),
       })
 
       render(<AuthPage />)
-      switchToPassword()
+      await goToPasswordStep()
 
-      await userEvent.type(screen.getByPlaceholderText('garage-roma'), 'my-garage')
-      await userEvent.type(screen.getByPlaceholderText('tu@officina.it'), 'user@test.com')
-      await userEvent.type(screen.getByPlaceholderText('••••••••'), 'wrong')
+      fillBySelector('input[type="password"]', 'wrong')
 
+      const form = document.querySelector('form') as HTMLFormElement
       await act(async () => {
-        fireEvent.submit(screen.getByPlaceholderText('••••••••').closest('form')!)
+        fireEvent.submit(form)
       })
 
       await waitFor(() => {
@@ -465,14 +342,13 @@ describe('AuthPage', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
       render(<AuthPage />)
-      switchToPassword()
+      await goToPasswordStep()
 
-      await userEvent.type(screen.getByPlaceholderText('garage-roma'), 'my-garage')
-      await userEvent.type(screen.getByPlaceholderText('tu@officina.it'), 'user@test.com')
-      await userEvent.type(screen.getByPlaceholderText('••••••••'), 'test123')
+      fillBySelector('input[type="password"]', 'test123')
 
+      const form = document.querySelector('form') as HTMLFormElement
       await act(async () => {
-        fireEvent.submit(screen.getByPlaceholderText('••••••••').closest('form')!)
+        fireEvent.submit(form)
       })
 
       await waitFor(() => {
@@ -481,22 +357,17 @@ describe('AuthPage', () => {
     })
   })
 
-  // =========================================================================
-  // Method Selector
-  // =========================================================================
-  describe('method selector', () => {
-    it('should switch between magic link and password tabs', async () => {
+  describe('navigation', () => {
+    it('should navigate from methods to email step when Accedi is clicked', async () => {
       render(<AuthPage />)
+      await goToEmailStep()
+      expect(screen.getByText('Inserisci le tue credenziali')).toBeInTheDocument()
+    })
 
-      // Switch to magic link
-      fireEvent.click(screen.getByText('Magic Link'))
-      expect(screen.getByPlaceholderText('tu@officina.it')).toBeInTheDocument()
-      expect(screen.getByText(/Invia link di accesso/i)).toBeInTheDocument()
-
-      // Switch to password
-      fireEvent.click(screen.getByText('Password'))
-      expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument()
-      expect(screen.getByText(/Accedi con password/i)).toBeInTheDocument()
+    it('should show back button in email step', async () => {
+      render(<AuthPage />)
+      await goToEmailStep()
+      expect(screen.getByText(/Indietro/i)).toBeInTheDocument()
     })
   })
 })

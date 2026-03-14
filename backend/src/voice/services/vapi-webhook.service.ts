@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -37,7 +38,7 @@ export class VapiWebhookService {
    * Process incoming Vapi webhook
    */
   async processWebhook(payload: VapiWebhookDto): Promise<WebhookProcessingResult> {
-    const { event, callId, tenantId, customerPhone, intent, extractedData, transcript } = payload;
+    const { event, callId } = payload;
 
     this.loggerService.log(
       `Processing Vapi webhook: ${event} for call ${callId}`,
@@ -57,8 +58,8 @@ export class VapiWebhookService {
       case VapiEventType.TRANSFER_REQUESTED:
         const transferResult = await this.handleTransfer({
           callId,
-          customerPhone,
-          tenantId,
+          customerPhone: payload.customerPhone,
+          tenantId: payload.tenantId,
           reason: 'Transfer requested by customer',
         });
         return {
@@ -144,7 +145,7 @@ export class VapiWebhookService {
    */
   private async handleCallStarted(payload: VapiWebhookDto): Promise<WebhookProcessingResult> {
     // Log call start, can be used for analytics
-    this.logger.log(`Call started: ${payload.callId} from ${payload.customerPhone}`);
+    this.logger.log(`Call started: ${payload.callId} from ${payload.customerPhone.slice(0, 4)}***`);
     return { action: 'call_logged' };
   }
 
@@ -202,12 +203,14 @@ export class VapiWebhookService {
           eventType: payload.event,
           tenantId: payload.tenantId,
           customerPhone: payload.customerPhone,
-          payload: payload as any,
+          payload: payload as unknown as Prisma.InputJsonValue,
           processed: false,
         },
       });
     } catch (error) {
-      this.logger.error(`Failed to store webhook event: ${error.message}`);
+      this.logger.error(
+        `Failed to store webhook event: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -231,8 +234,17 @@ export class VapiWebhookService {
   /**
    * Get webhook event statistics
    */
-  async getStats(tenantId: string, fromDate?: Date, toDate?: Date): Promise<any> {
-    const where: any = {
+  async getStats(
+    tenantId: string,
+    fromDate?: Date,
+    toDate?: Date,
+  ): Promise<{
+    total: number;
+    byEventType: Record<string, number>;
+    processed: number;
+    unprocessed: number;
+  }> {
+    const where: Prisma.VoiceWebhookEventWhereInput = {
       tenantId,
       ...(fromDate &&
         toDate && {

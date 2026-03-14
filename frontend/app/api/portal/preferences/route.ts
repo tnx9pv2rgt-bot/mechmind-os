@@ -10,7 +10,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.PORTAL_JWT_SECRET || 'portal-secret-key-change-in-production')
+interface PortalPreferences {
+  email?: Record<string, boolean>
+  sms?: Record<string, boolean>
+  whatsapp?: Record<string, boolean>
+  push?: Record<string, boolean>
+}
+
+const JWT_SECRET = new TextEncoder().encode(process.env.PORTAL_JWT_SECRET || process.env.JWT_SECRET || 'portal-secret-key-change-in-production')
 
 async function verifyAuth(request: NextRequest): Promise<string | null> {
   try {
@@ -26,7 +33,7 @@ async function verifyAuth(request: NextRequest): Promise<string | null> {
 }
 
 // Mock preferences database
-const mockPreferences = new Map([
+const mockPreferences = new Map<string, PortalPreferences>([
   ['1', {
     email: {
       enabled: true,
@@ -98,10 +105,10 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const body = await request.json() as any
-    const currentPreferences = (mockPreferences.get(customerId) || {}) as any
+    const body = await request.json() as PortalPreferences
+    const currentPreferences: PortalPreferences = (mockPreferences.get(customerId) || {}) as PortalPreferences
 
-    const updatedPreferences = {
+    const updatedPreferences: PortalPreferences = {
       ...currentPreferences,
       ...body,
       email: { ...(currentPreferences.email || {}), ...(body.email || {}) },

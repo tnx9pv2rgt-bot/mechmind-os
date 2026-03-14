@@ -16,7 +16,10 @@ class UpdateComponentDto {
 }
 exports.UpdateComponentDto = UpdateComponentDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: ['HEALTHY', 'WARNING', 'CRITICAL', 'REPLACED', 'REPAIRING'], required: false }),
+    (0, swagger_1.ApiProperty)({
+        enum: ['HEALTHY', 'WARNING', 'CRITICAL', 'REPLACED', 'REPAIRING'],
+        required: false,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(['HEALTHY', 'WARNING', 'CRITICAL', 'REPLACED', 'REPAIRING']),
     __metadata("design:type", String)

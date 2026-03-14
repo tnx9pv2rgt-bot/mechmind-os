@@ -130,7 +130,7 @@ let SmsService = SmsService_1 = class SmsService {
             };
         }
         catch (error) {
-            this.logger.warn(`Phone validation failed for ${phone}: ${error.message}`);
+            this.logger.warn(`Phone validation failed for ${phone.slice(0, 4)}***: ${error.message}`);
             return { valid: false };
         }
     }
@@ -203,7 +203,7 @@ let SmsService = SmsService_1 = class SmsService {
     async sendSms(phone, message, category) {
         if (!this.twilioClient) {
             this.logger.warn('SMS service not initialized, logging message instead');
-            this.logger.debug(`SMS to ${phone} [${category}]: ${message}`);
+            this.logger.debug(`SMS to ${phone.slice(0, 4)}*** [${category}]: ${message}`);
             return { success: true, messageId: 'mock-sms-id' };
         }
         const formattedPhone = this.formatPhoneNumber(phone);
@@ -217,7 +217,7 @@ let SmsService = SmsService_1 = class SmsService {
                 body: message,
                 statusCallback: this.configService.get('TWILIO_STATUS_CALLBACK_URL'),
             });
-            this.logger.log(`SMS sent successfully: ${twilioMessage.sid} to ${formattedPhone} (${category})`);
+            this.logger.log(`SMS sent successfully: ${twilioMessage.sid} to ${formattedPhone.slice(0, 4)}*** (${category})`);
             return {
                 success: true,
                 messageId: twilioMessage.sid,

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { SmsService, SmsResult } from './sms.service';
+import { SmsService } from './sms.service';
 
 // Mock Twilio
 const mockCreate = jest.fn();
@@ -10,10 +10,10 @@ const mockAccountsList = jest.fn();
 
 jest.mock('twilio', () => ({
   Twilio: jest.fn().mockImplementation(() => ({
-    messages: Object.assign((sid: string) => ({ fetch: mockFetch }), { create: mockCreate }),
+    messages: Object.assign((_sid: string) => ({ fetch: mockFetch }), { create: mockCreate }),
     lookups: {
       v2: {
-        phoneNumbers: (phone: string) => ({
+        phoneNumbers: (_phone: string) => ({
           fetch: mockLookupFetch,
         }),
       },
@@ -28,8 +28,6 @@ jest.mock('twilio', () => ({
 
 describe('SmsService', () => {
   let service: SmsService;
-  let configService: ConfigService;
-
   const defaultConfigMap: Record<string, string | boolean> = {
     TWILIO_ACCOUNT_SID: 'test-account-sid',
     TWILIO_AUTH_TOKEN: 'test-auth-token',
@@ -61,7 +59,6 @@ describe('SmsService', () => {
     jest.clearAllMocks();
     const module = await createModule();
     service = module.get<SmsService>(SmsService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {

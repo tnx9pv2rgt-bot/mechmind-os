@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -26,11 +32,25 @@ export interface TwoFactorTempToken {
   userId: string;
 }
 
+export interface RegisterTenantInput {
+  shopName: string;
+  slug: string;
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterTenantResult {
+  tokens: AuthTokens;
+  tenant: { id: string; name: string; slug: string };
+  user: { id: string; email: string; name: string; role: string };
+}
+
 export interface AdminAction {
   adminId: string;
   action: string;
   targetUserId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: Date;
 }
 
@@ -61,6 +81,97 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
   ) {}
+
+  /**
+   * Register a new tenant with its first admin user.
+   * Creates tenant + user in a single transaction, returns JWT tokens.
+   */
+  async registerTenant(input: RegisterTenantInput): Promise<RegisterTenantResult> {
+    const { shopName, slug, name, email, password } = input;
+
+    // Validate password strength
+    if (!password || password.length < 8) {
+      throw new BadRequestException('La password deve avere almeno 8 caratteri');
+    }
+
+    // Check slug uniqueness
+    const existingTenant = await this.prisma.tenant.findUnique({
+      where: { slug },
+    });
+    if (existingTenant) {
+      throw new ConflictException('Questo slug è già in uso');
+    }
+
+    // Hash password (bcrypt, 12 rounds)
+    const passwordHash = await this.hashPassword(password);
+
+    // Create tenant + admin user in a single transaction
+    const result = await this.prisma.$transaction(async tx => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: shopName.trim(),
+          slug,
+          isActive: true,
+          settings: {},
+        },
+      });
+
+      const user = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: email.toLowerCase().trim(),
+          name: name.trim(),
+          passwordHash,
+          role: 'ADMIN',
+          isActive: true,
+        },
+      });
+
+      return { tenant, user };
+    });
+
+    // Generate JWT tokens
+    const userWithTenant: UserWithTenant = {
+      id: result.user.id,
+      email: result.user.email,
+      name: result.user.name,
+      role: result.user.role,
+      isActive: true,
+      tenantId: result.tenant.id,
+      tenant: {
+        id: result.tenant.id,
+        name: result.tenant.name,
+        slug: result.tenant.slug,
+        isActive: true,
+      },
+    };
+
+    const tokens = await this.generateTokens(userWithTenant);
+
+    // Audit log
+    await this.logAuthEvent({
+      userId: result.user.id,
+      tenantId: result.tenant.id,
+      action: 'register',
+      status: 'success',
+      details: { slug, shopName },
+    }).catch(() => {
+      /* non-blocking */
+    });
+
+    this.logger.log(`New tenant registered: ${slug} (${result.tenant.id})`);
+
+    return {
+      tokens,
+      tenant: { id: result.tenant.id, name: result.tenant.name, slug: result.tenant.slug },
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+      },
+    };
+  }
 
   /**
    * Validate user credentials and return user with tenant info
@@ -133,7 +244,7 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '24h'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '1h'),
       }),
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -141,7 +252,7 @@ export class AuthService {
       }),
     ]);
 
-    const expiresIn = parseInt(this.configService.get<string>('JWT_EXPIRES_IN_SECONDS', '86400'));
+    const expiresIn = parseInt(this.configService.get<string>('JWT_EXPIRES_IN_SECONDS', '3600'));
 
     return {
       accessToken,
@@ -230,7 +341,7 @@ export class AuthService {
    * Hash password for new user
    */
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = 12;
+    const saltRounds = 13; // OWASP 2025: minimum 13 rounds (~250-500ms)
     return bcrypt.hash(password, saltRounds);
   }
 
@@ -355,7 +466,7 @@ export class AuthService {
         tenantId: tenantId,
         action: 'admin_action',
         status: 'success',
-        details: action as any,
+        details: action as unknown as Prisma.InputJsonValue,
       },
     });
   }

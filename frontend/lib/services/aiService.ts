@@ -273,17 +273,15 @@ export class AIService {
       if (!this.config.useMock) {
         // In real implementation, load TensorFlow.js model
         // this.tfModel = await tf.loadLayersModel(this.config.tfModelPath!);
-        console.log('[AIService] Loading TensorFlow.js model...');
+        console.info('[AIService] Loading TensorFlow.js model...');
       }
-      
+
       this.isInitialized = true;
-      console.log('[AIService] Service initialized successfully');
+      console.info('[AIService] Service initialized successfully');
     } catch (error) {
-      throw new AIAnalysisError(
-        'Failed to initialize AI service',
-        'MODEL_LOAD_ERROR',
-        { error: String(error) }
-      );
+      throw new AIAnalysisError('Failed to initialize AI service', 'MODEL_LOAD_ERROR', {
+        error: String(error),
+      });
     }
   }
 
@@ -292,7 +290,7 @@ export class AIService {
   /**
    * Analyze a single image for vehicle damage
    * Analizza una singola immagine per rilevare danni al veicolo
-   * 
+   *
    * @param imageBase64 - Base64 encoded image
    * @returns Damage analysis result
    */
@@ -313,19 +311,17 @@ export class AIService {
       return await this.performRealDamageAnalysis(imageBase64);
     } catch (error) {
       if (error instanceof AIAnalysisError) throw error;
-      
-      throw new AIAnalysisError(
-        'Damage analysis failed',
-        'INFERENCE_ERROR',
-        { error: String(error) }
-      );
+
+      throw new AIAnalysisError('Damage analysis failed', 'INFERENCE_ERROR', {
+        error: String(error),
+      });
     }
   }
 
   /**
    * Analyze tire wear from image
    * Analizza l'usura delle gomme da immagine
-   * 
+   *
    * @param imageBase64 - Base64 encoded tire image
    * @returns Tire wear analysis
    */
@@ -344,19 +340,17 @@ export class AIService {
       return await this.performRealTireAnalysis(imageBase64);
     } catch (error) {
       if (error instanceof AIAnalysisError) throw error;
-      
-      throw new AIAnalysisError(
-        'Tire wear analysis failed',
-        'INFERENCE_ERROR',
-        { error: String(error) }
-      );
+
+      throw new AIAnalysisError('Tire wear analysis failed', 'INFERENCE_ERROR', {
+        error: String(error),
+      });
     }
   }
 
   /**
    * Estimate repair costs based on detected damage
    * Stima i costi di riparazione basati sui danni rilevati
-   * 
+   *
    * @param damageAreas - Detected damage areas
    * @returns Cost estimate
    */
@@ -383,10 +377,10 @@ export class AIService {
 
       // Base cost calculation
       const baseEstimate = costConfig.base * costConfig.factor * severityMultiplier;
-      
+
       // Adjust based on confidence
       const estimatedCost = Math.round(baseEstimate * confidenceFactor);
-      
+
       // Cost range based on uncertainty
       const minCost = Math.round(estimatedCost * 0.8);
       const maxCost = Math.round(estimatedCost * 1.3);
@@ -404,7 +398,8 @@ export class AIService {
     }
 
     // Calculate overall confidence
-    const avgConfidence = damageAreas.reduce((sum, d) => sum + d.confidence, 0) / damageAreas.length;
+    const avgConfidence =
+      damageAreas.reduce((sum, d) => sum + d.confidence, 0) / damageAreas.length;
 
     return {
       totalCost: Math.round((totalMin + totalMax) / 2),
@@ -419,7 +414,7 @@ export class AIService {
   /**
    * Predict maintenance needs based on inspection data
    * Predice le necessità di manutenzione basate sui dati di ispezione
-   * 
+   *
    * @param inspectionData - Vehicle inspection data
    * @returns Maintenance predictions
    */
@@ -436,7 +431,7 @@ export class AIService {
   /**
    * Batch analyze multiple photos in parallel
    * Analizza multiple foto in parallelo
-   * 
+   *
    * @param photos - Array of base64 encoded images
    * @param options - Batch processing options
    * @returns Batch analysis results
@@ -447,11 +442,7 @@ export class AIService {
   ): Promise<BatchAnalysisResult> {
     await this.ensureInitialized();
 
-    const {
-      maxConcurrency = 4,
-      timeoutMs = 30000,
-      continueOnError = true,
-    } = options;
+    const { maxConcurrency = 4, timeoutMs = 30000, continueOnError = true } = options;
 
     const startTime = Date.now();
     const results: (DamageAnalysisResult | { error: string; index: number })[] = [];
@@ -464,30 +455,30 @@ export class AIService {
       const chunk = photos.slice(i, i + maxConcurrency);
       const chunkPromises = chunk.map(async (photo, chunkIndex) => {
         const index = i + chunkIndex;
-        
+
         try {
           const result = await Promise.race([
             this.analyzeDamage(photo),
-            new Promise<never>((_, reject) => 
+            new Promise<never>((_, reject) =>
               setTimeout(() => reject(new Error('Timeout')), timeoutMs)
             ),
           ]);
-          
+
           successful++;
           if (result.damageDetected) damageDetected++;
           return { index, result };
         } catch (error) {
           failed++;
           if (!continueOnError) throw error;
-          return { 
-            index, 
-            result: { error: String(error), index } as unknown as DamageAnalysisResult
+          return {
+            index,
+            result: { error: String(error), index } as unknown as DamageAnalysisResult,
           };
         }
       });
 
       const chunkResults = await Promise.all(chunkPromises);
-      
+
       // Store results in correct order
       for (const { index, result } of chunkResults) {
         results[index] = result;
@@ -538,14 +529,14 @@ export class AIService {
 
   private generateCostNotes(damageAreas: DamageArea[]): string[] {
     const notes: string[] = [];
-    
+
     const rustCount = damageAreas.filter(d => d.type === 'rust').length;
     const crackCount = damageAreas.filter(d => d.type === 'crack').length;
-    
+
     if (rustCount > 0) {
       notes.push(`Rilevata ruggine in ${rustCount} area/e - consigliato intervento tempestivo`);
     }
-    
+
     if (crackCount > 0) {
       notes.push(`Rilevate ${crackCount} crepe/e - potrebbero richiedere sostituzione parti`);
     }
@@ -563,34 +554,34 @@ export class AIService {
   private mockAnalyzeDamage(imageBase64: string): DamageAnalysisResult {
     // Simulate processing delay
     const seed = imageBase64.length % 10;
-    
+
     // Mock detection logic based on image characteristics
     const damageAreas: DamageArea[] = [];
-    
+
     if (seed > 3) {
       damageAreas.push({
         id: generateId(),
         type: 'scratch',
-        confidence: 0.7 + (seed * 0.02),
+        confidence: 0.7 + seed * 0.02,
         bbox: [100, 150, 200, 50],
         severity: seed > 6 ? 'moderate' : 'minor',
         area: 10000,
         description: 'Graffio superficiale sulla carrozzeria',
       });
     }
-    
+
     if (seed > 6) {
       damageAreas.push({
         id: generateId(),
         type: 'dent',
-        confidence: 0.8 + (seed * 0.01),
+        confidence: 0.8 + seed * 0.01,
         bbox: [300, 200, 150, 150],
         severity: 'moderate',
         area: 22500,
         description: 'Ammaccatura sul parafango',
       });
     }
-    
+
     if (seed === 9) {
       damageAreas.push({
         id: generateId(),
@@ -606,9 +597,10 @@ export class AIService {
     return {
       damageDetected: damageAreas.length > 0,
       damageAreas,
-      overallConfidence: damageAreas.length > 0 
-        ? damageAreas.reduce((sum, d) => sum + d.confidence, 0) / damageAreas.length 
-        : 0,
+      overallConfidence:
+        damageAreas.length > 0
+          ? damageAreas.reduce((sum, d) => sum + d.confidence, 0) / damageAreas.length
+          : 0,
       timestamp: new Date().toISOString(),
       metadata: {
         width: 1920,
@@ -621,17 +613,17 @@ export class AIService {
 
   private mockAnalyzeTireWear(imageBase64: string): TireWearResult {
     const seed = imageBase64.length % 20;
-    
+
     // Simulate wear pattern
     const innerWear = Math.min(100, 10 + seed * 3);
     const middleWear = Math.min(100, 8 + seed * 2.5);
     const outerWear = Math.min(100, 12 + seed * 3.5);
-    
+
     const averageWear = (innerWear + middleWear + outerWear) / 3;
-    
+
     let condition: TireWearResult['condition'];
     let recommendation: string;
-    
+
     if (averageWear < 20) {
       condition = 'excellent';
       recommendation = 'Pneumatico in ottime condizioni';
@@ -652,9 +644,24 @@ export class AIService {
     return {
       analyzed: true,
       sections: [
-        { section: 'inner', wearPercent: Math.round(innerWear), treadDepthMm: Math.max(0, 8 - innerWear / 10), confidence: 0.85 },
-        { section: 'middle', wearPercent: Math.round(middleWear), treadDepthMm: Math.max(0, 8 - middleWear / 10), confidence: 0.9 },
-        { section: 'outer', wearPercent: Math.round(outerWear), treadDepthMm: Math.max(0, 8 - outerWear / 10), confidence: 0.85 },
+        {
+          section: 'inner',
+          wearPercent: Math.round(innerWear),
+          treadDepthMm: Math.max(0, 8 - innerWear / 10),
+          confidence: 0.85,
+        },
+        {
+          section: 'middle',
+          wearPercent: Math.round(middleWear),
+          treadDepthMm: Math.max(0, 8 - middleWear / 10),
+          confidence: 0.9,
+        },
+        {
+          section: 'outer',
+          wearPercent: Math.round(outerWear),
+          treadDepthMm: Math.max(0, 8 - outerWear / 10),
+          confidence: 0.85,
+        },
       ],
       averageWearPercent: Math.round(averageWear),
       condition,
@@ -666,20 +673,20 @@ export class AIService {
   private mockPredictMaintenance(inspectionData: InspectionData): MaintenancePrediction {
     const predictedIssues: PredictedIssue[] = [];
     const { vehicleAge, totalKm, previousIssues } = inspectionData;
-    
+
     // Simple rule-based predictions
     if (vehicleAge > 5 || totalKm > 100000) {
       predictedIssues.push({
         id: generateId(),
         component: 'Freni',
         description: 'Usura pastiglie freni probabile',
-        probability: Math.min(0.9, (vehicleAge / 10) + (totalKm / 200000)),
+        probability: Math.min(0.9, vehicleAge / 10 + totalKm / 200000),
         estimatedTimeframeDays: 90,
         estimatedCost: 250,
         recommendedAction: 'Verifica spessore pastiglie e dischi',
       });
     }
-    
+
     if (totalKm > 80000) {
       predictedIssues.push({
         id: generateId(),
@@ -691,7 +698,7 @@ export class AIService {
         recommendedAction: 'Pianificare sostituzione cinghia distribuzione',
       });
     }
-    
+
     if (vehicleAge > 3) {
       predictedIssues.push({
         id: generateId(),
@@ -718,23 +725,29 @@ export class AIService {
     }
 
     // Calculate urgency score
-    const avgProbability = predictedIssues.length > 0
-      ? predictedIssues.reduce((sum, i) => sum + i.probability, 0) / predictedIssues.length
-      : 0;
+    const avgProbability =
+      predictedIssues.length > 0
+        ? predictedIssues.reduce((sum, i) => sum + i.probability, 0) / predictedIssues.length
+        : 0;
     const urgencyScore = Math.round(avgProbability * 10);
-    
-    const urgencyLabel: MaintenancePrediction['urgencyLabel'] = 
-      urgencyScore <= 3 ? 'low' :
-      urgencyScore <= 6 ? 'medium' :
-      urgencyScore <= 8 ? 'high' : 'critical';
+
+    const urgencyLabel: MaintenancePrediction['urgencyLabel'] =
+      urgencyScore <= 3
+        ? 'low'
+        : urgencyScore <= 6
+          ? 'medium'
+          : urgencyScore <= 8
+            ? 'high'
+            : 'critical';
 
     return {
       predictedIssues,
       urgencyScore,
       urgencyLabel,
-      recommendedServiceDate: urgencyScore > 5 
-        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        : undefined,
+      recommendedServiceDate:
+        urgencyScore > 5
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          : undefined,
       maintenanceTips: [
         'Verificare regolarmente i livelli dei fluidi',
         'Controllare la pressione degli pneumatici mensilmente',
@@ -753,23 +766,19 @@ export class AIService {
     // 2. Run inference with loaded model
     // 3. Post-process results
     // 4. Return structured damage data
-    
-    throw new AIAnalysisError(
-      'Real ML analysis not yet implemented',
-      'INFERENCE_ERROR',
-      { message: 'Use useMock: true for development' }
-    );
+
+    throw new AIAnalysisError('Real ML analysis not yet implemented', 'INFERENCE_ERROR', {
+      message: 'Use useMock: true for development',
+    });
   }
 
   private async performRealTireAnalysis(imageBase64: string): Promise<TireWearResult> {
     // Placeholder for tire wear analysis using computer vision
     // Would measure tread depth patterns and calculate wear
-    
-    throw new AIAnalysisError(
-      'Real tire analysis not yet implemented',
-      'INFERENCE_ERROR',
-      { message: 'Use useMock: true for development' }
-    );
+
+    throw new AIAnalysisError('Real tire analysis not yet implemented', 'INFERENCE_ERROR', {
+      message: 'Use useMock: true for development',
+    });
   }
 
   private async performRealMaintenancePrediction(
@@ -777,7 +786,7 @@ export class AIService {
   ): Promise<MaintenancePrediction> {
     // Placeholder for ML model prediction
     // Would use trained model to predict maintenance needs
-    
+
     throw new AIAnalysisError(
       'Real maintenance prediction not yet implemented',
       'INFERENCE_ERROR',
@@ -839,4 +848,3 @@ export async function batchAnalyzePhotos(
 ): Promise<BatchAnalysisResult> {
   return getAIService().batchAnalyzePhotos(photos, options);
 }
-

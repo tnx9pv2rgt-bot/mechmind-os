@@ -546,9 +546,9 @@ export function validateFormData(
  */
 export async function sanitizationMiddleware(
   request: Request
-): Promise<{ sanitized: any; errors: string[] } | Response> {
+): Promise<{ sanitized: Record<string, unknown>; errors: string[] } | Response> {
   try {
-    let body: any
+    let body: Record<string, unknown>
     const contentType = request.headers.get('content-type') || ''
     
     if (contentType.includes('application/json')) {

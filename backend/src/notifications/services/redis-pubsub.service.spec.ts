@@ -28,8 +28,6 @@ jest.mock('ioredis', () => {
 
 describe('RedisPubSubService', () => {
   let service: RedisPubSubService;
-  let configService: ConfigService;
-
   const defaultConfig: Record<string, string | number | boolean> = {
     REDIS_HOST: 'localhost',
     REDIS_PORT: 6379,
@@ -57,7 +55,6 @@ describe('RedisPubSubService', () => {
     }).compile();
 
     service = module.get<RedisPubSubService>(RedisPubSubService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -76,6 +73,7 @@ describe('RedisPubSubService', () => {
       await service.onModuleInit();
 
       // Redis constructor should have been called twice (publisher + subscriber)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Redis = require('ioredis').default;
       expect(Redis).toHaveBeenCalledTimes(2);
     });
@@ -90,6 +88,7 @@ describe('RedisPubSubService', () => {
     it('should use config values for Redis connection', async () => {
       await service.onModuleInit();
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Redis = require('ioredis').default;
       expect(Redis).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -151,11 +150,19 @@ describe('RedisPubSubService', () => {
       expect(mockPublish).toHaveBeenCalledWith('notifications:my-tenant-id', expect.any(String));
     });
 
-    it('should throw when publish fails', async () => {
+    it('should throw when publish fails with Error', async () => {
       mockPublish.mockRejectedValue(new Error('Redis publish error'));
 
       await expect(service.publishToTenant('tenant-uuid-1', mockData)).rejects.toThrow(
         'Redis publish error',
+      );
+    });
+
+    it('should throw when publish fails with non-Error value', async () => {
+      mockPublish.mockRejectedValue('non-error-rejection');
+
+      await expect(service.publishToTenant('tenant-uuid-1', mockData)).rejects.toBe(
+        'non-error-rejection',
       );
     });
 
@@ -288,7 +295,7 @@ describe('RedisPubSubService', () => {
 
       // Find the 'message' handler registered on subscriber
       const messageHandler = mockOn.mock.calls.find(
-        (call: [string, Function]) => call[0] === 'message',
+        (call: [string, (...args: unknown[]) => void]) => call[0] === 'message',
       );
 
       if (messageHandler) {
@@ -311,13 +318,35 @@ describe('RedisPubSubService', () => {
       }
     });
 
+    it('should not forward messages to channels without subscribers', async () => {
+      // No subscription for tenant-uuid-2, so message should be silently ignored
+      const messageHandler = mockOn.mock.calls.find(
+        (call: [string, (...args: unknown[]) => void]) => call[0] === 'message',
+      );
+
+      if (messageHandler) {
+        const testData: NotificationEventData = {
+          type: 'booking_created',
+          tenantId: 'tenant-uuid-2',
+          title: 'Test',
+          message: 'No subscriber',
+          timestamp: new Date().toISOString(),
+        };
+
+        // Should not throw even with no subscriber for this channel
+        expect(() => {
+          messageHandler[1]('notifications:tenant-uuid-2', JSON.stringify(testData));
+        }).not.toThrow();
+      }
+    });
+
     it('should handle malformed JSON messages gracefully', async () => {
       mockSubscribe.mockResolvedValue(undefined);
 
       await service.subscribeToTenant('tenant-uuid-1');
 
       const messageHandler = mockOn.mock.calls.find(
-        (call: [string, Function]) => call[0] === 'message',
+        (call: [string, (...args: unknown[]) => void]) => call[0] === 'message',
       );
 
       if (messageHandler) {
@@ -326,6 +355,308 @@ describe('RedisPubSubService', () => {
           messageHandler[1]('notifications:tenant-uuid-1', 'invalid-json');
         }).not.toThrow();
       }
+    });
+  });
+
+  // =========================================================================
+  // getRedisConfig() — REDIS_URL parsing
+  // =========================================================================
+  describe('getRedisConfig with REDIS_URL', () => {
+    it('should parse REDIS_URL when provided', async () => {
+      const configWithUrl: Record<string, string | number | boolean> = {
+        REDIS_URL: 'rediss://user:mypassword@redis.example.com:6380/3',
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RedisPubSubService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn(
+                (key: string, defaultValue?: string | number | boolean) =>
+                  configWithUrl[key] ?? defaultValue,
+              ),
+            },
+          },
+        ],
+      }).compile();
+
+      const svcWithUrl = module.get<RedisPubSubService>(RedisPubSubService);
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      Redis.mockClear();
+
+      await svcWithUrl.onModuleInit();
+
+      expect(Redis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'redis.example.com',
+          port: 6380,
+          password: 'mypassword',
+          db: 3,
+          tls: {},
+        }),
+      );
+    });
+
+    it('should use defaults when REDIS_URL has no port, password, or db path', async () => {
+      const configMinimalUrl: Record<string, string | number | boolean> = {
+        REDIS_URL: 'redis://redis.example.com',
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RedisPubSubService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn(
+                (key: string, defaultValue?: string | number | boolean) =>
+                  configMinimalUrl[key] ?? defaultValue,
+              ),
+            },
+          },
+        ],
+      }).compile();
+
+      const svcMinUrl = module.get<RedisPubSubService>(RedisPubSubService);
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      Redis.mockClear();
+
+      await svcMinUrl.onModuleInit();
+
+      // port defaults to 6379, password to undefined, db to 0, no tls
+      expect(Redis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'redis.example.com',
+          port: 6379,
+          password: undefined,
+          db: 0,
+        }),
+      );
+      // Should NOT have tls key since protocol is redis: not rediss:
+      expect(Redis.mock.calls[0][0]).not.toHaveProperty('tls');
+    });
+
+    it('should fall back to individual config when REDIS_URL is invalid', async () => {
+      const configWithBadUrl: Record<string, string | number | boolean> = {
+        REDIS_URL: 'not-a-valid-url',
+        REDIS_HOST: 'fallback-host',
+        REDIS_PORT: 6379,
+        REDIS_PASSWORD: '',
+        REDIS_PUBSUB_DB: 0,
+        REDIS_TLS: 'false',
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RedisPubSubService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn(
+                (key: string, defaultValue?: string | number | boolean) =>
+                  configWithBadUrl[key] ?? defaultValue,
+              ),
+            },
+          },
+        ],
+      }).compile();
+
+      const svcBadUrl = module.get<RedisPubSubService>(RedisPubSubService);
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      Redis.mockClear();
+
+      await svcBadUrl.onModuleInit();
+
+      expect(Redis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'fallback-host',
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
+  // connect() — retryStrategy, TLS, event handlers, error branch
+  // =========================================================================
+  describe('connect internals', () => {
+    it('should set TLS option when config.tls is true', async () => {
+      const tlsConfig: Record<string, string | number | boolean> = {
+        REDIS_HOST: 'localhost',
+        REDIS_PORT: 6379,
+        REDIS_PASSWORD: '',
+        REDIS_PUBSUB_DB: 0,
+        REDIS_TLS: 'true',
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RedisPubSubService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn(
+                (key: string, defaultValue?: string | number | boolean) =>
+                  tlsConfig[key] ?? defaultValue,
+              ),
+            },
+          },
+        ],
+      }).compile();
+
+      const svcTls = module.get<RedisPubSubService>(RedisPubSubService);
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      Redis.mockClear();
+
+      await svcTls.onModuleInit();
+
+      expect(Redis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tls: {},
+        }),
+      );
+    });
+
+    it('should invoke retryStrategy and return capped delay', async () => {
+      await service.onModuleInit();
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      const constructorCall = Redis.mock.calls[0][0] as {
+        retryStrategy: (times: number) => number;
+      };
+      const retryStrategy = constructorCall.retryStrategy;
+
+      expect(retryStrategy(1)).toBe(50);
+      expect(retryStrategy(10)).toBe(500);
+      expect(retryStrategy(100)).toBe(2000); // capped at 2000
+    });
+
+    it('should handle publisher connect event', async () => {
+      await service.onModuleInit();
+
+      // Find the publisher 'connect' handler (first 'connect' call)
+      const connectHandlers = mockOn.mock.calls.filter(
+        (call: [string, () => void]) => call[0] === 'connect',
+      );
+
+      expect(connectHandlers.length).toBeGreaterThanOrEqual(2);
+
+      // Invoke publisher connect handler — should not throw
+      expect(() => connectHandlers[0][1]()).not.toThrow();
+    });
+
+    it('should handle subscriber connect event and set isConnected', async () => {
+      await service.onModuleInit();
+
+      const connectHandlers = mockOn.mock.calls.filter(
+        (call: [string, () => void]) => call[0] === 'connect',
+      );
+
+      // Invoke subscriber connect handler (second one)
+      connectHandlers[1][1]();
+
+      // After subscriber connects, isConnected should be true
+      // getConnectionStatus checks isConnected && publisher.status === 'ready'
+      expect(service.getConnectionStatus()).toBe(true);
+    });
+
+    it('should handle publisher error event', async () => {
+      await service.onModuleInit();
+
+      const errorHandlers = mockOn.mock.calls.filter(
+        (call: [string, (err: Error) => void]) => call[0] === 'error',
+      );
+
+      expect(errorHandlers.length).toBeGreaterThanOrEqual(2);
+
+      // Invoke publisher error handler — should not throw
+      expect(() => errorHandlers[0][1](new Error('pub connection lost'))).not.toThrow();
+    });
+
+    it('should handle subscriber error event and set isConnected to false', async () => {
+      await service.onModuleInit();
+
+      // First trigger subscriber connect to set isConnected = true
+      const connectHandlers = mockOn.mock.calls.filter(
+        (call: [string, () => void]) => call[0] === 'connect',
+      );
+      connectHandlers[1][1]();
+      expect(service.getConnectionStatus()).toBe(true);
+
+      // Now trigger subscriber error
+      const errorHandlers = mockOn.mock.calls.filter(
+        (call: [string, (err: Error) => void]) => call[0] === 'error',
+      );
+      errorHandlers[1][1](new Error('sub connection lost'));
+
+      // isConnected should now be false
+      // getConnectionStatus checks isConnected first
+      expect(service.getConnectionStatus()).toBe(false);
+    });
+
+    it('should throw and log when Redis constructor fails with Error', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      Redis.mockImplementationOnce(() => {
+        throw new Error('Connection refused');
+      });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RedisPubSubService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn(
+                (key: string, defaultValue?: string | number | boolean) =>
+                  defaultConfig[key] ?? defaultValue,
+              ),
+            },
+          },
+        ],
+      }).compile();
+
+      const svcFail = module.get<RedisPubSubService>(RedisPubSubService);
+
+      await expect(svcFail.onModuleInit()).rejects.toThrow('Connection refused');
+    });
+
+    it('should throw and log when Redis constructor fails with non-Error value', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Redis = require('ioredis').default;
+      Redis.mockImplementationOnce(() => {
+        // eslint-disable-next-line no-throw-literal
+        throw 'string-error';
+      });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RedisPubSubService,
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn(
+                (key: string, defaultValue?: string | number | boolean) =>
+                  defaultConfig[key] ?? defaultValue,
+              ),
+            },
+          },
+        ],
+      }).compile();
+
+      const svcFail = module.get<RedisPubSubService>(RedisPubSubService);
+
+      await expect(svcFail.onModuleInit()).rejects.toBe('string-error');
     });
   });
 

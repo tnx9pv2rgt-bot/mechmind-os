@@ -54,7 +54,9 @@ let MfaController = class MfaController {
         }
         const user = await this.authService.getUserWithTwoFactorStatus(userId);
         await this.authService.updateLastLogin(userId, req.ip);
-        return this.authService.generateTokens(user);
+        const mfaSession = await this.mfaService.createMfaSession(userId);
+        const tokens = await this.authService.generateTokens(user);
+        return { ...tokens, mfaSessionToken: mfaSession.mfaSessionToken };
     }
     async disable(userId, dto) {
         await this.mfaService.disable(userId, dto.token, dto.password);
@@ -103,7 +105,7 @@ __decorate([
     (0, common_1.Post)('enroll'),
     (0, swagger_1.ApiOperation)({
         summary: 'Enroll in MFA',
-        description: 'Generates TOTP secret and QR code. Returns backup codes - SAVE THEM NOW!'
+        description: 'Generates TOTP secret and QR code. Returns backup codes - SAVE THEM NOW!',
     }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'MFA enrollment initiated', type: mfa_dto_1.EnrollMfaResponseDto }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'MFA already enabled' }),
@@ -118,7 +120,7 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({
         summary: 'Verify and enable MFA',
-        description: 'Verifies the TOTP code and enables MFA permanently'
+        description: 'Verifies the TOTP code and enables MFA permanently',
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'MFA enabled successfully' }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Invalid verification code' }),
@@ -134,7 +136,7 @@ __decorate([
     (0, common_1.UseGuards)(),
     (0, swagger_1.ApiOperation)({
         summary: 'Verify MFA during login',
-        description: 'Completes login with MFA code after receiving tempToken from login'
+        description: 'Completes login with MFA code after receiving tempToken from login',
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'MFA verified, tokens issued' }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Invalid temp token or MFA code' }),
@@ -149,7 +151,7 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({
         summary: 'Disable MFA',
-        description: 'Disables MFA for the current user. Requires password and current MFA code.'
+        description: 'Disables MFA for the current user. Requires password and current MFA code.',
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'MFA disabled successfully' }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Invalid credentials' }),
@@ -164,9 +166,13 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({
         summary: 'Generate new backup codes',
-        description: 'Generates new backup codes. Old codes become invalid immediately.'
+        description: 'Generates new backup codes. Old codes become invalid immediately.',
     }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'New backup codes generated', type: mfa_dto_1.BackupCodesResponseDto }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'New backup codes generated',
+        type: mfa_dto_1.BackupCodesResponseDto,
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Invalid MFA code' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('userId')),
     __param(1, (0, common_1.Body)()),
@@ -179,7 +185,7 @@ __decorate([
     (0, roles_decorator_1.Roles)(roles_guard_1.UserRole.ADMIN),
     (0, swagger_1.ApiOperation)({
         summary: 'Admin: Reset MFA for user (emergency)',
-        description: 'Administrators can reset MFA for users who lost access. Requires admin role.'
+        description: 'Administrators can reset MFA for users who lost access. Requires admin role.',
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'MFA reset successfully' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Insufficient permissions' }),
@@ -194,7 +200,7 @@ __decorate([
     (0, roles_decorator_1.Roles)(roles_guard_1.UserRole.ADMIN),
     (0, swagger_1.ApiOperation)({
         summary: 'Admin: List users requiring MFA',
-        description: 'Lists all admin/manager users without MFA enabled'
+        description: 'Lists all admin/manager users without MFA enabled',
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'List retrieved' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('tenantId')),

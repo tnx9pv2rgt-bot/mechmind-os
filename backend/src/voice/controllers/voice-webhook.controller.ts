@@ -111,7 +111,11 @@ export class VoiceWebhookController {
   /**
    * Verify HMAC-SHA256 signature
    */
-  private verifySignature(payload: any, signature: string, timestamp?: string): boolean {
+  private verifySignature(
+    payload: VapiWebhookDto | TransferRequestDto,
+    signature: string,
+    timestamp?: string,
+  ): boolean {
     const secret = this.configService.get<string>('VAPI_WEBHOOK_SECRET');
 
     if (!secret) {

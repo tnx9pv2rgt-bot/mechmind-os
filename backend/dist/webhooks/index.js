@@ -45,7 +45,8 @@ let SegmentWebhookService = SegmentWebhookService_1 = class SegmentWebhookServic
             };
         }
         catch (error) {
-            this.logger.error('Segment webhook error:', error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Segment webhook error:', message);
             throw error;
         }
     }
@@ -70,9 +71,7 @@ let SegmentWebhookService = SegmentWebhookService_1 = class SegmentWebhookServic
         this.logger.log(`Page viewed by ${userId}`, properties);
     }
     verifySignature(payload, signature, secret) {
-        const expectedSignature = (0, crypto_1.createHmac)('sha1', secret)
-            .update(payload)
-            .digest('hex');
+        const expectedSignature = (0, crypto_1.createHmac)('sha1', secret).update(payload).digest('hex');
         return signature === expectedSignature || signature === `sha1=${expectedSignature}`;
     }
 };
@@ -97,7 +96,8 @@ let ZapierWebhookService = ZapierWebhookService_1 = class ZapierWebhookService {
             };
         }
         catch (error) {
-            this.logger.error('Zapier webhook error:', error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Zapier webhook error:', message);
             throw error;
         }
     }
@@ -115,19 +115,20 @@ let ZapierWebhookService = ZapierWebhookService_1 = class ZapierWebhookService {
             return response.ok;
         }
         catch (error) {
-            this.logger.error('Trigger Zap error:', error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Trigger Zap error:', message);
             return false;
         }
     }
-    async executeAutomation(event, data) {
+    async executeAutomation(event, _data) {
         const automations = {
-            'create_booking': async () => {
+            create_booking: async () => {
                 return 'booking_created';
             },
-            'update_customer': async () => {
+            update_customer: async () => {
                 return 'customer_updated';
             },
-            'send_notification': async () => {
+            send_notification: async () => {
                 return 'notification_sent';
             },
         };
@@ -183,7 +184,7 @@ let SlackWebhookService = SlackWebhookService_1 = class SlackWebhookService {
             const response = await fetch('https://slack.com/api/chat.postMessage', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${this.botToken}`,
+                    Authorization: `Bearer ${this.botToken}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -195,7 +196,8 @@ let SlackWebhookService = SlackWebhookService_1 = class SlackWebhookService {
             return data.ok;
         }
         catch (error) {
-            this.logger.error('Send Slack message error:', error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Send Slack message error:', message);
             return false;
         }
     }
@@ -266,7 +268,11 @@ let SlackWebhookService = SlackWebhookService_1 = class SlackWebhookService {
         const basestring = `v0:${timestamp}:${body}`;
         const mySignature = 'v0=' + (0, crypto_1.createHmac)('sha256', secret).update(basestring).digest('hex');
         try {
-            return mySignature === signature;
+            const sigBuffer = Buffer.from(signature);
+            const expectedBuffer = Buffer.from(mySignature);
+            if (sigBuffer.length !== expectedBuffer.length)
+                return false;
+            return (0, crypto_1.timingSafeEqual)(sigBuffer, expectedBuffer);
         }
         catch {
             return false;
@@ -304,26 +310,27 @@ let CRMWebhookService = CRMWebhookService_1 = class CRMWebhookService {
             };
         }
         catch (error) {
-            this.logger.error('CRM webhook error:', error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('CRM webhook error:', message);
             throw error;
         }
     }
     async handleSalesforceEvent(event) {
-        const { event: eventType, objectType, properties } = event;
+        const { objectType, properties } = event;
         if (objectType === 'Contact' || objectType === 'Lead') {
-            this.logger.log(`Syncing Salesforce ${objectType}: ${properties.Email}`);
+            this.logger.log(`Syncing Salesforce ${objectType}: ${String(properties['Email'] ?? '')}`);
         }
         else if (objectType === 'Opportunity') {
-            this.logger.log(`Syncing Salesforce Opportunity: ${properties.Name}`);
+            this.logger.log(`Syncing Salesforce Opportunity: ${String(properties['Name'] ?? '')}`);
         }
     }
     async handleHubSpotEvent(event) {
-        const { event: eventType, objectType, properties } = event;
-        this.logger.log(`HubSpot ${objectType} ${eventType}`, properties);
+        const { event: eventName, objectType, properties } = event;
+        this.logger.log(`HubSpot ${objectType} ${eventName}`, properties);
     }
     async handlePipedriveEvent(event) {
-        const { event: eventType, objectType, properties } = event;
-        this.logger.log(`Pipedrive ${objectType} ${eventType}`, properties);
+        const { event: eventName, objectType, properties } = event;
+        this.logger.log(`Pipedrive ${objectType} ${eventName}`, properties);
     }
     async syncToCRM(provider, data) {
         const configs = {
@@ -350,7 +357,21 @@ let CRMWebhookService = CRMWebhookService_1 = class CRMWebhookService {
             return true;
         }
         catch (error) {
-            this.logger.error(`Sync to ${provider} failed:`, error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Sync to ${provider} failed:`, message);
+            return false;
+        }
+    }
+    verifySignature(payload, signature, secret) {
+        const expectedSignature = (0, crypto_1.createHmac)('sha256', secret).update(payload).digest('hex');
+        try {
+            const sigBuffer = Buffer.from(signature);
+            const expectedBuffer = Buffer.from(expectedSignature);
+            if (sigBuffer.length !== expectedBuffer.length)
+                return false;
+            return (0, crypto_1.timingSafeEqual)(sigBuffer, expectedBuffer);
+        }
+        catch {
             return false;
         }
     }
@@ -360,6 +381,7 @@ exports.CRMWebhookService = CRMWebhookService = CRMWebhookService_1 = __decorate
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], CRMWebhookService);
+const VALID_CRM_PROVIDERS = ['salesforce', 'hubspot', 'pipedrive'];
 let WebhookController = WebhookController_1 = class WebhookController {
     constructor(segmentService, zapierService, slackService, crmService, configService) {
         this.segmentService = segmentService;
@@ -411,43 +433,57 @@ let WebhookController = WebhookController_1 = class WebhookController {
         }
         return this.slackService.handleSlashCommand(payload);
     }
-    async handleCRM(payload, provider, signature) {
-        const validProviders = ['salesforce', 'hubspot', 'pipedrive'];
-        if (!validProviders.includes(provider)) {
+    async handleCRM(payload, provider, signature, req) {
+        if (!VALID_CRM_PROVIDERS.includes(provider)) {
             throw new common_1.HttpException('Invalid provider', common_1.HttpStatus.BAD_REQUEST);
         }
-        const event = this.normalizeCRMEvent(provider, payload);
+        const validProvider = provider;
+        const secretKey = `${validProvider.toUpperCase()}_WEBHOOK_SECRET`;
+        const secret = this.configService.get(secretKey);
+        if (secret && signature) {
+            const body = JSON.stringify(req.body);
+            if (!this.crmService.verifySignature(body, signature, secret)) {
+                throw new common_1.HttpException('Invalid CRM signature', common_1.HttpStatus.UNAUTHORIZED);
+            }
+        }
+        const event = this.normalizeCRMEvent(validProvider, payload);
         return this.crmService.handleEvent(event);
     }
     normalizeCRMEvent(provider, payload) {
         switch (provider) {
-            case 'salesforce':
+            case 'salesforce': {
+                const sf = payload;
                 return {
                     provider,
-                    event: payload.event?.type || 'unknown',
-                    objectType: payload.sobjectType || 'Unknown',
-                    objectId: payload.id,
-                    properties: payload,
+                    event: sf.event?.type || 'unknown',
+                    objectType: sf.sobjectType || 'Unknown',
+                    objectId: sf.id,
+                    properties: sf,
                     timestamp: new Date(),
                 };
-            case 'hubspot':
+            }
+            case 'hubspot': {
+                const hs = payload;
                 return {
                     provider,
-                    event: payload.subscriptionType || 'unknown',
-                    objectType: payload.objectType || 'Unknown',
-                    objectId: payload.objectId,
-                    properties: payload.properties || payload,
-                    timestamp: new Date(payload.timestamp) || new Date(),
+                    event: hs.subscriptionType || 'unknown',
+                    objectType: hs.objectType || 'Unknown',
+                    objectId: hs.objectId,
+                    properties: hs.properties || hs,
+                    timestamp: hs.timestamp ? new Date(hs.timestamp) : new Date(),
                 };
-            case 'pipedrive':
+            }
+            case 'pipedrive': {
+                const pd = payload;
                 return {
                     provider,
-                    event: payload.event || 'unknown',
-                    objectType: payload.meta?.object || 'Unknown',
-                    objectId: payload.data?.id,
-                    properties: payload.data || payload,
+                    event: pd.event || 'unknown',
+                    objectType: pd.meta?.object || 'Unknown',
+                    objectId: pd.data?.id || '',
+                    properties: pd.data || pd,
                     timestamp: new Date(),
                 };
+            }
         }
     }
 };
@@ -494,8 +530,9 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Param)('provider')),
     __param(2, (0, common_1.Headers)('x-crm-signature')),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], WebhookController.prototype, "handleCRM", null);
 exports.WebhookController = WebhookController = WebhookController_1 = __decorate([

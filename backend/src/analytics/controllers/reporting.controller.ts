@@ -2,16 +2,7 @@
  * MechMind OS - Business Intelligence Reporting Controller
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Query,
-  Res,
-  UseGuards,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';

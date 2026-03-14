@@ -125,7 +125,7 @@ let UnitEconomicsService = UnitEconomicsService_1 = class UnitEconomicsService {
         ];
         const grossMargin = 0.62;
         const monthlyChurn = 0.03;
-        return tiers.map((tier) => ({
+        return tiers.map(tier => ({
             tier: tier.name,
             arpa: tier.arpa,
             ltv: Math.round(tier.arpa * grossMargin * (1 / monthlyChurn)),
@@ -169,7 +169,7 @@ let UnitEconomicsService = UnitEconomicsService_1 = class UnitEconomicsService {
         }
         return analyses;
     }
-    async calculateGrossMarginBySegment(startDate, endDate) {
+    async calculateGrossMarginBySegment(_startDate, _endDate) {
         this.logger.debug(`Calculating gross margin by segment`);
         let starterCount = 40;
         let proCount = 25;
@@ -201,7 +201,7 @@ let UnitEconomicsService = UnitEconomicsService_1 = class UnitEconomicsService {
             { name: 'pro', avgShops: proCount, arpa: 99 },
             { name: 'enterprise', avgShops: enterpriseCount, arpa: 299 },
         ];
-        return segments.map((segment) => {
+        return segments.map(segment => {
             const revenue = segment.avgShops * segment.arpa;
             const cogs = segment.avgShops * this.STANDARD_COGS;
             const grossMargin = revenue - cogs;
@@ -220,7 +220,7 @@ let UnitEconomicsService = UnitEconomicsService_1 = class UnitEconomicsService {
         return monthlyContribution > 0 ? Number((cac / monthlyContribution).toFixed(1)) : 0;
     }
     async generateReport(startDate, endDate) {
-        this.logger.log(`Generating unit economics report`);
+        this.logger.warn('UnitEconomicsReport: using sample data. Real calculations require marketing_spend and revenue tables.');
         const [cac, ltvByCohort, ltvByTier, churn, grossMarginBySegment] = await Promise.all([
             this.calculateCAC(startDate, endDate),
             this.calculateLTVByCohort(12),
@@ -238,6 +238,7 @@ let UnitEconomicsService = UnitEconomicsService_1 = class UnitEconomicsService {
         const paybackPeriod = this.calculatePaybackPeriod(cac.blended, arpa, 0.62);
         return {
             generatedAt: new Date(),
+            isSampleData: true,
             period: { start: startDate, end: endDate },
             cac,
             ltv: {
@@ -255,13 +256,11 @@ let UnitEconomicsService = UnitEconomicsService_1 = class UnitEconomicsService {
             arpa,
         };
     }
-    async exportInvestorMetrics(startDate, endDate) {
+    async exportInvestorMetrics(_startDate, _endDate) {
         const customerResult = await this.prisma.$queryRaw `
       SELECT COUNT(*) as count FROM tenants
     `;
-        const customerCount = Array.isArray(customerResult) && customerResult[0]
-            ? Number(customerResult[0].count)
-            : 0;
+        const customerCount = Array.isArray(customerResult) && customerResult[0] ? Number(customerResult[0].count) : 0;
         const mrr = customerCount * 82;
         const arr = mrr * 12;
         const netDollarRetention = 102.4;

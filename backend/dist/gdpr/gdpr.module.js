@@ -68,10 +68,7 @@ exports.GdprModule = GdprModule = __decorate([
                 },
             }),
         ],
-        controllers: [
-            gdpr_controller_1.GdprController,
-            gdpr_webhook_controller_1.GdprWebhookController,
-        ],
+        controllers: [gdpr_controller_1.GdprController, gdpr_webhook_controller_1.GdprWebhookController],
         providers: [
             gdpr_deletion_service_1.GdprDeletionService,
             data_retention_service_1.DataRetentionService,

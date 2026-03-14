@@ -9,7 +9,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -27,7 +26,7 @@ import { SubscriptionPlan, SubscriptionStatus, FeatureFlag } from '@prisma/clien
 import { UserRole } from '../../auth/guards/roles.guard';
 import { SubscriptionService, UpgradeRequest } from '../services/subscription.service';
 import { FeatureAccessService } from '../services/feature-access.service';
-import { RequireFeature, FeatureGuard } from '../guards/feature.guard';
+// FeatureGuard and RequireFeature available for route-level feature gating
 import { CheckLimit, LimitGuard } from '../guards/limit.guard';
 import { PLAN_PRICING, AI_ADDON, PLAN_FEATURES, getFormattedPrice } from '../config/pricing.config';
 

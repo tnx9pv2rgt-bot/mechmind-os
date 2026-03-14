@@ -11,27 +11,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '@common/services/prisma.service';
-import {
-  EmailService,
-  BookingConfirmationData,
-  InvoiceReadyData,
-  GdprDataExportData,
-  WelcomeData,
-  PasswordResetData,
-  BookingReminderData,
-  BookingCancelledData,
-} from '../email/email.service';
-import {
-  SmsService,
-  BookingConfirmationSmsData,
-  BookingReminderSmsData,
-  InvoiceReadySmsData,
-  BookingCancelledSmsData,
-} from '../sms/sms.service';
+import { EncryptionService } from '@common/services/encryption.service';
+import { EmailService } from '../email/email.service';
+import { SmsService } from '../sms/sms.service';
 import {
   NotificationType,
   NotificationChannel,
-  NotificationPriority,
   SendNotificationDto,
 } from '../dto/send-notification.dto';
 
@@ -66,7 +51,7 @@ interface CustomerInfo {
   phone?: string;
   notificationPreferences?: {
     preferredChannel?: NotificationChannel;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -93,6 +78,7 @@ export class NotificationOrchestratorService {
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
     private readonly prisma: PrismaService,
+    private readonly encryption: EncryptionService,
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     @InjectQueue('notification-queue') private readonly notificationQueue: Queue,
@@ -106,7 +92,7 @@ export class NotificationOrchestratorService {
     customerId: string,
     tenantId: string,
     type: NotificationType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     channelPreference: NotificationChannel = NotificationChannel.AUTO,
   ): Promise<NotificationResult> {
     const notificationId = this.generateId();
@@ -177,7 +163,7 @@ export class NotificationOrchestratorService {
     customer: CustomerInfo,
     workshop: WorkshopInfo,
     type: NotificationType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     notificationId: string,
   ): Promise<NotificationResult> {
     // Try SMS if phone is available
@@ -235,7 +221,7 @@ export class NotificationOrchestratorService {
     customer: CustomerInfo,
     workshop: WorkshopInfo,
     type: NotificationType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     notificationId: string,
   ): Promise<NotificationResult> {
     this.logger.log(`[${notificationId}] Sending email notification`);
@@ -265,7 +251,7 @@ export class NotificationOrchestratorService {
     customer: CustomerInfo,
     workshop: WorkshopInfo,
     type: NotificationType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     notificationId: string,
   ): Promise<NotificationResult> {
     this.logger.log(`[${notificationId}] Sending both SMS and Email notifications`);
@@ -293,7 +279,9 @@ export class NotificationOrchestratorService {
     return {
       success,
       channel: NotificationChannel.BOTH,
-      messageId: smsResult.success ? (smsResult as any).messageId : (emailResult as any)?.messageId,
+      messageId: smsResult.success
+        ? (smsResult as { messageId?: string }).messageId
+        : (emailResult as { messageId?: string })?.messageId,
       error: !success ? `SMS: ${smsResult.error}, Email: ${emailResult.error}` : undefined,
     };
   }
@@ -305,46 +293,48 @@ export class NotificationOrchestratorService {
     customer: CustomerInfo,
     workshop: WorkshopInfo,
     type: NotificationType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     if (!customer.phone) {
       return { success: false, error: 'No phone number' };
     }
 
+    const s = data as Record<string, string>;
+
     try {
       switch (type) {
         case NotificationType.BOOKING_CONFIRMATION:
           return await this.smsService.sendBookingConfirmation(customer.phone, {
-            date: data.date,
-            time: data.time,
-            service: data.service,
+            date: s.date,
+            time: s.time,
+            service: s.service,
             workshopName: workshop.name,
-            bookingCode: data.bookingCode,
+            bookingCode: s.bookingCode,
           });
 
         case NotificationType.BOOKING_REMINDER:
           return await this.smsService.sendBookingReminder(customer.phone, {
-            date: data.date,
-            time: data.time,
-            service: data.service,
+            date: s.date,
+            time: s.time,
+            service: s.service,
             workshopName: workshop.name,
-            bookingCode: data.bookingCode,
+            bookingCode: s.bookingCode,
           });
 
         case NotificationType.BOOKING_CANCELLED:
           return await this.smsService.sendBookingCancelled(customer.phone, {
-            date: data.date,
-            service: data.service,
+            date: s.date,
+            service: s.service,
             workshopName: workshop.name,
-            bookingCode: data.bookingCode,
-            cancellationReason: data.cancellationReason,
+            bookingCode: s.bookingCode,
+            cancellationReason: s.cancellationReason,
           });
 
         case NotificationType.INVOICE_READY:
           return await this.smsService.sendInvoiceReady(customer.phone, {
-            invoiceNumber: data.invoiceNumber,
-            amount: data.amount,
-            downloadUrl: data.downloadUrl,
+            invoiceNumber: s.invoiceNumber,
+            amount: s.amount,
+            downloadUrl: s.downloadUrl,
             workshopName: workshop.name,
           });
 
@@ -353,8 +343,9 @@ export class NotificationOrchestratorService {
           return { success: false, error: `SMS not supported for type: ${type}` };
       }
     } catch (error) {
-      this.logger.error(`SMS sending failed: ${error.message}`);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`SMS sending failed: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -365,11 +356,13 @@ export class NotificationOrchestratorService {
     customer: CustomerInfo,
     workshop: WorkshopInfo,
     type: NotificationType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     if (!customer.email) {
       return { success: false, error: 'No email address' };
     }
+
+    const s = data as Record<string, string>;
 
     try {
       switch (type) {
@@ -377,26 +370,26 @@ export class NotificationOrchestratorService {
           return await this.emailService.sendBookingConfirmation({
             customerName: customer.name,
             customerEmail: customer.email,
-            service: data.service,
-            date: data.date,
-            time: data.time,
-            vehicle: data.vehicle,
-            bookingCode: data.bookingCode,
+            service: s.service,
+            date: s.date,
+            time: s.time,
+            vehicle: s.vehicle,
+            bookingCode: s.bookingCode,
             workshopName: workshop.name,
             workshopAddress: workshop.address,
             workshopPhone: workshop.phone,
-            notes: data.notes,
+            notes: s.notes,
           });
 
         case NotificationType.BOOKING_REMINDER:
           return await this.emailService.sendBookingReminder({
             customerName: customer.name,
             customerEmail: customer.email,
-            service: data.service,
-            date: data.date,
-            time: data.time,
-            vehicle: data.vehicle,
-            bookingCode: data.bookingCode,
+            service: s.service,
+            date: s.date,
+            time: s.time,
+            vehicle: s.vehicle,
+            bookingCode: s.bookingCode,
             workshopName: workshop.name,
             workshopAddress: workshop.address,
           });
@@ -405,21 +398,21 @@ export class NotificationOrchestratorService {
           return await this.emailService.sendBookingCancelled({
             customerName: customer.name,
             customerEmail: customer.email,
-            service: data.service,
-            date: data.date,
-            bookingCode: data.bookingCode,
+            service: s.service,
+            date: s.date,
+            bookingCode: s.bookingCode,
             workshopName: workshop.name,
-            cancellationReason: data.cancellationReason,
+            cancellationReason: s.cancellationReason,
           });
 
         case NotificationType.INVOICE_READY:
           return await this.emailService.sendInvoiceReady({
             customerName: customer.name,
             customerEmail: customer.email,
-            invoiceNumber: data.invoiceNumber,
-            invoiceDate: data.invoiceDate,
-            amount: data.amount,
-            downloadUrl: data.downloadUrl,
+            invoiceNumber: s.invoiceNumber,
+            invoiceDate: s.invoiceDate,
+            amount: s.amount,
+            downloadUrl: s.downloadUrl,
             workshopName: workshop.name,
           });
 
@@ -427,9 +420,9 @@ export class NotificationOrchestratorService {
           return await this.emailService.sendGdprDataExport({
             customerName: customer.name,
             customerEmail: customer.email,
-            downloadUrl: data.downloadUrl,
-            expiryDate: data.expiryDate,
-            requestId: data.requestId,
+            downloadUrl: s.downloadUrl,
+            expiryDate: s.expiryDate,
+            requestId: s.requestId,
           });
 
         case NotificationType.WELCOME:
@@ -437,23 +430,24 @@ export class NotificationOrchestratorService {
             customerName: customer.name,
             customerEmail: customer.email,
             workshopName: workshop.name,
-            loginUrl: data.loginUrl,
+            loginUrl: s.loginUrl,
           });
 
         case NotificationType.PASSWORD_RESET:
           return await this.emailService.sendPasswordReset({
             customerName: customer.name,
             customerEmail: customer.email,
-            resetUrl: data.resetUrl,
-            expiryHours: data.expiryHours || 24,
+            resetUrl: s.resetUrl,
+            expiryHours: Number(data.expiryHours) || 24,
           });
 
         default:
           return { success: false, error: `Email not supported for type: ${type}` };
       }
     } catch (error) {
-      this.logger.error(`Email sending failed: ${error.message}`);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Email sending failed: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -466,7 +460,7 @@ export class NotificationOrchestratorService {
   ): Promise<{ jobId: string; scheduledFor?: Date }> {
     const jobId = `notif-${this.generateId()}`;
 
-    const job = await this.notificationQueue.add('send-notification', dto, {
+    await this.notificationQueue.add('send-notification', dto, {
       jobId,
       delay: delayMs,
       attempts: 3,
@@ -500,44 +494,58 @@ export class NotificationOrchestratorService {
     let successful = 0;
     let failed = 0;
 
+    // Process in batches of 10 for controlled concurrency
+    const BATCH_SIZE = 10;
     const throttleMs = options.throttleMs || 100;
 
-    for (const notification of notifications) {
-      try {
-        const result = await this.notifyCustomer(
-          notification.customerId,
-          notification.tenantId,
-          notification.type,
-          notification.data,
-          notification.channel,
-        );
+    for (let i = 0; i < notifications.length; i += BATCH_SIZE) {
+      const batch = notifications.slice(i, i + BATCH_SIZE);
 
-        results.push(result);
+      const batchResults = await Promise.allSettled(
+        batch.map(notification =>
+          this.notifyCustomer(
+            notification.customerId,
+            notification.tenantId,
+            notification.type,
+            notification.data,
+            notification.channel,
+          ),
+        ),
+      );
 
-        if (result.success) {
-          successful++;
+      let shouldBreak = false;
+      for (let j = 0; j < batchResults.length; j++) {
+        const settled = batchResults[j];
+        if (settled.status === 'fulfilled') {
+          results.push(settled.value);
+          if (settled.value.success) {
+            successful++;
+          } else {
+            failed++;
+            if (!options.continueOnError) {
+              shouldBreak = true;
+              break;
+            }
+          }
         } else {
           failed++;
+          results.push({
+            success: false,
+            channel: batch[j].channel,
+            error: settled.reason instanceof Error ? settled.reason.message : 'Unknown error',
+          });
           if (!options.continueOnError) {
+            shouldBreak = true;
             break;
           }
         }
+      }
 
-        // Throttle
-        if (throttleMs > 0) {
-          await this.delay(throttleMs);
-        }
-      } catch (error) {
-        failed++;
-        results.push({
-          success: false,
-          channel: notification.channel,
-          error: error.message,
-        });
+      if (shouldBreak) break;
 
-        if (!options.continueOnError) {
-          break;
-        }
+      // Throttle between batches
+      if (throttleMs > 0 && i + BATCH_SIZE < notifications.length) {
+        await this.delay(throttleMs);
       }
     }
 
@@ -553,8 +561,8 @@ export class NotificationOrchestratorService {
    * Get customer notification preferences
    */
   async getCustomerPreferences(
-    customerId: string,
-    tenantId: string,
+    _customerId: string,
+    _tenantId: string,
   ): Promise<{
     preferredChannel: NotificationChannel;
     bookingConfirmations: boolean;
@@ -575,8 +583,8 @@ export class NotificationOrchestratorService {
       // Query from database if preferences are stored
       // This would typically query a notification_preferences table
       return defaults;
-    } catch (error) {
-      this.logger.warn(`Could not fetch preferences for customer ${customerId}`);
+    } catch (_error) {
+      this.logger.warn(`Could not fetch preferences for customer ${_customerId}`);
       return defaults;
     }
   }
@@ -586,8 +594,8 @@ export class NotificationOrchestratorService {
    */
   async updateCustomerPreferences(
     customerId: string,
-    tenantId: string,
-    preferences: Partial<ReturnType<typeof this.getCustomerPreferences>>,
+    _tenantId: string,
+    _preferences: Partial<ReturnType<typeof this.getCustomerPreferences>>,
   ): Promise<void> {
     // Implementation would update database
     this.logger.log(`Updated preferences for customer ${customerId}`);
@@ -632,16 +640,29 @@ export class NotificationOrchestratorService {
 
       if (!customer) return null;
 
+      const firstName = customer.encryptedFirstName
+        ? await this.encryption.decrypt(customer.encryptedFirstName)
+        : '';
+      const lastName = customer.encryptedLastName
+        ? await this.encryption.decrypt(customer.encryptedLastName)
+        : '';
+      const email = customer.encryptedEmail
+        ? await this.encryption.decrypt(customer.encryptedEmail)
+        : '';
+      const phone = customer.encryptedPhone
+        ? await this.encryption.decrypt(customer.encryptedPhone)
+        : undefined;
+
       return {
         id: customer.id,
-        name:
-          `${customer.encryptedFirstName || ''} ${customer.encryptedLastName || ''}`.trim() ||
-          'Customer',
-        email: customer.encryptedEmail || '',
-        phone: customer.encryptedPhone || undefined,
+        name: `${firstName} ${lastName}`.trim() || 'Customer',
+        email,
+        phone,
       };
     } catch (error) {
-      this.logger.error(`Error fetching customer: ${error.message}`);
+      this.logger.error(
+        `Error fetching customer: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return null;
     }
   }

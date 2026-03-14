@@ -12,8 +12,18 @@ export interface TenantContext {
   features: string[]
 }
 
+let _currentTenantContext: TenantContext | null = null
+
+export function setTenantContext(ctx: TenantContext): void {
+  _currentTenantContext = ctx
+}
+
+export function clearTenantContext(): void {
+  _currentTenantContext = null
+}
+
 export const getTenantContext = async (): Promise<TenantContext | null> => {
-  return null // TODO: implement
+  return _currentTenantContext
 }
 
 export const requireTenantId = async (): Promise<string> => {

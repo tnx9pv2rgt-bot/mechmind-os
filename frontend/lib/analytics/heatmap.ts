@@ -422,7 +422,7 @@ class HeatmapTracker {
     return `${tag}${id}${classes}`;
   }
 
-  private throttle<T extends (...args: any[]) => void>(
+  private throttle<T extends (...args: never[]) => void>(
     func: T,
     limit: number
   ): (...args: Parameters<T>) => void {

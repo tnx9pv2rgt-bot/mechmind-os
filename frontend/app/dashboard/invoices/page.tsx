@@ -12,7 +12,7 @@ const mockInvoices = [
   { id: 'QUO-004', customer: 'Anna Neri', date: '24/02/2026', amount: '€180', status: 'accepted', type: 'quote' },
 ]
 
-const statusConfig: any = {
+const statusConfig: Record<string, { color: string; label: string }> = {
   'paid': { color: 'bg-apple-green', label: 'Pagata' },
   'pending': { color: 'bg-apple-orange', label: 'In attesa' },
   'accepted': { color: 'bg-apple-blue', label: 'Accettata' },
@@ -79,18 +79,13 @@ const listItemVariants = {
 
 export default function InvoicesPage() {
   return (
-    <div className="min-h-screen">
+    <div>
       {/* Header */}
-      <motion.header 
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
-        initial="hidden"
-        animate="visible"
-        variants={headerVariants}
-      >
+      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark">Fatture</h1>
-            <p className="text-apple-gray text-body mt-1">Gestisci fatture e preventivi</p>
+            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">Fatture</h1>
+            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">Gestisci fatture e preventivi</p>
           </div>
           <div className="flex gap-3">
             <AppleButton variant="secondary" icon={<Plus className="h-4 w-4" />}>
@@ -101,7 +96,7 @@ export default function InvoicesPage() {
             </AppleButton>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <motion.div 
         className="p-8 space-y-6"
@@ -127,10 +122,10 @@ export default function InvoicesPage() {
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
                       <stat.icon className="h-5 w-5 text-white" />
                     </div>
-                    <span className="text-footnote text-apple-gray">{stat.trend}</span>
+                    <span className="text-footnote text-apple-gray dark:text-[#636366]">{stat.trend}</span>
                   </div>
-                  <p className="text-title-1 font-bold text-apple-dark">{stat.value}</p>
-                  <p className="text-footnote text-apple-gray">{stat.label}</p>
+                  <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">{stat.value}</p>
+                  <p className="text-footnote text-apple-gray dark:text-[#636366]">{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -175,7 +170,7 @@ export default function InvoicesPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard>
             <AppleCardHeader>
-              <h2 className="text-title-2 font-semibold text-apple-dark">Documenti Recenti</h2>
+              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Documenti Recenti</h2>
             </AppleCardHeader>
             <AppleCardContent>
               <motion.div 
@@ -189,7 +184,7 @@ export default function InvoicesPage() {
                   return (
                     <motion.div 
                       key={doc.id}
-                      className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 hover:bg-white hover:shadow-apple transition-all duration-300"
+                      className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#353535] hover:shadow-apple transition-all duration-300"
                       variants={listItemVariants}
                       custom={index}
                       whileHover={{ scale: 1.01, x: 4 }}
@@ -201,19 +196,19 @@ export default function InvoicesPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-body font-semibold text-apple-dark">{doc.id}</p>
-                            <span className="text-[10px] uppercase px-2 py-0.5 rounded-full bg-apple-light-gray text-apple-gray">
+                            <p className="text-body font-semibold text-apple-dark dark:text-[#ececec]">{doc.id}</p>
+                            <span className="text-[10px] uppercase px-2 py-0.5 rounded-full bg-apple-light-gray dark:bg-[#353535] text-apple-gray dark:text-[#636366]">
                               {doc.type === 'invoice' ? 'Fattura' : 'Preventivo'}
                             </span>
                           </div>
-                          <p className="text-footnote text-apple-gray">{doc.customer} • {doc.date}</p>
+                          <p className="text-footnote text-apple-gray dark:text-[#636366]">{doc.customer} • {doc.date}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-6">
                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full text-white ${status.color}`}>
                           {status.label}
                         </span>
-                        <p className="text-body font-semibold text-apple-dark min-w-[80px] text-right">{doc.amount}</p>
+                        <p className="text-body font-semibold text-apple-dark dark:text-[#ececec] min-w-[80px] text-right">{doc.amount}</p>
                         <AppleButton variant="ghost" size="sm">Apri</AppleButton>
                       </div>
                     </motion.div>

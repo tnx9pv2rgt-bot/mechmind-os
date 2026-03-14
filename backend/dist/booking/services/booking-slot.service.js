@@ -39,7 +39,7 @@ let BookingSlotService = class BookingSlotService {
                 },
             });
             if (duration) {
-                return slots.filter((slot) => {
+                return slots.filter(slot => {
                     const slotDuration = (slot.endTime.getTime() - slot.startTime.getTime()) / 60000;
                     return slotDuration >= duration;
                 });

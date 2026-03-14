@@ -94,11 +94,11 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
             return { received: true };
         }
         catch (error) {
-            this.logger.error(`Error processing Resend webhook: ${error.message}`);
+            this.logger.error(`Error processing Resend webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
             throw new common_1.BadRequestException('Failed to process webhook');
         }
     }
-    async handleTwilioWebhook(payload, signature) {
+    async handleTwilioWebhook(payload, _signature) {
         if (!payload?.MessageSid || !payload?.MessageStatus) {
             return { received: true };
         }
@@ -126,7 +126,7 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
             return { received: true };
         }
         catch (error) {
-            this.logger.error(`Error processing Twilio webhook: ${error.message}`);
+            this.logger.error(`Error processing Twilio webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return { received: true };
         }
     }
@@ -140,7 +140,7 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
             return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
         }
         catch (error) {
-            this.logger.error(`Error processing incoming SMS: ${error.message}`);
+            this.logger.error(`Error processing incoming SMS: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
         }
     }
@@ -180,7 +180,7 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
     async handleSmsRead(payload) {
         this.logger.debug(`SMS ${payload.MessageSid} read by ${payload.To}`);
     }
-    async processIncomingSms(from, body, messageSid) {
+    async processIncomingSms(from, body, _messageSid) {
         const normalizedBody = body.trim().toUpperCase();
         switch (normalizedBody) {
             case 'STOP':
@@ -225,11 +225,11 @@ let NotificationWebhookController = NotificationWebhookController_1 = class Noti
             return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
         }
         catch (error) {
-            this.logger.error(`Signature verification failed: ${error.message}`);
+            this.logger.error(`Signature verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return false;
         }
     }
-    async updateNotificationStatus(notificationId, status, timestamp) {
+    async updateNotificationStatus(notificationId, status, _timestamp) {
         this.logger.debug(`Update ${notificationId} status to ${status}`);
     }
     async trackEmailEngagement(notificationId, action) {

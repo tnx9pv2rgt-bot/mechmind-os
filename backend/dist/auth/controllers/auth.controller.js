@@ -59,10 +59,46 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], Verify2FADto.prototype, "totpCode", void 0);
+class RegisterDto {
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "shopName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Matches)(/^[a-z0-9-]+$/, { message: 'Lo slug può contenere solo lettere minuscole, numeri e trattini' }),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "slug", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(8, { message: 'La password deve avere almeno 8 caratteri' }),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "password", void 0);
 let AuthController = class AuthController {
     constructor(authService, mfaService) {
         this.authService = authService;
         this.mfaService = mfaService;
+    }
+    async register(dto) {
+        return this.authService.registerTenant({
+            shopName: dto.shopName,
+            slug: dto.slug,
+            name: dto.name,
+            email: dto.email,
+            password: dto.password,
+        });
     }
     async login(dto, ip) {
         const user = await this.authService.validateUser(dto.email, dto.password, dto.tenantSlug);
@@ -110,12 +146,28 @@ let AuthController = class AuthController {
 };
 exports.AuthController = AuthController;
 __decorate([
+    (0, common_1.Post)('register'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, throttler_1.Throttle)({ strict: { ttl: 3600000, limit: 3 } }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Registra nuovo tenant',
+        description: 'Crea un nuovo tenant con il primo utente admin. Restituisce JWT tokens.',
+    }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Tenant creato con successo' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Dati non validi' }),
+    (0, swagger_1.ApiResponse)({ status: 409, description: 'Slug o email già in uso' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [RegisterDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "register", null);
+__decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, throttler_1.Throttle)({ strict: { ttl: 60000, limit: 5 } }),
     (0, swagger_1.ApiOperation)({
         summary: 'User login',
-        description: 'Login with email/password. If 2FA is enabled, returns tempToken for verification.'
+        description: 'Login with email/password. If 2FA is enabled, returns tempToken for verification.',
     }),
     (0, swagger_1.ApiBody)({
         schema: {
@@ -124,7 +176,11 @@ __decorate([
                 email: { type: 'string', example: 'user@example.com' },
                 password: { type: 'string', example: 'password123' },
                 tenantSlug: { type: 'string', example: 'garage-roma' },
-                totpCode: { type: 'string', example: '123456', description: 'Optional: TOTP code if 2FA enabled' },
+                totpCode: {
+                    type: 'string',
+                    example: '123456',
+                    description: 'Optional: TOTP code if 2FA enabled',
+                },
             },
         },
     }),
@@ -166,7 +222,7 @@ __decorate([
     (0, throttler_1.Throttle)({ strict: { ttl: 60000, limit: 10 } }),
     (0, swagger_1.ApiOperation)({
         summary: 'Verify 2FA code',
-        description: 'Complete login with TOTP code or backup code after receiving tempToken'
+        description: 'Complete login with TOTP code or backup code after receiving tempToken',
     }),
     (0, swagger_1.ApiBody)({
         schema: {

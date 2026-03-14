@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   NotificationOrchestratorService,
   NotificationType,
@@ -13,6 +13,33 @@ import {
   EmailService,
   SmsService,
 } from '@notifications';
+
+// Example interfaces for demonstration purposes
+interface ExampleBooking {
+  id: string;
+  customerId: string;
+  tenantId: string;
+  scheduledDate: Date;
+  services: { name: string }[];
+  vehicle?: { brand: string; model: string; plate: string };
+  notes?: string;
+}
+
+interface ExampleInvoice {
+  id: string;
+  customerId: string;
+  tenantId: string;
+  number: string;
+  createdAt: Date;
+  total: number;
+}
+
+interface ExampleExportJob {
+  customer: { name: string; email: string };
+  downloadUrl: string;
+  expiresAt: string;
+  requestId: string;
+}
 
 // ============================================================================
 // ESEMPIO 1: Booking Service - Invio notifiche automatiche
@@ -25,14 +52,14 @@ export class BookingNotificationExample {
   /**
    * Quando una prenotazione viene creata
    */
-  async onBookingCreated(booking: any): Promise<void> {
+  async onBookingCreated(booking: ExampleBooking): Promise<void> {
     // Notifica automatica con fallback SMS -> Email
     await this.notificationService.notifyCustomer(
       booking.customerId,
       booking.tenantId,
       NotificationType.BOOKING_CONFIRMATION,
       {
-        service: booking.services.map((s: any) => s.name).join(', '),
+        service: booking.services.map(s => s.name).join(', '),
         date: booking.scheduledDate.toLocaleDateString('it-IT'),
         time: booking.scheduledDate.toLocaleTimeString('it-IT', {
           hour: '2-digit',
@@ -51,13 +78,13 @@ export class BookingNotificationExample {
   /**
    * Quando una prenotazione viene cancellata
    */
-  async onBookingCancelled(booking: any, reason?: string): Promise<void> {
+  async onBookingCancelled(booking: ExampleBooking, reason?: string): Promise<void> {
     await this.notificationService.notifyCustomer(
       booking.customerId,
       booking.tenantId,
       NotificationType.BOOKING_CANCELLED,
       {
-        service: booking.services.map((s: any) => s.name).join(', '),
+        service: booking.services.map(s => s.name).join(', '),
         date: booking.scheduledDate.toLocaleDateString('it-IT'),
         bookingCode: booking.id.slice(-8).toUpperCase(),
         cancellationReason: reason,
@@ -68,13 +95,13 @@ export class BookingNotificationExample {
   /**
    * Promemoria programmato (chiamato da Cron Job)
    */
-  async sendReminder(booking: any, type: '24h' | 'same_day'): Promise<void> {
+  async sendReminder(booking: ExampleBooking, type: '24h' | 'same_day'): Promise<void> {
     await this.notificationService.notifyCustomer(
       booking.customerId,
       booking.tenantId,
       NotificationType.BOOKING_REMINDER,
       {
-        service: booking.services.map((s: any) => s.name).join(', '),
+        service: booking.services.map(s => s.name).join(', '),
         date: booking.scheduledDate.toLocaleDateString('it-IT'),
         time: booking.scheduledDate.toLocaleTimeString('it-IT', {
           hour: '2-digit',
@@ -99,7 +126,7 @@ export class BookingNotificationExample {
 export class InvoiceNotificationExample {
   constructor(private readonly notificationService: NotificationOrchestratorService) {}
 
-  async onInvoiceCreated(invoice: any): Promise<void> {
+  async onInvoiceCreated(invoice: ExampleInvoice): Promise<void> {
     await this.notificationService.notifyCustomer(
       invoice.customerId,
       invoice.tenantId,
@@ -124,7 +151,7 @@ export class InvoiceNotificationExample {
 export class GdprNotificationExample {
   constructor(private readonly emailService: EmailService) {}
 
-  async onExportReady(exportJob: any): Promise<void> {
+  async onExportReady(exportJob: ExampleExportJob): Promise<void> {
     // GDPR: sempre via email per sicurezza
     await this.emailService.sendGdprDataExport({
       customerName: exportJob.customer.name,
@@ -179,7 +206,16 @@ export class BulkNotificationExample {
   /**
    * Notifica tutti i clienti di un officina
    */
-  async notifyAllCustomers(tenantId: string, customerIds: string[], message: string): Promise<any> {
+  async notifyAllCustomers(
+    tenantId: string,
+    customerIds: string[],
+    message: string,
+  ): Promise<{
+    total: number;
+    successful: number;
+    failed: number;
+    results: unknown[];
+  }> {
     const notifications = customerIds.map(customerId => ({
       customerId,
       tenantId,
@@ -197,7 +233,7 @@ export class BulkNotificationExample {
   /**
    * Prenota notifiche per promemoria futuri
    */
-  async scheduleReminders(bookings: any[]): Promise<void> {
+  async scheduleReminders(bookings: ExampleBooking[]): Promise<void> {
     for (const booking of bookings) {
       // Prenota reminder 24h prima
       await this.notificationService.queueNotification(
@@ -269,7 +305,11 @@ export class DirectServiceExample {
 export class NotificationHealthExample {
   constructor(private readonly smsService: SmsService) {}
 
-  async checkServicesHealth(): Promise<any> {
+  async checkServicesHealth(): Promise<{
+    sms: { healthy: boolean; latency?: number; error?: string };
+    templates: number;
+    timestamp: string;
+  }> {
     const [smsHealth, templates] = await Promise.all([
       this.smsService.healthCheck(),
       Promise.resolve(this.smsService.getTemplates()),

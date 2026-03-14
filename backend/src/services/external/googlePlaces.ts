@@ -34,6 +34,12 @@ export interface GeocodeResult {
   placeId?: string;
 }
 
+interface GoogleAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
 @Injectable()
 export class GooglePlacesService {
   private readonly logger = new Logger(GooglePlacesService.name);
@@ -118,20 +124,28 @@ export class GooglePlacesService {
         throw new Error(`Places API error: ${data.status} - ${data.error_message || ''}`);
       }
 
-      const predictions: AddressPrediction[] = (data.predictions || []).map((p: any) => ({
-        placeId: p.place_id,
-        description: p.description,
-        mainText: p.structured_formatting?.main_text || p.description,
-        secondaryText: p.structured_formatting?.secondary_text || '',
-        types: p.types || [],
-      }));
+      const predictions: AddressPrediction[] = (data.predictions || []).map(
+        (p: Record<string, unknown>) => ({
+          placeId: p.place_id as string,
+          description: p.description as string,
+          mainText:
+            ((p.structured_formatting as Record<string, unknown>)?.main_text as string) ||
+            (p.description as string),
+          secondaryText:
+            ((p.structured_formatting as Record<string, unknown>)?.secondary_text as string) || '',
+          types: (p.types as string[]) || [],
+        }),
+      );
 
       // Cache results
       await this.setCached(cacheKey, predictions, 24 * 60 * 60); // 1 giorno per autocomplete
 
       return { predictions };
     } catch (error) {
-      this.logger.error('Autocomplete error:', error.message);
+      this.logger.error(
+        'Autocomplete error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       if (this.isDevelopment) {
         return this.getMockPredictions(input);
@@ -175,18 +189,21 @@ export class GooglePlacesService {
         throw new Error(`Place Details API error: ${data.status}`);
       }
 
-      const result = data.result;
+      const result = data.result as Record<string, unknown>;
       const details = this.parseAddressComponents(
-        result.address_components,
-        result.geometry?.location,
-        result.formatted_address,
+        result.address_components as GoogleAddressComponent[],
+        (result.geometry as Record<string, unknown>)?.location as { lat: number; lng: number },
+        result.formatted_address as string,
       );
 
       await this.setCached(cacheKey, details);
 
       return details;
     } catch (error) {
-      this.logger.error('Place details error:', error.message);
+      this.logger.error(
+        'Place details error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       if (this.isDevelopment) {
         return this.getMockPlaceDetails(placeId);
@@ -230,18 +247,23 @@ export class GooglePlacesService {
         throw new Error(`Geocoding API error: ${data.status}`);
       }
 
-      const results: GeocodeResult[] = (data.results || []).map((r: any) => ({
-        latitude: r.geometry.location.lat,
-        longitude: r.geometry.location.lng,
-        formattedAddress: r.formatted_address,
-        placeId: r.place_id,
+      const results: GeocodeResult[] = (data.results || []).map((r: Record<string, unknown>) => ({
+        latitude: ((r.geometry as Record<string, unknown>)?.location as Record<string, number>)
+          ?.lat,
+        longitude: ((r.geometry as Record<string, unknown>)?.location as Record<string, number>)
+          ?.lng,
+        formattedAddress: r.formatted_address as string,
+        placeId: r.place_id as string,
       }));
 
       await this.setCached(cacheKey, results);
 
       return results;
     } catch (error) {
-      this.logger.error('Geocoding error:', error.message);
+      this.logger.error(
+        'Geocoding error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       if (this.isDevelopment) {
         return this.getMockGeocode(address);
@@ -284,11 +306,11 @@ export class GooglePlacesService {
         throw new Error(`Reverse Geocoding API error: ${data.status}`);
       }
 
-      const results: AddressDetails[] = (data.results || []).map((r: any) =>
+      const results: AddressDetails[] = (data.results || []).map((r: Record<string, unknown>) =>
         this.parseAddressComponents(
-          r.address_components,
-          r.geometry?.location,
-          r.formatted_address,
+          r.address_components as GoogleAddressComponent[],
+          (r.geometry as Record<string, unknown>)?.location as { lat: number; lng: number },
+          r.formatted_address as string,
         ),
       );
 
@@ -296,7 +318,10 @@ export class GooglePlacesService {
 
       return results;
     } catch (error) {
-      this.logger.error('Reverse geocoding error:', error.message);
+      this.logger.error(
+        'Reverse geocoding error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       if (this.isDevelopment) {
         return [this.getMockReverseGeocode(latitude, longitude)];
@@ -339,7 +364,10 @@ export class GooglePlacesService {
         province: first.province,
       };
     } catch (error) {
-      this.logger.error('Postal code validation error:', error.message);
+      this.logger.error(
+        'Postal code validation error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return { valid: false };
     }
   }
@@ -348,12 +376,12 @@ export class GooglePlacesService {
    * Parsa i componenti dell'indirizzo
    */
   private parseAddressComponents(
-    components: any[],
+    components: GoogleAddressComponent[],
     geometry: { lat: number; lng: number },
     formattedAddress: string,
   ): AddressDetails {
     const getComponent = (type: string, useShort = false): string => {
-      const component = components.find(c => c.types.includes(type));
+      const component = components.find((c: GoogleAddressComponent) => c.types.includes(type));
       return component ? (useShort ? component.short_name : component.long_name) : '';
     };
 
@@ -384,8 +412,11 @@ export class GooglePlacesService {
     try {
       const cached = await this.redis.get(key);
       return cached ? (JSON.parse(cached) as T) : null;
-    } catch (error: any) {
-      this.logger.warn('Cache get error:', error.message);
+    } catch (error) {
+      this.logger.warn(
+        'Cache get error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return null;
     }
   }
@@ -394,8 +425,11 @@ export class GooglePlacesService {
     try {
       const seconds = ttl || this.cacheTtlSeconds;
       await this.redis.setex(key, seconds, JSON.stringify(value));
-    } catch (error: any) {
-      this.logger.warn('Cache set error:', error.message);
+    } catch (error) {
+      this.logger.warn(
+        'Cache set error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 

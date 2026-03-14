@@ -64,7 +64,7 @@ const baseTemplate = (content, title) => `
 </body>
 </html>
 `;
-const verificationEmailTemplate = (firstName, verificationLink, token) => {
+const verificationEmailTemplate = (firstName, verificationLink, _token) => {
     const content = `
     <h2>Ciao ${firstName}, benvenuto su MechMind! 👋</h2>
     <p>Grazie per esserti registrato. Per completare la registrazione e attivare il tuo account, conferma il tuo indirizzo email cliccando il pulsante qui sotto:</p>
@@ -165,7 +165,7 @@ async function sendVerificationEmail(email, token, firstName) {
         console.error('Errore invio email di verifica:', error);
         return {
             success: false,
-            error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+            error: error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
         };
     }
 }
@@ -199,7 +199,7 @@ async function sendWelcomeEmail(email, firstName) {
         console.error('Errore invio email di benvenuto:', error);
         return {
             success: false,
-            error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+            error: error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
         };
     }
 }
@@ -234,7 +234,7 @@ async function sendPasswordResetEmail(email, token) {
         console.error('Errore invio email reset password:', error);
         return {
             success: false,
-            error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+            error: error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
         };
     }
 }
@@ -263,7 +263,7 @@ async function sendEmail(options) {
         console.error('Errore invio email:', error);
         return {
             success: false,
-            error: error.message || 'Errore sconosciuto durante l\'invio dell\'email',
+            error: error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
         };
     }
 }

@@ -24,12 +24,12 @@ const passkey_service_1 = require("./passkey/passkey.service");
 const passkey_controller_1 = require("./passkey/passkey.controller");
 const magic_link_service_1 = require("./magic-link/magic-link.service");
 const magic_link_controller_1 = require("./magic-link/magic-link.controller");
+const oauth_service_1 = require("./oauth/oauth.service");
+const oauth_controller_1 = require("./oauth/oauth.controller");
 const notifications_module_1 = require("../notifications/notifications.module");
 let AuthModule = class AuthModule {
     configure(consumer) {
-        consumer
-            .apply(tenant_context_middleware_1.TenantContextMiddleware)
-            .forRoutes('*');
+        consumer.apply(tenant_context_middleware_1.TenantContextMiddleware).forRoutes('*');
     }
 };
 exports.AuthModule = AuthModule;
@@ -45,22 +45,38 @@ exports.AuthModule = AuthModule = __decorate([
                 useFactory: (configService) => ({
                     secret: configService.get('JWT_SECRET'),
                     signOptions: {
-                        expiresIn: configService.get('JWT_EXPIRES_IN', '24h'),
+                        expiresIn: configService.get('JWT_EXPIRES_IN', '1h'),
                     },
                 }),
                 inject: [config_1.ConfigService],
             }),
         ],
-        controllers: [auth_controller_1.AuthController, mfa_controller_1.MfaController, passkey_controller_1.PasskeyController, magic_link_controller_1.MagicLinkController],
+        controllers: [
+            auth_controller_1.AuthController,
+            mfa_controller_1.MfaController,
+            passkey_controller_1.PasskeyController,
+            magic_link_controller_1.MagicLinkController,
+            oauth_controller_1.OAuthController,
+        ],
         providers: [
             auth_service_1.AuthService,
             mfa_service_1.MfaService,
             passkey_service_1.PasskeyService,
             magic_link_service_1.MagicLinkService,
+            oauth_service_1.OAuthService,
             jwt_strategy_1.JwtStrategy,
             jwt_auth_guard_1.JwtAuthGuard,
             roles_guard_1.RolesGuard,
         ],
-        exports: [auth_service_1.AuthService, mfa_service_1.MfaService, passkey_service_1.PasskeyService, magic_link_service_1.MagicLinkService, jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard, jwt_1.JwtModule],
+        exports: [
+            auth_service_1.AuthService,
+            mfa_service_1.MfaService,
+            passkey_service_1.PasskeyService,
+            magic_link_service_1.MagicLinkService,
+            oauth_service_1.OAuthService,
+            jwt_auth_guard_1.JwtAuthGuard,
+            roles_guard_1.RolesGuard,
+            jwt_1.JwtModule,
+        ],
     })
 ], AuthModule);

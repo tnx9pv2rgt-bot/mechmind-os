@@ -1,3 +1,4 @@
+import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -8,6 +9,14 @@ import { AppModule } from './app.module';
 import { LoggerService } from './common/services/logger.service';
 
 async function bootstrap() {
+  // Validate required secrets before starting
+  if (!process.env.SETUP_SECRET) {
+    console.error(
+      '❌ SETUP_SECRET environment variable is required. Server cannot start without it.',
+    );
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule, {
     logger: new LoggerService(),
   });
@@ -50,9 +59,11 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global prefix
+  // Global prefix (exclude health check endpoints)
   const apiVersion = configService.get('API_VERSION', 'v1');
-  app.setGlobalPrefix(apiVersion);
+  app.setGlobalPrefix(apiVersion, {
+    exclude: ['health', 'liveness', 'readiness'],
+  });
 
   // Swagger documentation
   const swaggerConfig = new DocumentBuilder()
@@ -86,14 +97,8 @@ async function bootstrap() {
     },
   });
 
-  // Health check endpoint (before global prefix, no auth required)
-  const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get(
-    '/health',
-    (_req: unknown, res: { json: (body: Record<string, unknown>) => void }) => {
-      res.json({ status: 'ok', timestamp: new Date().toISOString() });
-    },
-  );
+  // Enable graceful shutdown hooks (Prisma disconnect, BullMQ cleanup, etc.)
+  app.enableShutdownHooks();
 
   // Start server
   const port = configService.get<number>('PORT', 3000);

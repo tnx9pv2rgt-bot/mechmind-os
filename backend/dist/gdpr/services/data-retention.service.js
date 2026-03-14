@@ -339,11 +339,16 @@ let DataRetentionService = DataRetentionService_1 = class DataRetentionService {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - policy.webhookEventDays);
         try {
-            const result = await this.prisma.$executeRaw `
-        DELETE FROM voice_webhook_events 
-        WHERE created_at < ${cutoffDate}
-        ${tenantId ? `AND tenant_id = ${tenantId}` : ''}
-      `;
+            const result = tenantId
+                ? await this.prisma.$executeRaw `
+            DELETE FROM voice_webhook_events
+            WHERE created_at < ${cutoffDate}
+            AND tenant_id = ${tenantId}
+          `
+                : await this.prisma.$executeRaw `
+            DELETE FROM voice_webhook_events
+            WHERE created_at < ${cutoffDate}
+          `;
             return { count: result };
         }
         catch (error) {
@@ -430,7 +435,7 @@ let DataRetentionService = DataRetentionService_1 = class DataRetentionService {
         const policy = this.getRetentionPolicy();
         const retentionCutoff = new Date();
         retentionCutoff.setDate(retentionCutoff.getDate() - policy.customerDataDays);
-        const [activeCustomers, pendingAnonymization, expiredRecordings,] = await Promise.all([
+        const [activeCustomers, pendingAnonymization, expiredRecordings] = await Promise.all([
             this.prisma.customerEncrypted.count({
                 where: {
                     tenantId,

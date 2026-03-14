@@ -2,16 +2,7 @@
  * MechMind OS - Vehicle Twin DTOs
  */
 
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsInt,
-  IsNumber,
-  IsArray,
-  IsJSON,
-  IsUUID,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNumber, IsArray, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateComponentDto {
@@ -30,7 +21,7 @@ export class UpdateComponentDto {
 
   @ApiProperty({ required: false, type: 'object' })
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class RecordHistoryDto {
@@ -201,8 +192,8 @@ export class VehicleTwinStateDto {
   lastUpdated: Date;
   components: ComponentResponseDto[];
   activeAlerts: PredictiveAlertDto[];
-  recentHistory: any[];
-  damageRecords: any[];
+  recentHistory: Record<string, unknown>[];
+  damageRecords: Record<string, unknown>[];
   mileage: number;
   engineHours: number;
 }

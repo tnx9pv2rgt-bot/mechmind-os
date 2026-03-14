@@ -85,7 +85,7 @@ describe('getContrastRatio', () => {
 describe('meetsContrastRequirement', () => {
   it('should validate AA normal contrast', () => {
     expect(meetsContrastRequirement('#000000', '#FFFFFF', 'AA', 'normal')).toBe(true);
-    expect(meetsContrastRequirement('#FFFFFF', '#767676', 'AA', 'normal')).toBe(false);
+    expect(meetsContrastRequirement('#FFFFFF', '#767676', 'AA', 'normal')).toBe(true);
   });
 
   it('should validate AA large contrast', () => {

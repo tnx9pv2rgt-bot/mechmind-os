@@ -72,7 +72,6 @@ class RedisRateLimitStore implements RateLimitStore {
   }
 
   async decrement(key: string): Promise<void> {
-    const now = Date.now();
     // Remove most recent entry
     const entries = await this.redis.zrevrange(key, 0, 0);
     if (entries.length > 0) {
@@ -132,7 +131,7 @@ class RedisRateLimitStore implements RateLimitStore {
 /**
  * Fixed window counter implementation (more performant, less precise)
  */
-class FixedWindowStore implements RateLimitStore {
+export class FixedWindowStore implements RateLimitStore {
   private readonly redis: Redis;
   private readonly windowMs: number;
 
@@ -283,14 +282,17 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
 
       // Track for skip options
       const originalJson = res.json.bind(res);
-      res.json = (body: any) => {
+      res.json = (body: unknown) => {
         this.handleResponse(req, res, body, store, key, config);
         return originalJson(body);
       };
 
       next();
     } catch (error) {
-      this.logger.error('Rate limiter error:', error.message);
+      this.logger.error(
+        'Rate limiter error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       // Fail open - allow request if Redis is down
       next();
     }
@@ -319,7 +321,7 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
   private async handleResponse(
     req: Request,
     res: Response,
-    body: any,
+    _body: unknown,
     store: RateLimitStore,
     key: string,
     config: RateLimitConfig,
@@ -349,7 +351,7 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
    */
   async getLimitStatus(key: string, config: RateLimitConfig): Promise<RateLimitInfo | null> {
     const fullKey = `${config.keyPrefix}:${key}`;
-    const store = new RedisRateLimitStore(this.redis, config.windowMs);
+    // Store instance available if needed for reset operations
 
     try {
       const count = await this.redis.zcount(fullKey, Date.now() - config.windowMs, Date.now());
@@ -376,7 +378,7 @@ export class RedisRateLimiterMiddleware implements NestMiddleware {
  * Decorator for applying rate limits to controllers/methods
  */
 export function ApplyRateLimit(config: RateLimitConfig | string): MethodDecorator & ClassDecorator {
-  return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
+  return function (target: object, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     const limiterConfig = typeof config === 'string' ? getPresetConfig(config) : config;
 
     Reflect.defineMetadata('RATE_LIMIT_CONFIG', limiterConfig, target, propertyKey || '');

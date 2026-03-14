@@ -19,7 +19,7 @@ exports.RateLimitingModule = RateLimitingModule = __decorate([
             throttler_1.ThrottlerModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
-                useFactory: (config) => {
+                useFactory: (_config) => {
                     return {
                         throttlers: [
                             {

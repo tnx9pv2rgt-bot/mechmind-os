@@ -35,7 +35,7 @@ let SseController = SseController_1 = class SseController {
         const targetUserId = userOnly === 'true' ? userId : undefined;
         return this.sseService.createEventStream(clientId, tenantId, targetUserId);
     }
-    personalNotificationsStream(req, lastEventId) {
+    personalNotificationsStream(req, _lastEventId) {
         const userId = req.user?.id;
         const tenantId = req.user?.tenantId;
         if (!userId || !tenantId) {

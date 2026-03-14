@@ -153,7 +153,7 @@ export class InspectionController {
     @CurrentUser('tenantId') tenantId: string,
     @CurrentUser('userId') userId: string,
     @Param('id') inspectionId: string,
-    @UploadedFile() file: any,
+    @UploadedFile() file: Express.Multer.File,
     @Body('itemId') itemId?: string,
     @Body('category') category?: string,
     @Body('description') description?: string,

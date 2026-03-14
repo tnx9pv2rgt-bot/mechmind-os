@@ -34,9 +34,9 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
         this.redis = new ioredis_1.default(redisUrl, {
             password: this.configService.get('REDIS_PASSWORD') || undefined,
             db: parseInt(this.configService.get('REDIS_DB') || '0'),
-            retryStrategy: (times) => Math.min(times * 50, 2000),
+            retryStrategy: times => Math.min(times * 50, 2000),
         });
-        this.redis.on('error', (err) => {
+        this.redis.on('error', err => {
             this.logger.error('Redis connection error:', err.message);
         });
     }
@@ -84,7 +84,9 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             if (ipAddress) {
                 params.append('ip_address', ipAddress);
             }
-            const response = await fetch(`${this.baseUrl}/validate?${params.toString()}`, { method: 'GET' });
+            const response = await fetch(`${this.baseUrl}/validate?${params.toString()}`, {
+                method: 'GET',
+            });
             if (!response.ok) {
                 throw new Error(`ZeroBounce API HTTP error: ${response.status}`);
             }
@@ -96,7 +98,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             return result;
         }
         catch (error) {
-            this.logger.error(`Email verification error for ${normalizedEmail}:`, error.message);
+            this.logger.error(`Email verification error for ${normalizedEmail}:`, error instanceof Error ? error.message : 'Unknown error');
             if (this.isDevelopment) {
                 return this.getMockResult(normalizedEmail);
             }
@@ -186,7 +188,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             };
         }
         catch (error) {
-            this.logger.error('Bulk upload error:', error.message);
+            this.logger.error('Bulk upload error:', error instanceof Error ? error.message : 'Unknown error');
             throw error;
         }
     }
@@ -213,10 +215,10 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             }
             const data = await response.json();
             const statusMap = {
-                'Pending': 'pending',
-                'Processing': 'pending',
-                'Completed': 'completed',
-                'Error': 'error',
+                Pending: 'pending',
+                Processing: 'pending',
+                Completed: 'completed',
+                Error: 'error',
             };
             return {
                 id: fileId,
@@ -228,7 +230,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             };
         }
         catch (error) {
-            this.logger.error('Bulk status error:', error.message);
+            this.logger.error('Bulk status error:', error instanceof Error ? error.message : 'Unknown error');
             throw error;
         }
     }
@@ -248,7 +250,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             return Buffer.from(await response.arrayBuffer());
         }
         catch (error) {
-            this.logger.error('Bulk download error:', error.message);
+            this.logger.error('Bulk download error:', error instanceof Error ? error.message : 'Unknown error');
             throw error;
         }
     }
@@ -268,7 +270,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             return { credits: data.credits || 0 };
         }
         catch (error) {
-            this.logger.error('Get credits error:', error.message);
+            this.logger.error('Get credits error:', error instanceof Error ? error.message : 'Unknown error');
             return { credits: 0 };
         }
     }
@@ -304,8 +306,12 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             }
         }
         const disposableDomains = [
-            'tempmail.com', 'throwaway.com', 'mailinator.com',
-            'guerrillamail.com', '10minutemail.com', 'yopmail.com',
+            'tempmail.com',
+            'throwaway.com',
+            'mailinator.com',
+            'guerrillamail.com',
+            '10minutemail.com',
+            'yopmail.com',
         ];
         if (domain && disposableDomains.includes(domain.toLowerCase())) {
             errors.push('Disposable email addresses are not allowed');
@@ -314,25 +320,27 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
     }
     parseApiResponse(email, data) {
         const statusMap = {
-            'valid': 'valid',
-            'invalid': 'invalid',
+            valid: 'valid',
+            invalid: 'invalid',
             'catch-all': 'catch-all',
-            'unknown': 'unknown',
-            'spamtrap': 'spamtrap',
-            'abuse': 'abuse',
-            'do_not_mail': 'do_not_mail',
+            unknown: 'unknown',
+            spamtrap: 'spamtrap',
+            abuse: 'abuse',
+            do_not_mail: 'do_not_mail',
         };
+        const status = data.status;
+        const subStatus = data.sub_status;
         return {
             email,
-            status: statusMap[data.status] || 'unknown',
-            subStatus: data.sub_status,
-            isValid: data.status === 'valid',
-            isDeliverable: ['valid', 'catch-all'].includes(data.status),
+            status: statusMap[status] || 'unknown',
+            subStatus,
+            isValid: status === 'valid',
+            isDeliverable: ['valid', 'catch-all'].includes(status),
             isSyntaxValid: true,
-            isDomainValid: !['invalid_domain', 'invalid_email'].includes(data.sub_status),
+            isDomainValid: !['invalid_domain', 'invalid_email'].includes(subStatus || ''),
             isDisposable: data.disposable || false,
             isRoleBased: data.role || false,
-            isCatchAll: data.status === 'catch-all',
+            isCatchAll: status === 'catch-all',
             isFree: data.free || false,
             score: parseInt(data.zerobounce_score) || 0,
             mxRecord: data.mx_record,
@@ -369,7 +377,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             return cached ? JSON.parse(cached) : null;
         }
         catch (error) {
-            this.logger.warn('Cache get error:', error.message);
+            this.logger.warn('Cache get error:', error instanceof Error ? error.message : 'Unknown error');
             return null;
         }
     }
@@ -378,7 +386,7 @@ let ZeroBounceService = ZeroBounceService_1 = class ZeroBounceService {
             await this.redis.setex(key, this.cacheTtlSeconds, JSON.stringify(value));
         }
         catch (error) {
-            this.logger.warn('Cache set error:', error.message);
+            this.logger.warn('Cache set error:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
     getMockResult(email) {

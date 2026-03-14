@@ -1,11 +1,12 @@
+import * as crypto from 'crypto';
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue, Job } from 'bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
-import { Customer, Vehicle, Booking } from '@prisma/client';
+import { Vehicle, Booking } from '@prisma/client';
 
 /**
  * Extended Booking with extra fields
@@ -333,7 +334,7 @@ export class GdprDeletionService {
     );
 
     // Gather all customer data for snapshot
-    const customerData = await this.prisma.withTenant(tenantId, async prisma => {
+    const customerData = (await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.customerEncrypted.findFirst({
         where: { id: customerId, tenantId },
         include: {
@@ -345,10 +346,12 @@ export class GdprDeletionService {
           },
         },
       });
-    }) as (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
-      vehicles: Vehicle[];
-      bookings: BookingWithCost[];
-    }) | null;
+    })) as
+      | (Awaited<ReturnType<typeof this.prisma.customerEncrypted.findFirst>> & {
+          vehicles: Vehicle[];
+          bookings: BookingWithCost[];
+        })
+      | null;
 
     if (!customerData) {
       throw new NotFoundException(`Customer ${customerId} not found`);
@@ -528,8 +531,9 @@ export class GdprDeletionService {
         errors: errors.length > 0 ? errors : undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to anonymize customer ${customerId}: ${error.message}`);
-      errors.push(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to anonymize customer ${customerId}: ${errorMessage}`);
+      errors.push(errorMessage);
 
       return {
         success: false,
@@ -575,32 +579,31 @@ export class GdprDeletionService {
 
       this.logger.debug(`Found ${recordings.length} recordings to delete`);
 
-      // Delete each recording
-      for (const recording of recordings) {
+      // Batch delete all recordings in a single query
+      if (recordings.length > 0) {
+        const recordingIds = recordings.map(r => r.id);
         try {
-          // In production, this would also delete from S3/Twilio
-          // await this.twilioClient.recordings(recording.recordingSid).remove();
-          // await this.s3Client.deleteObject({ Bucket: 'recordings', Key: recording.recordingUrl });
-
-          // Mark as deleted in database
           await this.prisma.withTenant(tenantId, async prisma => {
-            await prisma.callRecording.update({
-              where: { id: recording.id },
+            await prisma.callRecording.updateMany({
+              where: { id: { in: recordingIds } },
               data: {
                 deletedAt: new Date(),
                 deletionReason: 'GDPR_DELETION_REQUEST',
-                recordingUrl: null, // Remove URL reference
+                recordingUrl: null,
               },
             });
           });
-
-          deletedCount++;
-          storageReclaimed += recording.durationSeconds * 16000; // Approximate: 16kbps audio
+          deletedCount = recordings.length;
+          for (const recording of recordings) {
+            storageReclaimed += recording.durationSeconds * 16000;
+          }
         } catch (error) {
-          failedDeletions.push({
-            recordingId: recording.id,
-            reason: error.message,
-          });
+          for (const recording of recordings) {
+            failedDeletions.push({
+              recordingId: recording.id,
+              reason: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
         }
       }
 
@@ -631,7 +634,8 @@ export class GdprDeletionService {
         storageReclaimed,
       };
     } catch (error) {
-      this.logger.error(`Failed to delete recordings for customer ${customerId}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to delete recordings for customer ${customerId}: ${errorMessage}`);
       return {
         success: false,
         deletedCount,
@@ -639,7 +643,7 @@ export class GdprDeletionService {
           ...failedDeletions,
           {
             recordingId: 'N/A',
-            reason: error.message,
+            reason: errorMessage,
           },
         ],
         storageReclaimed,
@@ -749,7 +753,6 @@ export class GdprDeletionService {
    * Generate checksum for snapshot integrity
    */
   private generateChecksum(data: string): string {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 }

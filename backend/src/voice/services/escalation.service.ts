@@ -29,7 +29,7 @@ export class EscalationService {
   /**
    * Find an available agent for transfer
    */
-  async findAvailableAgent(tenantId: string, category?: string): Promise<Agent | null> {
+  async findAvailableAgent(tenantId: string, _category?: string): Promise<Agent | null> {
     this.logger.log(`Finding available agent for tenant ${tenantId}`, 'EscalationService');
 
     // In a real implementation, this would check:
@@ -99,7 +99,7 @@ export class EscalationService {
    * Queue customer for callback when no agents available
    */
   async queueForCallback(tenantId: string, customerPhone: string, reason: string): Promise<void> {
-    this.logger.log(`Queuing ${customerPhone} for callback`, 'EscalationService');
+    this.logger.log(`Queuing ${customerPhone.slice(0, 4)}*** for callback`, 'EscalationService');
 
     await this.queueService.addVoiceJob(
       'schedule-callback',
@@ -132,7 +132,16 @@ export class EscalationService {
   /**
    * Get escalation statistics
    */
-  async getEscalationStats(tenantId: string, fromDate?: Date, toDate?: Date): Promise<any> {
+  async getEscalationStats(
+    _tenantId: string,
+    _fromDate?: Date,
+    _toDate?: Date,
+  ): Promise<{
+    totalEscalations: number;
+    averageWaitTime: number;
+    successfulTransfers: number;
+    callbackQueueLength: number;
+  }> {
     // In a real implementation, this would query an escalation/transfer table
     // For now, return placeholder stats
     return {

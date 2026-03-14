@@ -36,9 +36,9 @@ let TwilioService = TwilioService_1 = class TwilioService {
         this.redis = new ioredis_1.default(redisUrl, {
             password: this.configService.get('REDIS_PASSWORD') || undefined,
             db: parseInt(this.configService.get('REDIS_DB') || '0'),
-            retryStrategy: (times) => Math.min(times * 50, 2000),
+            retryStrategy: times => Math.min(times * 50, 2000),
         });
-        this.redis.on('error', (err) => {
+        this.redis.on('error', err => {
             this.logger.error('Redis connection error:', err.message);
         });
     }
@@ -80,7 +80,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
             return result;
         }
         catch (error) {
-            this.logger.error(`Phone validation error for ${formattedNumber}:`, error.message);
+            this.logger.error(`Phone validation error for ${formattedNumber}:`, error instanceof Error ? error.message : 'Unknown error');
             if (error.code === 20404) {
                 return {
                     phoneNumber: formattedNumber,
@@ -125,7 +125,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
                 };
             }
             catch (error) {
-                this.logger.error('Twilio Verify error:', error.message);
+                this.logger.error('Twilio Verify error:', error instanceof Error ? error.message : 'Unknown error');
             }
         }
         if (this.isDevelopment && (!this.accountSid || !this.authToken)) {
@@ -152,11 +152,11 @@ let TwilioService = TwilioService_1 = class TwilioService {
             };
         }
         catch (error) {
-            this.logger.error('SMS sending error:', error.message);
+            this.logger.error('SMS sending error:', error instanceof Error ? error.message : 'Unknown error');
             return {
                 success: false,
                 status: 'error',
-                message: error.message,
+                message: error instanceof Error ? error.message : 'Unknown error',
             };
         }
     }
@@ -173,7 +173,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
                 };
             }
             catch (error) {
-                this.logger.error('Twilio Verify check error:', error.message);
+                this.logger.error('Twilio Verify check error:', error instanceof Error ? error.message : 'Unknown error');
             }
         }
         const session = await this.getOtpSession(formattedNumber);
@@ -194,7 +194,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
             return {
                 success: false,
                 valid: false,
-                message: `Invalid code. ${this.maxAttempts - session.attempts} attempts remaining.`
+                message: `Invalid code. ${this.maxAttempts - session.attempts} attempts remaining.`,
             };
         }
         session.verified = true;
@@ -242,11 +242,11 @@ let TwilioService = TwilioService_1 = class TwilioService {
             };
         }
         catch (error) {
-            this.logger.error('SMS resend error:', error.message);
+            this.logger.error('SMS resend error:', error instanceof Error ? error.message : 'Unknown error');
             return {
                 success: false,
                 status: 'error',
-                message: error.message,
+                message: error instanceof Error ? error.message : 'Unknown error',
             };
         }
     }
@@ -273,11 +273,11 @@ let TwilioService = TwilioService_1 = class TwilioService {
             };
         }
         catch (error) {
-            this.logger.error('SMS send error:', error.message);
+            this.logger.error('SMS send error:', error instanceof Error ? error.message : 'Unknown error');
             return {
                 success: false,
                 status: 'error',
-                message: error.message,
+                message: error instanceof Error ? error.message : 'Unknown error',
             };
         }
     }
@@ -289,7 +289,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
                 results.set(phone, result);
             }
             catch (error) {
-                this.logger.error(`Validation error for ${phone}:`, error.message);
+                this.logger.error(`Validation error for ${phone}:`, error instanceof Error ? error.message : 'Unknown error');
                 results.set(phone, {
                     phoneNumber: phone,
                     formattedNumber: this.formatE164(phone),
@@ -305,7 +305,8 @@ let TwilioService = TwilioService_1 = class TwilioService {
         return results;
     }
     parseLookupResult(formattedNumber, lookup) {
-        const lineType = lookup.lineTypeIntelligence?.type;
+        const lookupRecord = lookup;
+        const lineType = lookupRecord.lineTypeIntelligence?.type;
         return {
             phoneNumber: lookup.phoneNumber,
             formattedNumber,
@@ -313,25 +314,25 @@ let TwilioService = TwilioService_1 = class TwilioService {
             isMobile: lineType === 'mobile',
             isLandline: lineType === 'landline',
             isVoip: lineType === 'voip',
-            carrier: lookup.carrier?.name,
+            carrier: lookupRecord.carrier?.name,
             countryCode: lookup.countryCode || '',
             countryName: lookup.countryCode || '',
             nationalFormat: lookup.nationalFormat || '',
-            callerName: lookup.callerName?.callerName,
+            callerName: lookupRecord.callerName?.callerName,
         };
     }
     getCountryPrefix(countryCode) {
         const prefixes = {
-            'IT': '+39',
-            'US': '+1',
-            'GB': '+44',
-            'FR': '+33',
-            'DE': '+49',
-            'ES': '+34',
-            'CH': '+41',
-            'AT': '+43',
-            'NL': '+31',
-            'BE': '+32',
+            IT: '+39',
+            US: '+1',
+            GB: '+44',
+            FR: '+33',
+            DE: '+49',
+            ES: '+34',
+            CH: '+41',
+            AT: '+43',
+            NL: '+31',
+            BE: '+32',
         };
         return prefixes[countryCode.toUpperCase()] || '+39';
     }
@@ -376,7 +377,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
             return cached ? JSON.parse(cached) : null;
         }
         catch (error) {
-            this.logger.warn('Cache get error:', error.message);
+            this.logger.warn('Cache get error:', error instanceof Error ? error.message : 'Unknown error');
             return null;
         }
     }
@@ -385,7 +386,7 @@ let TwilioService = TwilioService_1 = class TwilioService {
             await this.redis.setex(key, ttl, JSON.stringify(value));
         }
         catch (error) {
-            this.logger.warn('Cache set error:', error.message);
+            this.logger.warn('Cache set error:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
     getMockValidationResult(phoneNumber) {
@@ -406,12 +407,12 @@ let TwilioService = TwilioService_1 = class TwilioService {
     }
     getCountryName(code) {
         const names = {
-            'IT': 'Italy',
-            'US': 'United States',
-            'GB': 'United Kingdom',
-            'FR': 'France',
-            'DE': 'Germany',
-            'ES': 'Spain',
+            IT: 'Italy',
+            US: 'United States',
+            GB: 'United Kingdom',
+            FR: 'France',
+            DE: 'Germany',
+            ES: 'Spain',
         };
         return names[code] || code;
     }
@@ -453,8 +454,14 @@ function formatE164(phoneNumber, defaultCountry = 'IT') {
     }
     if (!cleaned.startsWith('+')) {
         const prefixes = {
-            'IT': '+39', 'US': '+1', 'GB': '+44', 'FR': '+33',
-            'DE': '+49', 'ES': '+34', 'CH': '+41', 'AT': '+43',
+            IT: '+39',
+            US: '+1',
+            GB: '+44',
+            FR: '+33',
+            DE: '+49',
+            ES: '+34',
+            CH: '+41',
+            AT: '+43',
         };
         cleaned = (prefixes[defaultCountry.toUpperCase()] || '+39') + cleaned;
     }

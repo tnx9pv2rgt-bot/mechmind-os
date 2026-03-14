@@ -37,8 +37,7 @@ function validateLockOrder(locks) {
         }
         return a.slotId.localeCompare(b.slotId);
     });
-    const isOrdered = locks.every((lock, index) => lock.tenantId === sorted[index].tenantId &&
-        lock.slotId === sorted[index].slotId);
+    const isOrdered = locks.every((lock, index) => lock.tenantId === sorted[index].tenantId && lock.slotId === sorted[index].slotId);
     if (!isOrdered) {
         throw new LockOrderViolationError('Lock acquisition order violation detected. Locks must be acquired in consistent order (tenant_id, then slot_id) to prevent deadlocks.', sorted, locks);
     }
@@ -64,10 +63,10 @@ function computeBackoffDelay(attempt, baseDelayMs = 100, maxDelayMs = 5000) {
     return Math.max(0, Math.floor(jitteredDelay));
 }
 function isLockTimeoutError(error) {
-    return error instanceof LockTimeoutError ||
-        (error instanceof Error && error.name === 'LockTimeoutError');
+    return (error instanceof LockTimeoutError ||
+        (error instanceof Error && error.name === 'LockTimeoutError'));
 }
 function isLockOrderViolationError(error) {
-    return error instanceof LockOrderViolationError ||
-        (error instanceof Error && error.name === 'LockOrderViolationError');
+    return (error instanceof LockOrderViolationError ||
+        (error instanceof Error && error.name === 'LockOrderViolationError'));
 }

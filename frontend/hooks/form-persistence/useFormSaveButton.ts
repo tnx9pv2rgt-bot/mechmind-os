@@ -41,7 +41,7 @@ export interface UseFormSaveButtonReturn {
 
 /**
  * Hook per gestire il pulsante "Salva e continua dopo".
- * 
+ *
  * @example
  * ```tsx
  * function MyForm() {
@@ -51,7 +51,7 @@ export interface UseFormSaveButtonReturn {
  *     onSaveComplete: () => toast.success('Salvato!'),
  *     onSaveAndContinueLater: () => router.push('/dashboard'),
  *   });
- *   
+ *
  *   return (
  *     <div className="flex gap-2">
  *       <Button onClick={saveButton.handleSave} disabled={saveButton.isSaving}>
@@ -65,9 +65,7 @@ export interface UseFormSaveButtonReturn {
  * }
  * ```
  */
-export function useFormSaveButton(
-  options: UseFormSaveButtonOptions
-): UseFormSaveButtonReturn {
+export function useFormSaveButton(options: UseFormSaveButtonOptions): UseFormSaveButtonReturn {
   const {
     persistence,
     onSaveComplete,
@@ -110,7 +108,7 @@ export function useFormSaveButton(
     handleSave().then(() => {
       if (showConfirmation) {
         // Qui potresti mostrare un toast o un modal
-        console.log(confirmationMessage);
+        // Confirmation shown
       }
       onSaveAndContinueLater?.();
     });

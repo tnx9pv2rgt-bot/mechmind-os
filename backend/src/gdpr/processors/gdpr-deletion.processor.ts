@@ -49,7 +49,7 @@ export class GdprDeletionProcessor extends WorkerHost {
     recordingsDeleted: number;
   }> {
     const startTime = Date.now();
-    const { customerId, tenantId, requestId, reason } = job.data;
+    const { customerId, tenantId, requestId } = job.data;
 
     this.logger.log(`Starting deletion job ${job.id} for customer ${customerId}`);
     await job.updateProgress(10);
@@ -115,7 +115,8 @@ export class GdprDeletionProcessor extends WorkerHost {
         recordingsDeleted: recordingResult.deletedCount,
       };
     } catch (error) {
-      this.logger.error(`Deletion job ${job.id} failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Deletion job ${job.id} failed: ${errorMessage}`);
 
       // Update request status to failed
       await this.prisma.withTenant(tenantId, async prisma => {
@@ -123,7 +124,7 @@ export class GdprDeletionProcessor extends WorkerHost {
           where: { id: requestId },
           data: {
             status: 'RECEIVED', // Reset to allow retry
-            notes: `Deletion failed: ${error.message}`,
+            notes: `Deletion failed: ${errorMessage}`,
           },
         });
       });

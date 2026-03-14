@@ -25,7 +25,7 @@ import { BookingSlotService } from '../services/booking-slot.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
-import { CurrentUser, CurrentTenant } from '@auth/decorators/current-user.decorator';
+import { CurrentTenant } from '@auth/decorators/current-user.decorator';
 import {
   CreateBookingDto,
   ReserveSlotDto,
@@ -33,12 +33,7 @@ import {
   BookingResponseDto,
   ConflictResponseDto,
 } from '../dto/create-booking.dto';
-import {
-  FindAvailableSlotsDto,
-  CreateSlotDto,
-  BookingSlotResponseDto,
-  SlotAvailabilityResponseDto,
-} from '../dto/booking-slot.dto';
+import { FindAvailableSlotsDto, CreateSlotDto } from '../dto/booking-slot.dto';
 import { BookingStatus } from '@prisma/client';
 
 @ApiTags('Bookings')

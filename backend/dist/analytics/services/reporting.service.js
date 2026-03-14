@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReportingService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../common/services/prisma.service");
 const csv_writer_1 = require("csv-writer");
 let ReportingService = class ReportingService {
@@ -35,18 +36,14 @@ let ReportingService = class ReportingService {
     `;
     }
     async getRevenueAnalytics(tenantId, year, month) {
-        let query = `
+        const monthFilter = month ? client_1.Prisma.sql `AND EXTRACT(MONTH FROM date) = ${month}` : client_1.Prisma.empty;
+        return this.prisma.$queryRaw `
       SELECT * FROM mv_revenue_analytics
-      WHERE tenant_id = $1::uuid
-        AND EXTRACT(YEAR FROM date) = $2
+      WHERE tenant_id = ${tenantId}::uuid
+        AND EXTRACT(YEAR FROM date) = ${year}
+        ${monthFilter}
+      ORDER BY date DESC
     `;
-        const params = [tenantId, year];
-        if (month) {
-            query += ` AND EXTRACT(MONTH FROM date) = $3`;
-            params.push(month);
-        }
-        query += ` ORDER BY date DESC`;
-        return this.prisma.$queryRawUnsafe(query, ...params);
     }
     async getCustomerRetention(tenantId) {
         return this.prisma.$queryRaw `
@@ -84,31 +81,23 @@ let ReportingService = class ReportingService {
     `;
     }
     async getMechanicPerformance(tenantId, year, month) {
-        let query = `
+        const monthFilter = month ? client_1.Prisma.sql `AND EXTRACT(MONTH FROM month) = ${month}` : client_1.Prisma.empty;
+        return this.prisma.$queryRaw `
       SELECT * FROM mv_mechanic_performance
-      WHERE tenant_id = $1::uuid
-        AND EXTRACT(YEAR FROM month) = $2
+      WHERE tenant_id = ${tenantId}::uuid
+        AND EXTRACT(YEAR FROM month) = ${year}
+        ${monthFilter}
+      ORDER BY total_revenue_generated DESC
     `;
-        const params = [tenantId, year];
-        if (month) {
-            query += ` AND EXTRACT(MONTH FROM month) = $3`;
-            params.push(month);
-        }
-        query += ` ORDER BY total_revenue_generated DESC`;
-        return this.prisma.$queryRawUnsafe(query, ...params);
     }
     async getInventoryStatus(tenantId, status) {
-        let query = `
+        const statusFilter = status ? client_1.Prisma.sql `AND stock_status = ${status}` : client_1.Prisma.empty;
+        return this.prisma.$queryRaw `
       SELECT * FROM mv_inventory_status
-      WHERE tenant_id = $1::uuid
+      WHERE tenant_id = ${tenantId}::uuid
+        ${statusFilter}
+      ORDER BY inventory_value DESC
     `;
-        const params = [tenantId];
-        if (status) {
-            query += ` AND stock_status = $2`;
-            params.push(status);
-        }
-        query += ` ORDER BY inventory_value DESC`;
-        return this.prisma.$queryRawUnsafe(query, ...params);
     }
     async getInventoryValuation(tenantId) {
         return this.prisma.$queryRaw `
@@ -233,7 +222,7 @@ let ReportingService = class ReportingService {
         await this.prisma.$executeRaw `SELECT refresh_analytics_views()`;
     }
     async getCustomKPIs(tenantId) {
-        const [bookingMetrics, revenueMetrics, customerMetrics, inventoryMetrics,] = await Promise.all([
+        const [bookingMetrics, revenueMetrics, customerMetrics, inventoryMetrics] = await Promise.all([
             this.prisma.$queryRaw `
         SELECT 
           COUNT(*) as today_bookings,

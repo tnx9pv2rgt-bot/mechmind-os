@@ -95,7 +95,7 @@ const PROVINCE_CODES = {
     '64': 'Roma',
     '65': 'Latina',
     '66': 'Frosinone',
-    '67': 'L\'Aquila',
+    '67': "L'Aquila",
     '68': 'Teramo',
     '69': 'Pescara',
     '70': 'Chieti',
@@ -130,20 +130,104 @@ const PROVINCE_CODES = {
     '99': 'Nuoro',
 };
 const PROVINCE_SIGLE = {
-    '01': 'TO', '02': 'VA', '03': 'BG', '04': 'MI', '05': 'BS', '06': 'LC', '07': 'CO',
-    '08': 'SO', '09': 'MB', '10': 'NO', '11': 'CN', '12': 'AT', '13': 'AL', '14': 'BI',
-    '15': 'VB', '16': 'GE', '17': 'SV', '18': 'IM', '19': 'SP', '20': 'MI', '21': 'PV',
-    '22': 'LO', '23': 'CR', '24': 'MN', '25': 'BS', '26': 'VA', '27': 'BG', '28': 'CO',
-    '29': 'PC', '30': 'VE', '31': 'TV', '32': 'VR', '33': 'VI', '34': 'PD', '35': 'RO',
-    '36': 'BL', '37': 'UD', '38': 'GO', '39': 'TS', '40': 'BO', '41': 'MO', '42': 'PR',
-    '43': 'RE', '44': 'FE', '45': 'RA', '46': 'FC', '47': 'RN', '48': 'PU', '49': 'AN',
-    '50': 'FI', '51': 'PT', '52': 'PO', '53': 'LU', '54': 'MS', '55': 'LI', '56': 'PI',
-    '57': 'AR', '58': 'SI', '59': 'GR', '60': 'PG', '61': 'TR', '62': 'VT', '63': 'RI',
-    '64': 'RM', '65': 'LT', '66': 'FR', '67': 'AQ', '68': 'TE', '69': 'PE', '70': 'CH',
-    '71': 'CB', '72': 'IS', '73': 'CE', '74': 'BN', '75': 'NA', '76': 'AV', '77': 'SA',
-    '78': 'FG', '79': 'BA', '80': 'TA', '81': 'BR', '82': 'LE', '83': 'BA', '84': 'PZ',
-    '85': 'MT', '86': 'CS', '87': 'CZ', '88': 'RC', '89': 'KR', '90': 'PA', '91': 'AG',
-    '92': 'CL', '93': 'EN', '94': 'CT', '95': 'ME', '96': 'RG', '97': 'SR', '98': 'SS',
+    '01': 'TO',
+    '02': 'VA',
+    '03': 'BG',
+    '04': 'MI',
+    '05': 'BS',
+    '06': 'LC',
+    '07': 'CO',
+    '08': 'SO',
+    '09': 'MB',
+    '10': 'NO',
+    '11': 'CN',
+    '12': 'AT',
+    '13': 'AL',
+    '14': 'BI',
+    '15': 'VB',
+    '16': 'GE',
+    '17': 'SV',
+    '18': 'IM',
+    '19': 'SP',
+    '20': 'MI',
+    '21': 'PV',
+    '22': 'LO',
+    '23': 'CR',
+    '24': 'MN',
+    '25': 'BS',
+    '26': 'VA',
+    '27': 'BG',
+    '28': 'CO',
+    '29': 'PC',
+    '30': 'VE',
+    '31': 'TV',
+    '32': 'VR',
+    '33': 'VI',
+    '34': 'PD',
+    '35': 'RO',
+    '36': 'BL',
+    '37': 'UD',
+    '38': 'GO',
+    '39': 'TS',
+    '40': 'BO',
+    '41': 'MO',
+    '42': 'PR',
+    '43': 'RE',
+    '44': 'FE',
+    '45': 'RA',
+    '46': 'FC',
+    '47': 'RN',
+    '48': 'PU',
+    '49': 'AN',
+    '50': 'FI',
+    '51': 'PT',
+    '52': 'PO',
+    '53': 'LU',
+    '54': 'MS',
+    '55': 'LI',
+    '56': 'PI',
+    '57': 'AR',
+    '58': 'SI',
+    '59': 'GR',
+    '60': 'PG',
+    '61': 'TR',
+    '62': 'VT',
+    '63': 'RI',
+    '64': 'RM',
+    '65': 'LT',
+    '66': 'FR',
+    '67': 'AQ',
+    '68': 'TE',
+    '69': 'PE',
+    '70': 'CH',
+    '71': 'CB',
+    '72': 'IS',
+    '73': 'CE',
+    '74': 'BN',
+    '75': 'NA',
+    '76': 'AV',
+    '77': 'SA',
+    '78': 'FG',
+    '79': 'BA',
+    '80': 'TA',
+    '81': 'BR',
+    '82': 'LE',
+    '83': 'BA',
+    '84': 'PZ',
+    '85': 'MT',
+    '86': 'CS',
+    '87': 'CZ',
+    '88': 'RC',
+    '89': 'KR',
+    '90': 'PA',
+    '91': 'AG',
+    '92': 'CL',
+    '93': 'EN',
+    '94': 'CT',
+    '95': 'ME',
+    '96': 'RG',
+    '97': 'SR',
+    '98': 'SS',
     '99': 'NU',
 };
 const MOCK_COMPANIES = {
@@ -163,7 +247,7 @@ const MOCK_COMPANIES = {
     },
     '11111111111': {
         ragioneSociale: 'Officina Rossi & Figli',
-        indirizzo: 'Via dell\'Artigianato 7',
+        indirizzo: "Via dell'Artigianato 7",
         cap: '50100',
         città: 'Firenze',
         provincia: 'FI',
@@ -317,7 +401,6 @@ async function cachePivaData(piva, data) {
 }
 async function fetchPivaDataFromAPI(piva) {
     const cleaned = cleanPiva(piva);
-    await new Promise(resolve => setTimeout(resolve, 200));
     const validation = validatePiva(piva);
     if (!validation.isValid) {
         return {
@@ -329,28 +412,51 @@ async function fetchPivaDataFromAPI(piva) {
             provincia: '',
         };
     }
-    const mockData = MOCK_COMPANIES[cleaned];
-    if (mockData) {
-        return {
-            isValid: true,
-            ragioneSociale: mockData.ragioneSociale || 'Dato non disponibile',
-            indirizzo: mockData.indirizzo || 'Dato non disponibile',
-            cap: mockData.cap || 'Dato non disponibile',
-            città: mockData.città || 'Dato non disponibile',
-            provincia: mockData.provincia || extractProvinceSiglaFromPiva(piva) || 'Dato non disponibile',
-        };
+    try {
+        const viesUrl = process.env.VIES_API_URL ||
+            'https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/' + cleaned;
+        const response = await fetch(viesUrl, {
+            method: 'GET',
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.timeout(5000),
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.isValid || data.valid) {
+                const provinceSigla = extractProvinceSiglaFromPiva(piva) || '';
+                return {
+                    isValid: true,
+                    ragioneSociale: data.name || data.traderName || '',
+                    indirizzo: data.address || data.traderAddress || '',
+                    cap: '',
+                    città: '',
+                    provincia: provinceSigla,
+                };
+            }
+        }
     }
-    const provinceSigla = extractProvinceSiglaFromPiva(piva);
-    const provinceName = extractProvinceFromPiva(piva);
-    const provinceCode = cleaned.substring(0, 2);
-    const baseCap = provinceCode + '100';
+    catch {
+    }
+    if (process.env.NODE_ENV !== 'production') {
+        const mockData = MOCK_COMPANIES[cleaned];
+        if (mockData) {
+            return {
+                isValid: true,
+                ragioneSociale: mockData.ragioneSociale || 'Dato non disponibile',
+                indirizzo: mockData.indirizzo || 'Dato non disponibile',
+                cap: mockData.cap || 'Dato non disponibile',
+                città: mockData.città || 'Dato non disponibile',
+                provincia: mockData.provincia || extractProvinceSiglaFromPiva(piva) || 'Dato non disponibile',
+            };
+        }
+    }
     return {
         isValid: true,
-        ragioneSociale: `Azienda ${cleaned.substring(0, 5)}...`,
-        indirizzo: 'Via dell\'Industria 1',
-        cap: baseCap,
-        città: provinceName || 'Sede legale',
-        provincia: provinceSigla || 'XX',
+        ragioneSociale: '',
+        indirizzo: '',
+        cap: '',
+        città: extractProvinceFromPiva(piva) || '',
+        provincia: extractProvinceSiglaFromPiva(piva) || '',
     };
 }
 async function getPivaData(piva, skipCache = false) {

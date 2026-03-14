@@ -33,7 +33,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
         this.redisSubscriber = this.redis.duplicate();
         this.setupRedisSubscription();
     }
-    afterInit(server) {
+    afterInit(_server) {
         this.logger.log('OBD Streaming Gateway initialized');
     }
     async handleConnection(client) {
@@ -52,7 +52,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             });
         }
         catch (error) {
-            this.logger.error(`Connection error: ${error.message}`);
+            this.logger.error(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             client.disconnect();
         }
     }
@@ -87,7 +87,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             this.logger.log(`Streaming started: ${stream.id} for device ${payload.deviceId}`);
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleStopStreaming(client, payload) {
@@ -107,7 +107,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             client.emit('streaming-stopped', { streamId: payload.streamId });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleSubscribeDevice(client, payload) {
@@ -124,7 +124,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             client.emit('subscribed', { deviceId: payload.deviceId });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleUnsubscribeDevice(client, payload) {
@@ -137,7 +137,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             client.emit('unsubscribed', { deviceId: payload.deviceId });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleSensorData(client, payload) {
@@ -145,7 +145,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             await this.streamingService.processSensorData(payload.streamId, payload.data);
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleCaptureFreezeFrame(client, payload) {
@@ -154,7 +154,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             client.emit('freeze-frame-captured', freezeFrame);
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleGetMode06Tests(client, payload) {
@@ -163,7 +163,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             client.emit('mode06-results', { deviceId: payload.deviceId, results });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleExecuteEvapTest(client, payload) {
@@ -172,7 +172,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             client.emit('evap-test-started', test);
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleRequestSnapshot(client, payload) {
@@ -185,7 +185,7 @@ let ObdStreamingGateway = ObdStreamingGateway_1 = class ObdStreamingGateway {
             });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     setupRedisSubscription() {

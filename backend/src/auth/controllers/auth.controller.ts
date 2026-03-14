@@ -8,9 +8,9 @@ import {
   Ip,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
-import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
-import { AuthService, AuthTokens } from '../services/auth.service';
+import { Throttle } from '@nestjs/throttler';
+import { IsEmail, IsString, IsNotEmpty, IsOptional, MinLength, Matches } from 'class-validator';
+import { AuthService, AuthTokens, RegisterTenantResult } from '../services/auth.service';
 import { MfaService } from '../mfa/mfa.service';
 import { MfaRequiredResponseDto } from '../mfa/dto/mfa.dto';
 
@@ -47,6 +47,28 @@ class Verify2FADto {
   totpCode: string;
 }
 
+class RegisterDto {
+  @IsString()
+  @IsNotEmpty()
+  shopName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[a-z0-9-]+$/, { message: 'Lo slug può contenere solo lettere minuscole, numeri e trattini' })
+  slug: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8, { message: 'La password deve avere almeno 8 caratteri' })
+  password: string;
+}
+
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -54,6 +76,26 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly mfaService: MfaService,
   ) {}
+
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ strict: { ttl: 3600000, limit: 3 } }) // 3 registrazioni per ora per IP
+  @ApiOperation({
+    summary: 'Registra nuovo tenant',
+    description: 'Crea un nuovo tenant con il primo utente admin. Restituisce JWT tokens.',
+  })
+  @ApiResponse({ status: 201, description: 'Tenant creato con successo' })
+  @ApiResponse({ status: 400, description: 'Dati non validi' })
+  @ApiResponse({ status: 409, description: 'Slug o email già in uso' })
+  async register(@Body() dto: RegisterDto): Promise<RegisterTenantResult> {
+    return this.authService.registerTenant({
+      shopName: dto.shopName,
+      slug: dto.slug,
+      name: dto.name,
+      email: dto.email,
+      password: dto.password,
+    });
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)

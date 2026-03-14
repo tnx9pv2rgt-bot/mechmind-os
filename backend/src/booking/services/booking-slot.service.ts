@@ -1,8 +1,20 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Prisma, SlotStatus } from '@prisma/client';
+import { BookingSlot, Prisma, SlotStatus } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 import { CreateSlotDto } from '../dto/booking-slot.dto';
+
+type SlotWithBooking = Prisma.BookingSlotGetPayload<{
+  include: { booking: { include: { customer: true; vehicle: true } } };
+}>;
+
+interface DayAvailability {
+  date: string;
+  totalSlots: number;
+  availableSlots: number;
+  bookedSlots: number;
+  blockedSlots: number;
+}
 
 @Injectable()
 export class BookingSlotService {
@@ -14,7 +26,11 @@ export class BookingSlotService {
   /**
    * Find available slots for a date range
    */
-  async findAvailableSlots(tenantId: string, date: string, duration?: number): Promise<any[]> {
+  async findAvailableSlots(
+    tenantId: string,
+    date: string,
+    duration?: number,
+  ): Promise<BookingSlot[]> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -51,7 +67,7 @@ export class BookingSlotService {
   /**
    * Create a new booking slot
    */
-  async createSlot(tenantId: string, dto: CreateSlotDto): Promise<any> {
+  async createSlot(tenantId: string, dto: CreateSlotDto): Promise<BookingSlot> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const startTime = new Date(dto.startTime);
       const endTime = new Date(dto.endTime);
@@ -165,7 +181,7 @@ export class BookingSlotService {
   /**
    * Get slot by ID
    */
-  async findById(tenantId: string, slotId: string): Promise<any> {
+  async findById(tenantId: string, slotId: string): Promise<SlotWithBooking> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: {
@@ -193,7 +209,11 @@ export class BookingSlotService {
   /**
    * Update slot status
    */
-  async updateSlotStatus(tenantId: string, slotId: string, status: SlotStatus): Promise<any> {
+  async updateSlotStatus(
+    tenantId: string,
+    slotId: string,
+    status: SlotStatus,
+  ): Promise<BookingSlot> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: { id: slotId, tenantId },
@@ -217,7 +237,7 @@ export class BookingSlotService {
   /**
    * Block a slot (e.g., for lunch break, maintenance)
    */
-  async blockSlot(tenantId: string, slotId: string, reason?: string): Promise<any> {
+  async blockSlot(tenantId: string, slotId: string, reason?: string): Promise<BookingSlot> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const slot = await prisma.bookingSlot.findFirst({
         where: { id: slotId, tenantId },
@@ -270,7 +290,11 @@ export class BookingSlotService {
   /**
    * Get slot availability for a date range
    */
-  async getAvailabilityForRange(tenantId: string, startDate: Date, endDate: Date): Promise<any[]> {
+  async getAvailabilityForRange(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<DayAvailability[]> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const slots = await prisma.bookingSlot.findMany({
         where: {
@@ -310,7 +334,7 @@ export class BookingSlotService {
 
           return acc;
         },
-        {} as Record<string, any>,
+        {} as Record<string, DayAvailability>,
       );
 
       return Object.values(grouped);

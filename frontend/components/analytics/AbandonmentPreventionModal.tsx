@@ -42,8 +42,9 @@ export const AbandonmentPreventionModal: React.FC<AbandonmentPreventionModalProp
   className,
 }) => {
   const handleOpenChat = useCallback(() => {
-    if (typeof window !== 'undefined' && (window as any).analytics) {
-      (window as any).analytics.track('Support Chat Opened', {
+    const win = window as Window & { analytics?: { track: (event: string, properties: Record<string, string | number | undefined>) => void } };
+    if (typeof window !== 'undefined' && win.analytics) {
+      win.analytics.track('Support Chat Opened', {
         source: 'abandonment_prevention',
         formId,
         riskLevel,

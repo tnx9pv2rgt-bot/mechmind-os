@@ -51,7 +51,7 @@ __decorate([
         description: 'TOTP code from authenticator app or backup code',
         example: '123456',
         minLength: 6,
-        maxLength: 9
+        maxLength: 9,
     }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(6, 9),
@@ -68,7 +68,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'TOTP code from authenticator app or backup code',
-        example: '123456'
+        example: '123456',
     }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(6, 9),
@@ -80,7 +80,7 @@ exports.DisableMfaDto = DisableMfaDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'TOTP code or backup code',
-        example: '123456'
+        example: '123456',
     }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

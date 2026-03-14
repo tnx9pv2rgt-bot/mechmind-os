@@ -235,7 +235,9 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
                 ...(config.modelFormat && { modelFormat: config.modelFormat }),
                 ...(config.modelUrl && { modelUrl: config.modelUrl }),
                 ...(config.componentMappings && { componentMappings: config.componentMappings }),
-                ...(config.defaultCameraPosition && { defaultCameraPosition: config.defaultCameraPosition }),
+                ...(config.defaultCameraPosition && {
+                    defaultCameraPosition: config.defaultCameraPosition,
+                }),
                 ...(config.hotspots && { hotspots: config.hotspots }),
             },
         });
@@ -269,8 +271,9 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
         });
         const overallHealth = this.calculateOverallHealth(components);
         const activeAlerts = await this.generatePredictiveAlerts(vehicle);
-        const latestReading = vehicle.obdDevices
-            .flatMap((d) => d.readings)
+        const obdDevices = vehicle.obdDevices;
+        const latestReading = obdDevices
+            .flatMap(d => d.readings)
             .sort((a, b) => b.recordedAt.getTime() - a.recordedAt.getTime())[0];
         return {
             vehicleId: vehicle.id,
@@ -348,7 +351,7 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
         });
         return defaultComponents;
     }
-    getDefaultComponents(vehicle) {
+    getDefaultComponents(_vehicle) {
         return [
             {
                 id: 'engine',
@@ -477,7 +480,8 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
     async generatePredictiveAlerts(vehicle) {
         const alerts = [];
         const mileage = vehicle.mileage || 0;
-        const activeDtcs = vehicle.obdDevices.flatMap((d) => d.dtcs);
+        const obdDevicesForAlerts = vehicle.obdDevices;
+        const activeDtcs = obdDevicesForAlerts.flatMap(d => d.dtcs);
         for (const dtc of activeDtcs) {
             if (dtc.severity === 'CRITICAL' || dtc.severity === 'HIGH') {
                 alerts.push({
@@ -489,21 +493,31 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
                     confidence: 0.85,
                     recommendedAction: `Address ${dtc.code}: ${dtc.description}`,
                     estimatedCost: this.estimateRepairCost(dtc.code),
-                    reasoning: [dtc.description, dtc.symptoms, dtc.causes].filter(Boolean),
+                    reasoning: [dtc.description, dtc.symptoms, dtc.causes].filter((s) => Boolean(s)),
                 });
             }
         }
         const components = await this.prisma.vehicleTwinComponent.findMany({
             where: { vehicleId: vehicle.id },
         });
+        const componentIds = components.map((c) => c.componentId);
+        const allHistories = await this.prisma.componentHistory.findMany({
+            where: {
+                vehicleId: vehicle.id,
+                componentId: { in: componentIds },
+            },
+            orderBy: { date: 'desc' },
+        });
+        const historiesByComponent = new Map();
+        for (const h of allHistories) {
+            const key = h.componentId;
+            if (!historiesByComponent.has(key)) {
+                historiesByComponent.set(key, []);
+            }
+            historiesByComponent.get(key).push(h);
+        }
         for (const component of components) {
-            const serviceHistory = await this.prisma.componentHistory.findMany({
-                where: {
-                    vehicleId: vehicle.id,
-                    componentId: component.componentId,
-                },
-                orderBy: { date: 'desc' },
-            });
+            const serviceHistory = historiesByComponent.get(component.componentId) || [];
             const prediction = this.predictComponentFailure(component, serviceHistory, mileage);
             if (prediction.shouldAlert) {
                 alerts.push({
@@ -530,7 +544,9 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
         let severity = 'LOW';
         let confidence = 0.5;
         const lastService = history.find(h => h.eventType === 'MAINTENANCE' || h.eventType === 'REPLACEMENT');
-        const lifespan = this.LIFESPAN_ESTIMATES[component.category];
+        const componentCategory = component.category;
+        const componentName = component.name;
+        const lifespan = this.LIFESPAN_ESTIMATES[componentCategory];
         if (lifespan) {
             const serviceMileage = lastService?.odometer || 0;
             const milesSinceService = currentMileage - serviceMileage;
@@ -539,19 +555,19 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
                 shouldAlert = true;
                 severity = 'CRITICAL';
                 confidence = 0.9;
-                reasoning.push(`${component.name} has exceeded ${Math.round(wearPercentage)}% of expected lifespan`);
+                reasoning.push(`${componentName} has exceeded ${Math.round(wearPercentage)}% of expected lifespan`);
             }
             else if (wearPercentage > 75) {
                 shouldAlert = true;
                 severity = 'HIGH';
                 confidence = 0.75;
-                reasoning.push(`${component.name} is at ${Math.round(wearPercentage)}% of expected lifespan`);
+                reasoning.push(`${componentName} is at ${Math.round(wearPercentage)}% of expected lifespan`);
             }
             else if (wearPercentage > 50) {
                 shouldAlert = true;
                 severity = 'MEDIUM';
                 confidence = 0.6;
-                reasoning.push(`${component.name} is approaching service interval (${Math.round(wearPercentage)}% wear)`);
+                reasoning.push(`${componentName} is approaching service interval (${Math.round(wearPercentage)}% wear)`);
             }
             const remainingMiles = lifespan.max - milesSinceService;
             const dailyMiles = 50;
@@ -561,8 +577,8 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
                 severity,
                 failureDate: new Date(Date.now() + daysUntilFailure * 24 * 60 * 60 * 1000),
                 confidence,
-                recommendedAction: `Schedule ${component.name.toLowerCase()} inspection and potential replacement`,
-                estimatedCost: this.getEstimatedComponentCost(component.category),
+                recommendedAction: `Schedule ${componentName.toLowerCase()} inspection and potential replacement`,
+                estimatedCost: this.getEstimatedComponentCost(componentCategory),
                 reasoning,
             };
         }
@@ -583,7 +599,7 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
         const lifespan = this.LIFESPAN_ESTIMATES[component.category];
         if (lifespan) {
             for (let month = 1; month <= 12; month++) {
-                const projectedMileage = currentMileage + (monthlyMiles * month);
+                const projectedMileage = currentMileage + monthlyMiles * month;
                 const wearPercentage = Math.min(100, (projectedMileage / lifespan.max) * 100);
                 predictions.push({
                     date: new Date(Date.now() + month * 30 * 24 * 60 * 60 * 1000),
@@ -591,6 +607,8 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
                 });
             }
         }
+        const vehicleYear = vehicle.year || new Date().getFullYear();
+        const workOrders = vehicle.workOrders || [];
         return {
             componentId: component.id,
             currentWear: 100 - component.healthScore,
@@ -598,8 +616,8 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
             factors: {
                 drivingStyle: 0.7,
                 mileage: currentMileage / 200000,
-                age: (new Date().getFullYear() - vehicle.year) / 20,
-                maintenanceHistory: vehicle.workOrders.length / 10,
+                age: (new Date().getFullYear() - vehicleYear) / 20,
+                maintenanceHistory: workOrders.length / 10,
                 environment: 0.5,
             },
         };
@@ -607,42 +625,50 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
     mapDtcToComponent(dtcCode) {
         const prefix = dtcCode.substring(0, 2);
         const mappings = {
-            'P0': 'engine',
-            'P1': 'engine',
-            'P2': 'fuel_system',
-            'P3': 'transmission',
-            'B0': 'battery',
-            'B1': 'electrical',
-            'C0': 'brakes_front',
-            'C1': 'suspension_front',
-            'U0': 'engine',
+            P0: 'engine',
+            P1: 'engine',
+            P2: 'fuel_system',
+            P3: 'transmission',
+            B0: 'battery',
+            B1: 'electrical',
+            C0: 'brakes_front',
+            C1: 'suspension_front',
+            U0: 'engine',
         };
         return mappings[prefix] || 'engine';
     }
     mapEventTypeToStatus(eventType) {
         const mappings = {
-            'INSPECTION': 'HEALTHY',
-            'REPAIR': 'REPAIRING',
-            'REPLACEMENT': 'REPLACED',
-            'DAMAGE': 'CRITICAL',
-            'MAINTENANCE': 'HEALTHY',
+            INSPECTION: 'HEALTHY',
+            REPAIR: 'REPAIRING',
+            REPLACEMENT: 'REPLACED',
+            DAMAGE: 'CRITICAL',
+            MAINTENANCE: 'HEALTHY',
         };
         return mappings[eventType] || 'HEALTHY';
     }
     calculateDamageHealthImpact(type, severity) {
         const baseImpact = { MINOR: 10, MODERATE: 25, SEVERE: 50 };
-        const typeMultiplier = { DENT: 1, SCRATCH: 0.5, CRACK: 1.5, CORROSION: 1.2, WEAR: 1, IMPACT: 1.5 };
-        return baseImpact[severity] * (typeMultiplier[type] || 1);
+        const typeMultiplier = {
+            DENT: 1,
+            SCRATCH: 0.5,
+            CRACK: 1.5,
+            CORROSION: 1.2,
+            WEAR: 1,
+            IMPACT: 1.5,
+        };
+        return (baseImpact[severity] *
+            (typeMultiplier[type] || 1));
     }
     estimateRepairCost(dtcCode) {
         const prefix = dtcCode.substring(0, 3);
         const baseCosts = {
-            'P01': 150,
-            'P02': 200,
-            'P03': 300,
-            'P04': 250,
-            'P07': 800,
-            'P08': 1000,
+            P01: 150,
+            P02: 200,
+            P03: 300,
+            P04: 250,
+            P07: 800,
+            P08: 1000,
         };
         return baseCosts[prefix] || 200;
     }
@@ -666,8 +692,16 @@ let VehicleTwinService = VehicleTwinService_1 = class VehicleTwinService {
             { componentId: 'transmission', meshName: 'Transmission', materialName: 'Transmission_Metal' },
             { componentId: 'brakes_front', meshName: 'Brake_Front_L', materialName: 'Brake_Disc' },
             { componentId: 'brakes_rear', meshName: 'Brake_Rear_L', materialName: 'Brake_Disc' },
-            { componentId: 'suspension_front', meshName: 'Suspension_Front', materialName: 'Suspension_Metal' },
-            { componentId: 'suspension_rear', meshName: 'Suspension_Rear', materialName: 'Suspension_Metal' },
+            {
+                componentId: 'suspension_front',
+                meshName: 'Suspension_Front',
+                materialName: 'Suspension_Metal',
+            },
+            {
+                componentId: 'suspension_rear',
+                meshName: 'Suspension_Rear',
+                materialName: 'Suspension_Metal',
+            },
             { componentId: 'battery', meshName: 'Battery', materialName: 'Battery_Case' },
             { componentId: 'exhaust', meshName: 'Exhaust_System', materialName: 'Exhaust_Metal' },
         ];

@@ -44,8 +44,9 @@ export function useBilling(): UseBillingReturn {
       
       const data = await response.json()
       setBillingInfo(data)
-    } catch (err: any) {
-      setError(err.message || 'Unknown error')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      setError(errorMessage)
       console.error('Billing hook error:', err)
     } finally {
       setIsLoading(false)

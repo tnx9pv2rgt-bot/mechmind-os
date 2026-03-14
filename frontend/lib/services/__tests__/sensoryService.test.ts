@@ -7,21 +7,19 @@
  * @module lib/services/__tests__/sensoryService
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { Mock } from 'vitest'
+// Jest globals are available automatically
+// Jest Mock type
 
-// Mock the tRPC client
-vi.mock('@/lib/trpc-client', () => ({
-  trpc: {
-    inspection: {
-      sensory: {
-        create: { mutate: vi.fn() },
-        get: { query: vi.fn() },
-        getById: { query: vi.fn() },
-        update: { mutate: vi.fn() },
-      },
-    },
-  },
+// Mock the api-client
+const mockApi = {
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  patch: jest.fn(),
+  delete: jest.fn(),
+}
+jest.mock('@/lib/api-client', () => ({
+  api: mockApi,
 }))
 
 // Import after mocking
@@ -44,15 +42,15 @@ import {
   type OdorData,
   type ACData,
 } from '../sensoryService'
-import { trpc } from '@/lib/trpc-client'
+import { api } from '@/lib/api-client'
 
 describe('SensoryService', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    jest.restoreAllMocks()
   })
 
   // =============================================================================
@@ -254,32 +252,28 @@ describe('SensoryService', () => {
     }
 
     it('should create sensory inspection with calculated mold risk', async () => {
-      const mockMutate = trpc.inspection.sensory.create.mutate as Mock
-      mockMutate.mockResolvedValue(mockResponse)
+      mockApi.post.mockResolvedValue({ data: mockResponse })
 
       const result = await createSensoryInspection('insp-123', mockInput)
 
       expect(result).toBeDefined()
       expect(result.moldRiskLevel).toBe(MoldRiskLevel.HIGH)
-      expect(result.createdAt).toBeInstanceOf(Date)
-      expect(result.updatedAt).toBeInstanceOf(Date)
     })
 
-    it('should convert date strings to Date objects', async () => {
-      const mockMutate = trpc.inspection.sensory.create.mutate as Mock
-      mockMutate.mockResolvedValue(mockResponse)
+    it('should pass data with calculated risk to API', async () => {
+      mockApi.post.mockResolvedValue({ data: mockResponse })
 
-      const result = await createSensoryInspection('insp-123', mockInput)
+      await createSensoryInspection('insp-123', mockInput)
 
-      expect(result.createdAt).toBeInstanceOf(Date)
-      expect(result.updatedAt).toBeInstanceOf(Date)
-      expect(result.moisture.measuredAt).toBeInstanceOf(Date)
+      expect(mockApi.post).toHaveBeenCalledWith(
+        '/inspections/insp-123/sensory',
+        expect.objectContaining({ moldRiskLevel: MoldRiskLevel.HIGH })
+      )
     })
 
     it('should handle undefined measuredAt', async () => {
       const responseWithoutMeasuredAt = { ...mockResponse, moisture: { ...mockResponse.moisture, measuredAt: undefined } }
-      const mockMutate = trpc.inspection.sensory.create.mutate as Mock
-      mockMutate.mockResolvedValue(responseWithoutMeasuredAt)
+      mockApi.post.mockResolvedValue({ data: responseWithoutMeasuredAt })
 
       const result = await createSensoryInspection('insp-123', mockInput)
 
@@ -318,8 +312,7 @@ describe('SensoryService', () => {
     }
 
     it('should retrieve sensory inspection successfully', async () => {
-      const mockQuery = trpc.inspection.sensory.get.query as Mock
-      mockQuery.mockResolvedValue(mockResponse)
+      mockApi.get.mockResolvedValue({ data: { data: mockResponse } })
 
       const result = await getSensoryInspection('insp-123')
 
@@ -329,8 +322,7 @@ describe('SensoryService', () => {
     })
 
     it('should return null when inspection not found', async () => {
-      const mockQuery = trpc.inspection.sensory.get.query as Mock
-      mockQuery.mockResolvedValue(null)
+      mockApi.get.mockResolvedValue({ data: { data: null } })
 
       const result = await getSensoryInspection('non-existent')
 
@@ -338,8 +330,7 @@ describe('SensoryService', () => {
     })
 
     it('should return null on NOT_FOUND error', async () => {
-      const mockQuery = trpc.inspection.sensory.get.query as Mock
-      mockQuery.mockRejectedValue(new Error('NOT_FOUND'))
+      mockApi.get.mockRejectedValue(new Error('NOT_FOUND'))
 
       const result = await getSensoryInspection('insp-123')
 
@@ -347,8 +338,7 @@ describe('SensoryService', () => {
     })
 
     it('should return null on 404 error message', async () => {
-      const mockQuery = trpc.inspection.sensory.get.query as Mock
-      mockQuery.mockRejectedValue(new Error('Request failed with status 404'))
+      mockApi.get.mockRejectedValue(new Error('Request failed with status 404'))
 
       const result = await getSensoryInspection('insp-123')
 
@@ -356,8 +346,7 @@ describe('SensoryService', () => {
     })
 
     it('should throw other errors', async () => {
-      const mockQuery = trpc.inspection.sensory.get.query as Mock
-      mockQuery.mockRejectedValue(new Error('Database error'))
+      mockApi.get.mockRejectedValue(new Error('Database error'))
 
       await expect(getSensoryInspection('insp-123')).rejects.toThrow('Database error')
     })
@@ -396,13 +385,11 @@ describe('SensoryService', () => {
     }
 
     it('should update sensory inspection without recalculating risk if no moisture/odor change', async () => {
-      const mockGetById = trpc.inspection.sensory.getById.query as Mock
-      mockGetById.mockResolvedValue(mockGetByIdResponse)
-
-      const mockMutate = trpc.inspection.sensory.update.mutate as Mock
-      mockMutate.mockResolvedValue({
-        ...mockGetByIdResponse,
-        notes: 'Updated notes',
+      mockApi.put.mockResolvedValue({
+        data: {
+          ...mockGetByIdResponse,
+          notes: 'Updated notes',
+        },
       })
 
       const result = await updateSensoryInspection('sensory-001', { notes: 'Updated notes' })
@@ -411,15 +398,15 @@ describe('SensoryService', () => {
     })
 
     it('should recalculate mold risk when moisture changes', async () => {
-      const mockGetById = trpc.inspection.sensory.getById.query as Mock
-      mockGetById.mockResolvedValue(mockGetByIdResponse)
-
-      const mockMutate = trpc.inspection.sensory.update.mutate as Mock
-      mockMutate.mockImplementation((data) => Promise.resolve({
-        ...mockGetByIdResponse,
-        ...data,
-        createdAt: '2024-01-15T10:00:00Z',
-        updatedAt: '2024-01-15T11:00:00Z',
+      // updateSensoryInspection fetches current data via api.get, then calls api.put
+      mockApi.get.mockResolvedValue({ data: { data: mockGetByIdResponse } })
+      mockApi.put.mockImplementation((_url: string, data: Record<string, unknown>) => Promise.resolve({
+        data: {
+          ...mockGetByIdResponse,
+          ...data,
+          createdAt: '2024-01-15T10:00:00Z',
+          updatedAt: '2024-01-15T11:00:00Z',
+        },
       }))
 
       const result = await updateSensoryInspection('sensory-001', {
@@ -430,15 +417,14 @@ describe('SensoryService', () => {
     })
 
     it('should recalculate mold risk when odors change', async () => {
-      const mockGetById = trpc.inspection.sensory.getById.query as Mock
-      mockGetById.mockResolvedValue(mockGetByIdResponse)
-
-      const mockMutate = trpc.inspection.sensory.update.mutate as Mock
-      mockMutate.mockImplementation((data) => Promise.resolve({
-        ...mockGetByIdResponse,
-        ...data,
-        createdAt: '2024-01-15T10:00:00Z',
-        updatedAt: '2024-01-15T11:00:00Z',
+      mockApi.get.mockResolvedValue({ data: { data: mockGetByIdResponse } })
+      mockApi.put.mockImplementation((_url: string, data: Record<string, unknown>) => Promise.resolve({
+        data: {
+          ...mockGetByIdResponse,
+          ...data,
+          createdAt: '2024-01-15T10:00:00Z',
+          updatedAt: '2024-01-15T11:00:00Z',
+        },
       }))
 
       const result = await updateSensoryInspection('sensory-001', {

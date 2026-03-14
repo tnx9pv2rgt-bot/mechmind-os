@@ -4,7 +4,7 @@
  * DTOs for Multi-Factor Authentication with TOTP
  */
 
-import { IsString, IsBoolean, IsOptional, Length, Matches, IsArray } from 'class-validator';
+import { IsString, IsOptional, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class EnrollMfaDto {

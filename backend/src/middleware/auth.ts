@@ -7,13 +7,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import {
-  verifyAccessToken,
-  verifyRefreshToken,
-  decodeToken,
-  TokenVerificationResult,
-  DecodedToken,
-} from '../services/jwtService';
+import { verifyAccessToken, verifyRefreshToken } from '../services/jwtService';
 
 // Import express types to ensure global augmentations are loaded
 import '../types/express';
@@ -329,7 +323,7 @@ export function verifyRefreshTokenMiddleware(
 export function tenantCorsMiddleware(allowedOrigins: string[] = []) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const origin = req.headers.origin;
-    const tenantId = req.tenantId || (req.headers['x-tenant-id'] as string);
+    // tenantId available via req.tenantId or x-tenant-id header
 
     // Se non c'è origine o è Postman/localhost, permetti
     if (!origin || origin.includes('localhost') || origin.includes('postman')) {
@@ -402,7 +396,12 @@ export function auditLogMiddleware(action: string) {
  * Handler per errori di autenticazione globale
  * Da usare alla fine della catena di middleware
  */
-export function authErrorHandler(err: any, req: Request, res: Response, next: NextFunction): void {
+export function authErrorHandler(
+  err: Error & { name?: string },
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   if (err.name === 'UnauthorizedError') {
     res.status(401).json({
       success: false,

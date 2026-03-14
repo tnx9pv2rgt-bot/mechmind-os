@@ -1,274 +1,259 @@
 /**
- * Bot Detection - Cloudflare-style Multi-Layer Detection
- * Identifies and blocks automated traffic with confidence scoring
+ * Bot Detection - Multi-Layer Detection
+ * Identifies and blocks automated traffic with confidence scoring.
+ * Uses in-memory fingerprint storage (no external Redis dependency).
  */
 
-import { Redis } from '@upstash/redis'
-import { getClientIP } from './rateLimit'
-import { logSecurityEvent } from './audit'
+import { getClientIP } from './rateLimit';
+import { logSecurityEvent } from './audit';
 
-// Redis client for storing fingerprints
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
-})
+// In-memory fingerprint store with TTL
+const fingerprintStore = new Map<string, { firstSeen: number; count: number; lastSeen: number }>();
 
-const isRedisConfigured = Boolean(
-  process.env.UPSTASH_REDIS_REST_URL && 
-  process.env.UPSTASH_REDIS_REST_TOKEN
-)
-
-export interface BotCheckResult {
-  isBot: boolean
-  score: number // 0-100, >70 = likely bot
-  confidence: 'low' | 'medium' | 'high' | 'critical'
-  reasons: string[]
-  fingerprint?: string
+// Cleanup every 10 minutes
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const maxAge = 86400000 * 30; // 30 days
+    const now = Date.now();
+    for (const [key, entry] of fingerprintStore.entries()) {
+      if (now - entry.lastSeen > maxAge) {
+        fingerprintStore.delete(key);
+      }
+    }
+  }, 600000);
 }
 
-interface RequestFingerprint {
-  userAgent: string
-  acceptLanguage: string | null
-  acceptEncoding: string | null
-  acceptHeader: string | null
-  dnt: string | null
-  screenResolution?: string
-  timezone?: string
-  plugins?: string[]
-  canvas?: string
-  webgl?: string
-  fonts?: string[]
+export interface BotCheckResult {
+  isBot: boolean;
+  score: number; // 0-100, >70 = likely bot
+  confidence: 'low' | 'medium' | 'high' | 'critical';
+  reasons: string[];
+  fingerprint?: string;
 }
 
 // Known bot patterns (User-Agent strings)
 const BOT_PATTERNS = [
-  /bot/i, /crawler/i, /spider/i, /scrape/i,
-  /headless/i, /puppeteer/i, /selenium/i,
-  /phantom/i, /nightmare/i, /playwright/i,
-  /curl/i, /wget/i, /python-requests/i,
-  /postman/i, /insomnia/i, /httpclient/i,
-  /scrapy/i, /mechanize/i, /casper/i,
-  /slimer/i, /zombie/i, /electron/i,
-]
+  /bot/i,
+  /crawler/i,
+  /spider/i,
+  /scrape/i,
+  /headless/i,
+  /puppeteer/i,
+  /selenium/i,
+  /phantom/i,
+  /nightmare/i,
+  /playwright/i,
+  /curl/i,
+  /wget/i,
+  /python-requests/i,
+  /postman/i,
+  /insomnia/i,
+  /httpclient/i,
+  /scrapy/i,
+  /mechanize/i,
+  /casper/i,
+  /slimer/i,
+  /zombie/i,
+  /electron/i,
+];
 
 // Known good browser patterns
 const BROWSER_PATTERNS = [
-  /chrome\/\d+/i, /firefox\/\d+/i, /safari\/\d+/i,
-  /edge\/\d+/i, /opera\/\d+/i, /brave\/\d+/i,
-]
+  /chrome\/\d+/i,
+  /firefox\/\d+/i,
+  /safari\/\d+/i,
+  /edge\/\d+/i,
+  /opera\/\d+/i,
+  /brave\/\d+/i,
+];
 
 // Suspicious header combinations
 const SUSPICIOUS_HEADERS = [
   { missing: 'accept-language', score: 15 },
   { missing: 'accept-encoding', score: 10 },
   { missing: 'accept', score: 20 },
-]
+];
 
 /**
  * Calculate bot score based on User-Agent analysis
  */
 function analyzeUserAgent(ua: string): { score: number; reasons: string[] } {
-  const reasons: string[] = []
-  let score = 0
-  
-  // Empty or generic UA
+  const reasons: string[] = [];
+  let score = 0;
+
   if (!ua || ua.length < 20) {
-    score += 30
-    reasons.push('Empty or very short User-Agent')
-    return { score, reasons }
+    score += 30;
+    reasons.push('Empty or very short User-Agent');
+    return { score, reasons };
   }
-  
-  // Check for known bot patterns
+
   for (const pattern of BOT_PATTERNS) {
     if (pattern.test(ua)) {
-      score += 30
-      reasons.push(`Bot pattern detected: ${pattern.source}`)
-      break
+      score += 30;
+      reasons.push(`Bot pattern detected: ${pattern.source}`);
+      break;
     }
   }
-  
-  // Check for headless indicators
+
   if (/headlesschrome/i.test(ua)) {
-    score += 40
-    reasons.push('Headless Chrome detected')
+    score += 40;
+    reasons.push('Headless Chrome detected');
   }
-  
+
   if (/webkit.*presto/i.test(ua)) {
-    score += 20
-    reasons.push('Suspicious WebKit/Presto combination')
+    score += 20;
+    reasons.push('Suspicious WebKit/Presto combination');
   }
-  
-  // Check for missing browser indicators
-  const hasBrowserPattern = BROWSER_PATTERNS.some(p => p.test(ua))
+
+  const hasBrowserPattern = BROWSER_PATTERNS.some(p => p.test(ua));
   if (!hasBrowserPattern && ua.length > 0) {
-    score += 15
-    reasons.push('No recognized browser pattern')
+    score += 15;
+    reasons.push('No recognized browser pattern');
   }
-  
-  // Check for automation frameworks
+
   const automationIndicators = [
-    'selenium', 'webdriver', 'phantomjs', 'chromedriver',
-    'msedgedriver', 'geckodriver', 'playwright'
-  ]
-  
+    'selenium',
+    'webdriver',
+    'phantomjs',
+    'chromedriver',
+    'msedgedriver',
+    'geckodriver',
+    'playwright',
+  ];
+
   for (const indicator of automationIndicators) {
     if (ua.toLowerCase().includes(indicator)) {
-      score += 35
-      reasons.push(`Automation framework detected: ${indicator}`)
-      break
+      score += 35;
+      reasons.push(`Automation framework detected: ${indicator}`);
+      break;
     }
   }
-  
-  return { score, reasons }
+
+  return { score, reasons };
 }
 
 /**
  * Analyze headers for bot indicators
  */
 function analyzeHeaders(headers: Headers): { score: number; reasons: string[] } {
-  const reasons: string[] = []
-  let score = 0
-  
-  // Check for missing standard headers
+  const reasons: string[] = [];
+  let score = 0;
+
   for (const check of SUSPICIOUS_HEADERS) {
     if (!headers.get(check.missing)) {
-      score += check.score
-      reasons.push(`Missing ${check.missing} header`)
+      score += check.score;
+      reasons.push(`Missing ${check.missing} header`);
     }
   }
-  
-  // Check referer/origin
-  const referer = headers.get('referer')
-  const origin = headers.get('origin')
+
+  const referer = headers.get('referer');
+  const origin = headers.get('origin');
   if (!referer && !origin) {
-    score += 10
-    reasons.push('No referer/origin header')
+    score += 10;
+    reasons.push('No referer/origin header');
   }
-  
-  // Check for suspicious header ordering (bots often have different ordering)
-  const headerList = Array.from(headers.keys())
-  const hasStandardOrder = headerList.some(h => 
-    h.toLowerCase() === 'user-agent' ||
-    h.toLowerCase() === 'accept'
-  )
-  
+
+  const headerList = Array.from(headers.keys());
+  const hasStandardOrder = headerList.some(
+    h => h.toLowerCase() === 'user-agent' || h.toLowerCase() === 'accept'
+  );
+
   if (!hasStandardOrder && headerList.length > 0) {
-    score += 5
-    reasons.push('Non-standard header ordering')
+    score += 5;
+    reasons.push('Non-standard header ordering');
   }
-  
-  // Check for Cloudflare headers (if behind CF)
-  const cfRay = headers.get('cf-ray')
-  const cfIPCountry = headers.get('cf-ipcountry')
-  
-  // If we have CF headers but the request seems suspicious
-  if (cfRay && score > 30) {
-    reasons.push('Suspicious request behind Cloudflare')
-  }
-  
-  return { score, reasons }
+
+  return { score, reasons };
 }
 
 /**
  * Verify reCAPTCHA v3 token
  */
 async function verifyRecaptcha(token: string): Promise<{
-  success: boolean
-  score: number
-  action: string
-  challengeTs: string
-  hostname: string
+  success: boolean;
+  score: number;
+  action: string;
+  challengeTs: string;
+  hostname: string;
 }> {
-  const secretKey = process.env.RECAPTCHA_SECRET_KEY
-  
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+
   if (!secretKey) {
-    console.warn('[BotDetection] RECAPTCHA_SECRET_KEY not configured')
-    return { success: true, score: 0.9, action: '', challengeTs: '', hostname: '' }
+    console.warn('[BotDetection] RECAPTCHA_SECRET_KEY not configured');
+    return { success: true, score: 0.9, action: '', challengeTs: '', hostname: '' };
   }
-  
+
   try {
     const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `secret=${secretKey}&response=${token}`,
-    })
-    
-    const data = await response.json()
+    });
+
+    const data = await response.json();
     return {
       success: data.success,
       score: data.score || 0,
       action: data.action || '',
       challengeTs: data.challenge_ts || '',
       hostname: data.hostname || '',
-    }
+    };
   } catch (error) {
-    console.error('[BotDetection] reCAPTCHA verification error:', error)
-    return { success: false, score: 0, action: '', challengeTs: '', hostname: '' }
+    console.error('[BotDetection] reCAPTCHA verification error:', error);
+    return { success: false, score: 0, action: '', challengeTs: '', hostname: '' };
   }
 }
 
 /**
- * Check if fingerprint is known bot
+ * Check if fingerprint is known bot (in-memory)
  */
-async function checkKnownBotFingerprint(fingerprint: string): Promise<{
-  isKnown: boolean
-  firstSeen: number
-  count: number
-}> {
-  if (!isRedisConfigured) {
-    return { isKnown: false, firstSeen: 0, count: 0 }
-  }
-  
-  const key = `security:bot-fingerprint:${fingerprint}`
-  const data = await redis.get<string>(key)
-  
+function checkKnownBotFingerprint(fingerprint: string): {
+  isKnown: boolean;
+  firstSeen: number;
+  count: number;
+} {
+  const key = `bot:${fingerprint}`;
+  const data = fingerprintStore.get(key);
+
   if (!data) {
-    return { isKnown: false, firstSeen: 0, count: 0 }
+    return { isKnown: false, firstSeen: 0, count: 0 };
   }
-  
-  try {
-    const parsed = JSON.parse(data)
-    return {
-      isKnown: true,
-      firstSeen: parsed.firstSeen,
-      count: parsed.count || 1,
-    }
-  } catch {
-    return { isKnown: false, firstSeen: 0, count: 0 }
-  }
+
+  return { isKnown: true, firstSeen: data.firstSeen, count: data.count };
 }
 
 /**
- * Store bot fingerprint
+ * Store bot fingerprint (in-memory)
  */
-async function storeBotFingerprint(fingerprint: string): Promise<void> {
-  if (!isRedisConfigured) return
-  
-  const key = `security:bot-fingerprint:${fingerprint}`
-  const existing = await redis.get<string>(key)
-  
+function storeBotFingerprint(fingerprint: string): void {
+  const key = `bot:${fingerprint}`;
+  const existing = fingerprintStore.get(key);
+
   if (existing) {
-    try {
-      const parsed = JSON.parse(existing)
-      await redis.set(key, JSON.stringify({
-        ...parsed,
-        count: (parsed.count || 1) + 1,
-        lastSeen: Date.now(),
-      }), { ex: 86400 * 30 }) // 30 days TTL
-    } catch {
-      await redis.set(key, JSON.stringify({
-        firstSeen: Date.now(),
-        count: 1,
-        lastSeen: Date.now(),
-      }), { ex: 86400 * 30 })
-    }
+    existing.count += 1;
+    existing.lastSeen = Date.now();
   } else {
-    await redis.set(key, JSON.stringify({
+    fingerprintStore.set(key, {
       firstSeen: Date.now(),
       count: 1,
       lastSeen: Date.now(),
-    }), { ex: 86400 * 30 })
+    });
   }
+}
+
+/**
+ * Generate a simple fingerprint from request
+ */
+function generateFingerprint(request: Request): string {
+  const headers = request.headers;
+  const components = [
+    headers.get('user-agent') || '',
+    headers.get('accept-language') || '',
+    headers.get('accept-encoding') || '',
+    headers.get('dnt') || '',
+  ];
+
+  return btoa(components.join('|')).slice(0, 32);
 }
 
 /**
@@ -277,100 +262,98 @@ async function storeBotFingerprint(fingerprint: string): Promise<void> {
 export async function detectBot(
   request: Request,
   options: {
-    checkRecaptcha?: boolean
-    recaptchaToken?: string
-    body?: Record<string, any>
+    checkRecaptcha?: boolean;
+    recaptchaToken?: string;
+    body?: Record<string, unknown>;
   } = {}
 ): Promise<BotCheckResult> {
-  const reasons: string[] = []
-  let score = 0
-  
-  const headers = request.headers
-  const ua = headers.get('user-agent') || ''
-  const ip = getClientIP(request)
-  
+  const reasons: string[] = [];
+  let score = 0;
+
+  const headers = request.headers;
+  const ua = headers.get('user-agent') || '';
+  const ip = getClientIP(request);
+
   // Check 1: User Agent analysis
-  const uaResult = analyzeUserAgent(ua)
-  score += uaResult.score
-  reasons.push(...uaResult.reasons)
-  
+  const uaResult = analyzeUserAgent(ua);
+  score += uaResult.score;
+  reasons.push(...uaResult.reasons);
+
   // Check 2: Header analysis
-  const headerResult = analyzeHeaders(headers)
-  score += headerResult.score
-  reasons.push(...headerResult.reasons)
-  
-  // Check 3: Timing analysis (if form start time is provided)
-  const formStartTime = headers.get('x-form-start-time') || options.body?.formStartTime
+  const headerResult = analyzeHeaders(headers);
+  score += headerResult.score;
+  reasons.push(...headerResult.reasons);
+
+  // Check 3: Timing analysis
+  const formStartTime =
+    headers.get('x-form-start-time') || (options.body?.formStartTime as string | undefined);
   if (formStartTime) {
-    const timeSpent = Date.now() - parseInt(formStartTime as string, 10)
-    if (timeSpent < 3000) { // Less than 3 seconds
-      score += 25
-      reasons.push(`Form completed too quickly (${timeSpent}ms)`)
-    } else if (timeSpent > 3600000) { // More than 1 hour
-      score += 10
-      reasons.push('Form took unusually long to complete')
+    const timeSpent = Date.now() - parseInt(formStartTime, 10);
+    if (timeSpent < 3000) {
+      score += 25;
+      reasons.push(`Form completed too quickly (${timeSpent}ms)`);
+    } else if (timeSpent > 3600000) {
+      score += 10;
+      reasons.push('Form took unusually long to complete');
     }
   }
-  
+
   // Check 4: Honeypot field detection
-  const body = options.body || {}
+  const body = options.body || {};
   if (body.website || body.honeypot || body.url || body.website_url) {
-    score += 50
-    reasons.push('Honeypot field triggered')
+    score += 50;
+    reasons.push('Honeypot field triggered');
   }
-  
+
   // Check 5: reCAPTCHA v3 verification
   if (options.checkRecaptcha && options.recaptchaToken) {
-    const recaptchaResult = await verifyRecaptcha(options.recaptchaToken)
+    const recaptchaResult = await verifyRecaptcha(options.recaptchaToken);
     if (!recaptchaResult.success) {
-      score += 40
-      reasons.push('reCAPTCHA verification failed')
+      score += 40;
+      reasons.push('reCAPTCHA verification failed');
     } else if (recaptchaResult.score < 0.3) {
-      score += 35
-      reasons.push(`Very low reCAPTCHA score (${recaptchaResult.score})`)
+      score += 35;
+      reasons.push(`Very low reCAPTCHA score (${recaptchaResult.score})`);
     } else if (recaptchaResult.score < 0.5) {
-      score += 20
-      reasons.push(`Low reCAPTCHA score (${recaptchaResult.score})`)
+      score += 20;
+      reasons.push(`Low reCAPTCHA score (${recaptchaResult.score})`);
     }
   }
-  
+
   // Check 6: Browser fingerprint consistency
-  const fingerprint = body?.browserFingerprint || generateFingerprint(request)
+  const fingerprint = (body?.browserFingerprint as string) || generateFingerprint(request);
   if (fingerprint) {
-    const knownBotCheck = await checkKnownBotFingerprint(fingerprint)
+    const knownBotCheck = checkKnownBotFingerprint(fingerprint);
     if (knownBotCheck.isKnown && knownBotCheck.count > 5) {
-      score += 30
-      reasons.push(`Known bot fingerprint (${knownBotCheck.count} occurrences)`)
+      score += 30;
+      reasons.push(`Known bot fingerprint (${knownBotCheck.count} occurrences)`);
     }
-    
-    // Store fingerprint if bot detected
+
     if (score > 50) {
-      await storeBotFingerprint(fingerprint)
+      storeBotFingerprint(fingerprint);
     }
   }
-  
-  // Check 7: IP reputation (simplified - would integrate with threat intelligence)
+
+  // Check 7: IP reputation
   if (ip.startsWith('10.') || ip.startsWith('192.168.')) {
-    // Internal IPs might be testing
-    score -= 10
+    score -= 10;
   }
-  
+
   // Determine confidence level
-  let confidence: 'low' | 'medium' | 'high' | 'critical'
-  if (score >= 80) confidence = 'critical'
-  else if (score >= 60) confidence = 'high'
-  else if (score >= 40) confidence = 'medium'
-  else confidence = 'low'
-  
+  let confidence: 'low' | 'medium' | 'high' | 'critical';
+  if (score >= 80) confidence = 'critical';
+  else if (score >= 60) confidence = 'high';
+  else if (score >= 40) confidence = 'medium';
+  else confidence = 'low';
+
   const result: BotCheckResult = {
     isBot: score > 70,
     score: Math.min(score, 100),
     confidence,
-    reasons: [...new Set(reasons)], // Remove duplicates
+    reasons: [...new Set(reasons)],
     fingerprint,
-  }
-  
-  // Log high-confidence bot detections
+  };
+
   if (result.isBot) {
     await logSecurityEvent({
       type: 'bot_detected',
@@ -384,26 +367,10 @@ export async function detectBot(
         fingerprint: result.fingerprint,
         path: new URL(request.url).pathname,
       },
-    })
+    });
   }
-  
-  return result
-}
 
-/**
- * Generate a simple fingerprint from request
- */
-function generateFingerprint(request: Request): string {
-  const headers = request.headers
-  const components = [
-    headers.get('user-agent') || '',
-    headers.get('accept-language') || '',
-    headers.get('accept-encoding') || '',
-    headers.get('dnt') || '',
-  ]
-  
-  // Simple hash (in production, use a proper hashing library)
-  return btoa(components.join('|')).slice(0, 32)
+  return result;
 }
 
 /**
@@ -412,14 +379,14 @@ function generateFingerprint(request: Request): string {
 export async function botDetectionMiddleware(
   request: Request,
   options: {
-    blockThreshold?: number
-    checkRecaptcha?: boolean
+    blockThreshold?: number;
+    checkRecaptcha?: boolean;
   } = {}
 ): Promise<Response | null> {
-  const { blockThreshold = 70, checkRecaptcha = false } = options
-  
-  const result = await detectBot(request, { checkRecaptcha })
-  
+  const { blockThreshold = 70, checkRecaptcha = false } = options;
+
+  const result = await detectBot(request, { checkRecaptcha });
+
   if (result.score >= blockThreshold) {
     return new Response(
       JSON.stringify({
@@ -435,14 +402,10 @@ export async function botDetectionMiddleware(
           'X-Bot-Confidence': result.confidence,
         },
       }
-    )
+    );
   }
-  
-  // Add bot score headers for monitoring
-  request.headers.set('X-Bot-Score', result.score.toString())
-  request.headers.set('X-Bot-Confidence', result.confidence)
-  
-  return null // Continue processing
+
+  return null; // Continue processing
 }
 
 /**
@@ -462,5 +425,5 @@ export function createChallengeResponse(result: BotCheckResult): Response {
         'X-Bot-Score': result.score.toString(),
       },
     }
-  )
+  );
 }

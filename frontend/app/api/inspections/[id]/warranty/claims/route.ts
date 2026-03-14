@@ -10,7 +10,7 @@ import {
   WarrantyNotFoundError,
   InvalidWarrantyDataError,
 } from '@/lib/services/warrantyService'
-import { TRPCClientError } from '@/lib/trpc-client'
+import { TRPCClientError } from '@/lib/api-errors'
 interface CreateWarrantyClaimData {
   issueDescription: string
   estimatedCost: number

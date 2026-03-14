@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * NotificationItem Component
  * Single notification display component

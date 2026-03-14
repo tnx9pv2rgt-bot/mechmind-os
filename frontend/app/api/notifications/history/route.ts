@@ -24,7 +24,26 @@ const querySchema = z.object({
 });
 
 // Mock notification history data
-const generateMockHistory = (customerId: string): any[] => {
+interface NotificationHistoryItem {
+  id: string
+  customerId: string
+  tenantId: string
+  type: NotificationType
+  channel: NotificationChannel
+  status: NotificationStatus
+  message: string
+  messageId: string | undefined
+  metadata: Record<string, string>
+  sentAt: string | undefined
+  deliveredAt: string | undefined
+  error: string | undefined
+  retries: number
+  maxRetries: number
+  createdAt: string
+  updatedAt: string
+}
+
+const generateMockHistory = (customerId: string): NotificationHistoryItem[] => {
   const types = [
     NotificationType.BOOKING_CONFIRMATION,
     NotificationType.BOOKING_REMINDER,
@@ -45,7 +64,7 @@ const generateMockHistory = (customerId: string): any[] => {
     NotificationStatus.PENDING,
   ];
 
-  const history: any[] = [];
+  const history: NotificationHistoryItem[] = [];
   const baseDate = new Date('2024-03-01');
 
   for (let i = 0; i < 25; i++) {

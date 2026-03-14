@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
 import {
   NotificationOrchestratorService,
   NotificationSentEvent,
   NotificationFailedEvent,
-  NotificationResult,
 } from './notification.service';
 import { NotificationType, NotificationChannel } from '../dto/send-notification.dto';
 
@@ -18,7 +18,6 @@ describe('NotificationOrchestratorService', () => {
   let emailService: EmailService;
   let smsService: SmsService;
   let prisma: PrismaService;
-  let configService: ConfigService;
   let eventEmitter: EventEmitter2;
   let notificationQueue: { add: jest.Mock };
 
@@ -27,10 +26,10 @@ describe('NotificationOrchestratorService', () => {
 
   const mockCustomer = {
     id: mockCustomerId,
-    encryptedFirstName: 'Mario',
-    encryptedLastName: 'Rossi',
-    encryptedEmail: 'mario@example.com',
-    encryptedPhone: '+393331234567',
+    encryptedFirstName: 'enc:Mario',
+    encryptedLastName: 'enc:Rossi',
+    encryptedEmail: 'enc:mario@example.com',
+    encryptedPhone: 'enc:+393331234567',
   };
 
   beforeEach(async () => {
@@ -70,6 +69,13 @@ describe('NotificationOrchestratorService', () => {
           },
         },
         {
+          provide: EncryptionService,
+          useValue: {
+            encrypt: jest.fn((value: string) => `enc:${value}`),
+            decrypt: jest.fn((value: string) => value.replace('enc:', '')),
+          },
+        },
+        {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string, defaultValue?: string) => defaultValue),
@@ -92,7 +98,6 @@ describe('NotificationOrchestratorService', () => {
     emailService = module.get<EmailService>(EmailService);
     smsService = module.get<SmsService>(SmsService);
     prisma = module.get<PrismaService>(PrismaService);
-    configService = module.get<ConfigService>(ConfigService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
@@ -741,7 +746,317 @@ describe('NotificationOrchestratorService', () => {
   });
 
   // =========================================================================
-  // getCustomerPreferences()
+  // sendSmsNotification - edge cases (lines 297, 341-346)
+  // =========================================================================
+  describe('sendSmsNotification edge cases', () => {
+    beforeEach(() => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue(mockCustomer),
+            },
+          } as unknown as PrismaService),
+      );
+    });
+
+    it('should return failure for unsupported SMS notification type (default case)', async () => {
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.CUSTOM,
+        { message: 'test' },
+        NotificationChannel.SMS,
+      );
+
+      // SMS default case fails, then email fallback also hits default -> both fail
+      expect(result.success).toBe(false);
+    });
+
+    it('should catch SMS sending errors and return failure', async () => {
+      (smsService.sendBookingConfirmation as jest.Mock).mockRejectedValue(
+        new Error('Twilio connection timeout'),
+      );
+      (emailService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'email-fallback-1',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+        NotificationChannel.SMS,
+      );
+
+      // SMS throws -> caught -> fallback to email
+      expect(result.success).toBe(true);
+      expect(result.channel).toBe(NotificationChannel.EMAIL);
+      expect(result.fallbackUsed).toBe(true);
+    });
+
+    it('should catch non-Error SMS exceptions', async () => {
+      (smsService.sendBookingConfirmation as jest.Mock).mockRejectedValue('string error');
+      (emailService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'email-fallback-2',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+        NotificationChannel.SMS,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.fallbackUsed).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // sendEmailNotification - edge cases (lines 360, 396-407, 443-448)
+  // =========================================================================
+  describe('sendEmailNotification edge cases', () => {
+    beforeEach(() => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue(mockCustomer),
+            },
+          } as unknown as PrismaService),
+      );
+    });
+
+    it('should send BOOKING_CANCELLED email notification', async () => {
+      (emailService.sendBookingCancelled as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'email-CAN-1',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CANCELLED,
+        {
+          date: '2024-03-15',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          cancellationReason: 'Customer request',
+        },
+        NotificationChannel.EMAIL,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.channel).toBe(NotificationChannel.EMAIL);
+      expect(emailService.sendBookingCancelled).toHaveBeenCalled();
+    });
+
+    it('should send INVOICE_READY email notification', async () => {
+      (emailService.sendInvoiceReady as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'email-INV-1',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.INVOICE_READY,
+        {
+          invoiceNumber: 'INV-001',
+          invoiceDate: '2024-03-15',
+          amount: '250.00',
+          downloadUrl: 'https://example.com/inv',
+        },
+        NotificationChannel.EMAIL,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.channel).toBe(NotificationChannel.EMAIL);
+      expect(emailService.sendInvoiceReady).toHaveBeenCalled();
+    });
+
+    it('should return failure for unsupported email notification type (default case)', async () => {
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.CUSTOM,
+        { message: 'test' },
+        NotificationChannel.EMAIL,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Email not supported for type');
+    });
+
+    it('should catch email sending errors and return failure', async () => {
+      (emailService.sendBookingConfirmation as jest.Mock).mockRejectedValue(
+        new Error('Resend API error'),
+      );
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+        NotificationChannel.EMAIL,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Resend API error');
+    });
+
+    it('should catch non-Error email exceptions', async () => {
+      (emailService.sendBookingConfirmation as jest.Mock).mockRejectedValue('unknown failure');
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+        NotificationChannel.EMAIL,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Unknown error');
+    });
+
+    it('should return failure when customer has no email in sendEmailNotification', async () => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue({
+                ...mockCustomer,
+                encryptedEmail: '',
+                encryptedPhone: null,
+              }),
+            },
+          } as unknown as PrismaService),
+      );
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        { date: '2024-03-15' },
+        NotificationChannel.EMAIL,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('no email');
+    });
+  });
+
+  // =========================================================================
+  // sendBulkNotifications - exception handling (lines 523-531)
+  // =========================================================================
+  describe('sendBulkNotifications error handling', () => {
+    it('should catch exceptions thrown by notifyCustomer and stop when continueOnError is false', async () => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue(null),
+            },
+          } as unknown as PrismaService),
+      );
+
+      const notifications = [
+        {
+          type: NotificationType.BOOKING_REMINDER,
+          customerId: mockCustomerId,
+          tenantId: mockTenantId,
+          channel: NotificationChannel.AUTO,
+          data: { date: '2024-03-15', time: '14:30', service: 'Tagliando', bookingCode: 'BK-001' },
+        },
+        {
+          type: NotificationType.BOOKING_REMINDER,
+          customerId: mockCustomerId,
+          tenantId: mockTenantId,
+          channel: NotificationChannel.AUTO,
+          data: { date: '2024-03-16', time: '10:00', service: 'Revisione', bookingCode: 'BK-002' },
+        },
+      ];
+
+      const result = await service.sendBulkNotifications(notifications, {
+        continueOnError: false,
+        throttleMs: 0,
+      });
+
+      expect(result.failed).toBe(1);
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0].success).toBe(false);
+      expect(result.results[0].error).toContain('not found');
+    });
+
+    it('should catch exceptions and continue when continueOnError is true', async () => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue(null),
+            },
+          } as unknown as PrismaService),
+      );
+
+      const notifications = [
+        {
+          type: NotificationType.BOOKING_REMINDER,
+          customerId: 'non-existent-1',
+          tenantId: mockTenantId,
+          channel: NotificationChannel.AUTO,
+          data: { date: '2024-03-15', time: '14:30', service: 'Tagliando', bookingCode: 'BK-001' },
+        },
+        {
+          type: NotificationType.BOOKING_REMINDER,
+          customerId: 'non-existent-2',
+          tenantId: mockTenantId,
+          channel: NotificationChannel.AUTO,
+          data: { date: '2024-03-16', time: '10:00', service: 'Revisione', bookingCode: 'BK-002' },
+        },
+      ];
+
+      const result = await service.sendBulkNotifications(notifications, {
+        continueOnError: true,
+        throttleMs: 0,
+      });
+
+      expect(result.failed).toBe(2);
+      expect(result.results).toHaveLength(2);
+      expect(result.total).toBe(2);
+    });
+  });
+
+  // =========================================================================
+  // getCustomerPreferences - error handling (lines 571-572)
   // =========================================================================
   describe('getCustomerPreferences', () => {
     it('should return default preferences', async () => {
@@ -755,6 +1070,13 @@ describe('NotificationOrchestratorService', () => {
         promotionalMessages: false,
       });
     });
+
+    it('should be callable with different customer and tenant ids', async () => {
+      const prefs = await service.getCustomerPreferences('other-customer', 'other-tenant');
+
+      expect(prefs.preferredChannel).toBe(NotificationChannel.AUTO);
+      expect(prefs.bookingConfirmations).toBe(true);
+    });
   });
 
   // =========================================================================
@@ -765,6 +1087,218 @@ describe('NotificationOrchestratorService', () => {
       await expect(
         service.updateCustomerPreferences(mockCustomerId, mockTenantId, {}),
       ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // getCustomerInfo - error handling (lines 636-639)
+  // =========================================================================
+  describe('getCustomerInfo error handling', () => {
+    it('should return null and not throw when prisma.withTenant throws', async () => {
+      (prisma.withTenant as jest.Mock).mockRejectedValue(new Error('Database connection lost'));
+
+      // notifyCustomer calls getCustomerInfo internally; if it returns null, it throws "not found"
+      await expect(
+        service.notifyCustomer(
+          mockCustomerId,
+          mockTenantId,
+          NotificationType.BOOKING_CONFIRMATION,
+          { date: '2024-03-15' },
+        ),
+      ).rejects.toThrow(`Customer ${mockCustomerId} not found`);
+    });
+
+    it('should handle non-Error exceptions in getCustomerInfo', async () => {
+      (prisma.withTenant as jest.Mock).mockRejectedValue('unexpected string error');
+
+      await expect(
+        service.notifyCustomer(
+          mockCustomerId,
+          mockTenantId,
+          NotificationType.BOOKING_CONFIRMATION,
+          { date: '2024-03-15' },
+        ),
+      ).rejects.toThrow(`Customer ${mockCustomerId} not found`);
+    });
+  });
+
+  // =========================================================================
+  // determineChannel - customer preference (line 600)
+  // =========================================================================
+  describe('determineChannel with customer preferences', () => {
+    it('should use customer preferred channel when AUTO and customer has preference set', async () => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: mockCustomerId,
+                encryptedFirstName: 'Mario',
+                encryptedLastName: 'Rossi',
+                encryptedEmail: 'mario@example.com',
+                encryptedPhone: '+393331234567',
+              }),
+            },
+          } as unknown as PrismaService),
+      );
+
+      // Note: getCustomerInfo doesn't return notificationPreferences from DB currently,
+      // so the preferredChannel path (line 600) requires the customer object
+      // to have notificationPreferences. The current getCustomerInfo doesn't populate this.
+      // This test exercises the AUTO -> trySmsFirst default path.
+      (smsService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'SM-AUTO-1',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        { date: '2024-03-15', time: '14:30', service: 'Tagliando', bookingCode: 'BK-001' },
+        NotificationChannel.AUTO,
+      );
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // trySmsFirst - both SMS and email fail (line 297 + fallback fail path)
+  // =========================================================================
+  describe('trySmsFirst complete failure paths', () => {
+    beforeEach(() => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue(mockCustomer),
+            },
+          } as unknown as PrismaService),
+      );
+    });
+
+    it('should return failure when both SMS and email fallback fail', async () => {
+      (smsService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'SMS delivery failed',
+      });
+      (emailService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'Email delivery failed',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.fallbackUsed).toBe(true);
+      expect(result.error).toContain('Email fallback failed');
+    });
+
+    it('should return failure when customer has no phone and no email', async () => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue({
+                ...mockCustomer,
+                encryptedPhone: null,
+                encryptedEmail: '',
+              }),
+            },
+          } as unknown as PrismaService),
+      );
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        { date: '2024-03-15' },
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No phone or email');
+    });
+  });
+
+  // =========================================================================
+  // sendBoth - edge cases
+  // =========================================================================
+  describe('sendBoth edge cases', () => {
+    beforeEach(() => {
+      (prisma.withTenant as jest.Mock).mockImplementation(
+        (tenantId: string, callback: (p: PrismaService) => Promise<unknown>) =>
+          callback({
+            customer: {
+              findUnique: jest.fn().mockResolvedValue(mockCustomer),
+            },
+          } as unknown as PrismaService),
+      );
+    });
+
+    it('should handle when both SMS and email fail in BOTH mode', async () => {
+      (smsService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'SMS failed',
+      });
+      (emailService.sendBookingConfirmation as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'Email failed',
+      });
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+        NotificationChannel.BOTH,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.channel).toBe(NotificationChannel.BOTH);
+      expect(result.error).toContain('SMS');
+      expect(result.error).toContain('Email');
+    });
+
+    it('should handle when promises are rejected in BOTH mode', async () => {
+      (smsService.sendBookingConfirmation as jest.Mock).mockRejectedValue(new Error('SMS crash'));
+      (emailService.sendBookingConfirmation as jest.Mock).mockRejectedValue(
+        new Error('Email crash'),
+      );
+
+      const result = await service.notifyCustomer(
+        mockCustomerId,
+        mockTenantId,
+        NotificationType.BOOKING_CONFIRMATION,
+        {
+          date: '2024-03-15',
+          time: '14:30',
+          service: 'Tagliando',
+          bookingCode: 'BK-001',
+          vehicle: 'Fiat Panda',
+        },
+        NotificationChannel.BOTH,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.channel).toBe(NotificationChannel.BOTH);
     });
   });
 });

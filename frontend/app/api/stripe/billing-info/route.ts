@@ -71,14 +71,14 @@ export async function GET(request: NextRequest) {
           (item) => item.price.id.includes('ai_addon')
         )
 
-        const sub = subscription as any
+        const firstItem = subscription.items.data[0]
         subscriptionDetails = {
-          id: sub.id,
-          status: sub.status,
+          id: subscription.id,
+          status: subscription.status,
           plan: plan || tenant.subscriptionPlan,
-          currentPeriodStart: new Date(sub.current_period_start * 1000).toISOString(),
-          currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
-          cancelAtPeriodEnd: sub.cancel_at_period_end,
+          currentPeriodStart: new Date((firstItem?.current_period_start ?? 0) * 1000).toISOString(),
+          currentPeriodEnd: new Date((firstItem?.current_period_end ?? 0) * 1000).toISOString(),
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
           aiAddonActive: hasAiAddon,
           aiAddonAmount: hasAiAddon ? 20000 : undefined,
         }
@@ -88,7 +88,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Get invoices
-    let invoices: any[] = []
+    interface BillingInvoice {
+      id: string
+      number: string
+      amount: number
+      currency: string
+      status: string | null
+      created: string
+      pdfUrl: string | null | undefined
+      lineItems: { description: string; amount: number }[]
+    }
+    let invoices: BillingInvoice[] = []
     try {
       const stripeInvoices = await getInvoices(tenant.stripeCustomerId, 10)
       invoices = stripeInvoices.map((invoice) => ({
@@ -141,15 +151,17 @@ export async function GET(request: NextRequest) {
       paymentMethod,
       usage,
     })
-  } catch (error: any) {
-    console.error('Billing info error:', error)
-
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch billing info',
-        details: error.message 
+  } catch (error: unknown) {
+    // Return empty billing data on error (DB/Stripe unavailable)
+    return NextResponse.json({
+      subscription: null,
+      invoices: [],
+      paymentMethod: null,
+      usage: {
+        inspectionsThisMonth: 0,
+        aiCallsThisMonth: 0,
+        storageUsed: 0,
       },
-      { status: 500 }
-    )
+    })
   }
 }

@@ -31,7 +31,7 @@ export interface LicensePlateDetection {
   };
   processedAt: Date;
   provider: OcrProvider;
-  rawResponse?: Record<string, any>;
+  rawResponse?: Record<string, unknown>;
 }
 
 export interface VehicleEntryExit {

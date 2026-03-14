@@ -101,12 +101,12 @@ export class VehicleTwinService {
     update: {
       status?: VehicleComponent['status'];
       healthScore?: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     },
   ): Promise<VehicleComponent> {
     // Update in database
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma.vehicleTwinComponent.upsert as any)({
+    await (this.prisma as any).vehicleTwinComponent.upsert({
       where: { id: componentId },
       create: {
         vehicleId,
@@ -135,7 +135,8 @@ export class VehicleTwinService {
     vehicleId: string,
     history: Omit<ComponentHistory, 'id'>,
   ): Promise<ComponentHistory> {
-    const record = await (this.prisma.componentHistory.create as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const record = await (this.prisma as any).componentHistory.create({
       data: {
         vehicleId,
         componentId: history.componentId,
@@ -173,7 +174,8 @@ export class VehicleTwinService {
    * Record damage
    */
   async recordDamage(vehicleId: string, damage: Omit<DamageRecord, 'id'>): Promise<DamageRecord> {
-    const record = await (this.prisma.vehicleDamage.create as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const record = await (this.prisma as any).vehicleDamage.create({
       data: {
         vehicleId,
         componentId: damage.componentId,
@@ -290,7 +292,8 @@ export class VehicleTwinService {
     }
 
     // Default config based on make/model
-    const config: TwinVisualizationConfig = (vehicle.twinConfig as any) || {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config: TwinVisualizationConfig = (vehicle as Record<string, any>).twinConfig || {
       vehicleId,
       modelFormat: 'GLB',
       modelUrl: `/models/vehicles/${vehicle.make.toLowerCase()}_${vehicle.model.toLowerCase()}.glb`,
@@ -311,7 +314,8 @@ export class VehicleTwinService {
     vehicleId: string,
     config: Partial<TwinVisualizationConfig>,
   ): Promise<TwinVisualizationConfig> {
-    await (this.prisma.vehicleTwinConfig.upsert as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (this.prisma as any).vehicleTwinConfig.upsert({
       where: { vehicleId },
       create: {
         vehicleId,
@@ -346,7 +350,8 @@ export class VehicleTwinService {
     from: Date,
     to: Date,
   ): Promise<{ date: Date; overallHealth: number; componentHealth: Record<string, number> }[]> {
-    const history = await (this.prisma.vehicleHealthHistory.findMany as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const history = await (this.prisma as any).vehicleHealthHistory.findMany({
       where: {
         vehicleId,
         recordedAt: { gte: from, lte: to },
@@ -354,28 +359,36 @@ export class VehicleTwinService {
       orderBy: { recordedAt: 'asc' },
     });
 
-    return history.map((h: { recordedAt: Date; overallHealth: number; componentHealth: any }) => ({
-      date: h.recordedAt,
-      overallHealth: h.overallHealth,
-      componentHealth: h.componentHealth as Record<string, number>,
-    }));
+    return history.map(
+      (h: {
+        recordedAt: Date;
+        overallHealth: number;
+        componentHealth: Record<string, number>;
+      }) => ({
+        date: h.recordedAt,
+        overallHealth: h.overallHealth,
+        componentHealth: h.componentHealth as Record<string, number>,
+      }),
+    );
   }
 
   // ============== PRIVATE METHODS ==============
 
-  private async buildTwinState(vehicle: any): Promise<VehicleTwinState> {
+  private async buildTwinState(vehicle: Record<string, unknown>): Promise<VehicleTwinState> {
     // Get or initialize components
     const components = await this.getOrInitializeComponents(vehicle);
 
     // Get component history
-    const history = await (this.prisma.componentHistory.findMany as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const history = await (this.prisma as any).componentHistory.findMany({
       where: { vehicleId: vehicle.id },
       orderBy: { date: 'desc' },
       take: 20,
     });
 
     // Get damage records
-    const damageRecords = await (this.prisma.vehicleDamage.findMany as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const damageRecords = await (this.prisma as any).vehicleDamage.findMany({
       where: { vehicleId: vehicle.id },
       orderBy: { createdAt: 'desc' },
     });
@@ -387,16 +400,19 @@ export class VehicleTwinService {
     const activeAlerts = await this.generatePredictiveAlerts(vehicle);
 
     // Get latest OBD reading for mileage/hours
-    const latestReading = vehicle.obdDevices
-      .flatMap((d: any) => d.readings)
-      .sort((a: any, b: any) => b.recordedAt.getTime() - a.recordedAt.getTime())[0];
+    const obdDevices = vehicle.obdDevices as {
+      readings: { recordedAt: Date; distance?: number; runTime?: number }[];
+    }[];
+    const latestReading = obdDevices
+      .flatMap(d => d.readings)
+      .sort((a, b) => b.recordedAt.getTime() - a.recordedAt.getTime())[0];
 
     return {
-      vehicleId: vehicle.id,
-      vin: vehicle.vin,
-      make: vehicle.make,
-      model: vehicle.model,
-      year: vehicle.year,
+      vehicleId: vehicle.id as string,
+      vin: vehicle.vin as string,
+      make: vehicle.make as string,
+      model: vehicle.model as string,
+      year: vehicle.year as number,
       overallHealth,
       lastUpdated: new Date(),
       components,
@@ -410,14 +426,14 @@ export class VehicleTwinService {
           description?: string | null;
           technicianId?: string | null;
           cost?: number | null;
-          partsUsed: any;
-          photos: any;
-          documents: any;
+          partsUsed: string[];
+          photos: string[];
+          documents: string[];
           odometer?: number | null;
         }) => ({
           id: h.id,
           componentId: h.componentId,
-          eventType: h.eventType as any,
+          eventType: h.eventType as ComponentHistory['eventType'],
           date: h.date,
           description: h.description,
           technicianId: h.technicianId || undefined,
@@ -438,15 +454,15 @@ export class VehicleTwinService {
           locationX: number;
           locationY: number;
           locationZ: number;
-          photos: any;
+          photos: string[];
           reportedAt: Date;
           repairedAt?: Date | null;
           repairCost?: number | null;
         }) => ({
           id: d.id,
           componentId: d.componentId,
-          type: d.type as any,
-          severity: d.severity as any,
+          type: d.type as DamageRecord['type'],
+          severity: d.severity as DamageRecord['severity'],
           description: d.description,
           location: { x: d.locationX, y: d.locationY, z: d.locationZ },
           photos: d.photos as string[],
@@ -460,8 +476,11 @@ export class VehicleTwinService {
     };
   }
 
-  private async getOrInitializeComponents(vehicle: any): Promise<VehicleComponent[]> {
-    const existing = await (this.prisma.vehicleTwinComponent.findMany as any)({
+  private async getOrInitializeComponents(
+    vehicle: Record<string, unknown>,
+  ): Promise<VehicleComponent[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (this.prisma as any).vehicleTwinComponent.findMany({
       where: { vehicleId: vehicle.id },
     });
 
@@ -480,19 +499,19 @@ export class VehicleTwinService {
           positionY: number;
           positionZ: number;
           modelPartId?: string | null;
-          metadata: any;
+          metadata: Record<string, unknown>;
         }) => ({
           id: c.componentId,
           name: c.name,
-          category: c.category as any,
-          status: c.status as any,
+          category: c.category as VehicleComponent['category'],
+          status: c.status as VehicleComponent['status'],
           healthScore: c.healthScore,
           lastServiceDate: c.lastServiceDate || undefined,
           nextServiceDue: c.nextServiceDue || undefined,
           estimatedLifespan: c.estimatedLifespan || undefined,
           position: { x: c.positionX, y: c.positionY, z: c.positionZ },
           modelPartId: c.modelPartId || undefined,
-          metadata: c.metadata as Record<string, any>,
+          metadata: c.metadata as Record<string, unknown>,
         }),
       );
     }
@@ -500,7 +519,8 @@ export class VehicleTwinService {
     // Initialize default components
     const defaultComponents = this.getDefaultComponents(vehicle);
 
-    await (this.prisma.vehicleTwinComponent.createMany as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (this.prisma as any).vehicleTwinComponent.createMany({
       data: defaultComponents.map(c => ({
         vehicleId: vehicle.id,
         componentId: c.id,
@@ -519,7 +539,7 @@ export class VehicleTwinService {
     return defaultComponents;
   }
 
-  private getDefaultComponents(vehicle: any): VehicleComponent[] {
+  private getDefaultComponents(_vehicle: Record<string, unknown>): VehicleComponent[] {
     // Default vehicle component structure
     return [
       {
@@ -616,7 +636,8 @@ export class VehicleTwinService {
   }
 
   private async getComponent(vehicleId: string, componentId: string): Promise<VehicleComponent> {
-    const component = await (this.prisma.vehicleTwinComponent.findUnique as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const component = await (this.prisma as any).vehicleTwinComponent.findUnique({
       where: {
         vehicleId_componentId: {
           vehicleId,
@@ -632,15 +653,15 @@ export class VehicleTwinService {
     return {
       id: component.componentId,
       name: component.name,
-      category: component.category as any,
-      status: component.status as any,
+      category: component.category as VehicleComponent['category'],
+      status: component.status as VehicleComponent['status'],
       healthScore: component.healthScore,
       lastServiceDate: component.lastServiceDate || undefined,
       nextServiceDue: component.nextServiceDue || undefined,
       estimatedLifespan: component.estimatedLifespan || undefined,
       position: { x: component.positionX, y: component.positionY, z: component.positionZ },
       modelPartId: component.modelPartId || undefined,
-      metadata: component.metadata as Record<string, any>,
+      metadata: component.metadata as Record<string, unknown>,
     };
   }
 
@@ -651,12 +672,24 @@ export class VehicleTwinService {
     return Math.round(totalScore / components.length);
   }
 
-  private async generatePredictiveAlerts(vehicle: any): Promise<PredictiveAlert[]> {
+  private async generatePredictiveAlerts(
+    vehicle: Record<string, unknown>,
+  ): Promise<PredictiveAlert[]> {
     const alerts: PredictiveAlert[] = [];
-    const mileage = vehicle.mileage || 0;
+    const mileage = (vehicle.mileage as number) || 0;
 
     // Analyze DTCs
-    const activeDtcs = vehicle.obdDevices.flatMap((d: any) => d.dtcs);
+    const obdDevicesForAlerts = vehicle.obdDevices as {
+      dtcs: {
+        id: string;
+        code: string;
+        severity: string;
+        description: string;
+        symptoms?: string;
+        causes?: string;
+      }[];
+    }[];
+    const activeDtcs = obdDevicesForAlerts.flatMap(d => d.dtcs);
     for (const dtc of activeDtcs) {
       if (dtc.severity === 'CRITICAL' || dtc.severity === 'HIGH') {
         alerts.push({
@@ -668,24 +701,42 @@ export class VehicleTwinService {
           confidence: 0.85,
           recommendedAction: `Address ${dtc.code}: ${dtc.description}`,
           estimatedCost: this.estimateRepairCost(dtc.code),
-          reasoning: [dtc.description, dtc.symptoms, dtc.causes].filter(Boolean),
+          reasoning: [dtc.description, dtc.symptoms, dtc.causes].filter((s): s is string =>
+            Boolean(s),
+          ),
         });
       }
     }
 
     // Analyze wear patterns from service history
-    const components = await (this.prisma.vehicleTwinComponent.findMany as any)({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const components = await (this.prisma as any).vehicleTwinComponent.findMany({
       where: { vehicleId: vehicle.id },
     });
 
+    // Batch fetch all component histories in a single query
+    const componentIds = components.map((c: { componentId: string }) => c.componentId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allHistories = await (this.prisma as any).componentHistory.findMany({
+      where: {
+        vehicleId: vehicle.id,
+        componentId: { in: componentIds },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    // Group histories by componentId
+    const historiesByComponent = new Map<string, unknown[]>();
+    for (const h of allHistories) {
+      const key = (h as { componentId: string }).componentId;
+      if (!historiesByComponent.has(key)) {
+        historiesByComponent.set(key, []);
+      }
+      historiesByComponent.get(key)!.push(h);
+    }
+
     for (const component of components) {
-      const serviceHistory = await (this.prisma.componentHistory.findMany as any)({
-        where: {
-          vehicleId: vehicle.id,
-          componentId: component.componentId,
-        },
-        orderBy: { date: 'desc' },
-      });
+      const serviceHistory = historiesByComponent.get(component.componentId) || [];
 
       const prediction = this.predictComponentFailure(component, serviceHistory, mileage);
 
@@ -711,8 +762,8 @@ export class VehicleTwinService {
   }
 
   private predictComponentFailure(
-    component: any,
-    history: any[],
+    component: Record<string, unknown>,
+    history: { eventType: string; odometer?: number }[],
     currentMileage: number,
   ): {
     shouldAlert: boolean;
@@ -733,7 +784,9 @@ export class VehicleTwinService {
       h => h.eventType === 'MAINTENANCE' || h.eventType === 'REPLACEMENT',
     );
 
-    const lifespan = this.LIFESPAN_ESTIMATES[component.category];
+    const componentCategory = component.category as string;
+    const componentName = component.name as string;
+    const lifespan = this.LIFESPAN_ESTIMATES[componentCategory];
     if (lifespan) {
       const serviceMileage = lastService?.odometer || 0;
       const milesSinceService = currentMileage - serviceMileage;
@@ -744,21 +797,21 @@ export class VehicleTwinService {
         severity = 'CRITICAL';
         confidence = 0.9;
         reasoning.push(
-          `${component.name} has exceeded ${Math.round(wearPercentage)}% of expected lifespan`,
+          `${componentName} has exceeded ${Math.round(wearPercentage)}% of expected lifespan`,
         );
       } else if (wearPercentage > 75) {
         shouldAlert = true;
         severity = 'HIGH';
         confidence = 0.75;
         reasoning.push(
-          `${component.name} is at ${Math.round(wearPercentage)}% of expected lifespan`,
+          `${componentName} is at ${Math.round(wearPercentage)}% of expected lifespan`,
         );
       } else if (wearPercentage > 50) {
         shouldAlert = true;
         severity = 'MEDIUM';
         confidence = 0.6;
         reasoning.push(
-          `${component.name} is approaching service interval (${Math.round(wearPercentage)}% wear)`,
+          `${componentName} is approaching service interval (${Math.round(wearPercentage)}% wear)`,
         );
       }
 
@@ -772,8 +825,8 @@ export class VehicleTwinService {
         severity,
         failureDate: new Date(Date.now() + daysUntilFailure * 24 * 60 * 60 * 1000),
         confidence,
-        recommendedAction: `Schedule ${component.name.toLowerCase()} inspection and potential replacement`,
-        estimatedCost: this.getEstimatedComponentCost(component.category),
+        recommendedAction: `Schedule ${componentName.toLowerCase()} inspection and potential replacement`,
+        estimatedCost: this.getEstimatedComponentCost(componentCategory),
         reasoning,
       };
     }
@@ -789,8 +842,11 @@ export class VehicleTwinService {
     };
   }
 
-  private predictComponentWear(component: VehicleComponent, vehicle: any): ComponentWearPrediction {
-    const currentMileage = vehicle.mileage || 0;
+  private predictComponentWear(
+    component: VehicleComponent,
+    vehicle: Record<string, unknown>,
+  ): ComponentWearPrediction {
+    const currentMileage = (vehicle.mileage as number) || 0;
     const predictions: { date: Date; wearPercentage: number }[] = [];
 
     // Project wear over next 12 months
@@ -809,6 +865,9 @@ export class VehicleTwinService {
       }
     }
 
+    const vehicleYear = (vehicle.year as number) || new Date().getFullYear();
+    const workOrders = (vehicle.workOrders as unknown[]) || [];
+
     return {
       componentId: component.id,
       currentWear: 100 - component.healthScore,
@@ -816,8 +875,8 @@ export class VehicleTwinService {
       factors: {
         drivingStyle: 0.7,
         mileage: currentMileage / 200000, // Normalized
-        age: (new Date().getFullYear() - vehicle.year) / 20,
-        maintenanceHistory: vehicle.workOrders.length / 10,
+        age: (new Date().getFullYear() - vehicleYear) / 20,
+        maintenanceHistory: workOrders.length / 10,
         environment: 0.5,
       },
     };

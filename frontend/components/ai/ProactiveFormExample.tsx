@@ -51,29 +51,21 @@ export const ProactiveFormExample: React.FC = () => {
   const [currentField, setCurrentField] = useState<string>('');
 
   // Funzione per riempire un campo
-  const fillField = (field: string, value: any) => {
+  const fillField = (field: string, value: string | number | boolean | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   // Hook AI proattiva
-  const { 
-    suggestions, 
-    dismissSuggestion, 
-    dismissAll,
-    isLoading,
-    count 
-  } = useProactiveAI({
+  const { suggestions, dismissSuggestion, dismissAll, isLoading, count } = useProactiveAI({
     formData,
     currentField,
     fillField,
-    onSuggestionGenerated: (s) => {
-      console.log('Nuova suggestion generata:', s);
+    onSuggestionGenerated: _s => {
+      // Suggestion generated
     },
   });
 
-  const handleChange = (field: keyof FormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleChange = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
   };
 
@@ -83,123 +75,122 @@ export const ProactiveFormExample: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Registrazione Azienda</h2>
-        <p className="text-gray-600">
-          Compila il form. L'AI ti suggerirà automaticamente correzioni e ottimizzazioni.
+    <div className='max-w-2xl mx-auto p-6'>
+      <div className='mb-6'>
+        <h2 className='text-2xl font-bold mb-2'>Registrazione Azienda</h2>
+        <p className='text-gray-600'>
+          Compila il form. L&apos;AI ti suggerirà automaticamente correzioni e ottimizzazioni.
         </p>
         {count > 0 && (
-          <p className="text-sm text-blue-600 mt-2">
+          <p className='text-sm text-blue-600 mt-2'>
             {count} suggeriment{count === 1 ? 'o' : 'i'} disponibili
           </p>
         )}
       </div>
 
       {/* AI Suggestions Panel */}
-      <div className="mb-6">
+      <div className='mb-6'>
         <ProactiveSuggestions
           suggestions={suggestions}
           onDismiss={dismissSuggestion}
           maxSuggestions={3}
         />
-        
+
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className='flex items-center gap-2 text-sm text-gray-500'>
+            <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
             Analizzando i dati...
           </div>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className='space-y-4'>
         {/* Email */}
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor='email'>Email</Label>
           <Input
-            id="email"
-            type="email"
+            id='email'
+            type='email'
             value={formData.email}
             onChange={handleChange('email')}
             onFocus={handleFocus('email')}
-            placeholder="esempio@gmail.com"
+            placeholder='esempio@gmail.com'
           />
         </div>
 
         {/* PEC (auto-fillabile dall'AI) */}
         <div>
-          <Label htmlFor="pec">PEC (Posta Elettronica Certificata)</Label>
+          <Label htmlFor='pec'>PEC (Posta Elettronica Certificata)</Label>
           <Input
-            id="pec"
-            type="email"
+            id='pec'
+            type='email'
             value={formData.pec}
             onChange={handleChange('pec')}
             onFocus={handleFocus('pec')}
-            placeholder="esempio@pec.it"
+            placeholder='esempio@pec.it'
           />
         </div>
 
         {/* Partita IVA */}
         <div>
-          <Label htmlFor="vatNumber">Partita IVA</Label>
+          <Label htmlFor='vatNumber'>Partita IVA</Label>
           <Input
-            id="vatNumber"
+            id='vatNumber'
             value={formData.vatNumber}
             onChange={handleChange('vatNumber')}
             onFocus={handleFocus('vatNumber')}
-            placeholder="12345678901"
+            placeholder='12345678901'
             maxLength={11}
           />
         </div>
 
         {/* Ragione Sociale */}
         <div>
-          <Label htmlFor="ragioneSociale">Ragione Sociale</Label>
+          <Label htmlFor='ragioneSociale'>Ragione Sociale</Label>
           <Input
-            id="ragioneSociale"
+            id='ragioneSociale'
             value={formData.ragioneSociale}
             onChange={handleChange('ragioneSociale')}
             onFocus={handleFocus('ragioneSociale')}
-            placeholder="Rossi Auto SRL"
+            placeholder='Rossi Auto SRL'
           />
         </div>
 
         {/* Indirizzo */}
         <div>
-          <Label htmlFor="address">Indirizzo</Label>
+          <Label htmlFor='address'>Indirizzo</Label>
           <Input
-            id="address"
+            id='address'
             value={formData.address}
             onChange={handleChange('address')}
             onFocus={handleFocus('address')}
-            placeholder="Via Roma 123"
+            placeholder='Via Roma 123'
           />
         </div>
 
         {/* Città e CAP */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className='grid grid-cols-2 gap-4'>
           <div>
-            <Label htmlFor="city">Città</Label>
+            <Label htmlFor='city'>Città</Label>
             <Input
-              id="city"
+              id='city'
               value={formData.city}
               onChange={handleChange('city')}
               onFocus={handleFocus('city')}
-              placeholder="Milano"
+              placeholder='Milano'
             />
           </div>
           <div>
-            <Label htmlFor="cap">CAP</Label>
+            <Label htmlFor='cap'>CAP</Label>
             <Input
-              id="cap"
+              id='cap'
               value={formData.cap}
               onChange={handleChange('cap')}
               onFocus={handleFocus('cap')}
-              placeholder="20100"
+              placeholder='20100'
               maxLength={5}
             />
           </div>
@@ -207,87 +198,87 @@ export const ProactiveFormExample: React.FC = () => {
 
         {/* Provincia */}
         <div>
-          <Label htmlFor="province">Provincia</Label>
+          <Label htmlFor='province'>Provincia</Label>
           <Input
-            id="province"
+            id='province'
             value={formData.province}
             onChange={handleChange('province')}
             onFocus={handleFocus('province')}
-            placeholder="MI"
+            placeholder='MI'
             maxLength={2}
           />
         </div>
 
         {/* Telefono */}
         <div>
-          <Label htmlFor="phone">Telefono</Label>
+          <Label htmlFor='phone'>Telefono</Label>
           <Input
-            id="phone"
-            type="tel"
+            id='phone'
+            type='tel'
             value={formData.phone}
             onChange={handleChange('phone')}
             onFocus={handleFocus('phone')}
-            placeholder="+39 123 456 7890"
+            placeholder='+39 123 456 7890'
           />
         </div>
 
         {/* Codice Fiscale */}
         <div>
-          <Label htmlFor="codiceFiscale">Codice Fiscale</Label>
+          <Label htmlFor='codiceFiscale'>Codice Fiscale</Label>
           <Input
-            id="codiceFiscale"
+            id='codiceFiscale'
             value={formData.codiceFiscale}
             onChange={handleChange('codiceFiscale')}
             onFocus={handleFocus('codiceFiscale')}
-            placeholder="RSSMRA85T10A562S"
+            placeholder='RSSMRA85T10A562S'
             maxLength={16}
           />
         </div>
 
         {/* Password */}
         <div>
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor='password'>Password</Label>
           <Input
-            id="password"
-            type="password"
+            id='password'
+            type='password'
             value={formData.password}
             onChange={handleChange('password')}
             onFocus={handleFocus('password')}
-            placeholder="••••••••"
+            placeholder='••••••••'
           />
         </div>
 
         {/* Tipo Azienda */}
         <div>
-          <Label htmlFor="companyType">Tipo Azienda</Label>
+          <Label htmlFor='companyType'>Tipo Azienda</Label>
           <Input
-            id="companyType"
+            id='companyType'
             value={formData.companyType}
             onChange={handleChange('companyType')}
             onFocus={handleFocus('companyType')}
-            placeholder="SRL, SPA, SAS..."
+            placeholder='SRL, SPA, SAS...'
           />
         </div>
 
         {/* Settore */}
         <div>
-          <Label htmlFor="industry">Settore</Label>
+          <Label htmlFor='industry'>Settore</Label>
           <Input
-            id="industry"
+            id='industry'
             value={formData.industry}
             onChange={handleChange('industry')}
             onFocus={handleFocus('industry')}
-            placeholder="Automotive, Tecnologia..."
+            placeholder='Automotive, Tecnologia...'
           />
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-4">
-          <Button type="submit" className="flex-1">
+        <div className='flex gap-3 pt-4'>
+          <Button type='submit' className='flex-1'>
             Registra Azienda
           </Button>
           {suggestions.length > 0 && (
-            <Button type="button" variant="outline" onClick={dismissAll}>
+            <Button type='button' variant='outline' onClick={dismissAll}>
               Ignora tutti
             </Button>
           )}

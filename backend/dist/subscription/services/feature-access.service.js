@@ -143,9 +143,7 @@ let FeatureAccessService = class FeatureAccessService {
             current: check.current + 1,
             remaining: check.limit !== null ? Math.max(0, check.limit - check.current - 1) : Infinity,
             withinLimit: check.limit === null || check.current + 1 <= check.limit,
-            percentageUsed: check.limit !== null
-                ? ((check.current + 1) / check.limit) * 100
-                : 0,
+            percentageUsed: check.limit !== null ? ((check.current + 1) / check.limit) * 100 : 0,
         };
         return simulatedCheck;
     }
@@ -167,9 +165,7 @@ let FeatureAccessService = class FeatureAccessService {
                 where: { tenantId },
                 data: {
                     apiCallsUsed: { increment: 1 },
-                    storageUsedBytes: bytesTransferred > 0
-                        ? { increment: BigInt(bytesTransferred) }
-                        : undefined,
+                    storageUsedBytes: bytesTransferred > 0 ? { increment: BigInt(bytesTransferred) } : undefined,
                 },
             });
             const now = new Date();
@@ -222,7 +218,9 @@ let FeatureAccessService = class FeatureAccessService {
                 locations: {
                     current: currentUsage.locations,
                     limit: limits.maxLocations,
-                    percentage: limits.maxLocations ? (currentUsage.locations / limits.maxLocations) * 100 : 0,
+                    percentage: limits.maxLocations
+                        ? (currentUsage.locations / limits.maxLocations) * 100
+                        : 0,
                 },
                 apiCalls: {
                     current: subscription.apiCallsUsed,
@@ -241,7 +239,9 @@ let FeatureAccessService = class FeatureAccessService {
                 customers: {
                     current: currentUsage.customers,
                     limit: limits.maxCustomers,
-                    percentage: limits.maxCustomers ? (currentUsage.customers / limits.maxCustomers) * 100 : 0,
+                    percentage: limits.maxCustomers
+                        ? (currentUsage.customers / limits.maxCustomers) * 100
+                        : 0,
                 },
                 inspections: {
                     current: currentUsage.inspectionsThisMonth,

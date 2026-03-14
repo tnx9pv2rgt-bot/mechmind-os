@@ -3,10 +3,10 @@
  * Handles suspension after failed payments
  */
 
-import { prisma } from '@/lib/prisma'
-import { SubscriptionStatus } from '@prisma/client'
+import { prisma } from '@/lib/prisma';
+import { SubscriptionStatus } from '@prisma/client';
 
-const GRACE_PERIOD_DAYS = 3
+const GRACE_PERIOD_DAYS = 3;
 
 /**
  * Check if tenant is in grace period
@@ -18,14 +18,13 @@ export async function isInGracePeriod(tenantId: string): Promise<boolean> {
       gracePeriodEnd: true,
       subscriptionStatus: true,
     },
-  })
+  });
 
-  if (!tenant?.gracePeriodEnd) return false
-  
+  if (!tenant?.gracePeriodEnd) return false;
+
   return (
-    tenant.gracePeriodEnd > new Date() &&
-    (tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE)
-  )
+    tenant.gracePeriodEnd > new Date() && tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE
+  );
 }
 
 /**
@@ -39,23 +38,22 @@ export async function shouldSuspendTenant(tenantId: string): Promise<boolean> {
       subscriptionStatus: true,
       isSuspended: true,
     },
-  })
+  });
 
-  if (!tenant?.gracePeriodEnd) return false
-  if (tenant.isSuspended) return false
-  
+  if (!tenant?.gracePeriodEnd) return false;
+  if (tenant.isSuspended) return false;
+
   return (
-    tenant.gracePeriodEnd <= new Date() &&
-    (tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE)
-  )
+    tenant.gracePeriodEnd <= new Date() && tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE
+  );
 }
 
 /**
  * Start grace period for tenant
  */
 export async function startGracePeriod(tenantId: string): Promise<void> {
-  const gracePeriodEnd = new Date()
-  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS)
+  const gracePeriodEnd = new Date();
+  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS);
 
   await prisma.tenant.update({
     where: { id: tenantId },
@@ -63,10 +61,10 @@ export async function startGracePeriod(tenantId: string): Promise<void> {
       gracePeriodEnd,
       subscriptionStatus: SubscriptionStatus.PAST_DUE,
     },
-  })
+  });
 
   // TODO: Send email notification about grace period
-  console.log(`⏰ Grace period started for tenant ${tenantId}, ends ${gracePeriodEnd.toISOString()}`)
+  console.info(`Grace period started for tenant ${tenantId}, ends ${gracePeriodEnd.toISOString()}`);
 }
 
 /**
@@ -79,10 +77,10 @@ export async function suspendTenant(tenantId: string): Promise<void> {
       isSuspended: true,
       subscriptionStatus: SubscriptionStatus.SUSPENDED,
     },
-  })
+  });
 
   // TODO: Send suspension notification
-  console.log(`🚫 Tenant ${tenantId} suspended due to non-payment`)
+  console.info(`Tenant ${tenantId} suspended due to non-payment`);
 }
 
 /**
@@ -96,9 +94,9 @@ export async function reactivateTenant(tenantId: string): Promise<void> {
       gracePeriodEnd: null,
       subscriptionStatus: SubscriptionStatus.ACTIVE,
     },
-  })
+  });
 
-  console.log(`✅ Tenant ${tenantId} reactivated`)
+  console.info(`Tenant ${tenantId} reactivated`);
 }
 
 /**
@@ -108,15 +106,15 @@ export async function getGracePeriodDaysRemaining(tenantId: string): Promise<num
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
     select: { gracePeriodEnd: true },
-  })
+  });
 
-  if (!tenant?.gracePeriodEnd) return null
+  if (!tenant?.gracePeriodEnd) return null;
 
-  const now = new Date()
-  const diffTime = tenant.gracePeriodEnd.getTime() - now.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const now = new Date();
+  const diffTime = tenant.gracePeriodEnd.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  return Math.max(0, diffDays)
+  return Math.max(0, diffDays);
 }
 
 /**
@@ -124,7 +122,7 @@ export async function getGracePeriodDaysRemaining(tenantId: string): Promise<num
  * Should be run as a cron job
  */
 export async function processGracePeriods(): Promise<void> {
-  console.log('🔄 Processing grace periods...')
+  console.info('Processing grace periods...');
 
   // Find tenants with expired grace periods
   const tenantsToSuspend = await prisma.tenant.findMany({
@@ -137,17 +135,17 @@ export async function processGracePeriods(): Promise<void> {
         in: [SubscriptionStatus.PAST_DUE],
       },
     },
-  })
+  });
 
-  console.log(`Found ${tenantsToSuspend.length} tenants to suspend`)
+  console.info(`Found ${tenantsToSuspend.length} tenants to suspend`);
 
   for (const tenant of tenantsToSuspend) {
-    await suspendTenant(tenant.id)
+    await suspendTenant(tenant.id);
   }
 
   // Find tenants approaching grace period end (send warnings)
-  const warningThreshold = new Date()
-  warningThreshold.setDate(warningThreshold.getDate() + 1) // 1 day before
+  const warningThreshold = new Date();
+  warningThreshold.setDate(warningThreshold.getDate() + 1); // 1 day before
 
   const tenantsToWarn = await prisma.tenant.findMany({
     where: {
@@ -157,12 +155,12 @@ export async function processGracePeriods(): Promise<void> {
       },
       isSuspended: false,
     },
-  })
+  });
 
-  console.log(`Found ${tenantsToWarn.length} tenants to warn`)
+  console.info(`Found ${tenantsToWarn.length} tenants to warn`);
 
   for (const tenant of tenantsToWarn) {
     // TODO: Send warning email
-    console.log(`⚠️ Warning: Tenant ${tenant.id} grace period ending soon`)
+    console.info(`Warning: Tenant ${tenant.id} grace period ending soon`);
   }
 }

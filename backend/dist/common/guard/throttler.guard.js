@@ -36,7 +36,7 @@ let AdvancedThrottlerGuard = class AdvancedThrottlerGuard extends throttler_1.Th
             limit: limits.limit,
         };
     }
-    getLimitsForPath(path, method) {
+    getLimitsForPath(path, _method) {
         if (path.includes('/auth/login') || path.includes('/auth/verify-2fa')) {
             return { ttl: 60, limit: 5 };
         }

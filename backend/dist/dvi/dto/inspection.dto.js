@@ -91,7 +91,11 @@ __decorate([
     __metadata("design:type", Number)
 ], UpdateInspectionDto.prototype, "mileage", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Inspection items', type: [UpdateInspectionItemDto], required: false }),
+    (0, swagger_1.ApiProperty)({
+        description: 'Inspection items',
+        type: [UpdateInspectionItemDto],
+        required: false,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),

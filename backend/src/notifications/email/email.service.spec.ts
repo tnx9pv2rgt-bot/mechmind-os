@@ -9,7 +9,6 @@ import {
   WelcomeData,
   PasswordResetData,
   BookingCancelledData,
-  EmailResult,
 } from './email.service';
 
 // Mock the Resend SDK
@@ -31,7 +30,6 @@ jest.mock('resend', () => ({
 
 describe('EmailService', () => {
   let service: EmailService;
-  let configService: ConfigService;
 
   const defaultConfigMap: Record<string, string | boolean> = {
     RESEND_API_KEY: 'test-api-key',
@@ -63,7 +61,7 @@ describe('EmailService', () => {
     jest.clearAllMocks();
     const module = await createModule();
     service = module.get<EmailService>(EmailService);
-    configService = module.get<ConfigService>(ConfigService);
+    module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {

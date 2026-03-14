@@ -3,16 +3,7 @@
  * Esempio di utilizzo dei servizi esterni
  */
 
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ViesApiService, GooglePlacesService, ZeroBounceService, TwilioService } from './index';
 import { ApplyRateLimit, RedisRateLimiterMiddleware } from '../../middleware';

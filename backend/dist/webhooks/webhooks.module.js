@@ -13,7 +13,7 @@ const index_1 = require("./index");
 let WebhooksModule = class WebhooksModule {
     configure(consumer) {
         consumer
-            .apply((req, res, next) => {
+            .apply((req, _res, next) => {
             let data = '';
             req.setEncoding('utf8');
             req.on('data', (chunk) => {
@@ -32,17 +32,7 @@ exports.WebhooksModule = WebhooksModule = __decorate([
     (0, common_1.Module)({
         imports: [config_1.ConfigModule],
         controllers: [index_1.WebhookController],
-        providers: [
-            index_1.SegmentWebhookService,
-            index_1.ZapierWebhookService,
-            index_1.SlackWebhookService,
-            index_1.CRMWebhookService,
-        ],
-        exports: [
-            index_1.SegmentWebhookService,
-            index_1.ZapierWebhookService,
-            index_1.SlackWebhookService,
-            index_1.CRMWebhookService,
-        ],
+        providers: [index_1.SegmentWebhookService, index_1.ZapierWebhookService, index_1.SlackWebhookService, index_1.CRMWebhookService],
+        exports: [index_1.SegmentWebhookService, index_1.ZapierWebhookService, index_1.SlackWebhookService, index_1.CRMWebhookService],
     })
 ], WebhooksModule);

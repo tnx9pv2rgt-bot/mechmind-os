@@ -19,24 +19,23 @@ async function bootstrap() {
     const expressApp = (0, express_1.default)();
     const adapter = new platform_express_1.ExpressAdapter(expressApp);
     const app = await core_1.NestFactory.create(app_module_1.AppModule, adapter, {
-        logger: process.env.NODE_ENV === 'dev'
-            ? ['debug', 'log', 'warn', 'error']
-            : ['warn', 'error'],
+        logger: process.env.NODE_ENV === 'dev' ? ['debug', 'log', 'warn', 'error'] : ['warn', 'error'],
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,
         forbidNonWhitelisted: true,
     }));
+    const corsOrigin = process.env.CORS_ORIGIN;
     app.enableCors({
-        origin: process.env.CORS_ORIGIN || '*',
+        origin: corsOrigin ? corsOrigin.split(',').map(o => o.trim()) : false,
         credentials: true,
     });
     await app.init();
     cachedApp = expressApp;
     return expressApp;
 }
-const handler = async (event, context) => {
+const handler = async (_event, _context) => {
     if (!cachedApp) {
         await bootstrap();
     }
@@ -50,7 +49,7 @@ const handler = async (event, context) => {
 };
 exports.handler = handler;
 if (require.main === module) {
-    bootstrap().then((app) => {
+    bootstrap().then(app => {
         app.listen(PORT, HOST, () => {
             console.log(`🚀 MechMind OS API running on http://${HOST}:${PORT}`);
             console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);

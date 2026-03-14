@@ -7,7 +7,7 @@ import {
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
-import { GdprRequestService } from '../services/gdpr-request.service';
+import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
 import { LoggerService } from '@common/services/logger.service';
 
 /**
@@ -45,7 +45,7 @@ export class GdprWebhookController {
       message?: string;
       source: string;
     },
-    @Headers('x-webhook-signature') signature?: string,
+    @Headers('x-webhook-signature') _signature?: string,
   ) {
     if (!body?.tenantId || !body?.requestType || !body?.source) {
       throw new BadRequestException('Missing required fields: tenantId, requestType, source');
@@ -59,11 +59,11 @@ export class GdprWebhookController {
     // Create the request
     const request = await this.requestService.createRequest({
       tenantId: body.tenantId,
-      requestType: body.requestType as any,
+      requestType: body.requestType as DataSubjectRequestType,
       requesterEmail: body.requesterEmail,
       requesterPhone: body.requesterPhone,
       customerId: body.customerId,
-      source: body.source as any,
+      source: body.source as 'EMAIL' | 'WEB_FORM' | 'PHONE' | 'MAIL',
       notes: body.message,
     });
 
@@ -142,7 +142,7 @@ export class GdprWebhookController {
   /**
    * Verify webhook signature (placeholder)
    */
-  private verifyWebhookSignature(payload: any, signature?: string): boolean {
+  private verifyWebhookSignature(_payload: string, signature?: string): boolean {
     if (!signature) return false;
     // In production: Implement HMAC verification
     return true;

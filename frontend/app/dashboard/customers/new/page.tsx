@@ -12,7 +12,7 @@ export default function NewCustomerRedirect() {
   
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-pulse text-gray-400">Caricamento...</div>
+      <div className="animate-pulse text-gray-400 dark:text-[#6e6e6e]">Caricamento...</div>
     </div>
   );
 }

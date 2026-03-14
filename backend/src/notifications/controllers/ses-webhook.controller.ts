@@ -36,7 +36,7 @@ export class SesWebhookController {
   @Post('bounce')
   async handleBounce(
     @Body() payload: { Message: string },
-    @Headers('x-amz-sns-message-type') messageType: string,
+    @Headers('x-amz-sns-message-type') _messageType: string,
   ): Promise<void> {
     this.logger.log('Received SES bounce notification');
 
@@ -60,14 +60,17 @@ export class SesWebhookController {
         }
       }
     } catch (error) {
-      this.logger.error('Error processing bounce:', error.message);
+      this.logger.error(
+        'Error processing bounce:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
   @Post('complaint')
   async handleComplaint(
     @Body() payload: { Message: string },
-    @Headers('x-amz-sns-message-type') messageType: string,
+    @Headers('x-amz-sns-message-type') _messageType: string,
   ): Promise<void> {
     this.logger.log('Received SES complaint notification');
 
@@ -88,7 +91,10 @@ export class SesWebhookController {
         }
       }
     } catch (error) {
-      this.logger.error('Error processing complaint:', error.message);
+      this.logger.error(
+        'Error processing complaint:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -105,14 +111,17 @@ export class SesWebhookController {
         });
       }
     } catch (error) {
-      this.logger.error('Error processing delivery:', error.message);
+      this.logger.error(
+        'Error processing delivery:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
   private async updateEmailStatus(
     messageId: string,
     status: string,
-    metadata?: Record<string, unknown>,
+    _metadata?: Record<string, unknown>,
   ): Promise<void> {
     // Implementation would update database
     this.logger.log(`Updating email ${messageId} status to ${status}`);

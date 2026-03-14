@@ -695,10 +695,11 @@ describe('GdprDeletionService', () => {
           call[0].data.action === 'DELETION_SNAPSHOT_CREATED',
       );
       expect(snapshotAuditCall).toBeDefined();
-      const newValues = snapshotAuditCall![0].data.newValues as {
+      const newValuesRaw = snapshotAuditCall![0].data.newValues as string;
+      const newValues = JSON.parse(newValuesRaw) as {
         recordCount: number;
         snapshotId: string;
-        expiresAt: Date;
+        expiresAt: string;
       };
       // 1 customer + 1 vehicle + 1 booking = 3
       expect(newValues.recordCount).toBe(3);
@@ -842,10 +843,7 @@ describe('GdprDeletionService', () => {
             action: 'CUSTOMER_ANONYMIZED',
             tableName: 'customers_encrypted',
             recordId: CUSTOMER_ID,
-            newValues: expect.objectContaining({
-              anonymized: true,
-              requestId: REQUEST_ID,
-            }),
+            newValues: expect.stringContaining('"anonymized":true'),
           }),
         }),
       );
@@ -974,9 +972,7 @@ describe('GdprDeletionService', () => {
             action: 'CALL_RECORDINGS_DELETED',
             tableName: 'call_recordings',
             recordId: CUSTOMER_ID,
-            newValues: expect.objectContaining({
-              deletedCount: 2,
-            }),
+            newValues: expect.stringContaining('"deletedCount":2'),
           }),
         }),
       );

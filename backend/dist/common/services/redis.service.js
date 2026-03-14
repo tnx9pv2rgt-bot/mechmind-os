@@ -8,65 +8,114 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const redis_1 = require("@upstash/redis");
+const ioredis_1 = __importDefault(require("ioredis"));
 const logger_service_1 = require("./logger.service");
 let RedisService = class RedisService {
     constructor(config, logger) {
         this.config = config;
         this.logger = logger;
         this.client = null;
-        this.memoryStore = new Map();
-        const url = this.config.get('UPSTASH_REDIS_REST_URL');
-        const token = this.config.get('UPSTASH_REDIS_REST_TOKEN');
-        if (url && token) {
-            this.client = new redis_1.Redis({ url, token });
-            this.logger.log('RedisService: Upstash client initialized');
+        this._isAvailable = false;
+    }
+    get isAvailable() {
+        return this._isAvailable;
+    }
+    async onModuleInit() {
+        const url = this.config.get('REDIS_URL');
+        if (!url) {
+            this.logger.error('RedisService: REDIS_URL is required. ' +
+                'Redis-dependent features (MFA sessions, rate limiting, queues) will be unavailable.');
+            this._isAvailable = false;
+            return;
         }
-        else {
-            this.logger.warn('RedisService: Using in-memory fallback');
+        try {
+            this.client = new ioredis_1.default(url, {
+                maxRetriesPerRequest: 3,
+                retryStrategy(times) {
+                    if (times > 3)
+                        return null;
+                    return Math.min(times * 200, 2000);
+                },
+                lazyConnect: false,
+            });
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Redis connection timeout (5s)'));
+                }, 5000);
+                this.client.once('ready', () => {
+                    clearTimeout(timeout);
+                    resolve();
+                });
+                this.client.once('error', (err) => {
+                    clearTimeout(timeout);
+                    reject(err);
+                });
+            });
+            this._isAvailable = true;
+            this.logger.log('RedisService: ioredis client connected');
+        }
+        catch (error) {
+            this.logger.error(`RedisService: Failed to connect - ${error instanceof Error ? error.message : 'Unknown error'}. ` +
+                'App will start but Redis-dependent features will be unavailable.');
+            this.client?.disconnect();
+            this.client = null;
+            this._isAvailable = false;
         }
     }
     async get(key) {
-        if (this.client) {
-            return this.client.get(key);
-        }
-        const item = this.memoryStore.get(key);
-        if (!item)
-            return null;
-        if (item.expiresAt < Date.now()) {
-            this.memoryStore.delete(key);
+        if (!this.client) {
+            this.logger.warn('RedisService: get() called but Redis is not available');
             return null;
         }
-        return item.value;
+        try {
+            return await this.client.get(key);
+        }
+        catch (error) {
+            this.logger.error(`RedisService: get(${key}) failed - ${error instanceof Error ? error.message : 'Unknown error'}`);
+            return null;
+        }
     }
     async set(key, value, ttlSeconds) {
-        if (this.client) {
+        if (!this.client) {
+            this.logger.warn('RedisService: set() called but Redis is not available');
+            return;
+        }
+        try {
             if (ttlSeconds) {
-                await this.client.set(key, value, { ex: ttlSeconds });
+                await this.client.set(key, value, 'EX', ttlSeconds);
             }
             else {
                 await this.client.set(key, value);
             }
-            return;
         }
-        const expiresAt = ttlSeconds
-            ? Date.now() + ttlSeconds * 1000
-            : Number.MAX_SAFE_INTEGER;
-        this.memoryStore.set(key, { value, expiresAt });
+        catch (error) {
+            this.logger.error(`RedisService: set(${key}) failed - ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
     async del(key) {
-        if (this.client) {
-            await this.client.del(key);
+        if (!this.client) {
+            this.logger.warn('RedisService: del() called but Redis is not available');
             return;
         }
-        this.memoryStore.delete(key);
+        try {
+            await this.client.del(key);
+        }
+        catch (error) {
+            this.logger.error(`RedisService: del(${key}) failed - ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
-    onModuleDestroy() {
-        this.memoryStore.clear();
+    async onModuleDestroy() {
+        if (this.client) {
+            await this.client.quit();
+        }
+        this.logger.log('RedisService: disconnected');
     }
 };
 exports.RedisService = RedisService;

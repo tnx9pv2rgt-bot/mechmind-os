@@ -68,18 +68,13 @@ export default function OBDPage() {
   const [connected, setConnected] = useState(false)
 
   return (
-    <div className="min-h-screen">
+    <div>
       {/* Header */}
-      <motion.header 
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
-        initial="hidden"
-        animate="visible"
-        variants={headerVariants}
-      >
+      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark">OBD & Manutenzione ML</h1>
-            <p className="text-apple-gray text-body mt-1">Monitoraggio real-time e predizione intelligente</p>
+            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">OBD & Manutenzione ML</h1>
+            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">Monitoraggio real-time e predizione intelligente</p>
           </div>
           <div className="flex items-center gap-3">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${connected ? 'bg-apple-green/10 text-apple-green' : 'bg-apple-gray/10 text-apple-gray'}`}>
@@ -88,7 +83,7 @@ export default function OBDPage() {
             </div>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <motion.div 
         className="p-8 space-y-6"
@@ -150,14 +145,14 @@ export default function OBDPage() {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl font-bold text-apple-dark">78</span>
-                  <span className="text-sm text-apple-gray">Health Score</span>
+                  <span className="text-5xl font-bold text-apple-dark dark:text-[#ececec]">78</span>
+                  <span className="text-sm text-apple-gray dark:text-[#636366]">Health Score</span>
                 </div>
               </div>
               
               <div className="flex-1">
-                <h3 className="text-title-2 font-semibold text-apple-dark mb-2">Stato del Veicolo</h3>
-                <p className="text-body text-apple-gray mb-6">
+                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2">Stato del Veicolo</h3>
+                <p className="text-body text-apple-gray dark:text-[#636366] mb-6">
                   Il tuo veicolo è in buone condizioni generali. Ci sono alcuni elementi che richiedono attenzione 
                   nei prossimi 5,000 km.
                 </p>
@@ -168,11 +163,11 @@ export default function OBDPage() {
                     { label: 'Freni', score: 65, color: 'bg-apple-orange' },
                   ].map((item) => (
                     <div key={item.label} className="text-center">
-                      <div className="w-full h-2 bg-apple-light-gray rounded-full overflow-hidden mb-2">
+                      <div className="w-full h-2 bg-apple-light-gray dark:bg-[#353535] rounded-full overflow-hidden mb-2">
                         <div className={`h-full ${item.color}`} style={{ width: `${item.score}%` }} />
                       </div>
-                      <p className="text-footnote text-apple-gray">{item.label}</p>
-                      <p className="text-callout font-semibold text-apple-dark">{item.score}</p>
+                      <p className="text-footnote text-apple-gray dark:text-[#636366]">{item.label}</p>
+                      <p className="text-callout font-semibold text-apple-dark dark:text-[#ececec]">{item.score}</p>
                     </div>
                   ))}
                 </div>
@@ -198,10 +193,10 @@ export default function OBDPage() {
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4`}>
                     <item.icon className="h-5 w-5 text-white" />
                   </div>
-                  <p className="text-footnote text-apple-gray">{item.label}</p>
+                  <p className="text-footnote text-apple-gray dark:text-[#636366]">{item.label}</p>
                   <div className="flex items-baseline gap-1">
-                    <p className="text-title-1 font-bold text-apple-dark">{item.value}</p>
-                    <span className="text-caption text-apple-gray">{item.unit}</span>
+                    <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">{item.value}</p>
+                    <span className="text-caption text-apple-gray dark:text-[#636366]">{item.unit}</span>
                   </div>
                 </AppleCardContent>
               </AppleCard>
@@ -218,8 +213,8 @@ export default function OBDPage() {
                   <Brain className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-title-2 font-semibold text-apple-dark">Predizioni ML</h3>
-                  <p className="text-footnote text-apple-gray">Basate sui dati OBD e algoritmi di machine learning</p>
+                  <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Predizioni ML</h3>
+                  <p className="text-footnote text-apple-gray dark:text-[#636366]">Basate sui dati OBD e algoritmi di machine learning</p>
                 </div>
               </div>
 
@@ -253,7 +248,7 @@ export default function OBDPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <AlertTriangle className={`h-5 w-5 ${alert.severity === 'high' ? 'text-apple-red' : 'text-apple-orange'}`} />
-                        <h4 className="text-body font-semibold text-apple-dark">{alert.component}</h4>
+                        <h4 className="text-body font-semibold text-apple-dark dark:text-[#ececec]">{alert.component}</h4>
                       </div>
                       <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                         alert.severity === 'high' ? 'bg-apple-red text-white' : 'bg-apple-orange text-white'
@@ -261,13 +256,13 @@ export default function OBDPage() {
                         {alert.probability}% rischio
                       </span>
                     </div>
-                    <p className="text-body text-apple-gray mb-3">{alert.description}</p>
+                    <p className="text-body text-apple-gray dark:text-[#636366] mb-3">{alert.description}</p>
                     <div className="flex items-center justify-between">
                       <div className="text-footnote">
-                        <span className="text-apple-gray">Azione: </span>
-                        <span className="text-apple-dark font-medium">{alert.action}</span>
+                        <span className="text-apple-gray dark:text-[#636366]">Azione: </span>
+                        <span className="text-apple-dark dark:text-[#ececec] font-medium">{alert.action}</span>
                       </div>
-                      <span className="text-callout font-semibold text-apple-dark">{alert.cost}</span>
+                      <span className="text-callout font-semibold text-apple-dark dark:text-[#ececec]">{alert.cost}</span>
                     </div>
                   </div>
                 ))}
@@ -307,8 +302,8 @@ export default function OBDPage() {
                   <div className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mx-auto mb-4`}>
                     <feature.icon className="h-7 w-7 text-white" />
                   </div>
-                  <h3 className="text-title-3 font-semibold text-apple-dark mb-2">{feature.title}</h3>
-                  <p className="text-footnote text-apple-gray">{feature.description}</p>
+                  <h3 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-2">{feature.title}</h3>
+                  <p className="text-footnote text-apple-gray dark:text-[#636366]">{feature.description}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>

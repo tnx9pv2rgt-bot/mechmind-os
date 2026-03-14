@@ -102,10 +102,7 @@ let EncryptionService = class EncryptionService {
         if (!data)
             return '';
         const normalized = this.normalizeForHash(data);
-        return crypto
-            .createHmac('sha256', this.key)
-            .update(normalized)
-            .digest('hex');
+        return crypto.createHmac('sha256', this.key).update(normalized).digest('hex');
     }
     verifyHash(data, hash) {
         return this.hash(data) === hash;

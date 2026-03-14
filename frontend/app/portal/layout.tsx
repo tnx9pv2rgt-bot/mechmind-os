@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PortalAuthService } from '@/lib/auth/portal-auth'
+import { PortalAuthService } from '@/lib/auth/portal-auth-client'
 import { Customer } from '@/lib/types/portal'
 
 // ============================================
@@ -18,7 +18,7 @@ const publicRoutes = ['/portal/login', '/portal/register', '/portal/reset-passwo
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -31,7 +31,7 @@ function LoadingScreen() {
             className="w-8 h-8 border-2 border-white border-t-transparent rounded-full"
           />
         </div>
-        <p className="text-apple-gray">Caricamento...</p>
+        <p className="text-apple-gray dark:text-[#636366]">Caricamento...</p>
       </motion.div>
     </div>
   )

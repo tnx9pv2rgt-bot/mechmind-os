@@ -2,6 +2,27 @@
  * Test Setup for Accessibility Tests
  */
 
+// Polyfill TextEncoder/TextDecoder for jsdom test environment
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { TextEncoder: TE, TextDecoder: TD } = require('util')
+if (typeof globalThis.TextEncoder === 'undefined') {
+  Object.assign(globalThis, { TextEncoder: TE, TextDecoder: TD })
+}
+
+// Polyfill Request/Response for jsdom test environment (used by integration tests)
+if (typeof globalThis.Request === 'undefined') {
+  const undici = (() => {
+    try { return require('undici') } catch { return null }
+  })()
+  if (undici) {
+    Object.assign(globalThis, {
+      Request: undici.Request,
+      Response: undici.Response,
+      Headers: undici.Headers,
+    })
+  }
+}
+
 import '@testing-library/jest-dom';
 
 // Mock i18next

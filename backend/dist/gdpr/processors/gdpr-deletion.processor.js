@@ -26,7 +26,7 @@ let GdprDeletionProcessor = GdprDeletionProcessor_1 = class GdprDeletionProcesso
     }
     async process(job) {
         const startTime = Date.now();
-        const { customerId, tenantId, requestId, reason } = job.data;
+        const { customerId, tenantId, requestId } = job.data;
         this.logger.log(`Starting deletion job ${job.id} for customer ${customerId}`);
         await job.updateProgress(10);
         try {
@@ -66,13 +66,14 @@ let GdprDeletionProcessor = GdprDeletionProcessor_1 = class GdprDeletionProcesso
             };
         }
         catch (error) {
-            this.logger.error(`Deletion job ${job.id} failed: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Deletion job ${job.id} failed: ${errorMessage}`);
             await this.prisma.withTenant(tenantId, async (prisma) => {
                 await prisma.dataSubjectRequest.update({
                     where: { id: requestId },
                     data: {
                         status: 'RECEIVED',
-                        notes: `Deletion failed: ${error.message}`,
+                        notes: `Deletion failed: ${errorMessage}`,
                     },
                 });
             });

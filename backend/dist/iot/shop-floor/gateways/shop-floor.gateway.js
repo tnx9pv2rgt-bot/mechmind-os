@@ -31,7 +31,7 @@ let ShopFloorGateway = ShopFloorGateway_1 = class ShopFloorGateway {
         this.redisSubscriber = this.redis.duplicate();
         this.setupRedisSubscription();
     }
-    afterInit(server) {
+    afterInit(_server) {
         this.logger.log('Shop Floor Gateway initialized');
     }
     async handleConnection(client) {
@@ -50,7 +50,7 @@ let ShopFloorGateway = ShopFloorGateway_1 = class ShopFloorGateway {
             });
         }
         catch (error) {
-            this.logger.error(`Connection error: ${error.message}`);
+            this.logger.error(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             client.disconnect();
         }
     }
@@ -74,7 +74,7 @@ let ShopFloorGateway = ShopFloorGateway_1 = class ShopFloorGateway {
             client.emit('bay-subscribed', { bayId: payload.bayId });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleUnsubscribeBay(client, payload) {
@@ -87,7 +87,7 @@ let ShopFloorGateway = ShopFloorGateway_1 = class ShopFloorGateway {
             client.emit('bay-unsubscribed', { bayId: payload.bayId });
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleSubscribeTechnicians(client) {
@@ -99,7 +99,7 @@ let ShopFloorGateway = ShopFloorGateway_1 = class ShopFloorGateway {
             client.emit('technicians-subscribed', {});
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     async handleSubscribeEvents(client) {
@@ -111,7 +111,7 @@ let ShopFloorGateway = ShopFloorGateway_1 = class ShopFloorGateway {
             client.emit('events-subscribed', {});
         }
         catch (error) {
-            client.emit('error', { message: error.message });
+            client.emit('error', { message: error instanceof Error ? error.message : 'Unknown error' });
         }
     }
     setupRedisSubscription() {

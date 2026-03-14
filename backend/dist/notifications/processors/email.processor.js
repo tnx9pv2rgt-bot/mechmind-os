@@ -61,11 +61,12 @@ let EmailProcessor = EmailProcessor_1 = class EmailProcessor extends bullmq_1.Wo
         });
     }
     async process(job) {
-        this.logger.log(`Processing email job ${job.id} for ${job.data.to}`);
+        this.logger.log(`Processing email job ${job.id} for ${job.data.to.replace(/(.{2}).*(@.*)/, '$1***$2')}`);
         const { to, subject, template, variables } = job.data;
         try {
             const htmlBody = this.renderTemplate(template, variables);
-            const result = await this.ses.sendEmail({
+            const result = await this.ses
+                .sendEmail({
                 Source: process.env.SES_FROM_EMAIL || 'noreply@mechmind.io',
                 Destination: {
                     ToAddresses: [to],
@@ -87,11 +88,12 @@ let EmailProcessor = EmailProcessor_1 = class EmailProcessor extends bullmq_1.Wo
                     },
                 },
                 ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
-            }).promise();
+            })
+                .promise();
             this.logger.log(`Email sent successfully: ${result.MessageId}`);
         }
         catch (error) {
-            this.logger.error(`Failed to send email: ${error.message}`);
+            this.logger.error(`Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`);
             throw error;
         }
     }
@@ -141,12 +143,25 @@ let EmailProcessor = EmailProcessor_1 = class EmailProcessor extends bullmq_1.Wo
         };
         let html = templates[template] || templates.booking_confirmation;
         Object.entries(variables).forEach(([key, value]) => {
-            html = html.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+            const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedValue = this.escapeHtml(String(value));
+            html = html.replace(new RegExp(`\\{\\{${escapedKey}\\}\\}`, 'g'), escapedValue);
         });
         return html;
     }
+    escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
     stripHtml(html) {
-        return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        return html
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 };
 exports.EmailProcessor = EmailProcessor;

@@ -44,7 +44,7 @@ export class BookingEventListener {
   async handleBookingUpdated(event: {
     bookingId: string;
     tenantId: string;
-    changes: Record<string, any>;
+    changes: Record<string, unknown>;
   }) {
     this.logger.log(
       `Booking updated: ${event.bookingId} for tenant ${event.tenantId}`,

@@ -22,10 +22,15 @@ import { CurrentUser } from '@auth/decorators/current-user.decorator';
 // Services
 import { GdprDeletionService } from '../services/gdpr-deletion.service';
 import { DataRetentionService } from '../services/data-retention.service';
-import { GdprConsentService } from '../services/gdpr-consent.service';
+import { GdprConsentService, ConsentRecord } from '../services/gdpr-consent.service';
 import { GdprExportService, ExportFormat } from '../services/gdpr-export.service';
 import { UserRole } from '@auth/guards/roles.guard';
-import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
+import {
+  GdprRequestService,
+  DataSubjectRequestType,
+  RequestStatus,
+  RequestPriority,
+} from '../services/gdpr-request.service';
 
 // DTOs
 import {
@@ -76,8 +81,8 @@ export class GdprController {
       ...dto,
       tenantId,
       source: 'WEB_FORM',
-      requestType: dto.requestType as any,
-      priority: dto.priority as any,
+      requestType: dto.requestType as DataSubjectRequestType,
+      priority: dto.priority as RequestPriority,
     });
   }
 
@@ -95,7 +100,7 @@ export class GdprController {
     @Query('type') type?: string,
   ) {
     return this.requestService.listRequests(tenantId, {
-      status: status as any,
+      status: status as RequestStatus,
       type: type as DataSubjectRequestType,
     });
   }
@@ -137,7 +142,12 @@ export class GdprController {
     @Query('tenantId') tenantId: string,
     @Body() dto: UpdateRequestStatusDto,
   ) {
-    return this.requestService.updateStatus(requestId, tenantId, dto.status as any, dto.notes);
+    return this.requestService.updateStatus(
+      requestId,
+      tenantId,
+      dto.status as RequestStatus,
+      dto.notes,
+    );
   }
 
   /**
@@ -331,7 +341,7 @@ export class GdprController {
     return this.consentService.recordConsent(
       customerId,
       tenantId,
-      dto.consentType as any,
+      dto.consentType as ConsentRecord['consentType'],
       dto.granted,
       {
         ipAddress: forwardedFor,
@@ -363,7 +373,7 @@ export class GdprController {
     return this.consentService.revokeConsent(
       customerId,
       tenantId,
-      consentType as any,
+      consentType as ConsentRecord['consentType'],
       body.reason,
       body.revokedBy,
     );

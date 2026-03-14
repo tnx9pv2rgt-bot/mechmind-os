@@ -31,9 +31,9 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
         this.redis = new ioredis_1.default(redisUrl, {
             password: this.configService.get('REDIS_PASSWORD') || undefined,
             db: parseInt(this.configService.get('REDIS_DB') || '0'),
-            retryStrategy: (times) => Math.min(times * 50, 2000),
+            retryStrategy: times => Math.min(times * 50, 2000),
         });
-        this.redis.on('error', (err) => {
+        this.redis.on('error', err => {
             this.logger.error('Redis connection error:', err.message);
         });
     }
@@ -76,7 +76,8 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             const predictions = (data.predictions || []).map((p) => ({
                 placeId: p.place_id,
                 description: p.description,
-                mainText: p.structured_formatting?.main_text || p.description,
+                mainText: p.structured_formatting?.main_text ||
+                    p.description,
                 secondaryText: p.structured_formatting?.secondary_text || '',
                 types: p.types || [],
             }));
@@ -84,7 +85,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             return { predictions };
         }
         catch (error) {
-            this.logger.error('Autocomplete error:', error.message);
+            this.logger.error('Autocomplete error:', error instanceof Error ? error.message : 'Unknown error');
             if (this.isDevelopment) {
                 return this.getMockPredictions(input);
             }
@@ -121,7 +122,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             return details;
         }
         catch (error) {
-            this.logger.error('Place details error:', error.message);
+            this.logger.error('Place details error:', error instanceof Error ? error.message : 'Unknown error');
             if (this.isDevelopment) {
                 return this.getMockPlaceDetails(placeId);
             }
@@ -153,8 +154,10 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
                 throw new Error(`Geocoding API error: ${data.status}`);
             }
             const results = (data.results || []).map((r) => ({
-                latitude: r.geometry.location.lat,
-                longitude: r.geometry.location.lng,
+                latitude: r.geometry?.location
+                    ?.lat,
+                longitude: r.geometry?.location
+                    ?.lng,
                 formattedAddress: r.formatted_address,
                 placeId: r.place_id,
             }));
@@ -162,7 +165,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             return results;
         }
         catch (error) {
-            this.logger.error('Geocoding error:', error.message);
+            this.logger.error('Geocoding error:', error instanceof Error ? error.message : 'Unknown error');
             if (this.isDevelopment) {
                 return this.getMockGeocode(address);
             }
@@ -197,7 +200,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             return results;
         }
         catch (error) {
-            this.logger.error('Reverse geocoding error:', error.message);
+            this.logger.error('Reverse geocoding error:', error instanceof Error ? error.message : 'Unknown error');
             if (this.isDevelopment) {
                 return [this.getMockReverseGeocode(latitude, longitude)];
             }
@@ -225,7 +228,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             };
         }
         catch (error) {
-            this.logger.error('Postal code validation error:', error.message);
+            this.logger.error('Postal code validation error:', error instanceof Error ? error.message : 'Unknown error');
             return { valid: false };
         }
     }
@@ -259,7 +262,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             return cached ? JSON.parse(cached) : null;
         }
         catch (error) {
-            this.logger.warn('Cache get error:', error.message);
+            this.logger.warn('Cache get error:', error instanceof Error ? error.message : 'Unknown error');
             return null;
         }
     }
@@ -269,7 +272,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             await this.redis.setex(key, seconds, JSON.stringify(value));
         }
         catch (error) {
-            this.logger.warn('Cache set error:', error.message);
+            this.logger.warn('Cache set error:', error instanceof Error ? error.message : 'Unknown error');
         }
     }
     getMockPredictions(input) {
@@ -312,7 +315,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
                 longitude: 12.4964,
                 formattedAddress: 'Via del Corso, 1, 00186 Roma RM, Italia',
             },
-            'ChIJt2CZLXWIekgRWJmKRK3U_zA': {
+            ChIJt2CZLXWIekgRWJmKRK3U_zA: {
                 street: 'Via Montenapoleone',
                 number: '1',
                 city: 'Milano',
@@ -324,7 +327,7 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
                 formattedAddress: 'Via Montenapoleone, 1, 20121 Milano MI, Italia',
             },
         };
-        return mocks[placeId] || {
+        return (mocks[placeId] || {
             street: 'Via Example',
             number: '1',
             city: 'Roma',
@@ -334,15 +337,17 @@ let GooglePlacesService = GooglePlacesService_1 = class GooglePlacesService {
             latitude: 41.9,
             longitude: 12.5,
             formattedAddress: 'Via Example, 1, 00100 Roma RM, Italia',
-        };
+        });
     }
     getMockGeocode(address) {
-        return [{
+        return [
+            {
                 latitude: 41.9028,
                 longitude: 12.4964,
                 formattedAddress: address,
                 placeId: 'ChIJrTLJRciLekgRQtA7-sQq2Qc',
-            }];
+            },
+        ];
     }
     getMockReverseGeocode(lat, lng) {
         return {

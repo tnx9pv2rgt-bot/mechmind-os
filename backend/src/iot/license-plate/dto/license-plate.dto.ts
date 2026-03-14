@@ -2,15 +2,7 @@
  * MechMind OS - License Plate DTOs
  */
 
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsNumber,
-  IsObject,
-  IsBoolean,
-  IsUUID,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNumber, IsObject, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OcrProvider, EntryExitType } from '../interfaces/license-plate.interface';
 

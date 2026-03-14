@@ -11,6 +11,7 @@ import { z } from 'zod';
 import {
   NotificationChannel,
   NotificationType,
+  type NotificationPreferences,
 } from '@/types/notifications';
 
 // Validation schemas
@@ -29,7 +30,7 @@ const updateSchema = z.object({
 });
 
 // Mock preferences data
-const mockPreferences: Record<string, any> = {
+const mockPreferences: Record<string, NotificationPreferences> = {
   'cust-001': {
     customerId: 'cust-001',
     channels: [
@@ -68,8 +69,8 @@ const mockPreferences: Record<string, any> = {
     ],
     preferredChannel: NotificationChannel.SMS,
     language: 'it',
-    quietHoursStart: null,
-    quietHoursEnd: null,
+    quietHoursStart: undefined,
+    quietHoursEnd: undefined,
     timezone: 'Europe/Rome',
   },
 };
@@ -165,7 +166,7 @@ export async function PUT(request: NextRequest) {
     // Update channel preference
     if (data.channel !== undefined && data.enabled !== undefined) {
       const channelPref = preferences.channels.find(
-        (c: any) => c.channel === data.channel
+        (c: { channel: NotificationChannel; enabled: boolean }) => c.channel === data.channel
       );
       if (channelPref) {
         channelPref.enabled = data.enabled;

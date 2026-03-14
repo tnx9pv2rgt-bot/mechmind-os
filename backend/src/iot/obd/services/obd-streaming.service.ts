@@ -9,7 +9,8 @@
  * - Time-series data optimization
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { NotificationsService } from '../../../notifications/services/notifications.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -216,7 +217,7 @@ export class ObdStreamingService {
       data: {
         deviceId,
         dtcCode,
-        data: freezeFrame.data as any,
+        data: freezeFrame.data as unknown as Prisma.InputJsonValue,
         capturedAt: freezeFrame.capturedAt,
       },
     });
@@ -246,13 +247,19 @@ export class ObdStreamingService {
 
     const results: Mode06TestResult[] = [];
 
-    // Parse supported tests and query each
+    // Collect supported test IDs first, then query only those
+    const supportedTestIds: number[] = [];
     for (let testId = 0; testId < 255; testId++) {
       if (this.isTestSupported(supportedTests, testId)) {
-        const testResult = await this.queryMode06Test(deviceId, testId);
-        if (testResult) {
-          results.push(testResult);
-        }
+        supportedTestIds.push(testId);
+      }
+    }
+
+    // Serial I/O to OBD device (cannot parallelize hardware communication)
+    for (const testId of supportedTestIds) {
+      const testResult = await this.queryMode06Test(deviceId, testId);
+      if (testResult) {
+        results.push(testResult);
       }
     }
 
@@ -351,8 +358,27 @@ export class ObdStreamingService {
     to: Date,
     aggregation?: 'avg' | 'min' | 'max' | 'count',
   ): Promise<{ timestamp: Date; value: number }[]> {
-    // Query from time-series optimized storage
-    // In production, this would query InfluxDB/TimescaleDB
+    // Whitelist allowed sensor columns to prevent SQL injection
+    const allowedSensors = [
+      'rpm',
+      'speed',
+      'coolantTemp',
+      'engineLoad',
+      'throttlePosition',
+      'fuelLevel',
+      'intakeTemp',
+      'mafRate',
+      'timingAdvance',
+      'voltage',
+      'fuelPressure',
+      'oilTemp',
+      'ambientTemp',
+      'barometricPressure',
+    ];
+
+    if (!allowedSensors.includes(sensor)) {
+      throw new BadRequestException(`Invalid sensor: ${sensor}`);
+    }
 
     const cacheKey = `obd:history:${deviceId}:${sensor}:${from.getTime()}:${to.getTime()}`;
     const cached = await this.redis.get(cacheKey);
@@ -361,23 +387,51 @@ export class ObdStreamingService {
       return JSON.parse(cached);
     }
 
-    // Query from database
-    const readings = await this.prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('minute', "recordedAt") as timestamp,
-        ${aggregation === 'avg' ? 'AVG' : aggregation === 'min' ? 'MIN' : aggregation === 'max' ? 'MAX' : 'COUNT'}("${sensor}") as value
-      FROM "ObdReading"
-      WHERE "deviceId" = ${deviceId}
-        AND "recordedAt" >= ${from}
-        AND "recordedAt" <= ${to}
-      GROUP BY DATE_TRUNC('minute', "recordedAt")
-      ORDER BY timestamp
-    `;
+    // Use Prisma findMany instead of raw SQL to avoid injection risks
+    const readings = await this.prisma.obdReading.findMany({
+      where: {
+        deviceId,
+        recordedAt: { gte: from, lte: to },
+      },
+      select: {
+        recordedAt: true,
+        rawData: true,
+      },
+      orderBy: { recordedAt: 'asc' },
+    });
 
-    const result = (readings as any[]).map(r => ({
-      timestamp: r.timestamp,
-      value: Number(r.value),
-    }));
+    // Aggregate sensor values from rawData JSON field in application layer
+    const aggregated = new Map<string, number[]>();
+    for (const reading of readings) {
+      const minuteKey = new Date(reading.recordedAt).toISOString().substring(0, 16);
+      const rawData = reading.rawData as Record<string, number> | null;
+      const sensorValue = rawData?.[sensor];
+      if (sensorValue !== undefined && sensorValue !== null) {
+        const values = aggregated.get(minuteKey) ?? [];
+        values.push(Number(sensorValue));
+        aggregated.set(minuteKey, values);
+      }
+    }
+
+    const aggFn = aggregation ?? 'avg';
+    const result = Array.from(aggregated.entries()).map(([key, values]) => {
+      let value: number;
+      switch (aggFn) {
+        case 'min':
+          value = Math.min(...values);
+          break;
+        case 'max':
+          value = Math.max(...values);
+          break;
+        case 'count':
+          value = values.length;
+          break;
+        default:
+          value = values.reduce((a, b) => a + b, 0) / values.length;
+          break;
+      }
+      return { timestamp: new Date(key), value };
+    });
 
     // Cache for 5 minutes
     await this.redis.setex(cacheKey, 300, JSON.stringify(result));
@@ -424,15 +478,15 @@ export class ObdStreamingService {
     return ['rpm', 'speed', 'coolantTemp', 'throttlePos', 'engineLoad', 'fuelLevel', 'voltage'];
   }
 
-  private async queryPid(deviceId: string, pid: string): Promise<number | null> {
+  private async queryPid(_deviceId: string, _pid: string): Promise<number | null> {
     // In real implementation, this would send OBD command via adapter
     // For now, return null (device will provide actual data)
     return null;
   }
 
   private async queryMode06Test(
-    deviceId: string,
-    testId: number,
+    _deviceId: string,
+    _testId: number,
   ): Promise<Mode06TestResult | null> {
     // Mock implementation - would query actual OBD device
     return null;
@@ -521,7 +575,7 @@ export class ObdStreamingService {
     await pipeline.exec();
   }
 
-  private async archiveToColdStorage(deviceId: string, data: any[]): Promise<void> {
+  private async archiveToColdStorage(deviceId: string, data: unknown[]): Promise<void> {
     // In production, this would upload to S3 or similar
     this.logger.log(`Archiving ${data.length} records for ${deviceId} to cold storage`);
   }

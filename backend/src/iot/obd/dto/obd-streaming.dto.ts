@@ -2,7 +2,7 @@
  * MechMind OS - OBD Streaming DTOs
  */
 
-import { IsString, IsOptional, IsEnum, IsInt, IsNumber, IsArray, IsJSON } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt, IsNumber, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { AdapterType, ObdProtocol } from '../interfaces/obd-streaming.interface';
 
@@ -73,7 +73,7 @@ export class SensorDataDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  rawData?: Record<string, any>;
+  rawData?: Record<string, unknown>;
 }
 
 export class FreezeFrameRequestDto {
@@ -137,7 +137,7 @@ export class FreezeFrameResponseDto {
   deviceId: string;
   dtcCode: string;
   capturedAt: Date;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export class Mode06TestResponseDto {
@@ -158,5 +158,5 @@ export class EvapTestResponseDto {
   startedAt: Date;
   completedAt?: Date;
   status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'ABORTED';
-  results: any[];
+  results: Record<string, unknown>[];
 }

@@ -163,12 +163,16 @@ let ObdStreamingService = ObdStreamingService_1 = class ObdStreamingService {
         const supportedTestsNum = await this.queryPid(deviceId, this.PIDS.MODE_06_REQUEST);
         const supportedTests = supportedTestsNum !== null ? supportedTestsNum.toString(16) : null;
         const results = [];
+        const supportedTestIds = [];
         for (let testId = 0; testId < 255; testId++) {
             if (this.isTestSupported(supportedTests, testId)) {
-                const testResult = await this.queryMode06Test(deviceId, testId);
-                if (testResult) {
-                    results.push(testResult);
-                }
+                supportedTestIds.push(testId);
+            }
+        }
+        for (const testId of supportedTestIds) {
+            const testResult = await this.queryMode06Test(deviceId, testId);
+            if (testResult) {
+                results.push(testResult);
             }
         }
         if (results.length > 0) {
@@ -229,26 +233,71 @@ let ObdStreamingService = ObdStreamingService_1 = class ObdStreamingService {
         return Array.from(this.activeStreams.values()).filter(s => s.isActive);
     }
     async getSensorHistory(deviceId, sensor, from, to, aggregation) {
+        const allowedSensors = [
+            'rpm',
+            'speed',
+            'coolantTemp',
+            'engineLoad',
+            'throttlePosition',
+            'fuelLevel',
+            'intakeTemp',
+            'mafRate',
+            'timingAdvance',
+            'voltage',
+            'fuelPressure',
+            'oilTemp',
+            'ambientTemp',
+            'barometricPressure',
+        ];
+        if (!allowedSensors.includes(sensor)) {
+            throw new common_1.BadRequestException(`Invalid sensor: ${sensor}`);
+        }
         const cacheKey = `obd:history:${deviceId}:${sensor}:${from.getTime()}:${to.getTime()}`;
         const cached = await this.redis.get(cacheKey);
         if (cached) {
             return JSON.parse(cached);
         }
-        const readings = await this.prisma.$queryRaw `
-      SELECT 
-        DATE_TRUNC('minute', "recordedAt") as timestamp,
-        ${aggregation === 'avg' ? 'AVG' : aggregation === 'min' ? 'MIN' : aggregation === 'max' ? 'MAX' : 'COUNT'}("${sensor}") as value
-      FROM "ObdReading"
-      WHERE "deviceId" = ${deviceId}
-        AND "recordedAt" >= ${from}
-        AND "recordedAt" <= ${to}
-      GROUP BY DATE_TRUNC('minute', "recordedAt")
-      ORDER BY timestamp
-    `;
-        const result = readings.map(r => ({
-            timestamp: r.timestamp,
-            value: Number(r.value),
-        }));
+        const readings = await this.prisma.obdReading.findMany({
+            where: {
+                deviceId,
+                recordedAt: { gte: from, lte: to },
+            },
+            select: {
+                recordedAt: true,
+                rawData: true,
+            },
+            orderBy: { recordedAt: 'asc' },
+        });
+        const aggregated = new Map();
+        for (const reading of readings) {
+            const minuteKey = new Date(reading.recordedAt).toISOString().substring(0, 16);
+            const rawData = reading.rawData;
+            const sensorValue = rawData?.[sensor];
+            if (sensorValue !== undefined && sensorValue !== null) {
+                const values = aggregated.get(minuteKey) ?? [];
+                values.push(Number(sensorValue));
+                aggregated.set(minuteKey, values);
+            }
+        }
+        const aggFn = aggregation ?? 'avg';
+        const result = Array.from(aggregated.entries()).map(([key, values]) => {
+            let value;
+            switch (aggFn) {
+                case 'min':
+                    value = Math.min(...values);
+                    break;
+                case 'max':
+                    value = Math.max(...values);
+                    break;
+                case 'count':
+                    value = values.length;
+                    break;
+                default:
+                    value = values.reduce((a, b) => a + b, 0) / values.length;
+                    break;
+            }
+            return { timestamp: new Date(key), value };
+        });
         await this.redis.setex(cacheKey, 300, JSON.stringify(result));
         return result;
     }
@@ -274,20 +323,12 @@ let ObdStreamingService = ObdStreamingService_1 = class ObdStreamingService {
         return result.count;
     }
     getDefaultSensors() {
-        return [
-            'rpm',
-            'speed',
-            'coolantTemp',
-            'throttlePos',
-            'engineLoad',
-            'fuelLevel',
-            'voltage',
-        ];
+        return ['rpm', 'speed', 'coolantTemp', 'throttlePos', 'engineLoad', 'fuelLevel', 'voltage'];
     }
-    async queryPid(deviceId, pid) {
+    async queryPid(_deviceId, _pid) {
         return null;
     }
-    async queryMode06Test(deviceId, testId) {
+    async queryMode06Test(_deviceId, _testId) {
         return null;
     }
     isTestSupported(supportedMask, testId) {

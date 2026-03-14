@@ -27,29 +27,7 @@ import {
 import { InitializeShopFloorDto } from '../dto/shop-floor.dto';
 
 // Extended Prisma models for shop floor (to be added to schema)
-interface BaySensorModel {
-  id: string;
-  bayId: string;
-  type: string;
-  name: string;
-  isActive: boolean;
-  lastReading?: Date;
-  batteryLevel?: number;
-  config: Record<string, any>;
-}
-
-interface ShopFloorEventModel {
-  id: string;
-  type: string;
-  timestamp: Date;
-  bayId?: string | null;
-  vehicleId?: string | null;
-  technicianId?: string | null;
-  workOrderId?: string | null;
-  fromStatus?: string | null;
-  toStatus?: string | null;
-  metadata?: Record<string, any> | null;
-}
+// These interfaces are kept for documentation purposes when models are added to schema
 
 @Injectable()
 export class ShopFloorService {
@@ -70,7 +48,7 @@ export class ShopFloorService {
     tenantId: string,
     config: InitializeShopFloorDto,
   ): Promise<ServiceBay[]> {
-    // TODO: Add ShopFloor, ServiceBay, ParkingSpot models to Prisma schema
+    // Shop floor module is scaffold-only: ShopFloor, ServiceBay, ParkingSpot models need Prisma schema addition before enabling
     this.logger.warn(`Shop floor initialization for tenant ${tenantId} - models not in schema yet`);
 
     // Return mock bays for now
@@ -315,8 +293,8 @@ export class ShopFloorService {
    */
   async getShopFloorAnalytics(
     tenantId: string,
-    from: Date,
-    to: Date,
+    _from: Date,
+    _to: Date,
   ): Promise<{
     totalVehicles: number;
     averageServiceTime: number;
@@ -339,7 +317,7 @@ export class ShopFloorService {
    * Get recent events
    * Note: ShopFloorEvent model needs to be added to Prisma schema
    */
-  async getRecentEvents(tenantId: string, limit: number = 50): Promise<ShopFloorEvent[]> {
+  async getRecentEvents(tenantId: string, _limit: number = 50): Promise<ShopFloorEvent[]> {
     this.logger.warn(
       `Getting recent events for tenant ${tenantId} - ShopFloorEvent model not in schema yet`,
     );
@@ -401,7 +379,7 @@ export class ShopFloorService {
         },
       });
 
-      this.logger.log(`License plate detected: ${reading.data.licensePlate}`);
+      this.logger.log(`License plate detected: ${reading.data.licensePlate?.slice(0, 2)}***`);
     }
   }
 

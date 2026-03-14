@@ -14,6 +14,52 @@ import {
 } from '../dto/inspection.dto';
 
 // ==========================================
+// Mock PDFKit (virtual — not installed in test env)
+// ==========================================
+
+const mockPdfDocInstance: Record<string, jest.Mock | number> = {};
+const pdfEventHandlers: Record<string, ((...args: unknown[]) => void)[]> = {};
+
+function resetPdfMock(): void {
+  // Clear event handlers
+  for (const key of Object.keys(pdfEventHandlers)) {
+    delete pdfEventHandlers[key];
+  }
+
+  mockPdfDocInstance.on = jest.fn((event: string, handler: (...args: unknown[]) => void) => {
+    if (!pdfEventHandlers[event]) pdfEventHandlers[event] = [];
+    pdfEventHandlers[event].push(handler);
+    return mockPdfDocInstance;
+  });
+  mockPdfDocInstance.fontSize = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.text = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.moveDown = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.fillColor = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.moveTo = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.lineTo = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.stroke = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.font = jest.fn().mockReturnValue(mockPdfDocInstance);
+  mockPdfDocInstance.y = 100;
+  mockPdfDocInstance.end = jest.fn(() => {
+    if (pdfEventHandlers['data']) {
+      pdfEventHandlers['data'].forEach(h => h(Buffer.from('pdf-chunk')));
+    }
+    if (pdfEventHandlers['end']) {
+      pdfEventHandlers['end'].forEach(h => h());
+    }
+  });
+}
+
+jest.mock(
+  'pdfkit',
+  () => ({
+    __esModule: true,
+    default: jest.fn(() => mockPdfDocInstance),
+  }),
+  { virtual: true },
+);
+
+// ==========================================
 // Mock Prisma Enums (same values as @prisma/client)
 // ==========================================
 
@@ -124,6 +170,7 @@ function buildMockCustomer(overrides: Record<string, unknown> = {}): Record<stri
     id: CUSTOMER_ID,
     tenantId: TENANT_ID,
     encryptedFirstName: 'Mario',
+    encryptedLastName: 'Rossi',
     encryptedName: 'Mario Rossi',
     encryptedEmail: 'mario@example.com',
     ...overrides,
@@ -214,7 +261,18 @@ function buildMockInspection(overrides: Record<string, unknown> = {}): Record<st
 
 describe('InspectionService', () => {
   let service: InspectionService;
-  let prisma: Record<string, Record<string, jest.Mock> | jest.Mock>;
+  let prisma: {
+    inspectionTemplate: { findFirst: jest.Mock };
+    inspection: { create: jest.Mock; findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    inspectionItem: { updateMany: jest.Mock };
+    inspectionFinding: {
+      create: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
+      updateMany: jest.Mock;
+    };
+    inspectionPhoto: { create: jest.Mock };
+  };
   let s3: { upload: jest.Mock; getSignedUrl: jest.Mock; delete: jest.Mock };
   let notifications: { sendNotification: jest.Mock };
   let configService: { get: jest.Mock };
@@ -1433,14 +1491,6 @@ describe('InspectionService', () => {
   // ==========================================
 
   describe('generateReport', () => {
-    it('should throw when pdfkit module is not available', async () => {
-      // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
-
-      // Act & Assert - pdfkit is not installed in test env, so dynamic import fails
-      await expect(service.generateReport(TENANT_ID, INSPECTION_ID)).rejects.toThrow();
-    });
-
     it('should throw NotFoundException if inspection does not exist before generating report', async () => {
       // Arrange
       (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(null);
@@ -1449,6 +1499,439 @@ describe('InspectionService', () => {
       await expect(service.generateReport(TENANT_ID, 'nonexistent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    beforeEach(() => {
+      resetPdfMock();
+    });
+
+    it('should generate a PDF buffer with vehicle info and no findings', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [],
+        items: [buildMockInspectionItem({ status: InspectionItemStatus.CHECKED, notes: null })],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      const result = await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(result).toBeInstanceOf(Buffer);
+      expect(result.length).toBeGreaterThan(0);
+      // Should render "No issues found." for empty findings
+      expect(mockPdfDocInstance.font).toHaveBeenCalledWith('Helvetica-Oblique');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('No issues found.');
+    });
+
+    it('should render CRITICAL severity findings in red', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            severity: FindingSeverity.CRITICAL,
+            title: 'Engine Failure',
+            description: 'Complete engine failure detected',
+            recommendation: 'Replace engine',
+            estimatedCost: 5000,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      const result = await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(result).toBeInstanceOf(Buffer);
+      expect(mockPdfDocInstance.fillColor).toHaveBeenCalledWith('#dc2626');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('[CRITICAL] ', { continued: true });
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith(
+        'Engine Failure — Complete engine failure detected',
+      );
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('  Recommendation: Replace engine');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('  Estimated Cost: €5000.00');
+    });
+
+    it('should render HIGH severity findings in orange', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            severity: FindingSeverity.HIGH,
+            title: 'Worn Brakes',
+            description: 'Pads below 2mm',
+            recommendation: undefined,
+            estimatedCost: undefined,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.fillColor).toHaveBeenCalledWith('#ea580c');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('[HIGH] ', { continued: true });
+    });
+
+    it('should render MEDIUM severity findings in yellow', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            severity: FindingSeverity.MEDIUM,
+            title: 'Worn Tires',
+            description: 'Tread depth at 3mm',
+            recommendation: undefined,
+            estimatedCost: undefined,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.fillColor).toHaveBeenCalledWith('#ca8a04');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('[MEDIUM] ', { continued: true });
+    });
+
+    it('should render LOW severity findings in green', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            severity: FindingSeverity.LOW,
+            title: 'Minor Scratch',
+            description: 'Small scratch on bumper',
+            recommendation: undefined,
+            estimatedCost: undefined,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.fillColor).toHaveBeenCalledWith('#16a34a');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('[LOW] ', { continued: true });
+    });
+
+    it('should render findings with recommendation and estimatedCost', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            recommendation: 'Replace immediately',
+            estimatedCost: 350.5,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('  Recommendation: Replace immediately');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('  Estimated Cost: €350.50');
+    });
+
+    it('should skip recommendation and estimatedCost when not present', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            severity: FindingSeverity.HIGH,
+            title: 'Test Finding',
+            description: 'No extra info',
+            recommendation: undefined,
+            estimatedCost: undefined,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls.map(
+        (c: unknown[]) => c[0],
+      );
+      expect(textCalls).not.toContain(expect.stringContaining('Recommendation:'));
+      expect(textCalls).not.toContain(expect.stringContaining('Estimated Cost:'));
+    });
+
+    it('should render inspection items with all status types', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [],
+        items: [
+          buildMockInspectionItem({
+            id: 'item-checked',
+            status: InspectionItemStatus.CHECKED,
+            notes: null,
+            templateItem: buildMockTemplateItem({ category: 'BRAKES', name: 'Front Brakes' }),
+          }),
+          buildMockInspectionItem({
+            id: 'item-issue',
+            status: InspectionItemStatus.ISSUE_FOUND,
+            notes: 'Tread low',
+            templateItem: buildMockTemplateItem({ category: 'TIRES', name: 'Left Tire' }),
+          }),
+          buildMockInspectionItem({
+            id: 'item-na',
+            status: InspectionItemStatus.NOT_APPLICABLE,
+            notes: null,
+            templateItem: buildMockTemplateItem({ category: 'AC', name: 'AC System' }),
+          }),
+          buildMockInspectionItem({
+            id: 'item-pending',
+            status: InspectionItemStatus.PENDING,
+            notes: null,
+            templateItem: buildMockTemplateItem({ category: 'ENGINE', name: 'Oil Level' }),
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls.map(
+        (c: unknown[]) => c[0],
+      );
+      expect(textCalls).toContainEqual(expect.stringContaining('OK'));
+      expect(textCalls).toContainEqual(expect.stringContaining('ISSUE'));
+      expect(textCalls).toContainEqual(expect.stringContaining('N/A'));
+      expect(textCalls).toContainEqual(expect.stringContaining('PENDING'));
+    });
+
+    it('should render item notes when present', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [],
+        items: [
+          buildMockInspectionItem({
+            status: InspectionItemStatus.ISSUE_FOUND,
+            notes: 'Brake fluid is dark, needs replacement',
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith(
+        '  Notes: Brake fluid is dark, needs replacement',
+      );
+    });
+
+    it('should render mileage when present', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ mileage: 125000, findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls.map(
+        (c: unknown[]) => c[0],
+      );
+      expect(textCalls).toContainEqual(expect.stringContaining('Mileage:'));
+    });
+
+    it('should skip mileage when null', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ mileage: null, findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls.map(
+        (c: unknown[]) => c[0],
+      );
+      const mileageCalls = textCalls.filter(
+        (t: string) => typeof t === 'string' && t.includes('Mileage:'),
+      );
+      expect(mileageCalls).toHaveLength(0);
+    });
+
+    it('should render fuel level when present', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ fuelLevel: FuelLevel.THREE_QUARTERS, findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls.map(
+        (c: unknown[]) => c[0],
+      );
+      expect(textCalls).toContainEqual(expect.stringContaining('Fuel Level:'));
+    });
+
+    it('should skip fuel level when null', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ fuelLevel: null, findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls.map(
+        (c: unknown[]) => c[0],
+      );
+      const fuelCalls = textCalls.filter(
+        (t: string) => typeof t === 'string' && t.includes('Fuel Level:'),
+      );
+      expect(fuelCalls).toHaveLength(0);
+    });
+
+    it('should reject the promise when PDFDocument emits an error', async () => {
+      // Arrange - override end() to emit error instead of data+end
+      mockPdfDocInstance.end = jest.fn(() => {
+        if (pdfEventHandlers['error']) {
+          pdfEventHandlers['error'].forEach(h => h(new Error('PDF generation failed')));
+        }
+      });
+
+      const inspection = buildMockInspection({ findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(service.generateReport(TENANT_ID, INSPECTION_ID)).rejects.toThrow(
+        'PDF generation failed',
+      );
+    });
+
+    it('should render vehicle make, model, license plate, and mechanic name', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [],
+        vehicle: buildMockVehicle({ make: 'BMW', model: 'X5', licensePlate: 'ZZ999AA' }),
+        mechanic: buildMockMechanic({ name: 'Marco Verdi' }),
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('Make/Model: BMW X5');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('License Plate: ZZ999AA');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('Mechanic: Marco Verdi');
+    });
+
+    it('should render multiple findings with mixed severities', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({
+            id: 'f1',
+            severity: FindingSeverity.CRITICAL,
+            title: 'Brake Failure',
+            description: 'Complete brake failure',
+            recommendation: 'Urgent replacement',
+            estimatedCost: 1200,
+          }),
+          buildMockFinding({
+            id: 'f2',
+            severity: FindingSeverity.LOW,
+            title: 'Wiper Fluid',
+            description: 'Low wiper fluid',
+            recommendation: undefined,
+            estimatedCost: undefined,
+          }),
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.fillColor).toHaveBeenCalledWith('#dc2626');
+      expect(mockPdfDocInstance.fillColor).toHaveBeenCalledWith('#16a34a');
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('[CRITICAL] ', { continued: true });
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('[LOW] ', { continued: true });
+      expect(mockPdfDocInstance.end).toHaveBeenCalled();
+    });
+
+    it('should call doc.end() to finalize the PDF', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.end).toHaveBeenCalledTimes(1);
+    });
+
+    it('should render the report header with title and report ID', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith('Digital Vehicle Inspection Report', {
+        align: 'center',
+      });
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith(`Report ID: ${INSPECTION_ID}`, {
+        align: 'center',
+      });
+    });
+
+    it('should render the date using inspection startedAt', async () => {
+      // Arrange
+      const startDate = new Date('2024-06-01T09:00:00Z');
+      const inspection = buildMockInspection({ startedAt: startDate, findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      expect(mockPdfDocInstance.text).toHaveBeenCalledWith(
+        `Date: ${startDate.toLocaleDateString('it-IT')}`,
+      );
+    });
+
+    it('should render footer with generation timestamp', async () => {
+      // Arrange
+      const inspection = buildMockInspection({ findings: [] });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.generateReport(TENANT_ID, INSPECTION_ID);
+
+      // Assert
+      const textCalls = (mockPdfDocInstance.text as jest.Mock).mock.calls;
+      const footerCall = textCalls.find(
+        (c: unknown[]) =>
+          typeof c[0] === 'string' && (c[0] as string).includes('Generated by MechMind OS'),
+      );
+      expect(footerCall).toBeDefined();
+      expect(footerCall[1]).toEqual({ align: 'center' });
     });
   });
 

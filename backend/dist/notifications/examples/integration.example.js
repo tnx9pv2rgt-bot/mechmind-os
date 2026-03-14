@@ -19,9 +19,12 @@ let BookingNotificationExample = class BookingNotificationExample {
     }
     async onBookingCreated(booking) {
         await this.notificationService.notifyCustomer(booking.customerId, booking.tenantId, _notifications_1.NotificationType.BOOKING_CONFIRMATION, {
-            service: booking.services.map((s) => s.name).join(', '),
+            service: booking.services.map(s => s.name).join(', '),
             date: booking.scheduledDate.toLocaleDateString('it-IT'),
-            time: booking.scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+            time: booking.scheduledDate.toLocaleTimeString('it-IT', {
+                hour: '2-digit',
+                minute: '2-digit',
+            }),
             vehicle: booking.vehicle
                 ? `${booking.vehicle.brand} ${booking.vehicle.model} ${booking.vehicle.plate}`
                 : 'Non specificato',
@@ -31,7 +34,7 @@ let BookingNotificationExample = class BookingNotificationExample {
     }
     async onBookingCancelled(booking, reason) {
         await this.notificationService.notifyCustomer(booking.customerId, booking.tenantId, _notifications_1.NotificationType.BOOKING_CANCELLED, {
-            service: booking.services.map((s) => s.name).join(', '),
+            service: booking.services.map(s => s.name).join(', '),
             date: booking.scheduledDate.toLocaleDateString('it-IT'),
             bookingCode: booking.id.slice(-8).toUpperCase(),
             cancellationReason: reason,
@@ -39,9 +42,12 @@ let BookingNotificationExample = class BookingNotificationExample {
     }
     async sendReminder(booking, type) {
         await this.notificationService.notifyCustomer(booking.customerId, booking.tenantId, _notifications_1.NotificationType.BOOKING_REMINDER, {
-            service: booking.services.map((s) => s.name).join(', '),
+            service: booking.services.map(s => s.name).join(', '),
             date: booking.scheduledDate.toLocaleDateString('it-IT'),
-            time: booking.scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+            time: booking.scheduledDate.toLocaleTimeString('it-IT', {
+                hour: '2-digit',
+                minute: '2-digit',
+            }),
             vehicle: booking.vehicle
                 ? `${booking.vehicle.brand} ${booking.vehicle.model}`
                 : 'Non specificato',

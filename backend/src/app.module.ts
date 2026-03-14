@@ -1,6 +1,7 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_PIPE, APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
+import { APP_PIPE, APP_INTERCEPTOR, APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
@@ -15,7 +16,7 @@ import { ObdModule } from './obd/obd.module';
 import { PartsModule } from './parts/parts.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { IotModule } from './iot/iot.module';
-// TODO: Enable when Prisma models are added
+// Disabled modules — scaffold only, no Prisma models yet
 // import { FleetModule } from './fleet/fleet.module';
 // import { TireModule } from './tire/tire.module';
 // import { EstimateModule } from './estimate/estimate.module';
@@ -58,7 +59,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     PartsModule,
     SubscriptionModule,
     IotModule,
-    // TODO: Enable when Prisma models are added
+    // Disabled modules — scaffold only, no Prisma models yet
     // FleetModule,
     // TireModule,
     // EstimateModule,
@@ -67,6 +68,11 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     AdminModule,
   ],
   providers: [
+    // Global exception filter
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
     // Global validation pipe
     {
       provide: APP_PIPE,

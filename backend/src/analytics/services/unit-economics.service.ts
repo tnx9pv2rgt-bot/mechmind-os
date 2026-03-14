@@ -39,6 +39,7 @@ export interface GrossMarginBySegment {
 
 export interface UnitEconomicsReport {
   generatedAt: Date;
+  isSampleData: boolean;
   period: { start: Date; end: Date };
   cac: {
     blended: number;
@@ -281,8 +282,8 @@ export class UnitEconomicsService {
    * Calculate gross margin by customer segment
    */
   async calculateGrossMarginBySegment(
-    startDate: Date,
-    endDate: Date,
+    _startDate: Date,
+    _endDate: Date,
   ): Promise<GrossMarginBySegment[]> {
     this.logger.debug(`Calculating gross margin by segment`);
 
@@ -302,7 +303,7 @@ export class UnitEconomicsService {
       `;
 
       if (Array.isArray(tierCounts)) {
-        tierCounts.forEach((t: any) => {
+        tierCounts.forEach((t: Record<string, unknown>) => {
           if (t.subscription_tier === 'starter') starterCount = Number(t.count);
           if (t.subscription_tier === 'pro') proCount = Number(t.count);
           if (t.subscription_tier === 'enterprise') enterpriseCount = Number(t.count);
@@ -348,7 +349,9 @@ export class UnitEconomicsService {
    * Generate comprehensive unit economics report
    */
   async generateReport(startDate: Date, endDate: Date): Promise<UnitEconomicsReport> {
-    this.logger.log(`Generating unit economics report`);
+    this.logger.warn(
+      'UnitEconomicsReport: using sample data. Real calculations require marketing_spend and revenue tables.',
+    );
 
     const [cac, ltvByCohort, ltvByTier, churn, grossMarginBySegment] = await Promise.all([
       this.calculateCAC(startDate, endDate),
@@ -378,6 +381,7 @@ export class UnitEconomicsService {
 
     return {
       generatedAt: new Date(),
+      isSampleData: true,
       period: { start: startDate, end: endDate },
       cac,
       ltv: {
@@ -400,8 +404,8 @@ export class UnitEconomicsService {
    * Export metrics for investor reporting
    */
   async exportInvestorMetrics(
-    startDate: Date,
-    endDate: Date,
+    _startDate: Date,
+    _endDate: Date,
   ): Promise<{
     arr: number;
     mrr: number;

@@ -8,7 +8,7 @@ import {
   createInspection,
   InspectionValidationError 
 } from '@/lib/services/inspectionService'
-import { TRPCClientError, ServerError } from '@/lib/trpc-client'
+import { TRPCClientError, ServerError } from '@/lib/api-errors'
 import type { CreateInspectionInput } from '@/lib/services/inspectionService'
 type FuelLevel = 'EMPTY' | 'QUARTER' | 'HALF' | 'THREE_QUARTERS' | 'FULL'
 

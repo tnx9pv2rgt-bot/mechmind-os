@@ -33,6 +33,79 @@ interface NetworkError {
   duration: number;
 }
 
+// Interfaccia per Sentry SDK (dynamic import)
+interface SentryScope {
+  setUser: (user: { id: string; [key: string]: unknown }) => void;
+  setTags: (tags: Record<string, string>) => void;
+  setExtras: (extras: Record<string, unknown>) => void;
+  setContext: (name: string, context: Record<string, unknown>) => void;
+  setSpan: (transaction: SentryTransaction) => void;
+}
+
+interface SentryTransaction {
+  name: string;
+  startTimestamp: number;
+  finish: (options?: { status: string }) => void;
+  setData: (key: string, value: unknown) => void;
+}
+
+interface SentryEvent {
+  exception?: unknown;
+  request?: {
+    data?: Record<string, unknown>;
+    headers?: Record<string, string>;
+    cookies?: Record<string, string>;
+  };
+  extra?: {
+    formData?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  contexts?: Record<string, Record<string, unknown>>;
+}
+
+interface SentryLike {
+  init: (config: Record<string, unknown>) => void;
+  captureException: (error: Error, scope?: SentryScope) => string;
+  captureMessage: (message: string, level?: string) => string;
+  setUser: (user: { id: string; [key: string]: unknown }) => void;
+  setContext: (name: string, context: Record<string, unknown>) => void;
+  setTag: (key: string, value: string) => void;
+  addBreadcrumb: (breadcrumb: Record<string, unknown>) => void;
+  startTransaction: (options: { name: string; op: string }) => SentryTransaction;
+  getCurrentHub: () => {
+    configureScope: (callback: (scope: SentryScope) => void) => void;
+  };
+  replayIntegration: (config: Record<string, boolean>) => unknown;
+  Scope: new () => SentryScope;
+  close: () => void;
+}
+
+// Interfaccia per LogRocket SDK (dynamic import)
+interface LogRocketNetworkRequest {
+  headers: Record<string, string>;
+  body?: string;
+}
+
+interface LogRocketNetworkResponse {
+  headers: Record<string, string>;
+  body?: string;
+  status?: number;
+}
+
+interface LogRocketLike {
+  init: (appId: string, config?: Record<string, unknown>) => void;
+  captureException: (error: Error, context?: Record<string, unknown>) => void;
+  captureMessage: (message: string, context?: Record<string, unknown>) => void;
+  identify: (userId: string, traits?: Record<string, unknown>) => void;
+  log: (message: string, data?: unknown) => void;
+}
+
+// Layout shift entry extends PerformanceEntry
+interface LayoutShiftEntry extends PerformanceEntry {
+  hadRecentInput: boolean;
+  value: number;
+}
+
 // Provider di error tracking
 interface ErrorTrackingProvider {
   init: (config: Record<string, unknown>) => void;
@@ -61,7 +134,7 @@ interface Transaction {
 
 // Provider Sentry
 class SentryProvider implements ErrorTrackingProvider {
-  private Sentry: any = null;
+  private Sentry: SentryLike | null = null;
   private initialized = false;
 
   async init(config: Record<string, unknown>): Promise<void> {
@@ -69,7 +142,7 @@ class SentryProvider implements ErrorTrackingProvider {
 
     try {
       const SentryModule = await import('@sentry/nextjs');
-      this.Sentry = SentryModule;
+      this.Sentry = SentryModule as unknown as SentryLike;
       
       this.Sentry.init({
         dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -84,7 +157,7 @@ class SentryProvider implements ErrorTrackingProvider {
             blockAllMedia: false,
           }),
         ],
-        beforeSend: (event: any) => {
+        beforeSend: (event: SentryEvent) => {
           // Filtra dati sensibili
           if (event.exception) {
             this.sanitizeEvent(event);
@@ -100,19 +173,21 @@ class SentryProvider implements ErrorTrackingProvider {
     }
   }
 
-  private sanitizeEvent(event: any): void {
+  private sanitizeEvent(event: SentryEvent): void {
     // Rimuovi dati sensibili dagli eventi
     const sensitiveFields = ['password', 'token', 'ssn', 'creditCard', 'vatNumber'];
     
     if (event.request?.data) {
+      const requestData = event.request.data;
       sensitiveFields.forEach((field) => {
-        delete event.request.data[field];
+        delete requestData[field];
       });
     }
 
     if (event.extra?.formData) {
+      const formData = event.extra.formData;
       sensitiveFields.forEach((field) => {
-        delete event.extra.formData[field];
+        delete formData[field];
       });
     }
   }
@@ -185,7 +260,7 @@ class SentryProvider implements ErrorTrackingProvider {
     }
 
     const transaction = this.Sentry.startTransaction({ name, op });
-    this.Sentry.getCurrentHub().configureScope((scope: any) => {
+    this.Sentry.getCurrentHub().configureScope((scope: SentryScope) => {
       scope.setSpan(transaction);
     });
 
@@ -206,7 +281,7 @@ class SentryProvider implements ErrorTrackingProvider {
 
 // Provider LogRocket
 class LogRocketProvider implements ErrorTrackingProvider {
-  private LogRocket: any = null;
+  private LogRocket: LogRocketLike | null = null;
   private initialized = false;
 
   async init(config: Record<string, unknown>): Promise<void> {
@@ -214,18 +289,18 @@ class LogRocketProvider implements ErrorTrackingProvider {
 
     try {
       const LogRocketModule = await import('logrocket');
-      this.LogRocket = LogRocketModule.default;
+      this.LogRocket = LogRocketModule.default as unknown as LogRocketLike;
       
       this.LogRocket.init(process.env.NEXT_PUBLIC_LOGROCKET_APP_ID || '', {
         network: {
-          requestSanitizer: (request: any) => {
+          requestSanitizer: (request: LogRocketNetworkRequest) => {
             // Sanitizza richieste
             if (request.headers) {
               delete request.headers['Authorization'];
             }
             return request;
           },
-          responseSanitizer: (response: any) => {
+          responseSanitizer: (response: LogRocketNetworkResponse) => {
             return response;
           },
         },
@@ -494,9 +569,10 @@ class ErrorTracker {
     let clsValue = 0;
     const clsObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries();
-      entries.forEach((entry: any) => {
-        if (!entry.hadRecentInput) {
-          clsValue += entry.value;
+      entries.forEach((entry) => {
+        const layoutShift = entry as LayoutShiftEntry;
+        if (!layoutShift.hadRecentInput) {
+          clsValue += layoutShift.value;
         }
       });
       this.performanceMetrics.cls = clsValue;

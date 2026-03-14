@@ -13,6 +13,13 @@ exports.VehicleService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../common/services/prisma.service");
 const logger_service_1 = require("../../common/services/logger.service");
+const vehicleWithCustomerAndBookings = {
+    customer: true,
+    bookings: {
+        orderBy: { scheduledDate: 'desc' },
+        take: 5,
+    },
+};
 let VehicleService = class VehicleService {
     constructor(prisma, logger) {
         this.prisma = prisma;
@@ -44,11 +51,39 @@ let VehicleService = class VehicleService {
                     year: dto.year,
                     vin: dto.vin?.toUpperCase(),
                     notes: dto.notes,
+                    status: dto.status || 'active',
+                    mileage: dto.mileage,
                     customer: { connect: { id: customerId } },
                 },
             });
             this.logger.log(`Created vehicle ${vehicle.id} for customer ${customerId}`);
             return vehicle;
+        });
+    }
+    async findAll(tenantId, options) {
+        return this.prisma.withTenant(tenantId, async (prisma) => {
+            const where = {};
+            if (options?.search) {
+                where.OR = [
+                    { licensePlate: { contains: options.search.toUpperCase(), mode: 'insensitive' } },
+                    { make: { contains: options.search, mode: 'insensitive' } },
+                    { model: { contains: options.search, mode: 'insensitive' } },
+                ];
+            }
+            if (options?.status) {
+                where.status = options.status;
+            }
+            const [vehicles, total] = await Promise.all([
+                prisma.vehicle.findMany({
+                    where,
+                    include: { customer: true },
+                    orderBy: { updatedAt: 'desc' },
+                    take: options?.limit || 50,
+                    skip: options?.offset || 0,
+                }),
+                prisma.vehicle.count({ where }),
+            ]);
+            return { vehicles, total };
         });
     }
     async findById(tenantId, vehicleId) {
@@ -104,9 +139,7 @@ let VehicleService = class VehicleService {
             }
             const updateData = {};
             if (dto.licensePlate) {
-                updateData.licensePlate = dto.licensePlate
-                    .toUpperCase()
-                    .replace(/\s+/g, '');
+                updateData.licensePlate = dto.licensePlate.toUpperCase().replace(/\s+/g, '');
             }
             if (dto.make)
                 updateData.make = dto.make;
@@ -118,6 +151,10 @@ let VehicleService = class VehicleService {
                 updateData.vin = dto.vin.toUpperCase();
             if (dto.notes !== undefined)
                 updateData.notes = dto.notes;
+            if (dto.status)
+                updateData.status = dto.status;
+            if (dto.mileage !== undefined)
+                updateData.mileage = dto.mileage;
             const updated = await prisma.vehicle.update({
                 where: { id: vehicleId },
                 data: updateData,

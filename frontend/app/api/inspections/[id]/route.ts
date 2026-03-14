@@ -15,7 +15,7 @@ import {
   InspectionNotFoundError,
   InspectionValidationError,
 } from '@/lib/services/inspectionService'
-import { TRPCClientError, ServerError } from '@/lib/trpc-client'
+import { TRPCClientError, ServerError } from '@/lib/api-errors'
 import type { UpdateInspectionInput } from '@/lib/services/inspectionService'
 import type { InspectionStatus, InspectionItemStatus, FindingSeverity, FuelLevel } from '@prisma/client'
 

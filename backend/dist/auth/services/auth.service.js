@@ -58,6 +58,74 @@ let AuthService = class AuthService {
         this.MAX_FAILED_ATTEMPTS = 5;
         this.LOCKOUT_DURATION_MINUTES = 15;
     }
+    async registerTenant(input) {
+        const { shopName, slug, name, email, password } = input;
+        if (!password || password.length < 8) {
+            throw new common_1.BadRequestException('La password deve avere almeno 8 caratteri');
+        }
+        const existingTenant = await this.prisma.tenant.findUnique({
+            where: { slug },
+        });
+        if (existingTenant) {
+            throw new common_1.ConflictException('Questo slug è già in uso');
+        }
+        const passwordHash = await this.hashPassword(password);
+        const result = await this.prisma.$transaction(async (tx) => {
+            const tenant = await tx.tenant.create({
+                data: {
+                    name: shopName.trim(),
+                    slug,
+                    isActive: true,
+                    settings: {},
+                },
+            });
+            const user = await tx.user.create({
+                data: {
+                    tenantId: tenant.id,
+                    email: email.toLowerCase().trim(),
+                    name: name.trim(),
+                    passwordHash,
+                    role: 'ADMIN',
+                    isActive: true,
+                },
+            });
+            return { tenant, user };
+        });
+        const userWithTenant = {
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            role: result.user.role,
+            isActive: true,
+            tenantId: result.tenant.id,
+            tenant: {
+                id: result.tenant.id,
+                name: result.tenant.name,
+                slug: result.tenant.slug,
+                isActive: true,
+            },
+        };
+        const tokens = await this.generateTokens(userWithTenant);
+        await this.logAuthEvent({
+            userId: result.user.id,
+            tenantId: result.tenant.id,
+            action: 'register',
+            status: 'success',
+            details: { slug, shopName },
+        }).catch(() => {
+        });
+        this.logger.log(`New tenant registered: ${slug} (${result.tenant.id})`);
+        return {
+            tokens,
+            tenant: { id: result.tenant.id, name: result.tenant.name, slug: result.tenant.slug },
+            user: {
+                id: result.user.id,
+                email: result.user.email,
+                name: result.user.name,
+                role: result.user.role,
+            },
+        };
+    }
     async validateUser(email, password, tenantSlug) {
         const tenant = await this.prisma.tenant.findUnique({
             where: { slug: tenantSlug },
@@ -65,6 +133,7 @@ let AuthService = class AuthService {
         if (!tenant || !tenant.isActive) {
             throw new common_1.UnauthorizedException('Invalid tenant or tenant is inactive');
         }
+        await this.prisma.setTenantContext(tenant.id);
         const user = await this.prisma.user.findFirst({
             where: {
                 email,
@@ -107,14 +176,14 @@ let AuthService = class AuthService {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: this.configService.get('JWT_SECRET'),
-                expiresIn: this.configService.get('JWT_EXPIRES_IN', '24h'),
+                expiresIn: this.configService.get('JWT_EXPIRES_IN', '1h'),
             }),
             this.jwtService.signAsync(payload, {
                 secret: this.configService.get('JWT_REFRESH_SECRET'),
                 expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
             }),
         ]);
-        const expiresIn = parseInt(this.configService.get('JWT_EXPIRES_IN_SECONDS', '86400'));
+        const expiresIn = parseInt(this.configService.get('JWT_EXPIRES_IN_SECONDS', '3600'));
         return {
             accessToken,
             refreshToken,
@@ -176,7 +245,7 @@ let AuthService = class AuthService {
         return parts[0];
     }
     async hashPassword(password) {
-        const saltRounds = 12;
+        const saltRounds = 13;
         return bcrypt.hash(password, saltRounds);
     }
     async validateApiKey(apiKey) {

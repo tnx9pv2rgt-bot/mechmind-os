@@ -104,7 +104,7 @@ function formatTimeAgo(timestamp: number): string {
 /**
  * Debounce function
  */
-function debounce<T extends (...args: any[]) => void>(
+function debounce<T extends (...args: never[]) => void>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

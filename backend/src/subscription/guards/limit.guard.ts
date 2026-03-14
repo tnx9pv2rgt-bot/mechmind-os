@@ -13,6 +13,7 @@ import {
   Type,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request, Response } from 'express';
 import { FeatureAccessService } from '../services/feature-access.service';
 import { PlanLimits } from '../config/pricing.config';
 
@@ -21,7 +22,7 @@ export const LIMIT_CHECK_KEY = 'limitCheck';
 export type LimitCheckType = 'user' | 'location' | 'customer' | 'apiCall' | 'storage';
 
 export function CheckLimit(limitType: LimitCheckType) {
-  return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
+  return function (_target: object, _propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     Reflect.defineMetadata(LIMIT_CHECK_KEY, limitType, descriptor.value);
   };
 }
@@ -103,7 +104,7 @@ export class LimitGuard implements CanActivate {
 export class ApiUsageMiddleware {
   constructor(private featureAccessService: FeatureAccessService) {}
 
-  async use(req: any, res: any, next: () => void) {
+  async use(req: Request & { tenantId?: string; path: string }, _res: Response, next: () => void) {
     const tenantId = req.tenantId;
 
     if (tenantId) {

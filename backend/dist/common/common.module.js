@@ -17,6 +17,7 @@ const logger_service_1 = require("./services/logger.service");
 const s3_service_1 = require("./services/s3.service");
 const redis_service_1 = require("./services/redis.service");
 const tenant_guard_1 = require("./guard/tenant.guard");
+const health_controller_1 = require("./health/health.controller");
 let CommonModule = class CommonModule {
 };
 exports.CommonModule = CommonModule;
@@ -27,20 +28,38 @@ exports.CommonModule = CommonModule = __decorate([
             config_1.ConfigModule,
             bullmq_1.BullModule.forRootAsync({
                 useFactory: () => {
-                    const redisHost = process.env.REDIS_HOST;
-                    if (!redisHost) {
-                        console.warn('[BullMQ] REDIS_HOST not configured - queues will not process jobs');
-                    }
                     const connection = {
-                        host: redisHost || 'localhost',
-                        port: parseInt(process.env.REDIS_PORT || '6379'),
-                        password: process.env.REDIS_PASSWORD || undefined,
-                        db: parseInt(process.env.REDIS_DB || '0'),
                         lazyConnect: true,
                         maxRetriesPerRequest: 3,
                     };
-                    if (process.env.REDIS_TLS === 'true') {
-                        connection.tls = {};
+                    const redisUrl = process.env.REDIS_URL;
+                    if (redisUrl) {
+                        try {
+                            const url = new URL(redisUrl);
+                            connection.host = url.hostname;
+                            connection.port = parseInt(url.port, 10) || 6379;
+                            connection.password = url.password || undefined;
+                            connection.db = parseInt(url.pathname.slice(1), 10) || 0;
+                            if (url.protocol === 'rediss:') {
+                                connection.tls = {};
+                            }
+                        }
+                        catch {
+                            console.warn('[BullMQ] Invalid REDIS_URL, falling back to individual vars');
+                        }
+                    }
+                    if (!connection.host) {
+                        const redisHost = process.env.REDIS_HOST;
+                        if (!redisHost) {
+                            console.warn('[BullMQ] REDIS_HOST not configured - queues will not process jobs');
+                        }
+                        connection.host = redisHost || 'localhost';
+                        connection.port = parseInt(process.env.REDIS_PORT || '6379');
+                        connection.password = process.env.REDIS_PASSWORD || undefined;
+                        connection.db = parseInt(process.env.REDIS_DB || '0');
+                        if (process.env.REDIS_TLS === 'true') {
+                            connection.tls = {};
+                        }
                     }
                     return {
                         connection,
@@ -56,7 +75,25 @@ exports.CommonModule = CommonModule = __decorate([
             }),
             bullmq_1.BullModule.registerQueue({ name: 'booking' }, { name: 'voice' }, { name: 'notification' }),
         ],
-        providers: [prisma_service_1.PrismaService, encryption_service_1.EncryptionService, queue_service_1.QueueService, logger_service_1.LoggerService, s3_service_1.S3Service, redis_service_1.RedisService, tenant_guard_1.TenantGuard],
-        exports: [prisma_service_1.PrismaService, encryption_service_1.EncryptionService, queue_service_1.QueueService, logger_service_1.LoggerService, s3_service_1.S3Service, redis_service_1.RedisService, bullmq_1.BullModule, tenant_guard_1.TenantGuard],
+        controllers: [health_controller_1.HealthController],
+        providers: [
+            prisma_service_1.PrismaService,
+            encryption_service_1.EncryptionService,
+            queue_service_1.QueueService,
+            logger_service_1.LoggerService,
+            s3_service_1.S3Service,
+            redis_service_1.RedisService,
+            tenant_guard_1.TenantGuard,
+        ],
+        exports: [
+            prisma_service_1.PrismaService,
+            encryption_service_1.EncryptionService,
+            queue_service_1.QueueService,
+            logger_service_1.LoggerService,
+            s3_service_1.S3Service,
+            redis_service_1.RedisService,
+            bullmq_1.BullModule,
+            tenant_guard_1.TenantGuard,
+        ],
     })
 ], CommonModule);

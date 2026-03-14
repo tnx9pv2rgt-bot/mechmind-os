@@ -9,6 +9,7 @@
  */
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { NotificationsService } from '../../../notifications/services/notifications.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -49,7 +50,6 @@ export class LicensePlateService {
     } = {},
   ): Promise<LicensePlateDetection> {
     const provider = options.provider || OcrProvider.GOOGLE_VISION;
-    const minConfidence = options.minConfidence || 0.8;
 
     // Upload image to S3
     const imageKey = `lpr/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
@@ -87,9 +87,9 @@ export class LicensePlateService {
         country: detection.country,
         region: detection.region,
         vehicleType: detection.vehicleType,
-        boundingBox: detection.boundingBox as any,
+        boundingBox: detection.boundingBox as unknown as Prisma.InputJsonValue,
         provider: detection.provider,
-        rawResponse: detection.rawResponse as any,
+        rawResponse: detection.rawResponse as unknown as Prisma.InputJsonValue,
         cameraId: options.cameraId,
       },
     });
@@ -202,7 +202,15 @@ export class LicensePlateService {
    * Lookup vehicle by license plate
    */
   async lookupVehicle(licensePlate: string): Promise<{
-    vehicle?: any;
+    vehicle?: {
+      id: string;
+      make: string;
+      model: string;
+      year: number;
+      licensePlate: string;
+      customer: { id: string; name: string; phone?: string };
+      workOrders: { id: string; status: string; createdAt: Date }[];
+    };
     recentHistory: VehicleEntryExit[];
     activeSession?: ParkingSession;
   }> {
@@ -222,23 +230,42 @@ export class LicensePlateService {
     });
 
     // Get recent entry/exit history
-    const recentHistory = (await this.prisma.vehicleEntryExit.findMany({
+    const recentHistory = await this.prisma.vehicleEntryExit.findMany({
       where: { licensePlate: normalizedPlate },
       orderBy: { timestamp: 'desc' },
       take: 10,
-    })) as any[];
+    });
 
     // Get active parking session
-    const activeSession = (await this.prisma.parkingSession.findFirst({
+    const activeSession = await this.prisma.parkingSession.findFirst({
       where: {
         licensePlate: normalizedPlate,
         status: 'ACTIVE',
       },
-    })) as any;
+    });
 
     return {
-      vehicle,
-      recentHistory: recentHistory.map((h: any) => ({
+      vehicle: vehicle
+        ? {
+            id: vehicle.id,
+            make: vehicle.make,
+            model: vehicle.model,
+            year: vehicle.year || 0,
+            licensePlate: vehicle.licensePlate,
+            customer: vehicle.customer
+              ? {
+                  id: vehicle.customer.id,
+                  name:
+                    [vehicle.customer.encryptedFirstName, vehicle.customer.encryptedLastName]
+                      .filter(Boolean)
+                      .join(' ') || 'Unknown',
+                  phone: vehicle.customer.encryptedPhone || undefined,
+                }
+              : { id: '', name: '' },
+            workOrders: [],
+          }
+        : undefined,
+      recentHistory: recentHistory.map(h => ({
         id: h.id,
         type: h.type as EntryExitType,
         licensePlate: h.licensePlate,
@@ -255,8 +282,8 @@ export class LicensePlateService {
         ? {
             id: activeSession.id,
             licensePlate: activeSession.licensePlate,
-            entry: {} as any, // Would populate from relation
-            status: activeSession.status as any,
+            entry: {} as VehicleEntryExit, // Would populate from relation
+            status: activeSession.status as ParkingSession['status'],
             entryTime: activeSession.entryTime,
             parkingSpotId: activeSession.parkingSpotId || undefined,
           }
@@ -268,7 +295,7 @@ export class LicensePlateService {
    * Get active parking sessions
    */
   async getActiveSessions(tenantId?: string): Promise<ParkingSession[]> {
-    const where: any = { status: 'ACTIVE' };
+    const where: Prisma.ParkingSessionWhereInput = { status: 'ACTIVE' };
 
     if (tenantId) {
       where.vehicle = { customer: { tenantId } };
@@ -285,7 +312,7 @@ export class LicensePlateService {
       orderBy: { entryTime: 'desc' },
     });
 
-    return sessions.map((s: any) => ({
+    return sessions.map(s => ({
       id: s.id,
       licensePlate: s.licensePlate,
       entry: {
@@ -301,7 +328,7 @@ export class LicensePlateService {
         vehicleId: s.entry.vehicleId || undefined,
         isAuthorized: s.entry.isAuthorized,
       },
-      status: s.status as any,
+      status: s.status as ParkingSession['status'],
       entryTime: s.entryTime,
       durationMinutes: s.durationMinutes || undefined,
       parkingSpotId: s.parkingSpotId || undefined,
@@ -322,7 +349,7 @@ export class LicensePlateService {
         location: config.location,
         direction: config.direction,
         provider: config.provider,
-        config: config.config as any,
+        config: config.config as unknown as Prisma.InputJsonValue,
         isActive: true,
       },
     });
@@ -334,7 +361,7 @@ export class LicensePlateService {
       direction: camera.direction as EntryExitType,
       isActive: camera.isActive,
       provider: camera.provider as OcrProvider,
-      config: camera.config as any,
+      config: camera.config as LprCamera['config'],
       lastCapture: camera.lastCapture || undefined,
     };
   }
@@ -358,7 +385,7 @@ export class LicensePlateService {
       direction: camera.direction as EntryExitType,
       isActive: camera.isActive,
       provider: camera.provider as OcrProvider,
-      config: camera.config as any,
+      config: camera.config as LprCamera['config'],
       lastCapture: camera.lastCapture || undefined,
     };
   }
@@ -371,14 +398,14 @@ export class LicensePlateService {
       where: { tenantId },
     });
 
-    return cameras.map((c: any) => ({
+    return cameras.map(c => ({
       id: c.id,
       name: c.name,
       location: c.location,
       direction: c.direction as EntryExitType,
       isActive: c.isActive,
       provider: c.provider as OcrProvider,
-      config: c.config as any,
+      config: c.config as LprCamera['config'],
       lastCapture: c.lastCapture || undefined,
     }));
   }
@@ -399,7 +426,7 @@ export class LicensePlateService {
       direction: camera.direction as EntryExitType,
       isActive: camera.isActive,
       provider: camera.provider as OcrProvider,
-      config: camera.config as any,
+      config: camera.config as LprCamera['config'],
       lastCapture: camera.lastCapture || undefined,
     };
   }
@@ -408,28 +435,28 @@ export class LicensePlateService {
    * Get LPR statistics
    */
   async getStats(tenantId: string, from: Date, to: Date): Promise<LprStats> {
-    const detections = (await this.prisma.licensePlateDetection.findMany({
+    const detections = await this.prisma.licensePlateDetection.findMany({
       where: {
         camera: { tenantId },
         processedAt: { gte: from, lte: to },
       },
-    })) as any[];
+    });
 
     const totalDetections = detections.length;
     const avgConfidence =
       totalDetections > 0
-        ? detections.reduce((sum: number, d: any) => sum + d.confidence, 0) / totalDetections
+        ? detections.reduce((sum: number, d) => sum + d.confidence, 0) / totalDetections
         : 0;
 
     // Group by provider
-    const byProvider: Record<OcrProvider, { count: number; avgConfidence: number }> = {} as any;
+    const byProvider = {} as Record<OcrProvider, { count: number; avgConfidence: number }>;
     for (const provider of Object.values(OcrProvider)) {
-      const providerDetections = detections.filter((d: any) => d.provider === provider);
+      const providerDetections = detections.filter(d => d.provider === provider);
       byProvider[provider] = {
         count: providerDetections.length,
         avgConfidence:
           providerDetections.length > 0
-            ? providerDetections.reduce((sum: number, d: any) => sum + d.confidence, 0) /
+            ? providerDetections.reduce((sum: number, d) => sum + d.confidence, 0) /
               providerDetections.length
             : 0,
       };

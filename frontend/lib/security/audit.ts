@@ -14,7 +14,7 @@ export interface AuditEvent {
 export async function logAuditEvent(event: AuditEvent): Promise<void> {
   // TODO: Implement audit logging
   if (process.env.NODE_ENV === 'development') {
-    console.log('[AUDIT]', event.action, event.details);
+    console.info('[AUDIT]', event.action, event.details);
   }
 }
 
@@ -43,8 +43,6 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
   });
 }
 
-export async function getAuditLog(
-  _filters?: Record<string, unknown>
-): Promise<AuditEvent[]> {
+export async function getAuditLog(_filters?: Record<string, unknown>): Promise<AuditEvent[]> {
   return [];
 }

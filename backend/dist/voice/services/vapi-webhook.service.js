@@ -28,7 +28,7 @@ let VapiWebhookService = VapiWebhookService_1 = class VapiWebhookService {
         this.logger = new common_1.Logger(VapiWebhookService_1.name);
     }
     async processWebhook(payload) {
-        const { event, callId, tenantId, customerPhone, intent, extractedData, transcript } = payload;
+        const { event, callId } = payload;
         this.loggerService.log(`Processing Vapi webhook: ${event} for call ${callId}`, 'VapiWebhookService');
         await this.storeWebhookEvent(payload);
         switch (event) {
@@ -39,8 +39,8 @@ let VapiWebhookService = VapiWebhookService_1 = class VapiWebhookService {
             case vapi_webhook_dto_1.VapiEventType.TRANSFER_REQUESTED:
                 const transferResult = await this.handleTransfer({
                     callId,
-                    customerPhone,
-                    tenantId,
+                    customerPhone: payload.customerPhone,
+                    tenantId: payload.tenantId,
                     reason: 'Transfer requested by customer',
                 });
                 return {
@@ -86,7 +86,7 @@ let VapiWebhookService = VapiWebhookService_1 = class VapiWebhookService {
         return { action: 'message_logged' };
     }
     async handleCallStarted(payload) {
-        this.logger.log(`Call started: ${payload.callId} from ${payload.customerPhone}`);
+        this.logger.log(`Call started: ${payload.callId} from ${payload.customerPhone.slice(0, 4)}***`);
         return { action: 'call_logged' };
     }
     async handleCallUpdated(payload) {
@@ -125,7 +125,7 @@ let VapiWebhookService = VapiWebhookService_1 = class VapiWebhookService {
             });
         }
         catch (error) {
-            this.logger.error(`Failed to store webhook event: ${error.message}`);
+            this.logger.error(`Failed to store webhook event: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async queueForReview(payload) {
@@ -143,14 +143,15 @@ let VapiWebhookService = VapiWebhookService_1 = class VapiWebhookService {
     async getStats(tenantId, fromDate, toDate) {
         const where = {
             tenantId,
-            ...(fromDate && toDate && {
+            ...(fromDate &&
+                toDate && {
                 createdAt: {
                     gte: fromDate,
                     lte: toDate,
                 },
             }),
         };
-        const [totalEvents, eventTypeCounts, processedCount, unprocessedCount,] = await Promise.all([
+        const [totalEvents, eventTypeCounts, processedCount, unprocessedCount] = await Promise.all([
             this.prisma.voiceWebhookEvent.count({ where }),
             this.prisma.voiceWebhookEvent.groupBy({
                 by: ['eventType'],

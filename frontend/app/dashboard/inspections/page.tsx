@@ -53,14 +53,14 @@ const mockInspections = [
   { id: 'insp_005', plate: 'QR345ST', vehicle: 'VW Golf', customer: 'Laura Bianchi', type: 'ACCIDENT', status: 'completed', date: '02/03/2026', score: 6.8 },
 ]
 
-const statusConfig: any = {
+const statusConfig: Record<string, { color: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
   'completed': { color: 'bg-apple-green', icon: CheckCircle2, label: 'Completata' },
   'blockchain': { color: 'bg-apple-blue', icon: Shield, label: 'Blockchain' },
   'in_progress': { color: 'bg-apple-orange', icon: PlayCircle, label: 'In Corso' },
   'pending': { color: 'bg-apple-gray', icon: Clock, label: 'In Attesa' },
 }
 
-const typeLabels: any = {
+const typeLabels: Record<string, string> = {
   'PRE_PURCHASE': 'Pre-Acquisto',
   'PERIODIC': 'Periodica',
   'PRE_SALE': 'Pre-Vendita',
@@ -81,18 +81,13 @@ export default function InspectionsPage() {
   )
 
   return (
-    <div className="min-h-screen">
+    <div>
       {/* Header */}
-      <motion.header 
-        initial="hidden"
-        animate="visible"
-        variants={headerVariants}
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
-      >
+      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark">Ispezioni</h1>
-            <p className="text-apple-gray text-body mt-1">Gestione ispezioni digitali AI + Blockchain</p>
+            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">Ispezioni</h1>
+            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">Gestione ispezioni digitali AI + Blockchain</p>
           </div>
           <AppleButton 
             icon={<Plus className="h-4 w-4" />}
@@ -101,7 +96,7 @@ export default function InspectionsPage() {
             Nuova Ispezione
           </AppleButton>
         </div>
-      </motion.header>
+      </header>
 
       <div className="p-8 space-y-6">
         {/* Stats */}
@@ -122,8 +117,8 @@ export default function InspectionsPage() {
               <AppleCard>
                 <AppleCardContent className="text-center">
                   <div className={`w-3 h-3 rounded-full ${stat.color} mx-auto mb-2`} />
-                  <p className="text-title-1 font-semibold text-apple-dark">{stat.value}</p>
-                  <p className="text-footnote text-apple-gray">{stat.label}</p>
+                  <p className="text-title-1 font-semibold text-apple-dark dark:text-[#ececec]">{stat.value}</p>
+                  <p className="text-footnote text-apple-gray dark:text-[#636366]">{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -144,7 +139,7 @@ export default function InspectionsPage() {
                   placeholder="Cerca per targa, veicolo, cliente o ID ispezione..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 rounded-xl border-2 border-black bg-white text-gray-900 placeholder:text-gray-400 focus:border-black focus:ring-2 focus:ring-gray-200"
+                  className="pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]"
                 />
               </div>
             </AppleCardContent>
@@ -168,12 +163,12 @@ export default function InspectionsPage() {
                   <AppleCardContent>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-apple-light-gray flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center">
                           <ClipboardCheck className="h-6 w-6 text-apple-blue" />
                         </div>
                         <div>
-                          <h3 className="text-body font-semibold text-apple-dark">{inspection.id}</h3>
-                          <p className="text-footnote text-apple-gray">{inspection.vehicle} • {inspection.plate}</p>
+                          <h3 className="text-body font-semibold text-apple-dark dark:text-[#ececec]">{inspection.id}</h3>
+                          <p className="text-footnote text-apple-gray dark:text-[#636366]">{inspection.vehicle} • {inspection.plate}</p>
                         </div>
                       </div>
                       <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.color}/10`}>
@@ -184,26 +179,26 @@ export default function InspectionsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-footnote text-apple-gray mb-4">
+                    <div className="flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366] mb-4">
                       <User className="h-4 w-4" />
                       <span>{inspection.customer}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-apple-border/20">
+                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-apple-border/20 dark:border-[#424242]">
                       <div>
-                        <p className="text-caption text-apple-gray">Tipo</p>
-                        <p className="text-callout font-medium text-apple-dark">{typeLabels[inspection.type]}</p>
+                        <p className="text-caption text-apple-gray dark:text-[#636366]">Tipo</p>
+                        <p className="text-callout font-medium text-apple-dark dark:text-[#ececec]">{typeLabels[inspection.type]}</p>
                       </div>
                       <div>
-                        <p className="text-caption text-apple-gray">Data</p>
-                        <p className="text-callout font-medium text-apple-dark">{inspection.date}</p>
+                        <p className="text-caption text-apple-gray dark:text-[#636366]">Data</p>
+                        <p className="text-callout font-medium text-apple-dark dark:text-[#ececec]">{inspection.date}</p>
                       </div>
                     </div>
 
                     {inspection.score && (
-                      <div className="mt-4 pt-4 border-t border-apple-border/20">
+                      <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]">
                         <div className="flex items-center justify-between">
-                          <span className="text-caption text-apple-gray">Score</span>
+                          <span className="text-caption text-apple-gray dark:text-[#636366]">Score</span>
                           <span className={`text-title-2 font-semibold ${
                             inspection.score >= 9 ? 'text-apple-green' :
                             inspection.score >= 7 ? 'text-apple-orange' :
@@ -215,7 +210,7 @@ export default function InspectionsPage() {
                       </div>
                     )}
 
-                    <div className="mt-4 pt-4 border-t border-apple-border/20">
+                    <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]">
                       <AppleButton variant="secondary" fullWidth>
                         Visualizza Dettagli
                       </AppleButton>

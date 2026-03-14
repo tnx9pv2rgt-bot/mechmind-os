@@ -91,7 +91,7 @@ let MagicLinkService = class MagicLinkService {
             subject: 'Accedi a MechMind OS',
             html: this.getMagicLinkEmailHtml(user.name, verifyUrl, this.tokenExpiryMinutes),
         });
-        this.logger.log(`Magic link sent to ${email} for tenant ${tenantSlug}`);
+        this.logger.log(`Magic link sent to ${email.replace(/(.{2}).*(@.*)/, '$1***$2')} for tenant ${tenantSlug}`);
         return { sent: true };
     }
     async verifyMagicLink(token, ip) {
@@ -102,15 +102,18 @@ let MagicLinkService = class MagicLinkService {
             throw new MagicLinkError('Link non valido');
         }
         if (magicLink.usedAt) {
-            throw new MagicLinkError('Link gia\' utilizzato');
+            throw new MagicLinkError("Link gia' utilizzato");
         }
         if (magicLink.expiresAt < new Date()) {
             throw new MagicLinkError('Link scaduto');
         }
-        await this.prisma.magicLink.update({
-            where: { id: magicLink.id },
+        const updated = await this.prisma.magicLink.updateMany({
+            where: { id: magicLink.id, usedAt: null },
             data: { usedAt: new Date() },
         });
+        if (updated.count === 0) {
+            throw new MagicLinkError("Link gia' utilizzato");
+        }
         const user = await this.prisma.user.findFirst({
             where: {
                 email: magicLink.email,

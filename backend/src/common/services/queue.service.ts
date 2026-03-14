@@ -5,8 +5,10 @@ import { LoggerService } from './logger.service';
 
 export interface QueueJobData {
   type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: Record<string, any>;
   tenantId?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>;
 }
 
@@ -120,7 +122,9 @@ export class QueueService {
         await job.retry();
         retriedJobs.push(job);
       } catch (error) {
-        this.logger.error(`Failed to retry job ${job.id}: ${error.message}`);
+        this.logger.error(
+          `Failed to retry job ${job.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
@@ -155,6 +159,7 @@ export class QueueService {
     options?: JobOptions,
   ): Promise<Job<T>> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const job = await queue.add(jobName as any, data as any, {
         ...options,
         attempts: options?.attempts ?? 3,
@@ -167,7 +172,9 @@ export class QueueService {
       this.logger.log(`Added job ${job.id} (${jobName}) to ${queue.name} queue`);
       return job;
     } catch (error) {
-      this.logger.error(`Failed to add job to ${queue.name} queue: ${error.message}`);
+      this.logger.error(
+        `Failed to add job to ${queue.name} queue: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw error;
     }
   }

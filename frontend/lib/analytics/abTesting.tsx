@@ -286,8 +286,8 @@ class ABTestingManager {
 
   private trackAssignmentEvent(experimentId: string, variant: Variant): void {
     // Questo metodo può essere integrato con analytics.track
-    if (typeof window !== 'undefined' && (window as any).analytics) {
-      (window as any).analytics.track('Experiment Assigned', {
+    if (typeof window !== 'undefined' && window.analytics) {
+      window.analytics.track('Experiment Assigned', {
         experimentId,
         variant,
       });
@@ -340,8 +340,8 @@ class ABTestingManager {
     this.saveAssignments();
 
     // Traccia conversione
-    if (typeof window !== 'undefined' && (window as any).analytics) {
-      (window as any).analytics.track('Experiment Conversion', {
+    if (typeof window !== 'undefined' && window.analytics) {
+      window.analytics.track('Experiment Conversion', {
         experimentId,
         variant: assignment.variant,
         ...metadata,

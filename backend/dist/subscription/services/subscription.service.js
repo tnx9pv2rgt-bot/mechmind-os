@@ -48,8 +48,7 @@ let SubscriptionService = class SubscriptionService {
             stripe: {
                 customerId: subscription.stripeCustomerId || undefined,
                 subscriptionId: subscription.stripeSubscriptionId || undefined,
-                paymentMethodRequired: subscription.status === client_1.SubscriptionStatus.TRIAL &&
-                    !subscription.stripeCustomerId,
+                paymentMethodRequired: subscription.status === client_1.SubscriptionStatus.TRIAL && !subscription.stripeCustomerId,
             },
         };
     }
@@ -90,7 +89,8 @@ let SubscriptionService = class SubscriptionService {
         if (newPlan === client_1.SubscriptionPlan.TRIAL) {
             throw new common_1.BadRequestException('Cannot upgrade to trial plan');
         }
-        if (currentSub.plan === newPlan && currentSub.aiAddonEnabled === (aiAddon ?? currentSub.aiAddonEnabled)) {
+        if (currentSub.plan === newPlan &&
+            currentSub.aiAddonEnabled === (aiAddon ?? currentSub.aiAddonEnabled)) {
             throw new common_1.BadRequestException('Already on this plan configuration');
         }
         const daysRemaining = Math.ceil((currentSub.currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -98,7 +98,7 @@ let SubscriptionService = class SubscriptionService {
         const proratedAmount = (0, pricing_config_1.calculateProratedAmount)(currentSub.plan, newPlan, billingCycle, daysRemaining, daysInPeriod);
         const isUpgrade = this.isPlanUpgrade(currentSub.plan, newPlan);
         const immediate = isUpgrade;
-        const updatedSubscription = await this.prisma.$transaction(async (tx) => {
+        await this.prisma.$transaction(async (tx) => {
             await tx.subscriptionChange.create({
                 data: {
                     subscriptionId: currentSub.id,
@@ -312,7 +312,7 @@ let SubscriptionService = class SubscriptionService {
         return this.getSubscription(tenantId);
     }
     async getSubscriptionAnalytics() {
-        const [totalSubscriptions, byPlan, byStatus, trialConversions, revenueEstimate,] = await Promise.all([
+        const [totalSubscriptions, byPlan, byStatus, trialConversions, revenueEstimate] = await Promise.all([
             this.prisma.subscription.count(),
             this.prisma.subscription.groupBy({
                 by: ['plan'],
@@ -347,10 +347,10 @@ let SubscriptionService = class SubscriptionService {
             aiAddonRevenue: revenueEstimate._sum.aiAddonPrice || 0,
         };
     }
-    async createStripeCheckoutSession(tenantId, plan, billingCycle, aiAddon, successUrl, cancelUrl) {
+    async createStripeCheckoutSession(_tenantId, _plan, _billingCycle, _aiAddon, _successUrl, _cancelUrl) {
         throw new common_1.BadRequestException('Stripe is not configured - install stripe package');
     }
-    async handleStripeWebhook(event) {
+    async handleStripeWebhook(_event) {
     }
     isPlanUpgrade(currentPlan, newPlan) {
         const planOrder = [

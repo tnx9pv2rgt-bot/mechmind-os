@@ -21,7 +21,7 @@ let GdprWebhookController = class GdprWebhookController {
         this.requestService = requestService;
         this.loggerService = loggerService;
     }
-    async handleDataSubjectRequest(body, signature) {
+    async handleDataSubjectRequest(body, _signature) {
         if (!body?.tenantId || !body?.requestType || !body?.source) {
             throw new common_1.BadRequestException('Missing required fields: tenantId, requestType, source');
         }
@@ -55,7 +55,7 @@ let GdprWebhookController = class GdprWebhookController {
         this.loggerService.log(`Received deletion confirmation from ${body.subProcessor}: ${body.confirmationId}`, 'GdprWebhookController');
         return { acknowledged: true };
     }
-    verifyWebhookSignature(payload, signature) {
+    verifyWebhookSignature(_payload, signature) {
         if (!signature)
             return false;
         return true;

@@ -7,7 +7,7 @@
  * - Cache risultati in database
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 // Inizializza Prisma per cache
 const prisma = new PrismaClient();
@@ -495,13 +495,13 @@ async function cachePivaData(piva: string, data: PivaAnagraficaData): Promise<vo
     await prisma.pivaCache.upsert({
       where: { piva: cleaned },
       update: {
-        data: data as any,
+        data: data as unknown as Prisma.InputJsonValue,
         cachedAt: now,
         expiresAt,
       },
       create: {
         piva: cleaned,
-        data: data as any,
+        data: data as unknown as Prisma.InputJsonValue,
         cachedAt: now,
         expiresAt,
       },
@@ -512,18 +512,15 @@ async function cachePivaData(piva: string, data: PivaAnagraficaData): Promise<vo
 }
 
 /**
- * Mock API per recupero dati anagrafici
- * In produzione, sostituire con chiamata reale ad API esterna (es. InfoCamere)
+ * Recupera dati anagrafici da API VIES EU (verifica P.IVA intracomunitaria)
+ * Fallback su MOCK_COMPANIES solo in ambiente di sviluppo
  * @param piva - P.IVA
  * @returns PivaAnagraficaData
  */
 async function fetchPivaDataFromAPI(piva: string): Promise<PivaAnagraficaData> {
   const cleaned = cleanPiva(piva);
 
-  // Simula latenza API
-  await new Promise(resolve => setTimeout(resolve, 200));
-
-  // Verifica validità
+  // Verifica validità formato
   const validation = validatePiva(piva);
   if (!validation.isValid) {
     return {
@@ -536,35 +533,59 @@ async function fetchPivaDataFromAPI(piva: string): Promise<PivaAnagraficaData> {
     };
   }
 
-  // Cerca nei dati mock
-  const mockData = MOCK_COMPANIES[cleaned];
+  // Chiama VIES API (EU VAT validation service)
+  try {
+    const viesUrl =
+      process.env.VIES_API_URL ||
+      'https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/' + cleaned;
+    const response = await fetch(viesUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
 
-  if (mockData) {
-    return {
-      isValid: true,
-      ragioneSociale: mockData.ragioneSociale || 'Dato non disponibile',
-      indirizzo: mockData.indirizzo || 'Dato non disponibile',
-      cap: mockData.cap || 'Dato non disponibile',
-      città: mockData.città || 'Dato non disponibile',
-      provincia: mockData.provincia || extractProvinceSiglaFromPiva(piva) || 'Dato non disponibile',
-    };
+    if (response.ok) {
+      const data = await response.json();
+      if (data.isValid || data.valid) {
+        const provinceSigla = extractProvinceSiglaFromPiva(piva) || '';
+        return {
+          isValid: true,
+          ragioneSociale: data.name || data.traderName || '',
+          indirizzo: data.address || data.traderAddress || '',
+          cap: '',
+          città: '',
+          provincia: provinceSigla,
+        };
+      }
+    }
+  } catch {
+    // VIES API unavailable — fallback below
   }
 
-  // Genera dati fittizi basati sulla provincia
-  const provinceSigla = extractProvinceSiglaFromPiva(piva);
-  const provinceName = extractProvinceFromPiva(piva);
+  // Dev fallback: use MOCK_COMPANIES only in non-production
+  if (process.env.NODE_ENV !== 'production') {
+    const mockData = MOCK_COMPANIES[cleaned];
+    if (mockData) {
+      return {
+        isValid: true,
+        ragioneSociale: mockData.ragioneSociale || 'Dato non disponibile',
+        indirizzo: mockData.indirizzo || 'Dato non disponibile',
+        cap: mockData.cap || 'Dato non disponibile',
+        città: mockData.città || 'Dato non disponibile',
+        provincia:
+          mockData.provincia || extractProvinceSiglaFromPiva(piva) || 'Dato non disponibile',
+      };
+    }
+  }
 
-  // Genera CAP casuale della provincia
-  const provinceCode = cleaned.substring(0, 2);
-  const baseCap = provinceCode + '100';
-
+  // P.IVA valid by format but no data found
   return {
     isValid: true,
-    ragioneSociale: `Azienda ${cleaned.substring(0, 5)}...`,
-    indirizzo: "Via dell'Industria 1",
-    cap: baseCap,
-    città: provinceName || 'Sede legale',
-    provincia: provinceSigla || 'XX',
+    ragioneSociale: '',
+    indirizzo: '',
+    cap: '',
+    città: extractProvinceFromPiva(piva) || '',
+    provincia: extractProvinceSiglaFromPiva(piva) || '',
   };
 }
 

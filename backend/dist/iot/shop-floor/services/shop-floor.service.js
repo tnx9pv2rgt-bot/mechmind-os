@@ -165,7 +165,7 @@ let ShopFloorService = ShopFloorService_1 = class ShopFloorService {
         });
         return this.getWorkOrderProgress(workOrderId);
     }
-    async getShopFloorAnalytics(tenantId, from, to) {
+    async getShopFloorAnalytics(tenantId, _from, _to) {
         this.logger.warn(`Getting shop floor analytics for tenant ${tenantId} - Shop floor models not in schema yet`);
         return {
             totalVehicles: 0,
@@ -174,7 +174,7 @@ let ShopFloorService = ShopFloorService_1 = class ShopFloorService {
             technicianEfficiency: {},
         };
     }
-    async getRecentEvents(tenantId, limit = 50) {
+    async getRecentEvents(tenantId, _limit = 50) {
         this.logger.warn(`Getting recent events for tenant ${tenantId} - ShopFloorEvent model not in schema yet`);
         return [];
     }
@@ -219,7 +219,7 @@ let ShopFloorService = ShopFloorService_1 = class ShopFloorService {
                     imageUrl: reading.data.imageUrl,
                 },
             });
-            this.logger.log(`License plate detected: ${reading.data.licensePlate}`);
+            this.logger.log(`License plate detected: ${reading.data.licensePlate?.slice(0, 2)}***`);
         }
     }
     async processPressureReading(reading) {

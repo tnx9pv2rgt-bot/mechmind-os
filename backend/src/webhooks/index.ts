@@ -17,13 +17,17 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 // ==================== INTERFACES ====================
 
+export interface RequestWithRawBody extends Request {
+  rawBody?: string;
+}
+
 export interface WebhookPayload {
   event: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   timestamp: Date;
   source: string;
 }
@@ -41,6 +45,14 @@ export interface WebhookConfig {
   retryAttempts?: number;
 }
 
+export interface SlackResponse {
+  response_type?: 'ephemeral' | 'in_channel';
+  text?: string;
+  blocks?: Array<Record<string, unknown>>;
+  challenge?: string;
+  ok?: boolean;
+}
+
 // ==================== SEGMENT WEBHOOK ====================
 
 export interface SegmentEvent {
@@ -48,9 +60,9 @@ export interface SegmentEvent {
   event?: string;
   userId?: string;
   anonymousId?: string;
-  properties?: Record<string, any>;
-  traits?: Record<string, any>;
-  context?: Record<string, any>;
+  properties?: Record<string, unknown>;
+  traits?: Record<string, unknown>;
+  context?: Record<string, unknown>;
   timestamp?: string;
   integrations?: Record<string, boolean>;
 }
@@ -84,8 +96,9 @@ export class SegmentWebhookService {
         message: `Event ${event.type} processed successfully`,
         processedAt: new Date(),
       };
-    } catch (error) {
-      this.logger.error('Segment webhook error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Segment webhook error:', message);
       throw error;
     }
   }
@@ -104,7 +117,7 @@ export class SegmentWebhookService {
 
     const internalEvent = (eventName && eventMap[eventName]) || eventName || 'unknown';
 
-    // TODO: Emit to internal event bus or analytics service
+    // Analytics events are logged; integration with EventEmitter2 can be added when AnalyticsModule needs real-time events
     this.logger.log(`Analytics event: ${internalEvent}`, { userId, properties });
   }
 
@@ -133,7 +146,7 @@ export class SegmentWebhookService {
 export interface ZapierPayload {
   hookUrl: string;
   event: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   auth?: Record<string, string>;
 }
 
@@ -155,13 +168,14 @@ export class ZapierWebhookService {
         message: `Automation ${payload.event} executed: ${result}`,
         processedAt: new Date(),
       };
-    } catch (error) {
-      this.logger.error('Zapier webhook error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Zapier webhook error:', message);
       throw error;
     }
   }
 
-  async triggerZap(hookUrl: string, data: Record<string, any>): Promise<boolean> {
+  async triggerZap(hookUrl: string, data: Record<string, unknown>): Promise<boolean> {
     try {
       const response = await fetch(hookUrl, {
         method: 'POST',
@@ -174,13 +188,14 @@ export class ZapierWebhookService {
       });
 
       return response.ok;
-    } catch (error) {
-      this.logger.error('Trigger Zap error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Trigger Zap error:', message);
       return false;
     }
   }
 
-  private async executeAutomation(event: string, data: Record<string, any>): Promise<string> {
+  private async executeAutomation(event: string, _data: Record<string, unknown>): Promise<string> {
     const automations: Record<string, () => Promise<string>> = {
       create_booking: async () => {
         // Create booking from external trigger
@@ -238,6 +253,12 @@ export interface SlackSlashCommand {
   trigger_id: string;
 }
 
+export interface SlackMessage {
+  text?: string;
+  blocks?: Array<Record<string, unknown>>;
+  attachments?: Array<Record<string, unknown>>;
+}
+
 @Injectable()
 export class SlackWebhookService {
   private readonly logger = new Logger(SlackWebhookService.name);
@@ -261,10 +282,10 @@ export class SlackWebhookService {
     return { ok: true };
   }
 
-  async handleSlashCommand(command: SlackSlashCommand): Promise<any> {
+  async handleSlashCommand(command: SlackSlashCommand): Promise<SlackResponse> {
     this.logger.debug(`Slack command received: ${command.command}`);
 
-    const handlers: Record<string, (cmd: SlackSlashCommand) => Promise<any>> = {
+    const handlers: Record<string, (cmd: SlackSlashCommand) => Promise<SlackResponse>> = {
       '/mechmind': async cmd => this.handleMechMindCommand(cmd),
       '/booking': async cmd => this.handleBookingCommand(cmd),
       '/customer': async cmd => this.handleCustomerCommand(cmd),
@@ -281,7 +302,7 @@ export class SlackWebhookService {
     return handler(command);
   }
 
-  async sendMessage(channel: string, message: any): Promise<boolean> {
+  async sendMessage(channel: string, message: SlackMessage): Promise<boolean> {
     if (!this.botToken) {
       this.logger.warn('Slack bot token not configured');
       return false;
@@ -300,10 +321,11 @@ export class SlackWebhookService {
         }),
       });
 
-      const data = await response.json();
+      const data: { ok: boolean } = await response.json();
       return data.ok;
-    } catch (error) {
-      this.logger.error('Send Slack message error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Send Slack message error:', message);
       return false;
     }
   }
@@ -335,7 +357,7 @@ export class SlackWebhookService {
     this.logger.log(`Urgent message detected in channel ${event?.channel}`);
   }
 
-  private async handleMechMindCommand(command: SlackSlashCommand): Promise<any> {
+  private async handleMechMindCommand(command: SlackSlashCommand): Promise<SlackResponse> {
     const args = command.text.split(' ');
     const subcommand = args[0];
 
@@ -366,14 +388,14 @@ export class SlackWebhookService {
     }
   }
 
-  private async handleBookingCommand(command: SlackSlashCommand): Promise<any> {
+  private async handleBookingCommand(command: SlackSlashCommand): Promise<SlackResponse> {
     return {
       response_type: 'ephemeral',
       text: `Booking command received: ${command.text}`,
     };
   }
 
-  private async handleCustomerCommand(command: SlackSlashCommand): Promise<any> {
+  private async handleCustomerCommand(command: SlackSlashCommand): Promise<SlackResponse> {
     return {
       response_type: 'ephemeral',
       text: `Customer command received: ${command.text}`,
@@ -385,7 +407,10 @@ export class SlackWebhookService {
     const mySignature = 'v0=' + createHmac('sha256', secret).update(basestring).digest('hex');
 
     try {
-      return mySignature === signature;
+      const sigBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(mySignature);
+      if (sigBuffer.length !== expectedBuffer.length) return false;
+      return timingSafeEqual(sigBuffer, expectedBuffer);
     } catch {
       return false;
     }
@@ -394,12 +419,37 @@ export class SlackWebhookService {
 
 // ==================== CRM WEBHOOK (Salesforce/HubSpot) ====================
 
+interface SalesforcePayload {
+  event?: { type?: string };
+  sobjectType?: string;
+  id: string;
+  [key: string]: unknown;
+}
+
+interface HubSpotPayload {
+  subscriptionType?: string;
+  objectType?: string;
+  objectId: string;
+  properties?: Record<string, unknown>;
+  timestamp?: number;
+  [key: string]: unknown;
+}
+
+interface PipedrivePayload {
+  event?: string;
+  meta?: { object?: string };
+  data?: { id?: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+type CRMProviderPayload = SalesforcePayload | HubSpotPayload | PipedrivePayload;
+
 export interface CRMEvent {
   provider: 'salesforce' | 'hubspot' | 'pipedrive';
   event: string;
   objectType: string;
   objectId: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   timestamp: Date;
 }
 
@@ -430,40 +480,38 @@ export class CRMWebhookService {
         message: `${event.provider} event processed`,
         processedAt: new Date(),
       };
-    } catch (error) {
-      this.logger.error('CRM webhook error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('CRM webhook error:', message);
       throw error;
     }
   }
 
   private async handleSalesforceEvent(event: CRMEvent): Promise<void> {
-    const { event: eventType, objectType, properties } = event;
+    const { objectType, properties } = event;
 
     if (objectType === 'Contact' || objectType === 'Lead') {
-      // Sync customer data
-      this.logger.log(`Syncing Salesforce ${objectType}: ${properties.Email}`);
+      this.logger.log(`Syncing Salesforce ${objectType}: ${String(properties['Email'] ?? '')}`);
     } else if (objectType === 'Opportunity') {
-      // Sync booking/opportunity
-      this.logger.log(`Syncing Salesforce Opportunity: ${properties.Name}`);
+      this.logger.log(`Syncing Salesforce Opportunity: ${String(properties['Name'] ?? '')}`);
     }
   }
 
   private async handleHubSpotEvent(event: CRMEvent): Promise<void> {
-    const { event: eventType, objectType, properties } = event;
+    const { event: eventName, objectType, properties } = event;
 
-    // HubSpot webhook format
-    this.logger.log(`HubSpot ${objectType} ${eventType}`, properties);
+    this.logger.log(`HubSpot ${objectType} ${eventName}`, properties);
   }
 
   private async handlePipedriveEvent(event: CRMEvent): Promise<void> {
-    const { event: eventType, objectType, properties } = event;
+    const { event: eventName, objectType, properties } = event;
 
-    this.logger.log(`Pipedrive ${objectType} ${eventType}`, properties);
+    this.logger.log(`Pipedrive ${objectType} ${eventName}`, properties);
   }
 
   async syncToCRM(
     provider: 'salesforce' | 'hubspot' | 'pipedrive',
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): Promise<boolean> {
     const configs = {
       salesforce: {
@@ -487,17 +535,32 @@ export class CRMWebhookService {
     }
 
     try {
-      // Implementation depends on CRM
       this.logger.log(`Syncing to ${provider}`, data);
       return true;
-    } catch (error) {
-      this.logger.error(`Sync to ${provider} failed:`, error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Sync to ${provider} failed:`, message);
+      return false;
+    }
+  }
+
+  verifySignature(payload: string, signature: string, secret: string): boolean {
+    const expectedSignature = createHmac('sha256', secret).update(payload).digest('hex');
+    try {
+      const sigBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(expectedSignature);
+      if (sigBuffer.length !== expectedBuffer.length) return false;
+      return timingSafeEqual(sigBuffer, expectedBuffer);
+    } catch {
       return false;
     }
   }
 }
 
 // ==================== WEBHOOK CONTROLLER ====================
+
+const VALID_CRM_PROVIDERS = ['salesforce', 'hubspot', 'pipedrive'] as const;
+type CRMProvider = (typeof VALID_CRM_PROVIDERS)[number];
 
 @Controller('webhooks')
 export class WebhookController {
@@ -547,12 +610,12 @@ export class WebhookController {
     @Body() payload: SlackEvent,
     @Headers('x-slack-signature') signature: string,
     @Headers('x-slack-request-timestamp') timestamp: string,
-    @Req() req: Request,
-  ): Promise<any> {
+    @Req() req: RequestWithRawBody,
+  ): Promise<{ challenge?: string; ok?: boolean }> {
     // Verify Slack signature
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
-      const body = (req as any).rawBody || JSON.stringify(req.body);
+      const body = req.rawBody || JSON.stringify(req.body);
 
       // Check timestamp (prevent replay attacks)
       const requestTimestamp = parseInt(timestamp, 10);
@@ -574,12 +637,12 @@ export class WebhookController {
     @Body() payload: SlackSlashCommand,
     @Headers('x-slack-signature') signature: string,
     @Headers('x-slack-request-timestamp') timestamp: string,
-    @Req() req: Request,
-  ): Promise<any> {
+    @Req() req: RequestWithRawBody,
+  ): Promise<SlackResponse> {
     // Verify signature
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
-      const body = (req as any).rawBody || JSON.stringify(req.body);
+      const body = req.rawBody || JSON.stringify(req.body);
       if (!this.slackService.verifySignature(body, signature, timestamp, secret)) {
         throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
       }
@@ -590,54 +653,70 @@ export class WebhookController {
 
   @Post('crm/:provider')
   async handleCRM(
-    @Body() payload: CRMEvent | any,
+    @Body() payload: CRMProviderPayload,
     @Param('provider') provider: string,
     @Headers('x-crm-signature') signature: string,
+    @Req() req: Request,
   ): Promise<WebhookResponse> {
-    const validProviders = ['salesforce', 'hubspot', 'pipedrive'];
-    if (!validProviders.includes(provider)) {
+    if (!VALID_CRM_PROVIDERS.includes(provider as CRMProvider)) {
       throw new HttpException('Invalid provider', HttpStatus.BAD_REQUEST);
     }
 
+    const validProvider = provider as CRMProvider;
+
+    // Verify CRM webhook signature
+    const secretKey = `${validProvider.toUpperCase()}_WEBHOOK_SECRET`;
+    const secret = this.configService.get<string>(secretKey);
+    if (secret && signature) {
+      const body = JSON.stringify(req.body);
+      if (!this.crmService.verifySignature(body, signature, secret)) {
+        throw new HttpException('Invalid CRM signature', HttpStatus.UNAUTHORIZED);
+      }
+    }
+
     // Normalize payload based on provider
-    const event: CRMEvent = this.normalizeCRMEvent(provider as any, payload);
+    const event: CRMEvent = this.normalizeCRMEvent(validProvider, payload);
 
     return this.crmService.handleEvent(event);
   }
 
-  private normalizeCRMEvent(
-    provider: 'salesforce' | 'hubspot' | 'pipedrive',
-    payload: any,
-  ): CRMEvent {
+  private normalizeCRMEvent(provider: CRMProvider, payload: CRMProviderPayload): CRMEvent {
     // Normalize different CRM webhook formats to common structure
     switch (provider) {
-      case 'salesforce':
+      case 'salesforce': {
+        const sf = payload as SalesforcePayload;
         return {
           provider,
-          event: payload.event?.type || 'unknown',
-          objectType: payload.sobjectType || 'Unknown',
-          objectId: payload.id,
-          properties: payload,
+          event: sf.event?.type || 'unknown',
+          objectType: sf.sobjectType || 'Unknown',
+          objectId: sf.id,
+          properties: sf as unknown as Record<string, unknown>,
           timestamp: new Date(),
         };
-      case 'hubspot':
+      }
+      case 'hubspot': {
+        const hs = payload as HubSpotPayload;
         return {
           provider,
-          event: payload.subscriptionType || 'unknown',
-          objectType: payload.objectType || 'Unknown',
-          objectId: payload.objectId,
-          properties: payload.properties || payload,
-          timestamp: new Date(payload.timestamp) || new Date(),
+          event: hs.subscriptionType || 'unknown',
+          objectType: hs.objectType || 'Unknown',
+          objectId: hs.objectId,
+          properties: hs.properties || (hs as unknown as Record<string, unknown>),
+          timestamp: hs.timestamp ? new Date(hs.timestamp) : new Date(),
         };
-      case 'pipedrive':
+      }
+      case 'pipedrive': {
+        const pd = payload as PipedrivePayload;
         return {
           provider,
-          event: payload.event || 'unknown',
-          objectType: payload.meta?.object || 'Unknown',
-          objectId: payload.data?.id,
-          properties: payload.data || payload,
+          event: pd.event || 'unknown',
+          objectType: pd.meta?.object || 'Unknown',
+          objectId: pd.data?.id || '',
+          properties:
+            (pd.data as Record<string, unknown>) || (pd as unknown as Record<string, unknown>),
           timestamp: new Date(),
         };
+      }
     }
   }
 }

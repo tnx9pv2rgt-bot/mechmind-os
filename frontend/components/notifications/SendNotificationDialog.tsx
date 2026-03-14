@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * SendNotificationDialog Component
  * Dialog for manually sending notifications
@@ -45,14 +47,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  NotificationType,
-  NotificationChannel,
-} from '@/types/notifications';
-import {
-  sendNotification,
-  previewTemplate,
-} from '@/lib/services/notificationService';
+import { NotificationType, NotificationChannel } from '@/types/notifications';
+import { sendNotification, previewTemplate } from '@/lib/services/notificationService';
 
 // Props interface
 interface SendNotificationDialogProps {
@@ -86,8 +82,22 @@ const channelOptions = [
 
 // Variable suggestions by type
 const variableSuggestions: Record<NotificationType, string[]> = {
-  [NotificationType.BOOKING_CONFIRMATION]: ['customerName', 'date', 'time', 'vehicle', 'bookingCode', 'workshopName'],
-  [NotificationType.BOOKING_REMINDER]: ['customerName', 'date', 'time', 'service', 'vehicle', 'location'],
+  [NotificationType.BOOKING_CONFIRMATION]: [
+    'customerName',
+    'date',
+    'time',
+    'vehicle',
+    'bookingCode',
+    'workshopName',
+  ],
+  [NotificationType.BOOKING_REMINDER]: [
+    'customerName',
+    'date',
+    'time',
+    'service',
+    'vehicle',
+    'location',
+  ],
   [NotificationType.BOOKING_CANCELLED]: ['customerName', 'date', 'time'],
   [NotificationType.INVOICE_READY]: ['customerName', 'invoiceNumber', 'amount', 'downloadUrl'],
   [NotificationType.INSPECTION_COMPLETE]: ['customerName', 'score', 'reportUrl'],
@@ -112,7 +122,9 @@ export function SendNotificationDialog({
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('template');
   const [selectedType, setSelectedType] = useState<NotificationType>(NotificationType.CUSTOM);
-  const [selectedChannel, setSelectedChannel] = useState<NotificationChannel>(NotificationChannel.AUTO);
+  const [selectedChannel, setSelectedChannel] = useState<NotificationChannel>(
+    NotificationChannel.AUTO
+  );
   const [customMessage, setCustomMessage] = useState('');
   const [preview, setPreview] = useState('');
   const [variables, setVariables] = useState<Record<string, string>>({
@@ -137,14 +149,11 @@ export function SendNotificationDialog({
   );
 
   // Preview mutation
-  const previewMutation = useMutation(
-    (data: unknown) => previewTemplate(data),
-    {
-      onSuccess: (result) => {
-        setPreview((result as { preview: string }).preview);
-      },
-    }
-  );
+  const previewMutation = useMutation((data: unknown) => previewTemplate(data), {
+    onSuccess: result => {
+      setPreview((result as { preview: string }).preview);
+    },
+  });
 
   // Reset form
   const resetForm = () => {
@@ -178,9 +187,7 @@ export function SendNotificationDialog({
   const handleSend = async () => {
     if (!recipient.customerId) return;
 
-    const message = selectedType === NotificationType.CUSTOM 
-      ? customMessage 
-      : preview;
+    const message = selectedType === NotificationType.CUSTOM ? customMessage : preview;
 
     await sendMutation.mutateAsync({
       customerId: recipient.customerId,
@@ -194,13 +201,13 @@ export function SendNotificationDialog({
 
   // Handle variable change
   const handleVariableChange = (key: string, value: string) => {
-    setVariables((prev) => ({ ...prev, [key]: value }));
+    setVariables(prev => ({ ...prev, [key]: value }));
   };
 
   // Add variable
   const addVariable = (key: string) => {
     if (!(key in variables)) {
-      setVariables((prev) => ({ ...prev, [key]: '' }));
+      setVariables(prev => ({ ...prev, [key]: '' }));
     }
   };
 
@@ -212,67 +219,69 @@ export function SendNotificationDialog({
       <DialogTrigger asChild>
         {trigger || (
           <Button>
-            <Send className="w-4 h-4 mr-2" />
+            <Send className='w-4 h-4 mr-2' />
             Invia Notifica
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className='max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Send className="w-5 h-5" />
+          <DialogTitle className='flex items-center gap-2'>
+            <Send className='w-5 h-5' />
             Invia Notifica
           </DialogTitle>
-          <DialogDescription>
-            Invia una notifica manuale al cliente
-          </DialogDescription>
+          <DialogDescription>Invia una notifica manuale al cliente</DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="template">Template</TabsTrigger>
-            <TabsTrigger value="preview">Anteprima</TabsTrigger>
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className='flex-1 flex flex-col min-h-0'
+        >
+          <TabsList className='grid w-full grid-cols-2'>
+            <TabsTrigger value='template'>Template</TabsTrigger>
+            <TabsTrigger value='preview'>Anteprima</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 my-4">
-            <TabsContent value="template" className="mt-0 space-y-4">
+          <ScrollArea className='flex-1 my-4'>
+            <TabsContent value='template' className='mt-0 space-y-4'>
               {/* Recipient */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Destinatario</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-500">ID Cliente</Label>
+                <div className='grid grid-cols-2 gap-3'>
+                  <div className='space-y-2'>
+                    <Label className='text-xs text-gray-500'>ID Cliente</Label>
                     <Input
                       value={recipient.customerId}
-                      onChange={(e) =>
-                        setRecipient((prev) => ({ ...prev, customerId: e.target.value }))
+                      onChange={e =>
+                        setRecipient(prev => ({ ...prev, customerId: e.target.value }))
                       }
-                      placeholder="ID Cliente"
+                      placeholder='ID Cliente'
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-500">Nome</Label>
+                  <div className='space-y-2'>
+                    <Label className='text-xs text-gray-500'>Nome</Label>
                     <Input
                       value={variables.customerName}
-                      onChange={(e) => handleVariableChange('customerName', e.target.value)}
-                      placeholder="Nome cliente"
+                      onChange={e => handleVariableChange('customerName', e.target.value)}
+                      placeholder='Nome cliente'
                     />
                   </div>
                 </div>
               </div>
 
               {/* Template Type */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Tipo di Notifica</Label>
                 <Select
                   value={selectedType}
-                  onValueChange={(value) => setSelectedType(value as NotificationType)}
+                  onValueChange={value => setSelectedType(value as NotificationType)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleziona tipo" />
+                    <SelectValue placeholder='Seleziona tipo' />
                   </SelectTrigger>
                   <SelectContent>
-                    {templateOptions.map((option) => (
+                    {templateOptions.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -282,9 +291,9 @@ export function SendNotificationDialog({
               </div>
 
               {/* Channel */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Canale</Label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className='grid grid-cols-4 gap-2'>
                   {channelOptions.map(({ value, label, icon: Icon }) => (
                     <button
                       key={value}
@@ -296,8 +305,8 @@ export function SendNotificationDialog({
                           : 'border-gray-200 hover:bg-gray-50'
                       )}
                     >
-                      <Icon className="w-5 h-5" />
-                      <span className="text-xs">{label}</span>
+                      <Icon className='w-5 h-5' />
+                      <span className='text-xs'>{label}</span>
                     </button>
                   ))}
                 </div>
@@ -305,26 +314,26 @@ export function SendNotificationDialog({
 
               {/* Variables */}
               {!isCustom && (
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Variabili Template</Label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {variableSuggestions[selectedType]?.map((varName) => (
+                  <div className='flex flex-wrap gap-2 mb-3'>
+                    {variableSuggestions[selectedType]?.map(varName => (
                       <button
                         key={varName}
                         onClick={() => addVariable(varName)}
-                        className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                        className='text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors'
                       >
                         + {varName}
                       </button>
                     ))}
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className='grid grid-cols-2 gap-3'>
                     {Object.entries(variables).map(([key, value]) => (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-xs text-gray-500">{key}</Label>
+                      <div key={key} className='space-y-1'>
+                        <Label className='text-xs text-gray-500'>{key}</Label>
                         <Input
                           value={value}
-                          onChange={(e) => handleVariableChange(key, e.target.value)}
+                          onChange={e => handleVariableChange(key, e.target.value)}
                           placeholder={key}
                         />
                       </div>
@@ -335,15 +344,15 @@ export function SendNotificationDialog({
 
               {/* Custom Message */}
               {isCustom && (
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Messaggio Personalizzato</Label>
                   <Textarea
                     value={customMessage}
-                    onChange={(e) => setCustomMessage(e.target.value)}
-                    placeholder="Scrivi il tuo messaggio..."
+                    onChange={e => setCustomMessage(e.target.value)}
+                    placeholder='Scrivi il tuo messaggio...'
                     rows={4}
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className='text-xs text-gray-500'>
                     Usa {'{customerName}'} per inserire il nome del cliente
                   </p>
                 </div>
@@ -352,30 +361,30 @@ export function SendNotificationDialog({
               {/* Preview Button */}
               {!isCustom && (
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={handlePreview}
                   disabled={previewMutation.isPending}
-                  className="w-full"
+                  className='w-full'
                 >
                   {previewMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
                   ) : (
-                    <Eye className="w-4 h-4 mr-2" />
+                    <Eye className='w-4 h-4 mr-2' />
                   )}
                   Genera Anteprima
                 </Button>
               )}
             </TabsContent>
 
-            <TabsContent value="preview" className="mt-0 space-y-4">
+            <TabsContent value='preview' className='mt-0 space-y-4'>
               {/* Preview Card */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
-                  <Smartphone className="w-4 h-4" />
+              <div className='bg-gray-50 rounded-lg p-6'>
+                <h4 className='text-sm font-medium text-gray-500 mb-3 flex items-center gap-2'>
+                  <Smartphone className='w-4 h-4' />
                   Anteprima Messaggio
                 </h4>
-                <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border max-w-sm">
-                  <p className="text-gray-800 whitespace-pre-wrap">
+                <div className='bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border max-w-sm'>
+                  <p className='text-gray-800 whitespace-pre-wrap'>
                     {preview || 'Clicca "Genera Anteprima" per vedere il messaggio'}
                   </p>
                 </div>
@@ -383,26 +392,26 @@ export function SendNotificationDialog({
 
               {/* Message Info */}
               {preview && (
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-500">Tipo</span>
-                    <span className="font-medium">
-                      {templateOptions.find((t) => t.value === selectedType)?.label}
+                <div className='space-y-2 text-sm'>
+                  <div className='flex justify-between py-2 border-b'>
+                    <span className='text-gray-500'>Tipo</span>
+                    <span className='font-medium'>
+                      {templateOptions.find(t => t.value === selectedType)?.label}
                     </span>
                   </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-500">Canale</span>
-                    <span className="font-medium">
-                      {channelOptions.find((c) => c.value === selectedChannel)?.label}
+                  <div className='flex justify-between py-2 border-b'>
+                    <span className='text-gray-500'>Canale</span>
+                    <span className='font-medium'>
+                      {channelOptions.find(c => c.value === selectedChannel)?.label}
                     </span>
                   </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-500">Destinatario</span>
-                    <span className="font-medium">{variables.customerName}</span>
+                  <div className='flex justify-between py-2 border-b'>
+                    <span className='text-gray-500'>Destinatario</span>
+                    <span className='font-medium'>{variables.customerName}</span>
                   </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-gray-500">Lunghezza</span>
-                    <span className="font-medium">{preview.length} caratteri</span>
+                  <div className='flex justify-between py-2'>
+                    <span className='text-gray-500'>Lunghezza</span>
+                    <span className='font-medium'>{preview.length} caratteri</span>
                   </div>
                 </div>
               )}
@@ -410,22 +419,19 @@ export function SendNotificationDialog({
           </ScrollArea>
         </Tabs>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className='gap-2'>
+          <Button variant='outline' onClick={() => setOpen(false)}>
             Annulla
           </Button>
-          <Button
-            onClick={handleSend}
-            disabled={!canSend || sendMutation.isPending}
-          >
+          <Button onClick={handleSend} disabled={!canSend || sendMutation.isPending}>
             {sendMutation.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
                 Invio...
               </>
             ) : (
               <>
-                <Send className="w-4 h-4 mr-2" />
+                <Send className='w-4 h-4 mr-2' />
                 Invia Notifica
               </>
             )}
@@ -439,10 +445,10 @@ export function SendNotificationDialog({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm"
+              className='bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm'
             >
-              <AlertCircle className="w-4 h-4" />
-              Errore durante l'invio. Riprova.
+              <AlertCircle className='w-4 h-4' />
+              Errore durante l&apos;invio. Riprova.
             </motion.div>
           )}
         </AnimatePresence>
