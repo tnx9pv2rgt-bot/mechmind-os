@@ -9,7 +9,7 @@ services:
     rootDir: backend
     buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npm run start:prod
-    healthCheckPath: /health
+    healthCheckPath: /liveness
     envVars:
       # App config
       - key: NODE_ENV
