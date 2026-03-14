@@ -37,6 +37,10 @@ export class NotificationsGateway
         const pubClient = new Redis(redisUrl);
         const subClient = pubClient.duplicate();
 
+        // Attach error handlers to prevent unhandled error crashes
+        pubClient.on('error', err => this.logger.warn(`Socket.io Redis pub error: ${err.message}`));
+        subClient.on('error', err => this.logger.warn(`Socket.io Redis sub error: ${err.message}`));
+
         // Access the underlying server (this.server may be a Namespace in namespaced gateways)
         const ioServer = (this.server as unknown as { server?: Server }).server || this.server;
         if (typeof ioServer.adapter === 'function') {

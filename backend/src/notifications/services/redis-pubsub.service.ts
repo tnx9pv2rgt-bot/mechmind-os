@@ -72,8 +72,10 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
         port: config.port,
         password: config.password,
         db: config.db,
+        lazyConnect: true,
         retryStrategy: (times: number) => {
-          const delay = Math.min(times * 50, 2000);
+          if (times > 3) return null; // Stop retrying after 3 attempts
+          const delay = Math.min(times * 500, 2000);
           this.logger.warn(`Redis reconnection attempt ${times}, retrying in ${delay}ms`);
           return delay;
         },
@@ -84,20 +86,11 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
         redisOptions.tls = {};
       }
 
-      // Create separate connections for pub/sub
+      // Create connections with lazyConnect, attach error handlers BEFORE connecting
       this.publisher = new Redis(redisOptions);
       this.subscriber = new Redis(redisOptions);
 
-      // Handle connection events
-      this.publisher.on('connect', () => {
-        this.logger.log('Redis publisher connected');
-      });
-
-      this.subscriber.on('connect', () => {
-        this.logger.log('Redis subscriber connected');
-        this.isConnected = true;
-      });
-
+      // Attach error handlers FIRST to prevent unhandled error crashes
       this.publisher.on('error', err => {
         this.logger.error('Redis publisher error:', err.message);
       });
@@ -107,10 +100,22 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
         this.isConnected = false;
       });
 
+      this.publisher.on('connect', () => {
+        this.logger.log('Redis publisher connected');
+      });
+
+      this.subscriber.on('connect', () => {
+        this.logger.log('Redis subscriber connected');
+        this.isConnected = true;
+      });
+
       // Handle incoming messages
       this.subscriber.on('message', (channel, message) => {
         this.handleMessage(channel, message);
       });
+
+      // Now connect (errors are handled by the event listeners above)
+      await Promise.all([this.publisher.connect(), this.subscriber.connect()]);
 
       this.logger.log('Redis Pub/Sub service initialized');
     } catch (error) {
