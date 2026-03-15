@@ -207,13 +207,13 @@ export class NotificationWebhookController {
   // Resend event handlers
 
   private async handleEmailSent(data: ResendWebhookEvent['data']): Promise<void> {
-    this.logger.log(`Email ${data.email_id} sent to ${data.to.join(', ')}`);
+    this.logger.log(`Email ${data.email_id} sent to ${data.to.length} recipients`);
     // Update notification status in database
     // await this.updateNotificationStatus(data.email_id, 'sent');
   }
 
   private async handleEmailDelivered(data: ResendWebhookEvent['data']): Promise<void> {
-    this.logger.log(`Email ${data.email_id} delivered to ${data.to.join(', ')}`);
+    this.logger.log(`Email ${data.email_id} delivered to ${data.to.length} recipients`);
     // Update notification status
     // await this.updateNotificationStatus(data.email_id, 'delivered', new Date());
   }
@@ -225,7 +225,7 @@ export class NotificationWebhookController {
   }
 
   private async handleEmailBounced(data: ResendWebhookEvent['data']): Promise<void> {
-    this.logger.error(`Email ${data.email_id} bounced from ${data.to.join(', ')}`);
+    this.logger.error(`Email ${data.email_id} bounced from ${data.to.length} recipients`);
 
     // Mark email as bounced in database
     // await this.updateNotificationStatus(data.email_id, 'bounced');
@@ -235,7 +235,7 @@ export class NotificationWebhookController {
   }
 
   private async handleEmailComplained(data: ResendWebhookEvent['data']): Promise<void> {
-    this.logger.error(`Email ${data.email_id} marked as spam by ${data.to.join(', ')}`);
+    this.logger.error(`Email ${data.email_id} marked as spam by ${data.to.length} recipients`);
 
     // Log complaint
     // Update customer preferences to disable email

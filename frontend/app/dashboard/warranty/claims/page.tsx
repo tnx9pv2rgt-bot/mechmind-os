@@ -38,8 +38,8 @@ export default function ClaimsPage() {
       setClaims(json.data || []);
     } catch (error) {
       toast({
-        title: 'Error loading claims',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore nel caricamento dei reclami',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -55,16 +55,16 @@ export default function ClaimsPage() {
   const handlePayClaim = async (claim: WarrantyClaim) => {
     try {
       const payRes = await fetch(`/api/warranties/claims/${claim.id}/pay`, { method: 'POST' });
-      if (!payRes.ok) throw new Error('Failed to mark as paid');
+      if (!payRes.ok) throw new Error('Errore nel pagamento');
       toast({
-        title: 'Claim marked as paid',
-        description: 'The claim has been marked as paid successfully',
+        title: 'Reclamo pagato',
+        description: 'Il reclamo è stato contrassegnato come pagato',
       });
       loadClaims();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     }
@@ -83,14 +83,14 @@ export default function ClaimsPage() {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>Warranty Claims</h1>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>Reclami Garanzia</h1>
           <p className='text-sm text-gray-500 dark:text-[#636366] mt-1'>
-            Manage and review all warranty claims
+            Gestisci e revisiona tutti i reclami
           </p>
         </div>
         <Button onClick={() => router.push('/dashboard/warranty')}>
           <Plus className='h-4 w-4 mr-2' />
-          File New Claim
+          Nuovo Reclamo
         </Button>
       </div>
 
@@ -98,27 +98,27 @@ export default function ClaimsPage() {
       <div className='grid grid-cols-2 lg:grid-cols-5 gap-4'>
         {[
           {
-            label: 'Total Claims',
+            label: 'Totale Reclami',
             count: claims.length,
             color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
           },
           {
-            label: 'Submitted',
+            label: 'Inviati',
             count: claims.filter(c => c.status === 'SUBMITTED').length,
             color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
           },
           {
-            label: 'Under Review',
+            label: 'In Revisione',
             count: claims.filter(c => c.status === 'UNDER_REVIEW').length,
             color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
           },
           {
-            label: 'Approved',
+            label: 'Approvati',
             count: claims.filter(c => c.status === 'APPROVED').length,
             color: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300',
           },
           {
-            label: 'Paid',
+            label: 'Pagati',
             count: claims.filter(c => c.status === 'PAID').length,
             color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
           },
@@ -141,7 +141,7 @@ export default function ClaimsPage() {
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <FileText className='h-5 w-5' />
-            All Claims
+            Tutti i Reclami
           </CardTitle>
         </CardHeader>
         <CardContent>

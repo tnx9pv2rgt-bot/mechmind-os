@@ -380,7 +380,7 @@ export class SmsService {
   private async sendSms(phone: string, message: string, category: string): Promise<SmsResult> {
     if (!this.twilioClient) {
       this.logger.warn('SMS service not initialized, logging message instead');
-      this.logger.debug(`SMS to ${phone.slice(0, 4)}*** [${category}]: ${message}`);
+      this.logger.debug(`SMS to ${phone.slice(0, 4)}*** [${category}]`);
       return { success: true, messageId: 'mock-sms-id' };
     }
 

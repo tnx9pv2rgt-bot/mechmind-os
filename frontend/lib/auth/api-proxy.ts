@@ -558,6 +558,132 @@ function getDemoData(backendPath: string, method: string): unknown {
     return [];
   }
 
+  // Inspections
+  if (backendPath.includes('inspections')) {
+    return {
+      data: [
+        {
+          id: 'insp-001',
+          type: 'PRE_PURCHASE',
+          status: 'COMPLETED',
+          vehiclePlate: 'AB123CD',
+          customerName: 'Mario Rossi',
+          scheduledDate: new Date().toISOString(),
+          score: 85,
+        },
+        {
+          id: 'insp-002',
+          type: 'PERIODIC',
+          status: 'IN_PROGRESS',
+          vehiclePlate: 'EF456GH',
+          customerName: 'Luigi Verdi',
+          scheduledDate: new Date().toISOString(),
+          score: null,
+        },
+      ],
+      total: 2,
+      page: 1,
+      limit: 20,
+    };
+  }
+
+  // Invoices
+  if (backendPath.includes('invoices')) {
+    return {
+      data: [
+        {
+          id: 'inv-001',
+          number: 'FT-2026-001',
+          status: 'PAID',
+          total: 450.0,
+          customerName: 'Mario Rossi',
+          issuedAt: new Date().toISOString(),
+          paidAt: new Date().toISOString(),
+        },
+        {
+          id: 'inv-002',
+          number: 'FT-2026-002',
+          status: 'SENT',
+          total: 320.5,
+          customerName: 'Luigi Verdi',
+          issuedAt: new Date().toISOString(),
+          paidAt: null,
+        },
+      ],
+      total: 2,
+      page: 1,
+      limit: 20,
+    };
+  }
+
+  // Work Orders
+  if (backendPath.includes('work-orders')) {
+    return {
+      data: [
+        {
+          id: 'wo-001',
+          number: 'OL-2026-001',
+          status: 'IN_PROGRESS',
+          vehiclePlate: 'AB123CD',
+          customerName: 'Mario Rossi',
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 'wo-002',
+          number: 'OL-2026-002',
+          status: 'OPEN',
+          vehiclePlate: 'EF456GH',
+          customerName: 'Luigi Verdi',
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      total: 2,
+      page: 1,
+      limit: 20,
+    };
+  }
+
+  // Warranties
+  if (backendPath.includes('warranty') || backendPath.includes('warranties')) {
+    return {
+      data: [
+        {
+          id: 'war-001',
+          type: 'MANUFACTURER',
+          status: 'ACTIVE',
+          vehiclePlate: 'AB123CD',
+          expiresAt: new Date(Date.now() + 365 * 86400000).toISOString(),
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+    };
+  }
+
+  // Locations
+  if (backendPath.includes('locations')) {
+    return {
+      data: [
+        {
+          id: 'loc-001',
+          name: 'Sede Principale',
+          address: 'Via Roma 42, Milano',
+          phone: '+39 02 1234567',
+          isActive: true,
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+    };
+  }
+
+  // Notifications
+  if (backendPath.includes('notifications')) {
+    return { data: [], total: 0, unreadCount: 0 };
+  }
+
   // Analytics / Metabase
   if (backendPath.includes('analytics/metabase')) {
     return { success: true, data: { enabled: false, url: null, dashboards: {} } };

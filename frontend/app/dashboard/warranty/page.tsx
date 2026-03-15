@@ -89,8 +89,8 @@ export default function WarrantyDashboardPage() {
       setExpiringWarranties(expiringJson.data || []);
     } catch (error) {
       toast({
-        title: 'Error loading data',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore nel caricamento',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -120,18 +120,18 @@ export default function WarrantyDashboardPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to create warranty');
+        throw new Error(err.error || 'Errore nella creazione della garanzia');
       }
       toast({
-        title: 'Warranty created',
-        description: 'The warranty has been created successfully',
+        title: 'Garanzia creata',
+        description: 'La garanzia è stata creata con successo',
       });
       setCreateDialogOpen(false);
       loadData();
     } catch (error) {
       toast({
-        title: 'Error creating warranty',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore nella creazione',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -165,23 +165,23 @@ export default function WarrantyDashboardPage() {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-            Warranty Management
+            Gestione Garanzie
           </h1>
           <p className='text-sm text-gray-500 dark:text-[#636366] mt-1'>
-            Track warranties and manage claims
+            Monitora le garanzie e gestisci i reclami
           </p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className='h-4 w-4 mr-2' />
-              New Warranty
+              Nuova Garanzia
             </Button>
           </DialogTrigger>
           <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
             <DialogHeader>
-              <DialogTitle>Create New Warranty</DialogTitle>
-              <DialogDescription>Add a new warranty for a vehicle</DialogDescription>
+              <DialogTitle>Nuova Garanzia</DialogTitle>
+              <DialogDescription>Aggiungi una nuova garanzia per un veicolo</DialogDescription>
             </DialogHeader>
             <WarrantyForm
               onSubmit={handleCreateWarranty}
@@ -207,7 +207,7 @@ export default function WarrantyDashboardPage() {
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
               <Shield className='h-4 w-4 text-green-600' />
-              Active Warranties
+              Garanzie Attive
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -220,7 +220,7 @@ export default function WarrantyDashboardPage() {
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
               <Calendar className='h-4 w-4 text-amber-600' />
-              Expiring Soon
+              In Scadenza
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -233,7 +233,7 @@ export default function WarrantyDashboardPage() {
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
               <AlertTriangle className='h-4 w-4 text-red-600' />
-              Expired
+              Scadute
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -246,7 +246,7 @@ export default function WarrantyDashboardPage() {
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
               <FileText className='h-4 w-4 text-blue-600' />
-              Pending Claims
+              Reclami in Attesa
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -260,8 +260,8 @@ export default function WarrantyDashboardPage() {
       {/* Main Content */}
       <Tabs defaultValue='warranties' className='space-y-4'>
         <TabsList>
-          <TabsTrigger value='warranties'>Warranties</TabsTrigger>
-          <TabsTrigger value='claims'>Claims</TabsTrigger>
+          <TabsTrigger value='warranties'>Garanzie</TabsTrigger>
+          <TabsTrigger value='claims'>Reclami</TabsTrigger>
         </TabsList>
 
         <TabsContent value='warranties' className='space-y-4'>
@@ -269,14 +269,14 @@ export default function WarrantyDashboardPage() {
             <div className='text-center py-12 bg-gray-50 dark:bg-[#353535] rounded-lg'>
               <Shield className='h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4' />
               <h3 className='text-lg font-medium text-gray-900 dark:text-[#ececec]'>
-                No warranties yet
+                Nessuna garanzia
               </h3>
               <p className='text-sm text-gray-500 dark:text-[#636366] mt-1'>
-                Create a warranty to start tracking coverage
+                Crea una garanzia per iniziare a monitorare la copertura
               </p>
               <Button className='mt-4' onClick={() => setCreateDialogOpen(true)}>
                 <Plus className='h-4 w-4 mr-2' />
-                Create Warranty
+                Crea Garanzia
               </Button>
             </div>
           ) : (

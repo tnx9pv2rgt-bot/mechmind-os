@@ -220,51 +220,89 @@ export class ObdService {
       orderBy: { recordedAt: 'desc' },
     });
 
-    for (const code of codes) {
-      // Determine severity if not provided
-      const severity = code.severity || this.getSeverityFromCode(code.code);
+    // Batch fetch all existing active codes for this device in one query
+    const codesToCheck = codes.map(c => c.code);
+    const existingCodes = await this.prisma.obdTroubleCode.findMany({
+      where: { deviceId, code: { in: codesToCheck }, isActive: true },
+    });
+    const existingCodesMap = new Map(existingCodes.map(c => [c.code, c]));
 
-      // Check if code already exists
-      const existing = await this.prisma.obdTroubleCode.findFirst({
-        where: { deviceId, code: code.code, isActive: true },
-      });
+    // Separate into updates and creates
+    const updateIds: string[] = [];
+    const newCodesData: Array<{
+      dto: TroubleCodeDto;
+      severity: TroubleCodeSeverity;
+    }> = [];
+
+    for (const code of codes) {
+      const severity = code.severity || this.getSeverityFromCode(code.code);
+      const existing = existingCodesMap.get(code.code);
 
       if (existing) {
-        // Update last seen
-        await this.prisma.obdTroubleCode.update({
-          where: { id: existing.id },
-          data: { lastSeenAt: new Date() },
-        });
+        updateIds.push(existing.id);
       } else {
-        // Create new code
-        const newCode = await this.prisma.obdTroubleCode.create({
-          data: {
-            deviceId,
-            code: code.code,
-            category: code.category || this.getCategoryFromCode(code.code),
-            severity,
-            description: code.description,
-            symptoms: code.symptoms,
-            causes: code.causes,
-            isPending: code.isPending ?? false,
-            isPermanent: code.isPermanent ?? false,
-            readingSnapshot: latestReading?.rawData ?? undefined,
-          },
-        });
+        newCodesData.push({ dto: code, severity });
+      }
+    }
 
-        // Notify if critical
-        if (severity === TroubleCodeSeverity.CRITICAL || severity === TroubleCodeSeverity.HIGH) {
-          await this.notifications.sendToTenant(device.tenantId, {
-            title: `Vehicle Alert: ${code.code}`,
-            body: `${device.vehicle?.make} ${device.vehicle?.model}: ${code.description}`,
-            priority: severity === TroubleCodeSeverity.CRITICAL ? 'high' : 'normal',
-            data: {
-              type: 'OBD_TROUBLE_CODE',
-              codeId: newCode.id,
-              vehicleId: device.vehicleId,
-              deviceId,
-            },
-          });
+    // Batch update existing codes' lastSeenAt
+    if (updateIds.length > 0) {
+      await this.prisma.obdTroubleCode.updateMany({
+        where: { id: { in: updateIds } },
+        data: { lastSeenAt: new Date() },
+      });
+    }
+
+    // Batch create new codes
+    if (newCodesData.length > 0) {
+      await this.prisma.obdTroubleCode.createMany({
+        data: newCodesData.map(({ dto: code, severity }) => ({
+          deviceId,
+          code: code.code,
+          category: code.category || this.getCategoryFromCode(code.code),
+          severity,
+          description: code.description,
+          symptoms: code.symptoms,
+          causes: code.causes,
+          isPending: code.isPending ?? false,
+          isPermanent: code.isPermanent ?? false,
+          readingSnapshot: latestReading?.rawData ?? undefined,
+        })),
+      });
+
+      // Send notifications for critical/high severity new codes
+      const criticalCodes = newCodesData.filter(
+        ({ severity }) =>
+          severity === TroubleCodeSeverity.CRITICAL || severity === TroubleCodeSeverity.HIGH,
+      );
+
+      // Fetch the newly created codes to get their IDs for notifications
+      if (criticalCodes.length > 0) {
+        const newlyCreated = await this.prisma.obdTroubleCode.findMany({
+          where: {
+            deviceId,
+            code: { in: criticalCodes.map(c => c.dto.code) },
+            isActive: true,
+          },
+          orderBy: { firstSeenAt: 'desc' },
+        });
+        const newlyCreatedMap = new Map(newlyCreated.map(c => [c.code, c]));
+
+        for (const { dto: code, severity } of criticalCodes) {
+          const newCode = newlyCreatedMap.get(code.code);
+          if (newCode) {
+            await this.notifications.sendToTenant(device.tenantId, {
+              title: `Vehicle Alert: ${code.code}`,
+              body: `${device.vehicle?.make} ${device.vehicle?.model}: ${code.description}`,
+              priority: severity === TroubleCodeSeverity.CRITICAL ? 'high' : 'normal',
+              data: {
+                type: 'OBD_TROUBLE_CODE',
+                codeId: newCode.id,
+                vehicleId: device.vehicleId,
+                deviceId,
+              },
+            });
+          }
         }
       }
     }

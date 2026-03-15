@@ -261,7 +261,7 @@ export function MFASetupPageClient() {
                   <div className='p-4 rounded-2xl bg-white dark:bg-[#2f2f2f] border border-gray-100 dark:border-[#424242] shadow-sm'>
                     <Image
                       src={qrCode}
-                      alt='QR Code'
+                      alt='QR Code per configurazione MFA'
                       className='w-48 h-48'
                       width={200}
                       height={200}

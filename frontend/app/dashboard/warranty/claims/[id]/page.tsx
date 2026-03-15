@@ -73,31 +73,31 @@ const statusConfig: Record<
   }
 > = {
   SUBMITTED: {
-    label: 'Submitted',
+    label: 'Inviato',
     color: 'text-blue-700 dark:text-blue-300',
     icon: <FileText className='h-5 w-5' />,
     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
   },
   UNDER_REVIEW: {
-    label: 'Under Review',
+    label: 'In Revisione',
     color: 'text-amber-700 dark:text-amber-300',
     icon: <Clock className='h-5 w-5' />,
     bgColor: 'bg-amber-50 dark:bg-amber-900/20',
   },
   APPROVED: {
-    label: 'Approved',
+    label: 'Approvato',
     color: 'text-green-700 dark:text-green-300',
     icon: <CheckCircle2 className='h-5 w-5' />,
     bgColor: 'bg-green-50 dark:bg-green-900/20',
   },
   REJECTED: {
-    label: 'Rejected',
+    label: 'Rifiutato',
     color: 'text-red-700 dark:text-red-300',
     icon: <XCircle className='h-5 w-5' />,
     bgColor: 'bg-red-50 dark:bg-red-900/20',
   },
   PAID: {
-    label: 'Paid',
+    label: 'Pagato',
     color: 'text-purple-700 dark:text-purple-300',
     icon: <DollarSign className='h-5 w-5' />,
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
@@ -147,8 +147,8 @@ export default function ClaimDetailPage() {
       const res = await fetch(`/api/warranties/claims/${claimId}`);
       if (!res.ok) {
         toast({
-          title: 'Claim not found',
-          description: 'The requested claim could not be found',
+          title: 'Reclamo non trovato',
+          description: 'Il reclamo richiesto non è stato trovato',
           variant: 'error',
         });
         router.push('/dashboard/warranty/claims');
@@ -162,8 +162,8 @@ export default function ClaimDetailPage() {
       }
     } catch (error) {
       toast({
-        title: 'Error loading claim',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore nel caricamento del reclamo',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -189,18 +189,21 @@ export default function ClaimDetailPage() {
       );
       if (!reviewRes.ok) {
         const err = await reviewRes.json();
-        throw new Error(err.error || 'Review failed');
+        throw new Error(err.error || 'Revisione fallita');
       }
       toast({
-        title: `Claim ${reviewDecision.toLowerCase()}ed`,
-        description: `The claim has been ${reviewDecision.toLowerCase()}ed successfully`,
+        title: reviewDecision === 'APPROVE' ? 'Reclamo approvato' : 'Reclamo rifiutato',
+        description:
+          reviewDecision === 'APPROVE'
+            ? 'Il reclamo è stato approvato con successo'
+            : 'Il reclamo è stato rifiutato',
       });
       setReviewDialogOpen(false);
       loadClaim();
     } catch (error) {
       toast({
-        title: 'Error reviewing claim',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore nella revisione del reclamo',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -211,16 +214,16 @@ export default function ClaimDetailPage() {
   const handleMarkPaid = async () => {
     try {
       const payRes = await fetch(`/api/warranties/claims/${claimId}/pay`, { method: 'POST' });
-      if (!payRes.ok) throw new Error('Failed to mark as paid');
+      if (!payRes.ok) throw new Error('Errore nel pagamento');
       toast({
-        title: 'Claim marked as paid',
-        description: 'The claim has been marked as paid successfully',
+        title: 'Reclamo pagato',
+        description: 'Il reclamo è stato contrassegnato come pagato',
       });
       loadClaim();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     }
@@ -256,9 +259,11 @@ export default function ClaimDetailPage() {
             <ArrowLeft className='h-4 w-4' />
           </Button>
           <div>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>Claim Details</h1>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
+              Dettaglio Reclamo
+            </h1>
             <p className='text-sm text-gray-500 dark:text-[#636366]'>
-              Submitted on {formatDate(claim.submittedDate)}
+              Inviato il {formatDate(claim.submittedDate)}
             </p>
           </div>
         </div>
@@ -266,13 +271,13 @@ export default function ClaimDetailPage() {
           {canReview && (
             <Button onClick={() => setReviewDialogOpen(true)}>
               <CheckCircle2 className='h-4 w-4 mr-2' />
-              Review Claim
+              Revisiona Reclamo
             </Button>
           )}
           {canPay && (
             <Button onClick={handleMarkPaid}>
               <DollarSign className='h-4 w-4 mr-2' />
-              Mark as Paid
+              Segna come Pagato
             </Button>
           )}
         </div>
@@ -289,7 +294,7 @@ export default function ClaimDetailPage() {
                   <span className={status.color}>{status.icon}</span>
                 </div>
                 <div>
-                  <CardTitle className='text-lg'>Claim Status</CardTitle>
+                  <CardTitle className='text-lg'>Stato Reclamo</CardTitle>
                   <Badge className={cn('mt-1', status.bgColor, status.color)}>{status.label}</Badge>
                 </div>
               </div>
@@ -298,9 +303,7 @@ export default function ClaimDetailPage() {
               {/* Amounts */}
               <div className='grid grid-cols-2 gap-4'>
                 <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                    Estimated Cost
-                  </div>
+                  <div className='text-sm text-gray-600 dark:text-gray-500 mb-1'>Costo Stimato</div>
                   <div className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
                     {formatCurrency(claim.amount ?? 0)}
                   </div>
@@ -311,7 +314,7 @@ export default function ClaimDetailPage() {
               <div className='space-y-2'>
                 <div className='flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
                   <MessageSquare className='h-4 w-4' />
-                  <span>Issue Description</span>
+                  <span>Descrizione del Problema</span>
                 </div>
                 <div className='bg-gray-50 dark:bg-[#353535] p-4 rounded-lg'>
                   <p className='text-gray-800 dark:text-gray-200 whitespace-pre-wrap'>
@@ -325,7 +328,7 @@ export default function ClaimDetailPage() {
                 <div className='space-y-2'>
                   <div className='flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
                     <Eye className='h-4 w-4' />
-                    <span>Photo Evidence ({claim.evidencePhotos.length})</span>
+                    <span>Foto Prove ({claim.evidencePhotos.length})</span>
                   </div>
                   <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
                     {claim.evidencePhotos.map((url, index) => (
@@ -335,7 +338,7 @@ export default function ClaimDetailPage() {
                       >
                         <img
                           src={url}
-                          alt={`Evidence ${index + 1}`}
+                          alt={`Foto allegata al reclamo ${index + 1}`}
                           className='w-full h-full object-cover'
                         />
                       </div>
@@ -352,7 +355,7 @@ export default function ClaimDetailPage() {
               <CardHeader>
                 <CardTitle className='text-lg flex items-center gap-2'>
                   <Clock className='h-5 w-5' />
-                  Claim History
+                  Storico Reclamo
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
@@ -362,9 +365,9 @@ export default function ClaimDetailPage() {
                       <User className='h-4 w-4 text-blue-600' />
                     </div>
                     <div>
-                      <p className='font-medium text-gray-900 dark:text-[#ececec]'>Reviewed</p>
+                      <p className='font-medium text-gray-900 dark:text-[#ececec]'>Revisionato</p>
                       <p className='text-sm text-gray-500 dark:text-[#636366]'>
-                        on {formatDate(claim.reviewedDate)}
+                        il {formatDate(claim.reviewedDate)}
                       </p>
                     </div>
                   </div>
@@ -375,9 +378,9 @@ export default function ClaimDetailPage() {
                       <CheckCircle2 className='h-4 w-4 text-green-600' />
                     </div>
                     <div>
-                      <p className='font-medium text-gray-900 dark:text-[#ececec]'>Resolved</p>
+                      <p className='font-medium text-gray-900 dark:text-[#ececec]'>Risolto</p>
                       <p className='text-sm text-gray-500 dark:text-[#636366]'>
-                        on {formatDate(claim.resolvedDate)}
+                        il {formatDate(claim.resolvedDate)}
                       </p>
                     </div>
                   </div>
@@ -392,13 +395,13 @@ export default function ClaimDetailPage() {
           {/* Warranty Info */}
           <Card>
             <CardHeader>
-              <CardTitle className='text-lg'>Warranty Information</CardTitle>
+              <CardTitle className='text-lg'>Informazioni Garanzia</CardTitle>
             </CardHeader>
             <CardContent className='space-y-3'>
               {claim.warranty?.vehicle && (
                 <>
                   <div className='flex justify-between'>
-                    <span className='text-gray-600 dark:text-gray-400'>Vehicle</span>
+                    <span className='text-gray-600 dark:text-gray-500'>Veicolo</span>
                     <span className='font-medium'>
                       {claim.warranty.vehicle.make} {claim.warranty.vehicle.model}
                     </span>
@@ -407,11 +410,11 @@ export default function ClaimDetailPage() {
                 </>
               )}
               <div className='flex justify-between'>
-                <span className='text-gray-600 dark:text-gray-400'>Provider</span>
+                <span className='text-gray-600 dark:text-gray-500'>Fornitore</span>
                 <span className='font-medium'>{claim.warranty?.provider}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-600 dark:text-gray-400'>Max Coverage</span>
+                <span className='text-gray-600 dark:text-gray-500'>Copertura Max</span>
                 <span className='font-medium'>
                   {formatCurrency(claim.warranty?.maxCoverage || 0)}
                 </span>
@@ -426,7 +429,7 @@ export default function ClaimDetailPage() {
                   )
                 }
               >
-                View Warranty
+                Vedi Garanzia
               </Button>
             </CardContent>
           </Card>
@@ -437,8 +440,8 @@ export default function ClaimDetailPage() {
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
         <DialogContent className='max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Review Claim</DialogTitle>
-            <DialogDescription>Approve or reject this warranty claim</DialogDescription>
+            <DialogTitle>Revisiona Reclamo</DialogTitle>
+            <DialogDescription>Approva o rifiuta questo reclamo di garanzia</DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             {/* Decision Buttons */}
@@ -455,7 +458,7 @@ export default function ClaimDetailPage() {
                 <Check
                   className={cn(
                     'h-6 w-6 mx-auto mb-2',
-                    reviewDecision === 'APPROVE' ? 'text-green-600' : 'text-gray-400'
+                    reviewDecision === 'APPROVE' ? 'text-green-600' : 'text-gray-500'
                   )}
                 />
                 <p
@@ -464,7 +467,7 @@ export default function ClaimDetailPage() {
                     reviewDecision === 'APPROVE' ? 'text-green-700' : 'text-gray-700'
                   )}
                 >
-                  Approve
+                  Approva
                 </p>
               </button>
               <button
@@ -479,7 +482,7 @@ export default function ClaimDetailPage() {
                 <X
                   className={cn(
                     'h-6 w-6 mx-auto mb-2',
-                    reviewDecision === 'REJECT' ? 'text-red-600' : 'text-gray-400'
+                    reviewDecision === 'REJECT' ? 'text-red-600' : 'text-gray-500'
                   )}
                 />
                 <p
@@ -488,7 +491,7 @@ export default function ClaimDetailPage() {
                     reviewDecision === 'REJECT' ? 'text-red-700' : 'text-gray-700'
                   )}
                 >
-                  Reject
+                  Rifiuta
                 </p>
               </button>
             </div>
@@ -496,7 +499,7 @@ export default function ClaimDetailPage() {
             {/* Approved Amount (only for approve) */}
             {reviewDecision === 'APPROVE' && (
               <div className='space-y-2'>
-                <Label htmlFor='approvedAmount'>Approved Amount (€)</Label>
+                <Label htmlFor='approvedAmount'>Importo Approvato (€)</Label>
                 <Input
                   id='approvedAmount'
                   type='number'
@@ -514,11 +517,11 @@ export default function ClaimDetailPage() {
 
             {/* Review Notes */}
             <div className='space-y-2'>
-              <Label htmlFor='notes'>Review Notes</Label>
+              <Label htmlFor='notes'>Note di Revisione</Label>
               <Textarea
                 id='notes'
                 placeholder={
-                  reviewDecision === 'REJECT' ? 'Reason for rejection...' : 'Additional notes...'
+                  reviewDecision === 'REJECT' ? 'Motivo del rifiuto...' : 'Note aggiuntive...'
                 }
                 value={reviewNotes}
                 onChange={e => setReviewNotes(e.target.value)}
@@ -527,7 +530,7 @@ export default function ClaimDetailPage() {
           </div>
           <DialogFooter>
             <Button variant='outline' onClick={() => setReviewDialogOpen(false)}>
-              Cancel
+              Annulla
             </Button>
             <Button
               onClick={handleReview}
@@ -536,7 +539,7 @@ export default function ClaimDetailPage() {
               }
               className={cn(reviewDecision === 'REJECT' && 'bg-red-600 hover:bg-red-700')}
             >
-              {isReviewing ? 'Processing...' : 'Confirm'}
+              {isReviewing ? 'Elaborazione...' : 'Conferma'}
             </Button>
           </DialogFooter>
         </DialogContent>

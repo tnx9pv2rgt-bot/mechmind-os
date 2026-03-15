@@ -525,7 +525,7 @@ function MfaSection() {
                 <div className='flex justify-center p-4 bg-white dark:bg-[#2f2f2f] rounded-xl border border-apple-border dark:border-[#424242]'>
                   <Image
                     src={enrollData.qrCodeUrl}
-                    alt='QR Code MFA'
+                    alt='QR Code per configurazione autenticazione a due fattori'
                     className='w-48 h-48'
                     width={200}
                     height={200}

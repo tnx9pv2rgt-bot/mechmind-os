@@ -43,7 +43,7 @@ export class CustomerService {
       // Check if customer with this phone already exists
       const existing = await this.findByPhone(tenantId, dto.phone);
       if (existing) {
-        throw new ConflictException(`Customer with phone ${dto.phone} already exists`);
+        throw new ConflictException('Customer with this phone number already exists');
       }
 
       // Encrypt PII fields

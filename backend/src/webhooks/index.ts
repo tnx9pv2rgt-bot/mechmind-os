@@ -491,7 +491,9 @@ export class CRMWebhookService {
     const { objectType, properties } = event;
 
     if (objectType === 'Contact' || objectType === 'Lead') {
-      this.logger.log(`Syncing Salesforce ${objectType}: ${String(properties['Email'] ?? '')}`);
+      const rawEmail = String(properties['Email'] ?? '');
+      const maskedEmail = rawEmail.length > 3 ? rawEmail.slice(0, 3) + '***@***' : '***';
+      this.logger.log(`Syncing Salesforce ${objectType}: ${maskedEmail}`);
     } else if (objectType === 'Opportunity') {
       this.logger.log(`Syncing Salesforce Opportunity: ${String(properties['Name'] ?? '')}`);
     }

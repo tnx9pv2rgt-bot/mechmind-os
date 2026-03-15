@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { api } from '@/lib/api-client';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
@@ -136,10 +137,13 @@ export default function LocationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetch('/api/locations')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data || json || [];
+    api
+      .get<Record<string, unknown>[] | { data: Record<string, unknown>[] }>('/locations')
+      .then(res => {
+        const raw = res.data;
+        const data = Array.isArray(raw)
+          ? raw
+          : (raw as { data: Record<string, unknown>[] }).data || [];
         const mapped: LocationData[] = Array.isArray(data)
           ? data.map((loc: Record<string, unknown>) => ({
               id: (loc.id as string) || '',
@@ -305,7 +309,7 @@ export default function LocationsPage() {
                       placeholder='Cerca sede per nome o città...'
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className='pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                      className='pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-500 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
                     />
                   </div>
                 </AppleCardContent>

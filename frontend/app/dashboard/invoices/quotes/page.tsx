@@ -243,7 +243,7 @@ function ExpiryBadge({ expiryDate, status }: { expiryDate: string; status: Quote
   }
 
   return (
-    <span className='text-xs text-gray-500 dark:text-gray-400'>
+    <span className='text-xs text-gray-500 dark:text-gray-500'>
       Valido ancora {daysUntilExpiry} gg
     </span>
   );
@@ -267,13 +267,13 @@ function StatsCard({
     <div className='rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm'>
       <div className='flex items-start justify-between'>
         <div>
-          <p className='text-sm text-gray-600 dark:text-gray-400'>{title}</p>
+          <p className='text-sm text-gray-600 dark:text-gray-500'>{title}</p>
           {amount !== undefined && (
             <p className='mt-2 text-2xl font-bold text-gray-900 dark:text-white'>
               {formatCurrency(amount)}
             </p>
           )}
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>{count} preventivi</p>
+          <p className='mt-1 text-xs text-gray-500 dark:text-gray-500'>{count} preventivi</p>
         </div>
         <div className={`rounded-lg p-3 ${color}`}>
           <Icon className='h-5 w-5 text-white' />
@@ -374,19 +374,36 @@ export default function QuotesPage() {
   }, [quotes, searchQuery]);
 
   const handleConvertToInvoice = async (quoteId: string) => {
-    // TODO: Create QuoteController endpoint in backend
-    const res = await fetch(`/api/invoices/quotes/${quoteId}/convert`, { method: 'POST' });
-    if (res.ok) router.push('/dashboard/invoices');
+    try {
+      const res = await fetch(`/api/invoices/quotes/${quoteId}/convert`, { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(`Errore nella conversione del preventivo (${res.status})`);
+      }
+      router.push('/dashboard/invoices');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Errore durante la conversione in fattura';
+      setError(message);
+    }
   };
 
   const handleCreateQuote = async (data: Record<string, string | number | boolean>) => {
-    // TODO: Create QuoteController endpoint in backend
-    const res = await fetch('/api/invoices/quotes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) setIsCreateDialogOpen(false);
+    try {
+      const res = await fetch('/api/invoices/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        throw new Error(`Errore nella creazione del preventivo (${res.status})`);
+      }
+      setIsCreateDialogOpen(false);
+      fetchQuotes();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Errore durante la creazione del preventivo';
+      setError(message);
+    }
   };
 
   return (
@@ -403,7 +420,7 @@ export default function QuotesPage() {
           Torna alle Fatture
         </Button>
         <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Preventivi</h1>
-        <p className='text-sm text-gray-600 dark:text-gray-400'>
+        <p className='text-sm text-gray-600 dark:text-gray-500'>
           Gestisci preventivi e trasformali in fatture
         </p>
       </div>
@@ -439,7 +456,7 @@ export default function QuotesPage() {
         <div className='flex flex-wrap items-center gap-3'>
           {/* Search */}
           <div className='relative'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500' />
             <Input
               placeholder='Cerca preventivo...'
               value={searchQuery}
@@ -478,7 +495,7 @@ export default function QuotesPage() {
       {isLoading && (
         <div className='rounded-xl bg-white shadow-sm dark:bg-gray-800 py-16 text-center'>
           <div className='mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500' />
-          <p className='mt-4 text-gray-500 dark:text-gray-400'>Caricamento preventivi...</p>
+          <p className='mt-4 text-gray-500 dark:text-gray-500'>Caricamento preventivi...</p>
         </div>
       )}
 
@@ -536,7 +553,7 @@ export default function QuotesPage() {
                         <p className='font-medium text-gray-900 dark:text-white'>
                           {quote.customer.name}
                         </p>
-                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                        <p className='text-xs text-gray-500 dark:text-gray-500'>
                           {quote.customer.email}
                         </p>
                       </div>
@@ -547,21 +564,21 @@ export default function QuotesPage() {
                           <p className='text-gray-900 dark:text-white'>
                             {quote.vehicle.make} {quote.vehicle.model}
                           </p>
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          <p className='text-xs text-gray-500 dark:text-gray-500'>
                             {quote.vehicle.licensePlate}
                           </p>
                         </div>
                       ) : (
-                        <span className='text-gray-400'>-</span>
+                        <span className='text-gray-500'>-</span>
                       )}
                     </td>
-                    <td className='px-6 py-4 text-gray-600 dark:text-gray-400'>
+                    <td className='px-6 py-4 text-gray-600 dark:text-gray-500'>
                       {formatDate(quote.date)}
                     </td>
                     <td className='px-6 py-4'>
                       <div className='flex flex-col gap-1'>
                         <span
-                          className={`text-gray-600 dark:text-gray-400 ${
+                          className={`text-gray-600 dark:text-gray-500 ${
                             quote.status === 'expired' ? 'text-red-600 dark:text-red-400' : ''
                           }`}
                         >
@@ -615,8 +632,8 @@ export default function QuotesPage() {
           {filteredQuotes.length === 0 && (
             <div className='py-12 text-center'>
               <FileText className='mx-auto h-12 w-12 text-gray-300 dark:text-gray-600' />
-              <p className='mt-4 text-gray-500 dark:text-gray-400'>Nessun preventivo trovato</p>
-              <p className='text-sm text-gray-400 dark:text-gray-500'>
+              <p className='mt-4 text-gray-500 dark:text-gray-500'>Nessun preventivo trovato</p>
+              <p className='text-sm text-gray-500 dark:text-gray-500'>
                 Prova a modificare i filtri o crea un nuovo preventivo
               </p>
             </div>
@@ -624,7 +641,7 @@ export default function QuotesPage() {
 
           {/* Pagination */}
           <div className='flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <p className='text-sm text-gray-600 dark:text-gray-500'>
               Mostrando {filteredQuotes.length} di {totalQuotes} preventivi
             </p>
             <div className='flex items-center gap-2'>

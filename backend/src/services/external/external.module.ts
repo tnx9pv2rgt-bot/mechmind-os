@@ -1,3 +1,4 @@
+// DEPRECATED: This module is not imported anywhere. Consider removing.
 /**
  * External Services Module
  * NestJS module for external service integrations

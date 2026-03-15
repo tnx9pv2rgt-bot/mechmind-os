@@ -5,21 +5,48 @@
 
 export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from 'next/server'
-import { 
-  stripe, 
-  getInvoices, 
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import {
+  stripe,
+  getInvoices,
   getUpcomingInvoice,
   getDefaultPaymentMethod,
-  PRICE_ID_TO_PLAN 
-} from '@/lib/stripe/server'
-import { prisma } from '@/lib/prisma'
+  PRICE_ID_TO_PLAN,
+} from '@/lib/stripe/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get tenant ID from session/auth
-    // TODO: Replace with actual auth
-    const tenantId = request.headers.get('x-tenant-id') || 'default-tenant'
+    // Verify auth token
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Extract tenant ID from JWT payload
+    let tenantId: string | undefined;
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8')) as {
+          tenantId?: string;
+          sub?: string;
+        };
+        tenantId = payload.tenantId;
+        if (!tenantId && payload.sub) {
+          const subParts = payload.sub.split(':');
+          if (subParts.length >= 2) tenantId = subParts[1];
+        }
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant context' }, { status: 403 });
+    }
 
     // Get tenant from database
     const tenant = await prisma.tenant.findUnique({
@@ -31,13 +58,10 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    })
+    });
 
     if (!tenant) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // If no Stripe customer, return basic info
@@ -51,27 +75,22 @@ export async function GET(request: NextRequest) {
           aiCallsThisMonth: tenant.aiCallsThisMonth || 0,
           storageUsed: tenant.storageUsed || 0,
         },
-      })
+      });
     }
 
     // Get subscription details
-    let subscriptionDetails = null
+    let subscriptionDetails = null;
     if (tenant.stripeSubscriptionId) {
       try {
-        const subscription = await stripe.subscriptions.retrieve(
-          tenant.stripeSubscriptionId,
-          { expand: ['default_payment_method'] }
-        )
+        const subscription = await stripe.subscriptions.retrieve(tenant.stripeSubscriptionId, {
+          expand: ['default_payment_method'],
+        });
 
-        const mainItem = subscription.items.data.find(
-          (item) => !item.price.id.includes('ai_addon')
-        )
-        const plan = mainItem ? PRICE_ID_TO_PLAN[mainItem.price.id] : tenant.subscriptionPlan
-        const hasAiAddon = subscription.items.data.some(
-          (item) => item.price.id.includes('ai_addon')
-        )
+        const mainItem = subscription.items.data.find(item => !item.price.id.includes('ai_addon'));
+        const plan = mainItem ? PRICE_ID_TO_PLAN[mainItem.price.id] : tenant.subscriptionPlan;
+        const hasAiAddon = subscription.items.data.some(item => item.price.id.includes('ai_addon'));
 
-        const firstItem = subscription.items.data[0]
+        const firstItem = subscription.items.data[0];
         subscriptionDetails = {
           id: subscription.id,
           status: subscription.status,
@@ -81,27 +100,27 @@ export async function GET(request: NextRequest) {
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           aiAddonActive: hasAiAddon,
           aiAddonAmount: hasAiAddon ? 20000 : undefined,
-        }
+        };
       } catch (error) {
-        console.error('Failed to retrieve subscription:', error)
+        console.error('Failed to retrieve subscription:', error);
       }
     }
 
     // Get invoices
     interface BillingInvoice {
-      id: string
-      number: string
-      amount: number
-      currency: string
-      status: string | null
-      created: string
-      pdfUrl: string | null | undefined
-      lineItems: { description: string; amount: number }[]
+      id: string;
+      number: string;
+      amount: number;
+      currency: string;
+      status: string | null;
+      created: string;
+      pdfUrl: string | null | undefined;
+      lineItems: { description: string; amount: number }[];
     }
-    let invoices: BillingInvoice[] = []
+    let invoices: BillingInvoice[] = [];
     try {
-      const stripeInvoices = await getInvoices(tenant.stripeCustomerId, 10)
-      invoices = stripeInvoices.map((invoice) => ({
+      const stripeInvoices = await getInvoices(tenant.stripeCustomerId, 10);
+      invoices = stripeInvoices.map(invoice => ({
         id: invoice.id,
         number: invoice.number || invoice.id,
         amount: invoice.amount_due,
@@ -109,33 +128,35 @@ export async function GET(request: NextRequest) {
         status: invoice.status,
         created: new Date(invoice.created * 1000).toISOString(),
         pdfUrl: invoice.invoice_pdf,
-        lineItems: invoice.lines.data.map((line) => ({
+        lineItems: invoice.lines.data.map(line => ({
           description: line.description || 'Subscription',
           amount: line.amount,
         })),
-      }))
+      }));
     } catch (error) {
-      console.error('Failed to retrieve invoices:', error)
+      console.error('Failed to retrieve invoices:', error);
     }
 
     // Get payment method
-    let paymentMethod = null
+    let paymentMethod = null;
     try {
-      const pm = await getDefaultPaymentMethod(tenant.stripeCustomerId)
+      const pm = await getDefaultPaymentMethod(tenant.stripeCustomerId);
       if (pm) {
         paymentMethod = {
           id: pm.id,
           type: pm.type,
-          card: pm.card ? {
-            brand: pm.card.brand,
-            last4: pm.card.last4,
-            expMonth: pm.card.exp_month,
-            expYear: pm.card.exp_year,
-          } : undefined,
-        }
+          card: pm.card
+            ? {
+                brand: pm.card.brand,
+                last4: pm.card.last4,
+                expMonth: pm.card.exp_month,
+                expYear: pm.card.exp_year,
+              }
+            : undefined,
+        };
       }
     } catch (error) {
-      console.error('Failed to retrieve payment method:', error)
+      console.error('Failed to retrieve payment method:', error);
     }
 
     // Get usage
@@ -143,14 +164,14 @@ export async function GET(request: NextRequest) {
       inspectionsThisMonth: tenant._count.inspections,
       aiCallsThisMonth: tenant.aiCallsThisMonth || 0,
       storageUsed: tenant.storageUsed || 0,
-    }
+    };
 
     return NextResponse.json({
       subscription: subscriptionDetails,
       invoices,
       paymentMethod,
       usage,
-    })
+    });
   } catch (error: unknown) {
     // Return empty billing data on error (DB/Stripe unavailable)
     return NextResponse.json({
@@ -162,6 +183,6 @@ export async function GET(request: NextRequest) {
         aiCallsThisMonth: 0,
         storageUsed: 0,
       },
-    })
+    });
   }
 }

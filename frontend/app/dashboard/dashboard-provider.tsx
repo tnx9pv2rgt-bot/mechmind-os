@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Search, Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { SkipLink } from '@/components/accessibility/SkipLink';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -54,6 +55,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <div className='min-h-screen bg-[#f4f4f4] dark:bg-[#212121] transition-colors'>
+      <SkipLink targetId='main-content' />
       {/* Desktop Menu Bar */}
       <AnimatePresence>
         {isVisible && (
@@ -184,7 +186,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main>{children}</main>
+      <main id='main-content'>{children}</main>
     </div>
   );
 }

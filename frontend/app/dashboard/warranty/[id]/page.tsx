@@ -90,19 +90,19 @@ interface FileClaimDTO {
 }
 
 const statusConfig: Partial<Record<WarrantyStatus, { label: string; color: string }>> = {
-  ACTIVE: { label: 'Active', color: 'bg-green-100 text-green-800' },
-  EXPIRING_SOON: { label: 'Expiring Soon', color: 'bg-amber-100 text-amber-800' },
-  EXPIRED: { label: 'Expired', color: 'bg-red-100 text-red-800' },
-  VOID: { label: 'Void', color: 'bg-gray-100 text-gray-800' },
-  PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  CLAIMED: { label: 'Claimed', color: 'bg-blue-100 text-blue-800' },
+  ACTIVE: { label: 'Attiva', color: 'bg-green-100 text-green-800' },
+  EXPIRING_SOON: { label: 'In Scadenza', color: 'bg-amber-100 text-amber-800' },
+  EXPIRED: { label: 'Scaduta', color: 'bg-red-100 text-red-800' },
+  VOID: { label: 'Annullata', color: 'bg-gray-100 text-gray-800' },
+  PENDING: { label: 'In Attesa', color: 'bg-yellow-100 text-yellow-800' },
+  CLAIMED: { label: 'Reclamata', color: 'bg-blue-100 text-blue-800' },
 };
 
 const typeConfig: Record<WarrantyType, { label: string }> = {
-  MANUFACTURER: { label: 'Manufacturer' },
-  EXTENDED: { label: 'Extended' },
-  DEALER: { label: 'Dealer' },
-  AS_IS: { label: 'As-Is' },
+  MANUFACTURER: { label: 'Costruttore' },
+  EXTENDED: { label: 'Estesa' },
+  DEALER: { label: 'Concessionario' },
+  AS_IS: { label: "Così com'è" },
 };
 
 function calculateProgress(startDate: Date | string, expirationDate: Date | string): number {
@@ -146,8 +146,8 @@ export default function WarrantyDetailPage() {
       const res = await fetch(`/api/warranties/${warrantyId}`);
       if (!res.ok) {
         toast({
-          title: 'Warranty not found',
-          description: 'The requested warranty could not be found',
+          title: 'Garanzia non trovata',
+          description: 'La garanzia richiesta non è stata trovata',
           variant: 'error',
         });
         router.push('/dashboard/warranty');
@@ -157,8 +157,8 @@ export default function WarrantyDetailPage() {
       setWarranty(json.data);
     } catch (error) {
       toast({
-        title: 'Error loading warranty',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Errore nel caricamento della garanzia',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -176,18 +176,18 @@ export default function WarrantyDetailPage() {
       });
       if (!claimRes.ok) {
         const err = await claimRes.json();
-        throw new Error(err.error || 'Failed to file claim');
+        throw new Error(err.error || "Errore nell'invio del reclamo");
       }
       toast({
-        title: 'Claim filed',
-        description: 'Your warranty claim has been submitted for review',
+        title: 'Reclamo inviato',
+        description: 'Il reclamo è stato inviato per la revisione',
       });
       setClaimDialogOpen(false);
       loadWarranty();
     } catch (error) {
       toast({
-        title: 'Error filing claim',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: "Errore nell'invio del reclamo",
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     } finally {
@@ -196,7 +196,11 @@ export default function WarrantyDetailPage() {
   };
 
   const handleDeleteWarranty = async () => {
-    if (!confirm('Are you sure you want to delete this warranty? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Sei sicuro di voler eliminare questa garanzia? Questa azione non può essere annullata.'
+      )
+    ) {
       return;
     }
 
@@ -204,17 +208,17 @@ export default function WarrantyDetailPage() {
       const delRes = await fetch(`/api/warranties/${warrantyId}`, { method: 'DELETE' });
       if (!delRes.ok) {
         const err = await delRes.json();
-        throw new Error(err.error || 'Failed to delete warranty');
+        throw new Error(err.error || "Errore nell'eliminazione della garanzia");
       }
       toast({
-        title: 'Warranty deleted',
-        description: 'The warranty has been deleted successfully',
+        title: 'Garanzia eliminata',
+        description: 'La garanzia è stata eliminata con successo',
       });
       router.push('/dashboard/warranty');
     } catch (error) {
       toast({
-        title: 'Error deleting warranty',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: "Errore nell'eliminazione",
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
         variant: 'error',
       });
     }
@@ -233,7 +237,7 @@ export default function WarrantyDetailPage() {
   }
 
   const status = statusConfig[warranty.status as WarrantyStatus] || {
-    label: 'Unknown',
+    label: 'Sconosciuto',
     color: 'bg-gray-100 text-gray-800',
   };
   const type = typeConfig[(warranty.coverageType as WarrantyType) || WarrantyType.MANUFACTURER];
@@ -266,19 +270,19 @@ export default function WarrantyDetailPage() {
           </Button>
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-              {warranty.vehicle?.make} {warranty.vehicle?.model} Warranty
+              Garanzia {warranty.vehicle?.make} {warranty.vehicle?.model}
             </h1>
-            <p className='text-sm text-gray-500 dark:text-[#636366]'>{type?.label || 'Warranty'}</p>
+            <p className='text-sm text-gray-500 dark:text-[#636366]'>{type?.label || 'Garanzia'}</p>
           </div>
         </div>
         <div className='flex items-center gap-2'>
           <Button variant='outline' size='sm'>
             <Edit2 className='h-4 w-4 mr-2' />
-            Edit
+            Modifica
           </Button>
           <Button variant='destructive' size='sm' onClick={handleDeleteWarranty}>
             <Trash2 className='h-4 w-4 mr-2' />
-            Delete
+            Elimina
           </Button>
         </div>
       </div>
@@ -300,7 +304,7 @@ export default function WarrantyDetailPage() {
                     <Shield className={cn('h-6 w-6', status.color.split(' ')[1])} />
                   </div>
                   <div>
-                    <CardTitle className='text-lg'>Warranty Status</CardTitle>
+                    <CardTitle className='text-lg'>Stato Garanzia</CardTitle>
                     <Badge className={cn('mt-1', status.color)}>{status.label}</Badge>
                   </div>
                 </div>
@@ -310,9 +314,9 @@ export default function WarrantyDetailPage() {
               {/* Progress */}
               <div className='space-y-2'>
                 <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600 dark:text-gray-400'>Coverage Period</span>
+                  <span className='text-gray-600 dark:text-gray-500'>Periodo di Copertura</span>
                   <span className='font-medium text-gray-900 dark:text-[#ececec]'>
-                    {progress}% elapsed
+                    {progress}% trascorso
                   </span>
                 </div>
                 <Progress value={progress} className='h-2' />
@@ -356,10 +360,10 @@ export default function WarrantyDetailPage() {
                               : 'text-green-800 dark:text-green-300'
                         )}
                       >
-                        {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Expires today'}
+                        {daysRemaining > 0 ? `${daysRemaining} giorni rimanenti` : 'Scade oggi'}
                       </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        Expires on {formatDate(warranty.expirationDate)}
+                      <p className='text-sm text-gray-600 dark:text-gray-500'>
+                        Scade il {formatDate(warranty.expirationDate)}
                       </p>
                     </div>
                   </div>
@@ -368,38 +372,38 @@ export default function WarrantyDetailPage() {
               {/* Details Grid */}
               <div className='grid grid-cols-2 gap-4'>
                 <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
+                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-500 mb-1'>
                     <Euro className='h-4 w-4' />
-                    <span>Max Coverage</span>
+                    <span>Copertura Max</span>
                   </div>
                   <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
                     {formatCurrency(warranty.maxClaimAmount || 0)}
                   </div>
                 </div>
                 <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
+                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-500 mb-1'>
                     <Euro className='h-4 w-4' />
-                    <span>Deductible</span>
+                    <span>Franchigia</span>
                   </div>
                   <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
                     {formatCurrency(warranty.deductibleAmount || 0)}
                   </div>
                 </div>
                 <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
+                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-500 mb-1'>
                     <Gauge className='h-4 w-4' />
-                    <span>Coverage</span>
+                    <span>Copertura Km</span>
                   </div>
                   <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
                     {warranty.mileageLimit
                       ? `${warranty.mileageLimit.toLocaleString()} km`
-                      : 'Unlimited'}
+                      : 'Illimitata'}
                   </div>
                 </div>
                 <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
+                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-500 mb-1'>
                     <FileText className='h-4 w-4' />
-                    <span>Claims</span>
+                    <span>Reclami</span>
                   </div>
                   <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
                     {warranty.claims?.length || 0}
@@ -414,29 +418,29 @@ export default function WarrantyDetailPage() {
             <CardHeader className='flex flex-row items-center justify-between'>
               <CardTitle className='text-lg flex items-center gap-2'>
                 <FileText className='h-5 w-5' />
-                Claims History
+                Storico Reclami
               </CardTitle>
               {canFileClaim && (
                 <Button size='sm' onClick={() => setClaimDialogOpen(true)}>
                   <Plus className='h-4 w-4 mr-2' />
-                  File Claim
+                  Invia Reclamo
                 </Button>
               )}
             </CardHeader>
             <CardContent>
               <Tabs defaultValue='all' className='space-y-4'>
                 <TabsList>
-                  <TabsTrigger value='all'>All ({warranty.claims?.length || 0})</TabsTrigger>
-                  <TabsTrigger value='pending'>Pending ({pendingClaims.length})</TabsTrigger>
-                  <TabsTrigger value='approved'>Approved ({approvedClaims.length})</TabsTrigger>
-                  <TabsTrigger value='rejected'>Rejected ({rejectedClaims.length})</TabsTrigger>
+                  <TabsTrigger value='all'>Tutti ({warranty.claims?.length || 0})</TabsTrigger>
+                  <TabsTrigger value='pending'>In Attesa ({pendingClaims.length})</TabsTrigger>
+                  <TabsTrigger value='approved'>Approvati ({approvedClaims.length})</TabsTrigger>
+                  <TabsTrigger value='rejected'>Rifiutati ({rejectedClaims.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value='all' className='space-y-3'>
                   {warranty.claims?.length === 0 ? (
                     <div className='text-center py-8 text-gray-500'>
                       <FileText className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No claims filed yet</p>
+                      <p>Nessun reclamo inviato</p>
                     </div>
                   ) : (
                     warranty.claims?.map(claim => (
@@ -453,7 +457,7 @@ export default function WarrantyDetailPage() {
                   {pendingClaims.length === 0 ? (
                     <div className='text-center py-8 text-gray-500'>
                       <CheckCircle2 className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No pending claims</p>
+                      <p>Nessun reclamo in attesa</p>
                     </div>
                   ) : (
                     pendingClaims.map(claim => (
@@ -470,7 +474,7 @@ export default function WarrantyDetailPage() {
                   {approvedClaims.length === 0 ? (
                     <div className='text-center py-8 text-gray-500'>
                       <CheckCircle2 className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No approved claims</p>
+                      <p>Nessun reclamo approvato</p>
                     </div>
                   ) : (
                     approvedClaims.map(claim => (
@@ -487,7 +491,7 @@ export default function WarrantyDetailPage() {
                   {rejectedClaims.length === 0 ? (
                     <div className='text-center py-8 text-gray-500'>
                       <XCircle className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No rejected claims</p>
+                      <p>Nessun reclamo rifiutato</p>
                     </div>
                   ) : (
                     rejectedClaims.map(claim => (
@@ -519,24 +523,24 @@ export default function WarrantyDetailPage() {
           {warranty.vehicle && (
             <Card>
               <CardHeader>
-                <CardTitle className='text-lg'>Vehicle Information</CardTitle>
+                <CardTitle className='text-lg'>Informazioni Veicolo</CardTitle>
               </CardHeader>
               <CardContent className='space-y-3'>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>Make</span>
+                  <span className='text-gray-600 dark:text-gray-500'>Marca</span>
                   <span className='font-medium'>{warranty.vehicle.make}</span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>Model</span>
+                  <span className='text-gray-600 dark:text-gray-500'>Modello</span>
                   <span className='font-medium'>{warranty.vehicle.model}</span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>Year</span>
+                  <span className='text-gray-600 dark:text-gray-500'>Anno</span>
                   <span className='font-medium'>{warranty.vehicle.year}</span>
                 </div>
                 <Separator />
                 <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>VIN</span>
+                  <span className='text-gray-600 dark:text-gray-500'>VIN</span>
                   <span className='font-medium font-mono text-sm'>{warranty.vehicle.vin}</span>
                 </div>
               </CardContent>
@@ -549,8 +553,8 @@ export default function WarrantyDetailPage() {
       <Dialog open={claimDialogOpen} onOpenChange={setClaimDialogOpen}>
         <DialogContent className='max-w-lg max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>File a Warranty Claim</DialogTitle>
-            <DialogDescription>Submit a new claim for this warranty</DialogDescription>
+            <DialogTitle>Invia un Reclamo</DialogTitle>
+            <DialogDescription>Invia un nuovo reclamo per questa garanzia</DialogDescription>
           </DialogHeader>
           <ClaimForm
             warrantyId={warrantyId}

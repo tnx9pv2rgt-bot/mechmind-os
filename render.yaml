@@ -7,7 +7,7 @@ services:
     numInstances: 1
     branch: main
     rootDir: backend
-    buildCommand: npm install --legacy-peer-deps && npm run build
+    buildCommand: npm install --legacy-peer-deps && npx prisma migrate deploy && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /liveness
     envVars:
@@ -28,6 +28,16 @@ services:
       - key: JWT_REFRESH_SECRET
         sync: false
       - key: ENCRYPTION_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: SES_FROM_EMAIL
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        sync: false
+      - key: EMAIL_FROM_NAME
         sync: false
       # Redis — uses Render internal service (internal = no TLS, no auth, private network)
       - key: REDIS_URL

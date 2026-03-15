@@ -1,3 +1,4 @@
+// DEPRECATED: This file is not imported anywhere. Consider removing.
 /**
  * Email Service - SendGrid Integration
  * Gestisce l'invio di email transazionali con template HTML responsive

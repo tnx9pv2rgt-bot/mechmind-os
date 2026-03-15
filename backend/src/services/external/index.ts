@@ -1,3 +1,4 @@
+// DEPRECATED: This module is not imported anywhere. Consider removing.
 /**
  * External Services Module
  * Integrazioni con servizi esterni di terze parti

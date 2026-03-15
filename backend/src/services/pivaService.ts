@@ -1,3 +1,4 @@
+// DEPRECATED: This file is not imported anywhere. Consider removing.
 /**
  * P.IVA Service
  * Verifica formato e validità Partita IVA italiana

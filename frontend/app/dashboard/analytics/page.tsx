@@ -22,8 +22,17 @@ import {
   LayoutDashboard,
   PieChart,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
-import { MetabaseDashboardSelector, DashboardType } from './metabase-client';
+import type { DashboardType } from './metabase-client';
+
+const MetabaseDashboardSelector = dynamic(
+  () => import('./metabase-client').then(m => ({ default: m.MetabaseDashboardSelector })),
+  {
+    ssr: false,
+    loading: () => <div className='h-96 animate-pulse bg-gray-100 dark:bg-[#353535] rounded-2xl' />,
+  }
+);
 
 // Animation variants
 const containerVariants = {

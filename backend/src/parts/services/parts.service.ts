@@ -259,14 +259,18 @@ export class PartsService {
     const count = await this.prisma.purchaseOrder.count({ where: { tenantId } });
     const orderNumber = `PO-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
-    // Calculate totals
+    // Calculate totals — batch fetch all parts in one query
     let subtotal = new Prisma.Decimal(0);
     const itemsWithPrices = [];
 
+    const partIds = dto.items.map(item => item.partId);
+    const parts = await this.prisma.part.findMany({
+      where: { id: { in: partIds }, tenantId },
+    });
+    const partsMap = new Map(parts.map(p => [p.id, p]));
+
     for (const item of dto.items) {
-      const part = await this.prisma.part.findFirst({
-        where: { id: item.partId, tenantId },
-      });
+      const part = partsMap.get(item.partId);
 
       if (!part) {
         throw new NotFoundException(`Part ${item.partId} not found`);
