@@ -1,9 +1,12 @@
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
-})
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Standalone output for non-Vercel hosting (Render, Docker)
+  output: 'standalone',
+
   // Image optimization
   images: {
     unoptimized: true,
@@ -18,7 +21,7 @@ const nextConfig = {
       },
     ],
   },
-  
+
   // TypeScript and ESLint handling
   typescript: {
     ignoreBuildErrors: false,
@@ -26,7 +29,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // TODO: fix frontend lint errors then set to false
   },
-  
+
   // Experimental features
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
@@ -43,7 +46,7 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  
+
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
     // NOTE: Do NOT override splitChunks — Next.js manages chunk splitting
@@ -92,7 +95,7 @@ const nextConfig = {
         worker_threads: false,
       };
     }
-    
+
     // Production optimizations
     if (!dev && !isServer) {
       config.optimization.minimize = true;
@@ -100,7 +103,7 @@ const nextConfig = {
 
     return config;
   },
-  
+
   // Enhanced Security Headers
   async headers() {
     return [
@@ -116,14 +119,16 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co blob:",
-              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://mechmind-os.vercel.app http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
+              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
               "frame-src 'self' https://accounts.google.com https://www.google.com https://js.stripe.com https://hooks.stripe.com",
               "media-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'none'",
-              ...(process.env.NODE_ENV === 'production' && process.env.VERCEL ? ["upgrade-insecure-requests", "block-all-mixed-content"] : []),
+              ...(process.env.NODE_ENV === 'production'
+                ? ['upgrade-insecure-requests', 'block-all-mixed-content']
+                : []),
             ].join('; '),
           },
           // Security headers
@@ -143,10 +148,14 @@ const nextConfig = {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
           },
-          ...(process.env.NODE_ENV === 'production' ? [{
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload',
-          }] : []),
+          ...(process.env.NODE_ENV === 'production'
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=31536000; includeSubDomains; preload',
+                },
+              ]
+            : []),
           {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
@@ -191,9 +200,10 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: process.env.NODE_ENV === 'production'
-              ? 'public, max-age=31536000, immutable'
-              : 'no-store, must-revalidate',
+            value:
+              process.env.NODE_ENV === 'production'
+                ? 'public, max-age=31536000, immutable'
+                : 'no-store, must-revalidate',
           },
         ],
       },
@@ -209,35 +219,35 @@ const nextConfig = {
       },
     ];
   },
-  
+
   // Compression
   compress: true,
-  
+
   // Production source maps (disabled for security)
   productionBrowserSourceMaps: false,
-  
+
   // Trailing slashes
   trailingSlash: false,
-  
+
   // Security: Disable powered by header
   poweredByHeader: false,
-  
+
   // Security: Generate ETags
   generateEtags: true,
-  
+
   // Dist directory
   distDir: '.next',
-  
+
   // Clean dist on build
   cleanDistDir: true,
-  
+
   // Transpile packages if needed
   transpilePackages: [],
-  
+
   // NOTE: lucide-react tree-shaking is handled by optimizePackageImports above.
   // Do NOT use modularizeImports for lucide-react — it conflicts with
   // optimizePackageImports and causes webpack module resolution errors
   // (lucide-icons/lucide#1482, vercel/next.js#53668).
-}
+};
 
-module.exports = withBundleAnalyzer(nextConfig)
+module.exports = withBundleAnalyzer(nextConfig);
