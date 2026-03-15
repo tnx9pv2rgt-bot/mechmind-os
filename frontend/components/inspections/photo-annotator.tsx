@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -145,7 +146,14 @@ export function PhotoAnnotator({
         )}
         onClick={handleImageClick}
       >
-        <img src={imageUrl} alt='Vehicle inspection' className='w-full h-full object-contain' />
+        <Image
+          src={imageUrl}
+          alt='Vehicle inspection'
+          className='w-full h-full object-contain'
+          width={200}
+          height={200}
+          unoptimized
+        />
 
         {/* Annotations */}
         {annotations.map(annotation => (

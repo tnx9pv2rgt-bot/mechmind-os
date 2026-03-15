@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -258,7 +259,14 @@ export function MFASetupPageClient() {
               {qrCode && (
                 <div className='flex justify-center'>
                   <div className='p-4 rounded-2xl bg-white dark:bg-[#2f2f2f] border border-gray-100 dark:border-[#424242] shadow-sm'>
-                    <img src={qrCode} alt='QR Code' className='w-48 h-48' />
+                    <Image
+                      src={qrCode}
+                      alt='QR Code'
+                      className='w-48 h-48'
+                      width={200}
+                      height={200}
+                      unoptimized
+                    />
                   </div>
                 </div>
               )}

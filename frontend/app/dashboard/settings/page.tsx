@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -522,7 +523,14 @@ function MfaSection() {
               </p>
               {enrollData.qrCodeUrl && (
                 <div className='flex justify-center p-4 bg-white dark:bg-[#2f2f2f] rounded-xl border border-apple-border dark:border-[#424242]'>
-                  <img src={enrollData.qrCodeUrl} alt='QR Code MFA' className='w-48 h-48' />
+                  <Image
+                    src={enrollData.qrCodeUrl}
+                    alt='QR Code MFA'
+                    className='w-48 h-48'
+                    width={200}
+                    height={200}
+                    unoptimized
+                  />
                 </div>
               )}
               <div className='p-3 bg-apple-light-gray dark:bg-[#353535] rounded-xl'>
