@@ -80,7 +80,7 @@ export class NotificationV2Service {
       this.twilioClient = twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized for Notification v2');
     } else {
-      this.logger.warn('Twilio not configured or SMS notifications disabled');
+      this.logger.debug('Twilio not configured or SMS notifications disabled');
     }
   }
 

@@ -94,7 +94,7 @@ export class EmailService {
       this.resend = new Resend(apiKey);
       this.logger.log('Resend client initialized');
     } else {
-      this.logger.warn('Resend API key not configured or email notifications disabled');
+      this.logger.debug('Resend API key not configured or email notifications disabled');
     }
   }
 

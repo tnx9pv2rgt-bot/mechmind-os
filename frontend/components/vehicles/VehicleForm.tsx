@@ -248,7 +248,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                       </FormControl>
                       <SelectContent className='rounded-2xl border-0 shadow-xl'>
                         {customers.length === 0 ? (
-                          <SelectItem value='' disabled>
+                          <SelectItem value='__empty__' disabled>
                             Nessun cliente disponibile
                           </SelectItem>
                         ) : (

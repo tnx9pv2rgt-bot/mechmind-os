@@ -1,7 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import * as AWS from 'aws-sdk';
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 interface EmailJobData {
   tenantId: string;
@@ -15,11 +15,11 @@ interface EmailJobData {
 @Processor('email-queue')
 export class EmailProcessor extends WorkerHost {
   private readonly logger = new Logger(EmailProcessor.name);
-  private readonly ses: AWS.SES;
+  private readonly ses: SESClient;
 
   constructor() {
     super();
-    this.ses = new AWS.SES({
+    this.ses = new SESClient({
       region: process.env.AWS_REGION || 'eu-west-1',
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
@@ -39,9 +39,9 @@ export class EmailProcessor extends WorkerHost {
       // Generate HTML content from template
       const htmlBody = this.renderTemplate(template, variables);
 
-      // Send via AWS SES
-      const result = await this.ses
-        .sendEmail({
+      // Send via AWS SES v3
+      const result = await this.ses.send(
+        new SendEmailCommand({
           Source: process.env.SES_FROM_EMAIL || 'noreply@mechmind.io',
           Destination: {
             ToAddresses: [to],
@@ -62,9 +62,9 @@ export class EmailProcessor extends WorkerHost {
               },
             },
           },
-          ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
-        })
-        .promise();
+          ConfigurationSetName: process.env.SES_CONFIGURATION_SET || undefined,
+        }),
+      );
 
       this.logger.log(`Email sent successfully: ${result.MessageId}`);
     } catch (error) {

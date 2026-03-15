@@ -309,7 +309,7 @@ export class InspectionService {
     await this.s3.upload(this.photoBucket, key, file, mimeType);
 
     // Generate presigned URL
-    const url = await this.s3.getSignedUrl(this.photoBucket, key, 3600 * 24 * 7); // 7 days
+    const url = await this.s3.getSignedDownloadUrl(this.photoBucket, key, 3600 * 24 * 7); // 7 days
 
     // Save to database
     const photo = await this.prisma.inspectionPhoto.create({

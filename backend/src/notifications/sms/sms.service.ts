@@ -81,7 +81,7 @@ export class SmsService {
       this.twilioClient = new Twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized');
     } else {
-      this.logger.warn('Twilio not configured or SMS notifications disabled');
+      this.logger.debug('Twilio not configured or SMS notifications disabled');
     }
   }
 

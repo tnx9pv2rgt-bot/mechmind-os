@@ -18,7 +18,8 @@ import { HealthController } from './health/health.controller';
       useFactory: () => {
         const connection: Record<string, unknown> = {
           lazyConnect: true,
-          maxRetriesPerRequest: 3,
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
         };
 
         const redisUrl = process.env.REDIS_URL;
