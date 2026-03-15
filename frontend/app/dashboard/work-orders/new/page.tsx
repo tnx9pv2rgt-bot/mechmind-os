@@ -3,28 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
-import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Car, User, Wrench, Users, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 300, damping: 30 },
-  },
-};
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, Loader2, AlertCircle, Wrench, Car, User, Users } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -66,7 +48,6 @@ export default function NewWorkOrderPage() {
   const [customerRequest, setCustomerRequest] = useState('');
   const [mileageIn, setMileageIn] = useState('');
 
-  // Load customers on mount
   useEffect(() => {
     async function loadCustomers() {
       try {
@@ -98,7 +79,6 @@ export default function NewWorkOrderPage() {
     loadTechnicians();
   }, []);
 
-  // Load vehicles filtered by customer
   useEffect(() => {
     if (!customerId) {
       setVehicles([]);
@@ -156,248 +136,218 @@ export default function NewWorkOrderPage() {
   };
 
   const selectClass =
-    'w-full h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] px-4 focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242] focus:outline-none';
+    'w-full h-12 rounded-xl border border-gray-200 dark:border-[#424242] bg-white dark:bg-[#353535] text-sm text-gray-900 dark:text-[#ececec] px-4 focus:outline-none focus:ring-2 focus:ring-black/20';
 
   const textareaClass =
-    'w-full rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] px-4 py-3 placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242] focus:outline-none resize-none';
+    'w-full rounded-xl border border-gray-200 dark:border-[#424242] bg-white dark:bg-[#353535] text-sm text-gray-900 dark:text-[#ececec] px-4 py-3 placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:outline-none focus:ring-2 focus:ring-black/20 resize-none';
 
   return (
-    <div>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-8 py-5'>
-          <Link
-            href='/dashboard/work-orders'
-            className='flex items-center gap-2 text-apple-gray dark:text-[#636366] hover:text-apple-dark transition-colors mb-3'
-          >
-            <ArrowLeft className='h-4 w-4' />
-            <span className='text-sm'>Torna agli ordini di lavoro</span>
-          </Link>
-          <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>
-            Nuovo Ordine di Lavoro
-          </h1>
-          <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
-            Compila i dati per creare un nuovo ordine
-          </p>
-        </div>
-      </header>
-
-      <div className='p-8 max-w-3xl mx-auto'>
+    <div className='fixed inset-0 bg-white dark:bg-[#212121] flex items-center justify-center p-4 overflow-hidden'>
+      <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
         <motion.div
-          variants={containerVariants}
-          initial='hidden'
-          animate='visible'
-          className='space-y-6'
+          className='relative z-10 w-full h-full bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple rounded-[40px] shadow-2xl border border-apple-border/20 dark:border-[#424242]/50 overflow-hidden flex flex-col'
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Customer Selector */}
-          <motion.div variants={cardVariants}>
-            <AppleCard hover={false}>
-              <AppleCardContent>
-                <div className='flex items-center gap-3 mb-4'>
-                  <div className='w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center'>
-                    <User className='h-5 w-5 text-purple-500' />
-                  </div>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    Cliente
-                  </h2>
+          {/* Header */}
+          <div className='px-10 pt-8 pb-4'>
+            <div className='flex items-center justify-between mb-4'>
+              <div>
+                <h1 className='text-3xl font-semibold text-gray-900 dark:text-[#ececec] tracking-tight'>
+                  Nuovo Ordine di Lavoro
+                </h1>
+                <p className='text-gray-500 dark:text-[#636366] mt-1'>
+                  Compila i dati per creare un nuovo ordine
+                </p>
+              </div>
+              <div className='w-12 h-12 rounded-full bg-black dark:bg-[#ececec] flex items-center justify-center'>
+                <Wrench className='w-6 h-6 text-white dark:text-[#212121]' />
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className='flex-1 px-10 pb-24 overflow-y-auto space-y-6'>
+            {/* Error */}
+            {submitError && (
+              <div className='flex items-center gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'>
+                <AlertCircle className='h-5 w-5 text-red-500 flex-shrink-0' />
+                <p className='text-sm text-red-700 dark:text-red-300'>{submitError}</p>
+              </div>
+            )}
+
+            {/* Cliente */}
+            <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+              <div className='flex items-center gap-3 mb-4'>
+                <div className='w-10 h-10 rounded-xl bg-black dark:bg-[#ececec] flex items-center justify-center'>
+                  <User className='h-5 w-5 text-white dark:text-[#212121]' />
                 </div>
-                <label
-                  htmlFor='customerId'
-                  className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
-                >
-                  Seleziona il cliente
-                </label>
-                <select
-                  id='customerId'
-                  value={customerId}
-                  onChange={e => setCustomerId(e.target.value)}
-                  disabled={customersLoading}
-                  className={selectClass}
-                >
-                  <option value=''>
-                    {customersLoading ? 'Caricamento...' : 'Seleziona un cliente'}
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>Cliente</h3>
+              </div>
+              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                Seleziona il cliente
+              </Label>
+              <select
+                value={customerId}
+                onChange={e => setCustomerId(e.target.value)}
+                disabled={customersLoading}
+                className={selectClass}
+              >
+                <option value=''>
+                  {customersLoading ? 'Caricamento...' : 'Seleziona un cliente'}
+                </option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.firstName} {c.lastName}
+                    {c.companyName ? ` — ${c.companyName}` : ''}
                   </option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.firstName} {c.lastName}
-                      {c.companyName ? ` — ${c.companyName}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
+                ))}
+              </select>
+            </div>
 
-          {/* Vehicle Selector */}
-          <motion.div variants={cardVariants}>
-            <AppleCard hover={false}>
-              <AppleCardContent>
-                <div className='flex items-center gap-3 mb-4'>
-                  <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                    <Car className='h-5 w-5 text-apple-blue' />
-                  </div>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    Veicolo
-                  </h2>
+            {/* Veicolo */}
+            <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+              <div className='flex items-center gap-3 mb-4'>
+                <div className='w-10 h-10 rounded-xl bg-black dark:bg-[#ececec] flex items-center justify-center'>
+                  <Car className='h-5 w-5 text-white dark:text-[#212121]' />
                 </div>
-                <label
-                  htmlFor='vehicleId'
-                  className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
-                >
-                  Seleziona il veicolo
-                </label>
-                <select
-                  id='vehicleId'
-                  value={vehicleId}
-                  onChange={e => setVehicleId(e.target.value)}
-                  disabled={!customerId || vehiclesLoading}
-                  className={selectClass}
-                >
-                  <option value=''>
-                    {!customerId
-                      ? 'Seleziona prima un cliente'
-                      : vehiclesLoading
-                        ? 'Caricamento...'
-                        : 'Seleziona un veicolo'}
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>Veicolo</h3>
+              </div>
+              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                Seleziona il veicolo
+              </Label>
+              <select
+                value={vehicleId}
+                onChange={e => setVehicleId(e.target.value)}
+                disabled={!customerId || vehiclesLoading}
+                className={selectClass}
+              >
+                <option value=''>
+                  {!customerId
+                    ? 'Seleziona prima un cliente'
+                    : vehiclesLoading
+                      ? 'Caricamento...'
+                      : 'Seleziona un veicolo'}
+                </option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.make} {v.model} — {v.plate}
+                    {v.year ? ` (${v.year})` : ''}
                   </option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.make} {v.model} — {v.plate}
-                      {v.year ? ` (${v.year})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
+                ))}
+              </select>
+            </div>
 
-          {/* Technician Selector */}
-          <motion.div variants={cardVariants}>
-            <AppleCard hover={false}>
-              <AppleCardContent>
-                <div className='flex items-center gap-3 mb-4'>
-                  <div className='w-10 h-10 rounded-xl bg-apple-green/10 flex items-center justify-center'>
-                    <Users className='h-5 w-5 text-apple-green' />
-                  </div>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    Tecnico (opzionale)
-                  </h2>
+            {/* Tecnico */}
+            <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+              <div className='flex items-center gap-3 mb-4'>
+                <div className='w-10 h-10 rounded-xl bg-black dark:bg-[#ececec] flex items-center justify-center'>
+                  <Users className='h-5 w-5 text-white dark:text-[#212121]' />
                 </div>
-                <label
-                  htmlFor='technicianId'
-                  className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
-                >
-                  Assegna un tecnico
-                </label>
-                <select
-                  id='technicianId'
-                  value={technicianId}
-                  onChange={e => setTechnicianId(e.target.value)}
-                  disabled={techniciansLoading}
-                  className={selectClass}
-                >
-                  <option value=''>
-                    {techniciansLoading ? 'Caricamento...' : 'Nessun tecnico assegnato'}
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>
+                  Tecnico (opzionale)
+                </h3>
+              </div>
+              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                Assegna un tecnico
+              </Label>
+              <select
+                value={technicianId}
+                onChange={e => setTechnicianId(e.target.value)}
+                disabled={techniciansLoading}
+                className={selectClass}
+              >
+                <option value=''>
+                  {techniciansLoading ? 'Caricamento...' : 'Nessun tecnico assegnato'}
+                </option>
+                {technicians.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.firstName} {t.lastName}
                   </option>
-                  {technicians.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.firstName} {t.lastName}
-                    </option>
-                  ))}
-                </select>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
+                ))}
+              </select>
+            </div>
 
-          {/* Details */}
-          <motion.div variants={cardVariants}>
-            <AppleCard hover={false}>
-              <AppleCardContent>
-                <div className='flex items-center gap-3 mb-4'>
-                  <div className='w-10 h-10 rounded-xl bg-apple-orange/10 flex items-center justify-center'>
-                    <Wrench className='h-5 w-5 text-apple-orange' />
-                  </div>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    Dettagli
-                  </h2>
+            {/* Dettagli */}
+            <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+              <div className='flex items-center gap-3 mb-4'>
+                <div className='w-10 h-10 rounded-xl bg-black dark:bg-[#ececec] flex items-center justify-center'>
+                  <Wrench className='h-5 w-5 text-white dark:text-[#212121]' />
                 </div>
-                <div className='space-y-4'>
-                  <div>
-                    <label
-                      htmlFor='diagnosis'
-                      className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
-                    >
-                      Diagnosi
-                    </label>
-                    <textarea
-                      id='diagnosis'
-                      value={diagnosis}
-                      onChange={e => setDiagnosis(e.target.value)}
-                      rows={3}
-                      placeholder='Descrivi la diagnosi iniziale...'
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor='customerRequest'
-                      className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
-                    >
-                      Richiesta del cliente
-                    </label>
-                    <textarea
-                      id='customerRequest'
-                      value={customerRequest}
-                      onChange={e => setCustomerRequest(e.target.value)}
-                      rows={3}
-                      placeholder='Cosa richiede il cliente...'
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor='mileageIn'
-                      className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
-                    >
-                      Chilometraggio ingresso
-                    </label>
-                    <Input
-                      id='mileageIn'
-                      type='number'
-                      value={mileageIn}
-                      onChange={e => setMileageIn(e.target.value)}
-                      placeholder='es. 85000'
-                      className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
-                    />
-                  </div>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>
+                  Dettagli
+                </h3>
+              </div>
+              <div className='space-y-4'>
+                <div>
+                  <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Diagnosi
+                  </Label>
+                  <textarea
+                    value={diagnosis}
+                    onChange={e => setDiagnosis(e.target.value)}
+                    rows={3}
+                    placeholder='Descrivi la diagnosi iniziale...'
+                    className={textareaClass}
+                  />
                 </div>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
+                <div>
+                  <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Richiesta del cliente
+                  </Label>
+                  <textarea
+                    value={customerRequest}
+                    onChange={e => setCustomerRequest(e.target.value)}
+                    rows={3}
+                    placeholder='Cosa richiede il cliente...'
+                    className={textareaClass}
+                  />
+                </div>
+                <div>
+                  <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Chilometraggio ingresso
+                  </Label>
+                  <Input
+                    type='number'
+                    value={mileageIn}
+                    onChange={e => setMileageIn(e.target.value)}
+                    placeholder='es. 85000'
+                    className='rounded-xl'
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-          {/* Error */}
-          {submitError && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30'
-            >
-              <AlertCircle className='h-5 w-5 text-red-500 flex-shrink-0' />
-              <p className='text-sm text-red-700 dark:text-red-300'>{submitError}</p>
-            </motion.div>
-          )}
-
-          {/* Submit */}
-          <motion.div variants={cardVariants}>
-            <AppleButton
-              size='lg'
-              fullWidth
-              loading={isSubmitting}
-              onClick={handleSubmit}
-              icon={<Wrench className='h-5 w-5' />}
-            >
-              Crea Ordine di Lavoro
-            </AppleButton>
-          </motion.div>
+          {/* Footer */}
+          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-t border-apple-border/20 dark:border-[#424242]/50 z-50'>
+            <div className='flex items-center justify-between'>
+              <Button
+                type='button'
+                onClick={() => router.push('/dashboard/work-orders')}
+                className='rounded-full px-6 h-12 border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-black dark:text-[#ececec] hover:bg-gray-100 dark:hover:bg-[#424242] transition-all'
+              >
+                <ChevronLeft className='w-5 h-5 mr-2' />
+                Annulla
+              </Button>
+              <Button
+                type='button'
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className='rounded-full px-8 h-12 bg-apple-green hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all border-0'
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className='w-5 h-5 mr-2 animate-spin' />
+                    Creazione...
+                  </>
+                ) : (
+                  'Crea Ordine di Lavoro'
+                )}
+              </Button>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>

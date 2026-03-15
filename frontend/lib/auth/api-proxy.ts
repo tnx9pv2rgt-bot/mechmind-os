@@ -374,6 +374,19 @@ function getDemoData(backendPath: string, method: string): unknown {
     return { success: true, message: 'Demo — operazione simulata' };
   }
 
+  // Dashboard KPIs (must come before generic dashboard match)
+  if (backendPath.includes('analytics/dashboard-kpis')) {
+    return {
+      data: {
+        clientiTotali: 120,
+        veicoliTotali: 156,
+        fatturatoMese: 45230,
+        prenotazioniOggi: 8,
+        workOrderAperti: 6,
+      },
+    };
+  }
+
   // Dashboard
   if (backendPath.includes('analytics/dashboard') || backendPath.includes('dashboard')) {
     return {

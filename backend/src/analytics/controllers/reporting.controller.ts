@@ -2,7 +2,16 @@
  * MechMind OS - Business Intelligence Reporting Controller
  */
 
-import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -11,18 +20,39 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { ReportingService } from '../services/reporting.service';
 import { UserRole } from '../../auth/guards/roles.guard';
 import { Response } from 'express';
+import {
+  DateRangeQueryDto,
+  YearMonthQueryDto,
+  ExportQueryDto,
+  PaginationQueryDto,
+} from '../dto/reporting-query.dto';
+
+/**
+ * Sanitize a string for use in filenames by stripping path-traversal characters.
+ */
+function sanitizeFilenameSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]/g, '');
+}
 
 @ApiTags('Business Intelligence')
 @Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 @ApiBearerAuth()
 export class ReportingController {
   constructor(private readonly reportingService: ReportingService) {}
 
   // ============== DASHBOARD ==============
 
+  @Get('dashboard-kpis')
+  @ApiOperation({ summary: 'Get real-time dashboard KPIs from live data' })
+  @ApiResponse({ status: 200 })
+  async getDashboardKpis(@CurrentUser('tenantId') tenantId: string) {
+    return this.reportingService.getDashboardKpis(tenantId);
+  }
+
   @Get('dashboard')
-  @ApiOperation({ summary: 'Get dashboard summary KPIs' })
+  @ApiOperation({ summary: 'Get dashboard summary KPIs (materialized view)' })
   @ApiResponse({ status: 200 })
   async getDashboardSummary(@CurrentUser('tenantId') tenantId: string) {
     return this.reportingService.getDashboardSummary(tenantId);
@@ -39,32 +69,22 @@ export class ReportingController {
 
   @Get('bookings/metrics')
   @ApiOperation({ summary: 'Get daily booking metrics' })
-  @ApiQuery({ name: 'from', required: true, type: String })
-  @ApiQuery({ name: 'to', required: true, type: String })
   async getBookingMetrics(
     @CurrentUser('tenantId') tenantId: string,
-    @Query('from') from: string,
-    @Query('to') to: string,
+    @Query() dto: DateRangeQueryDto,
   ) {
-    return this.reportingService.getBookingMetrics(tenantId, new Date(from), new Date(to));
+    return this.reportingService.getBookingMetrics(tenantId, new Date(dto.from), new Date(dto.to));
   }
 
   // ============== REVENUE ANALYTICS ==============
 
   @Get('revenue')
   @ApiOperation({ summary: 'Get revenue analytics' })
-  @ApiQuery({ name: 'year', required: true, type: Number })
-  @ApiQuery({ name: 'month', required: false, type: Number })
   async getRevenueAnalytics(
     @CurrentUser('tenantId') tenantId: string,
-    @Query('year') year: string,
-    @Query('month') month?: string,
+    @Query() dto: YearMonthQueryDto,
   ) {
-    return this.reportingService.getRevenueAnalytics(
-      tenantId,
-      parseInt(year),
-      month ? parseInt(month) : undefined,
-    );
+    return this.reportingService.getRevenueAnalytics(tenantId, dto.year, dto.month);
   }
 
   // ============== CUSTOMER ANALYTICS ==============
@@ -77,37 +97,31 @@ export class ReportingController {
 
   @Get('customers/top')
   @ApiOperation({ summary: 'Get top customers by revenue' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  async getTopCustomers(@CurrentUser('tenantId') tenantId: string, @Query('limit') limit?: string) {
-    return this.reportingService.getTopCustomers(tenantId, limit ? parseInt(limit) : 10);
+  async getTopCustomers(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query() dto: PaginationQueryDto,
+  ) {
+    return this.reportingService.getTopCustomers(tenantId, dto.limit);
   }
 
   // ============== SERVICE ANALYTICS ==============
 
   @Get('services/popularity')
   @ApiOperation({ summary: 'Get service popularity analytics' })
-  @ApiQuery({ name: 'year', required: true, type: Number })
   async getServicePopularity(
     @CurrentUser('tenantId') tenantId: string,
-    @Query('year') year: string,
+    @Query() dto: YearMonthQueryDto,
   ) {
-    return this.reportingService.getServicePopularity(tenantId, parseInt(year));
+    return this.reportingService.getServicePopularity(tenantId, dto.year);
   }
 
   @Get('mechanics/performance')
   @ApiOperation({ summary: 'Get mechanic performance metrics' })
-  @ApiQuery({ name: 'year', required: true, type: Number })
-  @ApiQuery({ name: 'month', required: false, type: Number })
   async getMechanicPerformance(
     @CurrentUser('tenantId') tenantId: string,
-    @Query('year') year: string,
-    @Query('month') month?: string,
+    @Query() dto: YearMonthQueryDto,
   ) {
-    return this.reportingService.getMechanicPerformance(
-      tenantId,
-      parseInt(year),
-      month ? parseInt(month) : undefined,
-    );
+    return this.reportingService.getMechanicPerformance(tenantId, dto.year, dto.month);
   }
 
   // ============== INVENTORY REPORTS ==============
@@ -132,26 +146,23 @@ export class ReportingController {
 
   @Get('export/bookings')
   @ApiOperation({ summary: 'Export bookings to CSV/JSON' })
-  @ApiQuery({ name: 'from', required: true })
-  @ApiQuery({ name: 'to', required: true })
-  @ApiQuery({ name: 'format', required: false, enum: ['csv', 'json'] })
   async exportBookings(
     @CurrentUser('tenantId') tenantId: string,
     @Res() res: Response,
-    @Query('from') from: string,
-    @Query('to') to: string,
-    @Query('format') format: 'csv' | 'json' = 'csv',
+    @Query() dto: ExportQueryDto,
   ) {
     const data = await this.reportingService.exportBookings(
       tenantId,
-      new Date(from),
-      new Date(to),
-      format,
+      new Date(dto.from),
+      new Date(dto.to),
+      dto.format,
     );
 
-    const filename = `bookings_${from}_${to}.${format}`;
+    const safeFrom = sanitizeFilenameSegment(dto.from);
+    const safeTo = sanitizeFilenameSegment(dto.to);
+    const filename = `bookings_${safeFrom}_${safeTo}.${dto.format}`;
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/json');
+    res.setHeader('Content-Type', dto.format === 'csv' ? 'text/csv' : 'application/json');
     res.send(data);
   }
 
@@ -173,19 +184,18 @@ export class ReportingController {
 
   @Get('export/revenue')
   @ApiOperation({ summary: 'Export revenue report to CSV/JSON' })
-  @ApiQuery({ name: 'year', required: true, type: Number })
-  @ApiQuery({ name: 'format', required: false, enum: ['csv', 'json'] })
   async exportRevenue(
     @CurrentUser('tenantId') tenantId: string,
     @Res() res: Response,
-    @Query('year') year: string,
-    @Query('format') format: 'csv' | 'json' = 'csv',
+    @Query() dto: ExportQueryDto,
   ) {
-    const data = await this.reportingService.exportRevenue(tenantId, parseInt(year), format);
+    const year = new Date(dto.from).getFullYear();
+    const data = await this.reportingService.exportRevenue(tenantId, year, dto.format);
 
-    const filename = `revenue_${year}.${format}`;
+    const safeYear = sanitizeFilenameSegment(String(year));
+    const filename = `revenue_${safeYear}.${dto.format}`;
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/json');
+    res.setHeader('Content-Type', dto.format === 'csv' ? 'text/csv' : 'application/json');
     res.send(data);
   }
 

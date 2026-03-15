@@ -64,8 +64,8 @@ export interface UnitEconomicsReport {
 export class UnitEconomicsService {
   private readonly logger = new Logger(UnitEconomicsService.name);
 
-  // Standard COGS per shop for quick calculations
-  private readonly STANDARD_COGS = 30.38; // € per shop per month
+  // Standard COGS per shop for quick calculations (must match controller default)
+  private readonly STANDARD_COGS = 34.34; // € per shop per month
 
   constructor(
     private readonly prisma: PrismaService,
@@ -76,6 +76,8 @@ export class UnitEconomicsService {
    * Calculate CAC (Customer Acquisition Cost) per channel
    *
    * Formula: CAC = Total Sales & Marketing Spend / Number of New Customers
+   *
+   * // TODO: Replace mock data with real marketing_spend table queries
    */
   async calculateCAC(
     startDate: Date,
@@ -213,6 +215,7 @@ export class UnitEconomicsService {
       { name: 'enterprise', arpa: 299 },
     ];
 
+    // TODO: Calculate from actual data
     const grossMargin = 0.62;
     const monthlyChurn = 0.03;
 
@@ -425,7 +428,7 @@ export class UnitEconomicsService {
     const mrr = customerCount * 82; // Blended ARPA
     const arr = mrr * 12;
 
-    // Calculate retention metrics (simplified)
+    // TODO: Calculate from actual data
     const netDollarRetention = 102.4;
     const grossDollarRetention = 97.0;
 

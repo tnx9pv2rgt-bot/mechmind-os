@@ -1,6 +1,6 @@
 /**
  * Error Tracking Integration
- * 
+ *
  * Integrazione con Sentry/LogRocket per error tracking e performance monitoring
  */
 
@@ -143,7 +143,7 @@ class SentryProvider implements ErrorTrackingProvider {
     try {
       const SentryModule = await import('@sentry/nextjs');
       this.Sentry = SentryModule as unknown as SentryLike;
-      
+
       this.Sentry.init({
         dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
         environment: process.env.NODE_ENV,
@@ -176,17 +176,17 @@ class SentryProvider implements ErrorTrackingProvider {
   private sanitizeEvent(event: SentryEvent): void {
     // Rimuovi dati sensibili dagli eventi
     const sensitiveFields = ['password', 'token', 'ssn', 'creditCard', 'vatNumber'];
-    
+
     if (event.request?.data) {
       const requestData = event.request.data;
-      sensitiveFields.forEach((field) => {
+      sensitiveFields.forEach(field => {
         delete requestData[field];
       });
     }
 
     if (event.extra?.formData) {
       const formData = event.extra.formData;
-      sensitiveFields.forEach((field) => {
+      sensitiveFields.forEach(field => {
         delete formData[field];
       });
     }
@@ -196,7 +196,7 @@ class SentryProvider implements ErrorTrackingProvider {
     if (!this.initialized || !this.Sentry) return null;
 
     const scope = new this.Sentry.Scope();
-    
+
     if (context) {
       if (context.userId) scope.setUser({ id: context.userId });
       if (context.tags) scope.setTags(context.tags);
@@ -209,11 +209,15 @@ class SentryProvider implements ErrorTrackingProvider {
     return this.Sentry.captureException(error, scope);
   }
 
-  captureMessage(message: string, level: ErrorLevel = 'info', context?: ErrorContext): string | null {
+  captureMessage(
+    message: string,
+    level: ErrorLevel = 'info',
+    context?: ErrorContext
+  ): string | null {
     if (!this.initialized || !this.Sentry) return null;
 
     const scope = new this.Sentry.Scope();
-    
+
     if (context) {
       if (context.userId) scope.setUser({ id: context.userId });
       if (context.tags) scope.setTags(context.tags);
@@ -290,7 +294,7 @@ class LogRocketProvider implements ErrorTrackingProvider {
     try {
       const LogRocketModule = await import('logrocket');
       this.LogRocket = LogRocketModule.default as unknown as LogRocketLike;
-      
+
       this.LogRocket.init(process.env.NEXT_PUBLIC_LOGROCKET_APP_ID || '', {
         network: {
           requestSanitizer: (request: LogRocketNetworkRequest) => {
@@ -330,7 +334,11 @@ class LogRocketProvider implements ErrorTrackingProvider {
     return null;
   }
 
-  captureMessage(message: string, level: ErrorLevel = 'info', context?: ErrorContext): string | null {
+  captureMessage(
+    message: string,
+    level: ErrorLevel = 'info',
+    context?: ErrorContext
+  ): string | null {
     if (!this.initialized || !this.LogRocket) return null;
 
     this.LogRocket.captureMessage(message, {
@@ -378,7 +386,7 @@ class LogRocketProvider implements ErrorTrackingProvider {
     }
 
     const startTime = Date.now();
-    
+
     return {
       name,
       op,
@@ -404,6 +412,7 @@ class ErrorTracker {
   private initialized = false;
   private performanceMetrics: Partial<PerformanceMetrics> = {};
   private errorCount = 0;
+  private observers: PerformanceObserver[] = [];
 
   async init(): Promise<void> {
     if (this.initialized || typeof window === 'undefined') return;
@@ -424,7 +433,7 @@ class ErrorTracker {
 
     // Setup global error handlers
     this.setupErrorHandlers();
-    
+
     // Setup performance monitoring
     this.setupPerformanceMonitoring();
 
@@ -435,7 +444,7 @@ class ErrorTracker {
     if (typeof window === 'undefined') return;
 
     // Global error handler
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', event => {
       this.captureException(event.error, {
         tags: { type: 'unhandled' },
         extra: {
@@ -447,11 +456,9 @@ class ErrorTracker {
     });
 
     // Unhandled promise rejection
-    window.addEventListener('unhandledrejection', (event) => {
-      const error = event.reason instanceof Error 
-        ? event.reason 
-        : new Error(String(event.reason));
-      
+    window.addEventListener('unhandledrejection', event => {
+      const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+
       this.captureException(error, {
         tags: { type: 'unhandledrejection' },
       });
@@ -494,7 +501,7 @@ class ErrorTracker {
         return response;
       } catch (error) {
         const duration = Date.now() - startTime;
-        
+
         self.captureNetworkError({
           url: String(url),
           method,
@@ -514,14 +521,12 @@ class ErrorTracker {
 
     console.error = function (...args) {
       // Non tracciare errori di React in development
-      const isReactError = args.some(
-        (arg) => typeof arg === 'string' && arg.includes('Warning:')
-      );
+      const isReactError = args.some(arg => typeof arg === 'string' && arg.includes('Warning:'));
 
       if (!isReactError) {
-        const errorMessage = args.map((arg) => 
-          arg instanceof Error ? arg.message : String(arg)
-        ).join(' ');
+        const errorMessage = args
+          .map(arg => (arg instanceof Error ? arg.message : String(arg)))
+          .join(' ');
 
         self.captureMessage(errorMessage, 'error', {
           tags: { source: 'console' },
@@ -536,7 +541,7 @@ class ErrorTracker {
     if (typeof window === 'undefined' || !('PerformanceObserver' in window)) return;
 
     // LCP
-    const lcpObserver = new PerformanceObserver((list) => {
+    const lcpObserver = new PerformanceObserver(list => {
       const entries = list.getEntries();
       const lastEntry = entries[entries.length - 1];
       this.performanceMetrics.lcp = lastEntry.startTime;
@@ -544,14 +549,15 @@ class ErrorTracker {
 
     try {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      this.observers.push(lcpObserver);
     } catch (e) {
       // LCP non supportato
     }
 
     // FID
-    const fidObserver = new PerformanceObserver((list) => {
+    const fidObserver = new PerformanceObserver(list => {
       const entries = list.getEntries();
-      entries.forEach((entry) => {
+      entries.forEach(entry => {
         if (entry.entryType === 'first-input') {
           const eventEntry = entry as unknown as { processingStart: number; startTime: number };
           this.performanceMetrics.fid = eventEntry.processingStart - eventEntry.startTime;
@@ -561,15 +567,16 @@ class ErrorTracker {
 
     try {
       fidObserver.observe({ entryTypes: ['first-input'] });
+      this.observers.push(fidObserver);
     } catch (e) {
       // FID non supportato
     }
 
     // CLS
     let clsValue = 0;
-    const clsObserver = new PerformanceObserver((list) => {
+    const clsObserver = new PerformanceObserver(list => {
       const entries = list.getEntries();
-      entries.forEach((entry) => {
+      entries.forEach(entry => {
         const layoutShift = entry as LayoutShiftEntry;
         if (!layoutShift.hadRecentInput) {
           clsValue += layoutShift.value;
@@ -580,19 +587,22 @@ class ErrorTracker {
 
     try {
       clsObserver.observe({ entryTypes: ['layout-shift'] });
+      this.observers.push(clsObserver);
     } catch (e) {
       // CLS non supportato
     }
 
     // FCP e TTFB
     window.addEventListener('load', () => {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      const navigation = performance.getEntriesByType(
+        'navigation'
+      )[0] as PerformanceNavigationTiming;
       if (navigation) {
         this.performanceMetrics.ttfb = navigation.responseStart - navigation.startTime;
       }
 
       const paintEntries = performance.getEntriesByType('paint');
-      paintEntries.forEach((entry) => {
+      paintEntries.forEach(entry => {
         if (entry.name === 'first-contentful-paint') {
           this.performanceMetrics.fcp = entry.startTime;
         }
@@ -603,13 +613,13 @@ class ErrorTracker {
   // Metodi pubblici
   captureException(error: Error, context?: ErrorContext): void {
     this.errorCount++;
-    this.providers.forEach((provider) => {
+    this.providers.forEach(provider => {
       provider.captureException(error, context);
     });
   }
 
   captureMessage(message: string, level: ErrorLevel = 'info', context?: ErrorContext): void {
-    this.providers.forEach((provider) => {
+    this.providers.forEach(provider => {
       provider.captureMessage(message, level, context);
     });
   }
@@ -629,25 +639,25 @@ class ErrorTracker {
   }
 
   setUser(user: { id: string; email?: string; [key: string]: unknown }): void {
-    this.providers.forEach((provider) => {
+    this.providers.forEach(provider => {
       provider.setUser(user);
     });
   }
 
   setContext(name: string, context: Record<string, unknown>): void {
-    this.providers.forEach((provider) => {
+    this.providers.forEach(provider => {
       provider.setContext(name, context);
     });
   }
 
   setTag(key: string, value: string): void {
-    this.providers.forEach((provider) => {
+    this.providers.forEach(provider => {
       provider.setTag(key, value);
     });
   }
 
   addBreadcrumb(message: string, category?: string, data?: Record<string, unknown>): void {
-    this.providers.forEach((provider) => {
+    this.providers.forEach(provider => {
       provider.addBreadcrumb({ message, category, data });
     });
   }
@@ -689,8 +699,14 @@ class ErrorTracker {
     return this.errorCount;
   }
 
+  destroy(): void {
+    this.observers.forEach(obs => obs.disconnect());
+    this.observers = [];
+  }
+
   close(): void {
-    this.providers.forEach((provider) => provider.close());
+    this.destroy();
+    this.providers.forEach(provider => provider.close());
   }
 }
 
@@ -711,11 +727,11 @@ export function captureReactError(error: Error, errorInfo: { componentStack: str
 }
 
 // Tipi esportati
-export type { 
-  ErrorLevel, 
-  ErrorContext, 
-  PerformanceMetrics, 
+export type {
+  ErrorLevel,
+  ErrorContext,
+  PerformanceMetrics,
   NetworkError,
   ErrorTrackingProvider,
-  Transaction 
+  Transaction,
 };

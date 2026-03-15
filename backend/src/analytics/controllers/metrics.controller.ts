@@ -1,5 +1,6 @@
 import { Controller, Get, Query, UseGuards, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { UnitEconomicsService } from '../services/unit-economics.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
@@ -99,10 +100,26 @@ class BreakEvenResponseDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('analytics')
 export class MetricsController {
+  private readonly fixedCosts: number;
+  private readonly arpa: number;
+  private readonly cogsPerShop: number;
+  private readonly monthlyGrowthRate: number;
+  private readonly grossMargin: number;
+
   constructor(
     private readonly unitEconomicsService: UnitEconomicsService,
     private readonly prisma: PrismaService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.fixedCosts = this.configService.get<number>('UNIT_ECONOMICS_FIXED_COSTS', 14300);
+    this.arpa = this.configService.get<number>('UNIT_ECONOMICS_ARPA', 82);
+    this.cogsPerShop = this.configService.get<number>('UNIT_ECONOMICS_COGS_PER_SHOP', 34.34);
+    this.monthlyGrowthRate = this.configService.get<number>(
+      'UNIT_ECONOMICS_MONTHLY_GROWTH_RATE',
+      0.15,
+    );
+    this.grossMargin = this.configService.get<number>('UNIT_ECONOMICS_GROSS_MARGIN', 0.62);
+  }
 
   /**
    * GET /analytics/cac
@@ -187,8 +204,8 @@ Target: LTV/CAC > 3:1`,
         byTier: ltvByTier,
         calculation: {
           formula: 'LTV = ARPA × Gross Margin × (1 / Monthly Churn Rate)',
-          arpa: 82,
-          grossMargin: 0.62,
+          arpa: this.arpa,
+          grossMargin: this.grossMargin,
           monthlyChurn: 0.03,
         },
       },
@@ -341,11 +358,7 @@ Target: Break-even at 100 shops (requires cost optimization)`,
   })
   @ApiResponse({ status: 403, description: 'Admin access required' })
   async getBreakEven(): Promise<{ success: boolean; data: BreakEvenResponseDto }> {
-    // Business parameters
-    const fixedCosts = 14300; // Monthly fixed costs
-    const arpa = 82;
-    const cogsPerShop = 34.34;
-    const monthlyGrowthRate = 0.15; // 15% monthly growth
+    const { fixedCosts, arpa, cogsPerShop, monthlyGrowthRate } = this;
 
     // Calculate break-even point
     const contributionMargin = arpa - cogsPerShop;
@@ -492,9 +505,7 @@ Excellent: <6 months`,
       new Date(),
     );
 
-    const arpa = 82;
-    const grossMargin = 0.62;
-    const monthlyContribution = arpa * grossMargin;
+    const monthlyContribution = this.arpa * this.grossMargin;
     const months = monthlyContribution > 0 ? cac.blended / monthlyContribution : 0;
 
     return {

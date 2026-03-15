@@ -41,10 +41,51 @@ export class MlIntegrationService {
   private readonly mlApiKey: string;
   private readonly timeoutMs: number;
 
+  // Circuit breaker state
+  private consecutiveFailures = 0;
+  private readonly maxFailures = 5;
+  private circuitOpenedAt: number | null = null;
+  private readonly circuitResetMs = 60_000; // 60 seconds
+
+  // Retry configuration
+  private readonly maxRetries = 3;
+  private readonly retryBaseMs = 1_000; // 1 second
+
   constructor(private readonly config: ConfigService) {
     this.mlApiUrl = this.config.get<string>('ML_API_URL', 'http://localhost:8000');
     this.mlApiKey = this.config.get<string>('ML_API_KEY', '');
     this.timeoutMs = this.config.get<number>('ML_API_TIMEOUT_MS', 10000);
+  }
+
+  /**
+   * Check if the circuit breaker is currently open.
+   * If the reset timeout has elapsed, transition to half-open (allow one attempt).
+   */
+  private isCircuitOpen(): boolean {
+    if (this.consecutiveFailures < this.maxFailures) {
+      return false;
+    }
+    if (this.circuitOpenedAt && Date.now() - this.circuitOpenedAt >= this.circuitResetMs) {
+      // Half-open: allow a single attempt
+      this.logger.warn('Circuit breaker half-open, allowing trial request');
+      return false;
+    }
+    return true;
+  }
+
+  private recordSuccess(): void {
+    this.consecutiveFailures = 0;
+    this.circuitOpenedAt = null;
+  }
+
+  private recordFailure(): void {
+    this.consecutiveFailures++;
+    if (this.consecutiveFailures >= this.maxFailures && !this.circuitOpenedAt) {
+      this.circuitOpenedAt = Date.now();
+      this.logger.error(
+        `Circuit breaker opened after ${this.consecutiveFailures} consecutive failures`,
+      );
+    }
   }
 
   /**
@@ -154,9 +195,45 @@ export class MlIntegrationService {
   }
 
   /**
-   * Call the ML API with timeout and error handling
+   * Call the ML API with circuit breaker, exponential backoff retry, and timeout.
    */
   private async callMlApi<T>(
+    path: string,
+    body?: unknown,
+    method: 'GET' | 'POST' = 'POST',
+  ): Promise<T> {
+    if (this.isCircuitOpen()) {
+      throw new Error(`Circuit breaker is open. ML API calls are temporarily disabled.`);
+    }
+
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      if (attempt > 0) {
+        const delayMs = this.retryBaseMs * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+
+      try {
+        const result = await this.callMlApiOnce<T>(path, body, method);
+        this.recordSuccess();
+        return result;
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        this.logger.warn(
+          `ML API attempt ${attempt + 1}/${this.maxRetries} failed [${path}]: ${lastError.message}`,
+        );
+      }
+    }
+
+    this.recordFailure();
+    throw lastError;
+  }
+
+  /**
+   * Single attempt to call the ML API with timeout.
+   */
+  private async callMlApiOnce<T>(
     path: string,
     body?: unknown,
     method: 'GET' | 'POST' = 'POST',

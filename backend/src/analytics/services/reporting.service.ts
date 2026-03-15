@@ -19,7 +19,69 @@ import { createObjectCsvStringifier } from 'csv-writer';
 export class ReportingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ============== DASHBOARD KPIs ==============
+  // ============== REAL-TIME DASHBOARD KPIs ==============
+
+  async getDashboardKpis(tenantId: string): Promise<{
+    clientiTotali: number;
+    veicoliTotali: number;
+    fatturatoMese: number;
+    prenotazioniOggi: number;
+    workOrderAperti: number;
+  }> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const [clientiTotali, veicoliTotali, fatturatoMese, prenotazioniOggi, workOrderAperti] =
+      await Promise.all([
+        // KPI 1: Clienti totali del tenant
+        this.prisma.customer.count({
+          where: { tenantId },
+        }),
+
+        // KPI 2: Veicoli totali (via customer.tenantId, Vehicle non ha tenantId)
+        this.prisma.vehicle.count({
+          where: { customer: { tenantId } },
+        }),
+
+        // KPI 3: Fatturato mese corrente (fatture pagate)
+        this.prisma.invoice.aggregate({
+          where: {
+            tenantId,
+            status: 'PAID',
+            paidAt: { gte: startOfMonth },
+          },
+          _sum: { total: true },
+        }),
+
+        // KPI 4: Prenotazioni di oggi
+        this.prisma.booking.count({
+          where: {
+            tenantId,
+            scheduledDate: { gte: startOfDay, lte: endOfDay },
+          },
+        }),
+
+        // KPI 5: Work order aperti
+        this.prisma.workOrder.count({
+          where: {
+            tenantId,
+            status: { in: ['OPEN', 'PENDING', 'IN_PROGRESS', 'CHECKED_IN', 'WAITING_PARTS'] },
+          },
+        }),
+      ]);
+
+    return {
+      clientiTotali,
+      veicoliTotali,
+      fatturatoMese: Number(fatturatoMese._sum.total ?? 0),
+      prenotazioniOggi,
+      workOrderAperti,
+    };
+  }
+
+  // ============== DASHBOARD SUMMARY (Materialized View) ==============
 
   async getDashboardSummary(tenantId: string) {
     const result = await this.prisma.$queryRaw`

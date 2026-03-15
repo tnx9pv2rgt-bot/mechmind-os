@@ -1,6 +1,6 @@
 /**
  * A/B Testing Framework
- * 
+ *
  * Gestione esperimenti per ottimizzazione conversione form
  */
 
@@ -153,7 +153,7 @@ class ABTestingManager {
         this.experiments.set(exp.id, { ...exp, startDate: new Date(exp.startDate) });
       });
     } else {
-      DEFAULT_EXPERIMENTS.forEach((exp) => {
+      DEFAULT_EXPERIMENTS.forEach(exp => {
         this.experiments.set(exp.id, exp);
       });
     }
@@ -179,7 +179,7 @@ class ABTestingManager {
         this.assignments.set(key, {
           ...assignment,
           assignedAt: new Date(assignment.assignedAt),
-          events: assignment.events.map((e) => ({
+          events: assignment.events.map(e => ({
             ...e,
             timestamp: new Date(e.timestamp),
           })),
@@ -192,9 +192,7 @@ class ABTestingManager {
   private saveAssignments(): void {
     if (typeof window === 'undefined' || !this.userId) return;
 
-    const data = Array.from(this.assignments.values()).filter(
-      (a) => a.userId === this.userId
-    );
+    const data = Array.from(this.assignments.values()).filter(a => a.userId === this.userId);
     localStorage.setItem(`ab_assignments_${this.userId}`, JSON.stringify(data));
   }
 
@@ -245,15 +243,15 @@ class ABTestingManager {
     // Controlla se utente deve essere incluso
     const userHash = this.hashString(userId);
     const userPercentile = userHash % 100;
-    
-    if (userPercentile >= experiment.trafficAllocation) {
+
+    if (userPercentile > experiment.trafficAllocation) {
       return null; // Utente non incluso nell'esperimento
     }
 
     // Assegna a variante basata sul peso
     const variantHash = this.hashString(`${userId}:${experimentId}`);
     const variantPercentile = variantHash % 100;
-    
+
     let cumulativeWeight = 0;
     let selectedVariant: Variant = experiment.variants[0].id;
 
@@ -304,7 +302,7 @@ class ABTestingManager {
       // Prova ad assegnare
       const variant = this.assignVariant(experimentId);
       if (!variant) return null;
-      
+
       return this.getVariantConfigById(experimentId, variant);
     }
 
@@ -318,7 +316,7 @@ class ABTestingManager {
     const experiment = this.experiments.get(experimentId);
     if (!experiment) return null;
 
-    const variant = experiment.variants.find((v) => v.id === variantId);
+    const variant = experiment.variants.find(v => v.id === variantId);
     return variant?.config || null;
   }
 
@@ -350,11 +348,7 @@ class ABTestingManager {
   }
 
   // Traccia evento intermedio
-  trackEvent(
-    experimentId: string,
-    event: string,
-    metadata?: Record<string, unknown>
-  ): void {
+  trackEvent(experimentId: string, event: string, metadata?: Record<string, unknown>): void {
     const userId = this.getOrCreateUserId();
     const assignmentKey = `${userId}:${experimentId}`;
     const assignment = this.assignments.get(assignmentKey);
@@ -406,7 +400,7 @@ class ABTestingManager {
   }
 
   getActiveExperiments(): Experiment[] {
-    return this.getAllExperiments().filter((e) => e.isActive);
+    return this.getAllExperiments().filter(e => e.isActive);
   }
 
   // Calcola risultati
@@ -415,16 +409,14 @@ class ABTestingManager {
     if (!experiment) return null;
 
     const experimentAssignments = Array.from(this.assignments.values()).filter(
-      (a) => a.experimentId === experimentId
+      a => a.experimentId === experimentId
     );
 
-    const variantResults = experiment.variants.map((variant) => {
-      const variantAssignments = experimentAssignments.filter(
-        (a) => a.variant === variant.id
-      );
+    const variantResults = experiment.variants.map(variant => {
+      const variantAssignments = experimentAssignments.filter(a => a.variant === variant.id);
 
       const visitors = variantAssignments.length;
-      const conversions = variantAssignments.filter((a) => a.converted).length;
+      const conversions = variantAssignments.filter(a => a.converted).length;
       const conversionRate = visitors > 0 ? (conversions / visitors) * 100 : 0;
 
       return {
@@ -437,8 +429,8 @@ class ABTestingManager {
     });
 
     // Calcola vincitore (semplice, senza test statistico completo)
-    const maxConversionRate = Math.max(...variantResults.map((v) => v.conversionRate));
-    const winner = variantResults.find((v) => v.conversionRate === maxConversionRate);
+    const maxConversionRate = Math.max(...variantResults.map(v => v.conversionRate));
+    const winner = variantResults.find(v => v.conversionRate === maxConversionRate);
 
     if (winner && winner.conversionRate > 0) {
       winner.isWinner = true;
@@ -522,11 +514,4 @@ export function withABTest<P extends object>(
 }
 
 // Tipi esportati
-export type {
-  Variant,
-  ExperimentType,
-  Experiment,
-  VariantConfig,
-  Assignment,
-  ExperimentResult,
-};
+export type { Variant, ExperimentType, Experiment, VariantConfig, Assignment, ExperimentResult };
