@@ -16,13 +16,14 @@ import { ObdModule } from './obd/obd.module';
 import { PartsModule } from './parts/parts.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { IotModule } from './iot/iot.module';
-// Disabled modules — scaffold only, no Prisma models yet
-// import { FleetModule } from './fleet/fleet.module';
-// import { TireModule } from './tire/tire.module';
-// import { EstimateModule } from './estimate/estimate.module';
-// import { LaborGuideModule } from './labor-guide/labor-guide.module';
-// import { AccountingModule } from './accounting/accounting.module';
+import { FleetModule } from './fleet/fleet.module';
+import { TireModule } from './tire/tire.module';
+import { EstimateModule } from './estimate/estimate.module';
+import { LaborGuideModule } from './labor-guide/labor-guide.module';
+import { AccountingModule } from './accounting/accounting.module';
 import { AdminModule } from './admin/admin.module';
+import { InvoiceModule } from './invoice/invoice.module';
+import { WorkOrderModule } from './work-order/work-order.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
@@ -59,13 +60,14 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     PartsModule,
     SubscriptionModule,
     IotModule,
-    // Disabled modules — scaffold only, no Prisma models yet
-    // FleetModule,
-    // TireModule,
-    // EstimateModule,
-    // LaborGuideModule,
-    // AccountingModule,
+    FleetModule,
+    TireModule,
+    EstimateModule,
+    LaborGuideModule,
+    AccountingModule,
     AdminModule,
+    InvoiceModule,
+    WorkOrderModule,
   ],
   providers: [
     // Global exception filter

@@ -11,103 +11,6 @@ import { MaintenanceList } from '@/components/portal';
 import { MaintenanceSchedule, Customer } from '@/lib/types/portal';
 
 // ============================================
-// MOCK DATA
-// ============================================
-
-const mockMaintenance: MaintenanceSchedule[] = [
-  {
-    id: 'm1',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    serviceType: 'Tagliando completo',
-    description:
-      'Sostituzione olio, filtri aria/olio/abitacolo, controllo freni, sospensioni e livelli',
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    dueMileage: 50000,
-    estimatedCost: 350,
-    priority: 'medium',
-    status: 'due',
-  },
-  {
-    id: 'm2',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    serviceType: 'Sostituzione gomme',
-    description: 'Gomme anteriori usurate al 30%, necessaria sostituzione',
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    estimatedCost: 480,
-    priority: 'high',
-    status: 'upcoming',
-  },
-  {
-    id: 'm3',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 38000,
-      fuelType: 'diesel',
-    },
-    serviceType: 'Cambio freni posteriori',
-    description: 'Pastiglie freni posteriori al 20%',
-    dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-    dueMileage: 48000,
-    estimatedCost: 220,
-    priority: 'high',
-    status: 'overdue',
-  },
-  {
-    id: 'm4',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    serviceType: 'Tagliando 30.000 km',
-    description: 'Tagliando ordinario completato',
-    dueDate: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
-    dueMileage: 30000,
-    estimatedCost: 280,
-    priority: 'low',
-    status: 'completed',
-    completedAt: new Date(Date.now() - 182 * 24 * 60 * 60 * 1000),
-    completedMileage: 29950,
-  },
-];
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -116,18 +19,28 @@ export default function PortalMaintenancePage() {
   const [filteredMaintenance, setFilteredMaintenance] = useState<MaintenanceSchedule[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'overdue'>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const currentCustomer = null; // TODO: Get from auth context
-      setCustomer(currentCustomer);
+      try {
+        const response = await fetch('/api/portal/maintenance');
 
-      setTimeout(() => {
-        setMaintenance(mockMaintenance);
-        setFilteredMaintenance(mockMaintenance.filter(m => m.status !== 'completed'));
+        if (!response.ok) {
+          throw new Error(`Failed to load maintenance (${response.status})`);
+        }
+
+        const result = await response.json();
+        const data = (result.data || []) as MaintenanceSchedule[];
+        setMaintenance(data);
+        setFilteredMaintenance(data.filter(m => m.status !== 'completed'));
+      } catch (err) {
+        console.error('Maintenance load error:', err);
+        setError(err instanceof Error ? err.message : 'Errore nel caricamento della manutenzione');
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
     loadData();
@@ -166,6 +79,22 @@ export default function PortalMaintenancePage() {
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
           />
+        </div>
+      </PortalPageWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <PortalPageWrapper title='Manutenzione' customer={customer || undefined}>
+        <div className='text-center py-16'>
+          <p className='text-apple-red mb-4'>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className='text-apple-blue hover:underline'
+          >
+            Riprova
+          </button>
         </div>
       </PortalPageWrapper>
     );

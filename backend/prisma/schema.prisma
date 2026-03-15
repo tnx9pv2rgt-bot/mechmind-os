@@ -200,6 +200,7 @@ model Customer {
   // Relations
   bookings                       Booking[]
   vehicles                       Vehicle[]
+  invoices                       Invoice[]
   Inspection                     Inspection[]
   Notification                   Notification[]
   CustomerNotificationPreference CustomerNotificationPreference[]
@@ -442,17 +443,48 @@ model BookingService {
 
 model Invoice {
   id        String  @id @default(uuid())
-  bookingId String  @map("booking_id")
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tenantId  String  @map("tenant_id")
 
-  totalCents  BigInt    @map("total_cents")
-  taxCents    BigInt?   @map("tax_cents")
-  status      String
-  paymentDate DateTime? @map("payment_date")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
 
+  bookingId String?  @map("booking_id")
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  workOrderId String? @map("work_order_id")
+
+  invoiceNumber String @unique @map("invoice_number")
+
+  status InvoiceStatus @default(DRAFT)
+
+  items     Json
+  subtotal  Decimal   @db.Decimal(10, 2)
+  taxRate   Decimal   @default(22) @db.Decimal(5, 2) @map("tax_rate")
+  taxAmount Decimal   @db.Decimal(10, 2) @map("tax_amount")
+  total     Decimal   @db.Decimal(10, 2)
+
+  notes   String?
+  dueDate DateTime? @map("due_date")
+  sentAt  DateTime? @map("sent_at")
+  paidAt  DateTime? @map("paid_at")
+  pdfUrl  String?   @map("pdf_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([customerId])
   @@index([bookingId])
+  @@index([status])
   @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
 }
 
 // ==========================================
@@ -1128,12 +1160,15 @@ enum OrderStatus {
 }
 
 enum WorkOrderStatus {
+  OPEN
   PENDING
   CHECKED_IN
   IN_PROGRESS
   WAITING_PARTS
   QUALITY_CHECK
+  READY
   COMPLETED
+  INVOICED
 }
 
 enum ServiceBayStatus {
@@ -2177,17 +2212,47 @@ model WorkOrder {
   tenantId  String   @map("tenant_id")
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  status WorkOrderStatus @default(PENDING)
+  woNumber String @unique @map("wo_number")
+  status   WorkOrderStatus @default(PENDING)
 
   // Relations
-  vehicleId String  @map("vehicle_id")
-  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+  vehicleId  String  @map("vehicle_id")
+  vehicle    Vehicle @relation(fields: [vehicleId], references: [id])
+
+  customerId String  @map("customer_id")
+
+  technicianId String? @map("technician_id")
+
+  bookingId String? @map("booking_id")
 
   assignedBayId String? @map("assigned_bay_id")
-  
+
+  // Diagnosis & customer input
+  diagnosis       String?  @db.Text
+  customerRequest String?  @db.Text @map("customer_request")
+
+  // Cost tracking
+  laborItems Json?   @map("labor_items")
+  partsUsed  Json?   @map("parts_used")
+  laborHours Decimal? @db.Decimal(5, 2) @map("labor_hours")
+  laborCost  Decimal? @db.Decimal(10, 2) @map("labor_cost")
+  partsCost  Decimal? @db.Decimal(10, 2) @map("parts_cost")
+  totalCost  Decimal? @db.Decimal(10, 2) @map("total_cost")
+
+  // Vehicle state
+  mileageIn  Int? @map("mileage_in")
+  mileageOut Int? @map("mileage_out")
+
+  // Media
+  photos           Json?   @map("photos")
+  customerSignature String? @db.Text @map("customer_signature")
+
+  // Timestamps
   actualStartTime      DateTime? @map("actual_start_time")
   estimatedCompletion  DateTime? @map("estimated_completion")
   actualCompletionTime DateTime? @map("actual_completion_time")
+
+  invoiceId String? @map("invoice_id")
 
   technicians WorkOrderTechnician[]
   services    WorkOrderService[]
@@ -2199,6 +2264,7 @@ model WorkOrder {
 
   @@index([tenantId])
   @@index([vehicleId])
+  @@index([customerId])
   @@index([status])
   @@map("work_orders")
 }

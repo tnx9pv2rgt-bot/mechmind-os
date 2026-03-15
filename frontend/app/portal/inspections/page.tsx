@@ -9,89 +9,6 @@ import { InspectionList } from '@/components/portal';
 import { CustomerInspection, Customer } from '@/lib/types/portal';
 
 // ============================================
-// MOCK DATA
-// ============================================
-
-const mockInspections: CustomerInspection[] = [
-  {
-    id: 'i1',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    bookingId: 'b2',
-    score: 8.5,
-    status: 'completed',
-    completedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    technicianName: 'Luca Bianchi',
-    summary:
-      'Veicolo in buone condizioni generali. Gomme anteriori al 30%, consigliata sostituzione entro 5,000 km. Freni posteriori da monitorare.',
-    findings: [
-      {
-        id: 'f1',
-        category: 'Tires',
-        severity: 'needs_attention',
-        description: 'Gomme anteriori usurate',
-        recommendation: 'Sostituzione consigliata',
-        estimatedCost: 400,
-      },
-      {
-        id: 'f2',
-        category: 'Brakes',
-        severity: 'fair',
-        description: 'Freni posteriori da monitorare',
-        recommendation: 'Controllo alla prossima visita',
-      },
-    ],
-    photos: [
-      { id: 'p1', url: '/photos/1.jpg', thumbnailUrl: '/photos/1-thumb.jpg', takenAt: new Date() },
-      { id: 'p2', url: '/photos/2.jpg', thumbnailUrl: '/photos/2-thumb.jpg', takenAt: new Date() },
-    ],
-    pdfUrl: '/reports/inspection-1.pdf',
-  },
-  {
-    id: 'i2',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 38000,
-      fuelType: 'diesel',
-    },
-    bookingId: 'b4',
-    score: 9.2,
-    status: 'approved',
-    completedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
-    approvedAt: new Date(Date.now() - 179 * 24 * 60 * 60 * 1000),
-    technicianName: 'Marco Verdi',
-    summary: 'Veicolo in eccellenti condizioni. Tutti i sistemi funzionanti correttamente.',
-    findings: [
-      {
-        id: 'f3',
-        category: 'Engine',
-        severity: 'good',
-        description: 'Motore in perfette condizioni',
-      },
-    ],
-    photos: [],
-    pdfUrl: '/reports/inspection-2.pdf',
-  },
-];
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -100,18 +17,28 @@ export default function PortalInspectionsPage() {
   const [filteredInspections, setFilteredInspections] = useState<CustomerInspection[]>([]);
   const [filter, setFilter] = useState<'all' | 'completed' | 'approved'>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const currentCustomer = null; // TODO: Get from auth context
-      setCustomer(currentCustomer);
+      try {
+        const response = await fetch('/api/portal/inspections');
 
-      setTimeout(() => {
-        setInspections(mockInspections);
-        setFilteredInspections(mockInspections);
+        if (!response.ok) {
+          throw new Error(`Failed to load inspections (${response.status})`);
+        }
+
+        const result = await response.json();
+        const data = (result.data || []) as CustomerInspection[];
+        setInspections(data);
+        setFilteredInspections(data);
+      } catch (err) {
+        console.error('Inspections load error:', err);
+        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle ispezioni');
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
     loadData();
@@ -158,6 +85,22 @@ export default function PortalInspectionsPage() {
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
           />
+        </div>
+      </PortalPageWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <PortalPageWrapper title='Ispezioni' customer={customer || undefined}>
+        <div className='text-center py-16'>
+          <p className='text-apple-red mb-4'>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className='text-apple-blue hover:underline'
+          >
+            Riprova
+          </button>
         </div>
       </PortalPageWrapper>
     );

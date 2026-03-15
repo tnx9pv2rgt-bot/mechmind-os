@@ -10,93 +10,33 @@ import { WarrantyList, WarrantyStats } from '@/components/portal';
 import { WarrantyInfo, Customer } from '@/lib/types/portal';
 
 // ============================================
-// MOCK DATA
-// ============================================
-
-const mockWarranties: WarrantyInfo[] = [
-  {
-    id: 'w1',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    warrantyType: 'manufacturer',
-    provider: 'Volkswagen Italia',
-    policyNumber: 'VW-2020-123456',
-    startDate: new Date('2020-03-15'),
-    endDate: new Date('2025-03-15'),
-    coverageType: 'comprehensive',
-    maxMileage: 100000,
-    currentMileage: 45000,
-    status: 'active',
-    claims: [],
-    documents: [],
-  },
-  {
-    id: 'w2',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    warrantyType: 'extended',
-    provider: 'MechMind Protection',
-    policyNumber: 'MM-EXT-789012',
-    startDate: new Date('2025-03-15'),
-    endDate: new Date('2028-03-15'),
-    coverageType: 'powertrain',
-    maxMileage: 150000,
-    currentMileage: 45000,
-    status: 'expiring_soon',
-    claims: [
-      {
-        id: 'c1',
-        warrantyId: 'w2',
-        claimNumber: 'CLM-2024-001',
-        description: 'Sostituzione alternatore',
-        status: 'completed',
-        filedAt: new Date('2024-01-15'),
-        resolvedAt: new Date('2024-01-20'),
-        amount: 450,
-      },
-    ],
-    documents: [],
-  },
-];
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 
 export default function PortalWarrantyPage() {
   const [warranties, setWarranties] = useState<WarrantyInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const currentCustomer = null; // TODO: Get from auth context
-      setCustomer(currentCustomer);
+      try {
+        const response = await fetch('/api/portal/warranty');
 
-      setTimeout(() => {
-        setWarranties(mockWarranties);
+        if (!response.ok) {
+          throw new Error(`Failed to load warranties (${response.status})`);
+        }
+
+        const result = await response.json();
+        const data = (result.data || []) as WarrantyInfo[];
+        setWarranties(data);
+      } catch (err) {
+        console.error('Warranty load error:', err);
+        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle garanzie');
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
     loadData();
@@ -121,6 +61,22 @@ export default function PortalWarrantyPage() {
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
           />
+        </div>
+      </PortalPageWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <PortalPageWrapper title='Garanzia' customer={customer || undefined}>
+        <div className='text-center py-16'>
+          <p className='text-apple-red mb-4'>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className='text-apple-blue hover:underline'
+          >
+            Riprova
+          </button>
         </div>
       </PortalPageWrapper>
     );

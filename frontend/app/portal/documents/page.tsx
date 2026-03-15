@@ -9,72 +9,6 @@ import { DocumentList } from '@/components/portal';
 import { Document, Customer } from '@/lib/types/portal';
 
 // ============================================
-// MOCK DATA
-// ============================================
-
-const mockDocuments: Document[] = [
-  {
-    id: 'd1',
-    customerId: '1',
-    vehicleId: 'v1',
-    type: 'invoice',
-    documentNumber: 'FAT-2024-001',
-    title: 'Fattura Tagliando Gennaio',
-    description: 'Tagliando ordinario e sostituzione filtri',
-    amount: 350.0,
-    issueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    paidAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-    fileUrl: '/docs/invoice-001.pdf',
-    fileSize: 245760,
-    fileType: 'application/pdf',
-    status: 'paid',
-  },
-  {
-    id: 'd2',
-    customerId: '1',
-    vehicleId: 'v1',
-    type: 'inspection_report',
-    documentNumber: 'ISP-2024-001',
-    title: 'Report Ispezione Periodica',
-    description: 'Ispezione completa del veicolo',
-    issueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    fileUrl: '/docs/inspection-001.pdf',
-    fileSize: 1843200,
-    fileType: 'application/pdf',
-    status: 'issued',
-  },
-  {
-    id: 'd3',
-    customerId: '1',
-    type: 'maintenance_record',
-    documentNumber: 'MAN-2024-001',
-    title: 'Registro Manutenzione 2024',
-    description: 'Storico interventi di manutenzione',
-    issueDate: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
-    fileUrl: '/docs/maintenance-001.pdf',
-    fileSize: 512000,
-    fileType: 'application/pdf',
-    status: 'issued',
-  },
-  {
-    id: 'd4',
-    customerId: '1',
-    vehicleId: 'v1',
-    type: 'warranty_claim',
-    documentNumber: 'GAR-2024-001',
-    title: 'Reclamo Garanzia Cambio',
-    description: 'Intervento in garanzia sul cambio',
-    amount: 0,
-    issueDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
-    fileUrl: '/docs/warranty-001.pdf',
-    fileSize: 368640,
-    fileType: 'application/pdf',
-    status: 'paid',
-  },
-];
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -86,18 +20,28 @@ export default function PortalDocumentsPage() {
     'all'
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const currentCustomer = null; // TODO: Get from auth context
-      setCustomer(currentCustomer);
+      try {
+        const response = await fetch('/api/portal/documents');
 
-      setTimeout(() => {
-        setDocuments(mockDocuments);
-        setFilteredDocuments(mockDocuments);
+        if (!response.ok) {
+          throw new Error(`Failed to load documents (${response.status})`);
+        }
+
+        const result = await response.json();
+        const data = (result.data || []) as Document[];
+        setDocuments(data);
+        setFilteredDocuments(data);
+      } catch (err) {
+        console.error('Documents load error:', err);
+        setError(err instanceof Error ? err.message : 'Errore nel caricamento dei documenti');
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
     loadData();
@@ -144,6 +88,22 @@ export default function PortalDocumentsPage() {
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
           />
+        </div>
+      </PortalPageWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <PortalPageWrapper title='Documenti' customer={customer || undefined}>
+        <div className='text-center py-16'>
+          <p className='text-apple-red mb-4'>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className='text-apple-blue hover:underline'
+          >
+            Riprova
+          </button>
         </div>
       </PortalPageWrapper>
     );

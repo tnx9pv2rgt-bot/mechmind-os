@@ -11,91 +11,6 @@ import { BookingList } from '@/components/portal';
 import { Booking, Customer } from '@/lib/types/portal';
 
 // ============================================
-// MOCK DATA
-// ============================================
-
-const mockBookings: Booking[] = [
-  {
-    id: 'b1',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 45000,
-      fuelType: 'diesel',
-    },
-    status: 'confirmed',
-    type: 'maintenance',
-    scheduledDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    scheduledTime: '09:30',
-    duration: 120,
-    notes: 'Tagliando ordinario',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    location: 'MechMind Milano - Via Roma 123',
-    estimatedCost: 350,
-  },
-  {
-    id: 'b2',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 42000,
-      fuelType: 'diesel',
-    },
-    status: 'completed',
-    type: 'inspection',
-    scheduledDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    scheduledTime: '14:00',
-    duration: 90,
-    notes: 'Ispezione periodica',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    completedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    location: 'MechMind Milano - Via Roma 123',
-    finalCost: 120,
-    technicianName: 'Luca Bianchi',
-  },
-  {
-    id: 'b3',
-    customerId: '1',
-    vehicleId: 'v1',
-    vehicle: {
-      id: 'v1',
-      customerId: '1',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2020,
-      licensePlate: 'AB123CD',
-      mileage: 38000,
-      fuelType: 'diesel',
-    },
-    status: 'cancelled',
-    type: 'repair',
-    scheduledDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-    scheduledTime: '10:00',
-    duration: 180,
-    notes: 'Sostituzione pastiglie freni',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    cancelledAt: new Date(Date.now() - 61 * 24 * 60 * 60 * 1000),
-    cancellationReason: 'Cliente ha annullato',
-    location: 'MechMind Milano - Via Roma 123',
-  },
-];
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -104,20 +19,28 @@ export default function PortalBookingsPage() {
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      // const currentCustomer = await portalAuth.getCurrentCustomer(token)
-      const currentCustomer = null; // TODO: Get from auth context
-      setCustomer(currentCustomer);
+      try {
+        const response = await fetch('/api/portal/bookings');
 
-      // Mock API call
-      setTimeout(() => {
-        setBookings(mockBookings);
-        setFilteredBookings(mockBookings);
+        if (!response.ok) {
+          throw new Error(`Failed to load bookings (${response.status})`);
+        }
+
+        const result = await response.json();
+        const data = (result.data || []) as Booking[];
+        setBookings(data);
+        setFilteredBookings(data);
+      } catch (err) {
+        console.error('Bookings load error:', err);
+        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle prenotazioni');
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
     loadData();
@@ -176,6 +99,22 @@ export default function PortalBookingsPage() {
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
           />
+        </div>
+      </PortalPageWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <PortalPageWrapper title='Prenotazioni' customer={customer || undefined}>
+        <div className='text-center py-16'>
+          <p className='text-apple-red mb-4'>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className='text-apple-blue hover:underline'
+          >
+            Riprova
+          </button>
         </div>
       </PortalPageWrapper>
     );
