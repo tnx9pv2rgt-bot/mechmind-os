@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Wrench, Plus, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { PortalPageWrapper } from '@/components/portal';
@@ -15,43 +17,25 @@ import { MaintenanceSchedule, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalMaintenancePage() {
-  const [maintenance, setMaintenance] = useState<MaintenanceSchedule[]>([]);
-  const [filteredMaintenance, setFilteredMaintenance] = useState<MaintenanceSchedule[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'overdue'>('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/maintenance');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+  } = useSWR<{ data: MaintenanceSchedule[] }>('/api/portal/maintenance', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load maintenance (${response.status})`);
-        }
+  const maintenance = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento della manutenzione'
+    : null;
 
-        const result = await response.json();
-        const data = (result.data || []) as MaintenanceSchedule[];
-        setMaintenance(data);
-        setFilteredMaintenance(data.filter(m => m.status !== 'completed'));
-      } catch (err) {
-        console.error('Maintenance load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento della manutenzione');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    let filtered = maintenance;
-    if (filter !== 'all') {
-      filtered = maintenance.filter(m => m.status === filter);
-    }
-    setFilteredMaintenance(filtered);
+  const filteredMaintenance = useMemo(() => {
+    if (filter === 'all') return maintenance;
+    return maintenance.filter(m => m.status === filter);
   }, [filter, maintenance]);
 
   const stats = {

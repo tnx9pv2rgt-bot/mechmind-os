@@ -14,6 +14,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import Link from 'next/link';
+import { z } from 'zod';
 import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PortalLayout } from '@/components/portal';
 import { BookingType, CustomerVehicle } from '@/lib/types/portal';
+
+const bookingSchema = z.object({
+  vehicleId: z.string().min(1, 'Seleziona un veicolo'),
+  type: z.string().min(1, 'Seleziona un tipo di servizio'),
+  date: z.string().min(1, 'Seleziona una data'),
+  time: z.string().min(1, 'Seleziona un orario'),
+  notes: z.string().optional(),
+});
+
+type BookingFormErrors = Partial<Record<keyof z.infer<typeof bookingSchema>, string>>;
 
 const serviceTypes: { type: BookingType; label: string; description: string; duration: number }[] =
   [
@@ -93,6 +104,7 @@ export default function NewBookingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [vehicles, setVehicles] = useState<CustomerVehicle[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<BookingFormErrors>({});
   const [formData, setFormData] = useState({
     vehicleId: '',
     type: '' as BookingType | '',
@@ -130,6 +142,19 @@ export default function NewBookingPage() {
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitError(null);
+    setErrors({});
+
+    const result = bookingSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: BookingFormErrors = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof BookingFormErrors;
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      setErrors(fieldErrors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/portal/bookings', {
@@ -456,6 +481,18 @@ export default function NewBookingPage() {
             </AppleCard>
           )}
         </motion.div>
+
+        {/* Validation / Submit Errors */}
+        {(Object.keys(errors).length > 0 || submitError) && (
+          <div className='mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl space-y-1'>
+            {Object.values(errors).map((msg, i) => (
+              <p key={i} className='text-sm text-apple-red'>
+                {msg}
+              </p>
+            ))}
+            {submitError && <p className='text-sm text-apple-red'>{submitError}</p>}
+          </div>
+        )}
 
         {/* Navigation Buttons */}
         {step < 5 && (

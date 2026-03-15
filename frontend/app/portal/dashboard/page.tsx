@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
 import {
   Calendar,
   Wrench,
@@ -34,40 +34,31 @@ import {
 // MAIN COMPONENT
 // ============================================
 
+const dashboardFetcher = async (url: string): Promise<{ data: DashboardData }> => {
+  const auth = PortalAuthService.getInstance();
+  const token = auth.getToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(url, { headers, credentials: 'include' });
+  if (!response.ok) throw new Error(`API error ${response.status}`);
+  return response.json();
+};
+
 export default function PortalDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+  } = useSWR('/api/portal/dashboard', dashboardFetcher);
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        const auth = PortalAuthService.getInstance();
-        const token = auth.getToken();
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const response = await fetch('/api/portal/dashboard', { headers });
-
-        if (!response.ok) {
-          throw new Error(`Failed to load dashboard (${response.status})`);
-        }
-
-        const result = await response.json();
-        const dashboardData = result.data as DashboardData;
-        setData(dashboardData);
-        setCustomer(dashboardData.customer);
-      } catch (err) {
-        console.error('Dashboard load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento della dashboard');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadDashboard();
-  }, []);
+  const data = rawData?.data || null;
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento della dashboard'
+    : null;
+  const customer = data?.customer || null;
 
   if (isLoading || !data) {
     return (

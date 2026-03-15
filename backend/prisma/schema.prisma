@@ -157,6 +157,7 @@ model User {
 
   @@unique([tenantId, email])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([email])
   @@index([createdAt])
   @@index([locationId])
@@ -254,6 +255,7 @@ model CustomerEncrypted {
   CallRecording CallRecording[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([phoneHash])
   @@index([anonymizedAt])
   @@index([isDeleted])
@@ -357,6 +359,7 @@ model Booking {
   Invoice                  Invoice[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([tenantId, status])
   @@index([customerId])
   @@index([customerEncryptedId])
@@ -381,6 +384,7 @@ model BookingSlot {
   booking Booking?
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([tenantId, startTime, endTime])
   @@index([status])
   @@map("booking_slots")
@@ -425,6 +429,7 @@ model Service {
 
   @@unique([tenantId, name])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@map("services")
 }
 
@@ -512,6 +517,7 @@ model VoiceWebhookEvent {
 
   @@index([callId])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([eventType])
   @@index([processed])
   @@map("voice_webhook_events")
@@ -638,6 +644,7 @@ model InspectionTemplate {
   inspections Inspection[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([category])
   @@map("inspection_templates")
 }
@@ -816,6 +823,7 @@ model ObdDevice {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([vehicleId])
   @@map("obd_devices")
 }
@@ -971,6 +979,7 @@ model Part {
 
   @@unique([tenantId, sku])
   @@index([tenantId, isActive])
+  @@index([tenantId, createdAt])
   @@index([category])
   @@index([supplierId])
   @@map("parts")
@@ -1005,6 +1014,7 @@ model Supplier {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@map("suppliers")
 }
 
@@ -1062,6 +1072,7 @@ model InventoryMovement {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([partId])
   @@index([createdAt])
   @@map("inventory_movements")
@@ -1099,6 +1110,7 @@ model PurchaseOrder {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([supplierId])
   @@index([status])
   @@map("purchase_orders")
@@ -1239,6 +1251,7 @@ model Notification {
 
   @@index([customerId])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([status])
   @@index([createdAt])
   @@index([type])
@@ -1413,6 +1426,7 @@ model SubscriptionChange {
 
   @@index([subscriptionId])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([createdAt])
   @@map("subscription_changes")
 }
@@ -1467,6 +1481,7 @@ model Location {
 
   @@unique([tenantId, isMain])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([tenantId, isActive])
   @@map("locations")
 }
@@ -1669,6 +1684,7 @@ model AuthAuditLog {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([userId])
   @@index([action])
   @@index([status])
@@ -1705,6 +1721,7 @@ model AuditLog {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([action])
   @@index([tableName])
   @@index([recordId])
@@ -1895,6 +1912,7 @@ model LicensePlateDetection {
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([detectedText])
   @@index([cameraId])
   @@index([processedAt])
@@ -2001,6 +2019,7 @@ model LprCamera {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([isActive])
   @@map("lpr_cameras")
 }
@@ -2093,6 +2112,7 @@ model ShopFloor {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@map("shop_floors")
 }
 
@@ -2271,6 +2291,7 @@ model WorkOrder {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([tenantId, status])
   @@index([vehicleId])
   @@index([customerId])
@@ -2347,6 +2368,7 @@ model Technician {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([beaconId])
   @@map("technicians")
 }
@@ -2381,6 +2403,7 @@ model VehicleTwinConfig {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([vehicleId])
   @@map("vehicle_twin_configs")
 }
@@ -2418,6 +2441,7 @@ model VehicleTwinComponent {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([vehicleId])
   @@index([category])
   @@index([status])
@@ -2514,6 +2538,7 @@ model VehicleDamage {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([vehicleId])
   @@index([status])
   @@map("vehicle_damages")
@@ -2542,6 +2567,7 @@ model Fleet {
   vehicles FleetVehicle[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@unique([tenantId, name])
   @@map("fleets")
 }
@@ -2603,6 +2629,7 @@ model TireSet {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([vehicleId])
   @@index([season])
   @@index([isStored])
@@ -2653,6 +2680,7 @@ model Estimate {
   lines EstimateLine[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([customerId])
   @@index([status])
   @@map("estimates")
@@ -2714,6 +2742,7 @@ model LaborGuide {
   entries LaborGuideEntry[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@unique([tenantId, name])
   @@map("labor_guides")
 }
@@ -2746,6 +2775,7 @@ model LaborGuideEntry {
 
   @@index([guideId])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([make])
   @@index([category])
   @@map("labor_guide_entries")
@@ -2786,6 +2816,7 @@ model AccountingSync {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([entityType, entityId])
   @@index([status])
   @@index([provider])

@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
@@ -88,31 +90,24 @@ const typeLabels: Record<string, string> = {
 export default function InspectionsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [inspections, setInspections] = useState<InspectionItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/inspections')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data || json || [];
-        const mapped = Array.isArray(data)
-          ? data.map((i: Record<string, unknown>) => ({
-              id: (i.id as string) || '',
-              plate: (i.vehiclePlate as string) || (i.plate as string) || '',
-              vehicle: (i.vehicleName as string) || (i.vehicle as string) || '',
-              customer: (i.customerName as string) || (i.customer as string) || '',
-              type: (i.type as string) || (i.inspectionType as string) || '',
-              status: (i.status as string) || 'pending',
-              date: i.createdAt ? new Date(i.createdAt as string).toLocaleDateString('it-IT') : '',
-              score: (i.score as number) || null,
-            }))
-          : [];
-        setInspections(mapped);
-      })
-      .catch(() => setInspections([]))
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: rawData, isLoading } = useSWR<Record<string, unknown>>('/api/inspections', fetcher);
+
+  const inspections: InspectionItem[] = (() => {
+    const data = rawData?.data || rawData || [];
+    return Array.isArray(data)
+      ? data.map((i: Record<string, unknown>) => ({
+          id: (i.id as string) || '',
+          plate: (i.vehiclePlate as string) || (i.plate as string) || '',
+          vehicle: (i.vehicleName as string) || (i.vehicle as string) || '',
+          customer: (i.customerName as string) || (i.customer as string) || '',
+          type: (i.type as string) || (i.inspectionType as string) || '',
+          status: (i.status as string) || 'pending',
+          date: i.createdAt ? new Date(i.createdAt as string).toLocaleDateString('it-IT') : '',
+          score: (i.score as number) || null,
+        }))
+      : [];
+  })();
 
   const filteredInspections = inspections.filter(
     inspection =>

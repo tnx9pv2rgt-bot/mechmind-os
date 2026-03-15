@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Plus, Filter, Calendar } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { PortalPageWrapper } from '@/components/portal';
@@ -15,67 +17,56 @@ import { Booking, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalBookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/bookings');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+    mutate,
+  } = useSWR<{ data: Booking[] }>('/api/portal/bookings', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load bookings (${response.status})`);
-        }
+  const bookings = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento delle prenotazioni'
+    : null;
 
-        const result = await response.json();
-        const data = (result.data || []) as Booking[];
-        setBookings(data);
-        setFilteredBookings(data);
-      } catch (err) {
-        console.error('Bookings load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle prenotazioni');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  useEffect(() => {
+  const filteredBookings = useMemo(() => {
     const now = new Date();
-    let filtered = bookings;
-
     switch (filter) {
       case 'upcoming':
-        filtered = bookings.filter(
+        return bookings.filter(
           b =>
             new Date(b.scheduledDate) >= now &&
             ['pending', 'confirmed', 'in_progress'].includes(b.status)
         );
-        break;
       case 'past':
-        filtered = bookings.filter(
+        return bookings.filter(
           b =>
             new Date(b.scheduledDate) < now ||
             ['completed', 'cancelled', 'no_show'].includes(b.status)
         );
-        break;
       default:
-        filtered = bookings;
+        return bookings;
     }
-
-    setFilteredBookings(filtered);
   }, [filter, bookings]);
 
   const handleCancel = (id: string) => {
     if (confirm('Sei sicuro di voler cancellare questa prenotazione?')) {
-      setBookings(prev =>
-        prev.map(b => (b.id === id ? { ...b, status: 'cancelled' as const } : b))
+      mutate(
+        current =>
+          current
+            ? {
+                ...current,
+                data: current.data.map(b =>
+                  b.id === id ? { ...b, status: 'cancelled' as Booking['status'] } : b
+                ),
+              }
+            : current,
+        false
       );
     }
   };

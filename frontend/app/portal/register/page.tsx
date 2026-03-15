@@ -23,6 +23,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PortalAuthService } from '@/lib/auth/portal-auth-client';
+import { z } from 'zod';
+
+const registerStep1Schema = z.object({
+  firstName: z.string().min(2, 'Il nome è obbligatorio'),
+  lastName: z.string().min(2, 'Il cognome è obbligatorio'),
+  email: z.string().email('Email non valida'),
+  phone: z.string().min(6, 'Numero di telefono non valido'),
+});
+
+const registerStep2Schema = z
+  .object({
+    password: z.string().min(8, 'La password deve avere almeno 8 caratteri'),
+    confirmPassword: z.string().min(1, 'Conferma la password'),
+    gdprConsent: z.literal(true, {
+      errorMap: () => ({ message: 'Devi accettare la privacy policy' }),
+    }),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Le password non coincidono',
+    path: ['confirmPassword'],
+  });
+
+type RegisterErrors = Partial<Record<string, string>>;
 
 export default function PortalRegisterPage() {
   const [formData, setFormData] = useState({
@@ -38,37 +61,38 @@ export default function PortalRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<RegisterErrors>({});
   const [step, setStep] = useState(1);
 
   const router = useRouter();
 
-  const validateStep1 = () => {
-    if (!formData.firstName || !formData.lastName) {
-      setError('Inserisci nome e cognome');
-      return false;
-    }
-    if (!formData.email || !formData.email.includes('@')) {
-      setError('Inserisci un indirizzo email valido');
-      return false;
-    }
-    if (!formData.phone || formData.phone.length < 10) {
-      setError('Inserisci un numero di telefono valido');
+  const validateStep1 = (): boolean => {
+    setFieldErrors({});
+    const result = registerStep1Schema.safeParse(formData);
+    if (!result.success) {
+      const errs: RegisterErrors = {};
+      for (const issue of result.error.issues) {
+        const key = String(issue.path[0]);
+        if (!errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      setError(Object.values(errs)[0] ?? null);
       return false;
     }
     return true;
   };
 
-  const validateStep2 = () => {
-    if (formData.password.length < 8) {
-      setError('La password deve essere di almeno 8 caratteri');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Le password non coincidono');
-      return false;
-    }
-    if (!formData.gdprConsent) {
-      setError("Devi accettare l'informativa sulla privacy");
+  const validateStep2 = (): boolean => {
+    setFieldErrors({});
+    const result = registerStep2Schema.safeParse(formData);
+    if (!result.success) {
+      const errs: RegisterErrors = {};
+      for (const issue of result.error.issues) {
+        const key = String(issue.path[0]);
+        if (!errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      setError(Object.values(errs)[0] ?? null);
       return false;
     }
     return true;
@@ -205,6 +229,9 @@ export default function PortalRegisterPage() {
                             className='pl-12 h-12 rounded-xl'
                           />
                         </div>
+                        {fieldErrors.firstName && (
+                          <p className='text-xs text-apple-red'>{fieldErrors.firstName}</p>
+                        )}
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='lastName'>Cognome</Label>
@@ -218,6 +245,9 @@ export default function PortalRegisterPage() {
                             className='h-12 rounded-xl'
                           />
                         </div>
+                        {fieldErrors.lastName && (
+                          <p className='text-xs text-apple-red'>{fieldErrors.lastName}</p>
+                        )}
                       </div>
                     </div>
 
@@ -236,6 +266,9 @@ export default function PortalRegisterPage() {
                           className='pl-12 h-12 rounded-xl'
                         />
                       </div>
+                      {fieldErrors.email && (
+                        <p className='text-xs text-apple-red'>{fieldErrors.email}</p>
+                      )}
                     </div>
 
                     {/* Phone */}
@@ -253,6 +286,9 @@ export default function PortalRegisterPage() {
                           className='pl-12 h-12 rounded-xl'
                         />
                       </div>
+                      {fieldErrors.phone && (
+                        <p className='text-xs text-apple-red'>{fieldErrors.phone}</p>
+                      )}
                     </div>
 
                     <AppleButton
@@ -298,6 +334,9 @@ export default function PortalRegisterPage() {
                       <p className='text-xs text-apple-gray dark:text-[#636366]'>
                         Minimo 8 caratteri
                       </p>
+                      {fieldErrors.password && (
+                        <p className='text-xs text-apple-red'>{fieldErrors.password}</p>
+                      )}
                     </div>
 
                     {/* Confirm Password */}
@@ -317,32 +356,40 @@ export default function PortalRegisterPage() {
                           className='pl-12 h-12 rounded-xl'
                         />
                       </div>
+                      {fieldErrors.confirmPassword && (
+                        <p className='text-xs text-apple-red'>{fieldErrors.confirmPassword}</p>
+                      )}
                     </div>
 
                     {/* GDPR Consent */}
-                    <div className='flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'>
-                      <Shield className='h-5 w-5 text-apple-blue flex-shrink-0 mt-0.5' />
-                      <div className='flex-1'>
-                        <div className='flex items-start gap-3'>
-                          <Checkbox
-                            id='gdpr'
-                            checked={formData.gdprConsent}
-                            onCheckedChange={checked =>
-                              setFormData({ ...formData, gdprConsent: checked as boolean })
-                            }
-                          />
-                          <Label
-                            htmlFor='gdpr'
-                            className='text-sm text-apple-dark dark:text-[#ececec] cursor-pointer'
-                          >
-                            Accetto l&apos;{' '}
-                            <Link href='/privacy' className='text-apple-blue hover:underline'>
-                              informativa sulla privacy
-                            </Link>{' '}
-                            e il trattamento dei dati personali (GDPR)
-                          </Label>
+                    <div className='space-y-2'>
+                      <div className='flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'>
+                        <Shield className='h-5 w-5 text-apple-blue flex-shrink-0 mt-0.5' />
+                        <div className='flex-1'>
+                          <div className='flex items-start gap-3'>
+                            <Checkbox
+                              id='gdpr'
+                              checked={formData.gdprConsent}
+                              onCheckedChange={checked =>
+                                setFormData({ ...formData, gdprConsent: checked as boolean })
+                              }
+                            />
+                            <Label
+                              htmlFor='gdpr'
+                              className='text-sm text-apple-dark dark:text-[#ececec] cursor-pointer'
+                            >
+                              Accetto l&apos;{' '}
+                              <Link href='/privacy' className='text-apple-blue hover:underline'>
+                                informativa sulla privacy
+                              </Link>{' '}
+                              e il trattamento dei dati personali (GDPR)
+                            </Label>
+                          </div>
                         </div>
                       </div>
+                      {fieldErrors.gdprConsent && (
+                        <p className='text-xs text-apple-red'>{fieldErrors.gdprConsent}</p>
+                      )}
                     </div>
 
                     {/* Marketing Consent */}

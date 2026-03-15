@@ -24,6 +24,7 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
+import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import {
   useTenantSettings,
@@ -33,6 +34,25 @@ import {
   useMfaVerify,
   useChangePassword,
 } from '@/hooks/useApi';
+
+const settingsSchema = z.object({
+  name: z
+    .string()
+    .optional()
+    .refine(v => !v || v.length >= 2, 'Il nome deve avere almeno 2 caratteri'),
+  email: z
+    .string()
+    .optional()
+    .refine(v => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'Formato email non valido'),
+  phone: z
+    .string()
+    .optional()
+    .refine(v => !v || v.length >= 6, 'Numero di telefono non valido'),
+  vatNumber: z.string().optional(),
+  address: z.string().optional(),
+});
+
+type SettingsErrors = Partial<Record<keyof z.infer<typeof settingsSchema>, string>>;
 
 const fadeInDown = {
   initial: { opacity: 0, y: -20 },
@@ -64,16 +84,29 @@ export default function SettingsPage() {
   const saveSettings = useSaveSettings();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
+  const [settingsErrors, setSettingsErrors] = useState<SettingsErrors>({});
 
   const handleSave = async () => {
+    setSettingsErrors({});
+    const dataToValidate = {
+      name: formData.name || settings?.name,
+      email: formData.email || settings?.email,
+      phone: formData.phone || settings?.phone,
+      vatNumber: formData.vatNumber || settings?.vatNumber,
+      address: formData.address || settings?.address,
+    };
+    const result = settingsSchema.safeParse(dataToValidate);
+    if (!result.success) {
+      const fieldErrors: SettingsErrors = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof SettingsErrors;
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      setSettingsErrors(fieldErrors);
+      return;
+    }
     try {
-      await saveSettings.mutateAsync({
-        name: formData.name || settings?.name,
-        email: formData.email || settings?.email,
-        phone: formData.phone || settings?.phone,
-        vatNumber: formData.vatNumber || settings?.vatNumber,
-        address: formData.address || settings?.address,
-      });
+      await saveSettings.mutateAsync(dataToValidate);
       setSaved(true);
       toast.success('Impostazioni salvate');
       setTimeout(() => setSaved(false), 2000);
@@ -152,6 +185,9 @@ export default function SettingsPage() {
                         placeholder={settingsLoading ? 'Caricamento...' : 'Nome officina'}
                         className='h-12 rounded-xl border-apple-border dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'
                       />
+                      {settingsErrors.name && (
+                        <p className='text-xs text-apple-red'>{settingsErrors.name}</p>
+                      )}
                     </div>
                     <div className='space-y-2'>
                       <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
@@ -163,6 +199,9 @@ export default function SettingsPage() {
                         type='email'
                         className='h-12 rounded-xl border-apple-border dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'
                       />
+                      {settingsErrors.email && (
+                        <p className='text-xs text-apple-red'>{settingsErrors.email}</p>
+                      )}
                     </div>
                     <div className='space-y-2'>
                       <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
@@ -173,6 +212,9 @@ export default function SettingsPage() {
                         onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
                         className='h-12 rounded-xl border-apple-border dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'
                       />
+                      {settingsErrors.phone && (
+                        <p className='text-xs text-apple-red'>{settingsErrors.phone}</p>
+                      )}
                     </div>
                     <div className='space-y-2'>
                       <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>

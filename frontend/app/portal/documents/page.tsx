@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { FileText, Search, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PortalPageWrapper } from '@/components/portal';
@@ -13,41 +15,26 @@ import { Document, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalDocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'maintenance' | 'inspections'>(
     'all'
   );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/documents');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+  } = useSWR<{ data: Document[] }>('/api/portal/documents', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load documents (${response.status})`);
-        }
+  const documents = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento dei documenti'
+    : null;
 
-        const result = await response.json();
-        const data = (result.data || []) as Document[];
-        setDocuments(data);
-        setFilteredDocuments(data);
-      } catch (err) {
-        console.error('Documents load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento dei documenti');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  useEffect(() => {
+  const filteredDocuments = useMemo(() => {
     let filtered = documents;
 
     // Filter by tab
@@ -68,7 +55,7 @@ export default function PortalDocumentsPage() {
       );
     }
 
-    setFilteredDocuments(filtered);
+    return filtered;
   }, [activeTab, searchQuery, documents]);
 
   const handleDownload = (id: string) => {

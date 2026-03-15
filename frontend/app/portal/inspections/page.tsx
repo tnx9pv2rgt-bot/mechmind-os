@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { FileText, Filter, TrendingUp } from 'lucide-react';
 import { PortalPageWrapper } from '@/components/portal';
 import { InspectionList } from '@/components/portal';
@@ -13,43 +15,25 @@ import { CustomerInspection, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalInspectionsPage() {
-  const [inspections, setInspections] = useState<CustomerInspection[]>([]);
-  const [filteredInspections, setFilteredInspections] = useState<CustomerInspection[]>([]);
   const [filter, setFilter] = useState<'all' | 'completed' | 'approved'>('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/inspections');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+  } = useSWR<{ data: CustomerInspection[] }>('/api/portal/inspections', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load inspections (${response.status})`);
-        }
+  const inspections = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento delle ispezioni'
+    : null;
 
-        const result = await response.json();
-        const data = (result.data || []) as CustomerInspection[];
-        setInspections(data);
-        setFilteredInspections(data);
-      } catch (err) {
-        console.error('Inspections load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle ispezioni');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    let filtered = inspections;
-    if (filter !== 'all') {
-      filtered = inspections.filter(i => i.status === filter);
-    }
-    setFilteredInspections(filtered);
+  const filteredInspections = useMemo(() => {
+    if (filter === 'all') return inspections;
+    return inspections.filter(i => i.status === filter);
   }, [filter, inspections]);
 
   const averageScore =

@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Shield, Plus } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { PortalPageWrapper } from '@/components/portal';
@@ -14,33 +16,20 @@ import { WarrantyInfo, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalWarrantyPage() {
-  const [warranties, setWarranties] = useState<WarrantyInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/warranty');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+  } = useSWR<{ data: WarrantyInfo[] }>('/api/portal/warranty', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load warranties (${response.status})`);
-        }
-
-        const result = await response.json();
-        const data = (result.data || []) as WarrantyInfo[];
-        setWarranties(data);
-      } catch (err) {
-        console.error('Warranty load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle garanzie');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  const warranties = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento delle garanzie'
+    : null;
 
   const router = useRouter();
 

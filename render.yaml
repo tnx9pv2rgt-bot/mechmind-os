@@ -89,6 +89,9 @@ services:
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
+      # Sentry (configure DSN in Render dashboard)
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false
 
   - type: redis
     name: nexo-redis

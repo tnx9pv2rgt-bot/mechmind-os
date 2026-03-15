@@ -23,6 +23,40 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PortalPageWrapper } from '@/components/portal';
 import { Customer, NotificationPreferences } from '@/lib/types/portal';
+import { z } from 'zod';
+
+const profileSchema = z.object({
+  firstName: z
+    .string()
+    .optional()
+    .refine(v => !v || v.length >= 2, 'Il nome deve avere almeno 2 caratteri'),
+  lastName: z
+    .string()
+    .optional()
+    .refine(v => !v || v.length >= 2, 'Il cognome deve avere almeno 2 caratteri'),
+  email: z
+    .string()
+    .optional()
+    .refine(v => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'Formato email non valido'),
+  phone: z
+    .string()
+    .optional()
+    .refine(v => !v || v.length >= 6, 'Numero di telefono non valido'),
+});
+
+const passwordSchema = z
+  .object({
+    current: z.string().min(1, 'Inserisci la password attuale'),
+    new: z.string().min(8, 'La nuova password deve avere almeno 8 caratteri'),
+    confirm: z.string().min(1, 'Conferma la nuova password'),
+  })
+  .refine(data => data.new === data.confirm, {
+    message: 'Le password non coincidono',
+    path: ['confirm'],
+  });
+
+type ProfileErrors = Partial<Record<keyof z.infer<typeof profileSchema>, string>>;
+type PasswordErrors = Partial<Record<'current' | 'new' | 'confirm', string>>;
 
 // ============================================
 // MAIN COMPONENT
@@ -33,6 +67,8 @@ export default function PortalSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
+  const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
 
   // Profile form
   const [profile, setProfile] = useState({
@@ -96,6 +132,17 @@ export default function PortalSettingsPage() {
   }, []);
 
   const handleSaveProfile = async () => {
+    setProfileErrors({});
+    const result = profileSchema.safeParse(profile);
+    if (!result.success) {
+      const fieldErrors: ProfileErrors = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof ProfileErrors;
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      setProfileErrors(fieldErrors);
+      return;
+    }
     setIsSaving(true);
     try {
       const res = await fetch('/api/portal/profile', {
@@ -113,6 +160,17 @@ export default function PortalSettingsPage() {
   };
 
   const handleSavePassword = async () => {
+    setPasswordErrors({});
+    const result = passwordSchema.safeParse(password);
+    if (!result.success) {
+      const fieldErrors: PasswordErrors = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof PasswordErrors;
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      setPasswordErrors(fieldErrors);
+      return;
+    }
     setIsSaving(true);
     try {
       const res = await fetch('/api/auth/password/change', {
@@ -210,6 +268,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setProfile({ ...profile, firstName: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {profileErrors.firstName && (
+                    <p className='text-xs text-apple-red'>{profileErrors.firstName}</p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='lastName'>Cognome</Label>
@@ -219,6 +280,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setProfile({ ...profile, lastName: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {profileErrors.lastName && (
+                    <p className='text-xs text-apple-red'>{profileErrors.lastName}</p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='email'>Email</Label>
@@ -229,6 +293,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setProfile({ ...profile, email: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {profileErrors.email && (
+                    <p className='text-xs text-apple-red'>{profileErrors.email}</p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='phone'>Telefono</Label>
@@ -239,6 +306,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setProfile({ ...profile, phone: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {profileErrors.phone && (
+                    <p className='text-xs text-apple-red'>{profileErrors.phone}</p>
+                  )}
                 </div>
               </div>
               <div className='mt-6 flex justify-end'>
@@ -274,6 +344,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setPassword({ ...password, current: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {passwordErrors.current && (
+                    <p className='text-xs text-apple-red'>{passwordErrors.current}</p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='newPassword'>Nuova Password</Label>
@@ -284,6 +357,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setPassword({ ...password, new: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {passwordErrors.new && (
+                    <p className='text-xs text-apple-red'>{passwordErrors.new}</p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='confirmPassword'>Conferma Nuova Password</Label>
@@ -294,6 +370,9 @@ export default function PortalSettingsPage() {
                     onChange={e => setPassword({ ...password, confirm: e.target.value })}
                     className='h-12 rounded-xl'
                   />
+                  {passwordErrors.confirm && (
+                    <p className='text-xs text-apple-red'>{passwordErrors.confirm}</p>
+                  )}
                 </div>
               </div>
               <div className='mt-6 flex justify-end'>
