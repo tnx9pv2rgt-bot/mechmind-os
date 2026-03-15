@@ -80,121 +80,246 @@ export default function Step2Page() {
 
   if (!isLoaded) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#212121] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <div className='fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#212121] flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-blue-500' />
       </div>
     );
   }
 
   return (
-    <FormLayout 
-      step={2} 
-      title="Indirizzo & Fiscali" 
-      subtitle="Dati di residenza e informazioni fiscali"
+    <FormLayout
+      step={2}
+      title='Indirizzo & Fiscali'
+      subtitle='Dati di residenza e informazioni fiscali'
       onBack={handleBack}
       onNext={handleSubmit(onSubmit)}
       isSubmitting={isSubmitting}
     >
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
+        className='space-y-6'
       >
         {/* Section Header with Icon */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center">
-            <MapPin className="w-6 h-6 text-white" />
+        <div className='flex items-center gap-3 mb-6'>
+          <div className='w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center'>
+            <MapPin className='w-6 h-6 text-white' />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-[#ececec]">Indirizzo</h2>
-            <p className="text-gray-500 dark:text-[#636366] text-sm">Dati di residenza del cliente</p>
+            <h2 className='text-xl font-semibold text-gray-900 dark:text-[#ececec]'>Indirizzo</h2>
+            <p className='text-gray-500 dark:text-[#636366] text-sm'>
+              Dati di residenza del cliente
+            </p>
           </div>
         </div>
 
         {/* Indirizzo */}
-        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
-          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Indirizzo</Label>
-          <div className="relative">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+          <Label
+            htmlFor='address'
+            className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+          >
+            Indirizzo
+          </Label>
+          <div className='relative'>
+            <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
             <Input
+              id='address'
               {...register('address')}
-              className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-              placeholder="Via Roma 123"
+              autoComplete='street-address'
+              aria-invalid={!!errors.address}
+              aria-describedby={errors.address ? 'address-error' : undefined}
+              className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+              placeholder='Via Roma 123'
             />
           </div>
-          {errors.address && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.address.message}</p>}
+          <div className='min-h-[20px]'>
+            {errors.address && (
+              <p
+                id='address-error'
+                role='alert'
+                aria-live='assertive'
+                className='text-red-500 dark:text-red-400 text-sm mt-2'
+              >
+                {errors.address.message}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Città, CAP, Provincia */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
-            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Provincia</Label>
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+          <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+            <Label
+              htmlFor='province'
+              className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+            >
+              Provincia
+            </Label>
             <Input
+              id='province'
               {...register('province')}
-              className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
-              placeholder="MI"
+              autoComplete='address-level1'
+              aria-invalid={!!errors.province}
+              aria-describedby={errors.province ? 'province-error' : undefined}
+              className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase'
+              placeholder='MI'
               maxLength={2}
             />
-            {errors.province && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.province.message}</p>}
+            <div className='min-h-[20px]'>
+              {errors.province && (
+                <p
+                  id='province-error'
+                  role='alert'
+                  aria-live='assertive'
+                  className='text-red-500 dark:text-red-400 text-sm mt-2'
+                >
+                  {errors.province.message}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
-            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">CAP</Label>
+          <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+            <Label
+              htmlFor='zipCode'
+              className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+            >
+              CAP
+            </Label>
             <Input
+              id='zipCode'
               {...register('zipCode')}
-              className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-              placeholder="20100"
+              autoComplete='postal-code'
+              aria-invalid={!!errors.zipCode}
+              aria-describedby={errors.zipCode ? 'zipCode-error' : undefined}
+              className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+              placeholder='20100'
               maxLength={5}
             />
-            {errors.zipCode && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.zipCode.message}</p>}
+            <div className='min-h-[20px]'>
+              {errors.zipCode && (
+                <p
+                  id='zipCode-error'
+                  role='alert'
+                  aria-live='assertive'
+                  className='text-red-500 dark:text-red-400 text-sm mt-2'
+                >
+                  {errors.zipCode.message}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
-            <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Città</Label>
+          <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+            <Label
+              htmlFor='city'
+              className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+            >
+              Città
+            </Label>
             <Input
+              id='city'
               {...register('city')}
-              className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-              placeholder="Milano"
+              autoComplete='address-level2'
+              aria-invalid={!!errors.city}
+              aria-describedby={errors.city ? 'city-error' : undefined}
+              className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+              placeholder='Milano'
             />
-            {errors.city && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.city.message}</p>}
+            <div className='min-h-[20px]'>
+              {errors.city && (
+                <p
+                  id='city-error'
+                  role='alert'
+                  aria-live='assertive'
+                  className='text-red-500 dark:text-red-400 text-sm mt-2'
+                >
+                  {errors.city.message}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Dati Fiscali Section */}
-        <div className="flex items-center gap-3 mb-6 pt-4">
-          <div className="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center">
-            <CreditCard className="w-6 h-6 text-white" />
+        <div className='flex items-center gap-3 mb-6 pt-4'>
+          <div className='w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center'>
+            <CreditCard className='w-6 h-6 text-white' />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-[#ececec]">Dati Fiscali</h2>
-            <p className="text-gray-500 dark:text-[#636366] text-sm">Informazioni fiscali del cliente</p>
+            <h2 className='text-xl font-semibold text-gray-900 dark:text-[#ececec]'>
+              Dati Fiscali
+            </h2>
+            <p className='text-gray-500 dark:text-[#636366] text-sm'>
+              Informazioni fiscali del cliente
+            </p>
           </div>
         </div>
 
         {/* Codice Fiscale */}
-        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
-          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Codice Fiscale</Label>
-          <div className="relative">
-            <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+          <Label
+            htmlFor='fiscalCode'
+            className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+          >
+            Codice Fiscale
+          </Label>
+          <div className='relative'>
+            <CreditCard className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
             <Input
+              id='fiscalCode'
               {...register('fiscalCode')}
-              className="pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
-              placeholder="RSSMRA80A01F205X"
+              autoComplete='off'
+              aria-invalid={!!errors.fiscalCode}
+              aria-describedby={errors.fiscalCode ? 'fiscalCode-error' : undefined}
+              className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase'
+              placeholder='RSSMRA80A01F205X'
               maxLength={16}
             />
           </div>
-          {errors.fiscalCode && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{errors.fiscalCode.message}</p>}
+          <div className='min-h-[20px]'>
+            {errors.fiscalCode && (
+              <p
+                id='fiscalCode-error'
+                role='alert'
+                aria-live='assertive'
+                className='text-red-500 dark:text-red-400 text-sm mt-2'
+              >
+                {errors.fiscalCode.message}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* P.IVA */}
-        <div className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]">
-          <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">
-            Partita IVA {isBusiness && <span className="text-red-500">*</span>}
+        <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+          <Label
+            htmlFor='vatNumber'
+            className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+          >
+            Partita IVA {isBusiness && <span className='text-red-500'>*</span>}
           </Label>
           <Input
+            id='vatNumber'
             {...register('vatNumber', { required: isBusiness })}
-            className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-            placeholder="IT12345678901"
+            autoComplete='off'
+            aria-required={isBusiness}
+            aria-invalid={!!errors.vatNumber}
+            aria-describedby={errors.vatNumber ? 'vatNumber-error' : undefined}
+            className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+            placeholder='IT12345678901'
           />
-          {errors.vatNumber && <p className="text-red-500 dark:text-red-400 text-sm mt-2">Partita IVA richiesta per aziende</p>}
+          <div className='min-h-[20px]'>
+            {errors.vatNumber && (
+              <p
+                id='vatNumber-error'
+                role='alert'
+                aria-live='assertive'
+                className='text-red-500 dark:text-red-400 text-sm mt-2'
+              >
+                Partita IVA richiesta per aziende
+              </p>
+            )}
+          </div>
         </div>
 
         {/* SDI e PEC (solo se azienda) */}
@@ -202,30 +327,44 @@ export default function Step2Page() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]"
+            className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'
           >
-            <div className="flex items-center gap-2 text-sm text-blue-600 mb-4">
-              <Building2 className="w-4 h-4" />
-              <span className="font-medium">Dati fatturazione elettronica</span>
+            <div className='flex items-center gap-2 text-sm text-blue-600 mb-4'>
+              <Building2 className='w-4 h-4' />
+              <span className='font-medium'>Dati fatturazione elettronica</span>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
               <div>
-                <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">Codice SDI</Label>
+                <Label
+                  htmlFor='sdiCode'
+                  className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+                >
+                  Codice SDI
+                </Label>
                 <Input
+                  id='sdiCode'
                   {...register('sdiCode')}
-                  className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
-                  placeholder="XXXXXXX"
+                  autoComplete='off'
+                  className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase'
+                  placeholder='XXXXXXX'
                   maxLength={7}
                 />
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block">PEC</Label>
+                <Label
+                  htmlFor='pec'
+                  className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+                >
+                  PEC
+                </Label>
                 <Input
-                  type="email"
+                  id='pec'
+                  type='email'
                   {...register('pec')}
-                  className="h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-                  placeholder="pec@azienda.it"
+                  autoComplete='email'
+                  className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                  placeholder='pec@azienda.it'
                 />
               </div>
             </div>

@@ -25,7 +25,14 @@ const obd_module_1 = require("./obd/obd.module");
 const parts_module_1 = require("./parts/parts.module");
 const subscription_module_1 = require("./subscription/subscription.module");
 const iot_module_1 = require("./iot/iot.module");
+const fleet_module_1 = require("./fleet/fleet.module");
+const tire_module_1 = require("./tire/tire.module");
+const estimate_module_1 = require("./estimate/estimate.module");
+const labor_guide_module_1 = require("./labor-guide/labor-guide.module");
+const accounting_module_1 = require("./accounting/accounting.module");
 const admin_module_1 = require("./admin/admin.module");
+const invoice_module_1 = require("./invoice/invoice.module");
+const work_order_module_1 = require("./work-order/work-order.module");
 const logger_interceptor_1 = require("./common/interceptors/logger.interceptor");
 const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
 let AppModule = class AppModule {
@@ -60,7 +67,14 @@ exports.AppModule = AppModule = __decorate([
             parts_module_1.PartsModule,
             subscription_module_1.SubscriptionModule,
             iot_module_1.IotModule,
+            fleet_module_1.FleetModule,
+            tire_module_1.TireModule,
+            estimate_module_1.EstimateModule,
+            labor_guide_module_1.LaborGuideModule,
+            accounting_module_1.AccountingModule,
             admin_module_1.AdminModule,
+            invoice_module_1.InvoiceModule,
+            work_order_module_1.WorkOrderModule,
         ],
         providers: [
             {

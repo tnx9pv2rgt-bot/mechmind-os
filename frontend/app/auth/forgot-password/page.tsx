@@ -1,415 +1,208 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { 
-  Mail, 
-  ArrowLeft,
-  ArrowRight,
-  Loader2,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react'
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
-// Utility per classi condizionali
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-// Animation variants per Framer Motion (stessi di /auth)
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: 'spring',
-      stiffness: 300,
-      damping: 24,
-    },
-  },
-}
-
-const cardVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 40,
-    scale: 0.96,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 300,
-      damping: 30,
-      duration: 0.6,
-    },
-  },
-}
-
-const backgroundVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 1.2,
-      ease: 'easeOut',
-    },
-  },
-}
-
-// Componente Input stile iOS (identico a /auth)
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string
-  icon?: React.ReactNode
-  error?: string
-}
-
-function IOSInput({ label, icon, error, className, type, ...props }: InputProps) {
-  return (
-    <div className="w-full">
-      {label && (
-        <label className="mb-2 block text-sm font-medium text-foreground/80">
-          {label}
-        </label>
-      )}
-      <div
-        className={cn(
-          'group relative flex items-center overflow-hidden rounded-2xl bg-white/50 dark:bg-[#2f2f2f]/50 backdrop-blur-sm transition-all duration-300',
-          'border border-white/30 dark:border-[#424242]/30 shadow-sm',
-          'focus-within:border-apple-blue/50 focus-within:bg-white/80 dark:focus-within:bg-[#2f2f2f]/80 focus-within:shadow-md',
-          'hover:bg-white/60 dark:hover:bg-[#353535]/60',
-          error && 'border-apple-red/50 focus-within:border-apple-red/50',
-          className
-        )}
-      >
-        {icon && (
-          <div className="pointer-events-none absolute left-4 flex items-center justify-center text-foreground/40 transition-colors group-focus-within:text-apple-blue">
-            {icon}
-          </div>
-        )}
-        <input
-          type={type}
-          className={cn(
-            'h-14 w-full bg-transparent px-4 text-body text-foreground placeholder:text-foreground/40',
-            'focus:outline-none',
-            icon && 'pl-12'
-          )}
-          {...props}
-        />
-      </div>
-      {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-2 flex items-center gap-1.5 text-sm text-apple-red"
-        >
-          <AlertCircle className="h-4 w-4" />
-          {error}
-        </motion.p>
-      )}
-    </div>
-  )
-}
-
-// Componente Button stile Apple (identico a /auth)
-type ButtonVariant = 'primary' | 'secondary' | 'outline'
-type ButtonSize = 'default' | 'lg'
-
-interface AppleButtonProps {
-  children: React.ReactNode
-  variant?: ButtonVariant
-  size?: ButtonSize
-  isLoading?: boolean
-  disabled?: boolean
-  className?: string
-  type?: 'button' | 'submit' | 'reset'
-  onClick?: React.MouseEventHandler<HTMLButtonElement>
-  ariaLabel?: string
-}
-
-function AppleButton({
-  children,
-  variant = 'primary',
-  size = 'default',
-  isLoading,
-  disabled,
-  className,
-  type = 'button',
-  ariaLabel,
-  ...props
-}: AppleButtonProps) {
-  const variants = {
-    primary: 'bg-apple-blue text-white hover:bg-apple-blue-hover shadow-lg shadow-apple-blue/25',
-    secondary: 'bg-white/80 text-apple-dark dark:text-[#ececec] hover:bg-white shadow-md backdrop-blur-sm',
-    outline: 'bg-transparent text-apple-dark dark:text-[#ececec] border border-foreground/20 hover:bg-foreground/5',
-  }
-
-  const sizes = {
-    default: 'h-12 px-6 text-base',
-    lg: 'h-14 px-8 text-lg',
-  }
-
-  return (
-    <motion.button
-      type={type}
-      aria-label={ariaLabel}
-      whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
-      whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-      className={cn(
-        'relative inline-flex items-center justify-center rounded-2xl font-medium transition-all duration-300',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue focus-visible:ring-offset-2',
-        variants[variant],
-        sizes[size],
-        (disabled || isLoading) && 'opacity-50 cursor-not-allowed',
-        className
-      )}
-      disabled={disabled || isLoading}
-      {...props}
-    >
-      {isLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
-      ) : (
-        children
-      )}
-    </motion.button>
-  )
-}
-
-// Main Component
 export default function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [focused, setFocused] = useState(false);
+
+  const hasValue = email.length > 0;
+  const isFloating = focused || hasValue;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-    // Validazione email
     if (!email) {
-      setError('Inserisci la tua email')
-      setIsLoading(false)
-      return
+      setError('Inserisci la tua email');
+      setIsLoading(false);
+      return;
     }
-    
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Inserisci un\'email valida')
-      setIsLoading(false)
-      return
+      setError("Inserisci un'email valida");
+      setIsLoading(false);
+      return;
     }
 
     try {
-      // Chiamata API per richiedere reset password
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Errore durante l\'invio')
+        throw new Error("Errore durante l'invio");
       }
 
-      setIsSuccess(true)
-    } catch (err) {
-      setError('Non siamo riusciti a inviare l\'email. Riprova più tardi.')
+      setIsSuccess(true);
+    } catch {
+      setError("Non siamo riusciti a inviare l'email. Riprova più tardi.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-apple-light-gray dark:bg-[#212121]">
-      {/* Background Gradient Orbs - Liquid Glass Effect (identico a /auth) */}
-      <motion.div
-        variants={backgroundVariants}
-        initial="hidden"
-        animate="visible"
-        className="pointer-events-none fixed inset-0"
-      >
-        {/* Gradient Orbs */}
-        <div className="absolute -left-[20%] -top-[10%] h-[70vh] w-[70vh] rounded-full bg-gradient-to-br from-apple-blue/30 via-apple-purple/20 to-transparent blur-[120px]" />
-        <div className="absolute -right-[20%] top-[20%] h-[60vh] w-[60vh] rounded-full bg-gradient-to-bl from-apple-blue/25 via-cyan-400/20 to-transparent blur-[100px]" />
-        <div className="absolute bottom-[5%] left-[10%] h-[50vh] w-[50vh] rounded-full bg-gradient-to-tr from-apple-purple/20 via-apple-blue/15 to-transparent blur-[90px]" />
-        
-        {/* Noise texture overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          }}
-        />
-      </motion.div>
-
-      {/* Main Content */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <motion.div
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full max-w-[420px]"
+    <div className='flex min-h-screen w-full flex-col bg-[#f4f4f4] dark:bg-[#212121] overflow-hidden'>
+      {/* Header */}
+      <header className='relative flex items-center justify-center px-6 pt-6 pb-2'>
+        <Link
+          href='/auth'
+          className='absolute left-6 text-[15px] font-medium text-[#0d0d0d] dark:text-[#ececec] hover:opacity-50 transition-opacity'
         >
-          {/* Glass Card */}
-          <div className="relative overflow-hidden rounded-[32px] bg-white/70 dark:bg-[#2f2f2f]/70 p-8 shadow-2xl shadow-apple-dark/5 backdrop-blur-3xl ring-1 ring-white/50 dark:ring-[#424242]/50 sm:p-10">
-            {/* Card Shine Effect */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent" />
-            
-            {/* Card Border Glow */}
-            <div className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-inset ring-white/60" />
+          &larr; Indietro
+        </Link>
+        <span className='text-[15px] font-semibold text-[#0d0d0d] dark:text-[#ececec]'>
+          MechMind OS
+        </span>
+      </header>
 
-            {/* Content */}
+      {/* Content */}
+      <main className='flex flex-1 flex-col items-center justify-center px-6 pb-12'>
+        <div className='w-full max-w-[440px]'>
+          {isSuccess ? (
             <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="relative"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className='text-center space-y-5'
             >
-              {/* Back Link */}
-              <motion.div variants={itemVariants} className="mb-6">
-                <Link
-                  href="/auth"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-apple-gray dark:text-[#636366] transition-colors hover:text-apple-blue"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Torna al login
-                </Link>
-              </motion.div>
-
-              {/* Title & Description */}
-              <motion.div variants={itemVariants} className="mb-8 text-center">
-                <h1 className="text-title-1 font-semibold tracking-tight text-apple-dark dark:text-[#ececec]">
+              <div className='inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec]'>
+                <CheckCircle2 className='h-7 w-7 text-white dark:text-[#0d0d0d]' />
+              </div>
+              <h1 className='text-[28px] font-bold text-[#0d0d0d] dark:text-[#ececec] tracking-tight'>
+                Controlla la tua email
+              </h1>
+              <p className='text-[15px] text-[#636366] dark:text-[#636366] leading-relaxed max-w-[320px] mx-auto'>
+                Abbiamo inviato un link di reset a{' '}
+                <strong className='text-[#0d0d0d] dark:text-[#ececec]'>{email}</strong>
+              </p>
+              <p className='text-[13px] text-[#636366]'>
+                Se non trovi l&apos;email, controlla anche nella cartella spam.
+              </p>
+              <Link
+                href='/auth'
+                className='inline-block text-[14px] font-medium text-[#636366] dark:text-[#636366] hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors'
+              >
+                Torna al login
+              </Link>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className='space-y-5'
+            >
+              <div className='text-center mb-6'>
+                <h1 className='text-[28px] font-bold text-[#0d0d0d] dark:text-[#ececec] tracking-tight'>
                   Password dimenticata?
                 </h1>
-                <p className="mt-2 text-body text-apple-gray dark:text-[#636366]">
-                  Inserisci la tua email e ti invieremo un link per reimpostare la password
+                <p className='mt-2 text-[15px] text-[#636366] dark:text-[#636366] leading-relaxed'>
+                  Inserisci la tua email e ti invieremo un link per reimpostare la password.
                 </p>
-              </motion.div>
+              </div>
 
-              {/* Success State */}
-              {isSuccess ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center"
-                >
-                  <div className="mb-4 flex justify-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                      <CheckCircle2 className="h-8 w-8 text-green-600" />
-                    </div>
-                  </div>
-                  <h2 className="mb-2 text-lg font-semibold text-apple-dark dark:text-[#ececec]">
-                    Email inviata!
-                  </h2>
-                  <p className="mb-6 text-sm text-apple-gray dark:text-[#636366]">
-                    Controlla la tua casella di posta per il link di reset. Se non trovi l&apos;email, controlla anche nella cartella spam.
-                  </p>
-                  <Link href="/auth">
-                    <AppleButton variant="secondary" className="w-full">
-                      Torna al login
-                    </AppleButton>
-                  </Link>
-                </motion.div>
-              ) : (
-                /* Forgot Password Form */
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <motion.div variants={itemVariants}>
-                    <IOSInput
-                      name="email"
-                      type="email"
-                      label="Email"
-                      placeholder="nome@officina.it"
-                      icon={<Mail className="h-5 w-5" />}
-                      error={error || undefined}
-                      autoComplete="email"
-                      autoFocus
-                      aria-label="Indirizzo email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </motion.div>
-
-                  <motion.div variants={itemVariants}>
-                    <AppleButton
-                      type="submit"
-                      size="lg"
-                      isLoading={isLoading}
-                      disabled={!email}
-                      className="w-full"
-                    >
-                      {!isLoading && (
-                        <>
-                          Invia link di reset
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </>
-                      )}
-                    </AppleButton>
-                  </motion.div>
-
-                  {/* Help Text */}
-                  <motion.p 
-                    variants={itemVariants}
-                    className="text-center text-xs text-apple-gray dark:text-[#636366]"
+              <form onSubmit={handleSubmit} className='space-y-5'>
+                {/* Email input — same FloatingInput style as login */}
+                <div className='w-full'>
+                  <div
+                    className={`relative rounded-2xl border transition-colors duration-200 ${
+                      error
+                        ? 'border-red-500 dark:border-red-400'
+                        : focused
+                          ? 'border-[#0d0d0d] dark:border-[#ececec]'
+                          : 'border-[#e5e5e5] dark:border-[#424242]'
+                    }`}
                   >
-                    Non ricordi l&apos;email?{' '}
-                    <Link 
-                      href="/support" 
-                      className="text-apple-blue hover:underline"
+                    <label
+                      className={`absolute left-4 transition-all duration-200 pointer-events-none ${
+                        isFloating
+                          ? 'top-2 text-[11px] font-medium'
+                          : 'top-1/2 -translate-y-1/2 text-[15px]'
+                      } ${
+                        error
+                          ? 'text-red-500 dark:text-red-400'
+                          : focused
+                            ? 'text-[#0d0d0d] dark:text-[#ececec]'
+                            : 'text-[#636366] dark:text-[#636366]'
+                      }`}
                     >
-                      Contatta il supporto
-                    </Link>
-                  </motion.p>
-                </form>
-              )}
+                      Indirizzo e-mail
+                    </label>
+                    <input
+                      type='email'
+                      name='email'
+                      autoComplete='email'
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      onFocus={() => setFocused(true)}
+                      onBlur={() => setFocused(false)}
+                      autoFocus
+                      className='w-full bg-transparent rounded-2xl px-4 pt-6 pb-2 text-[15px] text-[#0d0d0d] dark:text-[#ececec] focus:outline-none'
+                    />
+                  </div>
+                  {error && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className='mt-2 flex items-center gap-1.5 text-[13px] text-red-600 dark:text-red-400'
+                    >
+                      <AlertCircle className='h-3.5 w-3.5 shrink-0' /> {error}
+                    </motion.p>
+                  )}
+                </div>
 
-              {/* Footer Links */}
-              {!isSuccess && (
-                <motion.div variants={itemVariants} className="mt-8 text-center">
-                  <p className="text-sm text-apple-gray dark:text-[#636366]">
-                    Ricordi la password?{' '}
-                    <Link
-                      href="/auth"
-                      className="font-medium text-apple-blue transition-colors hover:text-apple-blue-hover hover:underline"
-                    >
-                      Accedi
-                    </Link>
-                  </p>
-                </motion.div>
-              )}
+                <button
+                  type='submit'
+                  disabled={isLoading || !email}
+                  className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d] h-[56px] text-[15px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] active:bg-[#424242] dark:active:bg-[#c0c0c0] transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+                >
+                  {isLoading ? <Loader2 className='h-5 w-5 animate-spin' /> : 'Invia link di reset'}
+                </button>
+              </form>
+
+              <div className='text-center'>
+                <p className='text-[13px] text-[#636366]'>
+                  Ricordi la password?{' '}
+                  <Link
+                    href='/auth'
+                    className='font-medium text-[#0d0d0d] dark:text-[#ececec] hover:opacity-50 transition-opacity'
+                  >
+                    Accedi
+                  </Link>
+                </p>
+              </div>
             </motion.div>
-          </div>
+          )}
+        </div>
+      </main>
 
-          {/* Version Badge */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="mt-6 text-center text-xs text-foreground/20"
-          >
-            MechMind OS v10.0
-          </motion.p>
-        </motion.div>
-      </div>
+      {/* Footer */}
+      <footer className='flex items-center justify-center gap-3 px-6 pb-6 pt-2'>
+        <Link
+          href='/terms'
+          className='text-[13px] text-[#6b6b6b] dark:text-[#6e6e6e] hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors'
+        >
+          Condizioni d&apos;uso
+        </Link>
+        <span className='text-[#d9d9d9] dark:text-[#424242]'>|</span>
+        <Link
+          href='/privacy'
+          className='text-[13px] text-[#6b6b6b] dark:text-[#6e6e6e] hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors'
+        >
+          Informativa sulla privacy
+        </Link>
+      </footer>
     </div>
-  )
+  );
 }

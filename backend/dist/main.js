@@ -84,6 +84,13 @@ async function bootstrap() {
     logger.log(`📚 Swagger documentation available at /api/docs`);
     logger.log(`🔒 Environment: ${configService.get('NODE_ENV', 'development')}`);
 }
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', error => {
+    console.error('Uncaught Exception:', error);
+    setTimeout(() => process.exit(1), 1000);
+});
 bootstrap().catch(error => {
     console.error('Failed to start application:', error);
     process.exit(1);

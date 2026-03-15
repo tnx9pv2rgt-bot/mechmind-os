@@ -71,6 +71,42 @@ __decorate([
 ], CreateCustomerDto.prototype, "marketingConsent", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
+        description: 'GDPR consent timestamp (ISO 8601)',
+        example: '2026-03-15T10:00:00.000Z',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "gdprConsentAt", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Privacy policy version accepted',
+        example: '2.0',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "gdprPrivacyVersion", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Method used to collect GDPR consent',
+        example: 'form-checkbox',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "gdprConsentMethod", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Marketing consent timestamp (ISO 8601)',
+        example: '2026-03-15T10:00:00.000Z',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "marketingConsentAt", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
         description: 'Customer notes',
         example: 'Preferred contact time: morning',
     }),

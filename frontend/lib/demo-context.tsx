@@ -1,45 +1,35 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 // =============================================================================
 // Constants
 // =============================================================================
 const DEMO_KEY = 'mechmind_demo';
-const DEMO_CLICKS_KEY = 'mechmind_demo_clicks';
-const MAX_CLICKS = 100;
+const DEMO_DURATION = 60 * 60; // 1 hour in seconds
 
 // =============================================================================
 // Context
 // =============================================================================
 interface DemoContextType {
   isDemo: boolean;
-  clicksLeft: number;
-  totalClicks: number;
+  secondsLeft: number;
   exitDemo: () => void;
 }
 
 const DemoContext = createContext<DemoContextType>({
   isDemo: false,
-  clicksLeft: MAX_CLICKS,
-  totalClicks: 0,
+  secondsLeft: DEMO_DURATION,
   exitDemo: () => {},
 });
 
 export const useDemo = () => useContext(DemoContext);
 
 // =============================================================================
-// Helper — check demo flag
+// Helpers
 // =============================================================================
 export function isDemoMode(): boolean {
   if (typeof window === 'undefined') return false;
@@ -50,72 +40,86 @@ export function setDemoMode(active: boolean): void {
   if (typeof window === 'undefined') return;
   if (active) {
     localStorage.setItem(DEMO_KEY, 'true');
-    localStorage.setItem(DEMO_CLICKS_KEY, '0');
+    sessionStorage.setItem('demo_start', Date.now().toString());
   } else {
     localStorage.removeItem(DEMO_KEY);
-    localStorage.removeItem(DEMO_CLICKS_KEY);
-    // Clear demo session cookie via API
+    sessionStorage.removeItem('demo_start');
     fetch('/api/auth/demo-session', { method: 'DELETE' }).catch(() => {});
   }
 }
 
+function getSecondsLeft(): number {
+  if (typeof window === 'undefined') return DEMO_DURATION;
+  const start = sessionStorage.getItem('demo_start');
+  if (!start) {
+    sessionStorage.setItem('demo_start', Date.now().toString());
+    return DEMO_DURATION;
+  }
+  const elapsed = Math.floor((Date.now() - parseInt(start, 10)) / 1000);
+  return Math.max(0, DEMO_DURATION - elapsed);
+}
+
 // =============================================================================
-// Demo Wall — fullscreen modal after limit
+// DemoExpiredModal — blocking, no close
 // =============================================================================
-function DemoWall({ onClose }: { onClose: () => void }) {
+function DemoExpiredModal() {
   const router = useRouter();
+
+  // Block ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') e.preventDefault();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-6"
+      className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-6'
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="relative w-full max-w-[420px] rounded-3xl bg-white dark:bg-[#2f2f2f] p-8 text-center"
+        className='relative w-full max-w-[420px] rounded-3xl bg-white dark:bg-[#2f2f2f] p-8 text-center'
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[#636366] hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="mb-6">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-black dark:bg-white">
-            <span className="text-2xl">&#x1F680;</span>
+        <div className='mb-6'>
+          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec]'>
+            <span className='text-2xl'>&#x23F0;</span>
           </div>
-          <h2 className="text-[24px] font-bold text-[#0d0d0d] dark:text-[#ececec] tracking-tight">
-            Ti piace MechMind?
+          <h2 className='text-[24px] font-bold text-[#0d0d0d] dark:text-[#ececec] tracking-tight'>
+            La demo è terminata
           </h2>
-          <p className="mt-2 text-[15px] text-[#636366] leading-relaxed">
-            Hai esaurito le 100 azioni della demo gratuita. Crea un account per continuare a gestire la tua officina.
+          <p className='mt-2 text-[15px] text-[#636366] leading-relaxed'>
+            Hai provato MechMind OS per 1 ora. Registrati gratis per continuare con 7 giorni di
+            trial completo.
+          </p>
+          <p className='mt-3 text-[13px] text-[#636366]'>
+            &#x1F527; 850+ officine usano già MechMind OS
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className='space-y-3'>
           <button
             onClick={() => {
               setDemoMode(false);
-              router.push('/auth');
+              router.push('/auth/register');
             }}
-            className="flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d] h-[52px] text-[15px] font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
+            className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d] h-[40px] text-[15px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] transition-colors'
           >
-            Registrati gratis
+            Registrati gratis — 7 giorni trial
           </button>
           <button
             onClick={() => {
               setDemoMode(false);
               router.push('/auth');
             }}
-            className="flex w-full items-center justify-center rounded-full border border-[#e5e5e5] dark:border-[#424242] h-[52px] text-[15px] font-medium text-[#0d0d0d] dark:text-[#ececec] hover:bg-[#ebebeb] dark:hover:bg-[#3a3a3a] transition-colors"
+            className='text-[13px] font-medium text-[#636366] hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors'
           >
-            Ho gi\u00E0 un account
+            Torna al login
           </button>
         </div>
       </motion.div>
@@ -124,37 +128,75 @@ function DemoWall({ onClose }: { onClose: () => void }) {
 }
 
 // =============================================================================
-// Demo Banner — persistent top bar
+// DemoExitIntent — bottom-right card, appears once when mouse leaves window
 // =============================================================================
-function DemoBanner({ clicksLeft, onExit }: { clicksLeft: number; onExit: () => void }) {
-  const pct = Math.max(0, (clicksLeft / MAX_CLICKS) * 100);
-  const isLow = clicksLeft <= 20;
+function DemoExitIntent({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      className='fixed bottom-4 right-4 z-[9997] max-w-sm w-full shadow-2xl rounded-xl border p-4 bg-white dark:bg-[#2f2f2f] border-[#e5e5e5] dark:border-[#424242]'
+    >
+      <button
+        onClick={onClose}
+        className='absolute top-2 right-3 text-[#636366] hover:text-[#0d0d0d] dark:hover:text-[#ececec] text-lg transition-colors'
+        aria-label='Chiudi'
+      >
+        &times;
+      </button>
+      <p className='font-semibold text-[14px] text-[#0d0d0d] dark:text-[#ececec] mb-1'>
+        Aspetta! Non perdere i tuoi progressi
+      </p>
+      <p className='text-[13px] text-[#636366] mb-3'>
+        Registrati gratis e continua da dove eri rimasto. 7 giorni senza carta di credito.
+      </p>
+      <a
+        href='/auth/register'
+        className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d] h-[36px] text-[13px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] transition-colors'
+      >
+        Registrati gratis
+      </a>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// Demo Banner — top bar with timer
+// =============================================================================
+function DemoBanner({ secondsLeft, onExit }: { secondsLeft: number; onExit: () => void }) {
+  const m = Math.floor(secondsLeft / 60)
+    .toString()
+    .padStart(2, '0');
+  const s = (secondsLeft % 60).toString().padStart(2, '0');
+  const isUrgent = secondsLeft < 600;
+  const isCritical = secondsLeft < 300;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9998] bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d]">
-      <div className="flex items-center justify-between px-4 py-2 text-[13px]">
-        <span className="font-medium">
-          Modalità demo {isLow ? '— ' : '— '}
-          <span className={isLow ? 'text-red-400 dark:text-red-600 font-bold' : ''}>
-            {clicksLeft} azioni rimaste
-          </span>
-        </span>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:block w-32 h-1.5 rounded-full bg-white/20 dark:bg-black/20 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                isLow ? 'bg-red-400 dark:bg-red-600' : 'bg-white dark:bg-black'
-              }`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <button
-            onClick={onExit}
-            className="text-[13px] font-semibold underline underline-offset-2 hover:opacity-70 transition-opacity"
+    <div className='w-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d]'>
+      <div className='flex items-center justify-between px-4 py-2 text-[13px]'>
+        <span className='font-medium'>
+          Modalità demo —{' '}
+          <span
+            className={
+              isCritical
+                ? 'font-mono font-bold text-red-400 dark:text-red-600 animate-pulse'
+                : isUrgent
+                  ? 'font-mono font-bold text-orange-400 dark:text-orange-600'
+                  : 'font-mono font-semibold'
+            }
           >
-            Registrati
-          </button>
-        </div>
+            {m}:{s}
+          </span>{' '}
+          rimast{secondsLeft === 1 ? 'o' : 'i'}
+        </span>
+        <button
+          onClick={onExit}
+          className='text-[13px] font-semibold underline underline-offset-2 hover:opacity-70 transition-opacity'
+        >
+          Registrati gratis
+        </button>
       </div>
     </div>
   );
@@ -163,41 +205,77 @@ function DemoBanner({ clicksLeft, onExit }: { clicksLeft: number; onExit: () => 
 // =============================================================================
 // Demo Provider
 // =============================================================================
-export function DemoProvider({ children, initialIsDemo = false }: { children: React.ReactNode; initialIsDemo?: boolean }) {
+export function DemoProvider({
+  children,
+  initialIsDemo = false,
+}: {
+  children: React.ReactNode;
+  initialIsDemo?: boolean;
+}) {
   const [isDemo, setIsDemo] = useState(initialIsDemo);
-  const [totalClicks, setTotalClicks] = useState(0);
-  const [showWall, setShowWall] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(DEMO_DURATION);
+  const [showExpired, setShowExpired] = useState(false);
+  const [showExitIntent, setShowExitIntent] = useState(false);
   const router = useRouter();
-  const clicksRef = useRef(0);
+  const fiveMinToastShown = useRef(false);
 
-  // Init from localStorage
+  // Init
   useEffect(() => {
     const demo = localStorage.getItem(DEMO_KEY) === 'true';
     setIsDemo(demo);
     if (demo) {
-      const clicks = parseInt(localStorage.getItem(DEMO_CLICKS_KEY) || '0', 10);
-      setTotalClicks(clicks);
-      clicksRef.current = clicks;
-      if (clicks >= MAX_CLICKS) setShowWall(true);
+      const left = getSecondsLeft();
+      setSecondsLeft(left);
+      if (left <= 0) setShowExpired(true);
     }
   }, []);
 
-  // Track clicks globally
+  // Timer countdown
+  useEffect(() => {
+    if (!isDemo || showExpired) return;
+
+    const interval = setInterval(() => {
+      const left = getSecondsLeft();
+      setSecondsLeft(left);
+
+      // Toast at 5 minutes
+      if (left <= 300 && left > 0 && !fiveMinToastShown.current) {
+        fiveMinToastShown.current = true;
+        toast.warning('Hai ancora 5 minuti di demo — registrati gratis!', {
+          duration: 8000,
+          action: {
+            label: 'Registrati',
+            onClick: () => {
+              window.location.href = '/auth/register';
+            },
+          },
+        });
+      }
+
+      if (left <= 0) {
+        clearInterval(interval);
+        setShowExpired(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isDemo, showExpired]);
+
+  // Exit-intent detection
   useEffect(() => {
     if (!isDemo) return;
+    if (sessionStorage.getItem('exit_intent_shown')) return;
 
-    const handleClick = () => {
-      clicksRef.current += 1;
-      const newCount = clicksRef.current;
-      setTotalClicks(newCount);
-      localStorage.setItem(DEMO_CLICKS_KEY, String(newCount));
-      if (newCount >= MAX_CLICKS) {
-        setShowWall(true);
+    const handler = (e: MouseEvent) => {
+      if (e.clientY < 10) {
+        setShowExitIntent(true);
+        sessionStorage.setItem('exit_intent_shown', '1');
+        document.removeEventListener('mouseleave', handler);
       }
     };
 
-    document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
+    document.addEventListener('mouseleave', handler);
+    return () => document.removeEventListener('mouseleave', handler);
   }, [isDemo]);
 
   const exitDemo = useCallback(() => {
@@ -206,19 +284,16 @@ export function DemoProvider({ children, initialIsDemo = false }: { children: Re
     router.push('/auth');
   }, [router]);
 
-  const clicksLeft = Math.max(0, MAX_CLICKS - totalClicks);
-
   return (
-    <DemoContext.Provider value={{ isDemo, clicksLeft, totalClicks, exitDemo }}>
-      <div>
-        {isDemo && <DemoBanner clicksLeft={clicksLeft} onExit={exitDemo} />}
-      </div>
-      <div className={isDemo ? 'pt-[40px]' : ''}>
-        {children}
-      </div>
+    <DemoContext.Provider value={{ isDemo, secondsLeft, exitDemo }}>
+      {isDemo && !showExpired && <DemoBanner secondsLeft={secondsLeft} onExit={exitDemo} />}
+      {children}
       <AnimatePresence>
-        {showWall && <DemoWall onClose={() => setShowWall(false)} />}
+        {showExitIntent && !showExpired && (
+          <DemoExitIntent onClose={() => setShowExitIntent(false)} />
+        )}
       </AnimatePresence>
+      {showExpired && <DemoExpiredModal />}
     </DemoContext.Provider>
   );
 }

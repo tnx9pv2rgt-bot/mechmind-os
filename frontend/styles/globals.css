@@ -296,6 +296,21 @@
   box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2) !important;
 }
 
+/* Previene zoom automatico iOS su input — WCAG 2.5.5 */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,

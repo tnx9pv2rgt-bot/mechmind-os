@@ -28,6 +28,8 @@ let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
             try {
                 const pubClient = new ioredis_1.Redis(redisUrl);
                 const subClient = pubClient.duplicate();
+                pubClient.on('error', err => this.logger.warn(`Socket.io Redis pub error: ${err.message}`));
+                subClient.on('error', err => this.logger.warn(`Socket.io Redis sub error: ${err.message}`));
                 const ioServer = this.server.server || this.server;
                 if (typeof ioServer.adapter === 'function') {
                     ioServer.adapter((0, redis_adapter_1.createAdapter)(pubClient, subClient));

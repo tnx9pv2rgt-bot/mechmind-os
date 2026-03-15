@@ -63,8 +63,11 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
                 port: config.port,
                 password: config.password,
                 db: config.db,
+                lazyConnect: true,
                 retryStrategy: (times) => {
-                    const delay = Math.min(times * 50, 2000);
+                    if (times > 3)
+                        return null;
+                    const delay = Math.min(times * 500, 2000);
                     this.logger.warn(`Redis reconnection attempt ${times}, retrying in ${delay}ms`);
                     return delay;
                 },
@@ -75,13 +78,6 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
             }
             this.publisher = new ioredis_1.default(redisOptions);
             this.subscriber = new ioredis_1.default(redisOptions);
-            this.publisher.on('connect', () => {
-                this.logger.log('Redis publisher connected');
-            });
-            this.subscriber.on('connect', () => {
-                this.logger.log('Redis subscriber connected');
-                this.isConnected = true;
-            });
             this.publisher.on('error', err => {
                 this.logger.error('Redis publisher error:', err.message);
             });
@@ -89,14 +85,22 @@ let RedisPubSubService = RedisPubSubService_1 = class RedisPubSubService {
                 this.logger.error('Redis subscriber error:', err.message);
                 this.isConnected = false;
             });
+            this.publisher.on('connect', () => {
+                this.logger.log('Redis publisher connected');
+            });
+            this.subscriber.on('connect', () => {
+                this.logger.log('Redis subscriber connected');
+                this.isConnected = true;
+            });
             this.subscriber.on('message', (channel, message) => {
                 this.handleMessage(channel, message);
             });
+            await Promise.all([this.publisher.connect(), this.subscriber.connect()]);
             this.logger.log('Redis Pub/Sub service initialized');
         }
         catch (error) {
-            this.logger.error('Failed to connect to Redis:', error instanceof Error ? error.message : 'Unknown error');
-            throw error;
+            this.logger.error('Failed to connect to Redis Pub/Sub:', error instanceof Error ? error.message : 'Unknown error');
+            this.isConnected = false;
         }
     }
     async disconnect() {

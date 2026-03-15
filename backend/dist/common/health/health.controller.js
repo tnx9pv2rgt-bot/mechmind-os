@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const prisma_service_1 = require("../services/prisma.service");
 const redis_service_1 = require("../services/redis.service");
 const logger_service_1 = require("../services/logger.service");
@@ -36,14 +37,14 @@ let HealthController = class HealthController {
                 ? redisCheck.value
                 : { status: 'down', error: 'Check failed' };
         const allUp = Object.values(checks).every(c => c.status === 'up');
-        const allDown = Object.values(checks).every(c => c.status === 'down');
+        const dbUp = checks.database?.status === 'up';
         const result = {
-            status: allUp ? 'ok' : allDown ? 'unhealthy' : 'degraded',
+            status: allUp ? 'ok' : dbUp ? 'degraded' : 'unhealthy',
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
             checks,
         };
-        const statusCode = allUp ? common_1.HttpStatus.OK : common_1.HttpStatus.SERVICE_UNAVAILABLE;
+        const statusCode = dbUp ? common_1.HttpStatus.OK : common_1.HttpStatus.SERVICE_UNAVAILABLE;
         res.status(statusCode).json(result);
     }
     liveness() {
@@ -107,6 +108,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], HealthController.prototype, "readiness", null);
 exports.HealthController = HealthController = __decorate([
+    (0, throttler_1.SkipThrottle)(),
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         redis_service_1.RedisService,
