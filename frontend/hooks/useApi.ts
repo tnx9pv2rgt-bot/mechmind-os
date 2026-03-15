@@ -119,7 +119,11 @@ interface CreateCustomerInput {
   firstName?: string;
   lastName?: string;
   gdprConsent?: boolean;
+  gdprConsentAt?: string;
+  gdprPrivacyVersion?: string;
+  gdprConsentMethod?: string;
   marketingConsent?: boolean;
+  marketingConsentAt?: string;
   notes?: string;
 }
 

@@ -19,6 +19,8 @@ import { useState, useEffect } from 'react';
 import { FormLayout } from '@/components/customers/FormLayout';
 import { useFormSession } from '@/hooks/useFormSession';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useCreateCustomer, useCreateVehicle } from '@/hooks/useApi';
 
 export default function Step4Page() {
@@ -27,6 +29,8 @@ export default function Step4Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [gdprAccepted, setGdprAccepted] = useState(false);
+  const [gdprError, setGdprError] = useState(false);
   const createCustomer = useCreateCustomer();
   const createVehicle = useCreateVehicle();
 
@@ -38,6 +42,10 @@ export default function Step4Page() {
   }, [isLoaded, formData, router]);
 
   const handleSubmit = async () => {
+    if (!gdprAccepted) {
+      setGdprError(true);
+      return;
+    }
     setIsSubmitting(true);
     setSubmitError(null);
     try {
@@ -59,13 +67,18 @@ export default function Step4Page() {
         noteParts.push(`[EXTRA_DATA]${JSON.stringify(extraFields)}`);
       }
 
+      const now = new Date().toISOString();
       const customer = await createCustomer.mutateAsync({
         phone: formData.phone,
         email: formData.email || undefined,
         firstName: formData.firstName || undefined,
         lastName: formData.lastName || undefined,
-        gdprConsent: true,
+        gdprConsent: gdprAccepted,
+        gdprConsentAt: now,
+        gdprPrivacyVersion: '2.0',
+        gdprConsentMethod: 'form-checkbox',
         marketingConsent: formData.marketingConsent || false,
+        marketingConsentAt: formData.marketingConsent ? now : undefined,
         notes: noteParts.length > 0 ? noteParts.join('\n') : undefined,
       });
 
@@ -398,6 +411,65 @@ export default function Step4Page() {
                 <span className='text-gray-500 text-xs uppercase tracking-wide'>Note</span>
                 <p className='text-gray-700 dark:text-[#ececec] mt-1'>{formData.notes}</p>
               </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Consenso GDPR */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28 }}
+          className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'
+        >
+          <div className='flex items-center gap-3 mb-4'>
+            <div className='w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center'>
+              <Shield className='w-5 h-5 text-white' />
+            </div>
+            <h3 className='font-semibold text-gray-900 dark:text-[#ececec] text-lg'>
+              Consenso Trattamento Dati
+            </h3>
+          </div>
+          <div className='flex items-start gap-3'>
+            <Checkbox
+              id='gdprConsent'
+              checked={gdprAccepted}
+              onCheckedChange={checked => {
+                setGdprAccepted(checked === true);
+                if (checked) setGdprError(false);
+              }}
+              aria-required='true'
+              aria-invalid={gdprError}
+              aria-describedby={gdprError ? 'gdpr-error' : undefined}
+              className='mt-1'
+            />
+            <Label
+              htmlFor='gdprConsent'
+              className='text-sm leading-relaxed text-gray-700 dark:text-[#ececec] cursor-pointer'
+            >
+              Ho letto e accetto il{' '}
+              <a
+                href='/privacy-policy'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='underline text-blue-600 dark:text-blue-400'
+              >
+                trattamento dei dati personali
+              </a>{' '}
+              ai sensi del GDPR 2016/679 e del Regolamento UE sulla protezione dei dati.{' '}
+              <span aria-hidden='true'>*</span>
+            </Label>
+          </div>
+          <div className='min-h-[20px] ml-7'>
+            {gdprError && (
+              <p
+                id='gdpr-error'
+                role='alert'
+                aria-live='assertive'
+                className='text-red-500 text-sm mt-1'
+              >
+                Devi accettare il trattamento dei dati per procedere
+              </p>
             )}
           </div>
         </motion.div>

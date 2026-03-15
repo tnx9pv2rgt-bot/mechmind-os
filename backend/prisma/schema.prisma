@@ -184,7 +184,10 @@ model Customer {
   phoneHash          String    @map("phone_hash") // For lookup without decryption
   gdprConsent        Boolean   @default(false) @map("gdpr_consent")
   gdprConsentAt      DateTime? @map("gdpr_consent_at")
+  gdprPrivacyVersion String?   @default("2.0") @map("gdpr_privacy_version")
+  gdprConsentMethod  String?   @default("form-checkbox") @map("gdpr_consent_method")
   marketingConsent   Boolean   @default(false) @map("marketing_consent")
+  marketingConsentAt DateTime? @map("marketing_consent_at")
   notes              String?
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
@@ -285,6 +288,7 @@ model Vehicle {
   // Service tracking
   lastServiceDate  DateTime? @map("last_service_date")
   nextServiceDueKm Int?      @map("next_service_due_km")
+  revisionExpiry   DateTime? @map("revision_expiry")
 
   // LPR relations
   entryExits      VehicleEntryExit[]

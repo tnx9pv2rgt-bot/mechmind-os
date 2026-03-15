@@ -63,8 +63,19 @@ export class CustomerService {
           encryptedLastName,
           phoneHash,
           gdprConsent: dto.gdprConsent || false,
-          gdprConsentAt: dto.gdprConsent ? new Date() : null,
+          gdprConsentAt: dto.gdprConsent
+            ? dto.gdprConsentAt
+              ? new Date(dto.gdprConsentAt)
+              : new Date()
+            : null,
+          gdprPrivacyVersion: dto.gdprPrivacyVersion ?? '2.0',
+          gdprConsentMethod: dto.gdprConsentMethod ?? 'form-checkbox',
           marketingConsent: dto.marketingConsent || false,
+          marketingConsentAt: dto.marketingConsent
+            ? dto.marketingConsentAt
+              ? new Date(dto.marketingConsentAt)
+              : new Date()
+            : null,
           notes: dto.notes || null,
           tenant: { connect: { id: tenantId } },
         },

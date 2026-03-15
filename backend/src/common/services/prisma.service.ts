@@ -17,14 +17,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   ) {
     const databaseUrl = configService.get<string>('DATABASE_URL') || '';
     const isProduction = configService.get<string>('NODE_ENV') === 'production';
-    const defaultPoolSize = isProduction ? 20 : 10;
+    const defaultPoolSize = isProduction ? 2 : 10;
     const connectionLimit = configService.get<number>('DATABASE_CONNECTION_LIMIT', defaultPoolSize);
 
-    // Append connection_limit if not already in the URL
+    // Append connection_limit and pool/connect timeouts if not already in the URL
     const separator = databaseUrl.includes('?') ? '&' : '?';
+    const poolTimeout = isProduction ? 20 : 30;
+    const connectTimeout = isProduction ? 20 : 30;
     const urlWithPooling = databaseUrl.includes('connection_limit')
       ? databaseUrl
-      : `${databaseUrl}${separator}connection_limit=${connectionLimit}`;
+      : `${databaseUrl}${separator}connection_limit=${connectionLimit}&pool_timeout=${poolTimeout}&connect_timeout=${connectTimeout}`;
 
     super({
       datasources: {
@@ -36,12 +38,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         maxWait: 5000,
         timeout: 15000,
       },
-      log: [
-        { emit: 'event', level: 'query' },
-        { emit: 'event', level: 'error' },
-        { emit: 'event', level: 'info' },
-        { emit: 'event', level: 'warn' },
-      ],
+      log: isProduction
+        ? [{ emit: 'event', level: 'error' }]
+        : [
+            { emit: 'event', level: 'query' },
+            { emit: 'event', level: 'error' },
+            { emit: 'event', level: 'info' },
+            { emit: 'event', level: 'warn' },
+          ],
     });
   }
 

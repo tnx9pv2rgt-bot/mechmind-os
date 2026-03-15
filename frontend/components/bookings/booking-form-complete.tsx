@@ -63,6 +63,7 @@ import {
   useCreateBooking,
   useTenantSettings,
 } from '@/hooks/useApi';
+import { useFormAutosave } from '@/hooks/useFormAutosave';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -121,6 +122,7 @@ const bookingFormSchema = z.object({
   vehicleYear: z.number().min(1900).max(2030),
   vehicleColor: z.string().optional(),
   vehicleVin: z.string().optional(),
+  vehicleKm: z.number().int().min(0).max(9999999).optional(),
 
   // Step 2: Appointment
   serviceType: z.enum([
@@ -214,6 +216,7 @@ export function BookingFormComplete() {
     setValue,
     getValues,
     trigger,
+    reset,
     formState: { errors },
     handleSubmit,
   } = useForm<BookingFormData>({
@@ -235,6 +238,8 @@ export function BookingFormComplete() {
       selectedPreventiveServices: [],
     },
   });
+
+  const { clearDraft, hasDraft } = useFormAutosave(watch, reset, 'booking_form_draft_v1');
 
   const watchServiceType = watch('serviceType');
   const watchUrgency = watch('urgency');
@@ -366,6 +371,7 @@ export function BookingFormComplete() {
         liftPosition: data.liftPosition,
         source: 'WEB',
       });
+      clearDraft();
       setIsSuccess(true);
     } catch {
       // Error is handled by React Query — toast can be added here
@@ -462,8 +468,14 @@ export function BookingFormComplete() {
                 <h1 className='text-3xl font-semibold text-apple-dark dark:text-[#ececec] tracking-tight'>
                   Nuova Prenotazione
                 </h1>
-                <p className='text-apple-gray dark:text-[#636366] mt-1'>
+                <p className='text-apple-gray dark:text-[#636366] mt-1 flex items-center gap-2'>
                   Crea un nuovo appuntamento per il cliente
+                  {hasDraft && (
+                    <span className='text-xs text-green-500 flex items-center gap-1'>
+                      <Check className='h-3 w-3' />
+                      Bozza salvata
+                    </span>
+                  )}
                 </p>
               </div>
               <div className='flex items-center gap-2'>
@@ -672,6 +684,7 @@ function Step1CustomerVehicle({
             }}
             onFocus={() => setShowCustomerDropdown(true)}
             placeholder='Cerca per nome, telefono o email...'
+            aria-label='Cerca cliente per nome, telefono o email'
             className='pl-12 h-14 rounded-2xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
           />
 
@@ -731,22 +744,43 @@ function Step1CustomerVehicle({
       </div>
 
       {/* Customer Details */}
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         <Controller
           name='customerName'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='customerName'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Nome e Cognome *
               </Label>
               <div className='relative'>
                 <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
-                <Input {...field} className='pl-12 h-12 rounded-xl' placeholder='Mario Rossi' />
+                <Input
+                  {...field}
+                  id='customerName'
+                  autoComplete='name'
+                  aria-required='true'
+                  aria-invalid={!!errors.customerName}
+                  aria-describedby={errors.customerName ? 'customerName-error' : undefined}
+                  className='pl-12 h-12 rounded-xl'
+                  placeholder='Mario Rossi'
+                />
               </div>
-              {errors.customerName && (
-                <p className='text-red-500 text-sm mt-1'>{errors.customerName.message as string}</p>
-              )}
+              <div className='min-h-[20px]'>
+                {errors.customerName && (
+                  <p
+                    id='customerName-error'
+                    role='alert'
+                    aria-live='assertive'
+                    className='text-red-500 text-sm mt-1'
+                  >
+                    {errors.customerName.message as string}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         />
@@ -756,18 +790,37 @@ function Step1CustomerVehicle({
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='customerPhone'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Telefono *
               </Label>
               <div className='relative'>
                 <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
-                <Input {...field} className='pl-12 h-12 rounded-xl' placeholder='+39 333 1234567' />
+                <Input
+                  {...field}
+                  id='customerPhone'
+                  autoComplete='tel'
+                  aria-required='true'
+                  aria-invalid={!!errors.customerPhone}
+                  aria-describedby={errors.customerPhone ? 'customerPhone-error' : undefined}
+                  className='pl-12 h-12 rounded-xl'
+                  placeholder='+39 333 1234567'
+                />
               </div>
-              {errors.customerPhone && (
-                <p className='text-red-500 text-sm mt-1'>
-                  {errors.customerPhone.message as string}
-                </p>
-              )}
+              <div className='min-h-[20px]'>
+                {errors.customerPhone && (
+                  <p
+                    id='customerPhone-error'
+                    role='alert'
+                    aria-live='assertive'
+                    className='text-red-500 text-sm mt-1'
+                  >
+                    {errors.customerPhone.message as string}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         />
@@ -777,23 +830,38 @@ function Step1CustomerVehicle({
           control={control}
           render={({ field }) => (
             <div className='col-span-2'>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='customerEmail'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Email *
               </Label>
               <div className='relative'>
                 <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
                 <Input
                   {...field}
+                  id='customerEmail'
                   type='email'
+                  autoComplete='email'
+                  aria-required='true'
+                  aria-invalid={!!errors.customerEmail}
+                  aria-describedby={errors.customerEmail ? 'customerEmail-error' : undefined}
                   className='pl-12 h-12 rounded-xl'
                   placeholder='mario@email.it'
                 />
               </div>
-              {errors.customerEmail && (
-                <p className='text-red-500 text-sm mt-1'>
-                  {errors.customerEmail.message as string}
-                </p>
-              )}
+              <div className='min-h-[20px]'>
+                {errors.customerEmail && (
+                  <p
+                    id='customerEmail-error'
+                    role='alert'
+                    aria-live='assertive'
+                    className='text-red-500 text-sm mt-1'
+                  >
+                    {errors.customerEmail.message as string}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         />
@@ -814,11 +882,19 @@ function Step1CustomerVehicle({
             control={control}
             render={({ field }) => (
               <div className='flex-1'>
-                <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+                <Label
+                  htmlFor='licensePlate'
+                  className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                >
                   Targa *
                 </Label>
                 <Input
                   {...field}
+                  id='licensePlate'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.licensePlate}
+                  aria-describedby={errors.licensePlate ? 'licensePlate-error' : undefined}
                   className='h-12 rounded-xl uppercase tracking-wider font-medium text-center text-lg'
                   placeholder='AB 123 CD'
                   maxLength={10}
@@ -878,6 +954,41 @@ function Step1CustomerVehicle({
             </div>
           </motion.div>
         )}
+
+        {/* Km attuali — DMS field */}
+        <Controller
+          name='vehicleKm'
+          control={control}
+          render={({ field }) => (
+            <div>
+              <Label
+                htmlFor='vehicleKm'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
+                Km attuali (opzionale)
+              </Label>
+              <Input
+                {...field}
+                id='vehicleKm'
+                type='number'
+                min={0}
+                max={9999999}
+                step={1}
+                autoComplete='off'
+                aria-describedby='vehicleKm-hint'
+                placeholder='es. 85000'
+                className='h-12 rounded-xl'
+                value={field.value ?? ''}
+                onChange={e =>
+                  field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)
+                }
+              />
+              <p id='vehicleKm-hint' className='text-xs text-apple-gray dark:text-[#636366] mt-1'>
+                Aggiornare i km aiuta a pianificare i prossimi tagliandi
+              </p>
+            </div>
+          )}
+        />
       </div>
     </motion.div>
   );
@@ -965,7 +1076,10 @@ function Step2AppointmentDetails({
 
       {/* Service Type */}
       <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
-        <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-4 block'>
+        <Label
+          htmlFor='serviceType'
+          className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-4 block'
+        >
           Tipo Intervento *
         </Label>
         <Controller
@@ -973,7 +1087,11 @@ function Step2AppointmentDetails({
           control={control}
           render={({ field }) => (
             <Select onValueChange={handleServiceTypeChange} defaultValue={field.value}>
-              <SelectTrigger className='h-14 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'>
+              <SelectTrigger
+                id='serviceType'
+                aria-required='true'
+                className='h-14 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+              >
                 <SelectValue placeholder='Seleziona tipo intervento' />
               </SelectTrigger>
               <SelectContent>
@@ -994,7 +1112,10 @@ function Step2AppointmentDetails({
             animate={{ opacity: 1, height: 'auto' }}
             className='mt-4'
           >
-            <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+            <Label
+              htmlFor='serviceSubtype'
+              className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+            >
               Sotto-categoria
             </Label>
             <Controller
@@ -1002,7 +1123,10 @@ function Step2AppointmentDetails({
               control={control}
               render={({ field }) => (
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger className='h-12 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'>
+                  <SelectTrigger
+                    id='serviceSubtype'
+                    className='h-12 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                  >
                     <SelectValue placeholder='Seleziona sotto-categoria' />
                   </SelectTrigger>
                   <SelectContent>
@@ -1058,7 +1182,10 @@ function Step2AppointmentDetails({
       {/* Description with Voice */}
       <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
         <div className='flex items-center justify-between mb-3'>
-          <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+          <Label
+            htmlFor='description'
+            className='text-sm font-medium text-apple-dark dark:text-[#ececec]'
+          >
             Descrizione / Richiesta Cliente *
           </Label>
           <button
@@ -1091,13 +1218,27 @@ function Step2AppointmentDetails({
             <>
               <Textarea
                 {...field}
+                id='description'
+                autoComplete='off'
+                aria-required='true'
+                aria-invalid={!!errors.description}
+                aria-describedby={errors.description ? 'description-error' : undefined}
                 className='min-h-[120px] rounded-xl resize-none bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
                 placeholder='Descrivi il problema o la richiesta del cliente...'
               />
               <div className='flex justify-between mt-2'>
-                {errors.description && (
-                  <p className='text-red-500 text-sm'>{errors.description.message as string}</p>
-                )}
+                <div className='min-h-[20px]'>
+                  {errors.description && (
+                    <p
+                      id='description-error'
+                      role='alert'
+                      aria-live='assertive'
+                      className='text-red-500 text-sm'
+                    >
+                      {errors.description.message as string}
+                    </p>
+                  )}
+                </div>
                 <span className='text-xs text-apple-gray/70 dark:text-[#636366] ml-auto'>
                   {field.value?.length || 0}/500
                 </span>
@@ -1124,22 +1265,43 @@ function Step2AppointmentDetails({
       </div>
 
       {/* Date & Time */}
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         <Controller
           name='date'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='date'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Data *
               </Label>
               <div className='relative'>
                 <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
-                <Input {...field} type='date' className='pl-12 h-12 rounded-xl' />
+                <Input
+                  {...field}
+                  id='date'
+                  type='date'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.date}
+                  aria-describedby={errors.date ? 'date-error' : undefined}
+                  className='pl-12 h-12 rounded-xl'
+                />
               </div>
-              {errors.date && (
-                <p className='text-red-500 text-sm mt-1'>{errors.date.message as string}</p>
-              )}
+              <div className='min-h-[20px]'>
+                {errors.date && (
+                  <p
+                    id='date-error'
+                    role='alert'
+                    aria-live='assertive'
+                    className='text-red-500 text-sm mt-1'
+                  >
+                    {errors.date.message as string}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         />
@@ -1149,16 +1311,37 @@ function Step2AppointmentDetails({
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='time'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Ora *
               </Label>
               <div className='relative'>
                 <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
-                <Input {...field} type='time' className='pl-12 h-12 rounded-xl' />
+                <Input
+                  {...field}
+                  id='time'
+                  type='time'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.time}
+                  aria-describedby={errors.time ? 'time-error' : undefined}
+                  className='pl-12 h-12 rounded-xl'
+                />
               </div>
-              {errors.time && (
-                <p className='text-red-500 text-sm mt-1'>{errors.time.message as string}</p>
-              )}
+              <div className='min-h-[20px]'>
+                {errors.time && (
+                  <p
+                    id='time-error'
+                    role='alert'
+                    aria-live='assertive'
+                    className='text-red-500 text-sm mt-1'
+                  >
+                    {errors.time.message as string}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         />
@@ -1195,17 +1378,23 @@ function Step2AppointmentDetails({
       </div>
 
       {/* Technician */}
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         <Controller
           name='technicianId'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='technicianId'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Tecnico Assegnato
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <SelectTrigger className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'>
+                <SelectTrigger
+                  id='technicianId'
+                  className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                >
                   <SelectValue placeholder='Seleziona tecnico' />
                 </SelectTrigger>
                 <SelectContent>
@@ -1244,11 +1433,17 @@ function Step2AppointmentDetails({
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>
+              <Label
+                htmlFor='liftPosition'
+                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              >
                 Posto Rialzo
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <SelectTrigger className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'>
+                <SelectTrigger
+                  id='liftPosition'
+                  className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                >
                   <SelectValue placeholder='Seleziona posto' />
                 </SelectTrigger>
                 <SelectContent>
@@ -1305,7 +1500,7 @@ function Step3Notifications({
             name='emailReminder'
             control={control}
             render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Switch id='emailReminder' checked={field.value} onCheckedChange={field.onChange} />
             )}
           />
         </div>
@@ -1351,7 +1546,7 @@ function Step3Notifications({
             name='smsReminder'
             control={control}
             render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Switch id='smsReminder' checked={field.value} onCheckedChange={field.onChange} />
             )}
           />
         </div>
@@ -1399,7 +1594,11 @@ function Step3Notifications({
             name='whatsappReminder'
             control={control}
             render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Switch
+                id='whatsappReminder'
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
             )}
           />
         </div>
@@ -1418,21 +1617,28 @@ function Step3Notifications({
             name='requireConfirmation'
             control={control}
             render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Switch
+                id='requireConfirmation'
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
             )}
           />
         </div>
 
         {watch('requireConfirmation') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'>
+            <Label
+              htmlFor='confirmationChannel'
+              className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
+            >
               Canale di conferma:
             </Label>
             <Controller
               name='confirmationChannel'
               control={control}
               render={({ field }) => (
-                <div className='flex gap-3'>
+                <div id='confirmationChannel' className='flex gap-3'>
                   {['sms', 'email', 'whatsapp'].map(channel => (
                     <button
                       key={channel}
@@ -1837,6 +2043,13 @@ function Step5AIFeatures({
           </p>
         </div>
       </div>
+
+      <p className='text-xs text-apple-gray dark:text-[#636366] mt-4'>
+        I dati inseriti saranno trattati ai sensi del GDPR 2016/679.{' '}
+        <a href='/privacy-policy' className='underline' target='_blank' rel='noopener noreferrer'>
+          Informativa privacy
+        </a>
+      </p>
     </motion.div>
   );
 }

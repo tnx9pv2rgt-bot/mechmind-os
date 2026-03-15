@@ -1,26 +1,40 @@
-'use client'
+'use client';
 
-import { useState, useCallback, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { 
-  Car, User, Hash, Calendar, Gauge, Fuel, 
-  Search, Check, AlertCircle, Loader2, Zap, 
-  Droplets, Battery, Wind, FileText, Sparkles,
-  ChevronDown, ChevronUp
-} from 'lucide-react'
-import { AppleButton } from '@/components/ui/apple-button'
-import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Car,
+  User,
+  Hash,
+  Calendar,
+  Gauge,
+  Fuel,
+  Search,
+  Check,
+  AlertCircle,
+  Loader2,
+  Zap,
+  Droplets,
+  Battery,
+  Wind,
+  FileText,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -28,16 +42,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { 
-  vehicleSchema, 
-  type VehicleFormValues, 
+} from '@/components/ui/form';
+import {
+  vehicleSchema,
+  type VehicleFormValues,
   formatLicensePlate,
   fuelTypeLabels,
   fuelTypeIcons,
   mockVINLookup,
-  type VINLookupResult
-} from '@/lib/validations/vehicle'
+  type VINLookupResult,
+} from '@/lib/validations/vehicle';
 
 /** Local form values with English field names matching the form */
 interface VehicleFormLocalValues {
@@ -56,18 +70,19 @@ interface VehicleFormLocalValues {
   nextServiceDate: string;
   registrationDate: string;
   insuranceExpiry: string;
+  revisionExpiry: string;
   notes: string;
 }
 
 export interface VehicleFormProps {
-  onSubmit: (data: VehicleFormLocalValues) => Promise<void>
-  onCancel?: () => void
-  initialData?: Partial<VehicleFormLocalValues>
-  customers?: Array<{ id: string; name: string }>
+  onSubmit: (data: VehicleFormLocalValues) => Promise<void>;
+  onCancel?: () => void;
+  initialData?: Partial<VehicleFormLocalValues>;
+  customers?: Array<{ id: string; name: string }>;
 }
 
-type FormStatus = 'idle' | 'loading' | 'success' | 'error'
-type VINStatus = 'idle' | 'loading' | 'success' | 'error' | 'not_found'
+type FormStatus = 'idle' | 'loading' | 'success' | 'error';
+type VINStatus = 'idle' | 'loading' | 'success' | 'error' | 'not_found';
 
 const slideUpVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -80,31 +95,36 @@ const slideUpVariants = {
       ease: [0.25, 0.1, 0.25, 1],
     },
   }),
-}
+};
 
 const fuelIcons: Record<string, React.ReactNode> = {
-  'benzina': <Droplets className="h-4 w-4 text-amber-500" />,
-  'diesel': <Wind className="h-4 w-4 text-gray-600" />,
-  'elettrico': <Battery className="h-4 w-4 text-green-500" />,
-  'ibrido': <Zap className="h-4 w-4 text-blue-500" />,
-  'gpl': <FlameIcon />,
-  'metano': <Wind className="h-4 w-4 text-cyan-500" />,
-}
+  benzina: <Droplets className='h-4 w-4 text-amber-500' />,
+  diesel: <Wind className='h-4 w-4 text-gray-600' />,
+  elettrico: <Battery className='h-4 w-4 text-green-500' />,
+  ibrido: <Zap className='h-4 w-4 text-blue-500' />,
+  gpl: <FlameIcon />,
+  metano: <Wind className='h-4 w-4 text-cyan-500' />,
+};
 
 function FlameIcon() {
   return (
-    <svg className="h-4 w-4 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C10.5 4 9 6.5 9 9c0 1.5.5 2.5 1.5 3.5C9.5 13 8.5 14 8 15.5c-.5 1.5-.5 3 0 4.5.5 1.5 1.5 2.5 3 3 1.5.5 3 0 4.5-1 1.5-1 2.5-2.5 3-4.5.5-2 0-4-1-6-.5-1-1.5-2-2.5-2.5C15 8 15 6 14 4c-.5-1-1.5-2-2-2z"/>
+    <svg
+      className='h-4 w-4 text-orange-500'
+      viewBox='0 0 24 24'
+      fill='currentColor'
+      aria-hidden='true'
+    >
+      <path d='M12 2C10.5 4 9 6.5 9 9c0 1.5.5 2.5 1.5 3.5C9.5 13 8.5 14 8 15.5c-.5 1.5-.5 3 0 4.5.5 1.5 1.5 2.5 3 3 1.5.5 3 0 4.5-1 1.5-1 2.5-2.5 3-4.5.5-2 0-4-1-6-.5-1-1.5-2-2.5-2.5C15 8 15 6 14 4c-.5-1-1.5-2-2-2z' />
     </svg>
-  )
+  );
 }
 
 export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }: VehicleFormProps) {
-  const [status, setStatus] = useState<FormStatus>('idle')
-  const [vinStatus, setVinStatus] = useState<VINStatus>('idle')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [vinResult, setVinResult] = useState<VINLookupResult | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [status, setStatus] = useState<FormStatus>('idle');
+  const [vinStatus, setVinStatus] = useState<VINStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [vinResult, setVinResult] = useState<VINLookupResult | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -123,108 +143,120 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
       nextServiceDate: initialData?.nextServiceDate || '',
       registrationDate: initialData?.registrationDate || '',
       insuranceExpiry: initialData?.insuranceExpiry || '',
+      revisionExpiry: initialData?.revisionExpiry || '',
       notes: initialData?.notes || '',
     },
-  })
+  });
 
-  const handlePlateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
-    const formatted = formatLicensePlate(e.target.value)
-    onChange(formatted)
-  }, [])
+  const handlePlateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+      const formatted = formatLicensePlate(e.target.value);
+      onChange(formatted);
+    },
+    []
+  );
 
   const lookupVIN = async () => {
-    const vin = form.getValues('vin')
+    const vin = form.getValues('vin');
     if (!vin || vin.length !== 17) {
-      setVinStatus('error')
-      return
+      setVinStatus('error');
+      return;
     }
 
-    setVinStatus('loading')
+    setVinStatus('loading');
     try {
-      const result = await mockVINLookup(vin)
-      setVinResult(result)
-      
+      const result = await mockVINLookup(vin);
+      setVinResult(result);
+
       if (result.valid) {
-        setVinStatus('success')
-        if (result.make) form.setValue('make', result.make)
-        if (result.model) form.setValue('model', result.model)
-        if (result.year) form.setValue('year', result.year)
-        if (result.fuelType) form.setValue('fuelType', result.fuelType)
-        if (result.engineSize) form.setValue('engineSize', result.engineSize)
-        if (result.powerKw) form.setValue('powerKw', result.powerKw)
+        setVinStatus('success');
+        if (result.make) form.setValue('make', result.make);
+        if (result.model) form.setValue('model', result.model);
+        if (result.year) form.setValue('year', result.year);
+        if (result.fuelType) form.setValue('fuelType', result.fuelType);
+        if (result.engineSize) form.setValue('engineSize', result.engineSize);
+        if (result.powerKw) form.setValue('powerKw', result.powerKw);
       } else {
-        setVinStatus('not_found')
+        setVinStatus('not_found');
       }
     } catch {
-      setVinStatus('error')
+      setVinStatus('error');
     }
-  }
+  };
 
   const handleSubmit = async (data: VehicleFormLocalValues) => {
-    setStatus('loading')
-    setErrorMessage('')
-    
+    setStatus('loading');
+    setErrorMessage('');
+
     try {
-      await onSubmit(data)
-      setStatus('success')
+      await onSubmit(data);
+      setStatus('success');
       setTimeout(() => {
-        setStatus('idle')
-        form.reset()
-        setVinResult(null)
-      }, 2000)
+        setStatus('idle');
+        form.reset();
+        setVinResult(null);
+      }, 2000);
     } catch (error) {
-      setStatus('error')
-      setErrorMessage(error instanceof Error ? error.message : 'Errore durante il salvataggio')
+      setStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Errore durante il salvataggio');
     }
-  }
+  };
 
   return (
-    <AppleCard className="bg-white/70 backdrop-blur-3xl rounded-3xl overflow-hidden">
-      <AppleCardHeader className="border-b border-gray-100/50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-            <Car className="h-5 w-5 text-white" />
+    <AppleCard className='bg-white/70 backdrop-blur-3xl rounded-3xl overflow-hidden'>
+      <AppleCardHeader className='border-b border-gray-100/50'>
+        <div className='flex items-center gap-3'>
+          <div className='w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center'>
+            <Car className='h-5 w-5 text-white' />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className='text-lg font-semibold text-gray-900'>
               {initialData ? 'Modifica Veicolo' : 'Nuovo Veicolo'}
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className='text-sm text-gray-500'>
               {initialData ? 'Aggiorna i dati del veicolo' : 'Inserisci i dati del nuovo veicolo'}
             </p>
           </div>
         </div>
       </AppleCardHeader>
 
-      <AppleCardContent className="p-6">
+      <AppleCardContent className='p-6'>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-5'>
             {/* Proprietario */}
-            <motion.div custom={0} variants={slideUpVariants} initial="hidden" animate="visible">
+            <motion.div custom={0} variants={slideUpVariants} initial='hidden' animate='visible'>
               <FormField
                 control={form.control}
-                name="customerId"
+                name='customerId'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Proprietario *</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700'>
+                      Proprietario *
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-400" />
-                            <SelectValue placeholder="Seleziona proprietario" />
+                        <SelectTrigger
+                          aria-required='true'
+                          aria-label='Seleziona proprietario'
+                          className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                        >
+                          <div className='flex items-center gap-2'>
+                            <User className='h-4 w-4 text-gray-400' />
+                            <SelectValue placeholder='Seleziona proprietario' />
                           </div>
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-2xl border-0 shadow-xl">
+                      <SelectContent className='rounded-2xl border-0 shadow-xl'>
                         {customers.length === 0 ? (
-                          <SelectItem value="" disabled>Nessun cliente disponibile</SelectItem>
+                          <SelectItem value='' disabled>
+                            Nessun cliente disponibile
+                          </SelectItem>
                         ) : (
-                          customers.map((customer) => (
-                            <SelectItem 
-                              key={customer.id} 
+                          customers.map(customer => (
+                            <SelectItem
+                              key={customer.id}
                               value={customer.id}
-                              className="rounded-xl cursor-pointer"
+                              className='rounded-xl cursor-pointer'
                             >
                               {customer.name}
                             </SelectItem>
@@ -232,79 +264,93 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         )}
                       </SelectContent>
                     </Select>
-                    <FormMessage className="text-xs text-red-500" />
+                    <div className='min-h-[20px]'>
+                      <FormMessage className='text-xs text-red-500' />
+                    </div>
                   </FormItem>
                 )}
               />
             </motion.div>
 
             {/* Targa */}
-            <motion.div custom={1} variants={slideUpVariants} initial="hidden" animate="visible">
+            <motion.div custom={1} variants={slideUpVariants} initial='hidden' animate='visible'>
               <FormField
                 control={form.control}
-                name="licensePlate"
+                name='licensePlate'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Targa *</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700'>Targa *</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <div className='relative'>
+                        <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                         <Input
                           {...field}
-                          placeholder="AB123CD"
+                          placeholder='AB123CD'
                           maxLength={7}
-                          onChange={(e) => handlePlateChange(e, field.onChange)}
-                          className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all uppercase tracking-wider font-medium"
+                          autoComplete='off'
+                          aria-required='true'
+                          onChange={e => handlePlateChange(e, field.onChange)}
+                          className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all uppercase tracking-wider font-medium'
                         />
                       </div>
                     </FormControl>
-                    <FormMessage className="text-xs text-red-500" />
-                    <p className="text-xs text-gray-400 mt-1">Formato: AB123CD</p>
+                    <div className='min-h-[20px]'>
+                      <FormMessage className='text-xs text-red-500' />
+                    </div>
+                    <p className='text-xs text-gray-400 mt-1'>Formato: AB123CD</p>
                   </FormItem>
                 )}
               />
             </motion.div>
 
             {/* Marca e Modello */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <motion.div custom={2} variants={slideUpVariants} initial="hidden" animate="visible">
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <motion.div custom={2} variants={slideUpVariants} initial='hidden' animate='visible'>
                 <FormField
                   control={form.control}
-                  name="make"
+                  name='make'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Marca *</FormLabel>
+                      <FormLabel className='text-sm font-medium text-gray-700'>Marca *</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Car className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <div className='relative'>
+                          <Car className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                           <Input
                             {...field}
-                            placeholder="Fiat"
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            placeholder='Fiat'
+                            autoComplete='off'
+                            aria-required='true'
+                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <div className='min-h-[20px]'>
+                        <FormMessage className='text-xs text-red-500' />
+                      </div>
                     </FormItem>
                   )}
                 />
               </motion.div>
 
-              <motion.div custom={3} variants={slideUpVariants} initial="hidden" animate="visible">
+              <motion.div custom={3} variants={slideUpVariants} initial='hidden' animate='visible'>
                 <FormField
                   control={form.control}
-                  name="model"
+                  name='model'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Modello *</FormLabel>
+                      <FormLabel className='text-sm font-medium text-gray-700'>Modello *</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Panda"
-                          className="h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                          placeholder='Panda'
+                          autoComplete='off'
+                          aria-required='true'
+                          className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
                         />
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <div className='min-h-[20px]'>
+                        <FormMessage className='text-xs text-red-500' />
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -312,49 +358,57 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             </div>
 
             {/* Anno e Colore */}
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div custom={4} variants={slideUpVariants} initial="hidden" animate="visible">
+            <div className='grid grid-cols-2 gap-4'>
+              <motion.div custom={4} variants={slideUpVariants} initial='hidden' animate='visible'>
                 <FormField
                   control={form.control}
-                  name="year"
+                  name='year'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Anno</FormLabel>
+                      <FormLabel className='text-sm font-medium text-gray-700'>Anno</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <div className='relative'>
+                          <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                           <Input
                             {...field}
-                            type="number"
-                            placeholder="2020"
+                            type='number'
+                            placeholder='2020'
                             min={1990}
                             max={2027}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            autoComplete='off'
+                            onChange={e =>
+                              field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
+                            }
+                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <div className='min-h-[20px]'>
+                        <FormMessage className='text-xs text-red-500' />
+                      </div>
                     </FormItem>
                   )}
                 />
               </motion.div>
 
-              <motion.div custom={5} variants={slideUpVariants} initial="hidden" animate="visible">
+              <motion.div custom={5} variants={slideUpVariants} initial='hidden' animate='visible'>
                 <FormField
                   control={form.control}
-                  name="color"
+                  name='color'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Colore</FormLabel>
+                      <FormLabel className='text-sm font-medium text-gray-700'>Colore</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Bianco"
-                          className="h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                          placeholder='Bianco'
+                          autoComplete='off'
+                          className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
                         />
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <div className='min-h-[20px]'>
+                        <FormMessage className='text-xs text-red-500' />
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -362,44 +416,52 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             </div>
 
             {/* VIN con lookup */}
-            <motion.div custom={6} variants={slideUpVariants} initial="hidden" animate="visible">
+            <motion.div custom={6} variants={slideUpVariants} initial='hidden' animate='visible'>
               <FormField
                 control={form.control}
-                name="vin"
+                name='vin'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">VIN (Numero di Telaio)</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700'>
+                      VIN (Numero di Telaio)
+                    </FormLabel>
                     <FormControl>
-                      <div className="relative flex gap-2">
-                        <div className="relative flex-1">
-                          <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <div className='relative flex gap-2'>
+                        <div className='relative flex-1'>
+                          <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                           <Input
                             {...field}
-                            placeholder="ZFA31200001234567"
+                            placeholder='ZFA31200001234567'
                             maxLength={17}
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all uppercase tracking-wider font-mono"
+                            autoComplete='off'
+                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all uppercase tracking-wider font-mono'
                           />
                         </div>
                         <AppleButton
-                          type="button"
-                          variant="secondary"
+                          type='button'
+                          variant='secondary'
                           onClick={lookupVIN}
-                          disabled={vinStatus === 'loading' || !field.value || field.value.length !== 17}
-                          className="h-14 px-4 rounded-2xl whitespace-nowrap"
+                          aria-label='Cerca dati veicolo tramite VIN'
+                          disabled={
+                            vinStatus === 'loading' || !field.value || field.value.length !== 17
+                          }
+                          className='h-14 px-4 rounded-2xl whitespace-nowrap'
                         >
                           {vinStatus === 'loading' ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className='h-4 w-4 animate-spin' />
                           ) : (
                             <>
-                              <Search className="h-4 w-4 mr-2" />
+                              <Search className='h-4 w-4 mr-2' />
                               Cerca
                             </>
                           )}
                         </AppleButton>
                       </div>
                     </FormControl>
-                    <FormMessage className="text-xs text-red-500" />
-                    
+                    <div className='min-h-[20px]'>
+                      <FormMessage className='text-xs text-red-500' />
+                    </div>
+
                     {/* VIN Lookup Result */}
                     <AnimatePresence>
                       {vinStatus === 'success' && vinResult && (
@@ -407,10 +469,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100"
+                          className='mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100'
                         >
-                          <div className="flex items-center gap-2 text-emerald-700 text-sm font-medium">
-                            <Sparkles className="h-4 w-4" />
+                          <div className='flex items-center gap-2 text-emerald-700 text-sm font-medium'>
+                            <Sparkles className='h-4 w-4' />
                             <span>Dati recuperati automaticamente</span>
                           </div>
                         </motion.div>
@@ -420,10 +482,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-100"
+                          className='mt-2 p-3 rounded-xl bg-amber-50 border border-amber-100'
                         >
-                          <div className="flex items-center gap-2 text-amber-700 text-sm">
-                            <AlertCircle className="h-4 w-4" />
+                          <div className='flex items-center gap-2 text-amber-700 text-sm'>
+                            <AlertCircle className='h-4 w-4' />
                             <span>VIN valido ma non trovato nel database</span>
                           </div>
                         </motion.div>
@@ -435,57 +497,69 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             </motion.div>
 
             {/* Chilometraggio e Carburante */}
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div custom={7} variants={slideUpVariants} initial="hidden" animate="visible">
+            <div className='grid grid-cols-2 gap-4'>
+              <motion.div custom={7} variants={slideUpVariants} initial='hidden' animate='visible'>
                 <FormField
                   control={form.control}
-                  name="mileage"
+                  name='mileage'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Chilometraggio</FormLabel>
+                      <FormLabel className='text-sm font-medium text-gray-700'>
+                        Chilometraggio
+                      </FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Gauge className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <div className='relative'>
+                          <Gauge className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                           <Input
                             {...field}
-                            type="number"
-                            placeholder="50000"
+                            type='number'
+                            placeholder='50000'
                             min={0}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            autoComplete='off'
+                            onChange={e =>
+                              field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
+                            }
+                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <div className='min-h-[20px]'>
+                        <FormMessage className='text-xs text-red-500' />
+                      </div>
                     </FormItem>
                   )}
                 />
               </motion.div>
 
-              <motion.div custom={8} variants={slideUpVariants} initial="hidden" animate="visible">
+              <motion.div custom={8} variants={slideUpVariants} initial='hidden' animate='visible'>
                 <FormField
                   control={form.control}
-                  name="fuelType"
+                  name='fuelType'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Carburante</FormLabel>
+                      <FormLabel className='text-sm font-medium text-gray-700'>
+                        Carburante
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                            <div className="flex items-center gap-2">
-                              <Fuel className="h-4 w-4 text-gray-400" />
-                              <SelectValue placeholder="Seleziona" />
+                          <SelectTrigger
+                            aria-label='Seleziona carburante'
+                            className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                          >
+                            <div className='flex items-center gap-2'>
+                              <Fuel className='h-4 w-4 text-gray-400' />
+                              <SelectValue placeholder='Seleziona' />
                             </div>
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="rounded-2xl border-0 shadow-xl">
+                        <SelectContent className='rounded-2xl border-0 shadow-xl'>
                           {Object.entries(fuelTypeLabels).map(([value, label]) => (
-                            <SelectItem 
-                              key={value} 
+                            <SelectItem
+                              key={value}
                               value={value}
-                              className="rounded-xl cursor-pointer"
+                              className='rounded-xl cursor-pointer'
                             >
-                              <div className="flex items-center gap-2">
+                              <div className='flex items-center gap-2'>
                                 {fuelIcons[value]}
                                 <span>{label}</span>
                               </div>
@@ -493,7 +567,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage className="text-xs text-red-500" />
+                      <div className='min-h-[20px]'>
+                        <FormMessage className='text-xs text-red-500' />
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -501,20 +577,22 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             </div>
 
             {/* Campi Avanzati */}
-            <motion.div custom={9} variants={slideUpVariants} initial="hidden" animate="visible">
+            <motion.div custom={9} variants={slideUpVariants} initial='hidden' animate='visible'>
               <button
-                type="button"
+                type='button'
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center justify-between w-full py-3 px-4 rounded-2xl bg-white/40 hover:bg-white/60 transition-colors"
+                aria-expanded={showAdvanced}
+                aria-controls='advanced-fields'
+                className='flex items-center justify-between w-full py-3 px-4 rounded-2xl bg-white/40 hover:bg-white/60 transition-colors'
               >
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Dati Tecnici Avanzati</span>
+                <div className='flex items-center gap-2'>
+                  <FileText className='h-4 w-4 text-gray-500' />
+                  <span className='text-sm font-medium text-gray-700'>Dati Tecnici Avanzati</span>
                 </div>
                 {showAdvanced ? (
-                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                  <ChevronUp className='h-4 w-4 text-gray-400' />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className='h-4 w-4 text-gray-400' />
                 )}
               </button>
             </motion.div>
@@ -522,28 +600,34 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             <AnimatePresence>
               {showAdvanced && (
                 <motion.div
+                  id='advanced-fields'
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="overflow-hidden"
+                  className='overflow-hidden'
                 >
-                  <div className="space-y-4 pt-2">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className='space-y-4 pt-2'>
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="engineSize"
+                        name='engineSize'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Cilindrata (L)</FormLabel>
+                            <FormLabel className='text-sm text-gray-600'>Cilindrata (L)</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                type="number"
-                                step="0.1"
-                                placeholder="1.2"
-                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900"
+                                type='number'
+                                step='0.1'
+                                placeholder='1.2'
+                                autoComplete='off'
+                                onChange={e =>
+                                  field.onChange(
+                                    e.target.value ? parseFloat(e.target.value) : undefined
+                                  )
+                                }
+                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
                               />
                             </FormControl>
                           </FormItem>
@@ -552,17 +636,22 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
 
                       <FormField
                         control={form.control}
-                        name="powerKw"
+                        name='powerKw'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Potenza (kW)</FormLabel>
+                            <FormLabel className='text-sm text-gray-600'>Potenza (kW)</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                type="number"
-                                placeholder="55"
-                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900"
+                                type='number'
+                                placeholder='55'
+                                autoComplete='off'
+                                onChange={e =>
+                                  field.onChange(
+                                    e.target.value ? parseInt(e.target.value) : undefined
+                                  )
+                                }
+                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
                               />
                             </FormControl>
                           </FormItem>
@@ -570,18 +659,19 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="lastServiceDate"
+                        name='lastServiceDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Ultimo Service</FormLabel>
+                            <FormLabel className='text-sm text-gray-600'>Ultimo Service</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                type="date"
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900"
+                                type='date'
+                                autoComplete='off'
+                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
                               />
                             </FormControl>
                           </FormItem>
@@ -590,15 +680,18 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
 
                       <FormField
                         control={form.control}
-                        name="nextServiceDate"
+                        name='nextServiceDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Prossimo Service</FormLabel>
+                            <FormLabel className='text-sm text-gray-600'>
+                              Prossimo Service
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                type="date"
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900"
+                                type='date'
+                                autoComplete='off'
+                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
                               />
                             </FormControl>
                           </FormItem>
@@ -606,18 +699,21 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="registrationDate"
+                        name='registrationDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Data Immatricolazione</FormLabel>
+                            <FormLabel className='text-sm text-gray-600'>
+                              Data Immatricolazione
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                type="date"
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900"
+                                type='date'
+                                autoComplete='off'
+                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
                               />
                             </FormControl>
                           </FormItem>
@@ -626,43 +722,75 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
 
                       <FormField
                         control={form.control}
-                        name="insuranceExpiry"
+                        name='insuranceExpiry'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Scadenza Assicurazione</FormLabel>
+                            <FormLabel className='text-sm text-gray-600'>
+                              Scadenza Assicurazione
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                type="date"
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900"
+                                type='date'
+                                autoComplete='off'
+                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
                               />
                             </FormControl>
                           </FormItem>
                         )}
                       />
                     </div>
+
+                    {/* Scadenza Revisione */}
+                    <FormField
+                      control={form.control}
+                      name='revisionExpiry'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className='text-sm text-gray-600'>
+                            Scadenza Revisione
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type='date'
+                              autoComplete='off'
+                              className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                            />
+                          </FormControl>
+                          <p className='text-xs text-gray-400'>
+                            Riceverai un alert 30 giorni prima della scadenza
+                          </p>
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Note */}
-            <motion.div custom={10} variants={slideUpVariants} initial="hidden" animate="visible">
+            <motion.div custom={10} variants={slideUpVariants} initial='hidden' animate='visible'>
               <FormField
                 control={form.control}
-                name="notes"
+                name='notes'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Note (opzionale)</FormLabel>
+                    <FormLabel className='text-sm font-medium text-gray-700'>
+                      Note (opzionale)
+                    </FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Note aggiuntive sul veicolo..."
+                        placeholder='Note aggiuntive sul veicolo...'
                         rows={3}
-                        className="rounded-2xl bg-white/60 border-0 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+                        autoComplete='off'
+                        className='rounded-2xl bg-white/60 border-0 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none'
                       />
                     </FormControl>
-                    <FormMessage className="text-xs text-red-500" />
+                    <div className='min-h-[20px]'>
+                      <FormMessage className='text-xs text-red-500' />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -672,12 +800,14 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             <AnimatePresence>
               {status === 'error' && (
                 <motion.div
+                  role='alert'
+                  aria-live='assertive'
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 p-4 rounded-2xl bg-red-50 text-red-600 text-sm"
+                  className='flex items-center gap-2 p-4 rounded-2xl bg-red-50 text-red-600 text-sm'
                 >
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <AlertCircle className='h-4 w-4 flex-shrink-0' />
                   <span>{errorMessage || 'Si è verificato un errore. Riprova.'}</span>
                 </motion.div>
               )}
@@ -687,40 +817,50 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
             <AnimatePresence>
               {status === 'success' && (
                 <motion.div
+                  role='status'
+                  aria-live='polite'
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="flex items-center gap-2 p-4 rounded-2xl bg-green-50 text-green-600 text-sm"
+                  className='flex items-center gap-2 p-4 rounded-2xl bg-green-50 text-green-600 text-sm'
                 >
-                  <Check className="h-4 w-4 flex-shrink-0" />
+                  <Check className='h-4 w-4 flex-shrink-0' />
                   <span>Veicolo salvato con successo!</span>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Actions */}
-            <motion.div custom={11} variants={slideUpVariants} initial="hidden" animate="visible" className="flex gap-3 pt-4">
+            <motion.div
+              custom={11}
+              variants={slideUpVariants}
+              initial='hidden'
+              animate='visible'
+              className='flex gap-3 pt-4'
+            >
               {onCancel && (
                 <AppleButton
-                  type="button"
-                  variant="secondary"
+                  type='button'
+                  variant='secondary'
                   onClick={onCancel}
-                  className="flex-1 h-12 rounded-2xl"
+                  className='flex-1 h-12 rounded-2xl'
                 >
                   Annulla
                 </AppleButton>
               )}
               <AppleButton
-                type="submit"
+                type='submit'
                 disabled={status === 'loading' || status === 'success'}
-                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium shadow-lg shadow-emerald-500/25"
+                className='flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium shadow-lg shadow-emerald-500/25'
               >
                 {status === 'loading' ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className='h-5 w-5 animate-spin' />
                 ) : status === 'success' ? (
-                  <Check className="h-5 w-5" />
+                  <Check className='h-5 w-5' />
+                ) : initialData ? (
+                  'Salva Modifiche'
                 ) : (
-                  initialData ? 'Salva Modifiche' : 'Crea Veicolo'
+                  'Crea Veicolo'
                 )}
               </AppleButton>
             </motion.div>
@@ -728,5 +868,5 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
         </Form>
       </AppleCardContent>
     </AppleCard>
-  )
+  );
 }

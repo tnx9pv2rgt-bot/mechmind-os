@@ -51,6 +51,38 @@ export class CreateCustomerDto {
   marketingConsent?: boolean;
 
   @ApiPropertyOptional({
+    description: 'GDPR consent timestamp (ISO 8601)',
+    example: '2026-03-15T10:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  gdprConsentAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Privacy policy version accepted',
+    example: '2.0',
+  })
+  @IsOptional()
+  @IsString()
+  gdprPrivacyVersion?: string;
+
+  @ApiPropertyOptional({
+    description: 'Method used to collect GDPR consent',
+    example: 'form-checkbox',
+  })
+  @IsOptional()
+  @IsString()
+  gdprConsentMethod?: string;
+
+  @ApiPropertyOptional({
+    description: 'Marketing consent timestamp (ISO 8601)',
+    example: '2026-03-15T10:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  marketingConsentAt?: string;
+
+  @ApiPropertyOptional({
     description: 'Customer notes',
     example: 'Preferred contact time: morning',
   })
