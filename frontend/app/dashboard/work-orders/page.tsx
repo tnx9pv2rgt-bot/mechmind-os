@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -126,36 +128,28 @@ function formatCurrency(amount: number): string {
 
 export default function WorkOrdersPage() {
   const router = useRouter();
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('ALL');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const fetchData = useCallback(() => {
-    setIsLoading(true);
-    fetch('/api/work-orders')
-      .then(r => r.json())
-      .then(res => {
-        const list = res.data || res || [];
-        setWorkOrders(Array.isArray(list) ? list : []);
-      })
-      .catch(() => {
-        setWorkOrders([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const {
+    data: workOrdersData,
+    isLoading,
+    mutate,
+  } = useSWR<{ data?: WorkOrder[] } | WorkOrder[]>('/api/work-orders', fetcher);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const workOrders: WorkOrder[] = (() => {
+    if (!workOrdersData) return [];
+    const list = (workOrdersData as { data?: WorkOrder[] }).data || workOrdersData || [];
+    return Array.isArray(list) ? list : [];
+  })();
 
   const handleStart = async (id: string) => {
     setActionLoading(id);
     try {
       const res = await fetch(`/api/work-orders/${id}/start`, { method: 'POST' });
       if (!res.ok) throw new Error('Errore avvio');
-      fetchData();
+      mutate();
     } catch {
       // silent
     } finally {
@@ -168,7 +162,7 @@ export default function WorkOrdersPage() {
     try {
       const res = await fetch(`/api/work-orders/${id}/complete`, { method: 'POST' });
       if (!res.ok) throw new Error('Errore completamento');
-      fetchData();
+      mutate();
     } catch {
       // silent
     } finally {
@@ -181,7 +175,7 @@ export default function WorkOrdersPage() {
     try {
       const res = await fetch(`/api/work-orders/${id}/invoice`, { method: 'POST' });
       if (!res.ok) throw new Error('Errore fatturazione');
-      fetchData();
+      mutate();
     } catch {
       // silent
     } finally {

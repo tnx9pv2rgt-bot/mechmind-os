@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { z } from 'zod';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft,
@@ -19,6 +20,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+
+const inspectionSchema = z.object({
+  type: z.enum(['PRE_PURCHASE', 'PERIODIC', 'PRE_SALE', 'WARRANTY', 'ACCIDENT'], {
+    required_error: 'Tipo ispezione obbligatorio',
+  }),
+  plate: z.string().min(1, 'Targa obbligatoria'),
+  vehicle: z.string().min(1, 'Veicolo obbligatorio'),
+  customer: z.string().min(1, 'Cliente obbligatorio'),
+});
 
 const totalSteps = 7;
 
@@ -53,8 +63,19 @@ export default function NewInspectionPage() {
   };
 
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async () => {
+    const result = inspectionSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const [key, msgs] of Object.entries(result.error.flatten().fieldErrors)) {
+        if (msgs && msgs.length > 0) fieldErrors[key] = msgs[0];
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+    setErrors({});
     setIsSubmitting(true);
     setSubmitError(null);
     try {
@@ -175,37 +196,55 @@ export default function NewInspectionPage() {
 
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='space-y-2'>
-                      <Label className='text-sm font-medium text-gray-700 dark:text-[#636366]'>
+                      <Label
+                        htmlFor='plate'
+                        className='text-sm font-medium text-gray-700 dark:text-[#636366]'
+                      >
                         Targa
                       </Label>
                       <Input
+                        id='plate'
                         placeholder='AB123CD'
                         className='h-14 rounded-xl border-gray-200 focus:border-blue-500'
                         value={formData.plate}
                         onChange={e => setFormData({ ...formData, plate: e.target.value })}
                       />
+                      {errors.plate && <p className='text-xs text-red-500 mt-1'>{errors.plate}</p>}
                     </div>
                     <div className='space-y-2'>
-                      <Label className='text-sm font-medium text-gray-700 dark:text-[#636366]'>
+                      <Label
+                        htmlFor='vehicle'
+                        className='text-sm font-medium text-gray-700 dark:text-[#636366]'
+                      >
                         Veicolo
                       </Label>
                       <Input
+                        id='vehicle'
                         placeholder='BMW X5'
                         className='h-14 rounded-xl border-gray-200 focus:border-blue-500'
                         value={formData.vehicle}
                         onChange={e => setFormData({ ...formData, vehicle: e.target.value })}
                       />
+                      {errors.vehicle && (
+                        <p className='text-xs text-red-500 mt-1'>{errors.vehicle}</p>
+                      )}
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label className='text-sm font-medium text-gray-700'>Cliente</Label>
+                    <Label htmlFor='customer' className='text-sm font-medium text-gray-700'>
+                      Cliente
+                    </Label>
                     <Input
+                      id='customer'
                       placeholder='Nome cliente'
                       className='h-14 rounded-xl border-gray-200 focus:border-blue-500'
                       value={formData.customer}
                       onChange={e => setFormData({ ...formData, customer: e.target.value })}
                     />
+                    {errors.customer && (
+                      <p className='text-xs text-red-500 mt-1'>{errors.customer}</p>
+                    )}
                   </div>
 
                   <div className='space-y-2'>

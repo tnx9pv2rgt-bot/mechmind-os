@@ -1,9 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import dynamic from 'next/dynamic';
 import '../styles/globals.css';
 import { Providers } from '@/components/providers';
 import { StyledJsxRegistry } from '@/lib/styled-jsx-registry';
 import { Toaster } from 'sonner';
+
+const CookieConsent = dynamic(
+  () => import('@/components/gdpr/CookieConsent').then(mod => mod.CookieConsent),
+  { ssr: false }
+);
 
 // Font optimization — adjustFontFallback generates size-adjust for zero CLS
 const inter = Inter({
@@ -113,6 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <StyledJsxRegistry>
           <Providers>{children}</Providers>
           <Toaster richColors position='top-right' />
+          <CookieConsent />
         </StyledJsxRegistry>
       </body>
     </html>

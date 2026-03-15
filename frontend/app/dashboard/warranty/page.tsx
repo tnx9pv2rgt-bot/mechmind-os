@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Shield, Plus, FileText, AlertTriangle, Calendar, TrendingUp, Car } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -57,46 +59,43 @@ interface WarrantyClaim {
 export default function WarrantyDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [warranties, setWarranties] = React.useState<WarrantyWithClaims[]>([]);
-  const [claims, setClaims] = React.useState<
-    (WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[]
-  >([]);
-  const [expiringWarranties, setExpiringWarranties] = React.useState<WarrantyWithClaims[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
   const [isCreating, setIsCreating] = React.useState(false);
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
 
-  // Load data
+  const {
+    data: warrantiesData,
+    error: warrantiesError,
+    isLoading: warrantiesLoading,
+    mutate: mutateWarranties,
+  } = useSWR<{ data?: WarrantyWithClaims[] }>('/api/warranties', fetcher);
+  const {
+    data: claimsData,
+    isLoading: claimsLoading,
+    mutate: mutateClaims,
+  } = useSWR<{
+    data?: (WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[];
+  }>('/api/warranties/claims', fetcher);
+  const {
+    data: expiringData,
+    isLoading: expiringLoading,
+    mutate: mutateExpiring,
+  } = useSWR<{ data?: WarrantyWithClaims[] }>('/api/warranties/expiring?days=60', fetcher);
+
+  const warranties = warrantiesData?.data || [];
+  const claims = claimsData?.data || [];
+  const expiringWarranties = expiringData?.data || [];
+  const isLoading = warrantiesLoading || claimsLoading || expiringLoading;
+
   React.useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      const [warrantiesRes, claimsRes, expiringRes] = await Promise.all([
-        fetch('/api/warranties'),
-        fetch('/api/warranties/claims'),
-        fetch('/api/warranties/expiring?days=60'),
-      ]);
-
-      const warrantiesJson = await warrantiesRes.json();
-      const claimsJson = await claimsRes.json();
-      const expiringJson = await expiringRes.json();
-
-      setWarranties(warrantiesJson.data || []);
-      setClaims(claimsJson.data || []);
-      setExpiringWarranties(expiringJson.data || []);
-    } catch (error) {
+    if (warrantiesError) {
       toast({
         title: 'Errore nel caricamento',
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
+        description:
+          warrantiesError instanceof Error ? warrantiesError.message : 'Errore sconosciuto',
         variant: 'error',
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [warrantiesError, toast]);
 
   const handleCreateWarranty = async (data: {
     vehicleId: string;
@@ -127,7 +126,9 @@ export default function WarrantyDashboardPage() {
         description: 'La garanzia è stata creata con successo',
       });
       setCreateDialogOpen(false);
-      loadData();
+      mutateWarranties();
+      mutateClaims();
+      mutateExpiring();
     } catch (error) {
       toast({
         title: 'Errore nella creazione',

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -112,52 +114,47 @@ function formatCurrency(amount: number): string {
 
 export default function InvoicesPage() {
   const router = useRouter();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [stats, setStats] = useState<InvoiceStats>({
-    monthlyRevenue: 0,
-    pendingCount: 0,
-    sentCount: 0,
-    paidCount: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus>('ALL');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const fetchData = useCallback(() => {
-    setIsLoading(true);
-    Promise.all([
-      fetch('/api/invoices').then(r => r.json()),
-      fetch('/api/invoices/stats').then(r => r.json()),
-    ])
-      .then(([invoicesRes, statsRes]) => {
-        const invoiceList = invoicesRes.data || invoicesRes || [];
-        setInvoices(Array.isArray(invoiceList) ? invoiceList : []);
+  const {
+    data: invoicesData,
+    isLoading: invoicesLoading,
+    mutate: mutateInvoices,
+  } = useSWR<{ data?: Invoice[] } | Invoice[]>('/api/invoices', fetcher);
+  const {
+    data: statsData,
+    isLoading: statsLoading,
+    mutate: mutateStats,
+  } = useSWR<{ data?: InvoiceStats } | InvoiceStats>('/api/invoices/stats', fetcher);
 
-        const statsData = statsRes.data || statsRes || {};
-        setStats({
-          monthlyRevenue: statsData.monthlyRevenue || 0,
-          pendingCount: statsData.pendingCount || 0,
-          sentCount: statsData.sentCount || 0,
-          paidCount: statsData.paidCount || 0,
-        });
-      })
-      .catch(() => {
-        setInvoices([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const isLoading = invoicesLoading || statsLoading;
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const invoices: Invoice[] = (() => {
+    if (!invoicesData) return [];
+    const list = (invoicesData as { data?: Invoice[] }).data || invoicesData || [];
+    return Array.isArray(list) ? list : [];
+  })();
+
+  const stats: InvoiceStats = (() => {
+    if (!statsData) return { monthlyRevenue: 0, pendingCount: 0, sentCount: 0, paidCount: 0 };
+    const d = (statsData as { data?: InvoiceStats }).data || statsData || {};
+    return {
+      monthlyRevenue: (d as InvoiceStats).monthlyRevenue || 0,
+      pendingCount: (d as InvoiceStats).pendingCount || 0,
+      sentCount: (d as InvoiceStats).sentCount || 0,
+      paidCount: (d as InvoiceStats).paidCount || 0,
+    };
+  })();
 
   const handleSend = async (id: string) => {
     setActionLoading(id);
     try {
       const res = await fetch(`/api/invoices/${id}/send`, { method: 'POST' });
       if (!res.ok) throw new Error('Errore invio');
-      fetchData();
+      mutateInvoices();
+      mutateStats();
     } catch {
       // silent
     } finally {
@@ -170,7 +167,8 @@ export default function InvoicesPage() {
     try {
       const res = await fetch(`/api/invoices/${id}/pay`, { method: 'POST' });
       if (!res.ok) throw new Error('Errore pagamento');
-      fetchData();
+      mutateInvoices();
+      mutateStats();
     } catch {
       // silent
     } finally {

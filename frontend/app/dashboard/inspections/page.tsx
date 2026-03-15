@@ -209,100 +209,129 @@ export default function InspectionsPage() {
         </motion.div>
 
         {/* Inspections Grid */}
-        <motion.div
-          initial='hidden'
-          animate='visible'
-          variants={containerVariants}
-          className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento'
-        >
-          {filteredInspections.map(inspection => {
-            const status = statusConfig[inspection.status];
-            const StatusIcon = status.icon;
+        {!isLoading && filteredInspections.length === 0 ? (
+          <motion.div initial='hidden' animate='visible' variants={cardVariants}>
+            <AppleCard>
+              <AppleCardContent className='flex flex-col items-center justify-center py-16 text-center'>
+                <div className='w-16 h-16 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center mb-6'>
+                  <ClipboardCheck className='h-8 w-8 text-apple-gray dark:text-[#636366]' />
+                </div>
+                <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
+                  Nessuna ispezione trovata
+                </h3>
+                <p className='text-body text-apple-gray dark:text-[#636366] max-w-md'>
+                  {searchQuery
+                    ? 'Nessun risultato per la ricerca corrente. Prova con altri termini.'
+                    : 'Non ci sono ispezioni registrate. Crea una nuova ispezione per iniziare.'}
+                </p>
+                {!searchQuery && (
+                  <AppleButton
+                    className='mt-6'
+                    icon={<Plus className='h-4 w-4' />}
+                    onClick={() => router.push('/dashboard/inspections/new')}
+                  >
+                    Nuova Ispezione
+                  </AppleButton>
+                )}
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial='hidden'
+            animate='visible'
+            variants={containerVariants}
+            className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento'
+          >
+            {filteredInspections.map(inspection => {
+              const status = statusConfig[inspection.status];
+              const StatusIcon = status.icon;
 
-            return (
-              <motion.div key={inspection.id} variants={cardVariants}>
-                <AppleCard hover>
-                  <AppleCardContent>
-                    <div className='flex items-start justify-between mb-4'>
-                      <div className='flex items-center gap-3'>
-                        <div className='w-12 h-12 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center'>
-                          <ClipboardCheck className='h-6 w-6 text-apple-blue' />
+              return (
+                <motion.div key={inspection.id} variants={cardVariants}>
+                  <AppleCard hover>
+                    <AppleCardContent>
+                      <div className='flex items-start justify-between mb-4'>
+                        <div className='flex items-center gap-3'>
+                          <div className='w-12 h-12 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center'>
+                            <ClipboardCheck className='h-6 w-6 text-apple-blue' />
+                          </div>
+                          <div>
+                            <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+                              {inspection.id}
+                            </h3>
+                            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                              {inspection.vehicle} • {inspection.plate}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.color}/10`}
+                        >
+                          <StatusIcon
+                            className={`h-3.5 w-3.5 ${status.color.replace('bg-', 'text-')}`}
+                          />
+                          <span
+                            className={`text-[10px] font-bold uppercase ${status.color.replace('bg-', 'text-')}`}
+                          >
+                            {status.label}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className='flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366] mb-4'>
+                        <User className='h-4 w-4' />
+                        <span>{inspection.customer}</span>
+                      </div>
+
+                      <div className='grid grid-cols-2 gap-3 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
+                        <div>
+                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Tipo</p>
+                          <p className='text-callout font-medium text-apple-dark dark:text-[#ececec]'>
+                            {typeLabels[inspection.type]}
+                          </p>
                         </div>
                         <div>
-                          <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                            {inspection.id}
-                          </h3>
-                          <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                            {inspection.vehicle} • {inspection.plate}
+                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Data</p>
+                          <p className='text-callout font-medium text-apple-dark dark:text-[#ececec]'>
+                            {inspection.date}
                           </p>
                         </div>
                       </div>
-                      <div
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.color}/10`}
-                      >
-                        <StatusIcon
-                          className={`h-3.5 w-3.5 ${status.color.replace('bg-', 'text-')}`}
-                        />
-                        <span
-                          className={`text-[10px] font-bold uppercase ${status.color.replace('bg-', 'text-')}`}
-                        >
-                          {status.label}
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className='flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366] mb-4'>
-                      <User className='h-4 w-4' />
-                      <span>{inspection.customer}</span>
-                    </div>
-
-                    <div className='grid grid-cols-2 gap-3 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
-                      <div>
-                        <p className='text-caption text-apple-gray dark:text-[#636366]'>Tipo</p>
-                        <p className='text-callout font-medium text-apple-dark dark:text-[#ececec]'>
-                          {typeLabels[inspection.type]}
-                        </p>
-                      </div>
-                      <div>
-                        <p className='text-caption text-apple-gray dark:text-[#636366]'>Data</p>
-                        <p className='text-callout font-medium text-apple-dark dark:text-[#ececec]'>
-                          {inspection.date}
-                        </p>
-                      </div>
-                    </div>
-
-                    {inspection.score && (
-                      <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
-                        <div className='flex items-center justify-between'>
-                          <span className='text-caption text-apple-gray dark:text-[#636366]'>
-                            Score
-                          </span>
-                          <span
-                            className={`text-title-2 font-semibold ${
-                              inspection.score >= 9
-                                ? 'text-apple-green'
-                                : inspection.score >= 7
-                                  ? 'text-apple-orange'
-                                  : 'text-apple-red'
-                            }`}
-                          >
-                            {inspection.score}/10
-                          </span>
+                      {inspection.score && (
+                        <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-caption text-apple-gray dark:text-[#636366]'>
+                              Score
+                            </span>
+                            <span
+                              className={`text-title-2 font-semibold ${
+                                inspection.score >= 9
+                                  ? 'text-apple-green'
+                                  : inspection.score >= 7
+                                    ? 'text-apple-orange'
+                                    : 'text-apple-red'
+                              }`}
+                            >
+                              {inspection.score}/10
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
-                      <AppleButton variant='secondary' fullWidth>
-                        Visualizza Dettagli
-                      </AppleButton>
-                    </div>
-                  </AppleCardContent>
-                </AppleCard>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                      <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
+                        <AppleButton variant='secondary' fullWidth>
+                          Visualizza Dettagli
+                        </AppleButton>
+                      </div>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
       </div>
     </div>
   );

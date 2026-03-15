@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,21 @@ interface LineItem {
   quantity: number;
   unitPrice: number;
 }
+
+const invoiceSchema = z.object({
+  customerId: z.string().min(1, 'Seleziona un cliente'),
+  items: z
+    .array(
+      z.object({
+        description: z.string().min(1, 'Descrizione obbligatoria'),
+        quantity: z.number().gt(0, 'La quantita deve essere maggiore di 0'),
+        unitPrice: z.number().min(0, 'Il prezzo non puo essere negativo'),
+      })
+    )
+    .min(1, 'Aggiungi almeno una riga'),
+  notes: z.string().optional(),
+  dueDate: z.string().optional(),
+});
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -78,21 +94,43 @@ export default function NewInvoicePage() {
     setLineItems(prev => prev.filter(item => item.id !== id));
   };
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   const handleSubmit = async () => {
     setError('');
 
-    if (!customerId) {
-      setError('Seleziona un cliente');
+    const result = invoiceSchema.safeParse({
+      customerId,
+      items: lineItems.map(i => ({
+        description: i.description,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+      })),
+      notes: notes || undefined,
+      dueDate: dueDate || undefined,
+    });
+
+    if (!result.success) {
+      const flat = result.error.flatten();
+      const errs: Record<string, string> = {};
+      for (const [key, msgs] of Object.entries(flat.fieldErrors)) {
+        if (msgs && msgs.length > 0) errs[key] = msgs[0];
+      }
+      // Check nested item errors
+      result.error.issues.forEach(issue => {
+        if (issue.path[0] === 'items' && typeof issue.path[1] === 'number') {
+          const idx = issue.path[1];
+          const field = issue.path[2] as string;
+          errs[`items.${idx}.${field}`] = issue.message;
+        }
+      });
+      setFieldErrors(errs);
+      if (errs.customerId) setError(errs.customerId);
+      else if (errs.items) setError(errs.items);
+      else setError('Correggi gli errori nei campi evidenziati');
       return;
     }
-    if (lineItems.some(item => !item.description.trim())) {
-      setError('Compila la descrizione di tutte le righe');
-      return;
-    }
-    if (lineItems.some(item => item.quantity <= 0 || item.unitPrice <= 0)) {
-      setError('Quantita e prezzo devono essere maggiori di zero');
-      return;
-    }
+    setFieldErrors({});
 
     setIsSubmitting(true);
     try {
@@ -168,7 +206,10 @@ export default function NewInvoicePage() {
               <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec] mb-4'>
                 Cliente
               </h3>
-              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <Label
+                htmlFor='customer-id'
+                className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'
+              >
                 Seleziona cliente
               </Label>
               {loadingCustomers ? (
@@ -178,8 +219,10 @@ export default function NewInvoicePage() {
                 </div>
               ) : (
                 <select
+                  id='customer-id'
                   value={customerId}
                   onChange={e => setCustomerId(e.target.value)}
+                  autoComplete='off'
                   className='h-12 w-full rounded-xl border border-gray-200 dark:border-[#424242] bg-white dark:bg-[#353535] px-4 text-sm text-gray-900 dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-black/20'
                 >
                   <option value=''>-- Seleziona un cliente --</option>
@@ -208,46 +251,75 @@ export default function NewInvoicePage() {
                 </button>
               </div>
               <div className='space-y-3'>
-                {lineItems.map(item => (
+                {lineItems.map((item, idx) => (
                   <div
                     key={item.id}
                     className='grid grid-cols-12 gap-3 items-end p-4 rounded-2xl bg-gray-50/80 dark:bg-[#353535]'
                   >
                     <div className='col-span-5'>
-                      <Label className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'>
+                      <Label
+                        htmlFor={`description-${item.id}`}
+                        className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'
+                      >
                         Descrizione
                       </Label>
                       <Input
+                        id={`description-${item.id}`}
                         placeholder='es. Cambio olio motore'
                         value={item.description}
                         onChange={e => updateLineItem(item.id, 'description', e.target.value)}
                         className='rounded-xl'
                       />
+                      {fieldErrors[`items.${idx}.description`] && (
+                        <p className='text-xs text-red-500 mt-1'>
+                          {fieldErrors[`items.${idx}.description`]}
+                        </p>
+                      )}
                     </div>
                     <div className='col-span-2'>
-                      <Label className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'>
+                      <Label
+                        htmlFor={`quantity-${item.id}`}
+                        className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'
+                      >
                         Quantita
                       </Label>
                       <Input
+                        id={`quantity-${item.id}`}
                         type='number'
                         min={1}
                         value={item.quantity}
                         onChange={e => updateLineItem(item.id, 'quantity', Number(e.target.value))}
+                        autoComplete='off'
                         className='rounded-xl'
                       />
+                      {fieldErrors[`items.${idx}.quantity`] && (
+                        <p className='text-xs text-red-500 mt-1'>
+                          {fieldErrors[`items.${idx}.quantity`]}
+                        </p>
+                      )}
                     </div>
                     <div className='col-span-2'>
-                      <Label className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'>
+                      <Label
+                        htmlFor={`unit-price-${item.id}`}
+                        className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'
+                      >
                         Prezzo Unitario
                       </Label>
                       <Input
+                        id={`unit-price-${item.id}`}
                         type='number'
                         min={0}
                         step={0.01}
                         value={item.unitPrice}
                         onChange={e => updateLineItem(item.id, 'unitPrice', Number(e.target.value))}
+                        autoComplete='off'
                         className='rounded-xl'
                       />
+                      {fieldErrors[`items.${idx}.unitPrice`] && (
+                        <p className='text-xs text-red-500 mt-1'>
+                          {fieldErrors[`items.${idx}.unitPrice`]}
+                        </p>
+                      )}
                     </div>
                     <div className='col-span-2 text-right'>
                       <Label className='mb-1.5 block text-xs text-gray-500 dark:text-[#636366]'>
@@ -280,23 +352,32 @@ export default function NewInvoicePage() {
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div className='space-y-4'>
                   <div>
-                    <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <Label
+                      htmlFor='tax-rate'
+                      className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+                    >
                       Aliquota IVA (%)
                     </Label>
                     <Input
+                      id='tax-rate'
                       type='number'
                       min={0}
                       max={100}
                       value={taxRate}
                       onChange={e => setTaxRate(Number(e.target.value))}
+                      autoComplete='off'
                       className='rounded-xl'
                     />
                   </div>
                   <div>
-                    <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <Label
+                      htmlFor='due-date'
+                      className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+                    >
                       Data Scadenza
                     </Label>
                     <Input
+                      id='due-date'
                       type='date'
                       value={dueDate}
                       onChange={e => setDueDate(e.target.value)}
@@ -304,10 +385,14 @@ export default function NewInvoicePage() {
                     />
                   </div>
                   <div>
-                    <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <Label
+                      htmlFor='notes'
+                      className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+                    >
                       Note
                     </Label>
                     <textarea
+                      id='notes'
                       value={notes}
                       onChange={e => setNotes(e.target.value)}
                       rows={3}

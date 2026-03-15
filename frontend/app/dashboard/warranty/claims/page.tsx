@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { FileText, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -21,31 +23,27 @@ interface WarrantyClaim {
 export default function ClaimsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [claims, setClaims] = React.useState<
-    (WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[]
-  >([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+
+  const {
+    data: claimsData,
+    error: claimsError,
+    isLoading,
+    mutate,
+  } = useSWR<{
+    data?: (WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[];
+  }>('/api/warranties/claims', fetcher);
+
+  const claims = claimsData?.data || [];
 
   React.useEffect(() => {
-    loadClaims();
-  }, []);
-
-  const loadClaims = async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch('/api/warranties/claims');
-      const json = await res.json();
-      setClaims(json.data || []);
-    } catch (error) {
+    if (claimsError) {
       toast({
         title: 'Errore nel caricamento dei reclami',
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
+        description: claimsError instanceof Error ? claimsError.message : 'Errore sconosciuto',
         variant: 'error',
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [claimsError, toast]);
 
   const handleReviewClaim = (claim: WarrantyClaim) => {
     // Navigate to claim detail page for review
@@ -60,7 +58,7 @@ export default function ClaimsPage() {
         title: 'Reclamo pagato',
         description: 'Il reclamo è stato contrassegnato come pagato',
       });
-      loadClaims();
+      mutate();
     } catch (error) {
       toast({
         title: 'Errore',

@@ -2,11 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Loader2, AlertCircle, Wrench, Car, User, Users } from 'lucide-react';
+
+const workOrderSchema = z.object({
+  customerId: z.string().min(1, 'Seleziona un cliente'),
+  vehicleId: z.string().min(1, 'Seleziona un veicolo'),
+  diagnosis: z
+    .string()
+    .optional()
+    .refine(val => !val || val.length >= 3, 'La diagnosi deve avere almeno 3 caratteri'),
+  technicianId: z.string().optional(),
+  customerRequest: z.string().optional(),
+  mileageIn: z.string().optional(),
+});
 
 interface Customer {
   id: string;
@@ -47,6 +60,7 @@ export default function NewWorkOrderPage() {
   const [diagnosis, setDiagnosis] = useState('');
   const [customerRequest, setCustomerRequest] = useState('');
   const [mileageIn, setMileageIn] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function loadCustomers() {
@@ -105,10 +119,24 @@ export default function NewWorkOrderPage() {
   }, [customerId]);
 
   const handleSubmit = async () => {
-    if (!customerId || !vehicleId) {
-      setSubmitError('Seleziona un cliente e un veicolo.');
+    const result = workOrderSchema.safeParse({
+      customerId,
+      vehicleId,
+      diagnosis: diagnosis || undefined,
+      technicianId: technicianId || undefined,
+      customerRequest: customerRequest || undefined,
+      mileageIn: mileageIn || undefined,
+    });
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const [key, msgs] of Object.entries(result.error.flatten().fieldErrors)) {
+        if (msgs && msgs.length > 0) fieldErrors[key] = msgs[0];
+      }
+      setErrors(fieldErrors);
+      setSubmitError('Correggi gli errori nei campi evidenziati');
       return;
     }
+    setErrors({});
     setIsSubmitting(true);
     setSubmitError(null);
     try {
@@ -185,10 +213,14 @@ export default function NewWorkOrderPage() {
                 </div>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>Cliente</h3>
               </div>
-              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <Label
+                htmlFor='customer-id'
+                className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'
+              >
                 Seleziona il cliente
               </Label>
               <select
+                id='customer-id'
                 value={customerId}
                 onChange={e => setCustomerId(e.target.value)}
                 disabled={customersLoading}
@@ -204,6 +236,9 @@ export default function NewWorkOrderPage() {
                   </option>
                 ))}
               </select>
+              {errors.customerId && (
+                <p className='text-xs text-red-500 mt-1'>{errors.customerId}</p>
+              )}
             </div>
 
             {/* Veicolo */}
@@ -214,10 +249,14 @@ export default function NewWorkOrderPage() {
                 </div>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>Veicolo</h3>
               </div>
-              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <Label
+                htmlFor='vehicle-id'
+                className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'
+              >
                 Seleziona il veicolo
               </Label>
               <select
+                id='vehicle-id'
                 value={vehicleId}
                 onChange={e => setVehicleId(e.target.value)}
                 disabled={!customerId || vehiclesLoading}
@@ -237,6 +276,7 @@ export default function NewWorkOrderPage() {
                   </option>
                 ))}
               </select>
+              {errors.vehicleId && <p className='text-xs text-red-500 mt-1'>{errors.vehicleId}</p>}
             </div>
 
             {/* Tecnico */}
@@ -249,10 +289,14 @@ export default function NewWorkOrderPage() {
                   Tecnico (opzionale)
                 </h3>
               </div>
-              <Label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <Label
+                htmlFor='technician-id'
+                className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'
+              >
                 Assegna un tecnico
               </Label>
               <select
+                id='technician-id'
                 value={technicianId}
                 onChange={e => setTechnicianId(e.target.value)}
                 disabled={techniciansLoading}
@@ -281,22 +325,33 @@ export default function NewWorkOrderPage() {
               </div>
               <div className='space-y-4'>
                 <div>
-                  <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <Label
+                    htmlFor='diagnosis'
+                    className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+                  >
                     Diagnosi
                   </Label>
                   <textarea
+                    id='diagnosis'
                     value={diagnosis}
                     onChange={e => setDiagnosis(e.target.value)}
                     rows={3}
                     placeholder='Descrivi la diagnosi iniziale...'
                     className={textareaClass}
                   />
+                  {errors.diagnosis && (
+                    <p className='text-xs text-red-500 mt-1'>{errors.diagnosis}</p>
+                  )}
                 </div>
                 <div>
-                  <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <Label
+                    htmlFor='customer-request'
+                    className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+                  >
                     Richiesta del cliente
                   </Label>
                   <textarea
+                    id='customer-request'
                     value={customerRequest}
                     onChange={e => setCustomerRequest(e.target.value)}
                     rows={3}
@@ -305,10 +360,14 @@ export default function NewWorkOrderPage() {
                   />
                 </div>
                 <div>
-                  <Label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <Label
+                    htmlFor='mileage-in'
+                    className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'
+                  >
                     Chilometraggio ingresso
                   </Label>
                   <Input
+                    id='mileage-in'
                     type='number'
                     value={mileageIn}
                     onChange={e => setMileageIn(e.target.value)}
