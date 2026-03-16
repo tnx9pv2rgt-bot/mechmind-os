@@ -6,7 +6,7 @@
  * channel preferences. Supersedes v1 for direct Twilio integration.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
@@ -99,7 +99,7 @@ export class NotificationV2Service {
 
     const formattedPhone = this.formatPhoneNumber(phone);
     if (!formattedPhone) {
-      throw new Error('Invalid phone number format');
+      throw new BadRequestException('Invalid phone number format');
     }
 
     try {
@@ -131,7 +131,7 @@ export class NotificationV2Service {
 
     const formattedPhone = this.formatPhoneNumber(phone);
     if (!formattedPhone) {
-      throw new Error('Invalid phone number format');
+      throw new BadRequestException('Invalid phone number format');
     }
 
     try {
@@ -163,7 +163,7 @@ export class NotificationV2Service {
         where: { id: data.customerId },
       });
       if (!customer) {
-        throw new Error(`Customer ${data.customerId} not found`);
+        throw new NotFoundException(`Customer ${data.customerId} not found`);
       }
       // Message will be generated during processing
     }
@@ -570,7 +570,7 @@ export class NotificationV2Service {
         messageId = await this.sendWhatsApp(phone, message);
         break;
       default:
-        throw new Error('Unsupported channel');
+        throw new BadRequestException('Unsupported channel');
     }
 
     // Update notification

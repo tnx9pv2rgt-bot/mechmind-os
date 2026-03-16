@@ -7,6 +7,7 @@ import {
   Logger,
   Headers,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -47,7 +48,7 @@ export class SseController {
     const tenantId = req.user?.tenantId;
 
     if (!userId || !tenantId) {
-      throw new Error('User not authenticated');
+      throw new UnauthorizedException('User not authenticated');
     }
     const clientId = uuidv4();
 
@@ -78,7 +79,7 @@ export class SseController {
     const tenantId = req.user?.tenantId;
 
     if (!userId || !tenantId) {
-      throw new Error('User not authenticated');
+      throw new UnauthorizedException('User not authenticated');
     }
     const clientId = uuidv4();
 

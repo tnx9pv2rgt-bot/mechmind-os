@@ -9,7 +9,7 @@
  * - Time-series data optimization
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { NotificationsService } from '../../../notifications/services/notifications.service';
@@ -183,7 +183,7 @@ export class ObdStreamingService {
     });
 
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
 
     // In real implementation, this would query the OBD device
@@ -238,7 +238,7 @@ export class ObdStreamingService {
     });
 
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
 
     // Query supported tests
@@ -297,7 +297,7 @@ export class ObdStreamingService {
     });
 
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
 
     this.logger.log(`Starting EVAP ${testType} test on device ${deviceId}`);

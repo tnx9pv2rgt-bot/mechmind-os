@@ -1,38 +1,36 @@
-import { IsString, IsOptional, IsNumber, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateWorkOrderDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Vehicle ID' })
+  @IsUUID()
   vehicleId: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Customer ID' })
+  @IsUUID()
   customerId: string;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ description: 'Technician ID' })
+  @IsUUID()
   @IsOptional()
   technicianId?: string;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ description: 'Booking ID' })
+  @IsUUID()
   @IsOptional()
   bookingId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Diagnosis' })
   @IsString()
   @IsOptional()
   diagnosis?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Customer request' })
   @IsString()
   @IsOptional()
   customerRequest?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Mileage at intake' })
   @IsNumber()
   @IsOptional()
   mileageIn?: number;

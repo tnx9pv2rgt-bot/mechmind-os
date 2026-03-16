@@ -14,6 +14,7 @@ import {
   HttpStatus,
   Req,
   Param,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
@@ -213,7 +214,7 @@ export class ZapierWebhookService {
 
     const automation = automations[event];
     if (!automation) {
-      throw new Error(`Unknown automation: ${event}`);
+      throw new BadRequestException(`Unknown automation: ${event}`);
     }
 
     return automation();

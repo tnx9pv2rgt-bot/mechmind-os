@@ -636,21 +636,21 @@ export class SubscriptionService {
   // }
 
   // private async handleCheckoutCompleted(
-  //   session: any
+  //   session: Record<string, unknown>
   // ): Promise<void> {
   //   ...
   // }
 
-  // private async handleInvoicePaid(invoice: any): Promise<void> {
+  // private async handleInvoicePaid(invoice: Record<string, unknown>): Promise<void> {
   //   ...
   // }
 
-  // private async handlePaymentFailed(invoice: any): Promise<void> {
+  // private async handlePaymentFailed(invoice: Record<string, unknown>): Promise<void> {
   //   ...
   // }
 
   // private async handleSubscriptionDeleted(
-  //   stripeSubscription: any
+  //   stripeSubscription: Record<string, unknown>
   // ): Promise<void> {
   //   ...
   // }

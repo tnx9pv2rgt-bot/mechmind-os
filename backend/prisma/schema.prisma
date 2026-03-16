@@ -193,6 +193,25 @@ model Customer {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
+  // Dati fiscali (fatturazione elettronica italiana)
+  customerType    CustomerType @default(PERSONA) @map("customer_type")
+  codiceFiscale   String?      @map("codice_fiscale")
+  partitaIva      String?      @map("partita_iva")
+  sdiCode         String?      @map("sdi_code")
+  pecEmail        String?      @map("pec_email")
+
+  // Indirizzo (obbligatorio per fatturazione)
+  address    String? @map("address")
+  city       String? @map("city")
+  postalCode String? @map("postal_code")
+  province   String? @map("province")
+  country    String  @default("IT") @map("country")
+
+  // Preferenze
+  preferredChannel  ContactChannel? @map("preferred_channel")
+  preferredLanguage String?         @default("it") @map("preferred_language")
+  source            CustomerSource? @map("source")
+
   // Tenant relation
   tenantId String @map("tenant_id")
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -274,6 +293,17 @@ model Vehicle {
   mileage      Int?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Dati tecnici veicolo
+  fuelType           FuelType?         @map("fuel_type")
+  engineDisplacement Int?              @map("engine_displacement") // cc
+  power              Int?              @map("power") // kW
+  transmissionType   TransmissionType? @map("transmission_type")
+  color              String?           @map("color")
+  driveType          DriveType?        @map("drive_type")
+  registrationDate   DateTime?         @map("registration_date")
+  insuranceExpiry    DateTime?         @map("insurance_expiry")
+  taxExpiry          DateTime?         @map("tax_expiry")
 
   // Customer relation (legacy)
   customerId String?   @map("customer_id")
@@ -468,7 +498,8 @@ model Invoice {
 
   status InvoiceStatus @default(DRAFT)
 
-  items     Json
+  // Legacy JSON items (kept for backward compatibility, prefer invoiceItems relation)
+  items     Json?
   subtotal  Decimal   @db.Decimal(10, 2)
   taxRate   Decimal   @default(22) @db.Decimal(5, 2) @map("tax_rate")
   taxAmount Decimal   @db.Decimal(10, 2) @map("tax_amount")
@@ -479,6 +510,26 @@ model Invoice {
   sentAt  DateTime? @map("sent_at")
   paidAt  DateTime? @map("paid_at")
   pdfUrl  String?   @map("pdf_url")
+
+  // Fatturazione elettronica italiana
+  documentType      InvoiceDocumentType @default(FATTURA) @map("document_type")
+  paymentMethod     PaymentMethod?      @map("payment_method")
+  paymentTerms      PaymentTerms        @default(IMMEDIATO) @map("payment_terms")
+  stampDuty         Boolean             @default(false) @map("stamp_duty")
+  taxRegime         TaxRegime           @default(ORDINARIO) @map("tax_regime")
+
+  // SDI (Sistema di Interscambio)
+  sdiStatus         SdiStatus?          @map("sdi_status")
+  sdiTransmissionId String?             @map("sdi_transmission_id")
+  xmlUrl            String?             @map("xml_url")
+
+  // Nota di credito
+  creditNoteOfId String?   @map("credit_note_of_id")
+  creditNoteOf   Invoice?  @relation("CreditNote", fields: [creditNoteOfId], references: [id])
+  creditNotes    Invoice[] @relation("CreditNote")
+
+  // Relazione items normalizzata
+  invoiceItems InvoiceItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -491,12 +542,75 @@ model Invoice {
   @@map("invoices")
 }
 
+model InvoiceItem {
+  id          String          @id @default(uuid())
+  invoiceId   String          @map("invoice_id")
+  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  position    Int             @default(0)
+  itemType    InvoiceItemType @default(SERVICE) @map("item_type")
+  description String
+  quantity    Decimal         @db.Decimal(10, 3)
+  unitPrice   Decimal         @db.Decimal(10, 2) @map("unit_price")
+  vatRate     Decimal         @db.Decimal(5, 2) @map("vat_rate")
+  discount    Decimal         @default(0) @db.Decimal(5, 2)
+  subtotal    Decimal         @db.Decimal(10, 2)
+  vatAmount   Decimal         @db.Decimal(10, 2) @map("vat_amount")
+  total       Decimal         @db.Decimal(10, 2)
+  partId      String?         @map("part_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
 enum InvoiceStatus {
   DRAFT
   SENT
   PAID
   OVERDUE
   CANCELLED
+}
+
+enum InvoiceDocumentType {
+  FATTURA
+  NOTA_CREDITO
+  PROFORMA
+}
+
+enum PaymentMethod {
+  CONTANTI
+  CARTA
+  BONIFICO
+  ASSEGNO
+  BNPL
+}
+
+enum PaymentTerms {
+  IMMEDIATO
+  TRENTA_GIORNI
+  SESSANTA_GIORNI
+  FINE_MESE
+}
+
+enum TaxRegime {
+  ORDINARIO
+  SEMPLIFICATO
+  FORFETTARIO
+}
+
+enum SdiStatus {
+  SDI_PENDING
+  SDI_SENT
+  SDI_DELIVERED
+  SDI_REJECTED
+  SDI_NOT_DELIVERED
+}
+
+enum InvoiceItemType {
+  LABOR
+  PART
+  EXTERNAL_SERVICE
+  SERVICE
 }
 
 // ==========================================
@@ -2835,4 +2949,53 @@ enum AccountingSyncStatus {
   SYNCED
   FAILED
   SKIPPED
+}
+
+// ==========================================
+// ITALIAN FISCAL ENUMS
+// ==========================================
+
+enum CustomerType {
+  PERSONA
+  AZIENDA
+}
+
+enum ContactChannel {
+  PHONE
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum CustomerSource {
+  GOOGLE
+  PASSAPAROLA
+  SOCIAL
+  VOLANTINO
+  WALK_IN
+  ALTRO
+}
+
+enum FuelType {
+  BENZINA
+  DIESEL
+  GPL
+  METANO
+  IBRIDO_BENZINA
+  IBRIDO_DIESEL
+  ELETTRICO
+  IDROGENO
+}
+
+enum TransmissionType {
+  MANUALE
+  AUTOMATICO
+  CVT
+  ROBOTIZZATO
+}
+
+enum DriveType {
+  FWD
+  RWD
+  AWD
 }

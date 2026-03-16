@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -502,9 +502,9 @@ export class GdprExportService {
           break;
         case 'PDF':
           // PDF generation would require a PDF library
-          throw new Error('PDF export not yet implemented');
+          throw new BadRequestException('PDF export not yet implemented');
         default:
-          throw new Error(`Unsupported format: ${format}`);
+          throw new BadRequestException(`Unsupported format: ${format}`);
       }
 
       // Calculate checksum

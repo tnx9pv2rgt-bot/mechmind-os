@@ -3,7 +3,7 @@
  * Verifica partite IVA europee con cache Redis
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadGatewayException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 // Simple XML parser for VIES SOAP responses (no external dependency)
@@ -80,7 +80,7 @@ export class ViesApiService {
       if (this.isDevelopment) {
         return this.getMockResult(countryCode, number);
       }
-      throw new Error('Rate limit exceeded. Please try again later.');
+      throw new HttpException('Rate limit exceeded. Please try again later.', 429);
     }
 
     try {
@@ -158,7 +158,7 @@ export class ViesApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`VIES HTTP error: ${response.status}`);
+      throw new BadGatewayException(`VIES HTTP error: ${response.status}`);
     }
 
     const xmlResponse = await response.text();
@@ -195,7 +195,7 @@ export class ViesApiService {
     // Check for SOAP Fault
     if (xmlResponse.includes('soapenv:Fault') || xmlResponse.includes('<faultstring>')) {
       const faultString = getTagValue(xmlResponse, 'faultstring') || 'Unknown SOAP fault';
-      throw new Error(`VIES SOAP Fault: ${faultString}`);
+      throw new BadGatewayException(`VIES SOAP Fault: ${faultString}`);
     }
 
     const valid = getTagValue(xmlResponse, 'valid');

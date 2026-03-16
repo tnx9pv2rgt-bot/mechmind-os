@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
@@ -12,7 +12,7 @@ export class EncryptionService {
     const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
 
     if (!encryptionKey || encryptionKey.length < 32) {
-      throw new Error('ENCRYPTION_KEY must be at least 32 characters');
+      throw new InternalServerErrorException('ENCRYPTION_KEY must be at least 32 characters');
     }
 
     this.key = Buffer.from(encryptionKey.slice(0, 32));
@@ -51,7 +51,7 @@ export class EncryptionService {
         decrypted += decipher.final('utf8');
         return decrypted;
       }
-      throw new Error('Ciphertext too short');
+      throw new BadRequestException('Ciphertext too short');
     } catch {
       // Fallback: try legacy static IV for backward compatibility with existing data
       try {
@@ -61,7 +61,9 @@ export class EncryptionService {
         decrypted += decipher.final('utf8');
         return decrypted;
       } catch {
-        throw new Error('Failed to decrypt data: invalid encryption key or corrupted data');
+        throw new InternalServerErrorException(
+          'Failed to decrypt data: invalid encryption key or corrupted data',
+        );
       }
     }
   }

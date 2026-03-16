@@ -10,6 +10,17 @@ import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
 import { CreateBookingDto, ReserveSlotDto, UpdateBookingDto } from '../dto/create-booking.dto';
+import { validateTransition, TransitionMap } from '@common/utils/state-machine';
+
+const BOOKING_TRANSITIONS: TransitionMap = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['CHECKED_IN', 'CANCELLED', 'NO_SHOW'],
+  CHECKED_IN: ['IN_PROGRESS'],
+  IN_PROGRESS: ['COMPLETED'],
+  COMPLETED: [],
+  CANCELLED: [],
+  NO_SHOW: [],
+};
 
 const bookingInclude = {
   customer: true,
@@ -435,6 +446,10 @@ export class BookingService {
 
       if (!existing) {
         throw new NotFoundException(`Booking ${bookingId} not found`);
+      }
+
+      if (dto.status) {
+        validateTransition(existing.status, dto.status, BOOKING_TRANSITIONS, 'booking');
       }
 
       const booking = await prisma.booking.update({

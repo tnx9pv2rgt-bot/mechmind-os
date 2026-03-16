@@ -5,7 +5,7 @@
  * Provides methods to check if a tenant can access specific features
  */
 
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { SubscriptionPlan, FeatureFlag, SubscriptionStatus } from '@prisma/client';
 import {
@@ -216,7 +216,7 @@ export class FeatureAccessService {
         current = await this.getInspectionsCountThisMonth(tenantId);
         break;
       default:
-        throw new Error(`Unknown limit type: ${limitType}`);
+        throw new BadRequestException(`Unknown limit type: ${limitType}`);
     }
 
     return this.checkLimit(current, limit);

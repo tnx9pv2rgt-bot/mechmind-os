@@ -1,5 +1,5 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, InternalServerErrorException } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { NotificationOrchestratorService } from '../services/notification.service';
 import { NotificationType, NotificationChannel } from '../dto/send-notification.dto';
@@ -41,7 +41,7 @@ export class NotificationProcessor extends WorkerHost {
       );
 
       if (!result.success) {
-        throw new Error(result.error || 'Notification failed');
+        throw new InternalServerErrorException(result.error || 'Notification failed');
       }
 
       this.logger.log(`Notification job ${job.id} completed successfully via ${result.channel}`);

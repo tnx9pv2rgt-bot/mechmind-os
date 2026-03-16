@@ -8,7 +8,7 @@
  * - Parking management
  */
 
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { NotificationsService } from '../../../notifications/services/notifications.service';
@@ -73,7 +73,7 @@ export class LicensePlateService {
         detection = await this.detectWithOpenAlpr(imageBuffer, imageUrl, provider);
         break;
       default:
-        throw new Error(`Unsupported OCR provider: ${provider}`);
+        throw new BadRequestException(`Unsupported OCR provider: ${provider}`);
     }
 
     // Store detection

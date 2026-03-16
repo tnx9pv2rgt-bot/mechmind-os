@@ -3,12 +3,64 @@ import {
   IsArray,
   IsOptional,
   IsNumber,
+  IsEnum,
+  IsUUID,
+  IsDateString,
   ValidateNested,
   IsNotEmpty,
+  Min,
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  InvoiceItemType,
+  PaymentMethod,
+  PaymentTerms,
+  TaxRegime,
+  InvoiceDocumentType,
+} from '@prisma/client';
 
+export class CreateInvoiceItemDto {
+  @ApiProperty({ description: 'Descrizione riga', example: 'Cambio olio motore' })
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
+  @ApiProperty({ description: 'Tipo riga', enum: InvoiceItemType, example: 'LABOR' })
+  @IsEnum(InvoiceItemType)
+  itemType: InvoiceItemType;
+
+  @ApiProperty({ description: 'Quantità', example: 1 })
+  @IsNumber()
+  @Min(0.001)
+  quantity: number;
+
+  @ApiProperty({ description: 'Prezzo unitario', example: 50.0 })
+  @IsNumber()
+  @Min(0)
+  unitPrice: number;
+
+  @ApiProperty({ description: 'Aliquota IVA (22, 10, 4, 0)', example: 22 })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  vatRate: number;
+
+  @ApiPropertyOptional({ description: 'Sconto % su riga', example: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  discount?: number;
+
+  @ApiPropertyOptional({ description: 'Part ID se ricambio' })
+  @IsOptional()
+  @IsUUID()
+  partId?: string;
+}
+
+// Legacy DTO kept for backward compatibility with existing JSON items
 export class InvoiceItemDto {
   @ApiProperty()
   @IsString()
@@ -25,39 +77,58 @@ export class InvoiceItemDto {
 }
 
 export class CreateInvoiceDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ description: 'ID cliente' })
+  @IsUUID()
   customerId: string;
 
-  @ApiProperty({ type: [InvoiceItemDto] })
+  @ApiProperty({ type: [CreateInvoiceItemDto], description: 'Righe fattura con IVA per riga' })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => InvoiceItemDto)
-  items: InvoiceItemDto[];
+  @Type(() => CreateInvoiceItemDto)
+  items: CreateInvoiceItemDto[];
 
-  @ApiPropertyOptional()
-  @IsNumber()
+  @ApiPropertyOptional({ description: 'Tipo documento', enum: InvoiceDocumentType })
   @IsOptional()
-  taxRate?: number;
+  @IsEnum(InvoiceDocumentType)
+  documentType?: InvoiceDocumentType;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ description: 'Data scadenza pagamento' })
   @IsOptional()
-  notes?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
+  @IsDateString()
   dueDate?: string;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ description: 'Metodo pagamento', enum: PaymentMethod })
   @IsOptional()
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
+
+  @ApiPropertyOptional({ description: 'Termini pagamento', enum: PaymentTerms })
+  @IsOptional()
+  @IsEnum(PaymentTerms)
+  paymentTerms?: PaymentTerms;
+
+  @ApiPropertyOptional({ description: 'Regime fiscale', enum: TaxRegime })
+  @IsOptional()
+  @IsEnum(TaxRegime)
+  taxRegime?: TaxRegime;
+
+  @ApiPropertyOptional({ description: 'Aliquota IVA globale (legacy, prefer per-riga)' })
+  @IsOptional()
+  @IsNumber()
+  taxRate?: number;
+
+  @ApiPropertyOptional({ description: 'Note' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @ApiPropertyOptional({ description: 'ID prenotazione collegata' })
+  @IsOptional()
+  @IsUUID()
   bookingId?: string;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ description: 'ID ordine di lavoro collegato' })
   @IsOptional()
+  @IsUUID()
   workOrderId?: string;
 }

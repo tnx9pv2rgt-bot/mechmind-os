@@ -3,7 +3,7 @@
  * Verifica email in tempo reale con multiple check
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadGatewayException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -108,7 +108,7 @@ export class ZeroBounceService {
       if (this.isDevelopment) {
         return this.getMockResult(normalizedEmail);
       }
-      throw new Error('Rate limit exceeded. Please try again later.');
+      throw new HttpException('Rate limit exceeded. Please try again later.', 429);
     }
 
     if (this.isDevelopment && !this.apiKey) {
@@ -132,7 +132,7 @@ export class ZeroBounceService {
       });
 
       if (!response.ok) {
-        throw new Error(`ZeroBounce API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`ZeroBounce API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -250,13 +250,13 @@ export class ZeroBounceService {
       });
 
       if (!response.ok) {
-        throw new Error(`ZeroBounce Bulk API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`ZeroBounce Bulk API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.success === false) {
-        throw new Error(`ZeroBounce Bulk API error: ${data.message}`);
+        throw new BadGatewayException(`ZeroBounce Bulk API error: ${data.message}`);
       }
 
       return {
@@ -301,7 +301,7 @@ export class ZeroBounceService {
       const response = await fetch(`${this.bulkUrl}/filestatus?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`ZeroBounce Status API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`ZeroBounce Status API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -347,7 +347,7 @@ export class ZeroBounceService {
       const response = await fetch(`${this.bulkUrl}/getfile?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`ZeroBounce Download API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`ZeroBounce Download API HTTP error: ${response.status}`);
       }
 
       return Buffer.from(await response.arrayBuffer());
@@ -376,7 +376,7 @@ export class ZeroBounceService {
       const response = await fetch(`${this.baseUrl}/getcredits?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`ZeroBounce Credits API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`ZeroBounce Credits API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();

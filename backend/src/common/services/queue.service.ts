@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job } from 'bullmq';
 import { LoggerService } from './logger.service';
@@ -188,7 +188,7 @@ export class QueueService {
       case 'notification':
         return this.notificationQueue;
       default:
-        throw new Error(`Unknown queue: ${name}`);
+        throw new BadRequestException(`Unknown queue: ${name}`);
     }
   }
 }

@@ -5,7 +5,12 @@
  * Provides churn prediction, predictive maintenance estimates,
  * and labor time estimation via HTTP calls to the ML API.
  */
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+  BadGatewayException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface ChurnPrediction {
@@ -203,7 +208,9 @@ export class MlIntegrationService {
     method: 'GET' | 'POST' = 'POST',
   ): Promise<T> {
     if (this.isCircuitOpen()) {
-      throw new Error(`Circuit breaker is open. ML API calls are temporarily disabled.`);
+      throw new ServiceUnavailableException(
+        `Circuit breaker is open. ML API calls are temporarily disabled.`,
+      );
     }
 
     let lastError: Error | undefined;
@@ -259,7 +266,7 @@ export class MlIntegrationService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`ML API error ${response.status}: ${errorText}`);
+        throw new BadGatewayException(`ML API error ${response.status}: ${errorText}`);
       }
 
       return (await response.json()) as T;

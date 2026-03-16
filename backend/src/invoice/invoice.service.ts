@@ -1,8 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
-import { CreateInvoiceDto, InvoiceItemDto } from './dto/create-invoice.dto';
+import { CreateInvoiceDto, CreateInvoiceItemDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { validateTransition, TransitionMap } from '../common/utils/state-machine';
+
+const INVOICE_TRANSITIONS: TransitionMap = {
+  DRAFT: ['SENT', 'CANCELLED'],
+  SENT: ['PAID', 'OVERDUE', 'CANCELLED'],
+  OVERDUE: ['PAID', 'CANCELLED'],
+  PAID: [],
+  CANCELLED: [],
+};
 
 interface InvoiceFilters {
   status?: string;
@@ -116,7 +125,10 @@ export class InvoiceService {
     if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
     if (dto.bookingId !== undefined) data.bookingId = dto.bookingId ?? null;
     if (dto.workOrderId !== undefined) data.workOrderId = dto.workOrderId ?? null;
-    if (dto.status) data.status = dto.status;
+    if (dto.status) {
+      validateTransition(existing.status, dto.status, INVOICE_TRANSITIONS, 'invoice');
+      data.status = dto.status;
+    }
 
     return this.prisma.invoice.update({
       where: { id },
@@ -215,12 +227,22 @@ export class InvoiceService {
   }
 
   private computeTotals(
-    items: InvoiceItemDto[],
+    items: CreateInvoiceItemDto[],
     taxRateOverride?: number,
   ): { subtotal: number; taxRate: number; taxAmount: number; total: number } {
-    const subtotal = items.reduce((sum, item) => sum + item.qty * item.price, 0);
-    const taxRate = taxRateOverride ?? 22;
-    const taxAmount = subtotal * (taxRate / 100);
+    let subtotal = 0;
+    let totalVat = 0;
+
+    for (const item of items) {
+      const discountMultiplier = 1 - (item.discount ?? 0) / 100;
+      const lineSubtotal = item.quantity * item.unitPrice * discountMultiplier;
+      const lineVat = lineSubtotal * (item.vatRate / 100);
+      subtotal += lineSubtotal;
+      totalVat += lineVat;
+    }
+
+    const taxRate = taxRateOverride ?? (items.length > 0 ? items[0].vatRate : 22);
+    const taxAmount = totalVat;
     const total = subtotal + taxAmount;
 
     return { subtotal, taxRate, taxAmount, total };

@@ -5,7 +5,7 @@
  * Routes notifications to Email (Resend), SMS (Twilio), or BullMQ queue
  * based on customer channel preferences. Emits domain events on send/fail.
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -104,7 +104,7 @@ export class NotificationOrchestratorService {
     // Get customer info
     const customer = await this.getCustomerInfo(customerId, tenantId);
     if (!customer) {
-      throw new Error(`Customer ${customerId} not found`);
+      throw new NotFoundException(`Customer ${customerId} not found`);
     }
 
     // Get workshop info

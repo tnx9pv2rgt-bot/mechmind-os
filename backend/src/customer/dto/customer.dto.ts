@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsDateString, IsEmail, Length } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  Length,
+  Matches,
+} from 'class-validator';
+import { CustomerType, ContactChannel, CustomerSource } from '@prisma/client';
 
 export class CreateCustomerDto {
   @ApiProperty({
@@ -89,6 +99,87 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // Dati fiscali italiani
+  @ApiPropertyOptional({
+    description: 'Customer type',
+    enum: CustomerType,
+    default: 'PERSONA',
+  })
+  @IsOptional()
+  @IsEnum(CustomerType)
+  customerType?: CustomerType;
+
+  @ApiPropertyOptional({
+    description: 'Codice Fiscale (16 chars persona, 11 cifre azienda)',
+    example: 'RSSMRA85M01H501Z',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$|^\d{11}$/, {
+    message: 'Codice fiscale non valido',
+  })
+  codiceFiscale?: string;
+
+  @ApiPropertyOptional({
+    description: 'Partita IVA (11 cifre)',
+    example: '12345678901',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{11}$/, { message: 'Partita IVA deve essere 11 cifre' })
+  partitaIva?: string;
+
+  @ApiPropertyOptional({
+    description: 'Codice destinatario SDI (7 caratteri)',
+    example: 'M5UXCR1',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(7, 7)
+  sdiCode?: string;
+
+  @ApiPropertyOptional({
+    description: 'PEC per fatturazione elettronica',
+    example: 'azienda@pec.it',
+  })
+  @IsOptional()
+  @IsEmail()
+  pecEmail?: string;
+
+  // Indirizzo
+  @ApiPropertyOptional({ description: 'Indirizzo (via e numero civico)', example: 'Via Roma 1' })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional({ description: 'Città', example: 'Milano' })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ description: 'CAP (5 cifre)', example: '20100' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{5}$/, { message: 'CAP deve essere 5 cifre' })
+  postalCode?: string;
+
+  @ApiPropertyOptional({ description: 'Sigla provincia (2 lettere)', example: 'MI' })
+  @IsOptional()
+  @IsString()
+  @Length(2, 2)
+  province?: string;
+
+  // Preferenze
+  @ApiPropertyOptional({ description: 'Canale contatto preferito', enum: ContactChannel })
+  @IsOptional()
+  @IsEnum(ContactChannel)
+  preferredChannel?: ContactChannel;
+
+  @ApiPropertyOptional({ description: 'Fonte acquisizione cliente', enum: CustomerSource })
+  @IsOptional()
+  @IsEnum(CustomerSource)
+  source?: CustomerSource;
 }
 
 export class UpdateCustomerDto {
@@ -116,6 +207,71 @@ export class UpdateCustomerDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // Dati fiscali
+  @ApiPropertyOptional({ enum: CustomerType })
+  @IsOptional()
+  @IsEnum(CustomerType)
+  customerType?: CustomerType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$|^\d{11}$/, {
+    message: 'Codice fiscale non valido',
+  })
+  codiceFiscale?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{11}$/, { message: 'Partita IVA deve essere 11 cifre' })
+  partitaIva?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(7, 7)
+  sdiCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  pecEmail?: string;
+
+  // Indirizzo
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{5}$/, { message: 'CAP deve essere 5 cifre' })
+  postalCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(2, 2)
+  province?: string;
+
+  // Preferenze
+  @ApiPropertyOptional({ enum: ContactChannel })
+  @IsOptional()
+  @IsEnum(ContactChannel)
+  preferredChannel?: ContactChannel;
+
+  @ApiPropertyOptional({ enum: CustomerSource })
+  @IsOptional()
+  @IsEnum(CustomerSource)
+  source?: CustomerSource;
 }
 
 export class CustomerResponseDto {
@@ -145,6 +301,33 @@ export class CustomerResponseDto {
 
   @ApiPropertyOptional({ example: 'Preferred contact time: morning' })
   notes?: string;
+
+  @ApiPropertyOptional({ enum: CustomerType })
+  customerType?: string;
+
+  @ApiPropertyOptional()
+  codiceFiscale?: string;
+
+  @ApiPropertyOptional()
+  partitaIva?: string;
+
+  @ApiPropertyOptional()
+  sdiCode?: string;
+
+  @ApiPropertyOptional()
+  pecEmail?: string;
+
+  @ApiPropertyOptional()
+  address?: string;
+
+  @ApiPropertyOptional()
+  city?: string;
+
+  @ApiPropertyOptional()
+  postalCode?: string;
+
+  @ApiPropertyOptional()
+  province?: string;
 
   @ApiProperty({ example: '2024-01-10T08:30:00Z' })
   createdAt: Date;

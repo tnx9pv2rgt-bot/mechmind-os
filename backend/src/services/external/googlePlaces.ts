@@ -3,7 +3,7 @@
  * Autocomplete indirizzi, geocoding e reverse geocoding
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadGatewayException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -115,13 +115,15 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/place/autocomplete/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Places API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Places API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Places API error: ${data.status} - ${data.error_message || ''}`);
+        throw new BadGatewayException(
+          `Places API error: ${data.status} - ${data.error_message || ''}`,
+        );
       }
 
       const predictions: AddressPrediction[] = (data.predictions || []).map(
@@ -180,13 +182,13 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/place/details/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Place Details API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Place Details API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK') {
-        throw new Error(`Place Details API error: ${data.status}`);
+        throw new BadGatewayException(`Place Details API error: ${data.status}`);
       }
 
       const result = data.result as Record<string, unknown>;
@@ -238,13 +240,13 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/geocode/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Geocoding API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Geocoding API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Geocoding API error: ${data.status}`);
+        throw new BadGatewayException(`Geocoding API error: ${data.status}`);
       }
 
       const results: GeocodeResult[] = (data.results || []).map((r: Record<string, unknown>) => ({
@@ -297,13 +299,13 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/geocode/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Reverse Geocoding API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Reverse Geocoding API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Reverse Geocoding API error: ${data.status}`);
+        throw new BadGatewayException(`Reverse Geocoding API error: ${data.status}`);
       }
 
       const results: AddressDetails[] = (data.results || []).map((r: Record<string, unknown>) =>

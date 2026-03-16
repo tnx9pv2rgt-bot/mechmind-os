@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -678,7 +678,7 @@ export class DataRetentionService {
     });
 
     if (!tenant) {
-      throw new Error(`Tenant ${tenantId} not found`);
+      throw new NotFoundException(`Tenant ${tenantId} not found`);
     }
 
     const policy = this.getRetentionPolicy();
@@ -737,7 +737,7 @@ export class DataRetentionService {
     const maxDays = 3650; // 10 years
 
     if (days < minDays || days > maxDays) {
-      throw new Error(`Retention days must be between ${minDays} and ${maxDays}`);
+      throw new BadRequestException(`Retention days must be between ${minDays} and ${maxDays}`);
     }
 
     // Store dataRetentionDays in tenant settings JSON field

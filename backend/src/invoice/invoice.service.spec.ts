@@ -46,7 +46,9 @@ function makeMockInvoice(overrides: Record<string, unknown> = {}): Record<string
     customerId: CUSTOMER_ID,
     invoiceNumber: `INV-${YEAR}-0001`,
     status: 'DRAFT',
-    items: [{ description: 'Brake Repair', qty: 1, price: 150 }],
+    items: [
+      { description: 'Brake Repair', itemType: 'LABOR', quantity: 1, unitPrice: 150, vatRate: 22 },
+    ],
     subtotal: new Decimal('150.00'),
     taxRate: new Decimal('22.00'),
     taxAmount: new Decimal('33.00'),
@@ -205,8 +207,20 @@ describe('InvoiceService', () => {
     const dto: CreateInvoiceDto = {
       customerId: CUSTOMER_ID,
       items: [
-        { description: 'Oil Change', qty: 1, price: 50 },
-        { description: 'Oil Filter', qty: 2, price: 15 },
+        {
+          description: 'Oil Change',
+          itemType: 'LABOR' as const,
+          quantity: 1,
+          unitPrice: 50,
+          vatRate: 22,
+        },
+        {
+          description: 'Oil Filter',
+          itemType: 'PART' as const,
+          quantity: 2,
+          unitPrice: 15,
+          vatRate: 22,
+        },
       ],
       taxRate: 22,
       notes: 'Test invoice',
@@ -281,7 +295,15 @@ describe('InvoiceService', () => {
     it('should use default tax rate of 22 when not provided', async () => {
       const dtoNoTax: CreateInvoiceDto = {
         customerId: CUSTOMER_ID,
-        items: [{ description: 'Service', qty: 1, price: 100 }],
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 100,
+            vatRate: 22,
+          },
+        ],
       };
 
       const mockTx = {
@@ -339,11 +361,11 @@ describe('InvoiceService', () => {
       await expect(service.update(TENANT_ID, INVOICE_ID, dto)).rejects.toThrow(BadRequestException);
     });
 
-    it('should allow status-only update on non-DRAFT invoice', async () => {
+    it('should allow valid status transition SENT → PAID', async () => {
       const existing = makeMockInvoice({ status: 'SENT' });
       prisma.invoice.findFirst.mockResolvedValue(existing);
 
-      const dto: UpdateInvoiceDto = { status: 'PAID' };
+      const dto: UpdateInvoiceDto = { status: 'PAID' as const };
       const updated = makeMockInvoice({ status: 'PAID' });
       prisma.invoice.update.mockResolvedValue(updated);
 
@@ -352,12 +374,47 @@ describe('InvoiceService', () => {
       expect(result).toEqual(updated);
     });
 
+    it('should block invalid status transition DRAFT → PAID', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT' });
+      prisma.invoice.findFirst.mockResolvedValue(existing);
+
+      const dto: UpdateInvoiceDto = { status: 'PAID' as const };
+
+      await expect(service.update(TENANT_ID, INVOICE_ID, dto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should block invalid status transition PAID → DRAFT', async () => {
+      const existing = makeMockInvoice({ status: 'PAID' });
+      prisma.invoice.findFirst.mockResolvedValue(existing);
+
+      const dto: UpdateInvoiceDto = { status: 'DRAFT' as const };
+
+      await expect(service.update(TENANT_ID, INVOICE_ID, dto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should block invalid status transition CANCELLED → SENT', async () => {
+      const existing = makeMockInvoice({ status: 'CANCELLED' });
+      prisma.invoice.findFirst.mockResolvedValue(existing);
+
+      const dto: UpdateInvoiceDto = { status: 'SENT' as const };
+
+      await expect(service.update(TENANT_ID, INVOICE_ID, dto)).rejects.toThrow(BadRequestException);
+    });
+
     it('should recalculate totals when items are updated', async () => {
       const existing = makeMockInvoice({ status: 'DRAFT' });
       prisma.invoice.findFirst.mockResolvedValue(existing);
 
       const dto: UpdateInvoiceDto = {
-        items: [{ description: 'New Service', qty: 2, price: 100 }],
+        items: [
+          {
+            description: 'New Service',
+            itemType: 'LABOR' as const,
+            quantity: 2,
+            unitPrice: 100,
+            vatRate: 10,
+          },
+        ],
         taxRate: 10,
       };
       prisma.invoice.update.mockResolvedValue(makeMockInvoice());
