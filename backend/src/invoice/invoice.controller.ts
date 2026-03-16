@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Res,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -19,18 +20,28 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/guards/roles.guard';
 import { CurrentTenant } from '../auth/decorators/current-user.decorator';
 import { InvoiceService } from './invoice.service';
+import { FatturapaService } from './services/fatturapa.service';
+import { PdfService } from './services/pdf.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 
 @ApiTags('invoices')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('invoices')
 export class InvoiceController {
-  constructor(private readonly invoiceService: InvoiceService) {}
+  constructor(
+    private readonly invoiceService: InvoiceService,
+    private readonly fatturapaService: FatturapaService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all invoices' })
@@ -158,5 +169,38 @@ export class InvoiceController {
       success: true,
       data: invoice,
     };
+  }
+
+  @Post(':id/fatturapa')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Generate FatturaPA XML' })
+  @ApiParam({ name: 'id', description: 'Invoice ID' })
+  @ApiResponse({ status: 201, description: 'FatturaPA XML generated' })
+  @ApiResponse({ status: 400, description: 'Missing fiscal data' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async generateFatturaPa(@Param('id') id: string, @CurrentTenant() tenantId: string) {
+    const xml = await this.fatturapaService.generateXml(id, tenantId);
+    return {
+      success: true,
+      data: { xml },
+    };
+  }
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Download invoice PDF' })
+  @ApiParam({ name: 'id', description: 'Invoice ID' })
+  @ApiResponse({ status: 200, description: 'Invoice PDF generated' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async generatePdf(
+    @Param('id') id: string,
+    @CurrentTenant() tenantId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const pdfBuffer = await this.pdfService.generateInvoicePdf(id, tenantId);
+    res.set({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Disposition': `attachment; filename="fattura-${id}.html"`,
+    });
+    res.send(pdfBuffer);
   }
 }

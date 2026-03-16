@@ -117,6 +117,8 @@ describe('VehicleService', () => {
           year: 2020,
           vin: 'ZFA3120000J123456',
           notes: 'Test notes',
+          status: 'active',
+          mileage: undefined,
           customer: { connect: { id: CUSTOMER_ID } },
         },
       });
@@ -151,6 +153,8 @@ describe('VehicleService', () => {
           year: undefined,
           vin: undefined,
           notes: undefined,
+          status: 'active',
+          mileage: undefined,
           customer: { connect: { id: CUSTOMER_ID } },
         },
       });

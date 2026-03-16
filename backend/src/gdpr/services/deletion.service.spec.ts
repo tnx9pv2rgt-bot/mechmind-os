@@ -31,6 +31,7 @@ interface MockPrismaModels {
   callRecording: {
     findMany: jest.Mock;
     update: jest.Mock;
+    updateMany: jest.Mock;
   };
   withTenant: jest.Mock;
 }
@@ -161,6 +162,7 @@ describe('GdprDeletionService', () => {
       callRecording: {
         findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
       withTenant: jest.fn((_tenantId: string, cb: (p: MockPrismaModels) => Promise<unknown>) =>
         cb(prisma),
@@ -905,7 +907,7 @@ describe('GdprDeletionService', () => {
   describe('deleteCallRecordings', () => {
     beforeEach(() => {
       prisma.callRecording.findMany.mockResolvedValue(MOCK_RECORDINGS);
-      prisma.callRecording.update.mockResolvedValue({ id: 'rec-001' });
+      prisma.callRecording.updateMany.mockResolvedValue({ count: 2 });
     });
 
     it('should delete all call recordings for a customer', async () => {
@@ -937,19 +939,20 @@ describe('GdprDeletionService', () => {
       );
     });
 
-    it('should mark each recording as soft-deleted with GDPR reason', async () => {
+    it('should batch-update all recordings as soft-deleted with GDPR reason', async () => {
       // Act
       await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
 
-      // Assert
-      expect(prisma.callRecording.update).toHaveBeenCalledTimes(2);
-      for (const call of prisma.callRecording.update.mock.calls) {
-        const updateArg = call[0] as {
-          data: { deletionReason: string; recordingUrl: null };
-        };
-        expect(updateArg.data.deletionReason).toBe('GDPR_DELETION_REQUEST');
-        expect(updateArg.data.recordingUrl).toBeNull();
-      }
+      // Assert - service uses updateMany (batch) instead of individual updates
+      expect(prisma.callRecording.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: { in: ['rec-001', 'rec-002'] } },
+          data: expect.objectContaining({
+            deletionReason: 'GDPR_DELETION_REQUEST',
+            recordingUrl: null,
+          }),
+        }),
+      );
     });
 
     it('should calculate reclaimed storage from recording durations', async () => {
@@ -990,20 +993,19 @@ describe('GdprDeletionService', () => {
       expect(prisma.auditLog.create).not.toHaveBeenCalled();
     });
 
-    it('should handle partial failures gracefully', async () => {
-      // Arrange - first update succeeds, second fails
-      prisma.callRecording.update
-        .mockResolvedValueOnce({ id: 'rec-001' })
-        .mockRejectedValueOnce(new Error('Storage service unavailable'));
+    it('should handle batch updateMany failure gracefully', async () => {
+      // Arrange - updateMany fails for all recordings
+      prisma.callRecording.updateMany.mockRejectedValue(new Error('Storage service unavailable'));
 
       // Act
       const result = await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
 
-      // Assert
+      // Assert - batch failure means all recordings fail
       expect(result.success).toBe(false);
-      expect(result.deletedCount).toBe(1);
-      expect(result.failedDeletions).toHaveLength(1);
-      expect(result.failedDeletions[0].recordingId).toBe('rec-002');
+      expect(result.deletedCount).toBe(0);
+      expect(result.failedDeletions).toHaveLength(2);
+      expect(result.failedDeletions[0].recordingId).toBe('rec-001');
+      expect(result.failedDeletions[1].recordingId).toBe('rec-002');
       expect(result.failedDeletions[0].reason).toBe('Storage service unavailable');
     });
 
@@ -1278,7 +1280,7 @@ describe('GdprDeletionService', () => {
       });
       prisma.dataSubjectRequest.update.mockResolvedValue({ id: REQUEST_ID });
       prisma.callRecording.findMany.mockResolvedValue(MOCK_RECORDINGS);
-      prisma.callRecording.update.mockResolvedValue({ id: 'rec-001' });
+      prisma.callRecording.updateMany.mockResolvedValue({ count: 2 });
       queue.getJob.mockResolvedValue(null);
     });
 
@@ -1522,13 +1524,13 @@ describe('GdprDeletionService', () => {
     it('should soft-delete recordings with GDPR deletion reason marker', async () => {
       // Arrange
       prisma.callRecording.findMany.mockResolvedValue([MOCK_RECORDINGS[0]]);
-      prisma.callRecording.update.mockResolvedValue({ id: 'rec-001' });
+      prisma.callRecording.updateMany.mockResolvedValue({ count: 1 });
 
       // Act
       await service.deleteCallRecordings(CUSTOMER_ID, TENANT_ID);
 
-      // Assert
-      expect(prisma.callRecording.update).toHaveBeenCalledWith(
+      // Assert - service uses updateMany (batch) for all recordings
+      expect(prisma.callRecording.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             deletionReason: 'GDPR_DELETION_REQUEST',

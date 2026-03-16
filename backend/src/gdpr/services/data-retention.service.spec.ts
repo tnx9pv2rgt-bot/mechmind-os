@@ -26,7 +26,7 @@ describe('DataRetentionService', () => {
     booking: {
       count: jest.Mock;
     };
-    callRecordings: {
+    callRecording: {
       findMany: jest.Mock;
       update: jest.Mock;
       count: jest.Mock;
@@ -73,7 +73,7 @@ describe('DataRetentionService', () => {
       booking: {
         count: jest.fn().mockResolvedValue(0),
       },
-      callRecordings: {
+      callRecording: {
         findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn().mockResolvedValue({}),
         count: jest.fn().mockResolvedValue(0),
@@ -272,7 +272,7 @@ describe('DataRetentionService', () => {
 
     it('should count bookings, recordings, logs, webhook events', async () => {
       prisma.booking.count.mockResolvedValueOnce(5);
-      prisma.callRecordings.findMany.mockResolvedValueOnce([
+      prisma.callRecording.findMany.mockResolvedValueOnce([
         { id: 'r1', tenantId: TENANT_ID, recordingSid: 'sid1' },
       ]);
       prisma.auditLog.deleteMany.mockResolvedValueOnce({ count: 10 });
@@ -526,7 +526,7 @@ describe('DataRetentionService', () => {
   // =========================================================================
   describe('deleteExpiredRecordings', () => {
     it('should soft-delete recordings past retentionUntil', async () => {
-      prisma.callRecordings.findMany.mockResolvedValueOnce([
+      prisma.callRecording.findMany.mockResolvedValueOnce([
         { id: 'rec-1', tenantId: TENANT_ID, recordingSid: 'sid-1' },
         { id: 'rec-2', tenantId: TENANT_ID, recordingSid: 'sid-2' },
       ]);
@@ -534,7 +534,7 @@ describe('DataRetentionService', () => {
       const result = await service.enforceRetentionPolicy();
 
       expect(result.recordingsDeleted).toBe(2);
-      expect(prisma.callRecordings.findMany).toHaveBeenCalledWith(
+      expect(prisma.callRecording.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             deletedAt: null,
@@ -545,14 +545,14 @@ describe('DataRetentionService', () => {
     });
 
     it('should set deletionReason and null out recordingUrl', async () => {
-      prisma.callRecordings.findMany.mockResolvedValueOnce([
+      prisma.callRecording.findMany.mockResolvedValueOnce([
         { id: 'rec-1', tenantId: TENANT_ID, recordingSid: 'sid-1' },
       ]);
 
       await service.enforceRetentionPolicy();
 
       // The update happens inside withTenant callback, which delegates to prisma
-      expect(prisma.callRecordings.update).toHaveBeenCalledWith({
+      expect(prisma.callRecording.update).toHaveBeenCalledWith({
         where: { id: 'rec-1' },
         data: expect.objectContaining({
           deletionReason: 'RETENTION_EXPIRED',
@@ -563,7 +563,7 @@ describe('DataRetentionService', () => {
     });
 
     it('should continue on individual recording deletion failure', async () => {
-      prisma.callRecordings.findMany.mockResolvedValueOnce([
+      prisma.callRecording.findMany.mockResolvedValueOnce([
         { id: 'rec-1', tenantId: TENANT_ID, recordingSid: 'sid-1' },
         { id: 'rec-2', tenantId: TENANT_ID, recordingSid: 'sid-2' },
       ]);
@@ -575,8 +575,8 @@ describe('DataRetentionService', () => {
         .mockImplementationOnce((_t: string, cb: (p: typeof prisma) => Promise<void>) => {
           const failPrisma = {
             ...prisma,
-            callRecordings: {
-              ...prisma.callRecordings,
+            callRecording: {
+              ...prisma.callRecording,
               update: jest.fn().mockRejectedValueOnce(new Error('S3 error')),
             },
           };
@@ -734,7 +734,7 @@ describe('DataRetentionService', () => {
       prisma.customerEncrypted.count
         .mockResolvedValueOnce(100) // activeCustomers
         .mockResolvedValueOnce(5); // pendingAnonymization
-      prisma.callRecordings.count.mockResolvedValueOnce(3);
+      prisma.callRecording.count.mockResolvedValueOnce(3);
 
       const stats = await service.getTenantRetentionStats(TENANT_ID);
 
@@ -759,10 +759,10 @@ describe('DataRetentionService', () => {
       prisma.tenant.findUnique.mockResolvedValueOnce({
         id: TENANT_ID,
         name: 'Custom Garage',
-        dataRetentionDays: 1000,
+        settings: { dataRetentionDays: 1000 },
       });
       prisma.customerEncrypted.count.mockResolvedValue(0);
-      prisma.callRecordings.count.mockResolvedValue(0);
+      prisma.callRecording.count.mockResolvedValue(0);
 
       const stats = await service.getTenantRetentionStats(TENANT_ID);
 
@@ -775,7 +775,7 @@ describe('DataRetentionService', () => {
         name: 'Test',
       });
       prisma.customerEncrypted.count.mockResolvedValue(0);
-      prisma.callRecordings.count.mockResolvedValue(0);
+      prisma.callRecording.count.mockResolvedValue(0);
 
       await service.getTenantRetentionStats(TENANT_ID);
 

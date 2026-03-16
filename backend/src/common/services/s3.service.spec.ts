@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from './s3.service';
+import * as s3Presigner from '@aws-sdk/s3-request-presigner';
 
 // ---------------------------------------------------------------------------
 // Mock AWS SDK
@@ -190,7 +191,7 @@ describe('S3Service', () => {
 
   describe('getSignedDownloadUrl', () => {
     it('should return signed URL', async () => {
-      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      const { getSignedUrl } = s3Presigner as { getSignedUrl: jest.Mock };
       getSignedUrl.mockResolvedValueOnce('https://signed.example.com/file');
 
       const url = await service.getSignedDownloadUrl(TEST_BUCKET, 'file.pdf', 3600);
@@ -214,7 +215,7 @@ describe('S3Service', () => {
 
   describe('getSignedUrlForKey', () => {
     it('should build tenant key and return signed URL', async () => {
-      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      const { getSignedUrl } = s3Presigner as { getSignedUrl: jest.Mock };
       getSignedUrl.mockResolvedValueOnce('https://signed.example.com/tenant-file');
 
       const url = await service.getSignedUrlForKey('report.pdf', 7200, TENANT_ID);
@@ -223,7 +224,7 @@ describe('S3Service', () => {
     });
 
     it('should use default expiresIn of 3600', async () => {
-      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      const { getSignedUrl } = s3Presigner as { getSignedUrl: jest.Mock };
       getSignedUrl.mockResolvedValueOnce('https://signed.example.com/file');
 
       await service.getSignedUrlForKey('file.pdf');

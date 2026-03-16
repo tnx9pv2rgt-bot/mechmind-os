@@ -183,7 +183,7 @@ describe('CustomerService', () => {
       // Act & Assert
       await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(ConflictException);
       await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(
-        `Customer with phone ${createDto.phone} already exists`,
+        'Customer with this phone number already exists',
       );
     });
 

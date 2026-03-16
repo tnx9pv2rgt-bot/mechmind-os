@@ -220,7 +220,7 @@ describe('MlIntegrationService', () => {
     it('should handle non-Error thrown values', async () => {
       fetchSpy.mockRejectedValue('string error');
 
-      await expect(service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto')).rejects.toBe(
+      await expect(service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto')).rejects.toThrow(
         'string error',
       );
     });

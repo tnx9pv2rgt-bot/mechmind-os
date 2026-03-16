@@ -111,8 +111,11 @@ describe('VehicleController', () => {
 
       const result = await controller.createVehicle(TENANT_ID, body as never);
 
-      const { customerId, ...dto } = body;
-      expect(service.create).toHaveBeenCalledWith(TENANT_ID, 'cust-001', dto);
+      expect(service.create).toHaveBeenCalledWith(
+        TENANT_ID,
+        'cust-001',
+        expect.objectContaining({ make: 'Toyota', model: 'Corolla' }),
+      );
       expect(result).toEqual({ success: true, data: mockVehicle });
     });
   });

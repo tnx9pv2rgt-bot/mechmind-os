@@ -273,7 +273,7 @@ describe('InspectionService', () => {
     };
     inspectionPhoto: { create: jest.Mock };
   };
-  let s3: { upload: jest.Mock; getSignedUrl: jest.Mock; delete: jest.Mock };
+  let s3: { upload: jest.Mock; getSignedDownloadUrl: jest.Mock; delete: jest.Mock };
   let notifications: { sendNotification: jest.Mock };
   let configService: { get: jest.Mock };
 
@@ -306,7 +306,7 @@ describe('InspectionService', () => {
     // -- S3 mock --
     s3 = {
       upload: jest.fn().mockResolvedValue(undefined),
-      getSignedUrl: jest.fn().mockResolvedValue('https://s3.example.com/signed-url'),
+      getSignedDownloadUrl: jest.fn().mockResolvedValue('https://s3.example.com/signed-url'),
       delete: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -1201,7 +1201,7 @@ describe('InspectionService', () => {
       await service.uploadPhoto(TENANT_ID, INSPECTION_ID, fileBuffer, mimeType, MECHANIC_ID);
 
       // Assert
-      expect(s3.getSignedUrl).toHaveBeenCalledWith(
+      expect(s3.getSignedDownloadUrl).toHaveBeenCalledWith(
         PHOTO_BUCKET,
         expect.stringContaining(`inspections/${TENANT_ID}/${INSPECTION_ID}/`),
         3600 * 24 * 7,

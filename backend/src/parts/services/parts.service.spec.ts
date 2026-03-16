@@ -1124,7 +1124,7 @@ describe('PartsService', () => {
     it('should create a purchase order with generated order number', async () => {
       // Arrange
       prisma.purchaseOrder.count.mockResolvedValue(5);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder());
 
       // Act
@@ -1149,7 +1149,7 @@ describe('PartsService', () => {
     it('should generate sequential order number based on existing count', async () => {
       // Arrange
       prisma.purchaseOrder.count.mockResolvedValue(42);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder());
 
       // Act
@@ -1164,7 +1164,7 @@ describe('PartsService', () => {
     it('should calculate subtotal, VAT, and total correctly', async () => {
       // Arrange
       prisma.purchaseOrder.count.mockResolvedValue(0);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder());
 
       // Act
@@ -1188,7 +1188,7 @@ describe('PartsService', () => {
         items: [{ partId: PART_ID, quantity: 5 }],
       };
       prisma.purchaseOrder.count.mockResolvedValue(0);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder());
 
       // Act
@@ -1203,7 +1203,7 @@ describe('PartsService', () => {
     it('should throw NotFoundException when a referenced part does not exist', async () => {
       // Arrange
       prisma.purchaseOrder.count.mockResolvedValue(0);
-      prisma.part.findFirst.mockResolvedValue(null);
+      prisma.part.findMany.mockResolvedValue([]);
 
       // Act & Assert
       await expect(service.createPurchaseOrder(TENANT_ID, dto, USER_ID)).rejects.toThrow(
@@ -1214,15 +1214,15 @@ describe('PartsService', () => {
     it('should enforce tenantId in part lookup for each item', async () => {
       // Arrange
       prisma.purchaseOrder.count.mockResolvedValue(0);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder());
 
       // Act
       await service.createPurchaseOrder(TENANT_ID, dto, USER_ID);
 
       // Assert
-      expect(prisma.part.findFirst).toHaveBeenCalledWith({
-        where: { id: PART_ID, tenantId: TENANT_ID },
+      expect(prisma.part.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [PART_ID] }, tenantId: TENANT_ID },
       });
     });
 
@@ -1233,7 +1233,7 @@ describe('PartsService', () => {
         items: [{ partId: PART_ID, quantity: 5 }],
       };
       prisma.purchaseOrder.count.mockResolvedValue(0);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder({ expectedDate: null }));
 
       // Act
@@ -1247,7 +1247,7 @@ describe('PartsService', () => {
     it('should map purchase order response with correct fields', async () => {
       // Arrange
       prisma.purchaseOrder.count.mockResolvedValue(0);
-      prisma.part.findFirst.mockResolvedValue(makeMockPart());
+      prisma.part.findMany.mockResolvedValue([makeMockPart()]);
       prisma.purchaseOrder.create.mockResolvedValue(makeMockPurchaseOrder());
 
       // Act

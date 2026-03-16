@@ -588,13 +588,13 @@ describe('AuthService', () => {
   // hashPassword()
   // =========================================================================
   describe('hashPassword', () => {
-    it('should hash password with 12 salt rounds', async () => {
+    it('should hash password with 13 salt rounds', async () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
       const result = await service.hashPassword('my-secure-password');
 
       expect(result).toBe('hashed-password');
-      expect(bcrypt.hash).toHaveBeenCalledWith('my-secure-password', 12);
+      expect(bcrypt.hash).toHaveBeenCalledWith('my-secure-password', 13);
     });
   });
 

@@ -677,9 +677,10 @@ describe('GdprRequestService', () => {
   // getPendingRequests
   // =========================================================================
   describe('getPendingRequests', () => {
-    const pastDeadline = new Date('2026-03-01T00:00:00Z');
-    const nearDeadline = new Date('2026-03-15T00:00:00Z');
-    const farDeadline = new Date('2026-04-30T00:00:00Z');
+    // Dates must be relative to actual runtime Date.now() since the service uses new Date()
+    const pastDeadline = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000); // 14 days ago → overdue
+    const nearDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days from now → urgent (within 7-day window)
+    const farDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now → normal
 
     it('should categorize requests by urgency', async () => {
       const overdueReq = { ...mockRequest, id: 'overdue-1', deadlineAt: pastDeadline };

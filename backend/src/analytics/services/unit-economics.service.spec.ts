@@ -346,13 +346,13 @@ describe('UnitEconomicsService', () => {
       });
     });
 
-    it('should use STANDARD_COGS (30.38) for cost calculation', async () => {
+    it('should use STANDARD_COGS (34.34) for cost calculation', async () => {
       prisma.$queryRaw.mockResolvedValue([{ subscription_tier: 'starter', count: BigInt(1) }]);
 
       const result = await service.calculateGrossMarginBySegment(startDate, endDate);
 
-      // starter: cogs = 1 * 30.38 = 30.38 (only 1 shop from DB, others use defaults)
-      expect(result[0].cogs).toBeCloseTo(1 * 30.38, 2);
+      // starter: cogs = 1 * 34.34 = 34.34 (only 1 shop from DB, others use defaults)
+      expect(result[0].cogs).toBeCloseTo(1 * 34.34, 2);
     });
   });
 

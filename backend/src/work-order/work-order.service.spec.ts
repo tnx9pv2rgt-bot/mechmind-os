@@ -86,16 +86,6 @@ function makeMockWorkOrder(overrides: Record<string, unknown> = {}): Record<stri
   };
 }
 
-function makeMockVehicleSelect(): Record<string, unknown> {
-  return {
-    id: VEHICLE_ID,
-    licensePlate: 'AB123CD',
-    make: 'BMW',
-    model: '320d',
-    year: 2020,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Test suite
 // ---------------------------------------------------------------------------

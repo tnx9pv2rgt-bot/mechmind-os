@@ -1,10 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
+import { FatturapaService } from './services/fatturapa.service';
+import { PdfService } from './services/pdf.service';
 
 describe('InvoiceController', () => {
   let controller: InvoiceController;
   let service: jest.Mocked<InvoiceService>;
+  let fatturapaService: jest.Mocked<FatturapaService>;
+  let pdfService: jest.Mocked<PdfService>;
 
   const TENANT_ID = 'tenant-001';
 
@@ -40,11 +44,25 @@ describe('InvoiceController', () => {
             getStats: jest.fn(),
           },
         },
+        {
+          provide: FatturapaService,
+          useValue: {
+            generateXml: jest.fn(),
+          },
+        },
+        {
+          provide: PdfService,
+          useValue: {
+            generateInvoicePdf: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<InvoiceController>(InvoiceController);
     service = module.get(InvoiceService) as jest.Mocked<InvoiceService>;
+    fatturapaService = module.get(FatturapaService) as jest.Mocked<FatturapaService>;
+    pdfService = module.get(PdfService) as jest.Mocked<PdfService>;
   });
 
   it('should be defined', () => {
@@ -53,7 +71,7 @@ describe('InvoiceController', () => {
 
   describe('findAll', () => {
     it('should delegate to service and return wrapped response', async () => {
-      const expected = { invoices: [mockInvoice], total: 1 } as any;
+      const expected = { invoices: [mockInvoice], total: 1 } as never;
       service.findAll.mockResolvedValue(expected);
 
       const result = await controller.findAll(
@@ -174,6 +192,39 @@ describe('InvoiceController', () => {
 
       expect(service.markPaid).toHaveBeenCalledWith(TENANT_ID, 'inv-001');
       expect(result).toEqual({ success: true, data: paid });
+    });
+  });
+
+  describe('generateFatturaPa', () => {
+    it('should delegate to fatturapaService and return xml', async () => {
+      const xml = '<xml>fattura</xml>';
+      fatturapaService.generateXml.mockResolvedValue(xml);
+
+      const result = await controller.generateFatturaPa('inv-001', TENANT_ID);
+
+      expect(fatturapaService.generateXml).toHaveBeenCalledWith('inv-001', TENANT_ID);
+      expect(result).toEqual({ success: true, data: { xml } });
+    });
+  });
+
+  describe('generatePdf', () => {
+    it('should delegate to pdfService and send buffer as response', async () => {
+      const buf = Buffer.from('<html>invoice</html>');
+      pdfService.generateInvoicePdf.mockResolvedValue(buf);
+
+      const res = {
+        set: jest.fn(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.generatePdf('inv-001', TENANT_ID, res);
+
+      expect(pdfService.generateInvoicePdf).toHaveBeenCalledWith('inv-001', TENANT_ID);
+      expect(res.set).toHaveBeenCalledWith({
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="fattura-inv-001.html"',
+      });
+      expect(res.send).toHaveBeenCalledWith(buf);
     });
   });
 });
