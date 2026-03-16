@@ -9,8 +9,10 @@ const INVOICE_TRANSITIONS: TransitionMap = {
   DRAFT: ['SENT', 'CANCELLED'],
   SENT: ['PAID', 'OVERDUE', 'CANCELLED'],
   OVERDUE: ['PAID', 'CANCELLED'],
-  PAID: [],
+  PAID: ['REFUNDED'],
   CANCELLED: [],
+  REFUNDED: [],
+  PARTIALLY_REFUNDED: [],
 };
 
 interface InvoiceFilters {
@@ -71,7 +73,10 @@ export class InvoiceService {
   }
 
   async create(tenantId: string, dto: CreateInvoiceDto) {
-    const { subtotal, taxRate, taxAmount, total } = this.computeTotals(dto.items, dto.taxRate);
+    const { subtotal, taxRate, taxAmount, total, stampDuty, stampDutyAmount } = this.computeTotals(
+      dto.items,
+      dto.taxRate,
+    );
 
     return this.prisma.$transaction(async tx => {
       const invoiceNumber = await this.generateInvoiceNumber(tenantId, tx);
@@ -86,6 +91,9 @@ export class InvoiceService {
           taxRate: new Decimal(taxRate.toFixed(2)),
           taxAmount: new Decimal(taxAmount.toFixed(2)),
           total: new Decimal(total.toFixed(2)),
+          stampDuty,
+          stampDutyAmount:
+            stampDutyAmount > 0 ? new Decimal(stampDutyAmount.toFixed(2)) : undefined,
           notes: dto.notes ?? null,
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
           bookingId: dto.bookingId ?? null,
@@ -226,26 +234,119 @@ export class InvoiceService {
     };
   }
 
-  private computeTotals(
+  /**
+   * Refund an invoice (full or partial).
+   * Full refund → creates a credit note (TD04) and marks REFUNDED.
+   * Partial refund → marks PARTIALLY_REFUNDED.
+   */
+  async refundInvoice(
+    tenantId: string,
+    invoiceId: string,
+    amount?: number,
+  ): Promise<{ refundedAmount: number; creditNoteId?: string }> {
+    const invoice = await this.prisma.invoice.findFirst({
+      where: { id: invoiceId, tenantId },
+      include: { customer: true },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException(`Invoice with id ${invoiceId} not found`);
+    }
+
+    if (invoice.status !== 'PAID') {
+      throw new BadRequestException('Only PAID invoices can be refunded');
+    }
+
+    const invoiceTotal = Number(invoice.total);
+    const refundAmount = amount ?? invoiceTotal;
+
+    if (refundAmount <= 0 || refundAmount > invoiceTotal) {
+      throw new BadRequestException(`Refund amount must be between 0.01 and ${invoiceTotal}`);
+    }
+
+    const isFullRefund = refundAmount >= invoiceTotal;
+
+    return this.prisma.$transaction(async tx => {
+      // Update original invoice status
+      await tx.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          status: isFullRefund ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
+        },
+      });
+
+      let creditNoteId: string | undefined;
+
+      // Full refund → create credit note (TD04)
+      if (isFullRefund) {
+        const creditNoteNumber = await this.generateInvoiceNumber(tenantId, tx);
+        const creditNote = await tx.invoice.create({
+          data: {
+            tenantId,
+            customerId: invoice.customerId,
+            invoiceNumber: creditNoteNumber,
+            items: invoice.items as object,
+            subtotal: invoice.subtotal,
+            taxRate: invoice.taxRate,
+            taxAmount: invoice.taxAmount,
+            total: new Decimal((-refundAmount).toFixed(2)),
+            documentType: 'NOTA_CREDITO',
+            creditNoteOfId: invoiceId,
+            status: 'SENT',
+            sentAt: new Date(),
+            notes: `Nota di credito per fattura ${invoice.invoiceNumber}`,
+          },
+        });
+        creditNoteId = creditNote.id;
+      }
+
+      this.logger.log(
+        `Invoice ${invoice.invoiceNumber} ${isFullRefund ? 'fully' : 'partially'} refunded: €${refundAmount.toFixed(2)}`,
+      );
+
+      return { refundedAmount: refundAmount, creditNoteId };
+    });
+  }
+
+  /**
+   * Compute totals with Italian-law-compliant per-line IVA rounding.
+   * Also applies automatic stamp duty (bollo virtuale €2) when applicable.
+   */
+  computeTotals(
     items: CreateInvoiceItemDto[],
     taxRateOverride?: number,
-  ): { subtotal: number; taxRate: number; taxAmount: number; total: number } {
+  ): {
+    subtotal: number;
+    taxRate: number;
+    taxAmount: number;
+    total: number;
+    stampDuty: boolean;
+    stampDutyAmount: number;
+  } {
     let subtotal = 0;
     let totalVat = 0;
 
     for (const item of items) {
       const discountMultiplier = 1 - (item.discount ?? 0) / 100;
       const lineSubtotal = item.quantity * item.unitPrice * discountMultiplier;
-      const lineVat = lineSubtotal * (item.vatRate / 100);
+      // Italian law: round IVA per line to 2 decimal places
+      const lineVat = Math.round(((lineSubtotal * item.vatRate) / 100) * 100) / 100;
       subtotal += lineSubtotal;
       totalVat += lineVat;
     }
 
     const taxRate = taxRateOverride ?? (items.length > 0 ? items[0].vatRate : 22);
     const taxAmount = totalVat;
-    const total = subtotal + taxAmount;
 
-    return { subtotal, taxRate, taxAmount, total };
+    // Automatic stamp duty (bollo virtuale €2)
+    // Applies when invoice has VAT-exempt items (vatRate = 0) and taxable amount > €77.47
+    const hasExemptItems = items.some(item => item.vatRate === 0);
+    const stampDuty = hasExemptItems && subtotal > 77.47;
+    const stampDutyAmount = stampDuty ? 2.0 : 0;
+
+    const total = subtotal + taxAmount + stampDutyAmount;
+
+    return { subtotal, taxRate, taxAmount, total, stampDuty, stampDutyAmount };
   }
 
   private async generateInvoiceNumber(

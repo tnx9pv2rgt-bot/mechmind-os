@@ -446,9 +446,12 @@ model Service {
   id          String   @id @default(uuid())
   name        String
   description String?
+  category    String?
   duration    Int      @default(60) // minutes
   price       Decimal  @db.Decimal(10, 2)
+  laborRate   Decimal? @db.Decimal(10, 2) @map("labor_rate")
   isActive    Boolean  @default(true) @map("is_active")
+  isCannedJob Boolean  @default(false) @map("is_canned_job")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -519,6 +522,7 @@ model Invoice {
   paymentMethod     PaymentMethod?      @map("payment_method")
   paymentTerms      PaymentTerms        @default(IMMEDIATO) @map("payment_terms")
   stampDuty         Boolean             @default(false) @map("stamp_duty")
+  stampDutyAmount   Decimal?            @db.Decimal(10, 2) @map("stamp_duty_amount")
   taxRegime         TaxRegime           @default(ORDINARIO) @map("tax_regime")
 
   // SDI (Sistema di Interscambio)
@@ -572,6 +576,8 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum InvoiceDocumentType {
@@ -1407,6 +1413,7 @@ enum NotificationChannel {
   SMS
   WHATSAPP
   EMAIL
+  IN_APP
 }
 
 enum NotificationStatus {

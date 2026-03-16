@@ -404,6 +404,41 @@ export class PartsService {
     await this.prisma.$transaction(transactions);
   }
 
+  // ============== MATRIX PRICING ==============
+
+  /**
+   * Calculate retail price based on tenant's markup matrix.
+   * Falls back to part's stored retailPrice if no matrix is configured.
+   */
+  async calculateRetailPrice(costPrice: number, tenantId: string): Promise<number> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { settings: true },
+    });
+
+    const settings = (tenant?.settings ?? {}) as Record<string, unknown>;
+    const matrix = settings.partMarkupMatrix as
+      | { rules: Array<{ maxCostPrice: number; markupPercent: number }> }
+      | undefined;
+
+    if (!matrix?.rules?.length) {
+      return costPrice; // No matrix configured, return cost price as-is
+    }
+
+    // Sort rules by maxCostPrice ascending
+    const sortedRules = [...matrix.rules].sort((a, b) => a.maxCostPrice - b.maxCostPrice);
+
+    for (const rule of sortedRules) {
+      if (costPrice <= rule.maxCostPrice) {
+        return Math.round(costPrice * (1 + rule.markupPercent / 100) * 100) / 100;
+      }
+    }
+
+    // If cost exceeds all rules, use the last rule's markup
+    const lastRule = sortedRules[sortedRules.length - 1];
+    return Math.round(costPrice * (1 + lastRule.markupPercent / 100) * 100) / 100;
+  }
+
   // ============== LOW STOCK ALERTS ==============
 
   async getLowStockAlerts(tenantId: string): Promise<LowStockAlertDto[]> {

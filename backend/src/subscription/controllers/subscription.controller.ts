@@ -16,6 +16,7 @@ import {
   Request,
   Headers,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request as ExpressRequest } from 'express';
@@ -289,6 +290,8 @@ export class AdminSubscriptionController {
 
 @Controller('webhooks/stripe')
 export class StripeWebhookController {
+  private readonly logger = new Logger(StripeWebhookController.name);
+
   constructor(
     private readonly subscriptionService: SubscriptionService,
     private readonly configService: ConfigService,
@@ -306,14 +309,42 @@ export class StripeWebhookController {
       throw new BadRequestException('Missing webhook payload');
     }
 
-    // In a real implementation, verify the webhook signature
-    // const event = this.stripe.webhooks.constructEvent(
-    //   payload,
-    //   signature,
-    //   this.configService.get('STRIPE_WEBHOOK_SECRET')
-    // );
+    const eventType = payload.type as string;
+    const data = payload.data as Record<string, unknown> | undefined;
 
-    // await this.subscriptionService.handleStripeWebhook(event);
+    switch (eventType) {
+      case 'charge.refunded':
+        this.logger.log(`Charge refunded: ${JSON.stringify(data?.object ?? {})}`);
+        // Invoice status update handled by InvoiceService.refundInvoice
+        break;
+
+      case 'charge.dispute.created':
+        this.logger.warn(`Dispute created: ${JSON.stringify(data?.object ?? {})}`);
+        // In production: notify admin via email/Slack, log for audit
+        break;
+
+      case 'customer.subscription.deleted': {
+        this.logger.log('Subscription deleted via Stripe');
+        const subscriptionObj = data?.object as Record<string, unknown> | undefined;
+        const tenantId = (subscriptionObj?.metadata as Record<string, string>)?.tenantId;
+        if (tenantId) {
+          try {
+            await this.subscriptionService.cancelSubscription(tenantId, true);
+            this.logger.log(
+              `Tenant ${tenantId} downgraded to FREE after Stripe subscription deletion`,
+            );
+          } catch (error) {
+            this.logger.error(
+              `Failed to cancel subscription for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown'}`,
+            );
+          }
+        }
+        break;
+      }
+
+      default:
+        this.logger.log(`Unhandled Stripe event: ${eventType}`);
+    }
 
     return { received: true };
   }

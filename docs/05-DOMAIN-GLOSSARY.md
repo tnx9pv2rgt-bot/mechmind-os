@@ -55,6 +55,15 @@
 | **Nota di Credito** | Documento fiscale che annulla/rettifica una fattura precedente |
 | **Imposta di Bollo** | Marca da bollo €2 obbligatoria su fatture esenti IVA > €77,47 |
 
+| **TechnicianTimeLog** | Record del tempo che un tecnico impiega su un work order (start/stop/durata) |
+| **VehicleCheckIn** | Processo di registrazione dello stato del veicolo alla consegna in officina (km, carburante, foto) |
+| **VehicleCheckOut** | Processo di registrazione dello stato del veicolo alla riconsegna al cliente |
+| **FatturaPA** | Formato XML fattura elettronica italiana (versione 1.2.2), obbligatorio per B2B/B2G |
+| **SDI** | Sistema di Interscambio — piattaforma Agenzia delle Entrate per scambio fatture elettroniche |
+| **CannedJob** | Template di servizio predefinito con prezzo, durata e ricambi associati |
+| **MatrixPricing** | Regole di markup per fasce di costo ricambi (es. costo 0-10€ → markup 80%, 10-50€ → 60%) |
+| **Bollo Virtuale** | Imposta di bollo virtuale (€2) obbligatoria su fatture esenti IVA con importo > €77,47 |
+
 ## Termini Tecnici
 
 | Termine | Definizione |

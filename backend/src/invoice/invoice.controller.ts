@@ -171,6 +171,22 @@ export class InvoiceController {
     };
   }
 
+  @Post(':id/refund')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Refund an invoice (full or partial)' })
+  @ApiParam({ name: 'id', description: 'Invoice ID' })
+  @ApiResponse({ status: 200, description: 'Invoice refunded' })
+  @ApiResponse({ status: 400, description: 'Only PAID invoices can be refunded' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async refundInvoice(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body('amount') amount?: number,
+  ) {
+    const result = await this.invoiceService.refundInvoice(tenantId, id, amount);
+    return { success: true, data: result };
+  }
+
   @Post(':id/fatturapa')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Generate FatturaPA XML' })

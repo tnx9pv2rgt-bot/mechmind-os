@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationTriggersService } from './notification-triggers.service';
 import { NotificationV2Service } from './notification-v2.service';
+import { PrismaService } from '../../common/services/prisma.service';
 
 // Mock Prisma enums and PrismaClient (needed because PrismaService extends PrismaClient)
 jest.mock('@prisma/client', () => {
@@ -27,6 +28,7 @@ jest.mock('@prisma/client', () => {
       SMS: 'SMS',
       WHATSAPP: 'WHATSAPP',
       EMAIL: 'EMAIL',
+      IN_APP: 'IN_APP',
     },
     NotificationStatus: {
       PENDING: 'PENDING',
@@ -40,11 +42,17 @@ jest.mock('@prisma/client', () => {
 describe('NotificationTriggersService', () => {
   let service: NotificationTriggersService;
   let notificationService: NotificationV2Service;
+  let prisma: { booking: { findMany: jest.Mock }; vehicle: { findMany: jest.Mock } };
 
   const mockTenantId = 'tenant-uuid-1';
   const mockCustomerId = 'customer-uuid-1';
 
   beforeEach(async () => {
+    prisma = {
+      booking: { findMany: jest.fn().mockResolvedValue([]) },
+      vehicle: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationTriggersService,
@@ -58,6 +66,7 @@ describe('NotificationTriggersService', () => {
             }),
           },
         },
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -96,6 +105,7 @@ describe('NotificationTriggersService', () => {
         metadata: expect.objectContaining({
           bookingId: 'booking-123',
           bookingCode: expect.any(String),
+          template: 'booking-confirmed',
         }),
       });
     });
@@ -467,19 +477,211 @@ describe('NotificationTriggersService', () => {
   });
 
   // =========================================================================
-  // Scheduled notification methods
+  // CRON: sendBookingReminders
   // =========================================================================
-  describe('queueBookingReminders', () => {
-    it('should return 0 (placeholder)', async () => {
-      const result = await service.queueBookingReminders();
-      expect(result).toBe(0);
+  describe('sendBookingReminders', () => {
+    it('should find tomorrow bookings and send SMS reminders', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      prisma.booking.findMany.mockResolvedValue([
+        {
+          id: 'bk-100',
+          tenantId: mockTenantId,
+          customerId: 'cust-001',
+          scheduledDate: tomorrow,
+        },
+        {
+          id: 'bk-101',
+          tenantId: mockTenantId,
+          customerId: 'cust-002',
+          scheduledDate: tomorrow,
+        },
+      ]);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(2);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'CONFIRMED' }),
+        }),
+      );
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return 0 when no bookings found', async () => {
+      prisma.booking.findMany.mockResolvedValue([]);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should continue sending even if one fails', async () => {
+      prisma.booking.findMany.mockResolvedValue([
+        { id: 'bk-1', tenantId: mockTenantId, customerId: 'c1', scheduledDate: new Date() },
+        { id: 'bk-2', tenantId: mockTenantId, customerId: 'c2', scheduledDate: new Date() },
+      ]);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(1);
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('queueMaintenanceReminders', () => {
-    it('should return 0 (placeholder)', async () => {
-      const result = await service.queueMaintenanceReminders();
-      expect(result).toBe(0);
+  // =========================================================================
+  // CRON: sendMaintenanceReminders
+  // =========================================================================
+  describe('sendMaintenanceReminders', () => {
+    it('should find vehicles needing maintenance and send reminders', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([
+        {
+          id: 'veh-001',
+          customerId: 'cust-001',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [{ tenantId: mockTenantId }],
+        },
+      ]);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(1);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'active' }),
+        }),
+      );
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            vehicleName: 'Fiat 500',
+            template: 'maintenance-due',
+          }),
+        }),
+      );
+    });
+
+    it('should return 0 when no vehicles need maintenance', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([]);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // New event handlers
+  // =========================================================================
+  describe('onVehicleCheckedIn', () => {
+    it('should send vehicle check-in notification', async () => {
+      await service.onVehicleCheckedIn({
+        workOrderId: 'wo-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        vehiclePlate: 'AB123CD',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            template: 'vehicle-checked-in',
+            vehiclePlate: 'AB123CD',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onEstimateSent', () => {
+    it('should send estimate notification via email', async () => {
+      await service.onEstimateSent({
+        estimateId: 'est-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        estimateNumber: 'EST-2026-0001',
+        totalCents: 15000,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            template: 'estimate-sent',
+            amount: '€150.00',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onWorkOrderStatusChanged', () => {
+    it('should send in-app notification for WO status change', async () => {
+      await service.onWorkOrderStatusChanged({
+        workOrderId: 'wo-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        status: 'IN_PROGRESS',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            template: 'wo-status-changed',
+            status: 'In corso',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onPartsArrived', () => {
+    it('should send parts arrived notification', async () => {
+      await service.onPartsArrived({
+        workOrderId: 'wo-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        partNames: ['Filtro olio', 'Candela'],
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            template: 'parts-arrived',
+            parts: 'Filtro olio, Candela',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onPaymentReceived', () => {
+    it('should send payment received notification', async () => {
+      await service.onPaymentReceived({
+        invoiceId: 'inv-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        amount: 350,
+        invoiceNumber: 'INV-2026-0001',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'EMAIL',
+          metadata: expect.objectContaining({
+            template: 'payment-received',
+            amount: '€350.00',
+          }),
+        }),
+      );
     });
   });
 

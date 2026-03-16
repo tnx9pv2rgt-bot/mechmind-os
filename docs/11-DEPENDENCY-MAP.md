@@ -152,6 +152,65 @@ BookingService.createBooking()         ← lock(tenantId, compositeKey) → tran
 
 ---
 
+## FatturapaService (InvoiceModule)
+
+### generateXml(invoice) / validateXml(xml) / sendToSdi(xml)
+```
+InvoiceController.sendToSdi()            ← POST /invoices/:id/sdi → genera XML FatturaPA 1.2.2 e invia a SDI
+```
+
+---
+
+## PdfService (CommonModule)
+
+### generatePdf(template, data)
+```
+InvoiceController.downloadPdf()          ← GET /invoices/:id/pdf → genera PDF fattura
+EstimateController.downloadPdf()         ← GET /estimates/:id/pdf → genera PDF preventivo
+InspectionController.downloadPdf()       ← GET /inspections/:id/pdf → genera PDF ispezione DVI
+```
+
+---
+
+## VinDecoderService (VehicleModule)
+
+### decode(vin)
+```
+VehicleController.decodeVin()            ← GET /vehicles/vin/:vin → decodifica VIN in marca/modello/anno
+```
+
+---
+
+## TechnicianTimerService (WorkOrderModule)
+
+### startTimer(technicianId, workOrderId) / stopTimer(technicianId) / getActiveTimer(technicianId)
+```
+WorkOrderController → WorkOrderService   ← gestione timer tecnico su work order (start/stop/get)
+```
+
+---
+
+## TenantSettingsService (TenantModule)
+
+### getSettings(tenantId) / updateSettings(tenantId, data)
+```
+TenantSettingsController.get()           ← GET /tenant/settings → legge impostazioni tenant
+TenantSettingsController.update()        ← PATCH /tenant/settings → aggiorna impostazioni tenant
+FatturapaService.generateXml()           ← legge dati fiscali tenant (P.IVA, regime, codice SDI)
+```
+
+---
+
+## NotificationTriggersService (NotificationsModule)
+
+### onDomainEvent(event) / executeCronTriggers()
+```
+EventEmitter2 domain events              ← ascolta eventi dominio (booking.confirmed, workorder.completed, ecc.)
+ScheduleModule cron                      ← trigger periodici (promemoria appuntamento, follow-up post-servizio)
+```
+
+---
+
 ## Regole per modifiche
 
 ### Se modifichi PrismaService:

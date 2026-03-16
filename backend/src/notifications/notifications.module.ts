@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Services
 import { NotificationsService } from './services/notifications.service';
@@ -32,6 +33,7 @@ import { NotificationProcessor } from './processors/notification.processor';
 @Module({
   imports: [
     ConfigModule,
+    ScheduleModule.forRoot(),
     BullModule.registerQueue(
       {
         name: 'email-queue',
