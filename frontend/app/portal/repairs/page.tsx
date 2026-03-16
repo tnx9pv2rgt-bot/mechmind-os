@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Wrench, Car, Clock, CheckCircle, AlertTriangle, Package } from 'lucide-react';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { Badge } from '@/components/ui/badge';
@@ -34,41 +35,35 @@ const statusConfig: Record<string, { color: string; label: string; icon: typeof 
   INVOICED: { color: 'bg-teal-500', label: 'Fatturato', icon: CheckCircle },
 };
 
-export default function PortalRepairsPage() {
-  const [repairs, setRepairs] = useState<PortalRepair[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+function mapRepairs(json: Record<string, unknown>): PortalRepair[] {
+  const data = (json as { data?: unknown[] }).data || [];
+  return Array.isArray(data)
+    ? (data as Record<string, unknown>[]).map(wo => ({
+        id: (wo.id as string) || '',
+        woNumber: (wo.woNumber as string) || '',
+        status: (wo.status as string) || 'OPEN',
+        vehicleMake: ((wo.vehicle as Record<string, unknown>)?.make as string) || '',
+        vehicleModel: ((wo.vehicle as Record<string, unknown>)?.model as string) || '',
+        vehiclePlate: ((wo.vehicle as Record<string, unknown>)?.licensePlate as string) || '',
+        diagnosis: (wo.diagnosis as string) || null,
+        customerRequest: (wo.customerRequest as string) || null,
+        mileageIn: (wo.mileageIn as number) || null,
+        laborCost: Number(wo.laborCost || 0) || null,
+        partsCost: Number(wo.partsCost || 0) || null,
+        totalCost: Number(wo.totalCost || 0) || null,
+        actualStartTime: (wo.actualStartTime as string) || null,
+        actualCompletionTime: (wo.actualCompletionTime as string) || null,
+        createdAt: (wo.createdAt as string) || '',
+      }))
+    : [];
+}
 
-  useEffect(() => {
-    fetch('/api/portal/repairs')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data || [];
-        setRepairs(
-          Array.isArray(data)
-            ? data.map((wo: Record<string, unknown>) => ({
-                id: (wo.id as string) || '',
-                woNumber: (wo.woNumber as string) || '',
-                status: (wo.status as string) || 'OPEN',
-                vehicleMake: ((wo.vehicle as Record<string, unknown>)?.make as string) || '',
-                vehicleModel: ((wo.vehicle as Record<string, unknown>)?.model as string) || '',
-                vehiclePlate:
-                  ((wo.vehicle as Record<string, unknown>)?.licensePlate as string) || '',
-                diagnosis: (wo.diagnosis as string) || null,
-                customerRequest: (wo.customerRequest as string) || null,
-                mileageIn: (wo.mileageIn as number) || null,
-                laborCost: Number(wo.laborCost || 0) || null,
-                partsCost: Number(wo.partsCost || 0) || null,
-                totalCost: Number(wo.totalCost || 0) || null,
-                actualStartTime: (wo.actualStartTime as string) || null,
-                actualCompletionTime: (wo.actualCompletionTime as string) || null,
-                createdAt: (wo.createdAt as string) || '',
-              }))
-            : []
-        );
-      })
-      .catch(() => setRepairs([]))
-      .finally(() => setIsLoading(false));
-  }, []);
+export default function PortalRepairsPage() {
+  const { data: rawData, isLoading } = useSWR<Record<string, unknown>>(
+    '/api/portal/repairs',
+    fetcher
+  );
+  const repairs = rawData ? mapRepairs(rawData) : [];
 
   if (isLoading) {
     return (

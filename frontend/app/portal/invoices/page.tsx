@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { FileText, Download, Euro, Clock, CheckCircle } from 'lucide-react';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -26,34 +27,28 @@ const statusConfig: Record<string, { color: string; label: string }> = {
   CANCELLED: { color: 'bg-gray-400', label: 'Annullata' },
 };
 
-export default function PortalInvoicesPage() {
-  const [invoices, setInvoices] = useState<PortalInvoice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+function mapInvoices(json: Record<string, unknown>): PortalInvoice[] {
+  const data = (json as { data?: unknown[] }).data || [];
+  return Array.isArray(data)
+    ? (data as Record<string, unknown>[]).map(inv => ({
+        id: (inv.id as string) || '',
+        invoiceNumber: (inv.invoiceNumber as string) || '',
+        total: Number(inv.total || 0),
+        status: (inv.status as string) || 'DRAFT',
+        createdAt: (inv.createdAt as string) || '',
+        dueDate: (inv.dueDate as string) || null,
+        paidAt: (inv.paidAt as string) || null,
+        items: (inv.items as Array<{ description: string; qty: number; price: number }>) || [],
+      }))
+    : [];
+}
 
-  useEffect(() => {
-    fetch('/api/portal/invoices')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data || [];
-        setInvoices(
-          Array.isArray(data)
-            ? data.map((inv: Record<string, unknown>) => ({
-                id: (inv.id as string) || '',
-                invoiceNumber: (inv.invoiceNumber as string) || '',
-                total: Number(inv.total || 0),
-                status: (inv.status as string) || 'DRAFT',
-                createdAt: (inv.createdAt as string) || '',
-                dueDate: (inv.dueDate as string) || null,
-                paidAt: (inv.paidAt as string) || null,
-                items:
-                  (inv.items as Array<{ description: string; qty: number; price: number }>) || [],
-              }))
-            : []
-        );
-      })
-      .catch(() => setInvoices([]))
-      .finally(() => setIsLoading(false));
-  }, []);
+export default function PortalInvoicesPage() {
+  const { data: rawData, isLoading } = useSWR<Record<string, unknown>>(
+    '/api/portal/invoices',
+    fetcher
+  );
+  const invoices = rawData ? mapInvoices(rawData) : [];
 
   if (isLoading) {
     return (

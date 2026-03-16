@@ -138,7 +138,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className='fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm md:hidden'
+              role='button'
+              tabIndex={0}
+              aria-label='Chiudi menu'
               onClick={() => setMobileMenuOpen(false)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                }
+              }}
             />
 
             {/* Menu Panel */}

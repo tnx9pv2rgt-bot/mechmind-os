@@ -21,8 +21,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PortalPageWrapper } from '@/components/portal';
-import { Customer, NotificationPreferences } from '@/lib/types/portal';
+import { PortalPageWrapper, usePortalCustomer } from '@/components/portal';
+import { NotificationPreferences } from '@/lib/types/portal';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -63,7 +63,7 @@ type PasswordErrors = Partial<Record<'current' | 'new' | 'confirm', string>>;
 // ============================================
 
 export default function PortalSettingsPage() {
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const { customer, isLoading: customerLoading } = usePortalCustomer();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -112,24 +112,18 @@ export default function PortalSettingsPage() {
   });
 
   useEffect(() => {
-    const loadData = async () => {
-      const currentCustomer = null as Customer | null; // TODO: Get from auth context
-      setCustomer(currentCustomer);
-
-      if (currentCustomer) {
+    if (!customerLoading) {
+      if (customer) {
         setProfile({
-          firstName: currentCustomer.firstName,
-          lastName: currentCustomer.lastName,
-          email: currentCustomer.email,
-          phone: currentCustomer.phone,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          phone: customer.phone,
         });
       }
-
       setIsLoading(false);
-    };
-
-    loadData();
-  }, []);
+    }
+  }, [customer, customerLoading]);
 
   const handleSaveProfile = async () => {
     setProfileErrors({});

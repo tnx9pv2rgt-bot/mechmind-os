@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PortalAuthService } from '@/lib/auth/portal-auth-client';
-import { Customer } from '@/lib/types/portal';
 import { SkipLink } from '@/components/accessibility/SkipLink';
+import { PortalCustomerProvider } from '@/components/portal/portal-customer-context';
 
 // ============================================
 // PUBLIC ROUTES (no auth required)
@@ -44,18 +44,16 @@ function LoadingScreen() {
 
 export default function PortalRootLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [customer, setCustomer] = useState<Customer | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     const checkAuth = async () => {
       const auth = PortalAuthService.getInstance();
+      auth.init();
       const isPublicRoute = publicRoutes.some(route => pathname?.startsWith(route));
 
       if (auth.isAuthenticated()) {
-        setCustomer(null); // TODO: Get from auth context
-
         // If on public route, redirect to dashboard
         if (isPublicRoute) {
           router.push('/portal/dashboard');
@@ -80,7 +78,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <>
+    <PortalCustomerProvider>
       <SkipLink targetId='main-content' />
       <AnimatePresence mode='wait'>
         <motion.div
@@ -94,6 +92,6 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
           {children}
         </motion.div>
       </AnimatePresence>
-    </>
+    </PortalCustomerProvider>
   );
 }

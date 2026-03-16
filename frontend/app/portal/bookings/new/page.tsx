@@ -20,7 +20,7 @@ import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PortalLayout } from '@/components/portal';
+import { PortalLayout, usePortalCustomer } from '@/components/portal';
 import { BookingType, CustomerVehicle } from '@/lib/types/portal';
 
 const bookingSchema = z.object({
@@ -113,7 +113,7 @@ export default function NewBookingPage() {
     notes: '',
   });
 
-  const customer = null; // TODO: Get from auth context
+  const { customer } = usePortalCustomer();
 
   useEffect(() => {
     const loadVehicles = async () => {

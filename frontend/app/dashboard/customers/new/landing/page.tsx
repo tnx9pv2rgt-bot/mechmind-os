@@ -251,7 +251,9 @@ export default function LandingPage() {
               &ldquo;Ho configurato tutto in 3 minuti. Il sistema è intuitivo e il supporto
               fantastico!&rdquo;
             </p>
-            <p className='text-xs text-gray-400 mt-2'>— Marco R., Officina Rossi srl</p>
+            <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+              — Marco R., Officina Rossi srl
+            </p>
           </div>
         </motion.div>
 
@@ -311,7 +313,10 @@ export default function LandingPage() {
         </motion.div>
 
         {/* Footer note */}
-        <motion.p variants={itemVariants} className='mt-12 text-xs text-center text-gray-400'>
+        <motion.p
+          variants={itemVariants}
+          className='mt-12 text-xs text-center text-gray-500 dark:text-gray-400'
+        >
           Cliccando su &ldquo;Crea account&rdquo; accetti i{' '}
           <Link href='#' className='underline hover:text-gray-600'>
             Termini di Servizio

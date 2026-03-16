@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Customer } from '@/lib/types/portal';
+import { usePortalCustomer } from './portal-customer-context';
 
 // ============================================
 // NAVIGATION ITEMS
@@ -52,7 +53,9 @@ interface PortalLayoutProps {
 // MAIN COMPONENT
 // ============================================
 
-export function PortalLayout({ children, customer }: PortalLayoutProps) {
+export function PortalLayout({ children, customer: customerProp }: PortalLayoutProps) {
+  const { customer: contextCustomer } = usePortalCustomer();
+  const customer = customerProp ?? contextCustomer;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
@@ -113,7 +116,16 @@ export function PortalLayout({ children, customer }: PortalLayoutProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className='fixed inset-0 bg-black/40 z-50 lg:hidden'
+            role='button'
+            tabIndex={0}
+            aria-label='Chiudi menu'
             onClick={() => setSidebarOpen(false)}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                e.preventDefault();
+                setSidebarOpen(false);
+              }
+            }}
           />
         )}
       </AnimatePresence>

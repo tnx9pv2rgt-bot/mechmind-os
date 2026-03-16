@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import useSWR from 'swr';
 import {
   CreditCard,
   Zap,
@@ -66,35 +67,23 @@ const staggerItem = {
   },
 };
 
+const billingFetcher = (url: string): Promise<TenantBillingInfo> =>
+  fetch(url).then(res => {
+    if (!res.ok) throw new Error('Failed to fetch billing info');
+    return res.json();
+  });
+
 export default function BillingPage() {
-  const [billingInfo, setBillingInfo] = useState<TenantBillingInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    data: billingInfo,
+    isLoading,
+    mutate,
+  } = useSWR<TenantBillingInfo>('/api/stripe/billing-info', billingFetcher, {
+    onError: () => toast.error('Errore nel caricamento dei dati di fatturazione'),
+  });
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('piccole');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
-
-  // Fetch billing info on mount
-  useEffect(() => {
-    fetchBillingInfo();
-  }, []);
-
-  async function fetchBillingInfo() {
-    try {
-      const response = await fetch('/api/stripe/billing-info');
-      if (response.ok) {
-        const data = await response.json();
-        setBillingInfo(data);
-        if (data.subscription?.plan) {
-          setSelectedPlan(data.subscription.plan as SubscriptionPlan);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch billing info:', error);
-      toast.error('Errore nel caricamento dei dati di fatturazione');
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   async function handleSubscribe(plan: SubscriptionPlan, aiAddon: boolean = false) {
     setIsProcessing(true);
@@ -130,7 +119,7 @@ export default function BillingPage() {
     try {
       await toggleAiAddon(enabled);
       toast.success(enabled ? 'AI Add-on attivato' : 'AI Add-on disattivato');
-      await fetchBillingInfo();
+      await mutate();
     } catch (error: unknown) {
       toast.error(
         error instanceof Error ? error.message : "Errore durante la modifica dell'AI Add-on"
@@ -146,7 +135,7 @@ export default function BillingPage() {
       await cancelSubscription();
       toast.success('Abbonamento cancellato. Rimarrà attivo fino alla fine del periodo.');
       setShowConfirmCancel(false);
-      await fetchBillingInfo();
+      await mutate();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Errore durante la cancellazione');
     } finally {
@@ -159,7 +148,7 @@ export default function BillingPage() {
     try {
       await resumeSubscription();
       toast.success('Abbonamento ripristinato con successo');
-      await fetchBillingInfo();
+      await mutate();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Errore durante il ripristino');
     } finally {
@@ -590,7 +579,13 @@ export default function BillingPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50'
+            role='dialog'
+            aria-modal='true'
+            aria-label='Conferma Cancellazione'
             onClick={() => setShowConfirmCancel(false)}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Escape') setShowConfirmCancel(false);
+            }}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}

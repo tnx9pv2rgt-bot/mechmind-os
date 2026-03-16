@@ -5,11 +5,9 @@ import { LoggerService } from './logger.service';
 
 export interface QueueJobData {
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   tenantId?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface JobOptions {
@@ -153,14 +151,13 @@ export class QueueService {
    * Add job to queue with logging
    */
   private async addJob<T extends QueueJobData>(
-    queue: Queue<T>,
+    queue: Queue,
     jobName: string,
     data: T,
     options?: JobOptions,
   ): Promise<Job<T>> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const job = await queue.add(jobName as any, data as any, {
+      const job = await queue.add(jobName, data, {
         ...options,
         attempts: options?.attempts ?? 3,
         backoff: options?.backoff ?? {
@@ -170,7 +167,7 @@ export class QueueService {
       });
 
       this.logger.log(`Added job ${job.id} (${jobName}) to ${queue.name} queue`);
-      return job;
+      return job as unknown as Job<T>;
     } catch (error) {
       this.logger.error(
         `Failed to add job to ${queue.name} queue: ${error instanceof Error ? error.message : 'Unknown error'}`,

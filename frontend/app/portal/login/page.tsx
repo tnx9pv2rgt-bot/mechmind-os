@@ -10,6 +10,14 @@ import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PortalAuthService } from '@/lib/auth/portal-auth-client';
+import { z } from 'zod';
+
+const loginSchema = z.object({
+  email: z.string().min(1, 'Email non valida').email('Email non valida'),
+  password: z.string().min(1, 'Inserisci la password'),
+});
+
+type LoginErrors = Partial<Record<keyof z.infer<typeof loginSchema>, string>>;
 
 // ============================================
 // MAIN COMPONENT
@@ -21,6 +29,7 @@ export default function PortalLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<LoginErrors>({});
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,6 +38,19 @@ export default function PortalLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      const errs: LoginErrors = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof LoginErrors;
+        if (!errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -103,11 +125,13 @@ export default function PortalLoginPage() {
                       placeholder='nome@email.com'
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      required
                       autoComplete='email'
                       className='pl-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className='text-xs text-apple-red mt-1'>{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 {/* Password */}
@@ -123,8 +147,6 @@ export default function PortalLoginPage() {
                       placeholder='••••••••'
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      required
-                      minLength={8}
                       autoComplete='current-password'
                       className='pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                     />
@@ -137,6 +159,9 @@ export default function PortalLoginPage() {
                       {showPassword ? <EyeOff className='h-5 w-5' /> : <Eye className='h-5 w-5' />}
                     </button>
                   </div>
+                  {fieldErrors.password && (
+                    <p className='text-xs text-apple-red mt-1'>{fieldErrors.password}</p>
+                  )}
                 </div>
 
                 {/* Forgot Password */}

@@ -170,7 +170,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
                   <p className={`text-3xl font-bold ${getScoreColor(inspection.score ?? 0)}`}>
                     {inspection.score}/10
                   </p>
-                  <p className='text-sm text-gray-400 dark:text-[#6e6e6e] mt-1'>
+                  <p className='text-sm text-gray-500 dark:text-[#6e6e6e] mt-1'>
                     Ottime condizioni generali
                   </p>
                 </div>
@@ -180,7 +180,7 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
                   <Shield className='w-5 h-5 text-blue-500' />
                   <Badge className='bg-blue-100 text-blue-700'>Certificata Blockchain</Badge>
                 </div>
-                <p className='text-xs text-gray-400 dark:text-[#6e6e6e] font-mono'>
+                <p className='text-xs text-gray-500 dark:text-[#6e6e6e] font-mono'>
                   {inspection.blockchainHash.slice(0, 20)}...{inspection.blockchainHash.slice(-8)}
                 </p>
               </div>

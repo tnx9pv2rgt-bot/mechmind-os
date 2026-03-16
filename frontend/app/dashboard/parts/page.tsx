@@ -189,6 +189,12 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
+        role='dialog'
+        aria-modal='true'
+        aria-label='Nuovo Fornitore'
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Escape') onClose();
+        }}
       >
         <motion.div
           className='bg-white dark:bg-[#2f2f2f] rounded-3xl shadow-2xl w-full max-w-md mx-4 p-6'

@@ -123,10 +123,10 @@ export default function NewInspectionPage() {
                 </p>
               </div>
               <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-400'>Step</span>
+                <span className='text-sm text-gray-500 dark:text-gray-400'>Step</span>
                 <span className='text-2xl font-bold text-black dark:text-[#ececec]'>{step}</span>
-                <span className='text-gray-400'>/</span>
-                <span className='text-gray-400'>{totalSteps}</span>
+                <span className='text-gray-500 dark:text-gray-400'>/</span>
+                <span className='text-gray-500 dark:text-gray-400'>{totalSteps}</span>
               </div>
             </div>
 
@@ -260,7 +260,15 @@ export default function NewInspectionPage() {
                                 ? 'bg-apple-green text-white hover:bg-green-600 border-apple-green'
                                 : 'text-white bg-black dark:bg-[#353535] border-transparent hover:border-apple-green'
                             }`}
+                            role='button'
+                            tabIndex={0}
                             onClick={() => setFormData({ ...formData, type })}
+                            onKeyDown={(e: React.KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setFormData({ ...formData, type });
+                              }
+                            }}
                           >
                             {type === 'PRE_PURCHASE' && 'Pre-Acquisto'}
                             {type === 'PERIODIC' && 'Periodica'}

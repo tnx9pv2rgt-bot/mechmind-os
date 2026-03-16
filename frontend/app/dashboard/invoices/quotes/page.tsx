@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -288,53 +290,39 @@ export default function QuotesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [totalQuotes, setTotalQuotes] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch quotes from API
-  const fetchQuotes = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== 'all') {
-        // Map frontend status to backend EstimateStatus
-        const backendStatusMap: Record<QuoteStatus, string> = {
-          draft: 'DRAFT',
-          sent: 'SENT',
-          approved: 'ACCEPTED',
-          rejected: 'REJECTED',
-          expired: 'EXPIRED',
-        };
-        params.set('status', backendStatusMap[statusFilter]);
-      }
-      params.set('limit', '50');
-
-      const res = await fetch(`/api/dashboard/quotes?${params.toString()}`);
-      if (!res.ok) {
-        throw new Error(`Errore nel caricamento dei preventivi (${res.status})`);
-      }
-
-      const json = await res.json();
-      const estimateData: EstimateResponse[] = json.data ?? json ?? [];
-      const mapped = (Array.isArray(estimateData) ? estimateData : []).map(mapEstimateToQuote);
-
-      setQuotes(mapped);
-      setTotalQuotes(json.meta?.total ?? mapped.length);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Errore sconosciuto';
-      setError(message);
-      setQuotes([]);
-    } finally {
-      setIsLoading(false);
+  // Build SWR key based on filters
+  const swrKey = useMemo(() => {
+    const params = new URLSearchParams();
+    if (statusFilter !== 'all') {
+      const backendStatusMap: Record<QuoteStatus, string> = {
+        draft: 'DRAFT',
+        sent: 'SENT',
+        approved: 'ACCEPTED',
+        rejected: 'REJECTED',
+        expired: 'EXPIRED',
+      };
+      params.set('status', backendStatusMap[statusFilter]);
     }
+    params.set('limit', '50');
+    return `/api/dashboard/quotes?${params.toString()}`;
   }, [statusFilter]);
 
-  useEffect(() => {
-    fetchQuotes();
-  }, [fetchQuotes]);
+  const {
+    data: json,
+    isLoading,
+    mutate,
+  } = useSWR<{ data?: EstimateResponse[]; meta?: { total?: number } }>(swrKey, fetcher);
+
+  const quotes = useMemo(() => {
+    if (!json) return [];
+    const estimateData: EstimateResponse[] =
+      json.data ?? (json as unknown as EstimateResponse[]) ?? [];
+    return (Array.isArray(estimateData) ? estimateData : []).map(mapEstimateToQuote);
+  }, [json]);
+
+  const totalQuotes = json?.meta?.total ?? quotes.length;
 
   // Calculate stats from loaded quotes
   const stats = useMemo(() => {
@@ -398,7 +386,7 @@ export default function QuotesPage() {
         throw new Error(`Errore nella creazione del preventivo (${res.status})`);
       }
       setIsCreateDialogOpen(false);
-      fetchQuotes();
+      mutate();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Errore durante la creazione del preventivo';
@@ -504,7 +492,7 @@ export default function QuotesPage() {
         <div className='rounded-xl bg-white shadow-sm dark:bg-gray-800 py-12 text-center'>
           <AlertCircle className='mx-auto h-12 w-12 text-red-400' />
           <p className='mt-4 text-red-600 dark:text-red-400 font-medium'>{error}</p>
-          <Button variant='outline' className='mt-4' onClick={fetchQuotes}>
+          <Button variant='outline' className='mt-4' onClick={() => mutate()}>
             Riprova
           </Button>
         </div>

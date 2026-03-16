@@ -21,9 +21,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handleRequest(err: any, user: any, _info: any) {
-    // You can throw an exception based on either "info" or "err" arguments
+  handleRequest<TUser = Record<string, unknown>>(
+    err: Error | null,
+    user: TUser | false | null,
+    _info: unknown,
+    _context: ExecutionContext,
+    _status?: unknown,
+  ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Invalid or expired token');
     }

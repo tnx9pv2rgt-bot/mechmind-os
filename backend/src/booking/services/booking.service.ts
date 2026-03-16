@@ -84,7 +84,7 @@ export class BookingService {
         'reserve-slot-retry',
         {
           type: 'reserve-slot-retry',
-          payload: dto,
+          payload: { ...dto } as Record<string, unknown>,
           tenantId,
         },
         { delay: 5000 },

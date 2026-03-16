@@ -6,9 +6,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 // Local type definitions to avoid @prisma/client import in client components
 type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
 const FeatureFlag = {
@@ -52,51 +53,50 @@ import subscriptionService, {
   PricingPlan,
 } from '@/lib/subscription/service';
 
+interface SubscriptionPageData {
+  subscription: SubscriptionData;
+  usage: UsageStats;
+  pricing: { plans: PricingPlan[]; aiAddon: { name: string; monthlyPrice: number } };
+}
+
+async function fetchSubscriptionData(): Promise<SubscriptionPageData> {
+  const timeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms)),
+    ]);
+  const [subscription, usage, pricing] = await timeout(
+    Promise.all([
+      subscriptionService.getCurrentSubscription(),
+      subscriptionService.getUsageStats(),
+      subscriptionService.getPricing(),
+    ]),
+    10000
+  );
+  return { subscription, usage, pricing };
+}
+
 export default function SubscriptionPage() {
   const router = useRouter();
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [usage, setUsage] = useState<UsageStats | null>(null);
-  const [pricing, setPricing] = useState<{
-    plans: PricingPlan[];
-    aiAddon: { name: string; monthlyPrice: number };
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: pageData,
+    isLoading: loading,
+    mutate,
+  } = useSWR<SubscriptionPageData>('subscription-page-data', fetchSubscriptionData, {
+    onError: () => {
+      toast.error('Errore nel caricamento dei dati abbonamento');
+    },
+  });
+
+  const subscription = pageData?.subscription ?? null;
+  const usage = pageData?.usage ?? null;
+  const pricing = pageData?.pricing ?? null;
+
   const [processing, setProcessing] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    const timeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
-      Promise.race([
-        promise,
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms)),
-      ]);
-    try {
-      setLoading(true);
-      const [subData, usageData, pricingData] = await timeout(
-        Promise.all([
-          subscriptionService.getCurrentSubscription(),
-          subscriptionService.getUsageStats(),
-          subscriptionService.getPricing(),
-        ]),
-        10000
-      );
-      setSubscription(subData);
-      setUsage(usageData);
-      setPricing(pricingData);
-    } catch (err) {
-      setError('Failed to load subscription data');
-      toast.error('Errore nel caricamento dei dati abbonamento');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleUpgrade = async (
     plan: SubscriptionPlan,
@@ -127,7 +127,7 @@ export default function SubscriptionPage() {
 
       // For trial or manual upgrades
       await subscriptionService.upgradeSubscription(plan, billingCycle, aiAddon);
-      await fetchData();
+      await mutate();
       setShowUpgradeDialog(false);
       setSuccess('Subscription upgraded successfully!');
     } catch (err: unknown) {
@@ -144,7 +144,7 @@ export default function SubscriptionPage() {
       setProcessing(true);
       setError(null);
       await subscriptionService.cancelSubscription(immediate);
-      await fetchData();
+      await mutate();
       setShowCancelDialog(false);
       setSuccess(
         immediate ? 'Subscription cancelled immediately' : 'Subscription will cancel at period end'
@@ -165,7 +165,7 @@ export default function SubscriptionPage() {
       setProcessing(true);
       setError(null);
       await subscriptionService.toggleAiAddon(!subscription.aiAddonEnabled);
-      await fetchData();
+      await mutate();
       setSuccess(subscription.aiAddonEnabled ? 'AI Add-on disabled' : 'AI Add-on enabled');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to toggle AI add-on';
@@ -491,7 +491,13 @@ export default function SubscriptionPage() {
                       ) : (
                         <XCircle className='w-5 h-5 text-gray-300' />
                       )}
-                      <span className={hasFeature ? 'text-gray-900' : 'text-gray-400'}>
+                      <span
+                        className={
+                          hasFeature
+                            ? 'text-gray-900 dark:text-white'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }
+                      >
                         {feature.replace(/_/g, ' ')}
                       </span>
                     </div>

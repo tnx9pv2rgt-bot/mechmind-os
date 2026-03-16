@@ -467,8 +467,7 @@ export class DataRetentionService {
     const now = new Date();
 
     // Find recordings past retention
-    // @ts-expect-error - callRecordings model name may differ in schema
-    const recordingsToDelete = await this.prisma.callRecordings.findMany({
+    const recordingsToDelete = await this.prisma.callRecording.findMany({
       where: {
         ...(tenantId && { tenantId }),
         retentionUntil: {
@@ -489,8 +488,7 @@ export class DataRetentionService {
     for (const recording of recordingsToDelete) {
       try {
         await this.prisma.withTenant(recording.tenantId, async prisma => {
-          // @ts-expect-error - callRecordings model name may differ in schema
-          await prisma.callRecordings.update({
+          await prisma.callRecording.update({
             where: { id: recording.id },
             data: {
               deletedAt: now,
@@ -705,8 +703,7 @@ export class DataRetentionService {
           },
         },
       }),
-      // @ts-expect-error - callRecordings model name may differ in schema
-      this.prisma.callRecordings.count({
+      this.prisma.callRecording.count({
         where: {
           tenantId,
           retentionUntil: {
@@ -717,8 +714,10 @@ export class DataRetentionService {
       }),
     ]);
 
-    // @ts-expect-error - dataRetentionDays may be in settings JSON
-    const retentionDays = tenant.dataRetentionDays ?? this.DEFAULT_RETENTION.customerDataDays;
+    const tenantSettings = (tenant.settings ?? {}) as Record<string, unknown>;
+    const retentionDays =
+      (tenantSettings.dataRetentionDays as number | undefined) ??
+      this.DEFAULT_RETENTION.customerDataDays;
     return {
       tenantId,
       tenantName: tenant.name,
