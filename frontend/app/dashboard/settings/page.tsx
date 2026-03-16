@@ -176,10 +176,14 @@ export default function SettingsPage() {
                 <AppleCardContent className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='space-y-2'>
-                      <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
+                      <label
+                        htmlFor='settingsName'
+                        className='text-footnote text-apple-gray dark:text-[#636366] font-medium'
+                      >
                         Nome Officina
                       </label>
                       <Input
+                        id='settingsName'
                         value={formData.name ?? settings?.name ?? ''}
                         onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
                         placeholder={settingsLoading ? 'Caricamento...' : 'Nome officina'}
@@ -190,10 +194,14 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className='space-y-2'>
-                      <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
+                      <label
+                        htmlFor='settingsEmail'
+                        className='text-footnote text-apple-gray dark:text-[#636366] font-medium'
+                      >
                         Email
                       </label>
                       <Input
+                        id='settingsEmail'
                         value={formData.email ?? settings?.email ?? ''}
                         onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
                         type='email'
@@ -204,10 +212,14 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className='space-y-2'>
-                      <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
+                      <label
+                        htmlFor='settingsPhone'
+                        className='text-footnote text-apple-gray dark:text-[#636366] font-medium'
+                      >
                         Telefono
                       </label>
                       <Input
+                        id='settingsPhone'
                         value={formData.phone ?? settings?.phone ?? ''}
                         onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
                         className='h-12 rounded-xl border-apple-border dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'
@@ -217,10 +229,14 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className='space-y-2'>
-                      <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
+                      <label
+                        htmlFor='settingsVatNumber'
+                        className='text-footnote text-apple-gray dark:text-[#636366] font-medium'
+                      >
                         Partita IVA
                       </label>
                       <Input
+                        id='settingsVatNumber'
                         value={formData.vatNumber ?? settings?.vatNumber ?? ''}
                         onChange={e => setFormData(p => ({ ...p, vatNumber: e.target.value }))}
                         className='h-12 rounded-xl border-apple-border dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'
@@ -228,10 +244,14 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className='space-y-2'>
-                    <label className='text-footnote text-apple-gray dark:text-[#636366] font-medium'>
+                    <label
+                      htmlFor='settingsAddress'
+                      className='text-footnote text-apple-gray dark:text-[#636366] font-medium'
+                    >
                       Indirizzo
                     </label>
                     <Input
+                      id='settingsAddress'
                       value={formData.address ?? settings?.address ?? ''}
                       onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
                       className='h-12 rounded-xl border-apple-border dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'

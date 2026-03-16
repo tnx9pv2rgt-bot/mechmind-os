@@ -329,10 +329,13 @@ function RefundDialog({
             Importo originale: {formatCurrency(payment.amount)}
           </p>
           <div className='space-y-2'>
-            <label className='text-sm font-medium'>Importo da rimborsare</label>
+            <label htmlFor='refundAmount' className='text-sm font-medium'>
+              Importo da rimborsare
+            </label>
             <div className='relative'>
               <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500'>€</span>
               <Input
+                id='refundAmount'
                 type='number'
                 min='0.01'
                 max={payment.amount}

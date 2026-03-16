@@ -125,6 +125,7 @@ export default function ForgotPasswordPage() {
                     }`}
                   >
                     <label
+                      htmlFor='forgotPasswordEmail'
                       className={`absolute left-4 transition-all duration-200 pointer-events-none ${
                         isFloating
                           ? 'top-2 text-[11px] font-medium'
@@ -140,6 +141,7 @@ export default function ForgotPasswordPage() {
                       Indirizzo e-mail
                     </label>
                     <input
+                      id='forgotPasswordEmail'
                       type='email'
                       name='email'
                       autoComplete='email'
