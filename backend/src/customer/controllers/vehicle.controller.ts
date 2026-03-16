@@ -20,6 +20,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { VehicleService } from '../services/vehicle.service';
+import { VinDecoderService } from '../services/vin-decoder.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
@@ -31,7 +32,10 @@ import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from '../dto/v
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('vehicles')
 export class VehicleController {
-  constructor(private readonly vehicleService: VehicleService) {}
+  constructor(
+    private readonly vehicleService: VehicleService,
+    private readonly vinDecoderService: VinDecoderService,
+  ) {}
 
   @Get()
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
@@ -117,6 +121,15 @@ export class VehicleController {
       success: true,
       data: vehicle,
     };
+  }
+
+  @Get('decode-vin/:vin')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Decode a VIN using NHTSA API' })
+  @ApiParam({ name: 'vin', description: '17-character VIN' })
+  async decodeVin(@Param('vin') vin: string) {
+    const result = await this.vinDecoderService.decode(vin);
+    return { success: true, data: result };
   }
 
   @Delete(':id')

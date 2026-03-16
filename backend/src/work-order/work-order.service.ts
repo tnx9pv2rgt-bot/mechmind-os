@@ -8,6 +8,8 @@ import {
 import { PrismaService } from '../common/services/prisma.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
+import { VehicleCheckInDto } from './dto/check-in.dto';
+import { VehicleCheckOutDto } from './dto/check-out.dto';
 
 interface WorkOrderFilters {
   status?: string;
@@ -421,5 +423,220 @@ export class WorkOrderService {
       this.logger.error(`Failed to create invoice from work order ${id}: ${error}`);
       throw new InternalServerErrorException('Failed to create invoice from work order');
     }
+  }
+
+  // ==================== CHECK-IN / CHECK-OUT ====================
+
+  /**
+   * Check in a vehicle: creates or updates a WorkOrder with CHECKED_IN status
+   */
+  async checkIn(tenantId: string, id: string, dto: VehicleCheckInDto): Promise<unknown> {
+    const existing = await this.prisma.workOrder.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Work order ${id} not found`);
+    }
+
+    if (existing.status !== 'PENDING' && existing.status !== 'OPEN') {
+      throw new BadRequestException(`Cannot check in work order with status ${existing.status}`);
+    }
+
+    const checkInData = {
+      damageNotes: dto.damageNotes,
+      itemsLeftInCar: dto.itemsLeftInCar,
+      parkingSpot: dto.parkingSpot,
+      estimatedPickup: dto.estimatedPickup,
+      courtesyCarProvided: dto.courtesyCarProvided,
+      courtesyCarPlate: dto.courtesyCarPlate,
+    };
+
+    const workOrder = await this.prisma.$transaction(async tx => {
+      // Update vehicle mileage
+      await tx.vehicle.update({
+        where: { id: dto.vehicleId },
+        data: { mileage: dto.mileageIn },
+      });
+
+      return tx.workOrder.update({
+        where: { id },
+        data: {
+          status: 'CHECKED_IN',
+          mileageIn: dto.mileageIn,
+          fuelLevelIn: dto.fuelLevel,
+          photos: dto.photos ? JSON.parse(JSON.stringify(dto.photos)) : undefined,
+          customerSignature: dto.customerSignature,
+          checkInData: JSON.parse(JSON.stringify(checkInData)),
+          estimatedCompletion: dto.estimatedPickup ? new Date(dto.estimatedPickup) : undefined,
+        },
+        include: {
+          vehicle: {
+            select: { id: true, licensePlate: true, make: true, model: true },
+          },
+        },
+      });
+    });
+
+    this.logger.log(`Work order ${id} checked in for tenant ${tenantId}`);
+    return workOrder;
+  }
+
+  /**
+   * Check out a vehicle: validates completion and records delivery data
+   */
+  async checkOut(tenantId: string, id: string, dto: VehicleCheckOutDto): Promise<unknown> {
+    const existing = await this.prisma.workOrder.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Work order ${id} not found`);
+    }
+
+    if (existing.status !== 'COMPLETED' && existing.status !== 'READY') {
+      throw new BadRequestException(
+        `Cannot check out work order with status ${existing.status}. Must be COMPLETED or READY.`,
+      );
+    }
+
+    if (existing.mileageIn && dto.mileageOut < existing.mileageIn) {
+      throw new BadRequestException(
+        `Mileage out (${dto.mileageOut}) cannot be less than mileage in (${existing.mileageIn})`,
+      );
+    }
+
+    const checkOutData = {
+      courtesyCarReturned: dto.courtesyCarReturned,
+      notes: dto.notes,
+    };
+
+    const workOrder = await this.prisma.$transaction(async tx => {
+      // Update vehicle mileage
+      await tx.vehicle.update({
+        where: { id: existing.vehicleId },
+        data: { mileage: dto.mileageOut },
+      });
+
+      return tx.workOrder.update({
+        where: { id },
+        data: {
+          status: 'READY',
+          mileageOut: dto.mileageOut,
+          fuelLevelOut: dto.fuelLevel,
+          checkOutData: JSON.parse(JSON.stringify(checkOutData)),
+          customerSignature: dto.customerSignature ?? existing.customerSignature,
+        },
+        include: {
+          vehicle: {
+            select: { id: true, licensePlate: true, make: true, model: true },
+          },
+        },
+      });
+    });
+
+    this.logger.log(`Work order ${id} checked out for tenant ${tenantId}`);
+    return workOrder;
+  }
+
+  // ==================== TECHNICIAN TIMER ====================
+
+  /**
+   * Start a timer for a technician on a work order
+   */
+  async startTimer(tenantId: string, workOrderId: string, technicianId: string): Promise<unknown> {
+    const wo = await this.prisma.workOrder.findFirst({
+      where: { id: workOrderId, tenantId },
+    });
+
+    if (!wo) {
+      throw new NotFoundException(`Work order ${workOrderId} not found`);
+    }
+
+    // Check for active timer
+    const active = await this.prisma.technicianTimeLog.findFirst({
+      where: { workOrderId, technicianId, stoppedAt: null },
+    });
+
+    if (active) {
+      throw new BadRequestException(
+        'Timer is already running for this technician on this work order',
+      );
+    }
+
+    const log = await this.prisma.technicianTimeLog.create({
+      data: {
+        tenantId,
+        workOrderId,
+        technicianId,
+        startedAt: new Date(),
+      },
+    });
+
+    return log;
+  }
+
+  /**
+   * Stop the active timer for a technician on a work order
+   */
+  async stopTimer(tenantId: string, workOrderId: string, technicianId: string): Promise<unknown> {
+    const active = await this.prisma.technicianTimeLog.findFirst({
+      where: { workOrderId, technicianId, stoppedAt: null, tenantId },
+    });
+
+    if (!active) {
+      throw new BadRequestException('No active timer found');
+    }
+
+    const stoppedAt = new Date();
+    const durationMinutes = Math.round((stoppedAt.getTime() - active.startedAt.getTime()) / 60000);
+
+    const log = await this.prisma.technicianTimeLog.update({
+      where: { id: active.id },
+      data: { stoppedAt, durationMinutes },
+    });
+
+    // Update WorkOrder laborHours with total accumulated time
+    const allLogs = await this.prisma.technicianTimeLog.findMany({
+      where: { workOrderId, stoppedAt: { not: null } },
+    });
+
+    const totalMinutes = allLogs.reduce((sum, l) => sum + (l.durationMinutes ?? 0), 0);
+    const totalHours = parseFloat((totalMinutes / 60).toFixed(2));
+
+    await this.prisma.workOrder.update({
+      where: { id: workOrderId },
+      data: { laborHours: totalHours },
+    });
+
+    return log;
+  }
+
+  /**
+   * Get timer status for a work order
+   */
+  async getTimer(
+    tenantId: string,
+    workOrderId: string,
+  ): Promise<{ active: unknown | null; totalMinutes: number; logs: unknown[] }> {
+    const wo = await this.prisma.workOrder.findFirst({
+      where: { id: workOrderId, tenantId },
+    });
+
+    if (!wo) {
+      throw new NotFoundException(`Work order ${workOrderId} not found`);
+    }
+
+    const logs = await this.prisma.technicianTimeLog.findMany({
+      where: { workOrderId },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    const active = logs.find(l => !l.stoppedAt) ?? null;
+    const totalMinutes = logs
+      .filter(l => l.stoppedAt)
+      .reduce((sum, l) => sum + (l.durationMinutes ?? 0), 0);
+
+    return { active, totalMinutes, logs };
   }
 }

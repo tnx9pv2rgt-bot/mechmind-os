@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CustomerController } from './customer.controller';
 import { CustomerService } from '../services/customer.service';
 import { VehicleService } from '../services/vehicle.service';
+import { CsvImportExportService } from '../services/csv-import-export.service';
 
 describe('CustomerController', () => {
   let controller: CustomerController;
@@ -52,6 +53,14 @@ describe('CustomerController', () => {
             findById: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
+          },
+        },
+        {
+          provide: CsvImportExportService,
+          useValue: {
+            exportCustomers: jest.fn(),
+            exportVehicles: jest.fn(),
+            importCustomers: jest.fn(),
           },
         },
       ],

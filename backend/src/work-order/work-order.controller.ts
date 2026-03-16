@@ -8,10 +8,12 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentTenant } from '../auth/decorators/current-user.decorator';
+import { CurrentTenant, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { WorkOrderService } from './work-order.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
+import { VehicleCheckInDto } from './dto/check-in.dto';
+import { VehicleCheckOutDto } from './dto/check-out.dto';
 
 @ApiTags('work-orders')
 @ApiBearerAuth()
@@ -106,6 +108,71 @@ export class WorkOrderController {
   @ApiResponse({ status: 404, description: 'Work order not found' })
   async createInvoice(@CurrentTenant() tenantId: string, @Param('id') id: string) {
     const result = await this.workOrderService.createInvoiceFromWo(tenantId, id);
+    return { success: true, data: result };
+  }
+
+  // ==================== CHECK-IN / CHECK-OUT ====================
+
+  @Post(':id/check-in')
+  @ApiOperation({ summary: 'Vehicle check-in for a work order' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiResponse({ status: 200, description: 'Vehicle checked in' })
+  async checkIn(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: VehicleCheckInDto,
+  ) {
+    const workOrder = await this.workOrderService.checkIn(tenantId, id, dto);
+    return { success: true, data: workOrder };
+  }
+
+  @Post(':id/check-out')
+  @ApiOperation({ summary: 'Vehicle check-out for a work order' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiResponse({ status: 200, description: 'Vehicle checked out' })
+  async checkOut(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: VehicleCheckOutDto,
+  ) {
+    const workOrder = await this.workOrderService.checkOut(tenantId, id, dto);
+    return { success: true, data: workOrder };
+  }
+
+  // ==================== TECHNICIAN TIMER ====================
+
+  @Post(':id/timer/start')
+  @ApiOperation({ summary: 'Start technician timer on a work order' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiResponse({ status: 200, description: 'Timer started' })
+  async startTimer(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @CurrentUser('userId') technicianId: string,
+  ) {
+    const log = await this.workOrderService.startTimer(tenantId, id, technicianId);
+    return { success: true, data: log };
+  }
+
+  @Post(':id/timer/stop')
+  @ApiOperation({ summary: 'Stop technician timer on a work order' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiResponse({ status: 200, description: 'Timer stopped' })
+  async stopTimer(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @CurrentUser('userId') technicianId: string,
+  ) {
+    const log = await this.workOrderService.stopTimer(tenantId, id, technicianId);
+    return { success: true, data: log };
+  }
+
+  @Get(':id/timer')
+  @ApiOperation({ summary: 'Get timer status for a work order' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiResponse({ status: 200, description: 'Timer status retrieved' })
+  async getTimer(@CurrentTenant() tenantId: string, @Param('id') id: string) {
+    const result = await this.workOrderService.getTimer(tenantId, id);
     return { success: true, data: result };
   }
 }

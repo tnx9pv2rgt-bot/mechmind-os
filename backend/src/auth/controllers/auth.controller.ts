@@ -54,7 +54,9 @@ class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-z0-9-]+$/, { message: 'Lo slug può contenere solo lettere minuscole, numeri e trattini' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'Lo slug può contenere solo lettere minuscole, numeri e trattini',
+  })
   slug: string;
 
   @IsString()

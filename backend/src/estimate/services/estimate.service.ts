@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstimateStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/services/prisma.service';
@@ -344,6 +349,92 @@ export class EstimateService {
       `Estimate ${estimate.estimateNumber} converted to booking ${bookingId} for tenant ${tenantId}`,
     );
     return updated;
+  }
+
+  // ==================== CONVERSIONS ====================
+
+  /**
+   * Convert an accepted estimate to a work order
+   */
+  async convertToWorkOrder(estimateId: string, tenantId: string): Promise<unknown> {
+    const estimate = await this.prisma.estimate.findFirst({
+      where: { id: estimateId, tenantId },
+      include: { lines: true },
+    });
+
+    if (!estimate) {
+      throw new NotFoundException('Estimate not found');
+    }
+
+    if (estimate.status !== EstimateStatus.ACCEPTED) {
+      throw new BadRequestException(
+        `Cannot convert estimate in ${estimate.status} status. Must be ACCEPTED.`,
+      );
+    }
+
+    // Check if already converted (has CONVERTED status)
+    if (estimate.bookingId) {
+      throw new ConflictException('Estimate has already been converted');
+    }
+
+    // Generate WO number
+    const year = new Date().getFullYear();
+    const prefix = `WO-${year}-`;
+    const lastWo = await this.prisma.workOrder.findFirst({
+      where: { tenantId, woNumber: { startsWith: prefix } },
+      orderBy: { createdAt: 'desc' },
+      select: { woNumber: true },
+    });
+
+    let seq = 1;
+    if (lastWo) {
+      const last = parseInt(lastWo.woNumber.replace(prefix, ''), 10);
+      if (!Number.isNaN(last)) seq = last + 1;
+    }
+    const woNumber = `${prefix}${String(seq).padStart(4, '0')}`;
+
+    // Build labor items from estimate lines
+    const laborItems = estimate.lines.map(line => ({
+      description: line.description,
+      type: line.type,
+      quantity: line.quantity,
+      unitPriceCents: line.unitPriceCents.toString(),
+      totalCents: line.totalCents.toString(),
+    }));
+
+    // Create work order + update estimate in a transaction
+    const result = await this.prisma.$transaction(async tx => {
+      const wo = await tx.workOrder.create({
+        data: {
+          tenantId,
+          woNumber,
+          vehicleId: estimate.vehicleId!,
+          customerId: estimate.customerId,
+          estimateId: estimate.id,
+          status: 'OPEN',
+          laborItems: JSON.parse(JSON.stringify(laborItems)),
+        },
+      });
+
+      await tx.estimate.update({
+        where: { id: estimateId },
+        data: { status: EstimateStatus.CONVERTED },
+      });
+
+      return wo;
+    });
+
+    this.eventEmitter.emit('estimate.convertedToWorkOrder', {
+      estimateId,
+      workOrderId: result.id,
+      tenantId,
+    });
+
+    this.logger.log(
+      `Estimate ${estimate.estimateNumber} converted to WO ${woNumber} for tenant ${tenantId}`,
+    );
+
+    return result;
   }
 
   // ==================== PRIVATE HELPERS ====================

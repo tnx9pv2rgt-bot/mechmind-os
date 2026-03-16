@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountingController } from './accounting.controller';
 import { AccountingService } from '../services/accounting.service';
+import { QuickBooksService } from '../services/quickbooks.service';
 
 describe('AccountingController', () => {
   let controller: AccountingController;
@@ -34,6 +35,12 @@ describe('AccountingController', () => {
             findById: jest.fn(),
             retry: jest.fn(),
             getStatus: jest.fn(),
+          },
+        },
+        {
+          provide: QuickBooksService,
+          useValue: {
+            exportInvoicesForQuickBooks: jest.fn(),
           },
         },
       ],

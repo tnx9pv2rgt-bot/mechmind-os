@@ -491,6 +491,100 @@ export class InspectionService {
     });
   }
 
+  // ============== CONVERSIONS ==============
+
+  /**
+   * Create an estimate from approved inspection findings
+   */
+  async createEstimateFromFindings(
+    tenantId: string,
+    inspectionId: string,
+    findingIds: string[],
+    createdBy: string,
+  ): Promise<unknown> {
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId, tenantId },
+      include: {
+        findings: { where: { id: { in: findingIds } } },
+        vehicle: true,
+      },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Inspection not found');
+    }
+
+    if (inspection.findings.length === 0) {
+      throw new NotFoundException('No matching findings found');
+    }
+
+    // Generate estimate number
+    const year = new Date().getFullYear();
+    const prefix = `EST-${year}-`;
+    const lastEst = await this.prisma.estimate.findFirst({
+      where: { tenantId, estimateNumber: { startsWith: prefix } },
+      orderBy: { estimateNumber: 'desc' },
+      select: { estimateNumber: true },
+    });
+
+    let seq = 1;
+    if (lastEst) {
+      const last = parseInt(lastEst.estimateNumber.replace(prefix, ''), 10);
+      if (!Number.isNaN(last)) seq = last + 1;
+    }
+    const estimateNumber = `${prefix}${String(seq).padStart(4, '0')}`;
+
+    // Build estimate lines from findings
+    const lines = inspection.findings.map((finding, index) => {
+      const costCents = finding.estimatedCost
+        ? BigInt(Math.round(Number(finding.estimatedCost) * 100))
+        : BigInt(0);
+      return {
+        type: 'LABOR' as const,
+        description: `${finding.title} — ${finding.description}`,
+        quantity: 1,
+        unitPriceCents: costCents,
+        totalCents: costCents,
+        vatRate: 22.0,
+        position: index,
+      };
+    });
+
+    const subtotalCents = lines.reduce((sum, l) => sum + l.totalCents, BigInt(0));
+    const vatCents = BigInt(Math.round(Number(subtotalCents) * 0.22));
+    const totalCents = subtotalCents + vatCents;
+
+    const estimate = await this.prisma.estimate.create({
+      data: {
+        tenantId,
+        estimateNumber,
+        customerId: inspection.customerId,
+        vehicleId: inspection.vehicleId,
+        status: 'DRAFT',
+        subtotalCents,
+        vatCents,
+        totalCents,
+        discountCents: BigInt(0),
+        createdBy,
+        notes: `Generated from inspection ${inspectionId}`,
+        lines: {
+          create: lines.map(l => ({
+            type: l.type,
+            description: l.description,
+            quantity: l.quantity,
+            unitPriceCents: l.unitPriceCents,
+            totalCents: l.totalCents,
+            vatRate: l.vatRate,
+            position: l.position,
+          })),
+        },
+      },
+      include: { lines: true },
+    });
+
+    return estimate;
+  }
+
   // ============== PRIVATE METHODS ==============
 
   private async notifyCustomer(inspection: InspectionWithRelations): Promise<void> {

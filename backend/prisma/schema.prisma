@@ -90,6 +90,9 @@ model Tenant {
   laborGuides       LaborGuide[]
   laborGuideEntries LaborGuideEntry[]
 
+  // Technician Time Logs
+  technicianTimeLogs TechnicianTimeLog[]
+
   // Accounting
   accountingSyncs AccountingSync[]
 
@@ -2394,12 +2397,20 @@ model WorkOrder {
   estimatedCompletion  DateTime? @map("estimated_completion")
   actualCompletionTime DateTime? @map("actual_completion_time")
 
-  invoiceId String? @map("invoice_id")
+  invoiceId  String? @map("invoice_id")
+  estimateId String? @map("estimate_id")
+
+  // Check-in / Check-out data
+  fuelLevelIn  FuelLevel? @map("fuel_level_in")
+  fuelLevelOut FuelLevel? @map("fuel_level_out")
+  checkInData  Json?      @map("check_in_data")
+  checkOutData Json?      @map("check_out_data")
 
   technicians WorkOrderTechnician[]
   services    WorkOrderService[]
   assignedBay ServiceBay[]
   parts       WorkOrderPart[]
+  timeLogs    TechnicianTimeLog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -2411,6 +2422,26 @@ model WorkOrder {
   @@index([customerId])
   @@index([status])
   @@map("work_orders")
+}
+
+model TechnicianTimeLog {
+  id              String    @id @default(uuid())
+  tenantId        String    @map("tenant_id")
+  workOrderId     String    @map("work_order_id")
+  technicianId    String    @map("technician_id")
+  startedAt       DateTime  @map("started_at")
+  stoppedAt       DateTime? @map("stopped_at")
+  durationMinutes Int?      @map("duration_minutes")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([workOrderId])
+  @@index([technicianId])
+  @@map("technician_time_logs")
 }
 
 model WorkOrderTechnician {

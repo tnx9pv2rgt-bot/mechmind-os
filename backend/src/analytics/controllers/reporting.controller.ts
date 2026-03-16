@@ -18,6 +18,8 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { ReportingService } from '../services/reporting.service';
+import { SearchService } from '../services/search.service';
+import { KpiService } from '../services/kpi.service';
 import { UserRole } from '../../auth/guards/roles.guard';
 import { Response } from 'express';
 import {
@@ -40,7 +42,11 @@ function sanitizeFilenameSegment(value: string): string {
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 @ApiBearerAuth()
 export class ReportingController {
-  constructor(private readonly reportingService: ReportingService) {}
+  constructor(
+    private readonly reportingService: ReportingService,
+    private readonly searchService: SearchService,
+    private readonly kpiService: KpiService,
+  ) {}
 
   // ============== DASHBOARD ==============
 
@@ -140,6 +146,31 @@ export class ReportingController {
   @ApiOperation({ summary: 'Get inventory valuation by category' })
   async getInventoryValuation(@CurrentUser('tenantId') tenantId: string) {
     return this.reportingService.getInventoryValuation(tenantId);
+  }
+
+  // ============== GLOBAL SEARCH ==============
+
+  @Get('search')
+  @ApiOperation({ summary: 'Global search across all entities' })
+  @ApiQuery({ name: 'q', required: true, description: 'Search query' })
+  async search(@CurrentUser('tenantId') tenantId: string, @Query('q') q: string) {
+    const result = await this.searchService.search(tenantId, q);
+    return { success: true, data: result.results, meta: { total: result.total } };
+  }
+
+  // ============== KPI DASHBOARD ==============
+
+  @Get('kpi')
+  @ApiOperation({ summary: 'Get comprehensive KPI dashboard' })
+  @ApiQuery({ name: 'from', required: true, description: 'Start date (ISO)' })
+  @ApiQuery({ name: 'to', required: true, description: 'End date (ISO)' })
+  async getKpiDashboard(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    const kpi = await this.kpiService.getDashboardKpi(tenantId, new Date(from), new Date(to));
+    return { success: true, data: kpi };
   }
 
   // ============== EXPORTS ==============

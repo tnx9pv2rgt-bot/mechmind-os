@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportingController } from './reporting.controller';
 import { ReportingService } from '../services/reporting.service';
+import { SearchService } from '../services/search.service';
+import { KpiService } from '../services/kpi.service';
 
 describe('ReportingController', () => {
   let controller: ReportingController;
@@ -30,6 +32,18 @@ describe('ReportingController', () => {
             exportInventory: jest.fn(),
             exportRevenue: jest.fn(),
             refreshAnalyticsViews: jest.fn(),
+          },
+        },
+        {
+          provide: SearchService,
+          useValue: {
+            search: jest.fn(),
+          },
+        },
+        {
+          provide: KpiService,
+          useValue: {
+            getDashboardKpi: jest.fn(),
           },
         },
       ],

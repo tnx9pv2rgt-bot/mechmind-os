@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VehicleController } from './vehicle.controller';
 import { VehicleService } from '../services/vehicle.service';
+import { VinDecoderService } from '../services/vin-decoder.service';
 
 describe('VehicleController', () => {
   let controller: VehicleController;
@@ -35,6 +36,10 @@ describe('VehicleController', () => {
             update: jest.fn(),
             delete: jest.fn(),
           },
+        },
+        {
+          provide: VinDecoderService,
+          useValue: { decode: jest.fn() },
         },
       ],
     }).compile();

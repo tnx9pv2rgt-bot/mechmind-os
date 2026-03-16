@@ -195,4 +195,23 @@ export class InspectionController {
   ): Promise<Buffer> {
     return this.inspectionService.generateReport(tenantId, id);
   }
+
+  @Post(':id/create-estimate')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Create estimate from inspection findings' })
+  @ApiResponse({ status: 201, description: 'Estimate created from findings' })
+  async createEstimateFromFindings(
+    @CurrentUser('tenantId') tenantId: string,
+    @CurrentUser('userId') userId: string,
+    @Param('id') inspectionId: string,
+    @Body('findingIds') findingIds: string[],
+  ): Promise<{ success: boolean; data: unknown }> {
+    const estimate = await this.inspectionService.createEstimateFromFindings(
+      tenantId,
+      inspectionId,
+      findingIds,
+      userId,
+    );
+    return { success: true, data: estimate };
+  }
 }

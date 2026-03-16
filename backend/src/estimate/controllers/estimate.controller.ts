@@ -206,4 +206,21 @@ export class EstimateController {
       message: 'Estimate converted to booking',
     };
   }
+
+  @Post(':id/convert-to-work-order')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Convert accepted estimate to work order' })
+  @ApiParam({ name: 'id', description: 'Estimate ID' })
+  @ApiResponse({ status: 201, description: 'Work order created from estimate' })
+  async convertToWorkOrder(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; data: unknown; message: string }> {
+    const workOrder = await this.estimateService.convertToWorkOrder(id, tenantId);
+    return {
+      success: true,
+      data: workOrder,
+      message: 'Estimate converted to work order',
+    };
+  }
 }

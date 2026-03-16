@@ -71,8 +71,8 @@ describe('InvoiceController', () => {
 
   describe('findAll', () => {
     it('should delegate to service and return wrapped response', async () => {
-      const expected = { invoices: [mockInvoice], total: 1 } as never;
-      service.findAll.mockResolvedValue(expected);
+      const expected = { invoices: [mockInvoice], total: 1 };
+      service.findAll.mockResolvedValue(expected as never);
 
       const result = await controller.findAll(
         TENANT_ID,
