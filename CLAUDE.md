@@ -1,77 +1,184 @@
 # MechMind OS v10
 
-See @backend/package.json for dependencies. See @backend/prisma/schema.prisma for DB models.
+SaaS multi-tenant per officine meccaniche. NestJS 10 + Prisma 5.22 + PostgreSQL 15 (RLS) + Redis 7 (BullMQ) + Next.js 14 App Router + TailwindCSS + Radix UI.
 
-## ⚠️ CHECKLIST — Prima di OGNI modifica:
-1. **Cosa fai?** (una frase in italiano)
+## Docs Reference
+- `docs/01-PROJECT-OVERVIEW.md` — Numeri chiave, stack, stato progetto
+- `docs/02-ARCHITECTURE.md` — Module map, data flow, child models senza tenantId, security layers
+- `docs/03-ADR-DECISIONS.md` — 11 ADR con rationale e conseguenze
+- `docs/04-API-REFERENCE.md` — ~66 endpoint, paginazione, WebSocket
+- `docs/05-DOMAIN-GLOSSARY.md` — 23 termini business + 12 tecnici + 8 enum
+- `docs/06-CODING-CONVENTIONS.md` — Pattern controller/service/model/test, Zod schema, naming, commit
+- `docs/07-DEPLOYMENT.md` — Platform map, env vars, CI/CD, health checks, monitoring Sentry
+- `docs/08-TEST-STRATEGY.md` — Jest config, mock rules, coverage 80%, TDD workflow
+- `docs/09-ERROR-CATALOG.md` — Domain exceptions per 14 moduli, 3 formati response
+- `docs/10-RUNBOOK.md` — Procedure step-by-step per Redis down, encryption failure, RLS leak, DB down
+- `docs/11-DEPENDENCY-MAP.md` — Grafo caller di ogni service critico (PrismaService, EncryptionService, RedisService)
+- `docs/12-PR-WORKFLOW-EXAMPLE.md` — Esempio PR completa end-to-end: failing test → implementation → green test
+
+## ⚠️ CHECKLIST — Prima di OGNI modifica
+
+Rispondi a TUTTE e 6 prima di scrivere codice:
+
+1. **Cosa fai?** (una frase)
 2. **Quali file tocchi?**
 3. **Cosa rischi di rompere?**
 4. **C'è un modo più sicuro?**
 5. **Rollback plan?**
-6. **Hai letto i file coinvolti?**
+6. **Hai letto i file coinvolti?** (`cat` i file prima di editarli)
 
 ## REGOLE INVIOLABILI
 
 ### Multi-Tenancy — CRITICAL
-- JWT payload: `userId:tenantId`. `TenantContextMiddleware` imposta `app.current_tenant` su PostgreSQL
-- RLS isola i dati tra tenant — **NEVER query senza contesto tenant**
-- Tutti gli 80 modelli hanno `tenantId` — **NEVER creare un modello senza**
+- JWT payload: `userId:tenantId`
+- `TenantContextMiddleware` → `SET app.current_tenant` su PostgreSQL → RLS filtra automaticamente
+- 63 modelli con `tenantId` diretto + 17 child models isolati via FK parent (80 totali)
+- **NEVER** query senza contesto tenant
+- **NEVER** creare un modello con query diretta senza `tenantId` (se è un child model, il parent DEVE averlo)
+- Dopo modifiche allo schema: verificare SEMPRE che le RLS policies coprano la nuova tabella
 
-### Sicurezza Dati — CRITICAL
-- PII crittografati SOLO tramite `EncryptionService` (AES-256-CBC) — **NEVER crittografare manualmente**
-- Campi: `encryptedPhone`, `encryptedEmail`, nome/cognome + hash per ricerca
-- **NEVER leggere/scrivere `.env`**
-- Secret obbligatori: `JWT_SECRET`, `ENCRYPTION_KEY`, `DATABASE_URL`, `REDIS_URL`
+### PII & Encryption — CRITICAL
+- PII crittografati SOLO tramite `EncryptionService` (AES-256-CBC, random IV per record)
+- Campi: `encryptedPhone`, `encryptedEmail`, `encryptedFirstName`, `encryptedLastName` + hash HMAC per ricerca
+- **NEVER** crittografare manualmente (`crypto.createCipher*` nel tuo codice = errore)
+- **NEVER** loggare dati PII decifrati
+- **NEVER** leggere/scrivere/esporre file `.env`
+- `ENCRYPTION_KEY` **non deve MAI cambiare** in prod (zero key rotation implementata)
 
 ### Database
-- Tutte le tabelle: `tenantId`, `createdAt`, `updatedAt`
-- Soft delete con `deletedAt DateTime?` per dati personali
-- Transazioni per mutazioni multi-modello
+- Tutte le tabelle: `tenantId`, `createdAt`, `updatedAt` (tranne i 17 child models documentati in `02-ARCHITECTURE.md`)
+- Soft delete con `deletedAt DateTime?` per dati personali (GDPR)
+- Transazioni obbligatorie per mutazioni multi-modello
+- **NEVER** raw SQL. Solo Prisma Client. Eccezione: `$queryRaw` solo in PrismaService per advisory lock e RLS setup
 
-### DOPO OGNI SESSIONE CHE RIMUOVE FILE, PACCHETTI O PROVIDER
+### Booking Concurrency — FRAGILE
+- Advisory lock PostgreSQL (`acquireAdvisoryLock`) + transazione SERIALIZABLE (`withSerializableTransaction`)
+- Retry 3x su errore P2034 con delay incrementale
+- **NEVER** modificare la logica di lock senza approvazione esplicita
+- **NEVER** aggiungere query dentro `withSerializableTransaction` senza capire l'impatto su deadlock
 
-Esegui SEMPRE questi 5 step nell'ordine esatto prima di dichiarare
-la sessione completata:
+### Validazione
+- Controller: `class-validator` decoratori nei DTO + global `ValidationPipe` (whitelist, forbidNonWhitelisted)
+- Service: `Zod` schema per business rules (es. "data nel futuro", "durata min 15 max 480")
+- I due sistemi DEVONO essere sincronizzati: se aggiungi un campo al DTO, aggiungilo anche allo Zod schema
 
-1. `rm -rf .next`          → pulisce cache webpack (evita runtime crash)
-2. `npm run lint`          → rileva import rotti verso file eliminati
-3. `npx tsc --noEmit`      → rileva errori TypeScript
-4. `npm run build`         → build pulita da zero
-5. `npm run dev` + apri browser → zero errori runtime in console
-
-Se uno dei 5 step fallisce: non dichiarare la sessione completata.
-Risolvi prima di andare avanti.
-
-MOTIVO: la cache `.next` contiene riferimenti ai moduli eliminati.
-TypeScript non la vede, ma il browser crasha con:
-`TypeError: undefined is not an object (evaluating 'originalFactory.call')`
-
-## Architettura Backend (14 moduli attivi)
+## Architettura Backend — 21 Moduli
 
 ```
-CommonModule (@Global) — PrismaService, EncryptionService, RedisService, QueueService, LoggerService, S3Service, AdvisoryLockService
+AppModule
+├── CommonModule (@Global)
+│   ├── PrismaService        → DB + RLS + advisory lock + SERIALIZABLE
+│   ├── EncryptionService    → AES-256-CBC PII
+│   ├── RedisService         → ioredis, graceful degradation (isAvailable)
+│   ├── QueueService         → BullMQ wrapper
+│   ├── LoggerService        → Winston
+│   ├── S3Service            → File upload
+│   └── AdvisoryLockService  → Booking concurrency
+├── AuthModule               → JWT, MFA TOTP, Passkey WebAuthn, OAuth, Magic Link
+├── BookingModule            → Advisory lock + SERIALIZABLE
+├── CustomerModule           → PII encrypted
+├── SubscriptionModule       → Stripe, FeatureGuard, LimitGuard
+├── GdprModule               → BullMQ: gdpr-deletion, gdpr-retention, gdpr-export
+├── NotificationsModule      → email-queue, notification-queue
+├── IotModule                → OBD WebSocket, LPR, Shop Floor, Vehicle Twin
+├── VoiceModule, DviModule, ObdModule, PartsModule
+├── AnalyticsModule, AdminModule
+├── FleetModule, TireModule, EstimateModule
+├── LaborGuideModule, AccountingModule
+├── InvoiceModule, WorkOrderModule
 ```
 
-Dipendenze critiche:
-- **AuthModule** → CommonModule, NotificationsModule (JWT, MFA, Passkey, OAuth, Magic Link)
-- **BookingModule** → CommonModule, CustomerModule (advisory lock + SERIALIZABLE)
-- **GdprModule** → CommonModule, CustomerModule, ScheduleModule (BullMQ: gdpr-deletion, gdpr-retention, gdpr-export)
-- **SubscriptionModule** → CommonModule, AuthModule (FeatureGuard, LimitGuard, Stripe)
-- **NotificationsModule** → ConfigModule, BullModule (email-queue, notification-queue)
-- **IotModule** → CommonModule, AuthModule, NotificationsModule, RedisModule
-- **VoiceModule** → CommonModule, CustomerModule, BookingModule
-- CustomerModule, DviModule, ObdModule, PartsModule, AnalyticsModule, AdminModule → CommonModule
+## ⚠️ Punti Fragili — Leggi prima di toccare
 
-## ⚠️ Punti Fragili
+1. **CommonModule** — Se PrismaService o EncryptionService crashano, tutto il backend crolla
+2. **RLS Policies** — Un errore = data leak tra tenant (violazione GDPR). Vedere `docs/10-RUNBOOK.md`
+3. **ENCRYPTION_KEY** — Se cambia, TUTTI i PII diventano illeggibili. Non esiste key rotation
+4. **Redis** — SPOF: BullMQ, cache, pub/sub, rate limiting. RedisService degrada gracefully (isAvailable=false)
+5. **Booking concurrency** — Advisory lock + SERIALIZABLE. Modifiche incaute = deadlock
+6. **`mechmind-os/`** — Mirror del progetto. **NEVER** modificare
 
-1. **CommonModule** — PrismaService o EncryptionService down = tutto il backend crolla
-2. **RLS Policies** — Errore = data leak tra tenant. Verificare SEMPRE dopo modifiche schema
-3. **ENCRYPTION_KEY** — Se cambia, tutti i PII crittografati diventano illeggibili. Zero key rotation
-4. **Redis** — SPOF: BullMQ, cache, pub/sub, rate limiting tutti dipendono da Redis
-5. **Booking concurrency** — Advisory lock + SERIALIZABLE: toccare = rischio deadlock
-6. **`mechmind-os/`** — Mirror del progetto. **NEVER modificare**
+## Workflow: Come aggiungere una feature
+
+Segui SEMPRE questo ordine. Esempio completo in `docs/12-PR-WORKFLOW-EXAMPLE.md`.
+
+```
+1. Scrivi il test che fallisce (RED)
+   → *.spec.ts con Arrange/Act/Assert, mock con mockDeep<PrismaClient>()
+
+2. Aggiungi migration Prisma (se serve nuovo modello/campo)
+   → npx prisma migrate dev --name <nome>
+   → Verifica: tenantId? createdAt/updatedAt? @@index([tenantId])? @@map("snake_case")?
+
+3. Crea DTO (class-validator)
+   → Create*Dto, Update*Dto, *ResponseDto
+   → Decoratori: @IsUUID(), @IsString(), @IsOptional(), @ApiProperty()
+
+4. Crea Zod schema (service-level)
+   → Business rules: date nel futuro, range valori, dipendenze tra campi
+
+5. Implementa Service
+   → Zod parse → business logic → Prisma query con tenantId
+   → Domain exceptions: NotFoundException, ConflictException, BadRequestException
+
+6. Implementa Controller
+   → @UseGuards(JwtAuthGuard), @TenantId(), @CurrentUser()
+   → Return type esplicito, @HttpCode appropriato
+
+7. Test verde (GREEN)
+   → npm run test -- --testPathPattern=<modulo>
+
+8. Refactor se necessario (BLUE)
+
+9. Verifica completa:
+   → npx tsc --noEmit (zero errori TS)
+   → npm run lint (zero warning)
+   → npm run test (tutti i test passano)
+   → npm run build (build ok)
+```
+
+## Post-Session Cleanup
+
+Esegui SEMPRE dopo sessioni che rimuovono file, pacchetti o provider:
+
+```bash
+rm -rf .next              # pulisce cache webpack
+npm run lint              # rileva import rotti
+npx tsc --noEmit          # errori TypeScript
+npm run build             # build pulita
+npm run dev               # zero errori runtime in console
+```
+
+Se uno step fallisce: risolvi prima di dichiarare completato.
+
+## Naming Conventions
+
+| Cosa | Convenzione | Esempio |
+|------|-------------|---------|
+| File | kebab-case | `booking.controller.ts` |
+| Classe | PascalCase | `BookingService` |
+| Metodo | camelCase | `findAvailableSlots()` |
+| DTO | PascalCase + Dto | `CreateBookingDto` |
+| Costanti | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+| Tabella DB (Prisma) | PascalCase + @@map | `Booking` → `@@map("bookings")` |
+| Colonna DB | camelCase + @map | `tenantId` → `@map("tenant_id")` |
+| Commit | type(scope): desc | `feat(booking): add slot check` |
+
+## TypeScript Strict
+
+- **NEVER** `any` — usa `unknown` + type guard
+- **NEVER** `@ts-ignore` o `@ts-expect-error`
+- Return types espliciti su tutti i metodi public
+- Import order: Node → NestJS → Third-party → Internal (absolute @/) → Relative
+
+## Errori Comuni da Evitare
+
+- Query Prisma senza `where: { tenantId }` su modelli con tenantId diretto
+- `throw new Error()` nei service — usa `NotFoundException`, `ConflictException`, `BadRequestException`
+- Catch-and-swallow silenziosi — sempre re-throw o log + throw
+- PII in log, response, o error messages
+- Modifiche a `.env`, `ENCRYPTION_KEY`, `JWT_SECRET`
+- `npm install` senza `--save-exact`
 
 ## Compact Instructions
-Preserve: test output, code changes, file paths, architectural decisions, current task context, error messages, checklist answers.
 
-IMPORTANT: NEVER query senza contesto tenant. NEVER PII senza EncryptionService.
+Preserve across context: test output, code changes, file paths, architectural decisions, current task context, error messages, checklist answers.
