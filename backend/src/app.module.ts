@@ -29,6 +29,9 @@ import { SmsModule } from './sms/sms.module';
 import { ReviewModule } from './reviews/review.module';
 import { CampaignModule } from './campaign/campaign.module';
 import { LocationModule } from './location/location.module';
+import { RentriModule } from './rentri/rentri.module';
+import { SecurityIncidentModule } from './security-incident/security-incident.module';
+import { AiComplianceModule } from './ai-compliance/ai-compliance.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
@@ -80,6 +83,9 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     ReviewModule,
     CampaignModule,
     LocationModule,
+    RentriModule,
+    SecurityIncidentModule,
+    AiComplianceModule,
   ],
   providers: [
     // Global exception filter

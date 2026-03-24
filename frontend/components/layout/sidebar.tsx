@@ -27,6 +27,7 @@ import {
   ChevronRight,
   LogOut,
   X,
+  Recycle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebarStore } from '@/stores/sidebar-store';
@@ -82,6 +83,7 @@ const NAV_GROUPS: NavGroup[] = [
       { name: 'OBD Diagnostica', href: '/dashboard/obd', icon: Activity },
       { name: 'Lavori Standard', href: '/dashboard/canned-jobs', icon: BookOpen },
       { name: 'Garanzie', href: '/dashboard/warranty', icon: Shield },
+      { name: 'Rifiuti (RENTRI)', href: '/dashboard/rentri', icon: Recycle },
       { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
     ],
   },

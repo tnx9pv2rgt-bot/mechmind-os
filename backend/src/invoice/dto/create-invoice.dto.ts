@@ -54,7 +54,10 @@ export class CreateInvoiceItemDto {
   @Max(100)
   discount?: number;
 
-  @ApiPropertyOptional({ description: 'Codice Natura IVA (N1-N7) per esenzioni/esclusioni', example: 'N4' })
+  @ApiPropertyOptional({
+    description: 'Codice Natura IVA (N1-N7) per esenzioni/esclusioni',
+    example: 'N4',
+  })
   @IsOptional()
   @IsString()
   naturaIva?: string;
@@ -137,12 +140,17 @@ export class CreateInvoiceDto {
   @IsUUID()
   workOrderId?: string;
 
-  @ApiPropertyOptional({ description: 'Data operazione Art. 226 #8 (se diversa da data emissione)' })
+  @ApiPropertyOptional({
+    description: 'Data operazione Art. 226 #8 (se diversa da data emissione)',
+  })
   @IsOptional()
   @IsDateString()
   operationDate?: string;
 
-  @ApiPropertyOptional({ description: 'Tipo ritenuta (RT01=persone fisiche, RT02=persone giuridiche)', example: 'RT01' })
+  @ApiPropertyOptional({
+    description: 'Tipo ritenuta (RT01=persone fisiche, RT02=persone giuridiche)',
+    example: 'RT01',
+  })
   @IsOptional()
   @IsString()
   ritenutaType?: string;

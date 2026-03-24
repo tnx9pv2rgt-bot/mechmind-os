@@ -286,12 +286,20 @@ export class FatturapaService {
 
   private buildRiepilogoIva(items: FatturapaLineItem[]): FatturapaRiepilogoIva[] {
     // Group by rate+natura key to handle multiple Natura codes at 0%
-    const byKey = new Map<string, { aliquotaIva: number; imponibile: number; imposta: number; natura?: string }>();
+    const byKey = new Map<
+      string,
+      { aliquotaIva: number; imponibile: number; imposta: number; natura?: string }
+    >();
 
     for (const item of items) {
       const natura = item.aliquotaIva === 0 ? (item.natura ?? 'N4') : undefined;
       const key = natura ? `0_${natura}` : String(item.aliquotaIva);
-      const existing = byKey.get(key) ?? { aliquotaIva: item.aliquotaIva, imponibile: 0, imposta: 0, natura };
+      const existing = byKey.get(key) ?? {
+        aliquotaIva: item.aliquotaIva,
+        imponibile: 0,
+        imposta: 0,
+        natura,
+      };
       existing.imponibile += item.prezzoTotale;
       existing.imposta += item.prezzoTotale * (item.aliquotaIva / 100);
       byKey.set(key, existing);

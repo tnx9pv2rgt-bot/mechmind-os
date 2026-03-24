@@ -402,11 +402,19 @@ export class PdfService {
   private buildVatSummary(
     lines: InvoiceLineForPdf[],
   ): Array<{ rate: number; taxable: number; tax: number; naturaIva?: string }> {
-    const byKey = new Map<string, { rate: number; taxable: number; tax: number; naturaIva?: string }>();
+    const byKey = new Map<
+      string,
+      { rate: number; taxable: number; tax: number; naturaIva?: string }
+    >();
     for (const line of lines) {
       const natura = line.vatRate === 0 ? (line.naturaIva ?? 'N4') : undefined;
       const key = natura ? `0_${natura}` : String(line.vatRate);
-      const existing = byKey.get(key) ?? { rate: line.vatRate, taxable: 0, tax: 0, naturaIva: natura ?? undefined };
+      const existing = byKey.get(key) ?? {
+        rate: line.vatRate,
+        taxable: 0,
+        tax: 0,
+        naturaIva: natura ?? undefined,
+      };
       existing.taxable += line.subtotal;
       existing.tax += line.subtotal * (line.vatRate / 100);
       byKey.set(key, existing);

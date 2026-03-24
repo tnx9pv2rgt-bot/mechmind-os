@@ -109,6 +109,18 @@ model Tenant {
   // Campaigns
   campaigns Campaign[]
 
+  // RENTRI (Waste Management)
+  wasteEntries      WasteEntry[]
+  wasteFirs         WasteFir[]
+  wasteTransporters WasteTransporter[]
+  wasteDestinations WasteDestination[]
+
+  // NIS2 Security Incidents
+  securityIncidents SecurityIncident[]
+
+  // AI Compliance (EU AI Act)
+  aiDecisionLogs AiDecisionLog[]
+
   @@map("tenants")
 }
 
@@ -3298,4 +3310,288 @@ enum SmsStatus {
   DELIVERED
   FAILED
   RECEIVED
+}
+
+// ==========================================
+// RENTRI (Waste Management) ENUMS
+// ==========================================
+
+enum WasteEntryType {
+  CARICO
+  SCARICO
+}
+
+enum WasteFirStatus {
+  DRAFT
+  VIDIMATED
+  IN_TRANSIT
+  DELIVERED
+  CONFIRMED
+  CANCELLED
+}
+
+enum WastePhysicalState {
+  SOLIDO
+  LIQUIDO
+  FANGOSO
+  POLVERULENTO
+}
+
+enum WasteHazardClass {
+  PERICOLOSO
+  NON_PERICOLOSO
+}
+
+// ==========================================
+// RENTRI (Waste Management) MODELS
+// ==========================================
+
+model WasteEntry {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  entryNumber String         @map("entry_number")
+  entryType   WasteEntryType @map("entry_type")
+  entryDate   DateTime       @map("entry_date")
+
+  cerCode       String            @map("cer_code")
+  cerDescription String           @map("cer_description")
+  hazardClass   WasteHazardClass  @map("hazard_class")
+  physicalState WastePhysicalState @map("physical_state")
+
+  quantityKg    Decimal  @map("quantity_kg") @db.Decimal(10, 3)
+  quantityUnits Int?     @map("quantity_units")
+  unitType      String?  @map("unit_type")
+
+  originDescription String?  @map("origin_description")
+  isOwnProduction   Boolean  @default(true) @map("is_own_production")
+
+  transporterId String?           @map("transporter_id")
+  transporter   WasteTransporter? @relation(fields: [transporterId], references: [id])
+
+  destinationId String?           @map("destination_id")
+  destination   WasteDestination? @relation(fields: [destinationId], references: [id])
+
+  firId String?   @map("fir_id")
+  fir   WasteFir? @relation(fields: [firId], references: [id])
+
+  workOrderId String? @map("work_order_id")
+
+  storageLocationCode String?   @map("storage_location_code")
+  storedSince         DateTime? @map("stored_since")
+
+  notes     String? @db.Text
+  createdBy String? @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, entryNumber])
+  @@index([tenantId])
+  @@index([tenantId, cerCode])
+  @@index([tenantId, entryDate])
+  @@index([tenantId, entryType])
+  @@index([workOrderId])
+  @@index([firId])
+  @@map("waste_entries")
+}
+
+model WasteFir {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  firNumber  String        @map("fir_number")
+  status     WasteFirStatus @default(DRAFT)
+  vivifirCode String?      @map("vivifir_code")
+
+  cerCode       String            @map("cer_code")
+  cerDescription String           @map("cer_description")
+  hazardClass   WasteHazardClass  @map("hazard_class")
+  physicalState WastePhysicalState @map("physical_state")
+
+  quantityKg    Decimal  @map("quantity_kg") @db.Decimal(10, 3)
+  quantityUnits Int?     @map("quantity_units")
+  unitType      String?  @map("unit_type")
+
+  producerName           String @map("producer_name")
+  producerFiscalCode     String @map("producer_fiscal_code")
+  producerAddress        String @map("producer_address")
+  producerRegistrationNo String? @map("producer_registration_no")
+
+  transporterId String           @map("transporter_id")
+  transporter   WasteTransporter @relation(fields: [transporterId], references: [id])
+
+  destinationId String           @map("destination_id")
+  destination   WasteDestination @relation(fields: [destinationId], references: [id])
+
+  scheduledDate    DateTime  @map("scheduled_date")
+  pickupDate       DateTime? @map("pickup_date")
+  deliveryDate     DateTime? @map("delivery_date")
+  confirmationDate DateTime? @map("confirmation_date")
+
+  adrClass   String? @map("adr_class")
+  adrUnNumber String? @map("adr_un_number")
+  vehiclePlate String? @map("vehicle_plate")
+
+  entries WasteEntry[]
+
+  notes     String? @db.Text
+  pdfUrl    String? @map("pdf_url")
+  createdBy String? @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, firNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, scheduledDate])
+  @@map("waste_firs")
+}
+
+model WasteTransporter {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name           String
+  fiscalCode     String  @map("fiscal_code")
+  alboCategoryNo String? @map("albo_category_no")
+  alboCategory   String? @map("albo_category")
+  address        String?
+  phone          String?
+  email          String?
+  isActive       Boolean @default(true) @map("is_active")
+
+  firs    WasteFir[]
+  entries WasteEntry[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, fiscalCode])
+  @@index([tenantId])
+  @@map("waste_transporters")
+}
+
+model WasteDestination {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name            String
+  fiscalCode      String  @map("fiscal_code")
+  authorizationNo String? @map("authorization_no")
+  operationType   String? @map("operation_type")
+  address         String
+  phone           String?
+  email           String?
+  isActive        Boolean @default(true) @map("is_active")
+
+  firs    WasteFir[]
+  entries WasteEntry[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, fiscalCode])
+  @@index([tenantId])
+  @@map("waste_destinations")
+}
+
+// ==========================================
+// NIS2 SECURITY INCIDENT MODELS
+// ==========================================
+
+enum SecurityIncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SecurityIncidentStatus {
+  DETECTED
+  INVESTIGATING
+  CONTAINED
+  RESOLVED
+  REPORTED_ACN
+  CLOSED
+}
+
+model SecurityIncident {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String @db.Text
+  severity    SecurityIncidentSeverity
+  status      SecurityIncidentStatus   @default(DETECTED)
+
+  // NIS2 timeline tracking
+  detectedAt  DateTime  @map("detected_at")
+  reportedAt  DateTime? @map("reported_at")
+  containedAt DateTime? @map("contained_at")
+  resolvedAt  DateTime? @map("resolved_at")
+
+  // Classification
+  incidentType    String   @map("incident_type")
+  affectedSystems String[] @map("affected_systems")
+  affectedUsers   Int?     @map("affected_users")
+  dataBreached    Boolean  @default(false) @map("data_breached")
+
+  // Response
+  responseActions    String? @db.Text @map("response_actions")
+  rootCause          String? @db.Text @map("root_cause")
+  preventiveMeasures String? @db.Text @map("preventive_measures")
+
+  // Audit
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, severity])
+  @@map("security_incidents")
+}
+
+// ==========================================
+// AI COMPLIANCE (EU AI Act)
+// ==========================================
+
+model AiDecisionLog {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // What AI did
+  featureName   String  @map("feature_name")
+  modelUsed     String  @map("model_used")
+  inputSummary  String  @db.Text @map("input_summary")
+  outputSummary String  @db.Text @map("output_summary")
+  confidence    Decimal? @db.Decimal(5, 4) @map("confidence")
+
+  // Human oversight
+  humanReviewed   Boolean   @default(false) @map("human_reviewed")
+  humanOverridden Boolean   @default(false) @map("human_overridden")
+  humanDecision   String?   @db.Text @map("human_decision")
+  reviewedBy      String?   @map("reviewed_by")
+  reviewedAt      DateTime? @map("reviewed_at")
+
+  // Context
+  entityType String? @map("entity_type")
+  entityId   String? @map("entity_id")
+  userId     String? @map("user_id")
+
+  // Metadata
+  processingTimeMs Int?     @map("processing_time_ms")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([tenantId, featureName])
+  @@index([tenantId, createdAt])
+  @@index([entityType, entityId])
+  @@map("ai_decision_logs")
 }
