@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EstimateController } from './estimate.controller';
 import { EstimateService } from '../services/estimate.service';
+import { PdfService } from '../../invoice/services/pdf.service';
 
 describe('EstimateController', () => {
   let controller: EstimateController;
@@ -33,6 +34,13 @@ describe('EstimateController', () => {
             accept: jest.fn(),
             reject: jest.fn(),
             convertToBooking: jest.fn(),
+            convertToWorkOrder: jest.fn(),
+          },
+        },
+        {
+          provide: PdfService,
+          useValue: {
+            generateEstimatePdf: jest.fn().mockResolvedValue(Buffer.from('<html></html>')),
           },
         },
       ],

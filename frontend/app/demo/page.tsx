@@ -1,45 +1,52 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default function DemoPage() {
-  const router = useRouter();
-  const didRun = useRef(false);
+export default function DemoPage(): React.ReactElement {
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (didRun.current) return;
-    didRun.current = true;
+    let cancelled = false;
 
-    async function startDemo() {
+    async function startDemo(): Promise<void> {
       try {
-        // Create demo session via HttpOnly cookie (30 min)
-        // MUST wait for response to ensure cookie is written before navigating
         const res = await fetch('/api/auth/demo-session', { method: 'POST', credentials: 'include' });
-        if (!res.ok) {
-          console.warn('Demo session creation failed, redirecting anyway');
+        if (cancelled) return;
+        if (res.ok) {
+          localStorage.setItem('mechmind_demo', 'true');
+          localStorage.setItem('mechmind_demo_clicks', '0');
+          window.location.href = '/dashboard';
+          return;
         }
+        setError(true);
       } catch {
-        console.warn('Demo session API unavailable, redirecting anyway');
+        if (!cancelled) setError(true);
       }
-
-      // Set client-side flag for DemoProvider UI (banner + click tracking)
-      localStorage.setItem('mechmind_demo', 'true');
-      localStorage.setItem('mechmind_demo_clicks', '0');
-
-      // Use window.location instead of router.replace to ensure
-      // the browser sends the new cookie on the very first request
-      window.location.href = '/dashboard';
     }
 
     startDemo();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { cancelled = true; };
+  }, []);
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#212121]">
+        <div className="text-center">
+          <p className="text-lg text-white">Server non disponibile</p>
+          <p className="mt-2 text-sm text-[#888]">Riprova tra qualche istante.</p>
+          <a href="/" className="mt-4 inline-block text-sm text-white underline">
+            Torna alla home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#212121] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-4 border-[#e5e5e5] dark:border-[#424242] border-t-[#0d0d0d] dark:border-t-[#ececec] rounded-full animate-spin" />
-        <p className="text-[15px] text-[#636366]">Preparazione demo...</p>
+    <div className="flex min-h-screen items-center justify-center bg-[#212121]">
+      <div className="flex flex-col items-center gap-3">
+        <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-white/20 border-t-white" />
+        <p className="text-base text-white">Avvio demo in corso...</p>
       </div>
     </div>
   );

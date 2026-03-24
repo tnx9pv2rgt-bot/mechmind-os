@@ -67,16 +67,16 @@ export class VehicleTwinService {
   /**
    * Initialize or get vehicle twin
    */
-  async getOrCreateTwin(vehicleId: string): Promise<VehicleTwinState> {
+  async getOrCreateTwin(tenantId: string, vehicleId: string): Promise<VehicleTwinState> {
     // Check cache first
     const cached = await this.redis.get(`twin:${vehicleId}`);
     if (cached) {
       return JSON.parse(cached);
     }
 
-    // Get vehicle data
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+    // Get vehicle data filtered by tenant
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: {
         customer: true,
         obdDevices: {
@@ -113,6 +113,7 @@ export class VehicleTwinService {
    * Update component status
    */
   async updateComponentStatus(
+    tenantId: string,
     vehicleId: string,
     componentId: string,
     update: {
@@ -148,6 +149,7 @@ export class VehicleTwinService {
    * Record component history event
    */
   async recordComponentHistory(
+    tenantId: string,
     vehicleId: string,
     history: Omit<ComponentHistory, 'id'>,
   ): Promise<ComponentHistory> {
@@ -169,7 +171,7 @@ export class VehicleTwinService {
 
     // Update component status based on event type
     const status = this.mapEventTypeToStatus(history.eventType);
-    await this.updateComponentStatus(vehicleId, history.componentId, {
+    await this.updateComponentStatus(tenantId, vehicleId, history.componentId, {
       status,
       metadata: {
         lastServiceDate: history.date,
@@ -188,7 +190,11 @@ export class VehicleTwinService {
   /**
    * Record damage
    */
-  async recordDamage(vehicleId: string, damage: Omit<DamageRecord, 'id'>): Promise<DamageRecord> {
+  async recordDamage(
+    tenantId: string,
+    vehicleId: string,
+    damage: Omit<DamageRecord, 'id'>,
+  ): Promise<DamageRecord> {
     const record = await this.delegate('vehicleDamage').create({
       data: {
         vehicleId,
@@ -209,7 +215,7 @@ export class VehicleTwinService {
     const healthImpact = this.calculateDamageHealthImpact(damage.type, damage.severity);
     const component = await this.getComponent(vehicleId, damage.componentId);
 
-    await this.updateComponentStatus(vehicleId, damage.componentId, {
+    await this.updateComponentStatus(tenantId, vehicleId, damage.componentId, {
       status: damage.severity === 'SEVERE' ? 'CRITICAL' : 'WARNING',
       healthScore: Math.max(0, component.healthScore - healthImpact),
     });
@@ -226,9 +232,9 @@ export class VehicleTwinService {
   /**
    * Get predictive alerts for vehicle
    */
-  async getPredictiveAlerts(vehicleId: string): Promise<PredictiveAlert[]> {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+  async getPredictiveAlerts(tenantId: string, vehicleId: string): Promise<PredictiveAlert[]> {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: {
         workOrders: {
           include: { services: true },
@@ -254,11 +260,12 @@ export class VehicleTwinService {
    * Get component wear prediction
    */
   async getWearPrediction(
+    tenantId: string,
     vehicleId: string,
     componentId: string,
   ): Promise<ComponentWearPrediction> {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: {
         workOrders: {
           where: {
@@ -290,14 +297,17 @@ export class VehicleTwinService {
   /**
    * Get or create 3D visualization config
    */
-  async getVisualizationConfig(vehicleId: string): Promise<TwinVisualizationConfig> {
+  async getVisualizationConfig(
+    tenantId: string,
+    vehicleId: string,
+  ): Promise<TwinVisualizationConfig> {
     const cached = await this.redis.get(`twin:config:${vehicleId}`);
     if (cached) {
       return JSON.parse(cached);
     }
 
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: { twinConfig: true },
     });
 
@@ -325,6 +335,7 @@ export class VehicleTwinService {
    * Update visualization config
    */
   async updateVisualizationConfig(
+    tenantId: string,
     vehicleId: string,
     config: Partial<TwinVisualizationConfig>,
   ): Promise<TwinVisualizationConfig> {
@@ -352,13 +363,14 @@ export class VehicleTwinService {
     // Invalidate cache
     await this.redis.del(`twin:config:${vehicleId}`);
 
-    return this.getVisualizationConfig(vehicleId);
+    return this.getVisualizationConfig(tenantId, vehicleId);
   }
 
   /**
    * Get health trend over time
    */
   async getHealthTrend(
+    tenantId: string,
     vehicleId: string,
     from: Date,
     to: Date,
@@ -401,6 +413,7 @@ export class VehicleTwinService {
     const damageRecords = await this.delegate('vehicleDamage').findMany({
       where: { vehicleId: vehicle.id },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
 
     // Calculate overall health

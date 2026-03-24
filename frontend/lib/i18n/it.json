@@ -1,0 +1,1572 @@
+{
+  "common": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "create": "Crea",
+    "search": "Cerca",
+    "loading": "Caricamento...",
+    "noResults": "Nessun risultato trovato",
+    "confirm": "Conferma",
+    "back": "Indietro",
+    "next": "Avanti",
+    "close": "Chiudi",
+    "retry": "Riprova",
+    "export": "Esporta",
+    "import": "Importa",
+    "filter": "Filtra",
+    "all": "Tutti",
+    "today": "Oggi",
+    "actions": "Azioni",
+    "yes": "Si",
+    "no": "No",
+    "page": "Pagina",
+    "of": "di",
+    "rows": "Righe",
+    "perPage": "Per pagina",
+    "selected": "Selezionati",
+    "selectAll": "Seleziona tutto",
+    "deselectAll": "Deseleziona tutto",
+    "sortBy": "Ordina per",
+    "ascending": "Crescente",
+    "descending": "Decrescente",
+    "required": "Obbligatorio",
+    "optional": "Facoltativo",
+    "or": "o",
+    "and": "e",
+    "from": "Da",
+    "to": "A",
+    "total": "Totale",
+    "subtotal": "Subtotale",
+    "tax": "IVA",
+    "discount": "Sconto",
+    "notes": "Note",
+    "description": "Descrizione",
+    "status": "Stato",
+    "date": "Data",
+    "time": "Ora",
+    "createdAt": "Creato il",
+    "updatedAt": "Aggiornato il",
+    "add": "Aggiungi",
+    "remove": "Rimuovi",
+    "details": "Dettagli",
+    "view": "Visualizza",
+    "download": "Scarica",
+    "upload": "Carica",
+    "print": "Stampa",
+    "send": "Invia",
+    "copy": "Copia",
+    "duplicate": "Duplica",
+    "archive": "Archivia",
+    "restore": "Ripristina",
+    "refresh": "Aggiorna",
+    "reset": "Ripristina",
+    "apply": "Applica",
+    "clearFilters": "Cancella filtri",
+    "showMore": "Mostra di piu",
+    "showLess": "Mostra meno",
+    "seeAll": "Vedi tutti",
+    "enabled": "Abilitato",
+    "disabled": "Disabilitato",
+    "active": "Attivo",
+    "inactive": "Inattivo",
+    "success": "Operazione completata con successo",
+    "error": "Si e verificato un errore",
+    "warning": "Attenzione",
+    "info": "Informazione",
+    "confirmDelete": "Sei sicuro di voler eliminare questo elemento?",
+    "confirmDeleteDescription": "Questa azione non puo essere annullata.",
+    "deleteSuccess": "Elemento eliminato con successo",
+    "saveSuccess": "Modifiche salvate con successo",
+    "createSuccess": "Elemento creato con successo",
+    "updateSuccess": "Elemento aggiornato con successo",
+    "copySuccess": "Copiato negli appunti",
+    "genericError": "Si e verificato un errore imprevisto. Riprova.",
+    "networkError": "Errore di connessione. Verifica la tua connessione internet.",
+    "validationError": "Correggi gli errori nel modulo prima di procedere.",
+    "unauthorized": "Non hai i permessi per questa azione.",
+    "sessionExpired": "La sessione e scaduta. Effettua nuovamente l'accesso."
+  },
+  "customers": {
+    "title": "Clienti",
+    "subtitle": "Gestisci l'anagrafica clienti dell'officina",
+    "empty": "Nessun cliente trovato",
+    "emptyCta": "Aggiungi il tuo primo cliente per iniziare",
+    "addNew": "Nuovo cliente",
+    "importCsv": "Importa da CSV",
+    "exportCsv": "Esporta CSV",
+    "totalCustomers": "Totale clienti",
+    "activeCustomers": "Clienti attivi",
+    "newThisMonth": "Nuovi questo mese",
+    "fields": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono",
+      "fiscalCode": "Codice fiscale",
+      "vatNumber": "Partita IVA",
+      "sdiCode": "Codice SDI",
+      "pecEmail": "PEC",
+      "address": "Indirizzo",
+      "city": "Citta",
+      "province": "Provincia",
+      "zipCode": "CAP",
+      "country": "Nazione",
+      "notes": "Note",
+      "company": "Azienda",
+      "type": "Tipo cliente",
+      "typePrivate": "Privato",
+      "typeBusiness": "Azienda",
+      "fullName": "Nome completo",
+      "contactInfo": "Informazioni di contatto",
+      "billingInfo": "Dati di fatturazione"
+    },
+    "validation": {
+      "firstNameRequired": "Il nome e obbligatorio",
+      "lastNameRequired": "Il cognome e obbligatorio",
+      "emailInvalid": "Inserisci un indirizzo email valido",
+      "phoneInvalid": "Inserisci un numero di telefono valido",
+      "fiscalCodeInvalid": "Il codice fiscale non e valido",
+      "vatNumberInvalid": "La partita IVA non e valida",
+      "sdiCodeInvalid": "Il codice SDI deve essere di 7 caratteri",
+      "pecEmailInvalid": "Inserisci un indirizzo PEC valido",
+      "zipCodeInvalid": "Il CAP deve essere di 5 cifre",
+      "provinceInvalid": "La provincia deve essere di 2 lettere"
+    },
+    "tabs": {
+      "anagrafica": "Anagrafica",
+      "veicoli": "Veicoli",
+      "storico": "Storico lavori",
+      "fatture": "Fatture",
+      "comunicazioni": "Comunicazioni"
+    },
+    "actions": {
+      "sendEmail": "Invia email",
+      "sendSms": "Invia SMS",
+      "viewHistory": "Vedi storico",
+      "merge": "Unisci duplicati",
+      "deactivate": "Disattiva cliente"
+    },
+    "deleteConfirm": "Sei sicuro di voler eliminare questo cliente?",
+    "deleteConfirmDescription": "Tutti i dati associati (veicoli, ordini di lavoro, fatture) verranno conservati ma non saranno piu collegati a questo cliente."
+  },
+  "vehicles": {
+    "title": "Veicoli",
+    "subtitle": "Gestisci il parco veicoli dei clienti",
+    "empty": "Nessun veicolo trovato",
+    "emptyCta": "Aggiungi il primo veicolo",
+    "addNew": "Nuovo veicolo",
+    "fields": {
+      "plate": "Targa",
+      "brand": "Marca",
+      "model": "Modello",
+      "year": "Anno",
+      "vin": "Numero di telaio (VIN)",
+      "color": "Colore",
+      "fuelType": "Alimentazione",
+      "mileage": "Chilometraggio",
+      "owner": "Proprietario",
+      "engineSize": "Cilindrata",
+      "power": "Potenza (kW)",
+      "registrationDate": "Data immatricolazione",
+      "lastRevision": "Ultima revisione",
+      "insuranceExpiry": "Scadenza assicurazione"
+    },
+    "fuelTypes": {
+      "PETROL": "Benzina",
+      "DIESEL": "Diesel",
+      "LPG": "GPL",
+      "CNG": "Metano",
+      "HYBRID": "Ibrido",
+      "ELECTRIC": "Elettrico",
+      "PLUGIN_HYBRID": "Ibrido plug-in"
+    },
+    "validation": {
+      "plateRequired": "La targa e obbligatoria",
+      "plateInvalid": "Formato targa non valido",
+      "brandRequired": "La marca e obbligatoria",
+      "modelRequired": "Il modello e obbligatorio",
+      "yearInvalid": "L'anno deve essere compreso tra 1900 e l'anno corrente",
+      "vinInvalid": "Il VIN deve essere di 17 caratteri",
+      "mileageInvalid": "Il chilometraggio deve essere un numero positivo",
+      "ownerRequired": "Il proprietario e obbligatorio"
+    }
+  },
+  "workOrders": {
+    "title": "Ordini di lavoro",
+    "subtitle": "Gestisci gli ordini di lavoro dell'officina",
+    "empty": "Nessun ordine di lavoro trovato",
+    "emptyCta": "Crea il primo ordine di lavoro",
+    "addNew": "Nuovo ordine di lavoro",
+    "statuses": {
+      "DRAFT": "Bozza",
+      "OPEN": "Aperto",
+      "IN_PROGRESS": "In lavorazione",
+      "QC": "Controllo qualita",
+      "COMPLETED": "Completato",
+      "DELIVERED": "Consegnato",
+      "CANCELLED": "Annullato"
+    },
+    "fields": {
+      "number": "Numero OdL",
+      "customer": "Cliente",
+      "vehicle": "Veicolo",
+      "description": "Descrizione lavori",
+      "assignedTo": "Assegnato a",
+      "priority": "Priorita",
+      "estimatedHours": "Ore stimate",
+      "actualHours": "Ore effettive",
+      "startDate": "Data inizio",
+      "endDate": "Data fine",
+      "dueDate": "Data scadenza",
+      "laborCost": "Costo manodopera",
+      "partsCost": "Costo ricambi",
+      "totalCost": "Costo totale",
+      "internalNotes": "Note interne",
+      "customerNotes": "Note per il cliente",
+      "checkIn": "Accettazione",
+      "checkOut": "Consegna"
+    },
+    "priorities": {
+      "LOW": "Bassa",
+      "MEDIUM": "Media",
+      "HIGH": "Alta",
+      "URGENT": "Urgente"
+    },
+    "validation": {
+      "customerRequired": "Il cliente e obbligatorio",
+      "vehicleRequired": "Il veicolo e obbligatorio",
+      "descriptionRequired": "La descrizione e obbligatoria",
+      "dueDateInvalid": "La data di scadenza deve essere futura",
+      "estimatedHoursInvalid": "Le ore stimate devono essere un numero positivo"
+    },
+    "timer": {
+      "start": "Avvia timer",
+      "stop": "Ferma timer",
+      "pause": "Pausa",
+      "resume": "Riprendi",
+      "elapsed": "Tempo trascorso",
+      "running": "In corso"
+    },
+    "transitions": {
+      "open": "Apri ordine",
+      "startWork": "Inizia lavorazione",
+      "sendToQc": "Invia al controllo qualita",
+      "complete": "Completa",
+      "deliver": "Consegna al cliente",
+      "cancel": "Annulla ordine",
+      "reopen": "Riapri ordine"
+    },
+    "checkIn": {
+      "title": "Accettazione veicolo",
+      "mileage": "Chilometraggio attuale",
+      "fuelLevel": "Livello carburante",
+      "photos": "Foto accettazione",
+      "damages": "Danni preesistenti",
+      "personalItems": "Oggetti personali",
+      "signature": "Firma del cliente"
+    },
+    "checkOut": {
+      "title": "Consegna veicolo",
+      "finalMileage": "Chilometraggio finale",
+      "workSummary": "Riepilogo lavori",
+      "recommendations": "Raccomandazioni",
+      "nextService": "Prossimo tagliando",
+      "customerSignature": "Firma del cliente"
+    }
+  },
+  "invoices": {
+    "title": "Fatture",
+    "subtitle": "Gestisci la fatturazione elettronica",
+    "empty": "Nessuna fattura trovata",
+    "emptyCta": "Crea la prima fattura",
+    "addNew": "Nuova fattura",
+    "statuses": {
+      "DRAFT": "Bozza",
+      "SENT": "Inviata",
+      "PAID": "Pagata",
+      "OVERDUE": "Scaduta",
+      "CANCELLED": "Annullata",
+      "CREDIT_NOTE": "Nota di credito"
+    },
+    "fields": {
+      "number": "Numero fattura",
+      "date": "Data emissione",
+      "dueDate": "Data scadenza",
+      "customer": "Cliente",
+      "items": "Voci",
+      "subtotal": "Imponibile",
+      "tax": "IVA",
+      "taxRate": "Aliquota IVA",
+      "total": "Totale",
+      "notes": "Note",
+      "sdiCode": "Codice SDI",
+      "pecEmail": "PEC",
+      "paymentMethod": "Metodo di pagamento",
+      "paymentTerms": "Termini di pagamento",
+      "paidAt": "Pagata il",
+      "amountPaid": "Importo pagato",
+      "amountDue": "Importo dovuto",
+      "bollo": "Bollo",
+      "bolloAmount": "Importo bollo",
+      "withholding": "Ritenuta d'acconto",
+      "cassa": "Contributo cassa previdenziale"
+    },
+    "items": {
+      "description": "Descrizione",
+      "quantity": "Quantita",
+      "unitPrice": "Prezzo unitario",
+      "discount": "Sconto %",
+      "taxRate": "Aliquota %",
+      "total": "Totale riga",
+      "addItem": "Aggiungi voce",
+      "removeItem": "Rimuovi voce"
+    },
+    "paymentMethods": {
+      "CASH": "Contanti",
+      "BANK_TRANSFER": "Bonifico bancario",
+      "CREDIT_CARD": "Carta di credito",
+      "DEBIT_CARD": "Carta di debito",
+      "CHECK": "Assegno",
+      "PAYPAL": "PayPal",
+      "STRIPE": "Stripe",
+      "BNPL": "Paga a rate",
+      "OTHER": "Altro"
+    },
+    "validation": {
+      "customerRequired": "Il cliente e obbligatorio",
+      "dateRequired": "La data di emissione e obbligatoria",
+      "dueDateRequired": "La data di scadenza e obbligatoria",
+      "dueDateInvalid": "La data di scadenza deve essere successiva alla data di emissione",
+      "itemsRequired": "Inserisci almeno una voce in fattura",
+      "itemDescriptionRequired": "La descrizione della voce e obbligatoria",
+      "itemQuantityInvalid": "La quantita deve essere maggiore di zero",
+      "itemPriceInvalid": "Il prezzo deve essere un numero positivo"
+    },
+    "actions": {
+      "sendToSdi": "Invia allo SDI",
+      "markAsPaid": "Segna come pagata",
+      "createCreditNote": "Crea nota di credito",
+      "downloadPdf": "Scarica PDF",
+      "downloadXml": "Scarica XML",
+      "sendByEmail": "Invia via email",
+      "sendByPec": "Invia via PEC",
+      "duplicate": "Duplica fattura",
+      "generateFromOrder": "Genera da ordine di lavoro"
+    },
+    "sdi": {
+      "status": "Stato SDI",
+      "pending": "In attesa di invio",
+      "sent": "Inviata allo SDI",
+      "delivered": "Consegnata al destinatario",
+      "rejected": "Rifiutata dallo SDI",
+      "notDelivered": "Mancata consegna",
+      "error": "Errore SDI"
+    }
+  },
+  "bookings": {
+    "title": "Prenotazioni",
+    "subtitle": "Gestisci gli appuntamenti dell'officina",
+    "empty": "Nessuna prenotazione trovata",
+    "emptyCta": "Crea la prima prenotazione",
+    "addNew": "Nuova prenotazione",
+    "calendar": "Calendario",
+    "list": "Lista",
+    "statuses": {
+      "PENDING": "In attesa",
+      "CONFIRMED": "Confermata",
+      "CANCELLED": "Annullata",
+      "NO_SHOW": "Non presentato",
+      "COMPLETED": "Completata"
+    },
+    "fields": {
+      "customer": "Cliente",
+      "vehicle": "Veicolo",
+      "service": "Tipo di servizio",
+      "date": "Data",
+      "time": "Ora",
+      "duration": "Durata",
+      "bay": "Postazione",
+      "technician": "Tecnico",
+      "notes": "Note",
+      "reminderSent": "Promemoria inviato"
+    },
+    "timeSlots": {
+      "morning": "Mattina (08:00 - 12:00)",
+      "afternoon": "Pomeriggio (14:00 - 18:00)",
+      "allDay": "Giornata intera"
+    },
+    "validation": {
+      "customerRequired": "Il cliente e obbligatorio",
+      "vehicleRequired": "Il veicolo e obbligatorio",
+      "dateRequired": "La data e obbligatoria",
+      "timeRequired": "L'ora e obbligatoria",
+      "dateInPast": "La data non puo essere nel passato",
+      "slotUnavailable": "Questo slot non e disponibile",
+      "bayRequired": "La postazione e obbligatoria"
+    },
+    "actions": {
+      "confirm": "Conferma prenotazione",
+      "cancel": "Annulla prenotazione",
+      "reschedule": "Riprogramma",
+      "markNoShow": "Segna come non presentato",
+      "sendReminder": "Invia promemoria",
+      "convertToOrder": "Converti in ordine di lavoro"
+    }
+  },
+  "estimates": {
+    "title": "Preventivi",
+    "subtitle": "Gestisci i preventivi dell'officina",
+    "empty": "Nessun preventivo trovato",
+    "emptyCta": "Crea il primo preventivo",
+    "addNew": "Nuovo preventivo",
+    "statuses": {
+      "DRAFT": "Bozza",
+      "SENT": "Inviato",
+      "ACCEPTED": "Accettato",
+      "REJECTED": "Rifiutato",
+      "EXPIRED": "Scaduto",
+      "CONVERTED": "Convertito in OdL"
+    },
+    "fields": {
+      "number": "Numero preventivo",
+      "customer": "Cliente",
+      "vehicle": "Veicolo",
+      "items": "Voci",
+      "subtotal": "Imponibile",
+      "tax": "IVA",
+      "total": "Totale",
+      "validUntil": "Valido fino al",
+      "notes": "Note",
+      "laborItems": "Manodopera",
+      "partItems": "Ricambi",
+      "discount": "Sconto",
+      "acceptedAt": "Accettato il",
+      "rejectedAt": "Rifiutato il",
+      "rejectionReason": "Motivo del rifiuto"
+    },
+    "validation": {
+      "customerRequired": "Il cliente e obbligatorio",
+      "vehicleRequired": "Il veicolo e obbligatorio",
+      "validUntilRequired": "La data di validita e obbligatoria",
+      "validUntilInvalid": "La data di validita deve essere futura",
+      "itemsRequired": "Inserisci almeno una voce"
+    },
+    "actions": {
+      "send": "Invia preventivo",
+      "approve": "Approva",
+      "reject": "Rifiuta",
+      "convertToOrder": "Converti in ordine di lavoro",
+      "duplicate": "Duplica preventivo",
+      "downloadPdf": "Scarica PDF",
+      "sendByEmail": "Invia via email",
+      "sendBySms": "Invia via SMS",
+      "extend": "Estendi validita"
+    }
+  },
+  "inspections": {
+    "title": "Ispezioni",
+    "subtitle": "Gestisci le ispezioni digitali dei veicoli (DVI)",
+    "empty": "Nessuna ispezione trovata",
+    "emptyCta": "Crea la prima ispezione",
+    "addNew": "Nuova ispezione",
+    "severities": {
+      "CRITICAL": "Critico",
+      "HIGH": "Alto",
+      "MEDIUM": "Medio",
+      "LOW": "Basso",
+      "OK": "OK"
+    },
+    "fields": {
+      "vehicle": "Veicolo",
+      "technician": "Tecnico",
+      "date": "Data ispezione",
+      "mileage": "Chilometraggio",
+      "overallCondition": "Condizione generale",
+      "recommendations": "Raccomandazioni",
+      "photos": "Foto",
+      "videos": "Video",
+      "annotations": "Annotazioni",
+      "signature": "Firma tecnico",
+      "customerSignature": "Firma cliente"
+    },
+    "checklist": {
+      "engine": "Motore",
+      "transmission": "Trasmissione",
+      "brakes": "Freni",
+      "brakePads": "Pastiglie freno",
+      "brakeDiscs": "Dischi freno",
+      "brakeFluid": "Liquido freni",
+      "suspension": "Sospensioni",
+      "steering": "Sterzo",
+      "tires": "Pneumatici",
+      "tirePressure": "Pressione pneumatici",
+      "tireDepth": "Profondita battistrada",
+      "exhaust": "Scarico",
+      "battery": "Batteria",
+      "batteryVoltage": "Tensione batteria",
+      "lights": "Luci",
+      "headlights": "Fari anteriori",
+      "taillights": "Fari posteriori",
+      "indicators": "Indicatori di direzione",
+      "wipers": "Tergicristalli",
+      "ac": "Climatizzatore",
+      "coolant": "Liquido raffreddamento",
+      "oilLevel": "Livello olio",
+      "oilCondition": "Condizione olio",
+      "belts": "Cinghie",
+      "hoses": "Tubi e manicotti",
+      "filters": "Filtri",
+      "airFilter": "Filtro aria",
+      "cabinFilter": "Filtro abitacolo",
+      "fuelFilter": "Filtro carburante",
+      "windshield": "Parabrezza",
+      "bodywork": "Carrozzeria",
+      "undercarriage": "Sottoscocca",
+      "fluidLeaks": "Perdite di liquidi"
+    },
+    "validation": {
+      "vehicleRequired": "Il veicolo e obbligatorio",
+      "technicianRequired": "Il tecnico e obbligatorio",
+      "dateRequired": "La data e obbligatoria",
+      "mileageRequired": "Il chilometraggio e obbligatorio",
+      "atLeastOneItem": "Compila almeno un punto della checklist"
+    },
+    "actions": {
+      "addPhoto": "Aggiungi foto",
+      "addVideo": "Aggiungi video",
+      "annotate": "Annota",
+      "sendToCustomer": "Invia al cliente",
+      "generateEstimate": "Genera preventivo",
+      "downloadReport": "Scarica report",
+      "verifyBlockchain": "Verifica su blockchain"
+    }
+  },
+  "parts": {
+    "title": "Ricambi",
+    "subtitle": "Gestisci il magazzino ricambi",
+    "empty": "Nessun ricambio trovato",
+    "emptyCta": "Aggiungi il primo ricambio",
+    "addNew": "Nuovo ricambio",
+    "fields": {
+      "name": "Nome ricambio",
+      "sku": "Codice articolo (SKU)",
+      "supplier": "Fornitore",
+      "quantity": "Quantita in magazzino",
+      "minStock": "Scorta minima",
+      "price": "Prezzo di acquisto",
+      "sellingPrice": "Prezzo di vendita",
+      "markup": "Ricarico %",
+      "location": "Posizione in magazzino",
+      "category": "Categoria",
+      "brand": "Marca",
+      "partNumber": "Codice OEM",
+      "compatibleVehicles": "Veicoli compatibili",
+      "barcode": "Codice a barre",
+      "weight": "Peso",
+      "notes": "Note"
+    },
+    "validation": {
+      "nameRequired": "Il nome e obbligatorio",
+      "skuRequired": "Il codice articolo e obbligatorio",
+      "skuUnique": "Questo codice articolo e gia in uso",
+      "quantityInvalid": "La quantita deve essere un numero positivo",
+      "minStockInvalid": "La scorta minima deve essere un numero positivo",
+      "priceInvalid": "Il prezzo deve essere un numero positivo",
+      "supplierRequired": "Il fornitore e obbligatorio"
+    },
+    "statuses": {
+      "IN_STOCK": "Disponibile",
+      "LOW_STOCK": "Scorta bassa",
+      "OUT_OF_STOCK": "Esaurito",
+      "ON_ORDER": "In ordine",
+      "DISCONTINUED": "Fuori produzione"
+    },
+    "actions": {
+      "reorder": "Riordina",
+      "adjustStock": "Rettifica magazzino",
+      "viewMovements": "Movimenti",
+      "printLabel": "Stampa etichetta",
+      "searchSupplier": "Cerca dal fornitore",
+      "transferLocation": "Trasferisci sede"
+    }
+  },
+  "locations": {
+    "title": "Sedi",
+    "subtitle": "Gestisci le sedi dell'officina",
+    "empty": "Nessuna sede trovata",
+    "emptyCta": "Aggiungi la prima sede",
+    "addNew": "Nuova sede",
+    "fields": {
+      "name": "Nome sede",
+      "address": "Indirizzo",
+      "city": "Citta",
+      "province": "Provincia",
+      "zipCode": "CAP",
+      "phone": "Telefono",
+      "email": "Email",
+      "manager": "Responsabile",
+      "bays": "Postazioni di lavoro",
+      "openingHours": "Orari di apertura",
+      "services": "Servizi offerti",
+      "isMainLocation": "Sede principale",
+      "latitude": "Latitudine",
+      "longitude": "Longitudine"
+    },
+    "validation": {
+      "nameRequired": "Il nome della sede e obbligatorio",
+      "addressRequired": "L'indirizzo e obbligatorio",
+      "cityRequired": "La citta e obbligatoria",
+      "phoneRequired": "Il telefono e obbligatorio"
+    },
+    "tabs": {
+      "details": "Dettagli",
+      "inventory": "Inventario",
+      "staff": "Personale",
+      "performance": "Prestazioni",
+      "comparison": "Confronto sedi"
+    }
+  },
+  "maintenance": {
+    "title": "Manutenzione programmata",
+    "subtitle": "Gestisci le scadenze di manutenzione",
+    "empty": "Nessuna manutenzione programmata",
+    "emptyCta": "Programma la prima manutenzione",
+    "addNew": "Nuova manutenzione",
+    "types": {
+      "OIL_CHANGE": "Cambio olio",
+      "TIRE_ROTATION": "Rotazione pneumatici",
+      "BRAKE_CHECK": "Controllo freni",
+      "FILTER": "Sostituzione filtri",
+      "BELT": "Sostituzione cinghie",
+      "BATTERY": "Controllo batteria",
+      "COOLANT": "Cambio liquido raffreddamento",
+      "TRANSMISSION": "Manutenzione trasmissione"
+    },
+    "fields": {
+      "vehicle": "Veicolo",
+      "type": "Tipo manutenzione",
+      "scheduledDate": "Data programmata",
+      "scheduledMileage": "Chilometraggio programmato",
+      "lastPerformed": "Ultima esecuzione",
+      "intervalMonths": "Intervallo (mesi)",
+      "intervalKm": "Intervallo (km)",
+      "notes": "Note",
+      "reminder": "Promemoria",
+      "completed": "Completata"
+    },
+    "validation": {
+      "vehicleRequired": "Il veicolo e obbligatorio",
+      "typeRequired": "Il tipo di manutenzione e obbligatorio",
+      "dateRequired": "La data programmata e obbligatoria",
+      "intervalRequired": "Specifica almeno un intervallo (mesi o km)"
+    },
+    "statuses": {
+      "UPCOMING": "In arrivo",
+      "DUE": "In scadenza",
+      "OVERDUE": "Scaduta",
+      "COMPLETED": "Completata",
+      "SKIPPED": "Saltata"
+    },
+    "actions": {
+      "markComplete": "Segna come completata",
+      "reschedule": "Riprogramma",
+      "sendReminder": "Invia promemoria al cliente",
+      "createOrder": "Crea ordine di lavoro"
+    }
+  },
+  "cannedJobs": {
+    "title": "Lavorazioni predefinite",
+    "subtitle": "Gestisci le lavorazioni tipo dell'officina",
+    "empty": "Nessuna lavorazione predefinita trovata",
+    "emptyCta": "Crea la prima lavorazione predefinita",
+    "addNew": "Nuova lavorazione predefinita",
+    "fields": {
+      "name": "Nome lavorazione",
+      "description": "Descrizione",
+      "category": "Categoria",
+      "laborHours": "Ore manodopera",
+      "laborRate": "Tariffa oraria",
+      "parts": "Ricambi inclusi",
+      "totalCost": "Costo totale",
+      "estimatedDuration": "Durata stimata",
+      "notes": "Note",
+      "isActive": "Attiva"
+    },
+    "validation": {
+      "nameRequired": "Il nome e obbligatorio",
+      "laborHoursRequired": "Le ore di manodopera sono obbligatorie",
+      "laborHoursInvalid": "Le ore devono essere un numero positivo",
+      "laborRateInvalid": "La tariffa deve essere un numero positivo"
+    },
+    "actions": {
+      "addToOrder": "Aggiungi all'ordine di lavoro",
+      "duplicate": "Duplica",
+      "deactivate": "Disattiva"
+    }
+  },
+  "warranty": {
+    "title": "Garanzie",
+    "subtitle": "Gestisci le garanzie su lavori e ricambi",
+    "empty": "Nessuna garanzia trovata",
+    "emptyCta": "Registra la prima garanzia",
+    "addNew": "Nuova garanzia",
+    "statuses": {
+      "ACTIVE": "Attiva",
+      "EXPIRED": "Scaduta",
+      "VOIDED": "Annullata",
+      "CLAIMED": "In reclamo"
+    },
+    "fields": {
+      "workOrder": "Ordine di lavoro",
+      "vehicle": "Veicolo",
+      "customer": "Cliente",
+      "type": "Tipo garanzia",
+      "startDate": "Data inizio",
+      "endDate": "Data fine",
+      "mileageLimit": "Limite chilometrico",
+      "coverage": "Copertura",
+      "terms": "Condizioni",
+      "notes": "Note"
+    },
+    "types": {
+      "LABOR": "Manodopera",
+      "PARTS": "Ricambi",
+      "FULL": "Completa"
+    },
+    "validation": {
+      "workOrderRequired": "L'ordine di lavoro e obbligatorio",
+      "typeRequired": "Il tipo di garanzia e obbligatorio",
+      "startDateRequired": "La data di inizio e obbligatoria",
+      "endDateRequired": "La data di fine e obbligatoria",
+      "endDateInvalid": "La data di fine deve essere successiva alla data di inizio"
+    },
+    "claims": {
+      "title": "Reclami garanzia",
+      "addNew": "Nuovo reclamo",
+      "statuses": {
+        "OPEN": "Aperto",
+        "UNDER_REVIEW": "In revisione",
+        "APPROVED": "Approvato",
+        "REJECTED": "Respinto",
+        "COMPLETED": "Completato"
+      },
+      "fields": {
+        "description": "Descrizione problema",
+        "reportedDate": "Data segnalazione",
+        "resolution": "Risoluzione",
+        "cost": "Costo reclamo"
+      }
+    },
+    "actions": {
+      "extend": "Estendi garanzia",
+      "void": "Annulla garanzia",
+      "fileClaim": "Apri reclamo",
+      "viewCoverage": "Vedi copertura residua"
+    },
+    "alerts": {
+      "expiringSoon": "In scadenza tra {{days}} giorni",
+      "expired": "Garanzia scaduta",
+      "mileageExceeded": "Limite chilometrico superato"
+    }
+  },
+  "marketing": {
+    "title": "Marketing",
+    "subtitle": "Gestisci campagne e comunicazioni di marketing",
+    "empty": "Nessuna campagna trovata",
+    "emptyCta": "Crea la prima campagna",
+    "addNew": "Nuova campagna",
+    "campaignTypes": {
+      "EMAIL": "Campagna email",
+      "SMS": "Campagna SMS",
+      "WHATSAPP": "Campagna WhatsApp",
+      "MULTI_CHANNEL": "Multi-canale"
+    },
+    "statuses": {
+      "DRAFT": "Bozza",
+      "SCHEDULED": "Programmata",
+      "SENDING": "In invio",
+      "SENT": "Inviata",
+      "PAUSED": "In pausa",
+      "CANCELLED": "Annullata"
+    },
+    "fields": {
+      "name": "Nome campagna",
+      "type": "Tipo",
+      "subject": "Oggetto",
+      "content": "Contenuto",
+      "audience": "Destinatari",
+      "segmentation": "Segmentazione",
+      "scheduledAt": "Invio programmato",
+      "sentAt": "Inviata il",
+      "openRate": "Tasso di apertura",
+      "clickRate": "Tasso di click",
+      "conversionRate": "Tasso di conversione",
+      "unsubscribeRate": "Tasso di disiscrizione"
+    },
+    "validation": {
+      "nameRequired": "Il nome della campagna e obbligatorio",
+      "typeRequired": "Il tipo di campagna e obbligatorio",
+      "subjectRequired": "L'oggetto e obbligatorio",
+      "contentRequired": "Il contenuto e obbligatorio",
+      "audienceRequired": "Seleziona almeno un destinatario"
+    },
+    "segments": {
+      "allCustomers": "Tutti i clienti",
+      "activeCustomers": "Clienti attivi",
+      "inactiveCustomers": "Clienti inattivi",
+      "newCustomers": "Nuovi clienti",
+      "highValue": "Clienti alto valore",
+      "maintenanceDue": "Manutenzione in scadenza",
+      "custom": "Segmento personalizzato"
+    },
+    "actions": {
+      "schedule": "Programma invio",
+      "sendNow": "Invia ora",
+      "pause": "Metti in pausa",
+      "resume": "Riprendi invio",
+      "duplicate": "Duplica campagna",
+      "viewReport": "Visualizza report"
+    }
+  },
+  "messaging": {
+    "title": "Messaggistica",
+    "subtitle": "Gestisci le comunicazioni con i clienti",
+    "empty": "Nessun messaggio trovato",
+    "emptyCta": "Invia il primo messaggio",
+    "addNew": "Nuovo messaggio",
+    "fields": {
+      "recipient": "Destinatario",
+      "channel": "Canale",
+      "subject": "Oggetto",
+      "body": "Testo",
+      "sentAt": "Inviato il",
+      "readAt": "Letto il",
+      "status": "Stato",
+      "template": "Modello"
+    },
+    "channels": {
+      "EMAIL": "Email",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp",
+      "PUSH": "Notifica push"
+    },
+    "statuses": {
+      "DRAFT": "Bozza",
+      "QUEUED": "In coda",
+      "SENT": "Inviato",
+      "DELIVERED": "Consegnato",
+      "READ": "Letto",
+      "FAILED": "Fallito",
+      "BOUNCED": "Rimbalzato"
+    },
+    "templates": {
+      "bookingConfirmation": "Conferma prenotazione",
+      "bookingReminder": "Promemoria appuntamento",
+      "orderReady": "Veicolo pronto",
+      "invoiceSent": "Fattura inviata",
+      "maintenanceReminder": "Promemoria manutenzione",
+      "estimateSent": "Preventivo inviato",
+      "welcomeMessage": "Messaggio di benvenuto",
+      "reviewRequest": "Richiesta recensione"
+    }
+  },
+  "obd": {
+    "title": "Diagnostica OBD",
+    "subtitle": "Diagnostica veicoli tramite OBD-II",
+    "empty": "Nessuna sessione diagnostica trovata",
+    "emptyCta": "Avvia la prima sessione diagnostica",
+    "addNew": "Nuova sessione",
+    "dtcCodes": {
+      "title": "Codici errore (DTC)",
+      "pending": "Codici in sospeso",
+      "confirmed": "Codici confermati",
+      "cleared": "Codici cancellati",
+      "noFaults": "Nessun codice errore rilevato"
+    },
+    "fields": {
+      "vehicle": "Veicolo",
+      "connectedAt": "Connesso il",
+      "protocol": "Protocollo",
+      "vin": "VIN rilevato",
+      "rpm": "Giri motore (RPM)",
+      "speed": "Velocita",
+      "coolantTemp": "Temperatura liquido raffreddamento",
+      "fuelPressure": "Pressione carburante",
+      "intakeTemp": "Temperatura aspirazione",
+      "throttle": "Posizione farfalla",
+      "engineLoad": "Carico motore",
+      "fuelTrim": "Correzione carburante",
+      "voltage": "Tensione batteria",
+      "mileage": "Chilometraggio"
+    },
+    "actions": {
+      "connect": "Connetti dispositivo",
+      "disconnect": "Disconnetti",
+      "readCodes": "Leggi codici errore",
+      "clearCodes": "Cancella codici errore",
+      "liveData": "Dati in tempo reale",
+      "freezeFrame": "Freeze frame",
+      "exportReport": "Esporta report",
+      "addToOrder": "Aggiungi all'ordine di lavoro"
+    },
+    "severities": {
+      "CRITICAL": "Critico - Riparazione immediata necessaria",
+      "WARNING": "Attenzione - Controllare al piu presto",
+      "INFO": "Informativo - Monitorare",
+      "PENDING": "In attesa di conferma"
+    }
+  },
+  "analytics": {
+    "title": "Analisi e report",
+    "subtitle": "Monitora le prestazioni dell'officina",
+    "metrics": {
+      "revenue": "Fatturato",
+      "profit": "Utile",
+      "margin": "Margine",
+      "ordersCompleted": "Ordini completati",
+      "averageOrderValue": "Valore medio ordine",
+      "averageRepairTime": "Tempo medio riparazione",
+      "customerSatisfaction": "Soddisfazione clienti",
+      "returnRate": "Tasso di ritorno",
+      "bayUtilization": "Utilizzo postazioni",
+      "technicianEfficiency": "Efficienza tecnici",
+      "partsRevenue": "Fatturato ricambi",
+      "laborRevenue": "Fatturato manodopera",
+      "newCustomers": "Nuovi clienti",
+      "customerRetention": "Fidelizzazione clienti",
+      "estimateConversion": "Conversione preventivi",
+      "outstandingInvoices": "Fatture in sospeso"
+    },
+    "periods": {
+      "today": "Oggi",
+      "yesterday": "Ieri",
+      "thisWeek": "Questa settimana",
+      "lastWeek": "Settimana scorsa",
+      "thisMonth": "Questo mese",
+      "lastMonth": "Mese scorso",
+      "thisQuarter": "Questo trimestre",
+      "lastQuarter": "Trimestre scorso",
+      "thisYear": "Quest'anno",
+      "lastYear": "Anno scorso",
+      "last7Days": "Ultimi 7 giorni",
+      "last30Days": "Ultimi 30 giorni",
+      "last90Days": "Ultimi 90 giorni",
+      "last12Months": "Ultimi 12 mesi",
+      "custom": "Personalizzato"
+    },
+    "charts": {
+      "revenueOverTime": "Fatturato nel tempo",
+      "ordersByStatus": "Ordini per stato",
+      "topServices": "Servizi piu richiesti",
+      "topCustomers": "Migliori clienti",
+      "technicianPerformance": "Prestazioni tecnici",
+      "revenueByService": "Fatturato per servizio",
+      "customerAcquisition": "Acquisizione clienti",
+      "monthlyComparison": "Confronto mensile"
+    },
+    "actions": {
+      "exportPdf": "Esporta PDF",
+      "exportExcel": "Esporta Excel",
+      "schedule": "Programma report",
+      "share": "Condividi"
+    }
+  },
+  "subscription": {
+    "title": "Abbonamento",
+    "subtitle": "Gestisci il tuo piano MechMind OS",
+    "currentPlan": "Piano attuale",
+    "changePlan": "Cambia piano",
+    "tiers": {
+      "FREE": {
+        "name": "Free",
+        "description": "Per piccole officine che iniziano",
+        "price": "Gratuito"
+      },
+      "STARTER": {
+        "name": "Starter",
+        "description": "Per officine in crescita",
+        "price": "29"
+      },
+      "PROFESSIONAL": {
+        "name": "Professional",
+        "description": "Per officine strutturate",
+        "price": "79"
+      },
+      "ENTERPRISE": {
+        "name": "Enterprise",
+        "description": "Per catene e grandi officine",
+        "price": "Personalizzato"
+      }
+    },
+    "fields": {
+      "plan": "Piano",
+      "status": "Stato",
+      "billingCycle": "Ciclo di fatturazione",
+      "nextBillingDate": "Prossima fatturazione",
+      "paymentMethod": "Metodo di pagamento",
+      "seats": "Utenti inclusi",
+      "extraSeats": "Utenti aggiuntivi",
+      "storage": "Spazio di archiviazione",
+      "apiCalls": "Chiamate API"
+    },
+    "billingCycles": {
+      "MONTHLY": "Mensile",
+      "YEARLY": "Annuale",
+      "yearlyDiscount": "Risparmia il 20%"
+    },
+    "statuses": {
+      "ACTIVE": "Attivo",
+      "TRIAL": "Prova gratuita",
+      "PAST_DUE": "Pagamento in ritardo",
+      "CANCELLED": "Cancellato",
+      "PAUSED": "In pausa"
+    },
+    "actions": {
+      "upgrade": "Passa a un piano superiore",
+      "downgrade": "Passa a un piano inferiore",
+      "cancel": "Cancella abbonamento",
+      "reactivate": "Riattiva abbonamento",
+      "updatePayment": "Aggiorna metodo di pagamento",
+      "viewInvoices": "Vedi fatture"
+    },
+    "features": {
+      "maxUsers": "Utenti massimi",
+      "maxVehicles": "Veicoli massimi",
+      "maxLocations": "Sedi massime",
+      "emailSupport": "Supporto email",
+      "phoneSupport": "Supporto telefonico",
+      "prioritySupport": "Supporto prioritario",
+      "apiAccess": "Accesso API",
+      "customBranding": "Branding personalizzato",
+      "advancedAnalytics": "Analisi avanzate",
+      "multiLocation": "Multi-sede",
+      "sdiIntegration": "Integrazione SDI",
+      "smsNotifications": "Notifiche SMS",
+      "whatsappIntegration": "Integrazione WhatsApp",
+      "obdIntegration": "Integrazione OBD-II",
+      "fleetManagement": "Gestione flotte",
+      "customerPortal": "Portale clienti"
+    }
+  },
+  "billing": {
+    "title": "Fatturazione account",
+    "subtitle": "Gestisci pagamenti e fatture del tuo abbonamento",
+    "fields": {
+      "invoiceNumber": "Numero fattura",
+      "amount": "Importo",
+      "date": "Data",
+      "status": "Stato",
+      "paymentMethod": "Metodo di pagamento",
+      "description": "Descrizione",
+      "period": "Periodo",
+      "downloadReceipt": "Scarica ricevuta"
+    },
+    "statuses": {
+      "PAID": "Pagato",
+      "PENDING": "In attesa",
+      "FAILED": "Fallito",
+      "REFUNDED": "Rimborsato"
+    },
+    "actions": {
+      "addCard": "Aggiungi carta",
+      "removeCard": "Rimuovi carta",
+      "setDefault": "Imposta come predefinita",
+      "downloadAll": "Scarica tutte le ricevute"
+    }
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "subtitle": "Configura la tua officina",
+    "sections": {
+      "general": {
+        "title": "Generali",
+        "description": "Informazioni di base sull'officina",
+        "shopName": "Nome officina",
+        "shopEmail": "Email",
+        "shopPhone": "Telefono",
+        "shopAddress": "Indirizzo",
+        "shopLogo": "Logo",
+        "currency": "Valuta",
+        "timezone": "Fuso orario",
+        "language": "Lingua",
+        "dateFormat": "Formato data",
+        "defaultTaxRate": "Aliquota IVA predefinita",
+        "defaultLaborRate": "Tariffa oraria predefinita",
+        "fiscalInfo": "Dati fiscali",
+        "vatNumber": "Partita IVA",
+        "fiscalCode": "Codice fiscale",
+        "reaNumber": "Numero REA",
+        "shareCapital": "Capitale sociale"
+      },
+      "team": {
+        "title": "Team",
+        "description": "Gestisci utenti e tecnici",
+        "inviteUser": "Invita utente",
+        "removeUser": "Rimuovi utente",
+        "changeRole": "Cambia ruolo",
+        "active": "Attivo",
+        "pending": "In attesa",
+        "deactivated": "Disattivato"
+      },
+      "roles": {
+        "title": "Ruoli e permessi",
+        "description": "Configura i ruoli e i permessi degli utenti",
+        "OWNER": "Proprietario",
+        "ADMIN": "Amministratore",
+        "MANAGER": "Responsabile",
+        "TECHNICIAN": "Tecnico",
+        "RECEPTIONIST": "Accettazione",
+        "ACCOUNTANT": "Contabile",
+        "VIEWER": "Visualizzatore"
+      },
+      "audit": {
+        "title": "Registro attivita",
+        "description": "Visualizza il registro delle attivita degli utenti",
+        "user": "Utente",
+        "action": "Azione",
+        "resource": "Risorsa",
+        "timestamp": "Data e ora",
+        "ipAddress": "Indirizzo IP",
+        "details": "Dettagli"
+      },
+      "webhooks": {
+        "title": "Webhook",
+        "description": "Configura le integrazioni webhook",
+        "url": "URL",
+        "events": "Eventi",
+        "secret": "Segreto",
+        "active": "Attivo",
+        "lastTriggered": "Ultimo invio",
+        "addWebhook": "Aggiungi webhook",
+        "testWebhook": "Testa webhook"
+      }
+    }
+  },
+  "portal": {
+    "title": "Portale clienti",
+    "subtitle": "Area riservata ai clienti",
+    "sections": {
+      "dashboard": "Riepilogo",
+      "repairs": "I miei lavori",
+      "invoices": "Le mie fatture",
+      "estimates": "I miei preventivi",
+      "bookings": "Le mie prenotazioni",
+      "vehicles": "I miei veicoli",
+      "documents": "I miei documenti",
+      "settings": "Impostazioni",
+      "tracking": "Traccia riparazione"
+    },
+    "actions": {
+      "bookAppointment": "Prenota appuntamento",
+      "requestEstimate": "Richiedi preventivo",
+      "approveEstimate": "Approva preventivo",
+      "payInvoice": "Paga fattura",
+      "downloadInvoice": "Scarica fattura",
+      "contactShop": "Contatta l'officina",
+      "leaveReview": "Lascia una recensione"
+    },
+    "tracking": {
+      "received": "Veicolo ricevuto",
+      "diagnosing": "In diagnostica",
+      "waitingParts": "In attesa ricambi",
+      "inProgress": "In lavorazione",
+      "qualityCheck": "Controllo qualita",
+      "ready": "Pronto per il ritiro",
+      "delivered": "Consegnato"
+    }
+  },
+  "notifications": {
+    "title": "Notifiche",
+    "subtitle": "Centro notifiche",
+    "empty": "Nessuna notifica",
+    "markAllRead": "Segna tutte come lette",
+    "markAsRead": "Segna come letta",
+    "settings": "Impostazioni notifiche",
+    "types": {
+      "BOOKING_CREATED": "Nuova prenotazione",
+      "BOOKING_CONFIRMED": "Prenotazione confermata",
+      "BOOKING_CANCELLED": "Prenotazione annullata",
+      "BOOKING_REMINDER": "Promemoria prenotazione",
+      "ORDER_CREATED": "Nuovo ordine di lavoro",
+      "ORDER_STATUS_CHANGED": "Cambio stato ordine",
+      "ORDER_COMPLETED": "Ordine completato",
+      "INVOICE_CREATED": "Nuova fattura",
+      "INVOICE_PAID": "Fattura pagata",
+      "INVOICE_OVERDUE": "Fattura scaduta",
+      "ESTIMATE_RECEIVED": "Preventivo ricevuto",
+      "ESTIMATE_ACCEPTED": "Preventivo accettato",
+      "ESTIMATE_REJECTED": "Preventivo rifiutato",
+      "MAINTENANCE_DUE": "Manutenzione in scadenza",
+      "MAINTENANCE_OVERDUE": "Manutenzione scaduta",
+      "PART_LOW_STOCK": "Scorta ricambio bassa",
+      "PART_OUT_OF_STOCK": "Ricambio esaurito",
+      "WARRANTY_EXPIRING": "Garanzia in scadenza",
+      "REVIEW_RECEIVED": "Nuova recensione",
+      "PAYMENT_RECEIVED": "Pagamento ricevuto",
+      "PAYMENT_FAILED": "Pagamento fallito",
+      "SYSTEM_UPDATE": "Aggiornamento di sistema",
+      "TEAM_INVITE": "Invito al team"
+    },
+    "channels": {
+      "inApp": "In-app",
+      "email": "Email",
+      "sms": "SMS",
+      "push": "Push",
+      "whatsapp": "WhatsApp"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Accedi a MechMind OS",
+      "subtitle": "Inserisci le tue credenziali per accedere",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Ricordami",
+      "submit": "Accedi",
+      "forgotPassword": "Password dimenticata?",
+      "noAccount": "Non hai un account?",
+      "signUp": "Registrati",
+      "orContinueWith": "oppure continua con",
+      "loginSuccess": "Accesso effettuato con successo",
+      "loginError": "Email o password non validi"
+    },
+    "register": {
+      "title": "Crea il tuo account",
+      "subtitle": "Inizia la tua prova gratuita di 14 giorni",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Conferma password",
+      "shopName": "Nome officina",
+      "acceptTerms": "Accetto i termini di servizio e l'informativa sulla privacy",
+      "submit": "Crea account",
+      "hasAccount": "Hai gia un account?",
+      "signIn": "Accedi",
+      "registerSuccess": "Account creato con successo",
+      "registerError": "Errore nella registrazione"
+    },
+    "forgotPassword": {
+      "title": "Recupera password",
+      "subtitle": "Inserisci la tua email per ricevere il link di recupero",
+      "email": "Email",
+      "submit": "Invia link di recupero",
+      "backToLogin": "Torna al login",
+      "success": "Email di recupero inviata. Controlla la tua casella di posta.",
+      "error": "Impossibile inviare l'email di recupero"
+    },
+    "resetPassword": {
+      "title": "Reimposta password",
+      "subtitle": "Inserisci la tua nuova password",
+      "newPassword": "Nuova password",
+      "confirmPassword": "Conferma nuova password",
+      "submit": "Reimposta password",
+      "success": "Password reimpostata con successo",
+      "error": "Impossibile reimpostare la password. Il link potrebbe essere scaduto."
+    },
+    "mfa": {
+      "title": "Verifica in due passaggi",
+      "subtitle": "Inserisci il codice dalla tua app di autenticazione",
+      "code": "Codice di verifica",
+      "submit": "Verifica",
+      "useBackupCode": "Usa codice di backup",
+      "backupCode": "Codice di backup",
+      "setup": {
+        "title": "Configura verifica in due passaggi",
+        "subtitle": "Scansiona il QR code con la tua app di autenticazione",
+        "step1": "Scarica un'app di autenticazione (es. Google Authenticator)",
+        "step2": "Scansiona il QR code qui sotto",
+        "step3": "Inserisci il codice generato dall'app",
+        "manualEntry": "Inserisci il codice manualmente",
+        "verify": "Verifica e attiva",
+        "backupCodes": "Codici di backup",
+        "backupCodesDescription": "Salva questi codici in un luogo sicuro. Ogni codice puo essere usato una sola volta.",
+        "success": "Verifica in due passaggi attivata",
+        "error": "Codice non valido. Riprova."
+      }
+    },
+    "magicLink": {
+      "title": "Accesso con link magico",
+      "subtitle": "Ti invieremo un link di accesso via email",
+      "email": "Email",
+      "submit": "Invia link di accesso",
+      "sent": "Link inviato! Controlla la tua casella di posta.",
+      "error": "Impossibile inviare il link di accesso"
+    },
+    "oauth": {
+      "google": "Continua con Google",
+      "apple": "Continua con Apple",
+      "microsoft": "Continua con Microsoft",
+      "error": "Errore durante l'autenticazione con {{provider}}"
+    },
+    "locked": {
+      "title": "Account bloccato",
+      "subtitle": "Il tuo account e stato bloccato dopo troppi tentativi di accesso.",
+      "contactSupport": "Contatta il supporto per sbloccarlo.",
+      "tryAgainIn": "Riprova tra {{minutes}} minuti"
+    },
+    "verifyEmail": {
+      "title": "Verifica la tua email",
+      "subtitle": "Abbiamo inviato un'email di verifica a {{email}}",
+      "resend": "Invia di nuovo",
+      "resendSuccess": "Email di verifica inviata",
+      "success": "Email verificata con successo",
+      "error": "Link di verifica non valido o scaduto"
+    },
+    "validation": {
+      "emailRequired": "L'email e obbligatoria",
+      "emailInvalid": "Inserisci un indirizzo email valido",
+      "passwordRequired": "La password e obbligatoria",
+      "passwordMinLength": "La password deve avere almeno 8 caratteri",
+      "passwordUppercase": "La password deve contenere almeno una lettera maiuscola",
+      "passwordLowercase": "La password deve contenere almeno una lettera minuscola",
+      "passwordNumber": "La password deve contenere almeno un numero",
+      "passwordSpecial": "La password deve contenere almeno un carattere speciale",
+      "passwordsMismatch": "Le password non corrispondono",
+      "firstNameRequired": "Il nome e obbligatorio",
+      "lastNameRequired": "Il cognome e obbligatorio",
+      "shopNameRequired": "Il nome dell'officina e obbligatorio",
+      "acceptTermsRequired": "Devi accettare i termini di servizio",
+      "codeRequired": "Il codice e obbligatorio",
+      "codeInvalid": "Il codice deve essere di 6 cifre"
+    }
+  },
+  "onboarding": {
+    "title": "Benvenuto in MechMind OS",
+    "subtitle": "Configura la tua officina in pochi passaggi",
+    "steps": {
+      "shopInfo": {
+        "title": "Informazioni officina",
+        "description": "Inserisci i dati della tua officina"
+      },
+      "fiscalInfo": {
+        "title": "Dati fiscali",
+        "description": "Configura la fatturazione elettronica"
+      },
+      "team": {
+        "title": "Il tuo team",
+        "description": "Invita i tuoi collaboratori"
+      },
+      "services": {
+        "title": "Servizi offerti",
+        "description": "Seleziona i servizi che offri"
+      },
+      "bays": {
+        "title": "Postazioni di lavoro",
+        "description": "Configura le postazioni dell'officina"
+      },
+      "hours": {
+        "title": "Orari di apertura",
+        "description": "Imposta gli orari dell'officina"
+      },
+      "complete": {
+        "title": "Configurazione completata!",
+        "description": "La tua officina e pronta"
+      }
+    },
+    "fields": {
+      "shopName": "Nome officina",
+      "shopType": "Tipo di officina",
+      "shopSize": "Dimensione officina",
+      "address": "Indirizzo",
+      "city": "Citta",
+      "province": "Provincia",
+      "zipCode": "CAP",
+      "phone": "Telefono",
+      "email": "Email",
+      "website": "Sito web",
+      "vatNumber": "Partita IVA",
+      "fiscalCode": "Codice fiscale",
+      "sdiCode": "Codice SDI",
+      "pecEmail": "PEC",
+      "reaNumber": "Numero REA",
+      "chamber": "Camera di commercio",
+      "shareCapital": "Capitale sociale"
+    },
+    "shopTypes": {
+      "GENERAL": "Officina generica",
+      "BODYWORK": "Carrozzeria",
+      "ELECTRICAL": "Elettrauto",
+      "TIRES": "Gommista",
+      "SPECIALIZED": "Specializzata (marca)",
+      "MULTI_SERVICE": "Multi-servizio"
+    },
+    "shopSizes": {
+      "SMALL": "Piccola (1-3 tecnici)",
+      "MEDIUM": "Media (4-10 tecnici)",
+      "LARGE": "Grande (11-25 tecnici)",
+      "ENTERPRISE": "Catena (25+ tecnici)"
+    },
+    "actions": {
+      "skip": "Salta per ora",
+      "finish": "Completa configurazione",
+      "goToDashboard": "Vai alla dashboard"
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Pagina non trovata",
+      "description": "La pagina che cerchi non esiste o e stata spostata.",
+      "action": "Torna alla dashboard"
+    },
+    "serverError": {
+      "title": "Errore del server",
+      "description": "Si e verificato un errore interno. Il nostro team e stato notificato.",
+      "action": "Riprova"
+    },
+    "maintenance": {
+      "title": "Manutenzione in corso",
+      "description": "Stiamo effettuando una manutenzione programmata. Torneremo presto.",
+      "action": "Ricarica pagina"
+    },
+    "sessionExpired": {
+      "title": "Sessione scaduta",
+      "description": "La tua sessione e scaduta per motivi di sicurezza.",
+      "action": "Accedi di nuovo"
+    },
+    "forbidden": {
+      "title": "Accesso negato",
+      "description": "Non hai i permessi necessari per accedere a questa risorsa.",
+      "action": "Torna alla dashboard"
+    },
+    "rateLimit": {
+      "title": "Troppe richieste",
+      "description": "Hai effettuato troppe richieste. Attendi qualche momento prima di riprovare.",
+      "action": "Riprova tra {{seconds}} secondi"
+    },
+    "networkError": {
+      "title": "Errore di connessione",
+      "description": "Impossibile connettersi al server. Verifica la tua connessione internet.",
+      "action": "Riprova"
+    },
+    "timeout": {
+      "title": "Richiesta scaduta",
+      "description": "La richiesta ha impiegato troppo tempo. Riprova.",
+      "action": "Riprova"
+    }
+  },
+  "gdpr": {
+    "cookieBanner": {
+      "title": "Utilizziamo i cookie",
+      "description": "Questo sito utilizza cookie tecnici e, previo tuo consenso, cookie di profilazione per migliorare la tua esperienza.",
+      "acceptAll": "Accetta tutti",
+      "rejectAll": "Rifiuta tutti",
+      "customize": "Personalizza",
+      "necessary": "Cookie necessari",
+      "necessaryDescription": "Essenziali per il funzionamento del sito. Non possono essere disattivati.",
+      "analytics": "Cookie analitici",
+      "analyticsDescription": "Ci aiutano a capire come utilizzi il sito per migliorarlo.",
+      "marketing": "Cookie di marketing",
+      "marketingDescription": "Utilizzati per mostrarti pubblicita pertinenti.",
+      "save": "Salva preferenze",
+      "privacyPolicy": "Informativa sulla privacy",
+      "cookiePolicy": "Cookie policy"
+    },
+    "export": {
+      "title": "Esporta i tuoi dati",
+      "description": "Puoi richiedere una copia di tutti i dati che abbiamo su di te. La preparazione potrebbe richiedere fino a 48 ore.",
+      "request": "Richiedi esportazione",
+      "processing": "Esportazione in corso...",
+      "ready": "I tuoi dati sono pronti per il download",
+      "download": "Scarica dati",
+      "format": "Formato: JSON",
+      "expires": "Il link scade tra {{hours}} ore"
+    },
+    "deletion": {
+      "title": "Elimina il tuo account",
+      "description": "Puoi richiedere l'eliminazione permanente del tuo account e di tutti i dati associati. Questa operazione e irreversibile.",
+      "warning": "Attenzione: questa azione non puo essere annullata. Tutti i tuoi dati, inclusi clienti, fatture e ordini di lavoro, verranno eliminati definitivamente.",
+      "confirmText": "Digita ELIMINA per confermare",
+      "request": "Richiedi eliminazione",
+      "processing": "Eliminazione in corso...",
+      "scheduledFor": "L'eliminazione e programmata per il {{date}}",
+      "cancel": "Annulla richiesta di eliminazione",
+      "graceperiod": "Hai {{days}} giorni per annullare la richiesta"
+    },
+    "consent": {
+      "title": "Consenso al trattamento dei dati",
+      "marketing": "Acconsento a ricevere comunicazioni di marketing",
+      "profiling": "Acconsento alla profilazione per servizi personalizzati",
+      "thirdParty": "Acconsento alla condivisione dei dati con terze parti",
+      "withdraw": "Revoca consenso",
+      "history": "Storico consensi"
+    }
+  },
+  "print": {
+    "invoice": {
+      "title": "Stampa fattura",
+      "header": "Fattura",
+      "number": "Numero",
+      "date": "Data",
+      "customer": "Cliente",
+      "items": "Voci",
+      "subtotal": "Imponibile",
+      "tax": "IVA",
+      "total": "Totale",
+      "paymentTerms": "Condizioni di pagamento",
+      "bankDetails": "Coordinate bancarie",
+      "iban": "IBAN",
+      "notes": "Note",
+      "footer": "Documento emesso ai sensi dell'art. 21 del DPR 633/72",
+      "electronicInvoice": "Fattura elettronica ai sensi del D.Lgs. 127/2015"
+    },
+    "inspection": {
+      "title": "Stampa ispezione",
+      "header": "Report ispezione veicolo",
+      "vehicle": "Veicolo",
+      "date": "Data ispezione",
+      "technician": "Tecnico",
+      "mileage": "Chilometraggio",
+      "overallCondition": "Condizione generale",
+      "results": "Risultati",
+      "recommendations": "Raccomandazioni",
+      "customerSignature": "Firma del cliente",
+      "technicianSignature": "Firma del tecnico",
+      "legend": "Legenda",
+      "legendOk": "OK - Nessun intervento necessario",
+      "legendLow": "Basso - Da monitorare",
+      "legendMedium": "Medio - Intervento consigliato",
+      "legendHigh": "Alto - Intervento raccomandato",
+      "legendCritical": "Critico - Intervento urgente necessario"
+    },
+    "workOrder": {
+      "title": "Stampa ordine di lavoro",
+      "header": "Ordine di lavoro",
+      "number": "Numero OdL",
+      "customer": "Cliente",
+      "vehicle": "Veicolo",
+      "date": "Data",
+      "description": "Descrizione lavori",
+      "parts": "Ricambi utilizzati",
+      "labor": "Manodopera",
+      "total": "Totale",
+      "notes": "Note",
+      "signature": "Firma del cliente"
+    }
+  },
+  "voice": {
+    "title": "Assistente vocale",
+    "subtitle": "Controlla MechMind OS con la voce",
+    "fields": {
+      "listening": "In ascolto...",
+      "processing": "Elaborazione...",
+      "notUnderstood": "Non ho capito. Puoi ripetere?",
+      "micPermission": "Consenti l'accesso al microfono per usare l'assistente vocale",
+      "micDenied": "Accesso al microfono negato. Abilita il microfono nelle impostazioni del browser."
+    },
+    "commands": {
+      "createOrder": "Crea ordine di lavoro",
+      "searchCustomer": "Cerca cliente",
+      "checkBookings": "Controlla prenotazioni",
+      "openDashboard": "Apri dashboard",
+      "help": "Cosa posso fare?"
+    },
+    "actions": {
+      "startListening": "Inizia ad ascoltare",
+      "stopListening": "Smetti di ascoltare",
+      "speak": "Parla ora"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { VehicleService } from './vehicle.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -107,17 +107,18 @@ describe('VehicleService', () => {
         where: { id: CUSTOMER_ID, tenantId: TENANT_ID },
       });
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { licensePlate: 'AB123CD', customerId: CUSTOMER_ID },
+        where: { licensePlate: 'AB123CD', tenantId: TENANT_ID, deletedAt: null },
       });
       expect((prisma.vehicle as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
         data: {
+          tenant: { connect: { id: TENANT_ID } },
           licensePlate: 'AB123CD',
           make: 'Fiat',
           model: 'Panda',
           year: 2020,
           vin: 'ZFA3120000J123456',
           notes: 'Test notes',
-          status: 'active',
+          status: 'ACTIVE',
           mileage: undefined,
           customer: { connect: { id: CUSTOMER_ID } },
         },
@@ -147,13 +148,14 @@ describe('VehicleService', () => {
 
       expect((prisma.vehicle as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
         data: {
+          tenant: { connect: { id: TENANT_ID } },
           licensePlate: 'XY999ZZ',
           make: 'Toyota',
           model: 'Yaris',
           year: undefined,
           vin: undefined,
           notes: undefined,
-          status: 'active',
+          status: 'ACTIVE',
           mileage: undefined,
           customer: { connect: { id: CUSTOMER_ID } },
         },
@@ -177,10 +179,10 @@ describe('VehicleService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockVehicle);
 
       await expect(service.create(TENANT_ID, CUSTOMER_ID, createDto)).rejects.toThrow(
-        NotFoundException,
+        ConflictException,
       );
       await expect(service.create(TENANT_ID, CUSTOMER_ID, createDto)).rejects.toThrow(
-        /already exists for this customer/,
+        'Veicolo con questa targa già presente',
       );
       expect((prisma.vehicle as Record<string, jest.Mock>).create).not.toHaveBeenCalled();
     });
@@ -199,7 +201,7 @@ describe('VehicleService', () => {
       await service.create(TENANT_ID, CUSTOMER_ID, spacedDto);
 
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { licensePlate: 'AB123CD', customerId: CUSTOMER_ID },
+        where: { licensePlate: 'AB123CD', tenantId: TENANT_ID, deletedAt: null },
       });
     });
   });
@@ -217,7 +219,7 @@ describe('VehicleService', () => {
 
       expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { id: VEHICLE_ID },
+        where: { id: VEHICLE_ID, tenantId: TENANT_ID },
         include: {
           customer: true,
           bookings: {
@@ -261,7 +263,7 @@ describe('VehicleService', () => {
         where: { id: CUSTOMER_ID, tenantId: TENANT_ID },
       });
       expect((prisma.vehicle as Record<string, jest.Mock>).findMany).toHaveBeenCalledWith({
-        where: { customerId: CUSTOMER_ID },
+        where: { customerId: CUSTOMER_ID, tenantId: TENANT_ID },
         orderBy: { createdAt: 'desc' },
       });
       expect(result).toEqual(vehicles);
@@ -304,7 +306,7 @@ describe('VehicleService', () => {
 
       expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { licensePlate: 'AB123CD' },
+        where: { licensePlate: 'AB123CD', tenantId: TENANT_ID },
         include: { customer: true },
       });
       expect(result).toEqual(vehicleWithCustomer);
@@ -324,7 +326,7 @@ describe('VehicleService', () => {
       await service.findByLicensePlate(TENANT_ID, '  ab  123  cd  ');
 
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { licensePlate: 'AB123CD' },
+        where: { licensePlate: 'AB123CD', tenantId: TENANT_ID },
         include: { customer: true },
       });
     });
@@ -360,7 +362,7 @@ describe('VehicleService', () => {
 
       expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { id: VEHICLE_ID },
+        where: { id: VEHICLE_ID, tenantId: TENANT_ID },
       });
       expect((prisma.vehicle as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },
@@ -497,7 +499,7 @@ describe('VehicleService', () => {
 
       expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
       expect((prisma.vehicle as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
-        where: { id: VEHICLE_ID },
+        where: { id: VEHICLE_ID, tenantId: TENANT_ID },
       });
       expect((prisma.vehicle as Record<string, jest.Mock>).delete).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },

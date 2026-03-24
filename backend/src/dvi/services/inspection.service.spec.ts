@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InspectionService } from './inspection.service';
 import { PrismaService } from '@common/services/prisma.service';
@@ -263,7 +263,13 @@ describe('InspectionService', () => {
   let service: InspectionService;
   let prisma: {
     inspectionTemplate: { findFirst: jest.Mock };
-    inspection: { create: jest.Mock; findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    inspection: {
+      create: jest.Mock;
+      findFirst: jest.Mock;
+      findMany: jest.Mock;
+      update: jest.Mock;
+      count: jest.Mock;
+    };
     inspectionItem: { updateMany: jest.Mock };
     inspectionFinding: {
       create: jest.Mock;
@@ -288,6 +294,7 @@ describe('InspectionService', () => {
         findFirst: jest.fn(),
         findMany: jest.fn(),
         update: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
       },
       inspectionItem: {
         updateMany: jest.fn(),
@@ -585,13 +592,15 @@ describe('InspectionService', () => {
     it('should return summary DTOs for all inspections', async () => {
       // Arrange
       (prisma.inspection.findMany as jest.Mock).mockResolvedValue(mockInspectionList);
+      (prisma.inspection.count as jest.Mock).mockResolvedValue(2);
 
       // Act
       const result = await service.findAll(TENANT_ID, {});
 
       // Assert
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({
+      expect(result.data).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.data[0]).toEqual({
         id: 'insp-001',
         status: InspectionStatus.IN_PROGRESS,
         startedAt: new Date('2024-06-01T09:00:00Z'),
@@ -601,13 +610,14 @@ describe('InspectionService', () => {
         issuesFound: 3,
         criticalIssues: 2,
       });
-      expect(result[1].issuesFound).toBe(0);
-      expect(result[1].criticalIssues).toBe(0);
+      expect(result.data[1].issuesFound).toBe(0);
+      expect(result.data[1].criticalIssues).toBe(0);
     });
 
     it('should filter by vehicleId when provided', async () => {
       // Arrange
       (prisma.inspection.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.inspection.count as jest.Mock).mockResolvedValue(0);
 
       // Act
       await service.findAll(TENANT_ID, { vehicleId: VEHICLE_ID });
@@ -626,6 +636,7 @@ describe('InspectionService', () => {
     it('should filter by customerId when provided', async () => {
       // Arrange
       (prisma.inspection.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.inspection.count as jest.Mock).mockResolvedValue(0);
 
       // Act
       await service.findAll(TENANT_ID, { customerId: CUSTOMER_ID });
@@ -710,12 +721,14 @@ describe('InspectionService', () => {
     it('should return empty array when no inspections found', async () => {
       // Arrange
       (prisma.inspection.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.inspection.count as jest.Mock).mockResolvedValue(0);
 
       // Act
       const result = await service.findAll(TENANT_ID, {});
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 
@@ -1301,6 +1314,7 @@ describe('InspectionService', () => {
     it('should approve selected findings', async () => {
       // Arrange
       const inspection = buildMockInspection({
+        status: InspectionStatus.READY_FOR_CUSTOMER,
         customer: buildMockCustomer(),
       });
       (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
@@ -1324,7 +1338,9 @@ describe('InspectionService', () => {
 
     it('should set approvedAt timestamp on approved findings', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -1338,7 +1354,9 @@ describe('InspectionService', () => {
 
     it('should decline selected findings', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -1354,7 +1372,9 @@ describe('InspectionService', () => {
 
     it('should update inspection status to APPROVED', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -1373,7 +1393,9 @@ describe('InspectionService', () => {
 
     it('should set approvedAt timestamp on the inspection', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -1387,7 +1409,9 @@ describe('InspectionService', () => {
 
     it('should send notification to mechanic after approval', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -1407,7 +1431,9 @@ describe('InspectionService', () => {
 
     it('should handle approval with no approved findings', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -1431,7 +1457,9 @@ describe('InspectionService', () => {
 
     it('should handle approval with no declined findings', async () => {
       // Arrange
-      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(buildMockInspection());
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.READY_FOR_CUSTOMER }),
+      );
       (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.inspection.update as jest.Mock).mockResolvedValue(buildMockInspection());
 
@@ -2182,6 +2210,80 @@ describe('InspectionService', () => {
           type: 'inspection_completed',
           title: 'Inspection Approved',
         }),
+      );
+    });
+  });
+
+  // ==========================================
+  // State Machine
+  // ==========================================
+
+  describe('State Machine', () => {
+    it('should reject ARCHIVED → IN_PROGRESS (update)', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.ARCHIVED,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      const dto: UpdateInspectionDto = { status: InspectionStatus.IN_PROGRESS as never };
+
+      // Act & Assert
+      await expect(service.update(TENANT_ID, INSPECTION_ID, dto, MECHANIC_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should reject APPROVED → READY_FOR_CUSTOMER (update)', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.APPROVED,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      const dto: UpdateInspectionDto = { status: InspectionStatus.READY_FOR_CUSTOMER as never };
+
+      // Act & Assert
+      await expect(service.update(TENANT_ID, INSPECTION_ID, dto, MECHANIC_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should reject IN_PROGRESS → APPROVED (update)', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.IN_PROGRESS,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      const dto: UpdateInspectionDto = { status: InspectionStatus.APPROVED as never };
+
+      // Act & Assert
+      await expect(service.update(TENANT_ID, INSPECTION_ID, dto, MECHANIC_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should reject IN_PROGRESS → APPROVED (submitCustomerApproval)', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.IN_PROGRESS,
+        customer: buildMockCustomer(),
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      const dto: CustomerApprovalDto = {
+        email: 'mario@example.com',
+        approvedFindingIds: ['finding-001'],
+        declinedFindingIds: [],
+      };
+
+      // Act & Assert
+      await expect(service.submitCustomerApproval(TENANT_ID, INSPECTION_ID, dto)).rejects.toThrow(
+        BadRequestException,
       );
     });
   });

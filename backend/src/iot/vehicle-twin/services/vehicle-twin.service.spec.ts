@@ -10,6 +10,7 @@ describe('VehicleTwinService', () => {
   let prisma: Record<string, Record<string, jest.Mock>>;
   let redis: Record<string, jest.Mock>;
 
+  const mockTenantId = 'tenant-uuid-1';
   const mockVehicleId = 'vehicle-uuid-1';
   const mockComponentId = 'engine';
 
@@ -49,6 +50,7 @@ describe('VehicleTwinService', () => {
     prisma = {
       vehicle: {
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
       },
       vehicleTwinComponent: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -108,7 +110,7 @@ describe('VehicleTwinService', () => {
       };
       redis.get.mockResolvedValue(JSON.stringify(cachedTwin));
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result).toEqual(cachedTwin);
       expect(prisma.vehicle.findUnique).not.toHaveBeenCalled();
@@ -117,19 +119,23 @@ describe('VehicleTwinService', () => {
     it('should throw NotFoundException when vehicle not found', async () => {
       redis.get.mockResolvedValue(null);
       prisma.vehicle.findUnique.mockResolvedValue(null);
+      prisma.vehicle.findFirst.mockResolvedValue(null);
 
-      await expect(service.getOrCreateTwin(mockVehicleId)).rejects.toThrow(NotFoundException);
+      await expect(service.getOrCreateTwin(mockTenantId, mockVehicleId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should build and cache twin state when vehicle exists', async () => {
       redis.get.mockResolvedValue(null);
       prisma.vehicle.findUnique.mockResolvedValue(mockVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(mockVehicle);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.vehicleTwinComponent.createMany.mockResolvedValue({ count: 10 });
       prisma.componentHistory.findMany.mockResolvedValue([]);
       prisma.vehicleDamage.findMany.mockResolvedValue([]);
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result.vehicleId).toBe(mockVehicleId);
       expect(result.make).toBe('BMW');
@@ -143,6 +149,7 @@ describe('VehicleTwinService', () => {
     it('should use existing components if already initialized', async () => {
       redis.get.mockResolvedValue(null);
       prisma.vehicle.findUnique.mockResolvedValue(mockVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(mockVehicle);
 
       const existingComponents = [
         {
@@ -165,7 +172,7 @@ describe('VehicleTwinService', () => {
       prisma.componentHistory.findMany.mockResolvedValue([]);
       prisma.vehicleDamage.findMany.mockResolvedValue([]);
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result.components).toHaveLength(1);
       expect(result.components[0].status).toBe('WARNING');
@@ -176,6 +183,7 @@ describe('VehicleTwinService', () => {
     it('should include recent history records in twin state', async () => {
       redis.get.mockResolvedValue(null);
       prisma.vehicle.findUnique.mockResolvedValue(mockVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(mockVehicle);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.vehicleTwinComponent.createMany.mockResolvedValue({ count: 10 });
       prisma.componentHistory.findMany.mockResolvedValue([
@@ -208,7 +216,7 @@ describe('VehicleTwinService', () => {
       ]);
       prisma.vehicleDamage.findMany.mockResolvedValue([]);
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result.recentHistory).toHaveLength(2);
       expect(result.recentHistory[0].id).toBe('hist-1');
@@ -224,6 +232,7 @@ describe('VehicleTwinService', () => {
     it('should include damage records in twin state', async () => {
       redis.get.mockResolvedValue(null);
       prisma.vehicle.findUnique.mockResolvedValue(mockVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(mockVehicle);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.vehicleTwinComponent.createMany.mockResolvedValue({ count: 10 });
       prisma.componentHistory.findMany.mockResolvedValue([]);
@@ -258,7 +267,7 @@ describe('VehicleTwinService', () => {
         },
       ]);
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result.damageRecords).toHaveLength(2);
       expect(result.damageRecords[0].id).toBe('dmg-1');
@@ -286,12 +295,13 @@ describe('VehicleTwinService', () => {
         ],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleWithMultipleReadings);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleWithMultipleReadings);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.vehicleTwinComponent.createMany.mockResolvedValue({ count: 10 });
       prisma.componentHistory.findMany.mockResolvedValue([]);
       prisma.vehicleDamage.findMany.mockResolvedValue([]);
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result.mileage).toBe(55000);
       expect(result.engineHours).toBe(1500);
@@ -309,12 +319,13 @@ describe('VehicleTwinService', () => {
         ],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleWithObd);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleWithObd);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.vehicleTwinComponent.createMany.mockResolvedValue({ count: 10 });
       prisma.componentHistory.findMany.mockResolvedValue([]);
       prisma.vehicleDamage.findMany.mockResolvedValue([]);
 
-      const result = await service.getOrCreateTwin(mockVehicleId);
+      const result = await service.getOrCreateTwin(mockTenantId, mockVehicleId);
 
       expect(result.mileage).toBe(55000);
       expect(result.engineHours).toBe(2000);
@@ -342,10 +353,15 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      const result = await service.updateComponentStatus(mockVehicleId, mockComponentId, {
-        status: 'WARNING',
-        healthScore: 75,
-      });
+      const result = await service.updateComponentStatus(
+        mockTenantId,
+        mockVehicleId,
+        mockComponentId,
+        {
+          status: 'WARNING',
+          healthScore: 75,
+        },
+      );
 
       expect(prisma.vehicleTwinComponent.upsert).toHaveBeenCalled();
       expect(redis.del).toHaveBeenCalledWith(`twin:${mockVehicleId}`);
@@ -367,9 +383,14 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      const result = await service.updateComponentStatus(mockVehicleId, mockComponentId, {
-        status: 'CRITICAL',
-      });
+      const result = await service.updateComponentStatus(
+        mockTenantId,
+        mockVehicleId,
+        mockComponentId,
+        {
+          status: 'CRITICAL',
+        },
+      );
 
       expect(result.status).toBe('CRITICAL');
     });
@@ -379,7 +400,7 @@ describe('VehicleTwinService', () => {
       prisma.vehicleTwinComponent.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.updateComponentStatus(mockVehicleId, mockComponentId, {
+        service.updateComponentStatus(mockTenantId, mockVehicleId, mockComponentId, {
           status: 'HEALTHY',
         }),
       ).rejects.toThrow(NotFoundException);
@@ -420,7 +441,11 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      const result = await service.recordComponentHistory(mockVehicleId, historyInput);
+      const result = await service.recordComponentHistory(
+        mockTenantId,
+        mockVehicleId,
+        historyInput,
+      );
 
       expect(result.id).toBe('history-1');
       expect(result.componentId).toBe('brakes_front');
@@ -447,7 +472,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      await service.recordComponentHistory(mockVehicleId, repairHistory);
+      await service.recordComponentHistory(mockTenantId, mockVehicleId, repairHistory);
 
       const upsertCall = prisma.vehicleTwinComponent.upsert.mock.calls[0][0];
       expect(upsertCall.create.status).toBe('REPAIRING');
@@ -472,7 +497,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      await service.recordComponentHistory(mockVehicleId, replaceHistory);
+      await service.recordComponentHistory(mockTenantId, mockVehicleId, replaceHistory);
 
       const upsertCall = prisma.vehicleTwinComponent.upsert.mock.calls[0][0];
       expect(upsertCall.create.status).toBe('REPLACED');
@@ -497,7 +522,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      await service.recordComponentHistory(mockVehicleId, damageHistory);
+      await service.recordComponentHistory(mockTenantId, mockVehicleId, damageHistory);
 
       const upsertCall = prisma.vehicleTwinComponent.upsert.mock.calls[0][0];
       expect(upsertCall.create.status).toBe('CRITICAL');
@@ -527,7 +552,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      await service.recordComponentHistory(mockVehicleId, historyNoOptional);
+      await service.recordComponentHistory(mockTenantId, mockVehicleId, historyNoOptional);
 
       const createCall = prisma.componentHistory.create.mock.calls[0][0];
       expect(createCall.data.partsUsed).toEqual([]);
@@ -569,7 +594,7 @@ describe('VehicleTwinService', () => {
       });
       prisma.vehicleTwinComponent.upsert.mockResolvedValue({});
 
-      const result = await service.recordDamage(mockVehicleId, damageInput);
+      const result = await service.recordDamage(mockTenantId, mockVehicleId, damageInput);
 
       expect(result.id).toBe('damage-1');
       expect(result.type).toBe('DENT');
@@ -596,7 +621,7 @@ describe('VehicleTwinService', () => {
       });
       prisma.vehicleTwinComponent.upsert.mockResolvedValue({});
 
-      await service.recordDamage(mockVehicleId, severeDamage);
+      await service.recordDamage(mockTenantId, mockVehicleId, severeDamage);
 
       const upsertCall = prisma.vehicleTwinComponent.upsert.mock.calls[0][0];
       expect(upsertCall.create.status).toBe('CRITICAL');
@@ -620,7 +645,7 @@ describe('VehicleTwinService', () => {
       });
       prisma.vehicleTwinComponent.upsert.mockResolvedValue({});
 
-      await service.recordDamage(mockVehicleId, damageInput);
+      await service.recordDamage(mockTenantId, mockVehicleId, damageInput);
 
       const upsertCall = prisma.vehicleTwinComponent.upsert.mock.calls[0][0];
       expect(upsertCall.create.status).toBe('WARNING');
@@ -649,7 +674,7 @@ describe('VehicleTwinService', () => {
       });
       prisma.vehicleTwinComponent.upsert.mockResolvedValue({});
 
-      await service.recordDamage(mockVehicleId, severeCrack);
+      await service.recordDamage(mockTenantId, mockVehicleId, severeCrack);
 
       const upsertCall = prisma.vehicleTwinComponent.upsert.mock.calls[0][0];
       expect(upsertCall.create.condition).toBeGreaterThanOrEqual(0);
@@ -661,8 +686,11 @@ describe('VehicleTwinService', () => {
   describe('getPredictiveAlerts', () => {
     it('should throw NotFoundException when vehicle not found', async () => {
       prisma.vehicle.findUnique.mockResolvedValue(null);
+      prisma.vehicle.findFirst.mockResolvedValue(null);
 
-      await expect(service.getPredictiveAlerts(mockVehicleId)).rejects.toThrow(NotFoundException);
+      await expect(service.getPredictiveAlerts(mockTenantId, mockVehicleId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return alerts for critical DTCs', async () => {
@@ -687,10 +715,11 @@ describe('VehicleTwinService', () => {
         ],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleWithDtcs);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleWithDtcs);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.componentHistory.findMany.mockResolvedValue([]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       const dtcAlert = result.find(a => a.id.startsWith('dtc:'));
       expect(dtcAlert).toBeDefined();
@@ -716,10 +745,11 @@ describe('VehicleTwinService', () => {
         ],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleWithHighDtc);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleWithHighDtc);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.componentHistory.findMany.mockResolvedValue([]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       const dtcAlert = result.find(a => a.id.startsWith('dtc:'));
       expect(dtcAlert).toBeDefined();
@@ -733,6 +763,7 @@ describe('VehicleTwinService', () => {
         obdDevices: [{ readings: [], dtcs: [] }],
       };
       prisma.vehicle.findUnique.mockResolvedValue(highMileageVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(highMileageVehicle);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([
         {
           componentId: 'brakes_front',
@@ -745,7 +776,7 @@ describe('VehicleTwinService', () => {
       // No service history => milesSinceService = 100000 which > 90% of max 60000
       prisma.componentHistory.findMany.mockResolvedValue([]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       const wearAlert = result.find(a => a.id.startsWith('pred:brakes'));
       expect(wearAlert).toBeDefined();
@@ -777,10 +808,11 @@ describe('VehicleTwinService', () => {
         ],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleWithMultiple);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleWithMultiple);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([]);
       prisma.componentHistory.findMany.mockResolvedValue([]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       if (result.length >= 2) {
         const severityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
@@ -801,6 +833,7 @@ describe('VehicleTwinService', () => {
         obdDevices: [{ readings: [], dtcs: [] }],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleHighWear);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleHighWear);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([
         {
           componentId: 'brakes_front',
@@ -814,7 +847,7 @@ describe('VehicleTwinService', () => {
       // wearPercentage = 48000/60000 * 100 = 80% => HIGH
       prisma.componentHistory.findMany.mockResolvedValue([]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       const wearAlert = result.find(a => a.id.startsWith('pred:brakes'));
       expect(wearAlert).toBeDefined();
@@ -831,6 +864,7 @@ describe('VehicleTwinService', () => {
         obdDevices: [{ readings: [], dtcs: [] }],
       };
       prisma.vehicle.findUnique.mockResolvedValue(vehicleMediumWear);
+      prisma.vehicle.findFirst.mockResolvedValue(vehicleMediumWear);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([
         {
           componentId: 'brakes_front',
@@ -844,7 +878,7 @@ describe('VehicleTwinService', () => {
       // wearPercentage = 36000/60000 * 100 = 60% => MEDIUM
       prisma.componentHistory.findMany.mockResolvedValue([]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       const wearAlert = result.find(a => a.id.startsWith('pred:brakes'));
       expect(wearAlert).toBeDefined();
@@ -859,6 +893,7 @@ describe('VehicleTwinService', () => {
         obdDevices: [{ readings: [], dtcs: [] }],
       };
       prisma.vehicle.findUnique.mockResolvedValue(healthyVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(healthyVehicle);
       prisma.vehicleTwinComponent.findMany.mockResolvedValue([
         {
           componentId: 'engine',
@@ -873,7 +908,7 @@ describe('VehicleTwinService', () => {
         { eventType: 'MAINTENANCE', odometer: 4000 },
       ]);
 
-      const result = await service.getPredictiveAlerts(mockVehicleId);
+      const result = await service.getPredictiveAlerts(mockTenantId, mockVehicleId);
 
       // No critical alerts expected for low-mileage vehicle with recent service
       const criticalAlerts = result.filter(a => a.severity === 'CRITICAL');
@@ -886,14 +921,19 @@ describe('VehicleTwinService', () => {
   describe('getWearPrediction', () => {
     it('should throw NotFoundException when vehicle not found', async () => {
       prisma.vehicle.findUnique.mockResolvedValue(null);
+      prisma.vehicle.findFirst.mockResolvedValue(null);
 
-      await expect(service.getWearPrediction(mockVehicleId, mockComponentId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getWearPrediction(mockTenantId, mockVehicleId, mockComponentId),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should return wear prediction with 12-month forecast', async () => {
       prisma.vehicle.findUnique.mockResolvedValue({
+        ...mockVehicle,
+        mileage: 30000,
+      });
+      prisma.vehicle.findFirst.mockResolvedValue({
         ...mockVehicle,
         mileage: 30000,
       });
@@ -909,7 +949,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      const result = await service.getWearPrediction(mockVehicleId, 'brakes_front');
+      const result = await service.getWearPrediction(mockTenantId, mockVehicleId, 'brakes_front');
 
       expect(result.componentId).toBe('brakes_front');
       expect(result.currentWear).toBe(20); // 100 - healthScore
@@ -926,6 +966,10 @@ describe('VehicleTwinService', () => {
         ...mockVehicle,
         mileage: 200000,
       });
+      prisma.vehicle.findFirst.mockResolvedValue({
+        ...mockVehicle,
+        mileage: 200000,
+      });
       prisma.vehicleTwinComponent.findUnique.mockResolvedValue({
         componentId: 'brakes_front',
         name: 'Front Brakes',
@@ -938,7 +982,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      const result = await service.getWearPrediction(mockVehicleId, 'brakes_front');
+      const result = await service.getWearPrediction(mockTenantId, mockVehicleId, 'brakes_front');
 
       for (const prediction of result.predictedWear) {
         expect(prediction.wearPercentage).toBeLessThanOrEqual(100);
@@ -947,6 +991,7 @@ describe('VehicleTwinService', () => {
 
     it('should handle component with no lifespan estimates', async () => {
       prisma.vehicle.findUnique.mockResolvedValue(mockVehicle);
+      prisma.vehicle.findFirst.mockResolvedValue(mockVehicle);
       prisma.vehicleTwinComponent.findUnique.mockResolvedValue({
         componentId: 'exhaust',
         name: 'Exhaust System',
@@ -959,7 +1004,7 @@ describe('VehicleTwinService', () => {
         metadata: {},
       });
 
-      const result = await service.getWearPrediction(mockVehicleId, 'exhaust');
+      const result = await service.getWearPrediction(mockTenantId, mockVehicleId, 'exhaust');
 
       expect(result.componentId).toBe('exhaust');
       expect(result.predictedWear).toHaveLength(0); // no lifespan data
@@ -977,7 +1022,7 @@ describe('VehicleTwinService', () => {
       };
       redis.get.mockResolvedValue(JSON.stringify(cachedConfig));
 
-      const result = await service.getVisualizationConfig(mockVehicleId);
+      const result = await service.getVisualizationConfig(mockTenantId, mockVehicleId);
 
       expect(result).toEqual(cachedConfig);
       expect(prisma.vehicle.findUnique).not.toHaveBeenCalled();
@@ -986,8 +1031,9 @@ describe('VehicleTwinService', () => {
     it('should throw NotFoundException when vehicle not found', async () => {
       redis.get.mockResolvedValue(null);
       prisma.vehicle.findUnique.mockResolvedValue(null);
+      prisma.vehicle.findFirst.mockResolvedValue(null);
 
-      await expect(service.getVisualizationConfig(mockVehicleId)).rejects.toThrow(
+      await expect(service.getVisualizationConfig(mockTenantId, mockVehicleId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -998,8 +1044,12 @@ describe('VehicleTwinService', () => {
         ...mockVehicle,
         twinConfig: null,
       });
+      prisma.vehicle.findFirst.mockResolvedValue({
+        ...mockVehicle,
+        twinConfig: null,
+      });
 
-      const result = await service.getVisualizationConfig(mockVehicleId);
+      const result = await service.getVisualizationConfig(mockTenantId, mockVehicleId);
 
       expect(result.vehicleId).toBe(mockVehicleId);
       expect(result.modelFormat).toBe('GLB');
@@ -1027,8 +1077,12 @@ describe('VehicleTwinService', () => {
         ...mockVehicle,
         twinConfig: existingConfig,
       });
+      prisma.vehicle.findFirst.mockResolvedValue({
+        ...mockVehicle,
+        twinConfig: existingConfig,
+      });
 
-      const result = await service.getVisualizationConfig(mockVehicleId);
+      const result = await service.getVisualizationConfig(mockTenantId, mockVehicleId);
 
       expect(result.modelFormat).toBe('FBX');
       expect(result.modelUrl).toBe('/models/custom.fbx');
@@ -1046,8 +1100,12 @@ describe('VehicleTwinService', () => {
         ...mockVehicle,
         twinConfig: null,
       });
+      prisma.vehicle.findFirst.mockResolvedValue({
+        ...mockVehicle,
+        twinConfig: null,
+      });
 
-      const result = await service.updateVisualizationConfig(mockVehicleId, {
+      const result = await service.updateVisualizationConfig(mockTenantId, mockVehicleId, {
         modelFormat: 'OBJ',
         modelUrl: '/models/custom.obj',
       });
@@ -1064,8 +1122,12 @@ describe('VehicleTwinService', () => {
         ...mockVehicle,
         twinConfig: null,
       });
+      prisma.vehicle.findFirst.mockResolvedValue({
+        ...mockVehicle,
+        twinConfig: null,
+      });
 
-      await service.updateVisualizationConfig(mockVehicleId, {});
+      await service.updateVisualizationConfig(mockTenantId, mockVehicleId, {});
 
       const upsertCall = prisma.vehicleTwinConfig.upsert.mock.calls[0][0];
       expect(upsertCall.create.modelFormat).toBe('GLB');
@@ -1095,7 +1157,7 @@ describe('VehicleTwinService', () => {
       ];
       prisma.vehicleHealthHistory.findMany.mockResolvedValue(mockHistory);
 
-      const result = await service.getHealthTrend(mockVehicleId, from, to);
+      const result = await service.getHealthTrend(mockTenantId, mockVehicleId, from, to);
 
       expect(result).toHaveLength(2);
       expect(result[0].overallHealth).toBe(95);
@@ -1107,6 +1169,7 @@ describe('VehicleTwinService', () => {
       prisma.vehicleHealthHistory.findMany.mockResolvedValue([]);
 
       const result = await service.getHealthTrend(
+        mockTenantId,
         mockVehicleId,
         new Date('2024-01-01'),
         new Date('2024-12-31'),
@@ -1120,7 +1183,7 @@ describe('VehicleTwinService', () => {
       const to = new Date('2024-09-30');
       prisma.vehicleHealthHistory.findMany.mockResolvedValue([]);
 
-      await service.getHealthTrend(mockVehicleId, from, to);
+      await service.getHealthTrend(mockTenantId, mockVehicleId, from, to);
 
       expect(prisma.vehicleHealthHistory.findMany).toHaveBeenCalledWith({
         where: {

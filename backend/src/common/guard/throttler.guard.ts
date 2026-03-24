@@ -30,15 +30,22 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
   }
 
   /**
-   * Get tracker identifier (IP + User ID if authenticated)
+   * Get tracker identifier (tenantId > userId > IP)
+   * Per-tenant tracking ensures fair rate limiting across tenants
    */
   protected async getTracker(req: Request): Promise<string> {
     const ip = this.getClientIp(req);
 
-    // If user is authenticated, include user ID for per-user limiting
-    const userId = (req as Request & { user?: { sub?: string } }).user?.sub;
-    if (userId) {
-      return `user:${userId}`;
+    const user = (req as Request & { user?: { sub?: string; tenantId?: string } }).user;
+
+    // Per-tenant tracking: isolate rate limits between tenants
+    if (user?.tenantId) {
+      return `tenant:${user.tenantId}:${user.sub || ip}`;
+    }
+
+    // If user is authenticated but no tenant context, use user ID
+    if (user?.sub) {
+      return `user:${user.sub}`;
     }
 
     return `ip:${ip}`;

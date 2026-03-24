@@ -15,6 +15,9 @@ import {
   MessageCircle,
   FileCheck,
   ArrowRight,
+  Euro,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -24,11 +27,35 @@ import { PortalAuthService } from '@/lib/auth/portal-auth-client';
 import {
   DashboardData,
   Customer,
+  CustomerVehicle,
   Booking,
   CustomerInspection,
   MaintenanceSchedule,
   WarrantyInfo,
 } from '@/lib/types/portal';
+
+/** Extract unique vehicles from dashboard data (bookings, maintenance, inspections) */
+function extractVehicles(data: DashboardData): CustomerVehicle[] {
+  const vehicleMap = new Map<string, CustomerVehicle>();
+
+  if (data.upcomingBooking?.vehicle) {
+    const v = data.upcomingBooking.vehicle;
+    vehicleMap.set(v.id, v);
+  }
+
+  for (const m of data.maintenanceDue) {
+    if (m.vehicle) {
+      vehicleMap.set(m.vehicle.id, m.vehicle);
+    }
+  }
+
+  if (data.recentInspection?.vehicle) {
+    const v = data.recentInspection.vehicle;
+    vehicleMap.set(v.id, v);
+  }
+
+  return Array.from(vehicleMap.values());
+}
 
 // ============================================
 // MAIN COMPONENT
@@ -50,6 +77,7 @@ export default function PortalDashboardPage() {
     data: rawData,
     error: swrError,
     isLoading,
+    mutate,
   } = useSWR('/api/portal/dashboard', dashboardFetcher);
 
   const data = rawData?.data || null;
@@ -80,7 +108,7 @@ export default function PortalDashboardPage() {
         <div className='p-8 text-center'>
           <p className='text-apple-red mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => mutate()}
             className='text-apple-blue hover:underline'
           >
             Riprova
@@ -93,6 +121,21 @@ export default function PortalDashboardPage() {
   const welcomeMessage = `Ciao, ${data.customer.firstName}!`;
   const hasUpcomingBooking = !!data.upcomingBooking;
   const hasMaintenanceDue = data.maintenanceDue.length > 0;
+
+  // Quick stats from dashboard data
+  const unpaidInvoicesCount = data.unpaidInvoices?.count ?? 0;
+  const unpaidInvoicesTotal = data.unpaidInvoices?.total ?? 0;
+  const activeRepairsCount = data.activeRepairs?.count ?? 0;
+  const nextBookingDate = data.upcomingBooking?.scheduledDate
+    ? new Date(data.upcomingBooking.scheduledDate).toLocaleDateString('it-IT', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
+    : null;
+  const overdueMaintenanceCount = data.maintenanceDue.filter(
+    (m: MaintenanceSchedule) => m.dueDate && new Date(m.dueDate) < new Date()
+  ).length;
 
   return (
     <PortalLayout customer={data.customer}>
@@ -109,6 +152,96 @@ export default function PortalDashboardPage() {
           <p className='text-apple-gray dark:text-[#636366] mt-1'>
             Ecco cosa c&apos;è di nuovo con i tuoi veicoli
           </p>
+        </motion.div>
+
+        {/* Quick Stats Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 sm:mb-8'
+        >
+          {/* Next Appointment */}
+          <AppleCard>
+            <AppleCardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center'>
+                  <Calendar className='h-5 w-5 text-apple-blue' />
+                </div>
+                <div className='min-w-0'>
+                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Prossimo appuntamento</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec] truncate'>
+                    {nextBookingDate || 'Nessuno'}
+                  </p>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+
+          {/* Active Repairs */}
+          <AppleCard>
+            <AppleCardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center'>
+                  <Wrench className='h-5 w-5 text-apple-orange' />
+                </div>
+                <div className='min-w-0'>
+                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Riparazioni in corso</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec]'>
+                    {activeRepairsCount}
+                  </p>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+
+          {/* Unpaid Invoices */}
+          <AppleCard>
+            <AppleCardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  unpaidInvoicesCount > 0
+                    ? 'bg-red-50 dark:bg-red-900/20'
+                    : 'bg-green-50 dark:bg-green-900/20'
+                }`}>
+                  <Euro className={`h-5 w-5 ${
+                    unpaidInvoicesCount > 0 ? 'text-apple-red' : 'text-apple-green'
+                  }`} />
+                </div>
+                <div className='min-w-0'>
+                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Fatture da pagare</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec]'>
+                    {unpaidInvoicesCount > 0
+                      ? `${unpaidInvoicesCount} (${unpaidInvoicesTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })})`
+                      : 'Nessuna'}
+                  </p>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+
+          {/* Overdue Maintenance */}
+          <AppleCard>
+            <AppleCardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  overdueMaintenanceCount > 0
+                    ? 'bg-red-50 dark:bg-red-900/20'
+                    : 'bg-green-50 dark:bg-green-900/20'
+                }`}>
+                  <AlertCircle className={`h-5 w-5 ${
+                    overdueMaintenanceCount > 0 ? 'text-apple-red' : 'text-apple-green'
+                  }`} />
+                </div>
+                <div className='min-w-0'>
+                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Manutenzione scaduta</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec]'>
+                    {overdueMaintenanceCount > 0 ? `${overdueMaintenanceCount} scadut${overdueMaintenanceCount === 1 ? 'a' : 'e'}` : 'Tutto ok'}
+                  </p>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Quick Actions */}
@@ -301,27 +434,50 @@ export default function PortalDashboardPage() {
                           I tuoi veicoli
                         </h2>
                         <p className='text-sm text-apple-gray dark:text-[#636366]'>
-                          1 veicolo registrato
+                          {(() => {
+                            const vehicles = extractVehicles(data);
+                            if (vehicles.length === 0) return 'Nessun veicolo registrato';
+                            return `${vehicles.length} veicol${vehicles.length === 1 ? 'o' : 'i'} registrat${vehicles.length === 1 ? 'o' : 'i'}`;
+                          })()}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className='p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-2xl'>
-                    <div className='flex items-center gap-4'>
-                      <div className='w-14 h-14 rounded-xl bg-white dark:bg-[#2f2f2f] flex items-center justify-center shadow-sm'>
-                        <Car className='h-7 w-7 text-apple-gray' />
+                  {(() => {
+                    const vehicles = extractVehicles(data);
+                    if (vehicles.length === 0) {
+                      return (
+                        <div className='flex flex-col items-center justify-center py-8 text-center'>
+                          <Car className='h-10 w-10 text-apple-gray/40 dark:text-[#636366]/40 mb-3' />
+                          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                            Nessun veicolo registrato
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className='space-y-3'>
+                        {vehicles.map((vehicle) => (
+                          <div key={vehicle.id} className='p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-2xl'>
+                            <div className='flex items-center gap-4'>
+                              <div className='w-14 h-14 rounded-xl bg-white dark:bg-[#2f2f2f] flex items-center justify-center shadow-sm'>
+                                <Car className='h-7 w-7 text-apple-gray' />
+                              </div>
+                              <div className='flex-1'>
+                                <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                                  {vehicle.make} {vehicle.model}
+                                </p>
+                                <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                                  {vehicle.licensePlate} {vehicle.mileage ? `\u2022 ${vehicle.mileage.toLocaleString('it-IT')} km` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className='flex-1'>
-                        <p className='font-medium text-apple-dark dark:text-[#ececec]'>
-                          Volkswagen Golf
-                        </p>
-                        <p className='text-sm text-apple-gray dark:text-[#636366]'>
-                          AB123CD • 45,000 km
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </AppleCardContent>
               </AppleCard>
             </motion.div>

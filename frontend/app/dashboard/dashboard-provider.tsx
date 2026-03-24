@@ -4,9 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Search, Menu, X } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { SkipLink } from '@/components/accessibility/SkipLink';
+import { CallerIdSearch } from '@/components/dashboard/caller-id-search';
+import { DemoBanner } from '@/components/auth/demo-banner';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -19,6 +21,10 @@ const navigation = [
   { name: 'Ordini Lavoro', href: '/dashboard/work-orders' },
   { name: 'Fatture', href: '/dashboard/invoices' },
   { name: 'Location', href: '/dashboard/locations' },
+  { name: 'Manutenzione', href: '/dashboard/maintenance' },
+  { name: 'Marketing', href: '/dashboard/marketing' },
+  { name: 'Messaggistica', href: '/dashboard/messaging' },
+  { name: 'Garanzie', href: '/dashboard/warranty' },
   { name: 'Analytics', href: '/dashboard/analytics' },
   { name: 'Impostazioni', href: '/dashboard/settings' },
 ];
@@ -54,7 +60,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className='min-h-screen bg-[#f4f4f4] dark:bg-[#212121] transition-colors'>
+    <div className='min-h-screen bg-[#1a1a1a] transition-colors'>
+      <DemoBanner />
       <SkipLink targetId='main-content' />
       {/* Desktop Menu Bar */}
       <AnimatePresence>
@@ -99,13 +106,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
                   onClick={() => setIsPinned(!isPinned)}
                   className={`p-1 transition-colors ${isPinned ? 'text-apple-blue' : 'text-gray-400 hover:text-white'}`}
                   title={isPinned ? 'Sblocca navbar' : 'Blocca navbar'}
+                  aria-label={isPinned ? 'Sblocca navbar' : 'Blocca navbar'}
                 >
                   {isPinned ? '📌' : '📍'}
                 </button>
-                <button className='p-1 text-gray-400 hover:text-white transition-colors'>
-                  <Search className='h-4 w-4' />
-                </button>
-                <button className='p-1 text-gray-400 hover:text-white transition-colors relative'>
+                <CallerIdSearch />
+                <button
+                  className='p-1 text-gray-400 hover:text-white transition-colors relative'
+                  aria-label='Notifiche'
+                >
                   <Bell className='h-4 w-4' />
                   <span className='absolute top-0 right-0 w-1.5 h-1.5 bg-apple-red rounded-full' />
                 </button>

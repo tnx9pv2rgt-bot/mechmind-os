@@ -46,33 +46,33 @@ interface NotificationItemProps {
 
 // Type icon mapping
 const typeIcons: Record<NotificationType, React.ReactNode> = {
-  [NotificationType.BOOKING_CONFIRMATION]: <Calendar className="w-5 h-5" />,
-  [NotificationType.BOOKING_REMINDER]: <Clock className="w-5 h-5" />,
-  [NotificationType.BOOKING_CANCELLED]: <XCircle className="w-5 h-5" />,
-  [NotificationType.INVOICE_READY]: <FileText className="w-5 h-5" />,
-  [NotificationType.INSPECTION_COMPLETE]: <CheckCircle className="w-5 h-5" />,
-  [NotificationType.MAINTENANCE_DUE]: <AlertCircle className="w-5 h-5" />,
-  [NotificationType.VEHICLE_READY]: <CheckCircle className="w-5 h-5" />,
-  [NotificationType.STATUS_UPDATE]: <Bell className="w-5 h-5" />,
-  [NotificationType.PAYMENT_REMINDER]: <AlertCircle className="w-5 h-5" />,
-  [NotificationType.WELCOME]: <Bell className="w-5 h-5" />,
-  [NotificationType.PASSWORD_RESET]: <Mail className="w-5 h-5" />,
-  [NotificationType.CUSTOM]: <MessageSquare className="w-5 h-5" />,
-  [NotificationType.GDPR_EXPORT_READY]: <FileText className="w-5 h-5" />,
+  [NotificationType.BOOKING_CONFIRMATION]: <Calendar className='w-5 h-5' />,
+  [NotificationType.BOOKING_REMINDER]: <Clock className='w-5 h-5' />,
+  [NotificationType.BOOKING_CANCELLED]: <XCircle className='w-5 h-5' />,
+  [NotificationType.INVOICE_READY]: <FileText className='w-5 h-5' />,
+  [NotificationType.INSPECTION_COMPLETE]: <CheckCircle className='w-5 h-5' />,
+  [NotificationType.MAINTENANCE_DUE]: <AlertCircle className='w-5 h-5' />,
+  [NotificationType.VEHICLE_READY]: <CheckCircle className='w-5 h-5' />,
+  [NotificationType.STATUS_UPDATE]: <Bell className='w-5 h-5' />,
+  [NotificationType.PAYMENT_REMINDER]: <AlertCircle className='w-5 h-5' />,
+  [NotificationType.WELCOME]: <Bell className='w-5 h-5' />,
+  [NotificationType.PASSWORD_RESET]: <Mail className='w-5 h-5' />,
+  [NotificationType.CUSTOM]: <MessageSquare className='w-5 h-5' />,
+  [NotificationType.GDPR_EXPORT_READY]: <FileText className='w-5 h-5' />,
 };
 
 // Channel icon mapping
 const channelIcons: Record<NotificationChannel, React.ReactNode> = {
-  [NotificationChannel.SMS]: <Smartphone className="w-4 h-4" />,
-  [NotificationChannel.WHATSAPP]: <MessageSquare className="w-4 h-4" />,
-  [NotificationChannel.EMAIL]: <Mail className="w-4 h-4" />,
+  [NotificationChannel.SMS]: <Smartphone className='w-4 h-4' />,
+  [NotificationChannel.WHATSAPP]: <MessageSquare className='w-4 h-4' />,
+  [NotificationChannel.EMAIL]: <Mail className='w-4 h-4' />,
   [NotificationChannel.BOTH]: (
-    <div className="flex -space-x-1">
-      <Smartphone className="w-4 h-4" />
-      <Mail className="w-4 h-4" />
+    <div className='flex -space-x-1'>
+      <Smartphone className='w-4 h-4' />
+      <Mail className='w-4 h-4' />
     </div>
   ),
-  [NotificationChannel.AUTO]: <Bell className="w-4 h-4" />,
+  [NotificationChannel.AUTO]: <Bell className='w-4 h-4' />,
 };
 
 // Type colors
@@ -193,23 +193,16 @@ export function NotificationItem({
           {typeIcons[type]}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm text-gray-900 truncate">
-              {typeLabels[type]}
-            </span>
-            <span
-              className={cn(
-                'text-xs px-2 py-0.5 rounded-full border',
-                statusColors[status]
-              )}
-            >
+        <div className='flex-1 min-w-0'>
+          <div className='flex items-center gap-2'>
+            <span className='font-medium text-sm text-gray-900 truncate'>{typeLabels[type]}</span>
+            <span className={cn('text-xs px-2 py-0.5 rounded-full border', statusColors[status])}>
               {statusLabels[status]}
             </span>
           </div>
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{message}</p>
-          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
+          <p className='text-sm text-gray-600 mt-1 line-clamp-2'>{message}</p>
+          <div className='flex items-center gap-3 mt-1 text-xs text-gray-500'>
+            <span className='flex items-center gap-1'>
               {channelIcons[channel]}
               {channelLabels[channel]}
             </span>
@@ -243,42 +236,39 @@ export function NotificationItem({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
+      <div className='flex-1 min-w-0'>
         {/* Header */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-gray-900">{typeLabels[type]}</h3>
-            <span
-              className={cn(
-                'text-xs px-2 py-0.5 rounded-full border',
-                statusColors[status]
-              )}
-            >
+        <div className='flex items-start justify-between gap-2'>
+          <div className='flex items-center gap-2 flex-wrap'>
+            <h3 className='font-semibold text-gray-900'>{typeLabels[type]}</h3>
+            <span className={cn('text-xs px-2 py-0.5 rounded-full border', statusColors[status])}>
               {statusLabels[status]}
             </span>
           </div>
           {showActions && (
-            <div className="flex items-center gap-1">
+            <div className='flex items-center gap-1'>
               {isFailed && onRetry && (
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant='ghost'
+                  size='icon'
                   onClick={() => onRetry(id)}
-                  className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-                  title="Riprova"
+                  className='h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-100'
+                  title='Riprova'
+                  aria-label='Riprova invio'
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className='w-4 h-4' />
                 </Button>
               )}
               {onDelete && (
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant='ghost'
+                  size='icon'
                   onClick={() => onDelete(id)}
-                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100"
-                  title="Elimina"
+                  className='h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100'
+                  title='Elimina'
+                  aria-label='Elimina notifica'
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className='w-4 h-4' />
                 </Button>
               )}
             </div>
@@ -286,34 +276,34 @@ export function NotificationItem({
         </div>
 
         {/* Message */}
-        <p className="text-gray-700 mt-2 leading-relaxed">{message}</p>
+        <p className='text-gray-700 mt-2 leading-relaxed'>{message}</p>
 
         {/* Metadata */}
-        <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
-          <span className="flex items-center gap-1.5">
+        <div className='flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500'>
+          <span className='flex items-center gap-1.5'>
             {channelIcons[channel]}
             {channelLabels[channel]}
           </span>
           {sentAt && (
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
+            <span className='flex items-center gap-1.5'>
+              <Clock className='w-4 h-4' />
               Inviato: {formatDate(sentAt)}
             </span>
           )}
           {deliveredAt && (
-            <span className="flex items-center gap-1.5 text-green-600">
-              <CheckCircle className="w-4 h-4" />
+            <span className='flex items-center gap-1.5 text-green-600'>
+              <CheckCircle className='w-4 h-4' />
               Consegnato: {formatDate(deliveredAt)}
             </span>
           )}
           {error && (
-            <span className="flex items-center gap-1.5 text-red-600">
-              <AlertCircle className="w-4 h-4" />
+            <span className='flex items-center gap-1.5 text-red-600'>
+              <AlertCircle className='w-4 h-4' />
               Errore: {error}
             </span>
           )}
           {retries > 0 && (
-            <span className="text-amber-600">
+            <span className='text-amber-600'>
               Tentativi: {retries}/{maxRetries}
             </span>
           )}

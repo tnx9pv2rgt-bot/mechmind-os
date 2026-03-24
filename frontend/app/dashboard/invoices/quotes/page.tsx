@@ -585,10 +585,24 @@ export default function QuotesPage() {
                     </td>
                     <td className='px-6 py-4'>
                       <div className='flex items-center justify-center gap-2'>
-                        <Button variant='ghost' size='icon-sm' title='Visualizza'>
+                        <Button variant='ghost' size='icon-sm' title='Visualizza' onClick={() => router.push(`/dashboard/estimates/${quote.id}`)}>
                           <Eye className='h-4 w-4' />
                         </Button>
-                        <Button variant='ghost' size='icon-sm' title='Scarica PDF'>
+                        <Button variant='ghost' size='icon-sm' title='Scarica PDF' onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/estimates/${quote.id}/pdf`);
+                            if (!res.ok) throw new Error('Errore PDF');
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `preventivo-${quote.number}.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          } catch {
+                            setError('Errore durante il download del PDF');
+                          }
+                        }}>
                           <Download className='h-4 w-4' />
                         </Button>
                         {quote.status === 'sent' && (
@@ -602,7 +616,15 @@ export default function QuotesPage() {
                           </Button>
                         )}
                         {quote.status === 'draft' && (
-                          <Button variant='ghost' size='icon-sm' title='Invia'>
+                          <Button variant='ghost' size='icon-sm' title='Invia' onClick={async () => {
+                            try {
+                              const res = await fetch(`/api/estimates/${quote.id}/send`, { method: 'POST' });
+                              if (!res.ok) throw new Error('Errore invio');
+                              mutate();
+                            } catch {
+                              setError('Errore durante l\'invio del preventivo');
+                            }
+                          }}>
                             <Send className='h-4 w-4' />
                           </Button>
                         )}

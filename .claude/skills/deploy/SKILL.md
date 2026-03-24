@@ -1,80 +1,69 @@
 ---
 name: deploy
-description: Build, test, and deploy MechMind OS to Render (backend + frontend)
-user_invocable: true
+description: Build, test, e deploy MechMind OS. Usa quando chiesto di deployare, rilasciare, o mettere in produzione.
+allowed-tools: [Read, Grep, "Bash(git *)", "Bash(npx tsc *)", "Bash(npm run *)", "Bash(npx jest *)", "Bash(npx prisma migrate deploy*)", "Bash(docker *)", "Bash(curl *)", "Bash(render *)"]
 ---
 
-# Deploy MechMind OS
+# Deploy MechMind OS — Workflow Sicuro
 
-Esegui il deploy completo di MechMind OS su Render. Segui questi step nell'ordine esatto:
+## Pre-deploy checklist
 
-## Pre-flight checks
+Esegui TUTTI i check. Se QUALSIASI fallisce → NON deployare.
 
-1. Verifica che non ci siano modifiche non committate:
-   ```
-   git status
-   ```
-   Se ci sono, chiedi all'utente se vuole committare prima.
+### 1. TypeScript check
+```bash
+cd backend && npx tsc --noEmit
+cd frontend && npx tsc --noEmit
+```
 
-2. Type check backend:
-   ```
-   cd backend && npx tsc --noEmit
-   ```
+### 2. Lint
+```bash
+cd backend && npm run lint
+```
 
-3. Type check frontend:
-   ```
-   cd frontend && npx tsc --noEmit
-   ```
+### 3. Test
+```bash
+cd backend && npx jest --forceExit
+```
 
-4. Lint backend:
-   ```
-   cd backend && npm run lint
-   ```
+### 4. Build
+```bash
+cd backend && npm run build
+cd frontend && npm run build
+```
 
-5. Run test backend:
-   ```
-   cd backend && npm run test -- --passWithNoTests
-   ```
+### 5. Security audit
+```bash
+# Mock data check
+grep -rn "DEMO_DATA\|MOCK_DATA\|mockCustomers\|isDemoMode" frontend/ --include="*.ts" --include="*.tsx"
+# Secrets check
+grep -rn "password.*=.*['"]" backend/src/ --include="*.ts" | grep -v configService | grep -v process.env | grep -v ".spec."
+```
+Atteso: 0 risultati.
 
-Se qualsiasi step fallisce, FERMATI e risolvi prima di procedere.
-
-## Build
-
-6. Build backend:
-   ```
-   cd backend && npm run build
-   ```
-
-7. Build frontend:
-   ```
-   cd frontend && npm run build
-   ```
+### 6. Migration status
+```bash
+cd backend && npx prisma migrate status
+```
 
 ## Deploy
 
-8. Committa con messaggio chiaro:
-   ```
-   git add -A && git commit -m "deploy: [descrizione breve]"
-   ```
+### Commit e push
+```bash
+git add -A
+git commit -m "deploy: <descrizione>"
+git push origin <branch>
+```
 
-9. Push su main:
-   ```
-   git push origin main
-   ```
-
-10. Verifica deploy su Render:
-    ```
-    render deploys list srv-d6nb5efgi27c73cbk0bg -o json 2>&1 | head -5
-    ```
-
-11. Attendi e verifica che il deploy sia live:
-    ```
-    curl -s https://mechmind-backend.onrender.com/v1/health
-    ```
+### Verifica health
+```bash
+# Attendi 2-3 minuti per il deploy
+curl -s https://mechmind-backend.onrender.com/v1/health
+```
 
 ## Post-deploy
+- Verifica health endpoint: 200 OK
+- Verifica un endpoint critico (bookings, customers)
+- Monitora log per 30 minuti
 
-12. Comunica all'utente:
-    - Stato del deploy
-    - URL backend e frontend
-    - Eventuali warning
+Vedi `references/deploy-steps.md` per comandi dettagliati per ogni ambiente.

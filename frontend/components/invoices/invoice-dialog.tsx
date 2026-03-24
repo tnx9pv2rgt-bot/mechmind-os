@@ -89,7 +89,7 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
 
   const handleSubmit = async (data: Record<string, unknown>) => {
     const invoiceData = data as InvoiceFormData;
-    // TODO: Replace with useCreateInvoice() hook when InvoiceController is created
+    // POST to /api/invoices proxies to NestJS /v1/invoices
     const res = await fetch('/api/invoices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

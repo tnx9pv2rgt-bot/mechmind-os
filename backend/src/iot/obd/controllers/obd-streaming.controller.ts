@@ -9,6 +9,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
 import { Roles } from '../../../auth/decorators/roles.decorator';
+import { CurrentUser } from '../../../auth/decorators/current-user.decorator';
 import { ObdStreamingService } from '../services/obd-streaming.service';
 import {
   StartStreamingDto,
@@ -33,8 +34,11 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Start OBD streaming session' })
   @ApiResponse({ status: 201, type: StreamResponseDto })
-  async startStreaming(@Body() dto: StartStreamingDto): Promise<StreamResponseDto> {
-    const stream = await this.streamingService.startStreaming(dto.deviceId, {
+  async startStreaming(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: StartStreamingDto,
+  ): Promise<StreamResponseDto> {
+    const stream = await this.streamingService.startStreaming(tenantId, dto.deviceId, {
       adapterType: dto.adapterType,
       protocol: dto.protocol,
       sensors: dto.sensors,
@@ -56,15 +60,18 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Stop OBD streaming session' })
   @ApiResponse({ status: 200 })
-  async stopStreaming(@Param('id') streamId: string): Promise<void> {
-    await this.streamingService.stopStreaming(streamId);
+  async stopStreaming(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') streamId: string,
+  ): Promise<void> {
+    await this.streamingService.stopStreaming(tenantId, streamId);
   }
 
   @Get('streams')
   @ApiOperation({ summary: 'Get all active streams' })
   @ApiResponse({ status: 200, type: [StreamResponseDto] })
-  async getActiveStreams(): Promise<StreamResponseDto[]> {
-    const streams = this.streamingService.getAllActiveStreams();
+  async getActiveStreams(@CurrentUser('tenantId') tenantId: string): Promise<StreamResponseDto[]> {
+    const streams = this.streamingService.getAllActiveStreams(tenantId);
     return streams.map(stream => ({
       streamId: stream.id,
       deviceId: stream.deviceId,
@@ -79,8 +86,11 @@ export class ObdStreamingController {
   @Get('devices/:id/stream')
   @ApiOperation({ summary: 'Get active stream for device' })
   @ApiResponse({ status: 200, type: StreamResponseDto })
-  async getDeviceStream(@Param('id') deviceId: string): Promise<StreamResponseDto | null> {
-    const stream = this.streamingService.getActiveStream(deviceId);
+  async getDeviceStream(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') deviceId: string,
+  ): Promise<StreamResponseDto | null> {
+    const stream = this.streamingService.getActiveStream(tenantId, deviceId);
     if (!stream) return null;
 
     return {
@@ -98,8 +108,15 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Capture freeze frame data' })
   @ApiResponse({ status: 201, type: FreezeFrameResponseDto })
-  async captureFreezeFrame(@Body() dto: FreezeFrameRequestDto): Promise<FreezeFrameResponseDto> {
-    const freezeFrame = await this.streamingService.captureFreezeFrame(dto.deviceId, dto.dtcCode);
+  async captureFreezeFrame(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: FreezeFrameRequestDto,
+  ): Promise<FreezeFrameResponseDto> {
+    const freezeFrame = await this.streamingService.captureFreezeFrame(
+      tenantId,
+      dto.deviceId,
+      dto.dtcCode,
+    );
 
     return {
       id: freezeFrame.id,
@@ -114,8 +131,11 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Get Mode $06 test results' })
   @ApiResponse({ status: 200, type: [Mode06TestResponseDto] })
-  async getMode06Tests(@Param('id') deviceId: string): Promise<Mode06TestResponseDto[]> {
-    const results = await this.streamingService.getMode06Tests(deviceId);
+  async getMode06Tests(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') deviceId: string,
+  ): Promise<Mode06TestResponseDto[]> {
+    const results = await this.streamingService.getMode06Tests(tenantId, deviceId);
     return results as Mode06TestResponseDto[];
   }
 
@@ -123,8 +143,11 @@ export class ObdStreamingController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Execute Mode $08 EVAP test' })
   @ApiResponse({ status: 201, type: EvapTestResponseDto })
-  async executeEvapTest(@Body() dto: EvapTestRequestDto): Promise<EvapTestResponseDto> {
-    const test = await this.streamingService.executeEvapTest(dto.deviceId, dto.testType);
+  async executeEvapTest(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: EvapTestRequestDto,
+  ): Promise<EvapTestResponseDto> {
+    const test = await this.streamingService.executeEvapTest(tenantId, dto.deviceId, dto.testType);
 
     return {
       id: test.id,
@@ -141,9 +164,11 @@ export class ObdStreamingController {
   @ApiOperation({ summary: 'Get sensor history' })
   @ApiResponse({ status: 200 })
   async getSensorHistory(
+    @CurrentUser('tenantId') tenantId: string,
     @Query() query: SensorHistoryQueryDto,
   ): Promise<{ timestamp: Date; value: number }[]> {
     return await this.streamingService.getSensorHistory(
+      tenantId,
       query.deviceId,
       query.sensor,
       new Date(query.from),
@@ -157,10 +182,11 @@ export class ObdStreamingController {
   @ApiOperation({ summary: 'Apply data retention policy' })
   @ApiResponse({ status: 200 })
   async applyRetentionPolicy(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id') deviceId: string,
     @Query('days') days: number,
   ): Promise<{ deleted: number }> {
-    const deleted = await this.streamingService.applyRetentionPolicy(deviceId, days);
+    const deleted = await this.streamingService.applyRetentionPolicy(tenantId, deviceId, days);
     return { deleted };
   }
 }

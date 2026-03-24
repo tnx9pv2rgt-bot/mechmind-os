@@ -11,6 +11,7 @@ const mockPrisma = {
     findMany: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(),
+    count: jest.fn(),
   },
   fleetVehicle: {
     create: jest.fn(),
@@ -65,9 +66,10 @@ describe('FleetService', () => {
     it('should return all fleets for tenant', async () => {
       const fleets = [{ id: '1', name: 'Fleet A' }];
       mockPrisma.fleet.findMany.mockResolvedValue(fleets);
+      mockPrisma.fleet.count.mockResolvedValue(1);
 
       const result = await service.findAll('t1');
-      expect(result).toEqual(fleets);
+      expect(result).toEqual({ data: fleets, total: 1, page: 1, limit: 20, pages: 1 });
       expect(mockPrisma.fleet.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ tenantId: 't1' }) }),
       );

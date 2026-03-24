@@ -138,7 +138,24 @@ export class SegmentWebhookService {
   verifySignature(payload: string, signature: string, secret: string): boolean {
     const expectedSignature = createHmac('sha1', secret).update(payload).digest('hex');
 
-    return signature === expectedSignature || signature === `sha1=${expectedSignature}`;
+    // Try plain hex comparison first, then with sha1= prefix
+    try {
+      const sigBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(expectedSignature);
+      if (sigBuffer.length === expectedBuffer.length) {
+        if (timingSafeEqual(sigBuffer, expectedBuffer)) return true;
+      }
+
+      const prefixedExpected = `sha1=${expectedSignature}`;
+      const prefixedBuffer = Buffer.from(prefixedExpected);
+      if (sigBuffer.length === prefixedBuffer.length) {
+        return timingSafeEqual(sigBuffer, prefixedBuffer);
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -601,8 +618,20 @@ export class WebhookController {
     @Headers('x-zapier-secret') secret: string,
   ): Promise<WebhookResponse> {
     const expectedSecret = this.configService.get('ZAPIER_WEBHOOK_SECRET');
-    if (expectedSecret && secret !== expectedSecret) {
-      throw new HttpException('Invalid secret', HttpStatus.UNAUTHORIZED);
+    if (expectedSecret) {
+      try {
+        const secretBuffer = Buffer.from(secret || '');
+        const expectedBuffer = Buffer.from(expectedSecret);
+        if (
+          secretBuffer.length !== expectedBuffer.length ||
+          !timingSafeEqual(secretBuffer, expectedBuffer)
+        ) {
+          throw new HttpException('Invalid secret', HttpStatus.UNAUTHORIZED);
+        }
+      } catch (error) {
+        if (error instanceof HttpException) throw error;
+        throw new HttpException('Invalid secret', HttpStatus.UNAUTHORIZED);
+      }
     }
 
     return this.zapierService.handleIncoming(payload);

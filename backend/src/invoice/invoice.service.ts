@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
+import { EncryptionService } from '../common/services/encryption.service';
 import { CreateInvoiceDto, CreateInvoiceItemDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -26,9 +27,20 @@ interface InvoiceFilters {
 export class InvoiceService {
   private readonly logger = new Logger(InvoiceService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryption: EncryptionService,
+  ) {}
 
-  async findAll(tenantId: string, filters?: InvoiceFilters) {
+  async findAll(
+    tenantId: string,
+    filters?: InvoiceFilters,
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: unknown[];
+    meta: { total: number; page: number; limit: number; pages: number };
+  }> {
     const where: Record<string, unknown> = { tenantId };
 
     if (filters?.status) {
@@ -52,17 +64,22 @@ export class InvoiceService {
         where,
         include: { customer: true },
         orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
       }),
       this.prisma.invoice.count({ where }),
     ]);
 
-    return { invoices, total };
+    return {
+      data: invoices,
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(tenantId: string, id: string) {
     const invoice = await this.prisma.invoice.findFirst({
       where: { id, tenantId },
-      include: { customer: true },
+      include: { customer: true, invoiceItems: true },
     });
 
     if (!invoice) {
@@ -78,6 +95,15 @@ export class InvoiceService {
       dto.taxRate,
     );
 
+    // Ritenuta d'acconto calculation
+    let ritenutaAmount: number | undefined;
+    if (dto.ritenutaRate && dto.ritenutaRate > 0) {
+      ritenutaAmount = Math.round(subtotal * dto.ritenutaRate) / 100;
+    }
+
+    // totalDue = total - ritenuta (netto a pagare)
+    const totalDue = ritenutaAmount != null ? total - ritenutaAmount : total;
+
     return this.prisma.$transaction(async tx => {
       const invoiceNumber = await this.generateInvoiceNumber(tenantId, tx);
 
@@ -90,7 +116,7 @@ export class InvoiceService {
           subtotal: new Decimal(subtotal.toFixed(2)),
           taxRate: new Decimal(taxRate.toFixed(2)),
           taxAmount: new Decimal(taxAmount.toFixed(2)),
-          total: new Decimal(total.toFixed(2)),
+          total: new Decimal(totalDue.toFixed(2)),
           stampDuty,
           stampDutyAmount:
             stampDutyAmount > 0 ? new Decimal(stampDutyAmount.toFixed(2)) : undefined,
@@ -98,6 +124,11 @@ export class InvoiceService {
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
           bookingId: dto.bookingId ?? null,
           workOrderId: dto.workOrderId ?? null,
+          operationDate: dto.operationDate ? new Date(dto.operationDate) : null,
+          ritenutaType: dto.ritenutaType ?? null,
+          ritenutaRate: dto.ritenutaRate != null ? new Decimal(dto.ritenutaRate.toFixed(2)) : null,
+          ritenutaAmount: ritenutaAmount != null ? new Decimal(ritenutaAmount.toFixed(2)) : null,
+          ritenutaCausale: dto.ritenutaCausale ?? null,
         },
         include: { customer: true },
       });
@@ -152,8 +183,11 @@ export class InvoiceService {
       throw new BadRequestException('Only DRAFT invoices can be deleted');
     }
 
-    await this.prisma.invoice.delete({ where: { id } });
-    this.logger.log(`Invoice ${existing.invoiceNumber} deleted for tenant ${tenantId}`);
+    await this.prisma.invoice.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: 'CANCELLED' },
+    });
+    this.logger.log(`Invoice ${existing.invoiceNumber} soft-deleted for tenant ${tenantId}`);
   }
 
   async send(tenantId: string, id: string) {
@@ -246,7 +280,7 @@ export class InvoiceService {
   ): Promise<{ refundedAmount: number; creditNoteId?: string }> {
     const invoice = await this.prisma.invoice.findFirst({
       where: { id: invoiceId, tenantId },
-      include: { customer: true },
+      include: { customer: true, invoiceItems: true },
     });
 
     if (!invoice) {
@@ -280,12 +314,20 @@ export class InvoiceService {
       // Full refund → create credit note (TD04)
       if (isFullRefund) {
         const creditNoteNumber = await this.generateInvoiceNumber(tenantId, tx);
+        // Build items snapshot from normalized InvoiceItem relation
+        const itemsSnapshot = invoice.invoiceItems.map(i => ({
+          description: i.description,
+          quantity: Number(i.quantity),
+          unitPrice: Number(i.unitPrice),
+          vatRate: Number(i.vatRate),
+          total: Number(i.total),
+        }));
         const creditNote = await tx.invoice.create({
           data: {
             tenantId,
             customerId: invoice.customerId,
             invoiceNumber: creditNoteNumber,
-            items: invoice.items as object,
+            items: itemsSnapshot.length > 0 ? itemsSnapshot : (invoice.items as object),
             subtotal: invoice.subtotal,
             taxRate: invoice.taxRate,
             taxAmount: invoice.taxAmount,
@@ -306,6 +348,97 @@ export class InvoiceService {
 
       return { refundedAmount: refundAmount, creditNoteId };
     });
+  }
+
+  /**
+   * Mark all SENT invoices past their due date as OVERDUE.
+   * Runs across all tenants (designed for cron usage).
+   * Returns count of updated invoices.
+   */
+  async markOverdueInvoices(): Promise<number> {
+    const now = new Date();
+
+    const result = await this.prisma.invoice.updateMany({
+      where: {
+        status: 'SENT',
+        dueDate: { lt: now },
+      },
+      data: {
+        status: 'OVERDUE',
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.log(`Marked ${result.count} invoices as OVERDUE`);
+    }
+
+    return result.count;
+  }
+
+  /**
+   * Export invoices in CSV format for Italian accountant compatibility.
+   * Uses semicolon separator and UTF-8 BOM for Excel.
+   */
+  async exportCsv(tenantId: string, from: Date, to: Date): Promise<string> {
+    // Internal: bounded by date range (export use case, not paginated API)
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        tenantId,
+        createdAt: {
+          gte: from,
+          lte: to,
+        },
+      },
+      include: { customer: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const statusMap: Record<string, string> = {
+      DRAFT: 'Bozza',
+      SENT: 'Inviata',
+      PAID: 'Pagata',
+      OVERDUE: 'Scaduta',
+      CANCELLED: 'Annullata',
+      REFUNDED: 'Rimborsata',
+      PARTIALLY_REFUNDED: 'Parzialmente rimborsata',
+    };
+
+    const header =
+      'Numero;Data;Cliente;CF/P.IVA;Imponibile;IVA;Totale;Stato;Data Pagamento;Metodo Pagamento';
+
+    const rows = invoices.map(invoice => {
+      const customer = invoice.customer;
+      const firstName = customer?.encryptedFirstName
+        ? this.encryption.decrypt(customer.encryptedFirstName)
+        : '';
+      const lastName = customer?.encryptedLastName
+        ? this.encryption.decrypt(customer.encryptedLastName)
+        : '';
+      const clientName = `${firstName} ${lastName}`.trim();
+
+      const fiscalId = customer?.partitaIva ?? customer?.codiceFiscale ?? '';
+
+      const invoiceDate = invoice.createdAt ? invoice.createdAt.toISOString().split('T')[0] : '';
+      const paidDate = invoice.paidAt ? invoice.paidAt.toISOString().split('T')[0] : '';
+
+      const status = statusMap[invoice.status] ?? invoice.status;
+
+      return [
+        invoice.invoiceNumber,
+        invoiceDate,
+        clientName,
+        fiscalId,
+        Number(invoice.subtotal).toFixed(2),
+        Number(invoice.taxAmount).toFixed(2),
+        Number(invoice.total).toFixed(2),
+        status,
+        paidDate,
+        invoice.paymentMethod ?? '',
+      ].join(';');
+    });
+
+    const bom = '\uFEFF';
+    return bom + [header, ...rows].join('\n');
   }
 
   /**

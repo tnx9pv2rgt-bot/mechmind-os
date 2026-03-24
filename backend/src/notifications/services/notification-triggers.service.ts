@@ -528,6 +528,39 @@ export class NotificationTriggersService {
   }
 
   // ==========================================
+  // WORK ORDER DELIVERY — REVIEW REQUEST
+  // ==========================================
+
+  @OnEvent('workOrder.delivered')
+  async onWorkOrderDelivered(event: {
+    workOrderId: string;
+    tenantId: string;
+    customerId: string;
+  }): Promise<void> {
+    this.logger.log(`Work order delivered: ${event.workOrderId} — scheduling review request`);
+
+    try {
+      // Schedule review request SMS 24h later via delayed notification
+      await this.notificationService.sendImmediate({
+        customerId: event.customerId,
+        tenantId: event.tenantId,
+        type: NotificationType.STATUS_UPDATE,
+        channel: NotificationChannel.SMS,
+        metadata: {
+          workOrderId: event.workOrderId,
+          template: NOTIFICATION_EVENTS.REVIEW_REQUEST.template,
+          subject: NOTIFICATION_EVENTS.REVIEW_REQUEST.subject,
+          reviewLink: `https://app.mechmind.io/review/${event.tenantId}`,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send review request for WO ${event.workOrderId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  // ==========================================
   // CRON JOBS — SCHEDULED NOTIFICATIONS
   // ==========================================
 
@@ -618,7 +651,7 @@ export class NotificationTriggersService {
       // Find vehicles with old completed work orders but no recent ones
       const vehicles = await this.prisma.vehicle.findMany({
         where: {
-          status: 'active',
+          status: 'ACTIVE',
           workOrders: {
             some: {
               status: 'COMPLETED',
@@ -671,6 +704,182 @@ export class NotificationTriggersService {
     } catch (error) {
       this.logger.error(
         `Maintenance reminder cron failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+
+    return sentCount;
+  }
+
+  /**
+   * Every day at 07:00 (Europe/Rome) — mark overdue invoices.
+   * INTENTIONALLY cross-tenant: cron marks overdue invoices system-wide.
+   */
+  @Cron('0 7 * * *', { timeZone: 'Europe/Rome' })
+  async markOverdueInvoices(): Promise<number> {
+    this.logger.log('Running mark overdue invoices cron job...');
+
+    try {
+      const now = new Date();
+
+      const result = await this.prisma.invoice.updateMany({
+        where: {
+          status: 'SENT',
+          dueDate: { lt: now },
+        },
+        data: {
+          status: 'OVERDUE',
+        },
+      });
+
+      this.logger.log(`Invoices marked as OVERDUE: ${result.count}`);
+      return result.count;
+    } catch (error) {
+      this.logger.error(
+        `Mark overdue invoices cron failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      return 0;
+    }
+  }
+
+  /**
+   * Every Monday at 10:00 (Europe/Rome) — send warranty expiring reminders
+   * Finds work orders completed between 335-365 days ago (warranty expiring within 30 days
+   * assuming 1-year warranty) and sends EMAIL notifications.
+   */
+  @Cron('0 10 * * 1', { timeZone: 'Europe/Rome' })
+  async sendWarrantyExpiringReminders(): Promise<number> {
+    this.logger.log('Running warranty expiring reminders cron job...');
+
+    const now = new Date();
+    const daysAgo365 = new Date(now);
+    daysAgo365.setDate(daysAgo365.getDate() - 365);
+    const daysAgo335 = new Date(now);
+    daysAgo335.setDate(daysAgo335.getDate() - 335);
+
+    let sentCount = 0;
+
+    try {
+      const workOrders = await this.prisma.workOrder.findMany({
+        where: {
+          status: 'COMPLETED',
+          actualCompletionTime: {
+            gte: daysAgo365,
+            lte: daysAgo335,
+          },
+        },
+        select: {
+          id: true,
+          tenantId: true,
+          customerId: true,
+          woNumber: true,
+        },
+      });
+
+      for (const wo of workOrders) {
+        if (!wo.customerId) continue;
+        try {
+          await this.notificationService.sendImmediate({
+            customerId: wo.customerId,
+            tenantId: wo.tenantId,
+            type: NotificationType.MAINTENANCE_DUE,
+            channel: NotificationChannel.EMAIL,
+            metadata: {
+              workOrderId: wo.id,
+              woNumber: wo.woNumber,
+              template: NOTIFICATION_EVENTS.WARRANTY_EXPIRING.template,
+              subject: NOTIFICATION_EVENTS.WARRANTY_EXPIRING.subject,
+            },
+          });
+          sentCount++;
+        } catch (error) {
+          this.logger.error(
+            `Failed to send warranty reminder for WO ${wo.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
+
+      this.logger.log(`Warranty expiring reminders sent: ${sentCount}/${workOrders.length}`);
+    } catch (error) {
+      this.logger.error(
+        `Warranty expiring reminders cron failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+
+    return sentCount;
+  }
+
+  // ==========================================
+  // CRON: sendReviewRequests
+  // ==========================================
+
+  /**
+   * Every day at 10:00 (Europe/Rome) — send review requests for work orders
+   * delivered yesterday that haven't received a review request yet.
+   */
+  @Cron('0 10 * * *', { timeZone: 'Europe/Rome' })
+  async sendReviewRequests(): Promise<number> {
+    this.logger.log('Running review request cron job...');
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const startOfYesterday = new Date(yesterday);
+    startOfYesterday.setHours(0, 0, 0, 0);
+    const endOfYesterday = new Date(yesterday);
+    endOfYesterday.setHours(23, 59, 59, 999);
+
+    let sentCount = 0;
+
+    try {
+      const deliveredOrders = await this.prisma.workOrder.findMany({
+        where: {
+          status: 'COMPLETED',
+          updatedAt: {
+            gte: startOfYesterday,
+            lt: endOfYesterday,
+          },
+          reviewRequestSentAt: null,
+        },
+        select: {
+          id: true,
+          tenantId: true,
+          customerId: true,
+        },
+      });
+
+      for (const wo of deliveredOrders) {
+        if (!wo.customerId) continue;
+
+        try {
+          await this.notificationService.sendImmediate({
+            customerId: wo.customerId,
+            tenantId: wo.tenantId,
+            type: NotificationType.STATUS_UPDATE,
+            channel: NotificationChannel.SMS,
+            metadata: {
+              workOrderId: wo.id,
+              template: NOTIFICATION_EVENTS.REVIEW_REQUEST.template,
+              subject: NOTIFICATION_EVENTS.REVIEW_REQUEST.subject,
+              reviewLink: `https://app.mechmind.io/review/${wo.tenantId}`,
+            },
+          });
+
+          await this.prisma.workOrder.update({
+            where: { id: wo.id },
+            data: { reviewRequestSentAt: new Date() },
+          });
+
+          sentCount++;
+        } catch (error) {
+          this.logger.error(
+            `Failed to send review request for WO ${wo.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
+
+      this.logger.log(`Review requests sent: ${sentCount}/${deliveredOrders.length}`);
+    } catch (error) {
+      this.logger.error(
+        `Review request cron failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
 

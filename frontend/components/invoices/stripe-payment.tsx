@@ -96,40 +96,6 @@ const mockInvoicePayment: InvoicePayment = {
   paymentHistory: [],
 };
 
-// Mock payment history
-const mockPaymentHistory: PaymentHistory[] = [
-  {
-    id: 'pi_1234567890',
-    amount: 450.0,
-    currency: 'EUR',
-    status: 'succeeded',
-    createdAt: '2024-03-18T14:30:00Z',
-    paymentMethod: {
-      brand: 'visa',
-      last4: '4242',
-      expMonth: 12,
-      expYear: 2025,
-    },
-    receiptUrl: 'https://pay.stripe.com/receipts/...',
-  },
-  {
-    id: 'pi_0987654321',
-    amount: 1250.0,
-    currency: 'EUR',
-    status: 'refunded',
-    createdAt: '2024-03-10T09:15:00Z',
-    refundedAt: '2024-03-12T11:20:00Z',
-    refundAmount: 1250.0,
-    paymentMethod: {
-      brand: 'mastercard',
-      last4: '8888',
-      expMonth: 8,
-      expYear: 2026,
-    },
-    receiptUrl: 'https://pay.stripe.com/receipts/...',
-  },
-];
-
 // Card input styles
 const cardElementOptions = {
   style: {
@@ -376,7 +342,7 @@ export function StripePayment({
     'idle' | 'processing' | 'succeeded' | 'failed'
   >('idle');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>(mockPaymentHistory);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
 
   const handleStartPayment = async () => {
     // In production: call API to create payment intent

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { AdminSetupService } from './admin-setup.service';
 import { PrismaService } from '../common/services/prisma.service';
 
@@ -19,7 +20,7 @@ jest.mock('@prisma/client', () => ({
   },
 }));
 
-const mockPrisma = {
+const mockTx = {
   tenant: {
     upsert: jest.fn(),
   },
@@ -31,12 +32,31 @@ const mockPrisma = {
   },
 };
 
+const mockPrisma = {
+  tenant: {
+    upsert: jest.fn(),
+  },
+  location: {
+    upsert: jest.fn(),
+  },
+  user: {
+    upsert: jest.fn(),
+  },
+  $transaction: jest
+    .fn()
+    .mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
+};
+
 describe('AdminSetupService', () => {
   let service: AdminSetupService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AdminSetupService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        AdminSetupService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('Demo2026!') } },
+      ],
     }).compile();
 
     service = module.get<AdminSetupService>(AdminSetupService);
@@ -75,12 +95,18 @@ describe('AdminSetupService', () => {
     ];
 
     beforeEach(() => {
-      mockPrisma.tenant.upsert.mockResolvedValue(mockTenant);
-      mockPrisma.location.upsert.mockResolvedValue(mockLocation);
-      mockPrisma.user.upsert
+      mockTx.tenant.upsert.mockResolvedValue(mockTenant);
+      mockTx.location.upsert.mockResolvedValue(mockLocation);
+      mockTx.user.upsert
         .mockResolvedValueOnce(mockUsers[0])
         .mockResolvedValueOnce(mockUsers[1])
         .mockResolvedValueOnce(mockUsers[2]);
+    });
+
+    it('should run all operations inside a single $transaction', async () => {
+      await service.seedDemoData();
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
     });
 
     it('should return SeedResult with tenantId, locationId, and users', async () => {
@@ -100,7 +126,7 @@ describe('AdminSetupService', () => {
     it('should upsert tenant with slug "demo"', async () => {
       await service.seedDemoData();
 
-      expect(mockPrisma.tenant.upsert).toHaveBeenCalledWith({
+      expect(mockTx.tenant.upsert).toHaveBeenCalledWith({
         where: { slug: 'demo' },
         update: {
           name: 'Demo Officina Roma',
@@ -119,7 +145,7 @@ describe('AdminSetupService', () => {
     it('should upsert location with tenantId and isMain=true', async () => {
       await service.seedDemoData();
 
-      expect(mockPrisma.location.upsert).toHaveBeenCalledWith({
+      expect(mockTx.location.upsert).toHaveBeenCalledWith({
         where: {
           tenantId_isMain: {
             tenantId: 'tenant-uuid-1',
@@ -150,10 +176,10 @@ describe('AdminSetupService', () => {
     it('should create three users with correct roles', async () => {
       await service.seedDemoData();
 
-      expect(mockPrisma.user.upsert).toHaveBeenCalledTimes(3);
+      expect(mockTx.user.upsert).toHaveBeenCalledTimes(3);
 
       // ADMIN user
-      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
+      expect(mockTx.user.upsert).toHaveBeenCalledWith({
         where: {
           tenantId_email: {
             tenantId: 'tenant-uuid-1',
@@ -179,7 +205,7 @@ describe('AdminSetupService', () => {
       });
 
       // MANAGER user
-      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
+      expect(mockTx.user.upsert).toHaveBeenCalledWith({
         where: {
           tenantId_email: {
             tenantId: 'tenant-uuid-1',
@@ -205,7 +231,7 @@ describe('AdminSetupService', () => {
       });
 
       // MECHANIC user
-      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
+      expect(mockTx.user.upsert).toHaveBeenCalledWith({
         where: {
           tenantId_email: {
             tenantId: 'tenant-uuid-1',
@@ -241,19 +267,19 @@ describe('AdminSetupService', () => {
 
     it('should call upsert operations in correct order: tenant, location, then users', async () => {
       const callOrder: string[] = [];
-      mockPrisma.tenant.upsert.mockReset();
-      mockPrisma.location.upsert.mockReset();
-      mockPrisma.user.upsert.mockReset();
+      mockTx.tenant.upsert.mockReset();
+      mockTx.location.upsert.mockReset();
+      mockTx.user.upsert.mockReset();
 
-      mockPrisma.tenant.upsert.mockImplementation(() => {
+      mockTx.tenant.upsert.mockImplementation(() => {
         callOrder.push('tenant');
         return Promise.resolve(mockTenant);
       });
-      mockPrisma.location.upsert.mockImplementation(() => {
+      mockTx.location.upsert.mockImplementation(() => {
         callOrder.push('location');
         return Promise.resolve(mockLocation);
       });
-      mockPrisma.user.upsert.mockImplementation(
+      mockTx.user.upsert.mockImplementation(
         (args: { where: { tenantId_email: { email: string } } }) => {
           callOrder.push(`user-${args.where.tenantId_email.email}`);
           const idx = mockUsers.findIndex(u => u.email === args.where.tenantId_email.email);
@@ -271,20 +297,20 @@ describe('AdminSetupService', () => {
     });
 
     it('should propagate error when tenant upsert fails', async () => {
-      mockPrisma.tenant.upsert.mockRejectedValue(new Error('DB connection failed'));
+      mockTx.tenant.upsert.mockRejectedValue(new Error('DB connection failed'));
 
       await expect(service.seedDemoData()).rejects.toThrow('DB connection failed');
     });
 
     it('should propagate error when location upsert fails', async () => {
-      mockPrisma.location.upsert.mockRejectedValue(new Error('Location constraint error'));
+      mockTx.location.upsert.mockRejectedValue(new Error('Location constraint error'));
 
       await expect(service.seedDemoData()).rejects.toThrow('Location constraint error');
     });
 
     it('should propagate error when user upsert fails', async () => {
-      mockPrisma.user.upsert.mockReset();
-      mockPrisma.user.upsert.mockRejectedValue(new Error('Unique constraint violated'));
+      mockTx.user.upsert.mockReset();
+      mockTx.user.upsert.mockRejectedValue(new Error('Unique constraint violated'));
 
       await expect(service.seedDemoData()).rejects.toThrow('Unique constraint violated');
     });

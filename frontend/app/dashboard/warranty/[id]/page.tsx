@@ -31,63 +31,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { ClaimForm, ClaimCard, RemainingCoverage } from '@/components/warranty';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import type { WarrantyWithClaims, WarrantyClaim } from '@/lib/services/warrantyService';
+import { WarrantyStatus, ClaimStatus, WarrantyType } from '@/lib/services/warrantyService';
 
-// Types defined locally to avoid importing Prisma client-side
-enum WarrantyStatus {
-  ACTIVE = 'ACTIVE',
-  EXPIRING_SOON = 'EXPIRING_SOON',
-  EXPIRED = 'EXPIRED',
-  VOID = 'VOID',
-  PENDING = 'PENDING',
-  CLAIMED = 'CLAIMED',
-}
-
-enum WarrantyType {
-  MANUFACTURER = 'MANUFACTURER',
-  EXTENDED = 'EXTENDED',
-  DEALER = 'DEALER',
-  AS_IS = 'AS_IS',
-}
-
-enum ClaimStatus {
-  SUBMITTED = 'SUBMITTED',
-  UNDER_REVIEW = 'UNDER_REVIEW',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  PAID = 'PAID',
-}
-
-interface WarrantyWithClaims {
-  id: string;
-  tenantId: string;
-  warrantyNumber: string;
-  vehicleId: string;
-  coverageType: string;
-  startDate: string;
-  expirationDate: string;
-  status: WarrantyStatus;
-  mileageLimit: number | null;
-  maxClaimAmount: number | null;
-  deductibleAmount: number | null;
-  createdAt: string;
-  updatedAt: string;
-  claims: Array<{
-    id: string;
-    status: string;
-    description: string;
-    amount: number | null;
-    approvedAmount?: number;
-  }>;
-  vehicle?: { id: string; vin: string; make: string; model: string; year: number };
-}
+const fileClaimSchema = z.object({
+  issueDescription: z.string().min(1, 'La descrizione del problema è obbligatoria'),
+  estimatedCost: z.number().min(0, 'Il costo stimato non può essere negativo'),
+  evidence: z.array(z.string()).optional(),
+});
 
 interface FileClaimDTO {
   issueDescription: string;
   estimatedCost: number;
   evidence?: string[];
 }
+
+type ClaimWithApproved = WarrantyClaim & { approvedAmount?: number };
 
 const statusConfig: Partial<Record<WarrantyStatus, { label: string; color: string }>> = {
   ACTIVE: { label: 'Attiva', color: 'bg-green-100 text-green-800' },
@@ -128,13 +92,13 @@ function calculateDaysRemaining(expirationDate: Date | string): number {
 export default function WarrantyDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const warrantyId = params.id as string;
 
-  const [warranty, setWarranty] = React.useState<WarrantyWithClaims | null>(null);
+  const [warranty, setWarranty] = React.useState<(WarrantyWithClaims & { claims: ClaimWithApproved[] }) | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSubmittingClaim, setIsSubmittingClaim] = React.useState(false);
   const [claimDialogOpen, setClaimDialogOpen] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
 
   React.useEffect(() => {
     loadWarranty();
@@ -145,28 +109,25 @@ export default function WarrantyDetailPage() {
       setIsLoading(true);
       const res = await fetch(`/api/warranties/${warrantyId}`);
       if (!res.ok) {
-        toast({
-          title: 'Garanzia non trovata',
-          description: 'La garanzia richiesta non è stata trovata',
-          variant: 'error',
-        });
+        toast.error('Garanzia non trovata');
         router.push('/dashboard/warranty');
         return;
       }
       const json = await res.json();
       setWarranty(json.data);
     } catch (error) {
-      toast({
-        title: 'Errore nel caricamento della garanzia',
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'Errore nel caricamento della garanzia');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFileClaim = async (data: FileClaimDTO) => {
+    const result = fileClaimSchema.safeParse(data);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
     try {
       setIsSubmittingClaim(true);
       const claimRes = await fetch(`/api/warranties/${warrantyId}/claims`, {
@@ -178,49 +139,27 @@ export default function WarrantyDetailPage() {
         const err = await claimRes.json();
         throw new Error(err.error || "Errore nell'invio del reclamo");
       }
-      toast({
-        title: 'Reclamo inviato',
-        description: 'Il reclamo è stato inviato per la revisione',
-      });
+      toast.success('Reclamo inviato con successo');
       setClaimDialogOpen(false);
       loadWarranty();
     } catch (error) {
-      toast({
-        title: "Errore nell'invio del reclamo",
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : "Errore nell'invio del reclamo");
     } finally {
       setIsSubmittingClaim(false);
     }
   };
 
   const handleDeleteWarranty = async () => {
-    if (
-      !confirm(
-        'Sei sicuro di voler eliminare questa garanzia? Questa azione non può essere annullata.'
-      )
-    ) {
-      return;
-    }
-
     try {
       const delRes = await fetch(`/api/warranties/${warrantyId}`, { method: 'DELETE' });
       if (!delRes.ok) {
         const err = await delRes.json();
         throw new Error(err.error || "Errore nell'eliminazione della garanzia");
       }
-      toast({
-        title: 'Garanzia eliminata',
-        description: 'La garanzia è stata eliminata con successo',
-      });
+      toast.success('Garanzia eliminata con successo');
       router.push('/dashboard/warranty');
     } catch (error) {
-      toast({
-        title: "Errore nell'eliminazione",
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : "Errore nell'eliminazione");
     }
   };
 
@@ -262,10 +201,22 @@ export default function WarrantyDetailPage() {
 
   return (
     <div className='space-y-6'>
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Garanzie', href: '/dashboard/warranty' },
+          { label: warranty.warrantyNumber },
+        ]}
+      />
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div className='flex items-center gap-4'>
-          <Button variant='outline' size='icon' onClick={() => router.push('/dashboard/warranty')}>
+          <Button
+            variant='outline'
+            size='icon'
+            onClick={() => router.push('/dashboard/warranty')}
+            aria-label='Torna alle garanzie'
+          >
             <ArrowLeft className='h-4 w-4' />
           </Button>
           <div>
@@ -280,7 +231,7 @@ export default function WarrantyDetailPage() {
             <Edit2 className='h-4 w-4 mr-2' />
             Modifica
           </Button>
-          <Button variant='destructive' size='sm' onClick={handleDeleteWarranty}>
+          <Button variant='destructive' size='sm' onClick={() => setDeleteConfirmOpen(true)}>
             <Trash2 className='h-4 w-4 mr-2' />
             Elimina
           </Button>
@@ -446,7 +397,7 @@ export default function WarrantyDetailPage() {
                     warranty.claims?.map(claim => (
                       <ClaimCard
                         key={claim.id}
-                        claim={claim as never}
+                        claim={claim}
                         onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
                       />
                     ))
@@ -463,7 +414,7 @@ export default function WarrantyDetailPage() {
                     pendingClaims.map(claim => (
                       <ClaimCard
                         key={claim.id}
-                        claim={claim as never}
+                        claim={claim}
                         onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
                       />
                     ))
@@ -480,7 +431,7 @@ export default function WarrantyDetailPage() {
                     approvedClaims.map(claim => (
                       <ClaimCard
                         key={claim.id}
-                        claim={claim as never}
+                        claim={claim}
                         onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
                       />
                     ))
@@ -497,7 +448,7 @@ export default function WarrantyDetailPage() {
                     rejectedClaims.map(claim => (
                       <ClaimCard
                         key={claim.id}
-                        claim={claim as never}
+                        claim={claim}
                         onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
                       />
                     ))
@@ -566,6 +517,16 @@ export default function WarrantyDetailPage() {
           />
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title='Elimina garanzia'
+        description='Sei sicuro di voler eliminare questa garanzia? Questa azione non può essere annullata.'
+        confirmLabel='Elimina'
+        variant='danger'
+        onConfirm={handleDeleteWarranty}
+      />
     </div>
   );
 }

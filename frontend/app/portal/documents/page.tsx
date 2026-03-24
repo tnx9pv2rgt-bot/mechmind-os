@@ -4,10 +4,12 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
+import { toast } from 'sonner';
 import { FileText, Search, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PortalPageWrapper } from '@/components/portal';
 import { DocumentList } from '@/components/portal';
+import { Pagination } from '@/components/ui/pagination';
 import { Document, Customer } from '@/lib/types/portal';
 
 // ============================================
@@ -16,15 +18,18 @@ import { Document, Customer } from '@/lib/types/portal';
 
 export default function PortalDocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'maintenance' | 'inspections'>(
+  const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'estimates' | 'inspections' | 'warranties' | 'other'>(
     'all'
   );
   const [customer] = useState<Customer | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const {
     data: rawData,
     error: swrError,
     isLoading,
+    mutate,
   } = useSWR<{ data: Document[] }>('/api/portal/documents', fetcher);
 
   const documents = rawData?.data || [];
@@ -39,12 +44,15 @@ export default function PortalDocumentsPage() {
 
     // Filter by tab
     if (activeTab !== 'all') {
-      const typeMap = {
+      const typeMap: Record<string, string[]> = {
         invoices: ['invoice', 'receipt'],
-        maintenance: ['maintenance_record'],
-        inspections: ['inspection_report', 'warranty_claim'],
+        estimates: ['estimate'],
+        inspections: ['inspection_report'],
+        warranties: ['warranty_claim'],
+        other: ['maintenance_record'],
       };
-      filtered = filtered.filter(d => typeMap[activeTab].includes(d.type));
+      const types = typeMap[activeTab] || [];
+      filtered = filtered.filter(d => types.includes(d.type));
     }
 
     // Filter by search
@@ -60,6 +68,7 @@ export default function PortalDocumentsPage() {
 
   const handleDownload = (id: string) => {
     window.open(`/api/portal/documents/${id}/download`, '_blank');
+    toast.success('Download avviato');
   };
 
   const handleView = (id: string) => {
@@ -86,7 +95,7 @@ export default function PortalDocumentsPage() {
         <div className='text-center py-16'>
           <p className='text-apple-red mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => mutate()}
             className='text-apple-blue hover:underline'
           >
             Riprova
@@ -109,8 +118,9 @@ export default function PortalDocumentsPage() {
           <Input
             placeholder='Cerca per numero documento o titolo...'
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
             className='pl-12 h-12 rounded-xl bg-white dark:bg-[#2f2f2f]'
+            aria-label='Cerca documenti'
           />
         </div>
       </div>
@@ -120,12 +130,14 @@ export default function PortalDocumentsPage() {
         {[
           { key: 'all', label: 'Tutti' },
           { key: 'invoices', label: 'Fatture' },
-          { key: 'maintenance', label: 'Manutenzione' },
+          { key: 'estimates', label: 'Preventivi' },
           { key: 'inspections', label: 'Ispezioni' },
+          { key: 'warranties', label: 'Garanzie' },
+          { key: 'other', label: 'Altro' },
         ].map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as typeof activeTab)}
+            onClick={() => { setActiveTab(tab.key as typeof activeTab); setPage(1); }}
             className={`
               px-4 py-2 rounded-xl text-sm font-medium transition-all
               ${
@@ -141,7 +153,12 @@ export default function PortalDocumentsPage() {
       </div>
 
       {/* Documents List */}
-      <DocumentList documents={filteredDocuments} onDownload={handleDownload} onView={handleView} />
+      <DocumentList documents={filteredDocuments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)} onDownload={handleDownload} onView={handleView} />
+      <Pagination
+        page={page}
+        totalPages={Math.ceil(filteredDocuments.length / PAGE_SIZE)}
+        onPageChange={setPage}
+      />
     </PortalPageWrapper>
   );
 }

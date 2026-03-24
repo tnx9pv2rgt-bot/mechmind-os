@@ -123,8 +123,8 @@ export default function NewBookingPage() {
           const result = await response.json();
           setVehicles(result.data || []);
         }
-      } catch (err) {
-        console.error('Failed to load vehicles:', err);
+      } catch (_err) {
+        // Vehicle loading failed silently - empty list shown
       }
     };
 
@@ -176,7 +176,6 @@ export default function NewBookingPage() {
 
       setStep(5); // Success step
     } catch (err) {
-      console.error('Booking submit error:', err);
       setSubmitError(
         err instanceof Error ? err.message : 'Errore nella creazione della prenotazione'
       );

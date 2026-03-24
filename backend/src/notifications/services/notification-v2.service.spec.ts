@@ -119,10 +119,12 @@ describe('NotificationV2Service', () => {
           useValue: {
             customer: {
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
             },
             notification: {
               create: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               findMany: jest.fn(),
               update: jest.fn(),
               updateMany: jest.fn(),
@@ -248,7 +250,7 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('queueNotification', () => {
     it('should create a pending notification record', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       const dto: CreateNotificationDTO = {
@@ -272,7 +274,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should emit notification.queued event', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       await service.queueNotification({
@@ -289,7 +291,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should throw when customer is not found and no message provided', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(null);
 
       await expect(
         service.queueNotification({
@@ -302,7 +304,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should include tenantId in created notification', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
       await service.queueNotification({
@@ -323,7 +325,7 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('sendImmediate', () => {
     it('should send SMS notification immediately', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
@@ -344,7 +346,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should return failure when customer is not found', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await service.sendImmediate({
         customerId: 'nonexistent',
@@ -358,7 +360,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should respect customer channel preference when disabled', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue({
         enabled: false,
       });
@@ -375,7 +377,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should send WhatsApp notification when channel is WHATSAPP', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
@@ -396,7 +398,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should return failure for unsupported channel', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue(mockNotification);
 
@@ -413,7 +415,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should create failed notification record on error', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
@@ -440,7 +442,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should emit notification.sent event on success', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
@@ -468,7 +470,7 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('sendBatch', () => {
     it('should send multiple notifications and return results', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
       (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({
         ...mockNotification,
@@ -530,7 +532,7 @@ describe('NotificationV2Service', () => {
       });
 
       expect(message).toContain('Mario');
-      expect(message).toContain('confirmed');
+      expect(message).toContain('confermato');
     });
 
     it('should return Italian templates for all notification types', () => {
@@ -672,29 +674,29 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('retryNotification', () => {
     it('should return failure when notification is not found', async () => {
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
 
-      const result = await service.retryNotification('nonexistent');
+      const result = await service.retryNotification(mockTenantId, 'nonexistent');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Notification not found');
     });
 
     it('should return failure when max retries exceeded', async () => {
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue({
         ...mockNotification,
         retries: 3,
         maxRetries: 3,
       });
 
-      const result = await service.retryNotification(mockNotificationId);
+      const result = await service.retryNotification(mockTenantId, mockNotificationId);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Max retries exceeded');
     });
 
     it('should increment retries and re-process', async () => {
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue({
         ...mockNotification,
         retries: 1,
         maxRetries: 3,
@@ -702,7 +704,7 @@ describe('NotificationV2Service', () => {
       (prisma.notification.update as jest.Mock).mockResolvedValue(mockNotification);
       mockTwilioCreate.mockResolvedValue({ sid: 'SM-RETRY-1' });
 
-      await service.retryNotification(mockNotificationId);
+      await service.retryNotification(mockTenantId, mockNotificationId);
 
       expect(prisma.notification.update).toHaveBeenCalledWith({
         where: { id: mockNotificationId },
@@ -724,13 +726,13 @@ describe('NotificationV2Service', () => {
       (prisma.notification.findMany as jest.Mock).mockResolvedValue(mockNotifications);
       (prisma.notification.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await service.getHistory(mockCustomerId);
+      const result = await service.getHistory(mockTenantId, mockCustomerId);
 
       expect(result.notifications).toHaveLength(1);
       expect(result.total).toBe(1);
       expect(prisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { customerId: mockCustomerId },
+          where: { tenantId: mockTenantId, customerId: mockCustomerId },
           orderBy: { createdAt: 'desc' },
         }),
       );
@@ -740,7 +742,7 @@ describe('NotificationV2Service', () => {
       (prisma.notification.findMany as jest.Mock).mockResolvedValue([]);
       (prisma.notification.count as jest.Mock).mockResolvedValue(0);
 
-      await service.getHistory(mockCustomerId, {
+      await service.getHistory(mockTenantId, mockCustomerId, {
         limit: 10,
         offset: 20,
       });
@@ -757,13 +759,14 @@ describe('NotificationV2Service', () => {
       (prisma.notification.findMany as jest.Mock).mockResolvedValue([]);
       (prisma.notification.count as jest.Mock).mockResolvedValue(0);
 
-      await service.getHistory(mockCustomerId, {
+      await service.getHistory(mockTenantId, mockCustomerId, {
         type: 'BOOKING_REMINDER' as never,
       });
 
       expect(prisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
+            tenantId: mockTenantId,
             customerId: mockCustomerId,
             type: 'BOOKING_REMINDER',
           },
@@ -847,10 +850,11 @@ describe('NotificationV2Service', () => {
           {
             provide: PrismaService,
             useValue: {
-              customer: { findUnique: jest.fn() },
+              customer: { findUnique: jest.fn(), findFirst: jest.fn() },
               notification: {
                 create: jest.fn(),
                 findUnique: jest.fn(),
+                findFirst: jest.fn(),
                 findMany: jest.fn(),
                 update: jest.fn(),
                 updateMany: jest.fn(),
@@ -1029,11 +1033,11 @@ describe('NotificationV2Service', () => {
         maxRetries: 3,
         customer: mockCustomer,
       };
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(whatsappNotification);
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(whatsappNotification);
       (prisma.notification.update as jest.Mock).mockResolvedValue(whatsappNotification);
       mockTwilioCreate.mockResolvedValue({ sid: 'WA-RETRY-1' });
 
-      const result = await service.retryNotification(mockNotificationId);
+      const result = await service.retryNotification(mockTenantId, mockNotificationId);
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('WA-RETRY-1');
@@ -1047,10 +1051,10 @@ describe('NotificationV2Service', () => {
         maxRetries: 3,
         customer: mockCustomer,
       };
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(emailNotification);
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(emailNotification);
       (prisma.notification.update as jest.Mock).mockResolvedValue(emailNotification);
 
-      await expect(service.retryNotification(mockNotificationId)).rejects.toThrow(
+      await expect(service.retryNotification(mockTenantId, mockNotificationId)).rejects.toThrow(
         'Unsupported channel',
       );
     });
@@ -1063,11 +1067,11 @@ describe('NotificationV2Service', () => {
         maxRetries: 3,
         customer: mockCustomer,
       };
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(notifNoMessage);
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(notifNoMessage);
       (prisma.notification.update as jest.Mock).mockResolvedValue(notifNoMessage);
       mockTwilioCreate.mockResolvedValue({ sid: 'SM-GEN-1' });
 
-      const result = await service.retryNotification(mockNotificationId);
+      const result = await service.retryNotification(mockTenantId, mockNotificationId);
 
       expect(result.success).toBe(true);
     });
@@ -1120,7 +1124,7 @@ describe('NotificationV2Service', () => {
   describe('decryptPhone fallback', () => {
     it('should return raw value when decryption fails', async () => {
       // Access decryptPhone indirectly via sendImmediate
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
         ...mockCustomer,
         encryptedPhone: 'raw-phone-value',
       });
@@ -1154,7 +1158,7 @@ describe('NotificationV2Service', () => {
   // =========================================================================
   describe('getCustomerName', () => {
     it('should return "Cliente" when encryptedFirstName is null', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
         ...mockCustomer,
         encryptedFirstName: null,
       });
@@ -1181,7 +1185,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should return "Cliente" when decrypting name fails', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
         ...mockCustomer,
         encryptedFirstName: 'bad-encrypted-name',
       });
@@ -1214,7 +1218,7 @@ describe('NotificationV2Service', () => {
     });
 
     it('should decrypt and use customer name when available', async () => {
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
         ...mockCustomer,
         encryptedFirstName: 'enc-Mario',
       });

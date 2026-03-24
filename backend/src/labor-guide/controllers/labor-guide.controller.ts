@@ -22,6 +22,7 @@ import {
   UpdateLaborGuideEntryDto,
   SearchLaborGuideDto,
 } from '../dto/labor-guide.dto';
+import { LaborGuide } from '@prisma/client';
 
 @ApiTags('Labor Guide')
 @Controller('labor-guides')
@@ -43,8 +44,21 @@ export class LaborGuideController {
   @Get()
   @ApiOperation({ summary: 'List all labor guides' })
   @ApiResponse({ status: 200 })
-  async findAllGuides(@CurrentUser('tenantId') tenantId: string) {
-    return this.laborGuideService.findAllGuides(tenantId);
+  async findAllGuides(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: LaborGuide[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    return this.laborGuideService.findAllGuides(tenantId, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 
   @Get('search')
@@ -53,8 +67,17 @@ export class LaborGuideController {
   async searchEntries(
     @CurrentUser('tenantId') tenantId: string,
     @Query() query: SearchLaborGuideDto,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.laborGuideService.searchEntries(tenantId, query.make, query.model, query.category);
+    return this.laborGuideService.searchEntries(
+      tenantId,
+      query.make,
+      query.model,
+      query.category,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get(':id')

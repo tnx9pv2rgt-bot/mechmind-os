@@ -433,12 +433,12 @@ export function BookingFormComplete() {
   }
 
   return (
-    <div className='fixed inset-0 bg-white dark:bg-[#212121] flex items-center justify-center p-4 overflow-hidden'>
+    <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'>
       {/* Main Container - 900x900px - Perfectly Centered */}
       <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
         {/* Background Icon/Illustration - Scaled proportionally */}
         <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-gray-100/40 via-gray-100/30 to-gray-100/40 dark:from-[#353535]/40 dark:via-[#353535]/30 dark:to-[#353535]/40 blur-3xl' />
+          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-[#353535]/40 via-[#353535]/30 to-[#353535]/40 blur-3xl' />
           <motion.div
             className='absolute'
             animate={{
@@ -448,7 +448,7 @@ export function BookingFormComplete() {
             transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           >
             <Calendar
-              className='w-[45%] h-[45%] text-gray-200/30 dark:text-[#424242]/30'
+              className='w-[45%] h-[45%] text-[#424242]/30'
               strokeWidth={0.5}
             />
           </motion.div>
@@ -456,7 +456,7 @@ export function BookingFormComplete() {
 
         {/* Glass Card Container */}
         <motion.div
-          className='relative z-10 w-full h-full bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple rounded-[40px] shadow-2xl border border-apple-border/20 dark:border-[#424242]/50 overflow-hidden'
+          className='relative z-10 w-full h-full bg-[#2f2f2f] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden'
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -465,10 +465,10 @@ export function BookingFormComplete() {
           <div className='px-10 pt-8 pb-4'>
             <div className='flex items-center justify-between mb-6'>
               <div>
-                <h1 className='text-3xl font-semibold text-apple-dark dark:text-[#ececec] tracking-tight'>
+                <h1 className='text-3xl font-semibold text-white tracking-tight'>
                   Nuova Prenotazione
                 </h1>
-                <p className='text-apple-gray dark:text-[#636366] mt-1 flex items-center gap-2'>
+                <p className='text-[#888] mt-1 flex items-center gap-2'>
                   Crea un nuovo appuntamento per il cliente
                   {hasDraft && (
                     <span className='text-xs text-green-500 flex items-center gap-1'>
@@ -479,19 +479,19 @@ export function BookingFormComplete() {
                 </p>
               </div>
               <div className='flex items-center gap-2'>
-                <span className='text-sm text-apple-gray dark:text-[#636366]'>Step</span>
-                <span className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+                <span className='text-sm text-[#888]'>Step</span>
+                <span className='text-2xl font-bold text-white'>
                   {currentStep}
                 </span>
-                <span className='text-apple-gray dark:text-[#636366]'>/</span>
-                <span className='text-apple-gray dark:text-[#636366]'>{totalSteps}</span>
+                <span className='text-[#888]'>/</span>
+                <span className='text-[#888]'>{totalSteps}</span>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className='h-2 bg-gray-200 dark:bg-[#424242] rounded-full overflow-hidden'>
+            <div className='h-2 bg-[#3a3a3a] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-black dark:bg-[#ececec]'
+                className='h-full bg-white'
                 initial={{ width: 0 }}
                 animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
                 transition={{ duration: 0.5 }}
@@ -571,12 +571,11 @@ export function BookingFormComplete() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-t border-apple-border/20 dark:border-[#424242]/50'>
+          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e]'>
             <div className='flex items-center justify-between'>
               <Button
-                variant='outline'
                 onClick={prevStep}
-                className='rounded-full px-6 h-12 border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray/30 dark:hover:bg-[#353535]'
+                className='rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
               >
                 <ChevronLeft className='w-5 h-5 mr-2' />
                 Indietro
@@ -585,7 +584,7 @@ export function BookingFormComplete() {
               {currentStep < totalSteps ? (
                 <Button
                   onClick={nextStep}
-                  className='rounded-full px-8 h-12 border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray/30 dark:hover:bg-[#353535]'
+                  className='rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
                 >
                   Avanti
                   <ChevronRight className='w-5 h-5 ml-2' />
@@ -594,7 +593,7 @@ export function BookingFormComplete() {
                 <Button
                   onClick={handleSubmit(onSubmit)}
                   disabled={isSubmitting}
-                  className='rounded-full px-8 h-12 bg-apple-green hover:bg-green-600 text-white'
+                  className='rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
                 >
                   {isSubmitting ? (
                     <>
@@ -661,21 +660,21 @@ function Step1CustomerVehicle({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-white'>
           Informazioni Cliente e Veicolo
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[#888] text-sm'>
           Cerca un cliente esistente o inserisci i dati manualmente
         </p>
       </div>
 
       {/* Customer Search */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
-        <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-3 block'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <Label className='text-sm font-medium text-white mb-3 block'>
           Cerca Cliente
         </Label>
         <div className='relative'>
-          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
           <Input
             value={customerSearch}
             onChange={e => {
@@ -685,7 +684,7 @@ function Step1CustomerVehicle({
             onFocus={() => setShowCustomerDropdown(true)}
             placeholder='Cerca per nome, telefono o email...'
             aria-label='Cerca cliente per nome, telefono o email'
-            className='pl-12 h-14 rounded-2xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+            className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] focus:border-[#ececec] outline-none'
           />
 
           {/* Dropdown */}
@@ -695,25 +694,25 @@ function Step1CustomerVehicle({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className='absolute z-50 top-full left-0 right-0 mt-2 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-xl border border-apple-border/50 dark:border-[#424242] overflow-hidden'
+                className='absolute z-50 top-full left-0 right-0 mt-2 bg-[#2f2f2f] rounded-2xl shadow-xl border border-[#4e4e4e] overflow-hidden'
               >
                 {filteredCustomers.map((customer: Customer) => (
                   <button
                     key={customer.id}
                     onClick={() => selectCustomer(customer)}
-                    className='w-full px-4 py-3 flex items-center gap-3 hover:bg-apple-light-gray/30 dark:hover:bg-[#353535] transition-colors text-left'
+                    className='w-full px-4 py-3 flex items-center gap-3 hover:bg-[#383838] transition-colors text-left'
                   >
-                    <div className='w-10 h-10 rounded-full bg-apple-purple flex items-center justify-center text-white font-semibold'>
+                    <div className='w-10 h-10 rounded-full bg-[#a78bfa] flex items-center justify-center text-white font-semibold'>
                       {customer.name
                         .split(' ')
                         .map(n => n[0])
                         .join('')}
                     </div>
                     <div className='flex-1'>
-                      <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                      <p className='font-medium text-white'>
                         {customer.name}
                       </p>
-                      <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                      <p className='text-sm text-[#888]'>
                         {customer.phone} • {customer.email}
                       </p>
                     </div>
@@ -729,12 +728,12 @@ function Step1CustomerVehicle({
           </AnimatePresence>
         </div>
 
-        <div className='mt-4 flex items-center gap-2 text-sm text-apple-gray dark:text-[#636366]'>
+        <div className='mt-4 flex items-center gap-2 text-sm text-[#888]'>
           <Plus className='w-4 h-4' />
           <span>
             Oppure{' '}
             <button
-              className='text-apple-dark dark:text-[#ececec] hover:underline'
+              className='text-white hover:underline'
               onClick={() => setShowCustomerDropdown(false)}
             >
               clicca per nuovo cliente
@@ -752,12 +751,12 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='customerName'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Nome e Cognome *
               </Label>
               <div className='relative'>
-                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
                 <Input
                   {...field}
                   id='customerName'
@@ -765,7 +764,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.customerName}
                   aria-describedby={errors.customerName ? 'customerName-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                   placeholder='Mario Rossi'
                 />
               </div>
@@ -792,12 +791,12 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='customerPhone'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Telefono *
               </Label>
               <div className='relative'>
-                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
                 <Input
                   {...field}
                   id='customerPhone'
@@ -805,7 +804,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.customerPhone}
                   aria-describedby={errors.customerPhone ? 'customerPhone-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                   placeholder='+39 333 1234567'
                 />
               </div>
@@ -832,12 +831,12 @@ function Step1CustomerVehicle({
             <div className='col-span-2'>
               <Label
                 htmlFor='customerEmail'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Email *
               </Label>
               <div className='relative'>
-                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
                 <Input
                   {...field}
                   id='customerEmail'
@@ -846,7 +845,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.customerEmail}
                   aria-describedby={errors.customerEmail ? 'customerEmail-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                   placeholder='mario@email.it'
                 />
               </div>
@@ -868,10 +867,10 @@ function Step1CustomerVehicle({
       </div>
 
       {/* Vehicle Section */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='mb-6'>
-          <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Dati Veicolo</h3>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+          <h3 className='font-semibold text-white'>Dati Veicolo</h3>
+          <p className='text-sm text-[#888]'>
             Inserisci la targa per decodifica automatica
           </p>
         </div>
@@ -884,7 +883,7 @@ function Step1CustomerVehicle({
               <div className='flex-1'>
                 <Label
                   htmlFor='licensePlate'
-                  className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                  className='text-sm font-medium text-white mb-2 block'
                 >
                   Targa *
                 </Label>
@@ -895,7 +894,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.licensePlate}
                   aria-describedby={errors.licensePlate ? 'licensePlate-error' : undefined}
-                  className='h-12 rounded-xl uppercase tracking-wider font-medium text-center text-lg'
+                  className='h-[52px] rounded-full uppercase tracking-wider font-medium text-center text-lg'
                   placeholder='AB 123 CD'
                   maxLength={10}
                 />
@@ -906,7 +905,7 @@ function Step1CustomerVehicle({
             type='button'
             onClick={decodeLicensePlate}
             disabled={isDecodingPlate || !watch('licensePlate') || watch('licensePlate').length < 5}
-            className='h-12 mt-7 rounded-xl bg-black hover:bg-gray-800 dark:bg-[#ececec] dark:hover:bg-white dark:text-black text-white'
+            className='h-[52px] mt-7 rounded-full bg-white hover:bg-[#e5e5e5] text-[#0d0d0d]'
           >
             {isDecodingPlate ? (
               <Loader2 className='w-5 h-5 animate-spin' />
@@ -924,31 +923,31 @@ function Step1CustomerVehicle({
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-2xl p-5 mb-6'
+            className='bg-[#383838] rounded-2xl p-5 mb-6'
           >
-            <h4 className='font-semibold text-apple-dark dark:text-[#ececec] mb-3 flex items-center gap-2'>
+            <h4 className='font-semibold text-white mb-3 flex items-center gap-2'>
               <Check className='w-5 h-5 text-green-500' />
               Dati Veicolo Decodificati
             </h4>
             <div className='grid grid-cols-2 gap-4 text-sm'>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Marca:</span>
+                <span className='text-[#888]'>Marca:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleMake')}</span>
               </div>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Modello:</span>
+                <span className='text-[#888]'>Modello:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleModel')}</span>
               </div>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Anno:</span>
+                <span className='text-[#888]'>Anno:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleYear')}</span>
               </div>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Colore:</span>
+                <span className='text-[#888]'>Colore:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleColor')}</span>
               </div>
               <div className='col-span-2'>
-                <span className='text-apple-gray dark:text-[#636366]'>VIN:</span>
+                <span className='text-[#888]'>VIN:</span>
                 <span className='ml-2 font-mono text-xs'>{watch('vehicleVin')}</span>
               </div>
             </div>
@@ -963,7 +962,7 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='vehicleKm'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Km attuali (opzionale)
               </Label>
@@ -977,13 +976,13 @@ function Step1CustomerVehicle({
                 autoComplete='off'
                 aria-describedby='vehicleKm-hint'
                 placeholder='es. 85000'
-                className='h-12 rounded-xl'
+                className='h-[52px] rounded-full'
                 value={field.value ?? ''}
                 onChange={e =>
                   field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)
                 }
               />
-              <p id='vehicleKm-hint' className='text-xs text-apple-gray dark:text-[#636366] mt-1'>
+              <p id='vehicleKm-hint' className='text-xs text-[#888] mt-1'>
                 Aggiornare i km aiuta a pianificare i prossimi tagliandi
               </p>
             </div>
@@ -1066,19 +1065,19 @@ function Step2AppointmentDetails({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-white'>
           Dettagli Appuntamento
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[#888] text-sm'>
           Configura il tipo di intervento e la data
         </p>
       </div>
 
       {/* Service Type */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <Label
           htmlFor='serviceType'
-          className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-4 block'
+          className='text-sm font-medium text-white mb-4 block'
         >
           Tipo Intervento *
         </Label>
@@ -1090,7 +1089,7 @@ function Step2AppointmentDetails({
               <SelectTrigger
                 id='serviceType'
                 aria-required='true'
-                className='h-14 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                className='h-[52px] rounded-full bg-[#2f2f2f] border-[#4e4e4e]'
               >
                 <SelectValue placeholder='Seleziona tipo intervento' />
               </SelectTrigger>
@@ -1114,7 +1113,7 @@ function Step2AppointmentDetails({
           >
             <Label
               htmlFor='serviceSubtype'
-              className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              className='text-sm font-medium text-white mb-2 block'
             >
               Sotto-categoria
             </Label>
@@ -1125,7 +1124,7 @@ function Step2AppointmentDetails({
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <SelectTrigger
                     id='serviceSubtype'
-                    className='h-12 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                    className='h-[52px] rounded-full bg-[#2f2f2f] border-[#4e4e4e]'
                   >
                     <SelectValue placeholder='Seleziona sotto-categoria' />
                   </SelectTrigger>
@@ -1145,7 +1144,7 @@ function Step2AppointmentDetails({
 
       {/* Urgency */}
       <div>
-        <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-3 block'>
+        <Label className='text-sm font-medium text-white mb-3 block'>
           Livello di Urgenza *
         </Label>
         <div className='grid grid-cols-3 gap-3'>
@@ -1153,15 +1152,15 @@ function Step2AppointmentDetails({
             <button
               key={option.value}
               onClick={() => setValue('urgency', option.value)}
-              className={`p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`p-4 rounded-2xl border transition-all text-left ${
                 watch('urgency') === option.value
-                  ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535]'
-                  : 'border-apple-border dark:border-[#424242] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                  ? 'border-[#ececec] bg-[#383838]'
+                  : 'border-[#4e4e4e] hover:border-[#636366]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full ${option.color} mb-2`} />
-              <div className='font-medium text-apple-dark dark:text-[#ececec]'>{option.label}</div>
-              <div className='text-xs text-apple-gray dark:text-[#636366] mt-1'>{option.desc}</div>
+              <div className='font-medium text-white'>{option.label}</div>
+              <div className='text-xs text-[#888] mt-1'>{option.desc}</div>
             </button>
           ))}
         </div>
@@ -1180,11 +1179,11 @@ function Step2AppointmentDetails({
       </div>
 
       {/* Description with Voice */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='flex items-center justify-between mb-3'>
           <Label
             htmlFor='description'
-            className='text-sm font-medium text-apple-dark dark:text-[#ececec]'
+            className='text-sm font-medium text-white'
           >
             Descrizione / Richiesta Cliente *
           </Label>
@@ -1192,8 +1191,8 @@ function Step2AppointmentDetails({
             onClick={toggleRecording}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${
               isRecording
-                ? 'bg-black/10 dark:bg-[#ececec]/10 text-apple-dark dark:text-[#ececec] animate-pulse'
-                : 'bg-apple-light-gray/30 dark:bg-[#353535] text-apple-gray dark:text-[#636366] hover:bg-apple-light-gray/50 dark:hover:bg-[#424242]'
+                ? 'bg-[#ececec]/10 text-white animate-pulse'
+                : 'bg-[#383838] text-[#888] hover:bg-[#4e4e4e]'
             }`}
           >
             {isRecording ? (
@@ -1223,7 +1222,7 @@ function Step2AppointmentDetails({
                 aria-required='true'
                 aria-invalid={!!errors.description}
                 aria-describedby={errors.description ? 'description-error' : undefined}
-                className='min-h-[120px] rounded-xl resize-none bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                className='min-h-[120px] rounded-2xl resize-none bg-[#2f2f2f] border border-[#4e4e4e] text-white placeholder-[#888] px-5 py-3 outline-none'
                 placeholder='Descrivi il problema o la richiesta del cliente...'
               />
               <div className='flex justify-between mt-2'>
@@ -1239,7 +1238,7 @@ function Step2AppointmentDetails({
                     </p>
                   )}
                 </div>
-                <span className='text-xs text-apple-gray/70 dark:text-[#636366] ml-auto'>
+                <span className='text-xs text-[#666666] ml-auto'>
                   {field.value?.length || 0}/500
                 </span>
               </div>
@@ -1251,15 +1250,15 @@ function Step2AppointmentDetails({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className='mt-4 p-4 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'
+            className='mt-4 p-4 bg-[#383838] rounded-xl'
           >
             <div className='flex items-center gap-2 mb-2'>
-              <Volume2 className='w-4 h-4 text-apple-dark dark:text-[#ececec]' />
-              <span className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+              <Volume2 className='w-4 h-4 text-white' />
+              <span className='text-sm font-medium text-white'>
                 Nota vocale trascritta
               </span>
             </div>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>{watch('voiceNote')}</p>
+            <p className='text-sm text-[#888]'>{watch('voiceNote')}</p>
           </motion.div>
         )}
       </div>
@@ -1273,12 +1272,12 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='date'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Data *
               </Label>
               <div className='relative'>
-                <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
                 <Input
                   {...field}
                   id='date'
@@ -1287,7 +1286,7 @@ function Step2AppointmentDetails({
                   aria-required='true'
                   aria-invalid={!!errors.date}
                   aria-describedby={errors.date ? 'date-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                 />
               </div>
               <div className='min-h-[20px]'>
@@ -1313,12 +1312,12 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='time'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Ora *
               </Label>
               <div className='relative'>
-                <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
                 <Input
                   {...field}
                   id='time'
@@ -1327,7 +1326,7 @@ function Step2AppointmentDetails({
                   aria-required='true'
                   aria-invalid={!!errors.time}
                   aria-describedby={errors.time ? 'time-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                 />
               </div>
               <div className='min-h-[20px]'>
@@ -1350,10 +1349,10 @@ function Step2AppointmentDetails({
       {/* Duration */}
       <div>
         <div className='flex items-center justify-between mb-3'>
-          <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+          <Label className='text-sm font-medium text-white'>
             Durata Prevista
           </Label>
-          <span className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+          <span className='text-lg font-semibold text-white'>
             {watch('duration')} min
           </span>
         </div>
@@ -1371,7 +1370,7 @@ function Step2AppointmentDetails({
             />
           )}
         />
-        <div className='flex justify-between text-xs text-apple-gray/70 dark:text-[#636366] mt-2'>
+        <div className='flex justify-between text-xs text-[#666666] mt-2'>
           <span>30 min</span>
           <span>4 ore</span>
         </div>
@@ -1386,14 +1385,14 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='technicianId'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Tecnico Assegnato
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='technicianId'
-                  className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] focus:border-[#ececec] outline-none'
                 >
                   <SelectValue placeholder='Seleziona tecnico' />
                 </SelectTrigger>
@@ -1402,7 +1401,7 @@ function Step2AppointmentDetails({
                     technicians.map(tech => (
                       <SelectItem key={tech.id} value={tech.id}>
                         <div className='flex items-center gap-2'>
-                          <span className='w-6 h-6 rounded-full bg-apple-purple text-white text-xs flex items-center justify-center'>
+                          <span className='w-6 h-6 rounded-full bg-[#a78bfa] text-white text-xs flex items-center justify-center'>
                             {tech.name
                               .split(' ')
                               .map(n => n[0])
@@ -1435,14 +1434,14 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='liftPosition'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-white mb-2 block'
               >
                 Posto Rialzo
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='liftPosition'
-                  className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] focus:border-[#ececec] outline-none'
                 >
                   <SelectValue placeholder='Seleziona posto' />
                 </SelectTrigger>
@@ -1479,20 +1478,20 @@ function Step3Notifications({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-white'>
           Promemoria e Notifiche
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[#888] text-sm'>
           Configura come e quando contattare il cliente
         </p>
       </div>
 
       {/* Email */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Email</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <h3 className='font-semibold text-white'>Email</h3>
+            <p className='text-sm text-[#888]'>
               Invia promemoria via email
             </p>
           </div>
@@ -1507,7 +1506,7 @@ function Step3Notifications({
 
         {watch('emailReminder') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'>
+            <Label className='text-sm text-[#888] mb-2 block'>
               Invia prima di:
             </Label>
             <Controller
@@ -1519,10 +1518,10 @@ function Step3Notifications({
                     <button
                       key={hours}
                       onClick={() => field.onChange(hours)}
-                      className={`px-4 py-2 rounded-xl border transition-colors ${
+                      className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                          : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                          ? 'border-[#ececec] bg-[#383838] text-white'
+                          : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
                       }`}
                     >
                       {hours}h
@@ -1536,11 +1535,11 @@ function Step3Notifications({
       </div>
 
       {/* SMS */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>SMS</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>Invia promemoria via SMS</p>
+            <h3 className='font-semibold text-white'>SMS</h3>
+            <p className='text-sm text-[#888]'>Invia promemoria via SMS</p>
           </div>
           <Controller
             name='smsReminder'
@@ -1553,7 +1552,7 @@ function Step3Notifications({
 
         {watch('smsReminder') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'>
+            <Label className='text-sm text-[#888] mb-2 block'>
               Invia prima di:
             </Label>
             <Controller
@@ -1565,10 +1564,10 @@ function Step3Notifications({
                     <button
                       key={hours}
                       onClick={() => field.onChange(hours)}
-                      className={`px-4 py-2 rounded-xl border transition-colors ${
+                      className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                          : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                          ? 'border-[#ececec] bg-[#383838] text-white'
+                          : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
                       }`}
                     >
                       {hours === 2 ? '2h' : `${hours}h`}
@@ -1582,11 +1581,11 @@ function Step3Notifications({
       </div>
 
       {/* WhatsApp */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>WhatsApp</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <h3 className='font-semibold text-white'>WhatsApp</h3>
+            <p className='text-sm text-[#888]'>
               Invia promemoria via WhatsApp
             </p>
           </div>
@@ -1605,11 +1604,11 @@ function Step3Notifications({
       </div>
 
       {/* 2-Way Confirmation */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Richiedi Conferma</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <h3 className='font-semibold text-white'>Richiedi Conferma</h3>
+            <p className='text-sm text-[#888]'>
               Doppio opt-in per confermare l&apos;appuntamento
             </p>
           </div>
@@ -1630,7 +1629,7 @@ function Step3Notifications({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
             <Label
               htmlFor='confirmationChannel'
-              className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
+              className='text-sm text-[#888] mb-2 block'
             >
               Canale di conferma:
             </Label>
@@ -1645,8 +1644,8 @@ function Step3Notifications({
                       onClick={() => field.onChange(channel)}
                       className={`px-4 py-2 rounded-xl border capitalize transition-colors ${
                         field.value === channel
-                          ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                          : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                          ? 'border-[#ececec] bg-[#383838] text-white'
+                          : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
                       }`}
                     >
                       {channel}
@@ -1690,10 +1689,10 @@ function Step4Capacity({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-white'>
           Gestione Capacità Produttiva
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[#888] text-sm'>
           Verifica disponibilità e seleziona lo slot ottimale
         </p>
       </div>
@@ -1715,7 +1714,7 @@ function Step4Capacity({
             <Button
               onClick={() => setShowWaitlistModal(true)}
               variant='outline'
-              className='mt-3 border-2 border-black dark:border-[#424242] text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray/30 dark:hover:bg-[#353535]'
+              className='mt-3 rounded-full border border-[#4e4e4e] text-white hover:bg-white/5'
             >
               <Plus className='w-4 h-4 mr-2' />
               Aggiungi a Lista d'Attesa
@@ -1727,12 +1726,12 @@ function Step4Capacity({
       {/* Available Slots */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+          <Label className='text-sm font-medium text-white'>
             Slot Disponibili Suggeriti
           </Label>
           <Badge
             variant='outline'
-            className='text-xs border-black dark:border-[#424242] text-apple-dark dark:text-[#ececec]'
+            className='text-xs border-[#4e4e4e] text-white'
           >
             {filteredSlots.length} opzioni
           </Badge>
@@ -1743,10 +1742,10 @@ function Step4Capacity({
             <motion.button
               key={slot.id}
               onClick={() => setValue('selectedSlotId', slot.id)}
-              className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`w-full p-4 rounded-2xl border transition-all text-left ${
                 selectedSlotId === slot.id
-                  ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535]'
-                  : 'border-apple-border dark:border-[#424242] hover:border-apple-dark/30 dark:hover:border-[#636366] dark:hover:border-[#555] bg-white/80 dark:bg-[#2f2f2f]/80'
+                  ? 'border-[#ececec] bg-[#383838]'
+                  : 'border-[#4e4e4e] hover:border-[#555] bg-[#2f2f2f]'
               }`}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -1755,7 +1754,7 @@ function Step4Capacity({
                 <div>
                   <div>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                      <span className='font-semibold text-white'>
                         {new Date(slot.start).toLocaleTimeString('it-IT', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -1768,13 +1767,13 @@ function Step4Capacity({
                         </Badge>
                       )}
                     </div>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                    <p className='text-sm text-[#888]'>
                       {slot.technicianName} • {slot.liftAvailable}
                     </p>
                   </div>
                 </div>
                 <div className='text-right'>
-                  <div className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+                  <div className='text-sm font-medium text-white'>
                     Capacità
                   </div>
                   <div
@@ -1800,10 +1799,10 @@ function Step4Capacity({
       </div>
 
       {/* Buffer Time */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='mb-4'>
-          <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Buffer Time</h3>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+          <h3 className='font-semibold text-white'>Buffer Time</h3>
+          <p className='text-sm text-[#888]'>
             Tempo di pulizia/setup dopo l&apos;appuntamento
           </p>
         </div>
@@ -1817,10 +1816,10 @@ function Step4Capacity({
                 <button
                   key={minutes}
                   onClick={() => field.onChange(minutes)}
-                  className={`flex-1 py-3 rounded-xl border transition-colors ${
+                  className={`flex-1 py-3 rounded-full border transition-colors ${
                     field.value === minutes
-                      ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                      : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                      ? 'border-[#ececec] bg-[#383838] text-white'
+                      : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
                   }`}
                 >
                   <div className='text-lg font-semibold'>{minutes}</div>
@@ -1831,7 +1830,7 @@ function Step4Capacity({
           )}
         />
 
-        <p className='text-sm text-apple-gray dark:text-[#636366] mt-4'>
+        <p className='text-sm text-[#888] mt-4'>
           Impatto: Lo slot successivo verrà mostrato disponibile {bufferTime} min dopo la fine di
           questo appuntamento.
         </p>
@@ -1878,22 +1877,22 @@ function Step5AIFeatures({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-white'>
           Funzionalità AI e Smart
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[#888] text-sm'>
           Suggerimenti intelligenti basati sullo storico
         </p>
       </div>
 
       {/* Preventive Services */}
-      <div className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-3xl p-6 border border-apple-border/20 dark:border-[#424242]/50'>
+      <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
         <div className='flex items-center gap-2 mb-4'>
-          <Shield className='w-5 h-5 text-apple-dark dark:text-[#ececec]' />
-          <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>
+          <Shield className='w-5 h-5 text-white' />
+          <h3 className='font-semibold text-white'>
             Servizi Preventivi Suggeriti
           </h3>
-          <Badge className='bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec] border border-black dark:border-[#424242]'>
+          <Badge className='bg-[#383838] text-white border border-[#4e4e4e]'>
             AI Powered
           </Badge>
         </div>
@@ -1903,10 +1902,10 @@ function Step5AIFeatures({
             <motion.button
               key={service.id}
               onClick={() => toggleService(service.id)}
-              className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`w-full p-4 rounded-2xl border transition-all text-left ${
                 selectedServices.includes(service.id)
-                  ? 'border-black dark:border-[#ececec] bg-white dark:bg-[#2f2f2f]'
-                  : 'border-transparent bg-white/60 dark:bg-[#2f2f2f]/60 hover:bg-white dark:hover:bg-[#353535]'
+                  ? 'border-[#ececec] bg-[#2f2f2f]'
+                  : 'border-transparent bg-[#2f2f2f]/60 hover:bg-[#353535]'
               }`}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -1916,8 +1915,8 @@ function Step5AIFeatures({
                   <div
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5 ${
                       selectedServices.includes(service.id)
-                        ? 'border-black bg-black dark:border-[#ececec] dark:bg-[#ececec]'
-                        : 'border-apple-border dark:border-[#424242]'
+                        ? 'border-[#ececec] bg-[#ececec]'
+                        : 'border-[#4e4e4e]'
                     }`}
                   >
                     {selectedServices.includes(service.id) && (
@@ -1926,25 +1925,25 @@ function Step5AIFeatures({
                   </div>
                   <div>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                      <span className='font-semibold text-white'>
                         {service.title}
                       </span>
                       <Badge
                         className={`text-xs ${
                           service.priority === 'high'
-                            ? 'bg-black/10 dark:bg-[#ececec]/10 text-apple-dark dark:text-[#ececec] border border-black dark:border-[#424242]'
+                            ? 'bg-[#ececec]/10 text-white border border-[#4e4e4e]'
                             : service.priority === 'medium'
-                              ? 'bg-black/5 dark:bg-[#ececec]/5 text-apple-dark dark:text-[#ececec] border border-black/50 dark:border-[#424242]'
-                              : 'bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec] border border-apple-border dark:border-[#424242]'
+                              ? 'bg-[#ececec]/5 text-white border border-[#4e4e4e]'
+                              : 'bg-[#383838] text-white border border-[#4e4e4e]'
                         }`}
                       >
                         {service.priority}
                       </Badge>
                     </div>
-                    <p className='text-sm text-apple-dark dark:text-[#ececec] mt-1'>
+                    <p className='text-sm text-white mt-1'>
                       {service.reason}
                     </p>
-                    <div className='flex items-center gap-3 mt-2 text-xs text-apple-dark dark:text-[#ececec]'>
+                    <div className='flex items-center gap-3 mt-2 text-xs text-white'>
                       <span>Stima: €{service.estimatedCost}</span>
                       <span>•</span>
                       <span>Confidenza: {service.aiConfidence}%</span>
@@ -1952,7 +1951,7 @@ function Step5AIFeatures({
                   </div>
                 </div>
                 <div className='text-right'>
-                  <div className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <div className='font-semibold text-white'>
                     €{service.estimatedCost}
                   </div>
                 </div>
@@ -1963,43 +1962,43 @@ function Step5AIFeatures({
       </div>
 
       {/* Cost Summary */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
-        <h3 className='font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
-          <Zap className='w-5 h-5 text-apple-dark dark:text-[#ececec]' />
+      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <h3 className='font-semibold text-white mb-4 flex items-center gap-2'>
+          <Zap className='w-5 h-5 text-white' />
           Stima Costi
         </h3>
 
         <div className='space-y-3'>
           <div className='flex items-center justify-between text-sm'>
-            <span className='text-apple-gray dark:text-[#636366]'>
+            <span className='text-[#888]'>
               Mano d&apos;opera ({watch('duration')} min @ €85/h)
             </span>
-            <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+            <span className='font-medium text-white'>
               €{baseLaborCost.toFixed(2)}
             </span>
           </div>
 
           {preventiveCost > 0 && (
             <div className='flex items-center justify-between text-sm'>
-              <span className='text-apple-gray dark:text-[#636366]'>
+              <span className='text-[#888]'>
                 Servizi preventivi ({selectedServices.length})
               </span>
-              <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+              <span className='font-medium text-white'>
                 +€{preventiveCost.toFixed(2)}
               </span>
             </div>
           )}
 
-          <div className='border-t border-apple-border dark:border-[#424242] pt-3'>
+          <div className='border-t border-[#4e4e4e] pt-3'>
             <div className='flex items-center justify-between'>
-              <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+              <span className='font-semibold text-white'>
                 Totale Stimato
               </span>
-              <span className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+              <span className='text-2xl font-bold text-white'>
                 €{totalEstimatedCost.toFixed(2)}
               </span>
             </div>
-            <p className='text-xs text-apple-gray dark:text-[#636366] mt-2'>
+            <p className='text-xs text-[#888] mt-2'>
               * Il costo finale può variare in base alle condizioni del veicolo.
             </p>
           </div>
@@ -2007,13 +2006,13 @@ function Step5AIFeatures({
       </div>
 
       {/* AI Summary */}
-      <div className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-3xl p-6 border border-apple-border/20 dark:border-[#424242]/50'>
-        <h3 className='font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
-          <Sparkles className='w-5 h-5 text-apple-dark dark:text-[#ececec]' />
+      <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <h3 className='font-semibold text-white mb-4 flex items-center gap-2'>
+          <Sparkles className='w-5 h-5 text-white' />
           Riepilogo AI
         </h3>
 
-        <div className='space-y-2 text-sm text-apple-dark dark:text-[#ececec]'>
+        <div className='space-y-2 text-sm text-white'>
           <p>
             <strong>Cliente:</strong> {watch('customerName')}
           </p>
@@ -2044,7 +2043,7 @@ function Step5AIFeatures({
         </div>
       </div>
 
-      <p className='text-xs text-apple-gray dark:text-[#636366] mt-4'>
+      <p className='text-xs text-[#888] mt-4'>
         I dati inseriti saranno trattati ai sensi del GDPR 2016/679.{' '}
         <a href='/privacy-policy' className='underline' target='_blank' rel='noopener noreferrer'>
           Informativa privacy
@@ -2063,9 +2062,9 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className='fixed inset-0 bg-white dark:bg-[#212121] flex items-center justify-center p-4 overflow-hidden'
+      className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'
     >
-      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple rounded-[40px] shadow-2xl border border-apple-border/20 dark:border-[#424242]/50 flex flex-col items-center justify-center p-10 text-center'>
+      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-[#2f2f2f]/90 backdrop-blur-xl rounded-[40px] shadow-2xl border border-[#4e4e4e] flex flex-col items-center justify-center p-10 text-center'>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -2075,24 +2074,24 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
           <Check className='w-16 h-16 text-white' />
         </motion.div>
 
-        <h2 className='text-3xl font-bold text-apple-dark dark:text-[#ececec] mb-4'>
+        <h2 className='text-3xl font-bold text-white mb-4'>
           Prenotazione Creata!
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] mb-8 max-w-md'>
+        <p className='text-[#888] mb-8 max-w-md'>
           L&apos;appuntamento è stato registrato con successo. Il cliente riceverà le notifiche
           configurate.
         </p>
 
-        <div className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-2xl p-6 mb-8'>
-          <p className='text-sm text-apple-gray dark:text-[#636366] mb-2'>Numero Prenotazione</p>
-          <p className='text-3xl font-mono font-bold text-apple-dark dark:text-[#ececec]'>
+        <div className='bg-[#383838] rounded-2xl p-6 mb-8'>
+          <p className='text-sm text-[#888] mb-2'>Numero Prenotazione</p>
+          <p className='text-3xl font-mono font-bold text-white'>
             {bookingNumber}
           </p>
         </div>
 
         <Button
           onClick={onClose}
-          className='rounded-full px-8 h-14 bg-black hover:bg-gray-800 dark:bg-[#ececec] dark:hover:bg-white dark:text-black text-white'
+          className='rounded-full px-8 h-[52px] bg-white hover:bg-[#e5e5e5] text-[#0d0d0d]'
         >
           Crea Nuova Prenotazione
         </Button>

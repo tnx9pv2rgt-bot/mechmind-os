@@ -159,8 +159,8 @@ export class NotificationV2Service {
     // Generate message if not provided
     const message = data.message;
     if (!message) {
-      const customer = await this.prisma.customer.findUnique({
-        where: { id: data.customerId },
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: data.customerId, tenantId: data.tenantId },
       });
       if (!customer) {
         throw new NotFoundException(`Customer ${data.customerId} not found`);
@@ -195,8 +195,8 @@ export class NotificationV2Service {
   async sendImmediate(data: CreateNotificationDTO): Promise<NotificationResult> {
     try {
       // Get customer data
-      const customer = await this.prisma.customer.findUnique({
-        where: { id: data.customerId },
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: data.customerId, tenantId: data.tenantId },
       });
 
       if (!customer) {
@@ -291,7 +291,8 @@ export class NotificationV2Service {
   }
 
   /**
-   * Process pending notifications (called by cron job)
+   * Process pending notifications (called by cron job).
+   * INTENTIONALLY cross-tenant: cron processes all pending notifications system-wide.
    */
   async processPending(): Promise<{ processed: number; failed: number }> {
     const pendingNotifications = await this.prisma.notification.findMany({
@@ -437,9 +438,9 @@ export class NotificationV2Service {
   /**
    * Retry failed notification
    */
-  async retryNotification(notificationId: string): Promise<NotificationResult> {
-    const notification = await this.prisma.notification.findUnique({
-      where: { id: notificationId },
+  async retryNotification(tenantId: string, notificationId: string): Promise<NotificationResult> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id: notificationId, tenantId },
       include: { customer: true },
     });
 
@@ -469,25 +470,58 @@ export class NotificationV2Service {
    * Get notification history for customer
    */
   async getHistory(
+    tenantId: string,
     customerId: string,
     options?: { limit?: number; offset?: number; type?: NotificationType },
   ): Promise<{ notifications: Notification[]; total: number }> {
+    const where = {
+      tenantId,
+      customerId,
+      ...(options?.type && { type: options.type }),
+    };
     const [notifications, total] = await Promise.all([
       this.prisma.notification.findMany({
-        where: {
-          customerId,
-          ...(options?.type && { type: options.type }),
-        },
+        where,
         orderBy: { createdAt: 'desc' },
         take: options?.limit || 50,
         skip: options?.offset || 0,
       }),
-      this.prisma.notification.count({
-        where: { customerId },
-      }),
+      this.prisma.notification.count({ where }),
     ]);
 
     return { notifications, total };
+  }
+
+  // ==========================================
+  // SINGLE NOTIFICATION OPERATIONS
+  // ==========================================
+
+  /**
+   * Get a notification by ID
+   */
+  async getNotificationById(tenantId: string, id: string): Promise<Notification | null> {
+    return this.prisma.notification.findFirst({
+      where: { id, tenantId },
+    });
+  }
+
+  /**
+   * Soft-delete a notification by setting status and deletedAt.
+   * Uses $executeRaw to support the deletedAt field added to schema
+   * before Prisma client regeneration.
+   */
+  async deleteNotification(tenantId: string, id: string): Promise<void> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification ${id} not found`);
+    }
+
+    await this.prisma.notification.delete({
+      where: { id },
+    });
   }
 
   // ==========================================
@@ -700,31 +734,36 @@ export class NotificationV2Service {
     };
   }
 
+  /**
+   * English templates kept as mirror of Italian ones for API consumers
+   * that explicitly request lang='en'. All customer-facing SMS/WhatsApp
+   * defaults to Italian (lang='it').
+   */
   private getEnglishTemplates(): Record<
     NotificationType,
     (vars: NotificationTemplateData) => string
   > {
     return {
       [NotificationType.BOOKING_REMINDER]: v =>
-        `Hi ${v.customerName}, reminder: your appointment is tomorrow ${v.date} at ${v.time}${v.location ? ` at ${v.location}` : ''}. Confirm or modify: ${v.link || 'https://mechmind.io/portal'}`,
+        `Ciao ${v.customerName}, ti ricordiamo l'appuntamento domani ${v.date} alle ${v.time}${v.location ? ` presso ${v.location}` : ''}. Conferma o modifica: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.BOOKING_CONFIRMATION]: v =>
-        `Hi ${v.customerName}, appointment confirmed for ${v.date} at ${v.time}${v.workshopName ? ` at ${v.workshopName}` : ''}${v.bookingCode ? ` (Code: ${v.bookingCode})` : ''}. See you soon!`,
+        `Ciao ${v.customerName}, appuntamento confermato per ${v.date} alle ${v.time}${v.workshopName ? ` da ${v.workshopName}` : ''}${v.bookingCode ? ` (Codice: ${v.bookingCode})` : ''}. Ti aspettiamo!`,
 
       [NotificationType.STATUS_UPDATE]: v =>
-        `Hi ${v.customerName}, status update: ${v.status || 'in progress'}. ${v.link ? `Details: ${v.link}` : ''}`,
+        `Ciao ${v.customerName}, aggiornamento: ${v.status || 'in lavorazione'}. ${v.link ? `Dettagli: ${v.link}` : ''}`,
 
       [NotificationType.INVOICE_READY]: v =>
-        `Hi ${v.customerName}, your invoice is ready. Amount: ${v.amount || 'N/A'}. View: ${v.link || 'https://mechmind.io/portal'}`,
+        `Ciao ${v.customerName}, la tua fattura è pronta. Importo: ${v.amount || 'N/D'}. Visualizza: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.MAINTENANCE_DUE]: v =>
-        `Hi ${v.customerName}, ${v.service || 'maintenance'} due in ${v.days || 'a few'} days. Book: ${v.link || 'https://mechmind.io/portal'}`,
+        `Ciao ${v.customerName}, promemoria: ${v.service || 'manutenzione'} in scadenza tra ${v.days || 'pochi'} giorni. Prenota: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.INSPECTION_COMPLETE]: v =>
-        `Hi ${v.customerName}, inspection completed!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
+        `Ciao ${v.customerName}, ispezione completata!${v.score ? ` Punteggio: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
 
       [NotificationType.PAYMENT_REMINDER]: v =>
-        `Hi ${v.customerName}, payment reminder${v.amount ? ` for ${v.amount}` : ''}. Pay here: ${v.link || 'https://mechmind.io/portal'}`,
+        `Ciao ${v.customerName}, promemoria pagamento fattura ${v.amount ? `di ${v.amount}` : ''}. Paga qui: ${v.link || 'https://mechmind.io/portal'}`,
     };
   }
 }

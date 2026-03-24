@@ -3,6 +3,14 @@ import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../services/auth.service';
 import { MfaService } from '../mfa/mfa.service';
+import { SmsOtpService } from '../services/sms-otp.service';
+import { LoginThrottleService } from '../services/login-throttle.service';
+import { SessionService } from '../services/session.service';
+import { RiskAssessmentService } from '../services/risk-assessment.service';
+import { TrustedDeviceService } from '../services/trusted-device.service';
+import { SecurityActivityService } from '../services/security-activity.service';
+import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -46,6 +54,76 @@ describe('AuthController', () => {
           useValue: {
             getStatus: jest.fn(),
             verify: jest.fn(),
+          },
+        },
+        {
+          provide: SessionService,
+          useValue: {
+            createSession: jest.fn().mockResolvedValue('session-1'),
+            listSessions: jest.fn().mockResolvedValue([]),
+            revokeSession: jest.fn(),
+            revokeAllOtherSessions: jest.fn().mockResolvedValue(0),
+            touchSession: jest.fn(),
+          },
+        },
+        {
+          provide: RiskAssessmentService,
+          useValue: {
+            assessLoginRisk: jest.fn().mockResolvedValue({
+              score: 0,
+              level: 'low',
+              signals: [],
+              requiresMfa: false,
+              requiresDeviceApproval: false,
+              blockLogin: false,
+            }),
+            trustDevice: jest.fn().mockResolvedValue(undefined),
+            markDeviceCompromised: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: LoginThrottleService,
+          useValue: {
+            getDelay: jest.fn().mockResolvedValue({ delay: 0, attempts: 0 }),
+            recordFailure: jest.fn().mockResolvedValue(1),
+            resetOnSuccess: jest.fn(),
+            getHeaders: jest.fn().mockReturnValue({}),
+          },
+        },
+        {
+          provide: SmsOtpService,
+          useValue: {
+            sendOtp: jest.fn().mockResolvedValue({ success: true, expiresIn: 300 }),
+            verifyOtp: jest.fn().mockResolvedValue({ valid: true }),
+          },
+        },
+        {
+          provide: TrustedDeviceService,
+          useValue: {
+            generateFingerprint: jest.fn().mockReturnValue('fingerprint-hash'),
+            isDeviceTrusted: jest.fn().mockResolvedValue(false),
+            trustDevice: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: SecurityActivityService,
+          useValue: {
+            logEvent: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: EncryptionService,
+          useValue: {
+            encrypt: jest.fn().mockReturnValue('encrypted-value'),
+            decrypt: jest.fn().mockReturnValue('+393331234567'),
+            hash: jest.fn().mockReturnValue('hashed-value'),
+          },
+        },
+        {
+          provide: PrismaService,
+          useValue: {
+            user: { findUnique: jest.fn(), update: jest.fn(), findFirst: jest.fn() },
+            tenant: { findFirst: jest.fn() },
           },
         },
       ],
@@ -98,7 +176,11 @@ describe('AuthController', () => {
       mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
       authService.generateTokens.mockResolvedValue(mockTokens as never);
 
-      const result = await controller.login(loginDto as never, '127.0.0.1');
+      const result = await controller.login(
+        loginDto as never,
+        '127.0.0.1',
+        'Mozilla/5.0 Chrome/120',
+      );
 
       expect(authService.validateUser).toHaveBeenCalledWith(
         'test@example.com',
@@ -112,9 +194,9 @@ describe('AuthController', () => {
     it('should throw UnauthorizedException when credentials invalid', async () => {
       authService.validateUser.mockResolvedValue(null as never);
 
-      await expect(controller.login(loginDto as never, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0 Chrome/120'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when account locked', async () => {
@@ -124,9 +206,9 @@ describe('AuthController', () => {
         until: new Date(),
       } as never);
 
-      await expect(controller.login(loginDto as never, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0 Chrome/120'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should return MFA temp token when MFA enabled and no code provided', async () => {
@@ -135,12 +217,17 @@ describe('AuthController', () => {
       mfaService.getStatus.mockResolvedValue({ enabled: true } as never);
       authService.generateTwoFactorTempToken.mockResolvedValue('temp-token-123' as never);
 
-      const result = await controller.login(loginDto as never, '127.0.0.1');
+      const result = await controller.login(
+        loginDto as never,
+        '127.0.0.1',
+        'Mozilla/5.0 Chrome/120',
+      );
 
       expect(result).toEqual({
         tempToken: 'temp-token-123',
         requiresMfa: true,
         methods: ['totp', 'backup'],
+        riskLevel: 'low',
       });
     });
 
@@ -152,7 +239,11 @@ describe('AuthController', () => {
       mfaService.verify.mockResolvedValue({ valid: true } as never);
       authService.generateTokens.mockResolvedValue(mockTokens as never);
 
-      const result = await controller.login(dtoWithTotp as never, '127.0.0.1');
+      const result = await controller.login(
+        dtoWithTotp as never,
+        '127.0.0.1',
+        'Mozilla/5.0 Chrome/120',
+      );
 
       expect(mfaService.verify).toHaveBeenCalledWith('user-001', '123456');
       expect(result).toEqual(mockTokens);
@@ -165,9 +256,9 @@ describe('AuthController', () => {
       mfaService.getStatus.mockResolvedValue({ enabled: true } as never);
       mfaService.verify.mockResolvedValue({ valid: false } as never);
 
-      await expect(controller.login(dtoWithTotp as never, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.login(dtoWithTotp as never, '127.0.0.1', 'Mozilla/5.0 Chrome/120'),
+      ).rejects.toThrow(UnauthorizedException);
       expect(authService.recordFailedLogin).toHaveBeenCalledWith('user-001');
     });
   });
@@ -180,7 +271,11 @@ describe('AuthController', () => {
       authService.generateTokens.mockResolvedValue(mockTokens as never);
 
       const dto = { tempToken: 'temp-123', totpCode: '123456' };
-      const result = await controller.verifyTwoFactor(dto as never, '127.0.0.1');
+      const result = await controller.verifyTwoFactor(
+        dto as never,
+        '127.0.0.1',
+        'Mozilla/5.0 Chrome/120',
+      );
 
       expect(authService.verifyTwoFactorTempToken).toHaveBeenCalledWith('temp-123');
       expect(mfaService.verify).toHaveBeenCalledWith('user-001', '123456');
@@ -193,9 +288,9 @@ describe('AuthController', () => {
       mfaService.verify.mockResolvedValue({ valid: false } as never);
 
       const dto = { tempToken: 'temp-123', totpCode: '000000' };
-      await expect(controller.verifyTwoFactor(dto as never, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.verifyTwoFactor(dto as never, '127.0.0.1', 'Mozilla/5.0 Chrome/120'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 

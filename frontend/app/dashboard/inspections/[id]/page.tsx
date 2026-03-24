@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -10,24 +10,33 @@ import {
   Shield,
   CheckCircle,
   Clock,
-  Wind,
   Camera,
-  QrCode,
   FileText,
   Download,
   Share2,
   Loader2,
+  AlertCircle,
+  AlertTriangle,
+  Send,
+  Printer,
+  Wrench,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
-interface InspectionFinding {
+interface InspectionItem {
+  id: string;
+  name: string;
   category: string;
-  status: string;
-  count: number;
+  severity: 'OK' | 'BASSO' | 'MEDIO' | 'ALTO' | 'CRITICO';
+  notes: string;
+  photos: string[];
 }
 
 interface InspectionDetail {
@@ -41,61 +50,148 @@ interface InspectionDetail {
   score: number | null;
   inspector: string;
   mileage: number;
-  blockchainHash: string;
-  ipfsCID: string;
-  findings: InspectionFinding[];
-  sensory: {
-    humidity: number;
-    moldRisk: string;
-    odors: string[];
-  };
+  items: InspectionItem[];
+  notes: string;
+  createdAt: string;
 }
 
-export default function InspectionDetailPage({ params }: { params: { id: string } }) {
+const severityConfig: Record<string, { color: string; bg: string; label: string; order: number }> = {
+  CRITICO: { color: 'text-red-700 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/40', label: 'Critico', order: 0 },
+  ALTO: { color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-100 dark:bg-orange-900/40', label: 'Alto', order: 1 },
+  MEDIO: { color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/40', label: 'Medio', order: 2 },
+  BASSO: { color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/40', label: 'Basso', order: 3 },
+  OK: { color: 'text-green-700 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/40', label: 'OK', order: 4 },
+};
+
+const categoryLabels: Record<string, string> = {
+  brakes: 'Freni',
+  engine: 'Motore',
+  suspension: 'Sospensioni',
+  body: 'Carrozzeria',
+  tires: 'Pneumatici',
+  lights: 'Luci',
+  fluids: 'Fluidi',
+  electronics: 'Elettronica',
+};
+
+const typeLabels: Record<string, string> = {
+  PRE_PURCHASE: 'Pre-Acquisto',
+  PERIODIC: 'Periodica',
+  PRE_SALE: 'Pre-Vendita',
+  WARRANTY: 'Garanzia',
+  ACCIDENT: 'Incidente',
+};
+
+function getMaxSeverity(items: InspectionItem[]): string {
+  if (items.length === 0) return 'OK';
+  let maxOrder = 4;
+  let maxSeverity = 'OK';
+  for (const item of items) {
+    const cfg = severityConfig[item.severity];
+    if (cfg && cfg.order < maxOrder) {
+      maxOrder = cfg.order;
+      maxSeverity = item.severity;
+    }
+  }
+  return maxSeverity;
+}
+
+export default function InspectionDetailPage() {
+  const params = useParams();
   const router = useRouter();
-  const { id } = params;
+  const id = params.id as string;
   const [inspection, setInspection] = useState<InspectionDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchInspection = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/inspections/${id}`);
+      if (!res.ok) throw new Error('Ispezione non trovata');
+      const json = await res.json();
+      const d = json.data || json;
+      setInspection({
+        id: d.id || id,
+        vehicle: d.vehicleName || (d.vehicle?.make ? `${d.vehicle.make} ${d.vehicle.model}` : 'N/D'),
+        plate: d.vehiclePlate || d.vehicle?.licensePlate || '',
+        customer: d.customerName || (d.customer ? `${d.customer.firstName || ''} ${d.customer.lastName || ''}`.trim() : ''),
+        type: d.type || d.inspectionType || '',
+        status: d.status || 'pending',
+        date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('it-IT') : '',
+        score: d.score || d.overallScore || null,
+        inspector: d.inspectorName || d.mechanic?.firstName || 'N/D',
+        mileage: d.mileage || 0,
+        items: Array.isArray(d.items)
+          ? d.items.map((item: Record<string, unknown>) => ({
+              id: (item.id as string) || '',
+              name: (item.name as string) || '',
+              category: (item.category as string) || '',
+              severity: (item.severity as string) || (item.status as string) || 'OK',
+              notes: (item.notes as string) || '',
+              photos: Array.isArray(item.photos) ? item.photos as string[] : [],
+            }))
+          : [],
+        notes: d.notes || '',
+        createdAt: d.createdAt || '',
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    fetch(`/api/inspections/${id}`)
-      .then(res => res.json())
-      .then(json => {
-        const d = json.data || json;
-        setInspection({
-          id: d.id || id,
-          vehicle:
-            d.vehicleName || d.vehicle?.make ? `${d.vehicle.make} ${d.vehicle.model}` : 'N/D',
-          plate: d.vehiclePlate || d.vehicle?.licensePlate || '',
-          customer:
-            d.customerName ||
-            (d.customer ? `${d.customer.firstName || ''} ${d.customer.lastName || ''}`.trim() : ''),
-          type: d.type || d.inspectionType || '',
-          status: d.status || 'pending',
-          date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('it-IT') : '',
-          score: d.score || d.overallScore || null,
-          inspector: d.inspectorName || d.mechanic?.firstName || 'N/D',
-          mileage: d.mileage || 0,
-          blockchainHash: d.blockchainHash || '',
-          ipfsCID: d.ipfsCID || d.ipfsHash || '',
-          findings: Array.isArray(d.findings)
-            ? d.findings
-            : (d.items || []).map((item: Record<string, unknown>) => ({
-                category: (item.category as string) || (item.name as string) || '',
-                status: (item.status as string) || 'good',
-                count: (item.count as number) || 1,
-              })),
-          sensory: d.sensory || { humidity: 0, moldRisk: 'N/D', odors: ['N/D'] },
-        });
-      })
-      .catch(() => setError("Impossibile caricare l'ispezione"))
-      .finally(() => setIsLoading(false));
-  }, [id]);
+    fetchInspection();
+  }, [fetchInspection]);
+
+  const handleGenerateEstimate = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/inspections/${id}/generate-estimate`, { method: 'POST' });
+      if (!res.ok) throw new Error('Errore generazione preventivo');
+      const json = await res.json();
+      const estimateId = json.data?.id || json.id;
+      toast.success('Preventivo generato con successo');
+      if (estimateId) router.push(`/dashboard/estimates/${estimateId}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore generazione preventivo');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSendToClient = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/inspections/${id}/send`, { method: 'POST' });
+      if (!res.ok) throw new Error('Errore invio');
+      toast.success('Report inviato al cliente');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore invio');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`/api/inspections/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Errore eliminazione');
+      toast.success('Ispezione eliminata');
+      router.push('/dashboard/inspections');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore eliminazione');
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-screen'>
+      <div className='flex items-center justify-center min-h-[60vh]'>
         <Loader2 className='w-8 h-8 animate-spin text-gray-400' />
       </div>
     );
@@ -103,8 +199,9 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
 
   if (error || !inspection) {
     return (
-      <div className='flex flex-col items-center justify-center h-screen gap-4'>
-        <p className='text-gray-500'>{error || 'Ispezione non trovata'}</p>
+      <div className='flex flex-col items-center justify-center min-h-[60vh] gap-4'>
+        <AlertCircle className='h-12 w-12 text-red-400' />
+        <p className='text-gray-500 dark:text-[#636366]'>{error || 'Ispezione non trovata'}</p>
         <Link href='/dashboard/inspections'>
           <Button variant='outline'>Torna alle ispezioni</Button>
         </Link>
@@ -112,289 +209,317 @@ export default function InspectionDetailPage({ params }: { params: { id: string 
     );
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 9) return 'text-green-600 dark:text-green-400';
-    if (score >= 7) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
+  const maxSev = getMaxSeverity(inspection.items);
+  const maxSevCfg = severityConfig[maxSev] || severityConfig.OK;
+
+  // Group items by category
+  const grouped: Record<string, InspectionItem[]> = {};
+  for (const item of inspection.items) {
+    const cat = item.category || 'altro';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  }
+
+  // All photos
+  const allPhotos = inspection.items.flatMap(i => i.photos);
+
+  // Severity counts
+  const severityCounts = { CRITICO: 0, ALTO: 0, MEDIO: 0, BASSO: 0, OK: 0 };
+  for (const item of inspection.items) {
+    if (item.severity in severityCounts) {
+      severityCounts[item.severity as keyof typeof severityCounts]++;
+    }
+  }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#2f2f2f] p-6'>
-      <div className='max-w-6xl mx-auto space-y-6'>
-        {/* Header */}
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Link href='/dashboard/inspections'>
-              <Button variant='ghost' size='icon' className='rounded-full'>
-                <ChevronLeft className='w-5 h-5' />
-              </Button>
-            </Link>
-            <div>
-              <div className='flex items-center gap-3'>
-                <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-                  Ispezione {inspection.id}
-                </h1>
-                <Badge className='bg-green-500'>Completata</Badge>
-              </div>
-              <p className='text-gray-500 dark:text-[#636366] text-sm'>
-                {inspection.vehicle} • {inspection.plate} • {inspection.date}
-              </p>
-            </div>
-          </div>
-          <div className='flex gap-2'>
-            <Button variant='outline' className='rounded-full'>
-              <Download className='w-4 h-4 mr-2' />
-              PDF
-            </Button>
-            <Button variant='outline' className='rounded-full'>
-              <Share2 className='w-4 h-4 mr-2' />
-              Condividi
-            </Button>
-            <Button className='rounded-full bg-gray-800 hover:bg-gray-900'>
-              <FileText className='w-4 h-4 mr-2' />
-              Modifica
-            </Button>
-          </div>
-        </div>
-
-        {/* Score Card */}
-        <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-6'>
-                <div className='w-24 h-24 rounded-3xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center'>
-                  <span className={`text-4xl font-bold text-white`}>{inspection.score}</span>
+    <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#2f2f2f]'>
+      {/* Header */}
+      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+        <div className='px-4 sm:px-8 py-5'>
+          <Breadcrumb
+            items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Ispezioni', href: '/dashboard/inspections' },
+              { label: `#${inspection.id.slice(0, 8)}` },
+            ]}
+          />
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2'>
+            <div className='flex items-center gap-4'>
+              <Link href='/dashboard/inspections'>
+                <Button variant='ghost' size='icon' className='rounded-full' aria-label='Torna alle ispezioni'>
+                  <ChevronLeft className='w-5 h-5' />
+                </Button>
+              </Link>
+              <div>
+                <div className='flex items-center gap-3'>
+                  <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
+                    Ispezione #{inspection.id.slice(0, 8)}
+                  </h1>
+                  <span className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${maxSevCfg.bg} ${maxSevCfg.color}`}>
+                    {maxSevCfg.label}
+                  </span>
                 </div>
-                <div>
-                  <p className='text-sm text-gray-500 dark:text-[#636366] mb-1'>Overall Score</p>
-                  <p className={`text-3xl font-bold ${getScoreColor(inspection.score ?? 0)}`}>
-                    {inspection.score}/10
-                  </p>
-                  <p className='text-sm text-gray-500 dark:text-[#6e6e6e] mt-1'>
-                    Ottime condizioni generali
-                  </p>
-                </div>
-              </div>
-              <div className='text-right'>
-                <div className='flex items-center gap-2 justify-end mb-2'>
-                  <Shield className='w-5 h-5 text-blue-500' />
-                  <Badge className='bg-blue-100 text-blue-700'>Certificata Blockchain</Badge>
-                </div>
-                <p className='text-xs text-gray-500 dark:text-[#6e6e6e] font-mono'>
-                  {inspection.blockchainHash.slice(0, 20)}...{inspection.blockchainHash.slice(-8)}
+                <p className='text-gray-500 dark:text-[#636366] text-sm'>
+                  {inspection.vehicle} | {inspection.plate} | {inspection.date}
+                  {inspection.inspector !== 'N/D' && ` | Tecnico: ${inspection.inspector}`}
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                variant='outline'
+                className='rounded-full'
+                onClick={handleGenerateEstimate}
+                disabled={actionLoading}
+              >
+                <Wrench className='w-4 h-4 mr-2' />
+                Genera Preventivo
+              </Button>
+              <Button variant='outline' className='rounded-full' onClick={() => window.print()}>
+                <Printer className='w-4 h-4 mr-2' />
+                Stampa Report
+              </Button>
+              <Button variant='outline' className='rounded-full' onClick={handleSendToClient} disabled={actionLoading}>
+                <Send className='w-4 h-4 mr-2' />
+                Invia al Cliente
+              </Button>
+              <Button
+                variant='outline'
+                className='rounded-full text-red-500 hover:text-red-600 hover:border-red-300'
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
+                Elimina
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className='p-4 sm:p-8 max-w-6xl mx-auto space-y-6'>
+        {/* Vehicle Info */}
+        <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
+          {[
+            { label: 'Veicolo', value: `${inspection.vehicle}`, icon: Car },
+            { label: 'Targa', value: inspection.plate, icon: Shield },
+            { label: 'Tecnico', value: inspection.inspector, icon: User },
+            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : 'N/D', icon: Clock },
+          ].map(info => (
+            <Card key={info.label} className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
+              <CardContent className='p-4 flex items-center gap-3'>
+                <info.icon className='w-5 h-5 text-gray-400 flex-shrink-0' />
+                <div>
+                  <p className='text-xs text-gray-500 dark:text-[#636366]'>{info.label}</p>
+                  <p className='text-sm font-medium text-gray-900 dark:text-[#ececec]'>{info.value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         {/* Tabs */}
-        <Tabs defaultValue='summary' className='w-full'>
-          <TabsList className='grid w-full grid-cols-5 bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl'>
-            <TabsTrigger value='summary'>Riepilogo</TabsTrigger>
-            <TabsTrigger value='details'>Dettagli</TabsTrigger>
-            <TabsTrigger value='video'>Video 360°</TabsTrigger>
-            <TabsTrigger value='blockchain'>Blockchain</TabsTrigger>
-            <TabsTrigger value='warranty'>Garanzia</TabsTrigger>
+        <Tabs defaultValue='checklist' className='w-full'>
+          <TabsList className='grid w-full grid-cols-3 bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl'>
+            <TabsTrigger value='checklist'>Checklist</TabsTrigger>
+            <TabsTrigger value='foto'>Foto ({allPhotos.length})</TabsTrigger>
+            <TabsTrigger value='report'>Report</TabsTrigger>
           </TabsList>
 
-          {/* Summary Tab */}
-          <TabsContent value='summary' className='mt-6'>
-            <div className='grid grid-cols-2 gap-6'>
-              <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Car className='w-5 h-5' />
-                    Veicolo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-500 dark:text-[#636366]'>Modello</span>
-                    <span className='font-medium'>{inspection.vehicle}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-500 dark:text-[#636366]'>Targa</span>
-                    <span className='font-medium'>{inspection.plate}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-500 dark:text-[#636366]'>Chilometraggio</span>
-                    <span className='font-medium'>{inspection.mileage.toLocaleString()} km</span>
-                  </div>
+          {/* Checklist Tab */}
+          <TabsContent value='checklist' className='mt-6 space-y-6'>
+            {Object.keys(grouped).length === 0 ? (
+              <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
+                <CardContent className='p-8 text-center'>
+                  <FileText className='w-12 h-12 text-gray-400 mx-auto mb-4' />
+                  <p className='text-gray-500 dark:text-[#636366]'>Nessun elemento registrato</p>
                 </CardContent>
               </Card>
-
-              <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <CheckCircle className='w-5 h-5' />
-                    Risultati
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='space-y-3'>
-                    {inspection.findings.map(finding => (
-                      <div key={finding.category} className='flex items-center justify-between'>
-                        <span className='text-gray-600 dark:text-[#636366]'>
-                          {finding.category}
-                        </span>
-                        <div className='flex items-center gap-2'>
-                          <span className='font-medium'>{finding.count} voci</span>
+            ) : (
+              Object.entries(grouped).map(([category, items]) => (
+                <Card key={category} className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>
+                      {categoryLabels[category] || category}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className='space-y-3'>
+                      {items.map(item => {
+                        const sev = severityConfig[item.severity] || severityConfig.OK;
+                        return (
                           <div
-                            className={`w-3 h-3 rounded-full ${
-                              finding.status === 'good'
-                                ? 'bg-green-500'
-                                : finding.status === 'warning'
-                                  ? 'bg-yellow-500'
-                                  : 'bg-red-500'
+                            key={item.id}
+                            className={`flex items-start gap-3 p-3 rounded-xl ${
+                              item.severity === 'CRITICO' ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30' :
+                              item.severity === 'ALTO' ? 'bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/30' :
+                              'bg-gray-50 dark:bg-[#353535]'
                             }`}
-                          />
-                        </div>
+                          >
+                            <div className='flex-1'>
+                              <div className='flex items-center gap-2 mb-1'>
+                                <span className='text-sm font-medium text-gray-900 dark:text-[#ececec]'>
+                                  {item.name}
+                                </span>
+                                <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${sev.bg} ${sev.color}`}>
+                                  {sev.label}
+                                </span>
+                              </div>
+                              {item.notes && (
+                                <p className='text-xs text-gray-500 dark:text-[#636366]'>{item.notes}</p>
+                              )}
+                            </div>
+                            {item.photos.length > 0 && (
+                              <div className='flex gap-1'>
+                                {item.photos.slice(0, 3).map((photo, i) => (
+                                  <div key={i} className='w-10 h-10 rounded-lg bg-gray-200 dark:bg-[#424242] overflow-hidden flex items-center justify-center'>
+                                    <Camera className='w-4 h-4 text-gray-400' />
+                                  </div>
+                                ))}
+                                {item.photos.length > 3 && (
+                                  <div className='w-10 h-10 rounded-lg bg-gray-200 dark:bg-[#424242] flex items-center justify-center text-xs font-medium text-gray-500'>
+                                    +{item.photos.length - 3}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          {/* Foto Tab */}
+          <TabsContent value='foto' className='mt-6'>
+            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
+              <CardContent className='p-6'>
+                {allPhotos.length === 0 ? (
+                  <div className='text-center py-12'>
+                    <Camera className='w-12 h-12 text-gray-400 mx-auto mb-4' />
+                    <p className='text-gray-500 dark:text-[#636366]'>Nessuna foto registrata</p>
+                  </div>
+                ) : (
+                  <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
+                    {allPhotos.map((photo, i) => (
+                      <div
+                        key={i}
+                        className='aspect-square rounded-xl bg-gray-100 dark:bg-[#353535] overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
+                      >
+                        <Camera className='w-8 h-8 text-gray-400' />
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* Details Tab */}
-          <TabsContent value='details' className='mt-6'>
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
+          {/* Report Tab */}
+          <TabsContent value='report' className='mt-6 space-y-6'>
+            {/* Severity Summary */}
+            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
+              <CardHeader>
+                <CardTitle>Riepilogo per Gravità</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='grid grid-cols-5 gap-4'>
+                  {(['CRITICO', 'ALTO', 'MEDIO', 'BASSO', 'OK'] as const).map(sev => {
+                    const cfg = severityConfig[sev];
+                    return (
+                      <div key={sev} className='text-center'>
+                        <div className={`w-12 h-12 rounded-xl ${cfg.bg} flex items-center justify-center mx-auto mb-2`}>
+                          <span className={`text-lg font-bold ${cfg.color}`}>
+                            {severityCounts[sev]}
+                          </span>
+                        </div>
+                        <p className='text-xs text-gray-500 dark:text-[#636366]'>{cfg.label}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Printable Summary */}
+            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Wind className='w-5 h-5' />
-                  Analisi Sensoriale
+                  <FileText className='w-5 h-5' />
+                  Riepilogo Ispezione
                 </CardTitle>
               </CardHeader>
-              <CardContent className='space-y-6'>
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='bg-gray-50 dark:bg-[#353535] rounded-2xl p-4 text-center'>
-                    <p className='text-sm text-gray-500 dark:text-[#636366] mb-1'>
-                      Umidità Interna
-                    </p>
-                    <p className='text-3xl font-bold text-gray-900 dark:text-[#ececec]'>
-                      {inspection.sensory.humidity}%
-                    </p>
-                    <Progress value={inspection.sensory.humidity} className='h-2 mt-2' />
+              <CardContent className='space-y-4'>
+                <div className='grid grid-cols-2 gap-4 text-sm'>
+                  <div>
+                    <span className='text-gray-500 dark:text-[#636366]'>Veicolo:</span>{' '}
+                    <span className='font-medium'>{inspection.vehicle} ({inspection.plate})</span>
                   </div>
-                  <div className='bg-gray-50 dark:bg-[#353535] rounded-2xl p-4 text-center'>
-                    <p className='text-sm text-gray-500 dark:text-[#636366] mb-1'>Rischio Muffa</p>
-                    <p className='text-3xl font-bold text-green-600 dark:text-green-400'>
-                      {inspection.sensory.moldRisk}
-                    </p>
-                    <Badge className='mt-2 bg-green-100 text-green-700'>Ottimale</Badge>
+                  <div>
+                    <span className='text-gray-500 dark:text-[#636366]'>Data:</span>{' '}
+                    <span className='font-medium'>{inspection.date}</span>
                   </div>
-                  <div className='bg-gray-50 dark:bg-[#353535] rounded-2xl p-4 text-center'>
-                    <p className='text-sm text-gray-500 dark:text-[#636366] mb-1'>Odori</p>
-                    <p className='text-3xl font-bold text-gray-900 dark:text-[#ececec]'>
-                      {inspection.sensory.odors[0]}
-                    </p>
-                    <Badge className='mt-2 bg-green-100 text-green-700'>Nessuno</Badge>
+                  <div>
+                    <span className='text-gray-500 dark:text-[#636366]'>Tecnico:</span>{' '}
+                    <span className='font-medium'>{inspection.inspector}</span>
+                  </div>
+                  <div>
+                    <span className='text-gray-500 dark:text-[#636366]'>Tipo:</span>{' '}
+                    <span className='font-medium'>{typeLabels[inspection.type] || inspection.type}</span>
+                  </div>
+                  <div>
+                    <span className='text-gray-500 dark:text-[#636366]'>Km:</span>{' '}
+                    <span className='font-medium'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : 'N/D'}</span>
+                  </div>
+                  <div>
+                    <span className='text-gray-500 dark:text-[#636366]'>Elementi totali:</span>{' '}
+                    <span className='font-medium'>{inspection.items.length}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* Video Tab */}
-          <TabsContent value='video' className='mt-6'>
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-              <CardContent className='p-8 text-center'>
-                <div className='w-20 h-20 rounded-3xl bg-gray-100 dark:bg-[#353535] flex items-center justify-center mx-auto mb-4'>
-                  <Camera className='w-10 h-10 text-gray-400' />
-                </div>
-                <h3 className='text-lg font-medium text-gray-900 dark:text-[#ececec] mb-2'>
-                  Video 360° Walkaround
-                </h3>
-                <p className='text-gray-500 dark:text-[#636366] max-w-md mx-auto mb-6'>
-                  Video ispezione completo con annotazioni AI e hotspot interattivi.
-                </p>
-                <div className='flex justify-center gap-2'>
-                  <Badge variant='outline'>📹 HLS Streaming</Badge>
-                  <Badge variant='outline'>🎯 Hotspots</Badge>
-                  <Badge variant='outline'>📍 GPS Tagged</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                {(severityCounts.CRITICO > 0 || severityCounts.ALTO > 0) && (
+                  <div className='mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30'>
+                    <div className='flex items-center gap-2 mb-2'>
+                      <AlertTriangle className='w-4 h-4 text-red-500' />
+                      <span className='text-sm font-semibold text-red-700 dark:text-red-300'>
+                        Elementi che richiedono intervento
+                      </span>
+                    </div>
+                    <ul className='space-y-1'>
+                      {inspection.items
+                        .filter(i => i.severity === 'CRITICO' || i.severity === 'ALTO')
+                        .map(item => (
+                          <li key={item.id} className='text-sm text-red-600 dark:text-red-400'>
+                            {item.name} ({severityConfig[item.severity]?.label})
+                            {item.notes && ` — ${item.notes}`}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
 
-          {/* Blockchain Tab */}
-          <TabsContent value='blockchain' className='mt-6'>
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Shield className='w-5 h-5 text-blue-500' />
-                  Certificazione Blockchain
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-6'>
-                <div className='flex items-center justify-center py-8'>
-                  <div className='w-48 h-48 bg-gray-100 dark:bg-[#353535] rounded-2xl flex items-center justify-center'>
-                    <QrCode className='w-32 h-32 text-gray-400' />
+                {inspection.notes && (
+                  <div className='mt-4'>
+                    <p className='text-sm text-gray-500 dark:text-[#636366] mb-1'>Note generali:</p>
+                    <p className='text-sm text-gray-900 dark:text-[#ececec] whitespace-pre-wrap'>{inspection.notes}</p>
                   </div>
-                </div>
-                <div className='space-y-3'>
-                  <div className='flex justify-between items-center py-2 border-b border-gray-100 dark:border-[#424242]'>
-                    <span className='text-gray-500 dark:text-[#636366]'>Network</span>
-                    <Badge>Polygon Mainnet</Badge>
-                  </div>
-                  <div className='flex justify-between items-center py-2 border-b border-gray-100 dark:border-[#424242]'>
-                    <span className='text-gray-500 dark:text-[#636366]'>Contract Address</span>
-                    <code className='text-sm bg-gray-100 dark:bg-[#353535] px-2 py-1 rounded'>
-                      {inspection.blockchainHash.slice(0, 20)}...
-                    </code>
-                  </div>
-                  <div className='flex justify-between items-center py-2 border-b border-gray-100 dark:border-[#424242]'>
-                    <span className='text-gray-500 dark:text-[#636366]'>IPFS CID</span>
-                    <code className='text-sm bg-gray-100 dark:bg-[#353535] px-2 py-1 rounded'>
-                      {inspection.ipfsCID.slice(0, 20)}...
-                    </code>
-                  </div>
-                </div>
-                <Button className='w-full rounded-full' variant='outline'>
-                  Verifica su PolygonScan
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Warranty Tab */}
-          <TabsContent value='warranty' className='mt-6'>
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-              <CardContent className='p-8 text-center'>
-                <Clock className='w-12 h-12 text-gray-400 mx-auto mb-4' />
-                <h3 className='text-lg font-medium text-gray-900 dark:text-[#ececec] mb-2'>
-                  Garanzia Estesa
-                </h3>
-                <p className='text-gray-500 dark:text-[#636366] max-w-md mx-auto'>
-                  Configura la garanzia estesa con tracciamento blockchain e gestione claims.
-                </p>
-                <Button className='mt-6 rounded-full'>Attiva Garanzia</Button>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Feature Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className='bg-gradient-to-r from-gray-800 to-gray-900 rounded-3xl p-6 text-white'
-        >
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-gray-400 dark:text-gray-300'>Powered by</p>
-              <p className='font-medium'>Vehicle Inspection System 2026</p>
-            </div>
-            <div className='flex gap-2'>
-              <Badge className='bg-white/20 text-white'>AI Vision</Badge>
-              <Badge className='bg-white/20 text-white'>Blockchain</Badge>
-              <Badge className='bg-white/20 text-white'>360° Video</Badge>
-            </div>
-          </div>
-        </motion.div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title='Elimina ispezione'
+        description='Sei sicuro di voler eliminare questa ispezione? Questa azione non può essere annullata.'
+        confirmLabel='Elimina'
+        variant='danger'
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

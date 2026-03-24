@@ -201,7 +201,7 @@ export function SubscriptionManager() {
           <Card>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium text-gray-500'>
-                Total Subscriptions
+                Abbonamenti Totali
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -211,7 +211,7 @@ export function SubscriptionManager() {
 
           <Card>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium text-gray-500'>Trial Conversions</CardTitle>
+              <CardTitle className='text-sm font-medium text-gray-500'>Conversioni Trial</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>{analytics.trialConversions}</div>
@@ -221,7 +221,7 @@ export function SubscriptionManager() {
           <Card>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium text-gray-500'>
-                Active Subscriptions
+                Abbonamenti Attivi
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -231,7 +231,7 @@ export function SubscriptionManager() {
 
           <Card>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium text-gray-500'>AI Addon Revenue</CardTitle>
+              <CardTitle className='text-sm font-medium text-gray-500'>Ricavi AI Addon</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>€{analytics.aiAddonRevenue.toFixed(2)}</div>
@@ -245,10 +245,11 @@ export function SubscriptionManager() {
         <CardContent className='pt-6'>
           <div className='flex flex-wrap gap-4'>
             <Input
-              placeholder='Search by tenant name...'
+              placeholder='Cerca per nome tenant...'
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className='w-64'
+              aria-label='Cerca tenant'
             />
 
             <Select
@@ -256,10 +257,10 @@ export function SubscriptionManager() {
               onValueChange={v => setFilterStatus(v as SubscriptionStatus | 'all')}
             >
               <SelectTrigger className='w-40'>
-                <SelectValue placeholder='Filter by status' />
+                <SelectValue placeholder='Filtra per stato' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Statuses</SelectItem>
+                <SelectItem value='all'>Tutti gli Stati</SelectItem>
                 {SUBSCRIPTION_STATUSES.map(status => (
                   <SelectItem key={status} value={status}>
                     {status}
@@ -273,10 +274,10 @@ export function SubscriptionManager() {
               onValueChange={v => setFilterPlan(v as SubscriptionPlan | 'all')}
             >
               <SelectTrigger className='w-40'>
-                <SelectValue placeholder='Filter by plan' />
+                <SelectValue placeholder='Filtra per piano' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Plans</SelectItem>
+                <SelectItem value='all'>Tutti i Piani</SelectItem>
                 {SUBSCRIPTION_PLANS.map(plan => (
                   <SelectItem key={plan} value={plan}>
                     {plan}
@@ -286,7 +287,7 @@ export function SubscriptionManager() {
             </Select>
 
             <Button variant='outline' onClick={fetchData}>
-              Refresh
+              Aggiorna
             </Button>
           </div>
         </CardContent>
@@ -295,23 +296,23 @@ export function SubscriptionManager() {
       {/* Subscriptions Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Subscriptions ({filteredSubscriptions.length})</CardTitle>
+          <CardTitle>Abbonamenti ({filteredSubscriptions.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className='text-center py-8'>Loading...</div>
+            <div className='text-center py-8'>Caricamento...</div>
           ) : (
             <div className='overflow-x-auto'>
               <table className='w-full'>
                 <thead>
                   <tr className='border-b'>
                     <th className='text-left py-3 px-4'>Tenant</th>
-                    <th className='text-left py-3 px-4'>Plan</th>
-                    <th className='text-left py-3 px-4'>Status</th>
+                    <th className='text-left py-3 px-4'>Piano</th>
+                    <th className='text-left py-3 px-4'>Stato</th>
                     <th className='text-left py-3 px-4'>AI Addon</th>
-                    <th className='text-left py-3 px-4'>Period End</th>
-                    <th className='text-left py-3 px-4'>Usage</th>
-                    <th className='text-left py-3 px-4'>Actions</th>
+                    <th className='text-left py-3 px-4'>Fine Periodo</th>
+                    <th className='text-left py-3 px-4'>Utilizzo</th>
+                    <th className='text-left py-3 px-4'>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,9 +326,9 @@ export function SubscriptionManager() {
                       <td className='py-3 px-4'>{getStatusBadge(sub.status)}</td>
                       <td className='py-3 px-4'>
                         {sub.aiAddonEnabled ? (
-                          <Badge className='bg-purple-500'>Enabled</Badge>
+                          <Badge className='bg-purple-500'>Abilitato</Badge>
                         ) : (
-                          <Badge variant='outline'>Disabled</Badge>
+                          <Badge variant='outline'>Disabilitato</Badge>
                         )}
                       </td>
                       <td className='py-3 px-4'>
@@ -352,7 +353,7 @@ export function SubscriptionManager() {
                               setShowEditDialog(true);
                             }}
                           >
-                            Edit
+                            Modifica
                           </Button>
                           <Button
                             variant='outline'
@@ -362,7 +363,7 @@ export function SubscriptionManager() {
                               setShowUsageDialog(true);
                             }}
                           >
-                            Usage
+                            Utilizzo
                           </Button>
                         </div>
                       </td>
@@ -379,7 +380,7 @@ export function SubscriptionManager() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className='max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Edit Subscription</DialogTitle>
+            <DialogTitle>Modifica Abbonamento</DialogTitle>
             <DialogDescription>{selectedSubscription?.tenant.name}</DialogDescription>
           </DialogHeader>
 
@@ -387,7 +388,7 @@ export function SubscriptionManager() {
             <div className='space-y-4 py-4'>
               <div>
                 <label htmlFor='subscriptionPlan' className='text-sm font-medium'>
-                  Plan
+                  Piano
                 </label>
                 <Select
                   value={selectedSubscription.plan}
@@ -408,7 +409,7 @@ export function SubscriptionManager() {
 
               <div>
                 <label htmlFor='subscriptionStatus' className='text-sm font-medium'>
-                  Status
+                  Stato
                 </label>
                 <Select
                   value={selectedSubscription.status}
@@ -439,8 +440,8 @@ export function SubscriptionManager() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='true'>Enabled</SelectItem>
-                    <SelectItem value='false'>Disabled</SelectItem>
+                    <SelectItem value='true'>Abilitato</SelectItem>
+                    <SelectItem value='false'>Disabilitato</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -449,7 +450,7 @@ export function SubscriptionManager() {
 
           <DialogFooter>
             <Button variant='outline' onClick={() => setShowEditDialog(false)}>
-              Cancel
+              Annulla
             </Button>
           </DialogFooter>
         </DialogContent>

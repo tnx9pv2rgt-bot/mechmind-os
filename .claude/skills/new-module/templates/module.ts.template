@@ -1,0 +1,10 @@
+import { Module } from '@nestjs/common';
+import { __MODULE_NAME__Controller } from './controllers/__MODULE_KEBAB__.controller';
+import { __MODULE_NAME__Service } from './services/__MODULE_KEBAB__.service';
+
+@Module({
+  controllers: [__MODULE_NAME__Controller],
+  providers: [__MODULE_NAME__Service],
+  exports: [__MODULE_NAME__Service],
+})
+export class __MODULE_NAME__Module {}

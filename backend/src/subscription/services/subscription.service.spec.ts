@@ -263,7 +263,7 @@ describe('SubscriptionService', () => {
       const result = await service.getAllSubscriptions();
 
       // Assert
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
       expect(findManyMock.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {},

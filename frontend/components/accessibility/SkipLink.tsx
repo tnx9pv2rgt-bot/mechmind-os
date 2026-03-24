@@ -7,12 +7,11 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 interface SkipLinkProps {
   /** ID dell'elemento target */
   targetId?: string;
-  /** Testo del link (default: traduzione da i18n) */
+  /** Testo del link (default: "Vai al contenuto principale") */
   text?: string;
   /** Classe CSS aggiuntiva */
   className?: string;
@@ -22,12 +21,11 @@ interface SkipLinkProps {
  * SkipLink - Link nascosto che appare al focus
  * Permette agli utenti di tastiera di saltare la navigazione
  */
-export function SkipLink({ 
-  targetId = 'main-content', 
+export function SkipLink({
+  targetId = 'main-content',
   text,
   className = '',
 }: SkipLinkProps) {
-  const { t } = useTranslation('common');
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -60,7 +58,7 @@ export function SkipLink({
         ${className}
       `}
     >
-      {text || t('meta.skipToContent')}
+      {text || 'Vai al contenuto principale'}
     </a>
   );
 }
@@ -105,11 +103,10 @@ interface SkipToNavigationProps {
   className?: string;
 }
 
-export function SkipToNavigation({ 
+export function SkipToNavigation({
   navId = 'main-navigation',
   className = '',
 }: SkipToNavigationProps) {
-  const { t } = useTranslation('common');
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -139,7 +136,7 @@ export function SkipToNavigation({
         ${className}
       `}
     >
-      {t('meta.mainNavigation')}
+      {'Vai alla navigazione'}
     </a>
   );
 }

@@ -3,13 +3,19 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import { AuthService, JwtPayload, UserWithTenant } from './auth.service';
+import { TokenBlacklistService } from './token-blacklist.service';
+import { PasswordPolicyService } from './password-policy.service';
+import { JwksService } from './jwks.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 
 jest.mock('bcrypt');
+jest.mock('argon2');
 
 describe('AuthService', () => {
+  let module: TestingModule;
   let service: AuthService;
   let jwtService: JwtService;
   let prisma: PrismaService;
@@ -55,7 +61,7 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AuthService,
         {
@@ -90,13 +96,48 @@ describe('AuthService', () => {
               const configMap: Record<string, string> = {
                 JWT_SECRET: 'test-jwt-secret',
                 JWT_REFRESH_SECRET: 'test-jwt-refresh-secret',
-                JWT_EXPIRES_IN: '1h',
+                JWT_EXPIRES_IN: '15m',
                 JWT_REFRESH_EXPIRES_IN: '7d',
-                JWT_EXPIRES_IN_SECONDS: '3600',
+                JWT_EXPIRES_IN_SECONDS: '900',
                 JWT_2FA_SECRET: 'test-2fa-secret',
               };
               return configMap[key] ?? defaultValue;
             }),
+          },
+        },
+        {
+          provide: TokenBlacklistService,
+          useValue: {
+            blacklistToken: jest.fn(),
+            isBlacklisted: jest.fn().mockResolvedValue(false),
+            invalidateAllUserSessions: jest.fn(),
+            isSessionValid: jest.fn().mockResolvedValue(true),
+            markRefreshTokenUsed: jest.fn().mockResolvedValue(false),
+            invalidateRefreshFamily: jest.fn(),
+            isRefreshFamilyRevoked: jest.fn().mockResolvedValue(false),
+          },
+        },
+        {
+          provide: PasswordPolicyService,
+          useValue: {
+            validatePassword: jest.fn().mockResolvedValue({ valid: true, strength: 'strong' }),
+            checkBreachedPassword: jest.fn().mockResolvedValue({ breached: false, count: 0 }),
+          },
+        },
+        {
+          provide: JwksService,
+          useValue: {
+            isAsymmetricEnabled: jest.fn().mockReturnValue(false),
+            getSigningKey: jest.fn().mockReturnValue(null),
+            getSigningOptions: jest.fn().mockReturnValue({
+              algorithm: 'HS256',
+              secret: 'test-jwt-secret',
+            }),
+            getPassportJwtOptions: jest.fn().mockReturnValue({
+              algorithms: ['HS256'],
+              secretOrKey: 'test-jwt-secret',
+            }),
+            getJwks: jest.fn().mockReturnValue({ keys: [] }),
           },
         },
         {
@@ -135,6 +176,8 @@ describe('AuthService', () => {
       (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant);
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (argon2.hash as jest.Mock).mockResolvedValue('$argon2id$v=19$migrated-hash');
+      (prisma.user.update as jest.Mock).mockResolvedValue({});
 
       const result = await service.validateUser(
         'mario@test.com',
@@ -150,7 +193,7 @@ describe('AuthService', () => {
         where: { email: 'mario@test.com', tenantId: 'tenant-uuid-1' },
         include: { tenant: true },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith('correct-password', mockUser.passwordHash);
+      expect(bcrypt.compare).toHaveBeenCalledWith('correct-password', '$2b$12$hashedpassword');
     });
 
     it('should throw UnauthorizedException when tenant is not found', async () => {
@@ -207,19 +250,20 @@ describe('AuthService', () => {
       ).rejects.toThrow('Invalid credentials');
     });
 
-    it('should compare against empty string when passwordHash is null', async () => {
+    it('should reject login when passwordHash is null (no bcrypt call needed)', async () => {
       (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant);
       (prisma.user.findFirst as jest.Mock).mockResolvedValue({
         ...mockUser,
         passwordHash: null,
       });
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
         service.validateUser('mario@test.com', 'password', 'test-garage'),
       ).rejects.toThrow('Invalid credentials');
 
-      expect(bcrypt.compare).toHaveBeenCalledWith('password', '');
+      // verifyAndMigratePassword returns { valid: false } for empty hash
+      // without calling bcrypt or argon2
+      expect(bcrypt.compare).not.toHaveBeenCalled();
     });
   });
 
@@ -227,7 +271,7 @@ describe('AuthService', () => {
   // generateTokens()
   // =========================================================================
   describe('generateTokens', () => {
-    it('should return access token, refresh token, and expiresIn', async () => {
+    it('should return access token, refresh token, and expiresIn (15min default)', async () => {
       (jwtService.signAsync as jest.Mock)
         .mockResolvedValueOnce('mock-access-token')
         .mockResolvedValueOnce('mock-refresh-token');
@@ -237,7 +281,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'mock-access-token',
         refreshToken: 'mock-refresh-token',
-        expiresIn: 3600,
+        expiresIn: 900,
       });
     });
 
@@ -248,21 +292,39 @@ describe('AuthService', () => {
 
       await service.generateTokens(mockUserWithTenant);
 
-      const expectedPayload: JwtPayload = {
-        sub: 'user-uuid-1:tenant-uuid-1',
-        email: 'mario@test.com',
-        role: 'ADMIN',
-        tenantId: 'tenant-uuid-1',
-      };
-
-      expect(jwtService.signAsync).toHaveBeenCalledWith(expectedPayload, {
+      // Verify first call (access token) has correct payload structure
+      const firstCall = (jwtService.signAsync as jest.Mock).mock.calls[0];
+      expect(firstCall[0]).toEqual(
+        expect.objectContaining({
+          sub: 'user-uuid-1:tenant-uuid-1',
+          email: 'mario@test.com',
+          role: 'ADMIN',
+          tenantId: 'tenant-uuid-1',
+        }),
+      );
+      expect(firstCall[0].jti).toBeDefined();
+      expect(firstCall[0]).not.toHaveProperty('familyId'); // access token has no familyId
+      expect(firstCall[1]).toEqual({
         secret: 'test-jwt-secret',
-        expiresIn: '1h',
+        expiresIn: '15m',
       });
-      expect(jwtService.signAsync).toHaveBeenCalledWith(expectedPayload, {
+
+      // Verify second call (refresh token) has familyId
+      const secondCall = (jwtService.signAsync as jest.Mock).mock.calls[1];
+      expect(secondCall[0].familyId).toBeDefined();
+      expect(secondCall[1]).toEqual({
         secret: 'test-jwt-refresh-secret',
         expiresIn: '7d',
       });
+    });
+
+    it('should reuse provided familyId for refresh token rotation', async () => {
+      (jwtService.signAsync as jest.Mock).mockResolvedValue('token');
+
+      await service.generateTokens(mockUserWithTenant, 'existing-family-id');
+
+      const refreshCall = (jwtService.signAsync as jest.Mock).mock.calls[1];
+      expect(refreshCall[0].familyId).toBe('existing-family-id');
     });
 
     it('should call signAsync twice (access + refresh)', async () => {
@@ -280,9 +342,9 @@ describe('AuthService', () => {
 
       expect(configService.get).toHaveBeenCalledWith('JWT_SECRET');
       expect(configService.get).toHaveBeenCalledWith('JWT_REFRESH_SECRET');
-      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN', '1h');
+      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN', '15m');
       expect(configService.get).toHaveBeenCalledWith('JWT_REFRESH_EXPIRES_IN', '7d');
-      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN_SECONDS', '3600');
+      expect(configService.get).toHaveBeenCalledWith('JWT_EXPIRES_IN_SECONDS', '900');
     });
   });
 
@@ -290,14 +352,22 @@ describe('AuthService', () => {
   // refreshTokens()
   // =========================================================================
   describe('refreshTokens', () => {
+    let tokenBlacklist: TokenBlacklistService;
+
     const mockPayload: JwtPayload = {
       sub: 'user-uuid-1:tenant-uuid-1',
       email: 'mario@test.com',
       role: 'ADMIN',
       tenantId: 'tenant-uuid-1',
+      jti: 'refresh-jti-1',
+      familyId: 'family-1',
     };
 
-    it('should verify refresh token and return new token pair', async () => {
+    beforeEach(() => {
+      tokenBlacklist = module.get(TokenBlacklistService);
+    });
+
+    it('should verify refresh token and return new rotated token pair', async () => {
       (jwtService.verifyAsync as jest.Mock).mockResolvedValue(mockPayload);
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
       (jwtService.signAsync as jest.Mock)
@@ -309,12 +379,15 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
-        expiresIn: 3600,
+        expiresIn: 900,
       });
 
       expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-refresh-token', {
         secret: 'test-jwt-refresh-secret',
       });
+
+      // Should mark the old refresh token JTI as used
+      expect(tokenBlacklist.markRefreshTokenUsed).toHaveBeenCalledWith('refresh-jti-1', 'family-1');
     });
 
     it('should look up user by userId and tenantId from payload subject', async () => {
@@ -344,8 +417,27 @@ describe('AuthService', () => {
       await expect(service.refreshTokens('expired-refresh-token')).rejects.toThrow(
         'Invalid refresh token',
       );
+    });
 
-      expect(logger.error).toHaveBeenCalledWith('Token refresh failed', expect.any(String));
+    it('should detect reuse and invalidate all sessions', async () => {
+      (jwtService.verifyAsync as jest.Mock).mockResolvedValue(mockPayload);
+      (tokenBlacklist.markRefreshTokenUsed as jest.Mock).mockResolvedValue(true); // REUSE
+
+      await expect(service.refreshTokens('reused-refresh-token')).rejects.toThrow(
+        'Token reuse detected',
+      );
+
+      expect(tokenBlacklist.invalidateRefreshFamily).toHaveBeenCalledWith('family-1');
+      expect(tokenBlacklist.invalidateAllUserSessions).toHaveBeenCalledWith('user-uuid-1');
+    });
+
+    it('should reject if refresh token family is revoked', async () => {
+      (jwtService.verifyAsync as jest.Mock).mockResolvedValue(mockPayload);
+      (tokenBlacklist.isRefreshFamilyRevoked as jest.Mock).mockResolvedValue(true);
+
+      await expect(service.refreshTokens('revoked-family-token')).rejects.toThrow(
+        'Session revoked',
+      );
     });
 
     it('should throw UnauthorizedException when user is not found', async () => {
@@ -353,7 +445,7 @@ describe('AuthService', () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
       await expect(service.refreshTokens('valid-refresh-token')).rejects.toThrow(
-        'Invalid refresh token',
+        'User or tenant is no longer active',
       );
     });
 
@@ -365,7 +457,7 @@ describe('AuthService', () => {
       });
 
       await expect(service.refreshTokens('valid-refresh-token')).rejects.toThrow(
-        'Invalid refresh token',
+        'User or tenant is no longer active',
       );
     });
   });
@@ -588,13 +680,54 @@ describe('AuthService', () => {
   // hashPassword()
   // =========================================================================
   describe('hashPassword', () => {
-    it('should hash password with 13 salt rounds', async () => {
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+    it('should hash password with Argon2id', async () => {
+      (argon2.hash as jest.Mock).mockResolvedValue('$argon2id$v=19$m=47104,t=1,p=1$hash');
 
       const result = await service.hashPassword('my-secure-password');
 
-      expect(result).toBe('hashed-password');
-      expect(bcrypt.hash).toHaveBeenCalledWith('my-secure-password', 13);
+      expect(result).toBe('$argon2id$v=19$m=47104,t=1,p=1$hash');
+      expect(argon2.hash).toHaveBeenCalledWith('my-secure-password', {
+        type: argon2.argon2id,
+        memoryCost: 47104,
+        timeCost: 1,
+        parallelism: 1,
+        hashLength: 32,
+      });
+    });
+  });
+
+  describe('verifyAndMigratePassword', () => {
+    it('should verify bcrypt hash and return new argon2id hash for migration', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (argon2.hash as jest.Mock).mockResolvedValue('$argon2id$migrated');
+
+      const result = await service.verifyAndMigratePassword('password', '$2b$12$oldhash');
+
+      expect(result.valid).toBe(true);
+      expect(result.newHash).toBe('$argon2id$migrated');
+    });
+
+    it('should verify argon2id hash without migration', async () => {
+      (argon2.verify as jest.Mock).mockResolvedValue(true);
+
+      const result = await service.verifyAndMigratePassword('password', '$argon2id$v=19$hash');
+
+      expect(result.valid).toBe(true);
+      expect(result.newHash).toBeUndefined();
+    });
+
+    it('should return invalid for wrong bcrypt password', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      const result = await service.verifyAndMigratePassword('wrong', '$2b$12$oldhash');
+
+      expect(result.valid).toBe(false);
+    });
+
+    it('should return invalid for empty hash', async () => {
+      const result = await service.verifyAndMigratePassword('password', '');
+
+      expect(result.valid).toBe(false);
     });
   });
 
@@ -602,20 +735,34 @@ describe('AuthService', () => {
   // verifyPassword()
   // =========================================================================
   describe('verifyPassword', () => {
-    it('should return true when password matches hash', async () => {
+    it('should verify bcrypt hash', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const result = await service.verifyPassword('password', 'hash');
+      const result = await service.verifyPassword('password', '$2b$12$hash');
 
       expect(result).toBe(true);
-      expect(bcrypt.compare).toHaveBeenCalledWith('password', 'hash');
+      expect(bcrypt.compare).toHaveBeenCalledWith('password', '$2b$12$hash');
     });
 
-    it('should return false when password does not match hash', async () => {
+    it('should verify argon2id hash', async () => {
+      (argon2.verify as jest.Mock).mockResolvedValue(true);
+
+      const result = await service.verifyPassword('password', '$argon2id$v=19$hash');
+
+      expect(result).toBe(true);
+      expect(argon2.verify).toHaveBeenCalledWith('$argon2id$v=19$hash', 'password');
+    });
+
+    it('should return false when password does not match', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      const result = await service.verifyPassword('wrong', 'hash');
+      const result = await service.verifyPassword('wrong', '$2b$12$hash');
 
+      expect(result).toBe(false);
+    });
+
+    it('should return false for empty hash', async () => {
+      const result = await service.verifyPassword('password', '');
       expect(result).toBe(false);
     });
   });

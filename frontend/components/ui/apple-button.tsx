@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { ReactNode, ButtonHTMLAttributes, forwardRef } from 'react';
 
 interface AppleButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  children: ReactNode;
+  children?: ReactNode;
   variant?: 'primary' | 'secondary' | 'ghost' | 'text';
   size?: 'sm' | 'md' | 'lg';
   icon?: ReactNode;
@@ -33,11 +33,11 @@ export const AppleButton = forwardRef<HTMLButtonElement, AppleButtonProps>(
       'inline-flex items-center justify-center gap-2 font-medium transition-all duration-300 ease-apple rounded-pill disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] min-h-[44px]';
 
     const variants = {
-      primary: 'bg-apple-blue text-white hover:bg-apple-blue-hover hover:shadow-apple',
+      primary: 'bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]',
       secondary:
-        'bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] border border-apple-border dark:border-[#424242] hover:bg-apple-light-gray dark:hover:bg-[#3a3a3a]',
-      ghost: 'bg-transparent text-apple-blue hover:bg-apple-blue/10',
-      text: 'bg-transparent text-apple-blue hover:underline px-0',
+        'bg-transparent text-white border border-[#4e4e4e] hover:bg-white/5',
+      ghost: 'bg-transparent text-white border border-[#4e4e4e] hover:bg-white/5',
+      text: 'bg-transparent text-white hover:underline px-0',
     };
 
     const sizes = {

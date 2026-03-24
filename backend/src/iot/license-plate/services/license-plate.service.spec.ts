@@ -81,6 +81,7 @@ describe('LicensePlateService', () => {
             },
             lprCamera: {
               create: jest.fn(),
+              findFirst: jest.fn(),
               findUnique: jest.fn(),
               findMany: jest.fn().mockResolvedValue([]),
               update: jest.fn(),
@@ -332,7 +333,7 @@ describe('LicensePlateService', () => {
         inspections: [],
       });
 
-      const result = await service.lookupVehicle('AB123CD');
+      const result = await service.lookupVehicle('tenant-1', 'AB123CD');
 
       expect(result.vehicle).toBeDefined();
       expect(result.vehicle?.make).toBe('Toyota');
@@ -342,7 +343,7 @@ describe('LicensePlateService', () => {
     it('should return undefined vehicle when not found', async () => {
       (prisma.vehicle.findFirst as jest.Mock).mockResolvedValueOnce(null);
 
-      const result = await service.lookupVehicle('ZZ999ZZ');
+      const result = await service.lookupVehicle('tenant-1', 'ZZ999ZZ');
 
       expect(result.vehicle).toBeUndefined();
     });
@@ -365,7 +366,7 @@ describe('LicensePlateService', () => {
       ];
       (prisma.vehicleEntryExit.findMany as jest.Mock).mockResolvedValueOnce(historyRecords);
 
-      const result = await service.lookupVehicle('AB123CD');
+      const result = await service.lookupVehicle('tenant-1', 'AB123CD');
 
       expect(result.recentHistory).toHaveLength(1);
       expect(result.recentHistory[0].location).toBe('Gate A');
@@ -380,7 +381,7 @@ describe('LicensePlateService', () => {
         parkingSpotId: 'spot-A1',
       });
 
-      const result = await service.lookupVehicle('AB123CD');
+      const result = await service.lookupVehicle('tenant-1', 'AB123CD');
 
       expect(result.activeSession).toBeDefined();
       expect(result.activeSession?.status).toBe('ACTIVE');
@@ -388,10 +389,10 @@ describe('LicensePlateService', () => {
     });
 
     it('should normalize plate before lookup (uppercase, strip special chars)', async () => {
-      await service.lookupVehicle('ab-123 cd');
+      await service.lookupVehicle('tenant-1', 'ab-123 cd');
 
       expect(prisma.vehicle.findFirst).toHaveBeenCalledWith({
-        where: { licensePlate: 'AB123CD' },
+        where: { licensePlate: 'AB123CD', customer: { tenantId: 'tenant-1' } },
         include: expect.anything(),
       });
     });
@@ -407,7 +408,7 @@ describe('LicensePlateService', () => {
         inspections: [],
       });
 
-      const result = await service.lookupVehicle('AB123CD');
+      const result = await service.lookupVehicle('tenant-1', 'AB123CD');
 
       expect(result.vehicle?.customer).toEqual({ id: '', name: '' });
     });
@@ -441,7 +442,7 @@ describe('LicensePlateService', () => {
         },
       ]);
 
-      const result = await service.getActiveSessions();
+      const result = await service.getActiveSessions('tenant-1');
 
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe('ACTIVE');
@@ -455,8 +456,8 @@ describe('LicensePlateService', () => {
       expect(prisma.parkingSession.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
+            tenantId: 'tenant-1',
             status: 'ACTIVE',
-            vehicle: { customer: { tenantId: 'tenant-1' } },
           },
         }),
       );
@@ -465,7 +466,7 @@ describe('LicensePlateService', () => {
     it('should return empty array when no active sessions', async () => {
       (prisma.parkingSession.findMany as jest.Mock).mockResolvedValueOnce([]);
 
-      const result = await service.getActiveSessions();
+      const result = await service.getActiveSessions('tenant-1');
 
       expect(result).toEqual([]);
     });
@@ -514,7 +515,7 @@ describe('LicensePlateService', () => {
   // ==================== getCamera ====================
   describe('getCamera', () => {
     it('should return camera by ID', async () => {
-      (prisma.lprCamera.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.lprCamera.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'cam-1',
         name: 'Test Cam',
         location: 'Gate B',
@@ -525,7 +526,7 @@ describe('LicensePlateService', () => {
         lastCapture: new Date('2026-01-01'),
       });
 
-      const result = await service.getCamera('cam-1');
+      const result = await service.getCamera('tenant-1', 'cam-1');
 
       expect(result.id).toBe('cam-1');
       expect(result.direction).toBe(EntryExitType.EXIT);
@@ -533,9 +534,9 @@ describe('LicensePlateService', () => {
     });
 
     it('should throw NotFoundException when camera not found', async () => {
-      (prisma.lprCamera.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.lprCamera.findFirst as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.getCamera('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getCamera('tenant-1', 'nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -570,6 +571,7 @@ describe('LicensePlateService', () => {
       expect(result).toHaveLength(2);
       expect(prisma.lprCamera.findMany).toHaveBeenCalledWith({
         where: { tenantId: 'tenant-1' },
+        take: 100,
       });
     });
 
@@ -583,6 +585,7 @@ describe('LicensePlateService', () => {
   // ==================== updateCameraStatus ====================
   describe('updateCameraStatus', () => {
     it('should activate a camera', async () => {
+      (prisma.lprCamera.findFirst as jest.Mock).mockResolvedValueOnce({ id: 'cam-1' });
       (prisma.lprCamera.update as jest.Mock).mockResolvedValueOnce({
         id: 'cam-1',
         name: 'Cam 1',
@@ -594,7 +597,7 @@ describe('LicensePlateService', () => {
         lastCapture: null,
       });
 
-      const result = await service.updateCameraStatus('cam-1', true);
+      const result = await service.updateCameraStatus('tenant-1', 'cam-1', true);
 
       expect(result.isActive).toBe(true);
       expect(prisma.lprCamera.update).toHaveBeenCalledWith({
@@ -604,6 +607,7 @@ describe('LicensePlateService', () => {
     });
 
     it('should deactivate a camera', async () => {
+      (prisma.lprCamera.findFirst as jest.Mock).mockResolvedValueOnce({ id: 'cam-1' });
       (prisma.lprCamera.update as jest.Mock).mockResolvedValueOnce({
         id: 'cam-1',
         name: 'Cam 1',
@@ -615,7 +619,7 @@ describe('LicensePlateService', () => {
         lastCapture: null,
       });
 
-      const result = await service.updateCameraStatus('cam-1', false);
+      const result = await service.updateCameraStatus('tenant-1', 'cam-1', false);
 
       expect(result.isActive).toBe(false);
     });

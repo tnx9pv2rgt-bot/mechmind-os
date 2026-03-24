@@ -27,7 +27,7 @@ export function InspectionDialog({ trigger, onInspectionCreated }: InspectionDia
   const handleSubmit = async (data: InspectionFormData) => {
     setIsSubmitting(true);
 
-    // TODO: Replace with useCreateInspection() hook when InspectionController is ready
+    // POST to /api/inspections creates inspection via backend
     const res = await fetch('/api/inspections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -152,10 +152,18 @@ export function InspectionDialogCompact({
 
   const handleSubmit = async (data: InspectionFormData) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onInspectionCreated?.(data);
-    setIsSubmitting(false);
-    setIsOpen(false);
+    try {
+      const res = await fetch('/api/inspections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error(`Errore creazione ispezione: ${res.status}`);
+      onInspectionCreated?.(data);
+    } finally {
+      setIsSubmitting(false);
+      setIsOpen(false);
+    }
   };
 
   return (

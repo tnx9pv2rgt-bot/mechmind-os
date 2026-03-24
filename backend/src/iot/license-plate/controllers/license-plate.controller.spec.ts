@@ -51,12 +51,13 @@ describe('LicensePlateController', () => {
       const detection = { plate: 'AB123CD', confidence: 0.95 };
       service.detectLicensePlate.mockResolvedValue(detection as never);
 
-      const result = await controller.detectLicensePlate(file, dto);
+      const result = await controller.detectLicensePlate(TENANT_ID, file, dto);
 
       expect(service.detectLicensePlate).toHaveBeenCalledWith(file.buffer, {
         cameraId: 'cam-001',
         provider: 'openalpr',
         minConfidence: 0.8,
+        tenantId: TENANT_ID,
       });
       expect(result).toEqual(detection);
     });
@@ -75,14 +76,16 @@ describe('LicensePlateController', () => {
       service.detectLicensePlate.mockResolvedValue(detection as never);
       service.recordEntryExit.mockResolvedValue(entryExit as never);
 
-      const result = await controller.recordEntryExit(dto);
+      const result = await controller.recordEntryExit(TENANT_ID, dto);
 
       expect(service.detectLicensePlate).toHaveBeenCalledWith(Buffer.from(''), {
         cameraId: 'cam-001',
+        tenantId: TENANT_ID,
       });
       expect(service.recordEntryExit).toHaveBeenCalledWith(detection, 'entry', {
         location: 'front-gate',
         isAuthorized: true,
+        tenantId: TENANT_ID,
       });
       expect(result).toEqual(entryExit);
     });
@@ -115,9 +118,9 @@ describe('LicensePlateController', () => {
     it('should delegate to service with cameraId', async () => {
       service.getCamera.mockResolvedValue(mockCamera as never);
 
-      const result = await controller.getCamera('cam-001');
+      const result = await controller.getCamera(TENANT_ID, 'cam-001');
 
-      expect(service.getCamera).toHaveBeenCalledWith('cam-001');
+      expect(service.getCamera).toHaveBeenCalledWith(TENANT_ID, 'cam-001');
       expect(result).toEqual(mockCamera);
     });
   });
@@ -127,9 +130,9 @@ describe('LicensePlateController', () => {
       const updated = { ...mockCamera, isActive: false };
       service.updateCameraStatus.mockResolvedValue(updated as never);
 
-      const result = await controller.updateCameraStatus('cam-001', false);
+      const result = await controller.updateCameraStatus(TENANT_ID, 'cam-001', false);
 
-      expect(service.updateCameraStatus).toHaveBeenCalledWith('cam-001', false);
+      expect(service.updateCameraStatus).toHaveBeenCalledWith(TENANT_ID, 'cam-001', false);
       expect(result).toEqual(updated);
     });
   });
@@ -141,7 +144,7 @@ describe('LicensePlateController', () => {
 
       const result = await controller.lookupVehicle(TENANT_ID, 'AB123CD');
 
-      expect(service.lookupVehicle).toHaveBeenCalledWith('AB123CD');
+      expect(service.lookupVehicle).toHaveBeenCalledWith(TENANT_ID, 'AB123CD');
       expect(result).toEqual(lookup);
     });
   });
@@ -153,7 +156,7 @@ describe('LicensePlateController', () => {
 
       const result = await controller.getActiveSessions(TENANT_ID);
 
-      expect(service.getActiveSessions).toHaveBeenCalledWith(TENANT_ID);
+      expect(service.getActiveSessions).toHaveBeenCalledWith(TENANT_ID, { page: 1, limit: 20 });
       expect(result).toEqual(sessions);
     });
   });

@@ -10,6 +10,7 @@ import {
   ValidateNested,
   Min,
   IsNumber,
+  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EstimateStatus, EstimateLineType } from '@prisma/client';
@@ -77,7 +78,8 @@ export class CreateEstimateDto {
   notes?: string;
 
   @ApiProperty({ description: 'User ID who created this estimate' })
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   createdBy: string;
 
   @ApiPropertyOptional({ type: [CreateEstimateLineDto] })

@@ -17,6 +17,7 @@ import {
   TenantSuspendedError,
   TenantExpiredError,
 } from '@/lib/tenant/context';
+import { BACKEND_BASE } from '@/lib/config';
 
 // =============================================================================
 // Configuration
@@ -206,7 +207,7 @@ async function validateTenant(
   // For now, we'll use a fetch to the tenant API
 
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const backendUrl = BACKEND_BASE;
 
     // Build query based on identifier type
     let queryParam = '';

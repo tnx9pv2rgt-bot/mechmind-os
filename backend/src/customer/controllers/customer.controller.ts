@@ -165,6 +165,16 @@ export class CustomerController {
     return { success: true, data: result };
   }
 
+  @Get('vehicles/export')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Export vehicles as CSV' })
+  async exportVehicles(@CurrentTenant() tenantId: string, @Res() res: Response): Promise<void> {
+    const csv = await this.csvService.exportVehicles(tenantId);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="vehicles.csv"');
+    res.send(csv);
+  }
+
   // ==================== VEHICLE ENDPOINTS ====================
 
   @Post(':id/vehicles')

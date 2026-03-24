@@ -16,6 +16,8 @@ describe('ObdStreamingService', () => {
   let notifications: jest.Mocked<NotificationsService>;
   let redis: Record<string, jest.Mock>;
 
+  const TENANT_ID = 't-1';
+
   const mockPipelineExec = jest.fn().mockResolvedValue([]);
   const mockPipeline = {
     setex: jest.fn().mockReturnThis(),
@@ -38,6 +40,7 @@ describe('ObdStreamingService', () => {
           provide: PrismaService,
           useValue: {
             obdDevice: {
+              findFirst: jest.fn().mockResolvedValue(null),
               findUnique: jest.fn().mockResolvedValue(null),
             },
             obdFreezeFrame: {
@@ -77,9 +80,9 @@ describe('ObdStreamingService', () => {
 
   afterEach(async () => {
     // Clean up any active streams
-    const streams = service.getAllActiveStreams();
+    const streams = service.getAllActiveStreams(TENANT_ID);
     for (const stream of streams) {
-      await service.stopStreaming(stream.id);
+      await service.stopStreaming(TENANT_ID, stream.id);
     }
   });
 
@@ -90,7 +93,12 @@ describe('ObdStreamingService', () => {
   // ==================== startStreaming ====================
   describe('startStreaming', () => {
     it('should start a new streaming session with defaults', async () => {
-      const result = await service.startStreaming('device-1', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-1',
+        tenantId: TENANT_ID,
+      });
+
+      const result = await service.startStreaming(TENANT_ID, 'device-1', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -106,7 +114,12 @@ describe('ObdStreamingService', () => {
     });
 
     it('should start streaming with custom config', async () => {
-      const result = await service.startStreaming('device-2', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-2',
+        tenantId: TENANT_ID,
+      });
+
+      const result = await service.startStreaming(TENANT_ID, 'device-2', {
         adapterType: AdapterType.OBDLINK_MX,
         protocol: ObdProtocol.ISO15765_4_CAN_11BIT,
         sensors: ['rpm', 'speed'],
@@ -119,7 +132,12 @@ describe('ObdStreamingService', () => {
     });
 
     it('should store stream metadata in Redis', async () => {
-      await service.startStreaming('device-3', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-3',
+        tenantId: TENANT_ID,
+      });
+
+      await service.startStreaming(TENANT_ID, 'device-3', {
         adapterType: AdapterType.ELM327_USB,
       });
 
@@ -127,37 +145,62 @@ describe('ObdStreamingService', () => {
     });
 
     it('should make stream retrievable via getActiveStream', async () => {
-      await service.startStreaming('device-4', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-4',
+        tenantId: TENANT_ID,
+      });
+
+      await service.startStreaming(TENANT_ID, 'device-4', {
         adapterType: AdapterType.ELM327_WIFI,
       });
 
-      const stream = service.getActiveStream('device-4');
+      const stream = service.getActiveStream(TENANT_ID, 'device-4');
       expect(stream).toBeDefined();
       expect(stream?.deviceId).toBe('device-4');
+    });
+
+    it('should throw NotFoundException when device not found', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce(null);
+
+      await expect(
+        service.startStreaming(TENANT_ID, 'nonexistent', {
+          adapterType: AdapterType.ELM327_BLUETOOTH,
+        }),
+      ).rejects.toThrow('Device not found');
     });
   });
 
   // ==================== stopStreaming ====================
   describe('stopStreaming', () => {
     it('should stop an active stream', async () => {
-      const stream = await service.startStreaming('device-5', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-5',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-5', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
-      await service.stopStreaming(stream.id);
+      await service.stopStreaming(TENANT_ID, stream.id);
 
-      expect(service.getActiveStream('device-5')).toBeUndefined();
+      expect(service.getActiveStream(TENANT_ID, 'device-5')).toBeUndefined();
       expect(redis.del).toHaveBeenCalledWith('obd:stream:device-5');
     });
 
     it('should do nothing when stream does not exist', async () => {
-      await service.stopStreaming('nonexistent-stream');
+      await service.stopStreaming(TENANT_ID, 'nonexistent-stream');
 
       expect(redis.del).not.toHaveBeenCalled();
     });
 
     it('should flush buffer before stopping', async () => {
-      const stream = await service.startStreaming('device-6', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-6',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-6', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -167,11 +210,11 @@ describe('ObdStreamingService', () => {
       // Manually push to buffer via processSensorData
       (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
         id: 'device-6',
-        tenantId: 't-1',
+        tenantId: TENANT_ID,
       });
       await service.processSensorData(stream.id, sensorData);
 
-      await service.stopStreaming(stream.id);
+      await service.stopStreaming(TENANT_ID, stream.id);
 
       // Buffer should have been flushed (createMany called)
       expect(prisma.obdReading.createMany).toHaveBeenCalled();
@@ -181,7 +224,12 @@ describe('ObdStreamingService', () => {
   // ==================== processSensorData ====================
   describe('processSensorData', () => {
     it('should process sensor data and update stats', async () => {
-      const stream = await service.startStreaming('device-7', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-7',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-7', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -194,12 +242,17 @@ describe('ObdStreamingService', () => {
 
       await service.processSensorData(stream.id, sensorData);
 
-      const activeStream = service.getActiveStream('device-7');
+      const activeStream = service.getActiveStream(TENANT_ID, 'device-7');
       expect(activeStream?.stats.packetsReceived).toBe(1);
     });
 
     it('should add timestamp when missing', async () => {
-      const stream = await service.startStreaming('device-8', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-8',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-8', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -210,7 +263,12 @@ describe('ObdStreamingService', () => {
     });
 
     it('should publish data to Redis for real-time subscribers', async () => {
-      const stream = await service.startStreaming('device-9', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-9',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-9', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -228,10 +286,15 @@ describe('ObdStreamingService', () => {
     });
 
     it('should do nothing for inactive stream', async () => {
-      const stream = await service.startStreaming('device-10', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-10',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-10', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
-      await service.stopStreaming(stream.id);
+      await service.stopStreaming(TENANT_ID, stream.id);
 
       const sensorData: ObdSensorData = { rpm: 3000, timestamp: new Date() };
       await service.processSensorData(stream.id, sensorData);
@@ -241,12 +304,16 @@ describe('ObdStreamingService', () => {
     });
 
     it('should flush buffer when it reaches 100 packets', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-11',
+        tenantId: TENANT_ID,
+      });
       (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
         id: 'device-11',
-        tenantId: 't-1',
+        tenantId: TENANT_ID,
       });
 
-      const stream = await service.startStreaming('device-11', {
+      const stream = await service.startStreaming(TENANT_ID, 'device-11', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -263,14 +330,18 @@ describe('ObdStreamingService', () => {
     });
 
     it('should check critical values and send notification for high coolant temp', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-12',
+        tenantId: TENANT_ID,
+      });
       (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
         id: 'device-12',
-        tenantId: 't-1',
+        tenantId: TENANT_ID,
         vehicle: { make: 'BMW', model: '320d' },
-        tenant: { id: 't-1' },
+        tenant: { id: TENANT_ID },
       });
 
-      const stream = await service.startStreaming('device-12', {
+      const stream = await service.startStreaming(TENANT_ID, 'device-12', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -281,7 +352,7 @@ describe('ObdStreamingService', () => {
       await service.processSensorData(stream.id, sensorData);
 
       expect(notifications.sendToTenant).toHaveBeenCalledWith(
-        't-1',
+        TENANT_ID,
         expect.objectContaining({
           priority: 'high',
         }),
@@ -289,14 +360,18 @@ describe('ObdStreamingService', () => {
     });
 
     it('should check critical values for low voltage', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-13',
+        tenantId: TENANT_ID,
+      });
       (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
         id: 'device-13',
-        tenantId: 't-1',
+        tenantId: TENANT_ID,
         vehicle: { make: 'Fiat', model: '500' },
-        tenant: { id: 't-1' },
+        tenant: { id: TENANT_ID },
       });
 
-      const stream = await service.startStreaming('device-13', {
+      const stream = await service.startStreaming(TENANT_ID, 'device-13', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -309,14 +384,18 @@ describe('ObdStreamingService', () => {
     });
 
     it('should check critical values for high RPM', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-14',
+        tenantId: TENANT_ID,
+      });
       (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
         id: 'device-14',
-        tenantId: 't-1',
+        tenantId: TENANT_ID,
         vehicle: { make: 'Honda', model: 'Civic' },
-        tenant: { id: 't-1' },
+        tenant: { id: TENANT_ID },
       });
 
-      const stream = await service.startStreaming('device-14', {
+      const stream = await service.startStreaming(TENANT_ID, 'device-14', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -329,7 +408,12 @@ describe('ObdStreamingService', () => {
     });
 
     it('should not send notification when values are within normal range', async () => {
-      const stream = await service.startStreaming('device-15', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-15',
+        tenantId: TENANT_ID,
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-15', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
@@ -347,12 +431,12 @@ describe('ObdStreamingService', () => {
   // ==================== captureFreezeFrame ====================
   describe('captureFreezeFrame', () => {
     it('should capture freeze frame for existing device', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-20',
         vehicle: { id: 'v-1', make: 'Toyota', model: 'Yaris' },
       });
 
-      const result = await service.captureFreezeFrame('device-20', 'P0301');
+      const result = await service.captureFreezeFrame(TENANT_ID, 'device-20', 'P0301');
 
       expect(result.deviceId).toBe('device-20');
       expect(result.dtcCode).toBe('P0301');
@@ -366,20 +450,20 @@ describe('ObdStreamingService', () => {
     });
 
     it('should throw error when device not found', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.captureFreezeFrame('nonexistent', 'P0301')).rejects.toThrow(
+      await expect(service.captureFreezeFrame(TENANT_ID, 'nonexistent', 'P0301')).rejects.toThrow(
         'Device not found',
       );
     });
 
     it('should include all PID data in freeze frame', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-21',
         vehicle: { id: 'v-2' },
       });
 
-      const result = await service.captureFreezeFrame('device-21', 'P0420');
+      const result = await service.captureFreezeFrame(TENANT_ID, 'device-21', 'P0420');
 
       expect(result.data).toHaveProperty('rpm');
       expect(result.data).toHaveProperty('speed');
@@ -393,24 +477,26 @@ describe('ObdStreamingService', () => {
   // ==================== getMode06Tests ====================
   describe('getMode06Tests', () => {
     it('should throw error when device not found', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.getMode06Tests('nonexistent')).rejects.toThrow('Device not found');
+      await expect(service.getMode06Tests(TENANT_ID, 'nonexistent')).rejects.toThrow(
+        'Device not found',
+      );
     });
 
     it('should return empty array when no tests supported', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-30',
       });
 
-      const result = await service.getMode06Tests('device-30');
+      const result = await service.getMode06Tests(TENANT_ID, 'device-30');
 
       // queryPid returns null, so isTestSupported returns false for all
       expect(result).toEqual([]);
     });
 
     it('should query supported tests and store results when tests are supported', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-31',
       });
 
@@ -432,7 +518,7 @@ describe('ObdStreamingService', () => {
         .spyOn(service as never, 'queryMode06Test' as never)
         .mockResolvedValue(mockTestResult as never);
 
-      const result = await service.getMode06Tests('device-31');
+      const result = await service.getMode06Tests(TENANT_ID, 'device-31');
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toEqual(mockTestResult);
@@ -449,7 +535,7 @@ describe('ObdStreamingService', () => {
     });
 
     it('should skip null test results from queryMode06Test', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-32',
       });
 
@@ -458,7 +544,7 @@ describe('ObdStreamingService', () => {
       // Return null from queryMode06Test — the result should not be pushed
       jest.spyOn(service as never, 'queryMode06Test' as never).mockResolvedValue(null as never);
 
-      const result = await service.getMode06Tests('device-32');
+      const result = await service.getMode06Tests(TENANT_ID, 'device-32');
 
       expect(result).toEqual([]);
       // No results so createMany should not be called
@@ -522,12 +608,12 @@ describe('ObdStreamingService', () => {
   // ==================== executeEvapTest ====================
   describe('executeEvapTest', () => {
     it('should start EVAP leak test', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-40',
         vehicle: { id: 'v-1' },
       });
 
-      const result = await service.executeEvapTest('device-40', 'LEAK');
+      const result = await service.executeEvapTest(TENANT_ID, 'device-40', 'LEAK');
 
       expect(result.deviceId).toBe('device-40');
       expect(result.testType).toBe('LEAK');
@@ -542,42 +628,42 @@ describe('ObdStreamingService', () => {
     });
 
     it('should start EVAP pressure test', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-41',
         vehicle: { id: 'v-2' },
       });
 
-      const result = await service.executeEvapTest('device-41', 'PRESSURE');
+      const result = await service.executeEvapTest(TENANT_ID, 'device-41', 'PRESSURE');
 
       expect(result.testType).toBe('PRESSURE');
     });
 
     it('should start EVAP vacuum test', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-42',
         vehicle: { id: 'v-3' },
       });
 
-      const result = await service.executeEvapTest('device-42', 'VACUUM');
+      const result = await service.executeEvapTest(TENANT_ID, 'device-42', 'VACUUM');
 
       expect(result.testType).toBe('VACUUM');
     });
 
     it('should throw error when device not found', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.executeEvapTest('nonexistent', 'LEAK')).rejects.toThrow(
+      await expect(service.executeEvapTest(TENANT_ID, 'nonexistent', 'LEAK')).rejects.toThrow(
         'Device not found',
       );
     });
 
     it('should assign database ID to test result', async () => {
-      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValueOnce({
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
         id: 'device-43',
         vehicle: { id: 'v-4' },
       });
 
-      const result = await service.executeEvapTest('device-43', 'LEAK');
+      const result = await service.executeEvapTest(TENANT_ID, 'device-43', 'LEAK');
 
       expect(result.id).toBe('evap:1');
     });
@@ -586,36 +672,45 @@ describe('ObdStreamingService', () => {
   // ==================== getActiveStream / getAllActiveStreams ====================
   describe('getActiveStream', () => {
     it('should return stream for device', async () => {
-      await service.startStreaming('device-50', {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-50',
+        tenantId: TENANT_ID,
+      });
+
+      await service.startStreaming(TENANT_ID, 'device-50', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
 
-      const stream = service.getActiveStream('device-50');
+      const stream = service.getActiveStream(TENANT_ID, 'device-50');
       expect(stream).toBeDefined();
       expect(stream?.deviceId).toBe('device-50');
     });
 
     it('should return undefined for unknown device', () => {
-      const stream = service.getActiveStream('unknown-device');
+      const stream = service.getActiveStream(TENANT_ID, 'unknown-device');
       expect(stream).toBeUndefined();
     });
   });
 
   describe('getAllActiveStreams', () => {
     it('should return all active streams', async () => {
-      await service.startStreaming('device-60', {
+      (prisma.obdDevice.findFirst as jest.Mock)
+        .mockResolvedValueOnce({ id: 'device-60', tenantId: TENANT_ID })
+        .mockResolvedValueOnce({ id: 'device-61', tenantId: TENANT_ID });
+
+      await service.startStreaming(TENANT_ID, 'device-60', {
         adapterType: AdapterType.ELM327_BLUETOOTH,
       });
-      await service.startStreaming('device-61', {
+      await service.startStreaming(TENANT_ID, 'device-61', {
         adapterType: AdapterType.OBDLINK_MX,
       });
 
-      const streams = service.getAllActiveStreams();
+      const streams = service.getAllActiveStreams(TENANT_ID);
       expect(streams).toHaveLength(2);
     });
 
     it('should return empty array when no streams', () => {
-      const streams = service.getAllActiveStreams();
+      const streams = service.getAllActiveStreams(TENANT_ID);
       expect(streams).toEqual([]);
     });
   });
@@ -629,7 +724,7 @@ describe('ObdStreamingService', () => {
       const cachedData = [{ timestamp: '2026-01-15T10:00:00.000Z', value: 3000 }];
       redis.get.mockResolvedValueOnce(JSON.stringify(cachedData));
 
-      const result = await service.getSensorHistory('device-70', 'rpm', from, to);
+      const result = await service.getSensorHistory(TENANT_ID, 'device-70', 'rpm', from, to);
 
       expect(result).toEqual(cachedData);
       expect(prisma.obdReading.findMany).not.toHaveBeenCalled();
@@ -642,7 +737,7 @@ describe('ObdStreamingService', () => {
       ];
       (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce(dbData);
 
-      const result = await service.getSensorHistory('device-71', 'rpm', from, to);
+      const result = await service.getSensorHistory(TENANT_ID, 'device-71', 'rpm', from, to);
 
       expect(result).toHaveLength(1);
       expect(result[0].value).toBe(2600); // avg of 2500 and 2700
@@ -651,7 +746,7 @@ describe('ObdStreamingService', () => {
     it('should cache results for 5 minutes', async () => {
       (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce([]);
 
-      await service.getSensorHistory('device-72', 'speed', from, to);
+      await service.getSensorHistory(TENANT_ID, 'device-72', 'speed', from, to);
 
       expect(redis.setex).toHaveBeenCalledWith(
         expect.stringContaining('obd:history:device-72:speed'),
@@ -666,7 +761,14 @@ describe('ObdStreamingService', () => {
       ];
       (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce(dbData);
 
-      const result = await service.getSensorHistory('device-73', 'coolantTemp', from, to, 'avg');
+      const result = await service.getSensorHistory(
+        TENANT_ID,
+        'device-73',
+        'coolantTemp',
+        from,
+        to,
+        'avg',
+      );
 
       expect(prisma.obdReading.findMany).toHaveBeenCalled();
       expect(result).toHaveLength(1);
@@ -674,7 +776,7 @@ describe('ObdStreamingService', () => {
 
     it('should reject invalid sensor names', async () => {
       await expect(
-        service.getSensorHistory('device-74', 'DROP TABLE; --', from, to),
+        service.getSensorHistory(TENANT_ID, 'device-74', 'DROP TABLE; --', from, to),
       ).rejects.toThrow('Invalid sensor');
     });
   });
@@ -682,14 +784,19 @@ describe('ObdStreamingService', () => {
   // ==================== applyRetentionPolicy ====================
   describe('applyRetentionPolicy', () => {
     it('should delete old records and return count', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-80',
+        tenantId: TENANT_ID,
+      });
       (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prisma.obdReading.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 42 });
 
-      const result = await service.applyRetentionPolicy('device-80', 90);
+      const result = await service.applyRetentionPolicy(TENANT_ID, 'device-80', 90);
 
       expect(result).toBe(42);
       expect(prisma.obdReading.deleteMany).toHaveBeenCalledWith({
         where: {
+          tenantId: TENANT_ID,
           deviceId: 'device-80',
           recordedAt: { lt: expect.any(Date) },
         },
@@ -697,6 +804,10 @@ describe('ObdStreamingService', () => {
     });
 
     it('should archive data before deletion', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-81',
+        tenantId: TENANT_ID,
+      });
       const oldRecords = [
         { id: 'r-1', rpm: 3000, recordedAt: new Date('2025-01-01') },
         { id: 'r-2', rpm: 2800, recordedAt: new Date('2025-01-02') },
@@ -704,18 +815,30 @@ describe('ObdStreamingService', () => {
       (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce(oldRecords);
       (prisma.obdReading.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 2 });
 
-      const result = await service.applyRetentionPolicy('device-81', 30);
+      const result = await service.applyRetentionPolicy(TENANT_ID, 'device-81', 30);
 
       expect(result).toBe(2);
     });
 
     it('should not archive when no records to delete', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-82',
+        tenantId: TENANT_ID,
+      });
       (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prisma.obdReading.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
 
-      const result = await service.applyRetentionPolicy('device-82', 365);
+      const result = await service.applyRetentionPolicy(TENANT_ID, 'device-82', 365);
 
       expect(result).toBe(0);
+    });
+
+    it('should throw error when device not found', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce(null);
+
+      await expect(service.applyRetentionPolicy(TENANT_ID, 'nonexistent', 90)).rejects.toThrow(
+        'Device not found',
+      );
     });
   });
 });

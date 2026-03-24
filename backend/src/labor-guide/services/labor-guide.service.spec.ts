@@ -10,6 +10,7 @@ const mockPrisma = {
     findFirst: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    count: jest.fn(),
   },
   laborGuideEntry: {
     create: jest.fn(),
@@ -17,6 +18,7 @@ const mockPrisma = {
     findFirst: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    count: jest.fn(),
   },
 };
 
@@ -56,14 +58,19 @@ describe('LaborGuideService', () => {
   });
 
   describe('findAllGuides', () => {
-    it('should return all active guides', async () => {
+    it('should return all active guides with pagination', async () => {
       const guides = [{ id: '1', name: 'BMW Standard' }];
       mockPrisma.laborGuide.findMany.mockResolvedValue(guides);
+      mockPrisma.laborGuide.count.mockResolvedValue(1);
 
       const result = await service.findAllGuides('t1');
-      expect(result).toEqual(guides);
+      expect(result).toEqual({ data: guides, total: 1, page: 1, limit: 50, pages: 1 });
       expect(mockPrisma.laborGuide.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tenantId: 't1', isActive: true } }),
+        expect.objectContaining({
+          where: { tenantId: 't1', isActive: true },
+          skip: 0,
+          take: 50,
+        }),
       );
     });
   });
@@ -87,9 +94,10 @@ describe('LaborGuideService', () => {
     it('should search entries by make and category', async () => {
       const entries = [{ id: 'e1', make: 'BMW', category: 'BRAKES', laborTimeMinutes: 120 }];
       mockPrisma.laborGuideEntry.findMany.mockResolvedValue(entries);
+      mockPrisma.laborGuideEntry.count.mockResolvedValue(1);
 
       const result = await service.searchEntries('t1', 'BMW', undefined, 'BRAKES');
-      expect(result).toEqual(entries);
+      expect(result.data).toEqual(entries);
       expect(mockPrisma.laborGuideEntry.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -227,6 +235,7 @@ describe('LaborGuideService', () => {
   describe('searchEntries', () => {
     it('should search by make only', async () => {
       mockPrisma.laborGuideEntry.findMany.mockResolvedValue([]);
+      mockPrisma.laborGuideEntry.count.mockResolvedValue(0);
       await service.searchEntries('t1', 'BMW');
       expect(mockPrisma.laborGuideEntry.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -240,6 +249,7 @@ describe('LaborGuideService', () => {
 
     it('should search by make and model', async () => {
       mockPrisma.laborGuideEntry.findMany.mockResolvedValue([]);
+      mockPrisma.laborGuideEntry.count.mockResolvedValue(0);
       await service.searchEntries('t1', 'BMW', '3 Series');
       expect(mockPrisma.laborGuideEntry.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

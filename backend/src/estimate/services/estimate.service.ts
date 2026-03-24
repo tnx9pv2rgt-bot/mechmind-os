@@ -8,7 +8,17 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstimateStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/services/prisma.service';
 import { LoggerService } from '../../common/services/logger.service';
+import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
 import { CreateEstimateDto, UpdateEstimateDto, CreateEstimateLineDto } from '../dto/estimate.dto';
+
+const ESTIMATE_TRANSITIONS: TransitionMap = {
+  DRAFT: ['SENT'],
+  SENT: ['ACCEPTED', 'REJECTED', 'EXPIRED'],
+  ACCEPTED: ['CONVERTED'],
+  REJECTED: [],
+  EXPIRED: [],
+  CONVERTED: [],
+};
 
 interface EstimateFilters {
   customerId?: string;
@@ -47,7 +57,7 @@ export class EstimateService {
         subtotalCents,
         vatCents,
         totalCents,
-        discountCents: BigInt(dto.discountCents ?? 0),
+        discountCents: dto.discountCents ?? 0,
         validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
         notes: dto.notes ?? null,
         createdBy: dto.createdBy,
@@ -56,8 +66,8 @@ export class EstimateService {
             type: line.type,
             description: line.description,
             quantity: line.quantity,
-            unitPriceCents: BigInt(line.unitPriceCents),
-            totalCents: BigInt(line.unitPriceCents * line.quantity),
+            unitPriceCents: line.unitPriceCents,
+            totalCents: line.unitPriceCents * line.quantity,
             vatRate: line.vatRate,
             partId: line.partId ?? null,
             position: line.position ?? index,
@@ -138,7 +148,9 @@ export class EstimateService {
     }
 
     if (existing.status !== EstimateStatus.DRAFT && existing.status !== EstimateStatus.SENT) {
-      throw new BadRequestException(`Cannot update estimate in ${existing.status} status`);
+      throw new BadRequestException(
+        `Cannot update estimate in ${existing.status} status. Only DRAFT or SENT estimates can be updated.`,
+      );
     }
 
     const estimate = await this.prisma.estimate.update({
@@ -147,7 +159,7 @@ export class EstimateService {
         customerId: dto.customerId,
         vehicleId: dto.vehicleId,
         validUntil: dto.validUntil ? new Date(dto.validUntil) : undefined,
-        discountCents: dto.discountCents !== undefined ? BigInt(dto.discountCents) : undefined,
+        discountCents: dto.discountCents !== undefined ? dto.discountCents : undefined,
         notes: dto.notes,
       },
       include: { lines: { orderBy: { position: 'asc' } } },
@@ -182,8 +194,8 @@ export class EstimateService {
         type: dto.type,
         description: dto.description,
         quantity: dto.quantity,
-        unitPriceCents: BigInt(dto.unitPriceCents),
-        totalCents: BigInt(dto.unitPriceCents * dto.quantity),
+        unitPriceCents: dto.unitPriceCents,
+        totalCents: dto.unitPriceCents * dto.quantity,
         vatRate: dto.vatRate,
         partId: dto.partId ?? null,
         position: dto.position ?? 0,
@@ -225,9 +237,7 @@ export class EstimateService {
       throw new NotFoundException(`Estimate ${id} not found`);
     }
 
-    if (estimate.status !== EstimateStatus.DRAFT) {
-      throw new BadRequestException('Can only send DRAFT estimates');
-    }
+    validateTransition(estimate.status, EstimateStatus.SENT, ESTIMATE_TRANSITIONS, 'estimate');
 
     const updated = await this.prisma.estimate.update({
       where: { id },
@@ -258,9 +268,7 @@ export class EstimateService {
       throw new NotFoundException(`Estimate ${id} not found`);
     }
 
-    if (estimate.status !== EstimateStatus.SENT) {
-      throw new BadRequestException('Can only accept SENT estimates');
-    }
+    validateTransition(estimate.status, EstimateStatus.ACCEPTED, ESTIMATE_TRANSITIONS, 'estimate');
 
     const updated = await this.prisma.estimate.update({
       where: { id },
@@ -291,9 +299,7 @@ export class EstimateService {
       throw new NotFoundException(`Estimate ${id} not found`);
     }
 
-    if (estimate.status !== EstimateStatus.SENT) {
-      throw new BadRequestException('Can only reject SENT estimates');
-    }
+    validateTransition(estimate.status, EstimateStatus.REJECTED, ESTIMATE_TRANSITIONS, 'estimate');
 
     const updated = await this.prisma.estimate.update({
       where: { id },
@@ -325,9 +331,7 @@ export class EstimateService {
       throw new NotFoundException(`Estimate ${id} not found`);
     }
 
-    if (estimate.status !== EstimateStatus.ACCEPTED) {
-      throw new BadRequestException('Can only convert ACCEPTED estimates to bookings');
-    }
+    validateTransition(estimate.status, EstimateStatus.CONVERTED, ESTIMATE_TRANSITIONS, 'estimate');
 
     const updated = await this.prisma.estimate.update({
       where: { id },
@@ -366,11 +370,7 @@ export class EstimateService {
       throw new NotFoundException('Estimate not found');
     }
 
-    if (estimate.status !== EstimateStatus.ACCEPTED) {
-      throw new BadRequestException(
-        `Cannot convert estimate in ${estimate.status} status. Must be ACCEPTED.`,
-      );
-    }
+    validateTransition(estimate.status, EstimateStatus.CONVERTED, ESTIMATE_TRANSITIONS, 'estimate');
 
     // Check if already converted (has CONVERTED status)
     if (estimate.bookingId) {
@@ -466,24 +466,23 @@ export class EstimateService {
   private calculateTotals(
     lines: CreateEstimateLineDto[],
     discountCents: number,
-  ): { subtotalCents: bigint; vatCents: bigint; totalCents: bigint } {
-    let subtotal = BigInt(0);
-    let vat = BigInt(0);
+  ): { subtotalCents: number; vatCents: number; totalCents: number } {
+    let subtotal = 0;
+    let vat = 0;
 
     for (const line of lines) {
-      const lineTotal = BigInt(line.unitPriceCents * line.quantity);
+      const lineTotal = line.unitPriceCents * line.quantity;
       subtotal += lineTotal;
       // Calculate VAT: lineTotal * vatRate, rounded
-      vat += BigInt(Math.round(Number(lineTotal) * line.vatRate));
+      vat += Math.round(lineTotal * line.vatRate);
     }
 
-    const discount = BigInt(discountCents);
-    const total = subtotal + vat - discount;
+    const total = subtotal + vat - discountCents;
 
     return {
       subtotalCents: subtotal,
       vatCents: vat,
-      totalCents: total < BigInt(0) ? BigInt(0) : total,
+      totalCents: total < 0 ? 0 : total,
     };
   }
 
@@ -500,15 +499,15 @@ export class EstimateService {
       select: { discountCents: true },
     });
 
-    let subtotal = BigInt(0);
-    let vat = BigInt(0);
+    let subtotal = 0;
+    let vat = 0;
 
     for (const line of lines) {
-      subtotal += line.totalCents;
-      vat += BigInt(Math.round(Number(line.totalCents) * Number(line.vatRate)));
+      subtotal += Number(line.totalCents);
+      vat += Math.round(Number(line.totalCents) * Number(line.vatRate));
     }
 
-    const discount = estimate?.discountCents ?? BigInt(0);
+    const discount = Number(estimate?.discountCents ?? 0);
     const total = subtotal + vat - discount;
 
     return this.prisma.estimate.update({
@@ -516,7 +515,7 @@ export class EstimateService {
       data: {
         subtotalCents: subtotal,
         vatCents: vat,
-        totalCents: total < BigInt(0) ? BigInt(0) : total,
+        totalCents: total < 0 ? 0 : total,
       },
       include: { lines: { orderBy: { position: 'asc' } } },
     });

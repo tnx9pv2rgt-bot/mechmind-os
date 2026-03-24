@@ -102,19 +102,20 @@ export function NotificationList({
   // Fetch notifications
   const { data, isLoading, isError, refetch } = useQuery(
     ['notifications', queryFilters, queryPagination],
-    () => getNotificationHistory(queryFilters as Parameters<typeof getNotificationHistory>[0], queryPagination),
+    () =>
+      getNotificationHistory(
+        queryFilters as Parameters<typeof getNotificationHistory>[0],
+        queryPagination
+      ),
     { enabled: !customerId || !!customerId }
   );
 
   // Delete mutation
-  const deleteMutation = useMutation(
-    (id: string) => deleteNotification(id),
-    {
-      onSuccess: () => {
-        void queryClient.invalidateQueries(['notifications']);
-      },
-    }
-  );
+  const deleteMutation = useMutation((id: string) => deleteNotification(id), {
+    onSuccess: () => {
+      void queryClient.invalidateQueries(['notifications']);
+    },
+  });
 
   // Retry mutation
   const retryMutation = useMutation({
@@ -128,7 +129,7 @@ export function NotificationList({
   const handleFilterChange = useCallback(
     (key: keyof NotificationFilters, value: string | string[]) => {
       setPage(1);
-      setFilters((prev) => ({
+      setFilters(prev => ({
         ...prev,
         [key]: value === 'all' ? undefined : Array.isArray(value) ? value : [value],
       }));
@@ -144,7 +145,7 @@ export function NotificationList({
 
   // Filter notifications by search query
   const filteredNotifications =
-    data?.notifications.filter((notification) => {
+    data?.notifications.filter(notification => {
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       return (
@@ -160,14 +161,11 @@ export function NotificationList({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
-        <div className="space-y-3">
+      <div className='space-y-4'>
+        {title && <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>}
+        <div className='space-y-3'>
           {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="h-24 bg-gray-100 animate-pulse rounded-xl"
-            />
+            <div key={i} className='h-24 bg-gray-100 animate-pulse rounded-xl' />
           ))}
         </div>
       </div>
@@ -176,16 +174,12 @@ export function NotificationList({
 
   if (isError) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Errore nel caricamento
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Impossibile caricare le notifiche. Riprova più tardi.
-        </p>
-        <Button onClick={() => refetch()} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
+      <div className='text-center py-12'>
+        <AlertCircle className='w-12 h-12 text-red-500 mx-auto mb-4' />
+        <h3 className='text-lg font-semibold text-gray-900 mb-2'>Errore nel caricamento</h3>
+        <p className='text-gray-600 mb-4'>Impossibile caricare le notifiche. Riprova più tardi.</p>
+        <Button onClick={() => refetch()} variant='outline'>
+          <RefreshCw className='w-4 h-4 mr-2' />
           Riprova
         </Button>
       </div>
@@ -193,41 +187,43 @@ export function NotificationList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      <div className='flex items-center justify-between'>
+        <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>
         <Button
-          variant="ghost"
-          size="icon"
+          variant='ghost'
+          size='icon'
           onClick={() => refetch()}
-          className="h-8 w-8"
+          className='h-8 w-8'
+          aria-label='Aggiorna lista'
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className='w-4 h-4' />
         </Button>
       </div>
 
       {/* Filters */}
       {showFilters && (
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className='flex flex-wrap gap-3'>
+          <div className='relative flex-1 min-w-[200px]'>
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
             <Input
-              placeholder="Cerca notifiche..."
+              placeholder='Cerca notifiche...'
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-9"
+              onChange={e => handleSearch(e.target.value)}
+              className='pl-9'
+              aria-label='Cerca notifiche'
             />
           </div>
           <Select
             value={filters.type?.[0] || 'all'}
-            onValueChange={(value) => handleFilterChange('type', value)}
+            onValueChange={value => handleFilterChange('type', value)}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Tipo" />
+            <SelectTrigger className='w-[180px]'>
+              <SelectValue placeholder='Tipo' />
             </SelectTrigger>
             <SelectContent>
-              {typeOptions.map((option) => (
+              {typeOptions.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -236,13 +232,13 @@ export function NotificationList({
           </Select>
           <Select
             value={filters.status?.[0] || 'all'}
-            onValueChange={(value) => handleFilterChange('status', value)}
+            onValueChange={value => handleFilterChange('status', value)}
           >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Stato" />
+            <SelectTrigger className='w-[150px]'>
+              <SelectValue placeholder='Stato' />
             </SelectTrigger>
             <SelectContent>
-              {statusOptions.map((option) => (
+              {statusOptions.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -251,13 +247,13 @@ export function NotificationList({
           </Select>
           <Select
             value={filters.channel?.[0] || 'all'}
-            onValueChange={(value) => handleFilterChange('channel', value)}
+            onValueChange={value => handleFilterChange('channel', value)}
           >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Canale" />
+            <SelectTrigger className='w-[150px]'>
+              <SelectValue placeholder='Canale' />
             </SelectTrigger>
             <SelectContent>
-              {channelOptions.map((option) => (
+              {channelOptions.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -268,10 +264,10 @@ export function NotificationList({
       )}
 
       {/* Notification List */}
-      <div className="space-y-3">
-        <AnimatePresence mode="popLayout">
+      <div className='space-y-3'>
+        <AnimatePresence mode='popLayout'>
           {filteredNotifications.length > 0 ? (
-            filteredNotifications.map((notification) => (
+            filteredNotifications.map(notification => (
               <NotificationItem
                 key={notification.id}
                 notification={notification as unknown as Notification}
@@ -284,15 +280,11 @@ export function NotificationList({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className='text-center py-12'
             >
-              <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                Nessuna notifica
-              </h3>
-              <p className="text-gray-500">
-                Non ci sono notifiche da visualizzare.
-              </p>
+              <Inbox className='w-12 h-12 text-gray-300 mx-auto mb-4' />
+              <h3 className='text-lg font-medium text-gray-900 mb-1'>Nessuna notifica</h3>
+              <p className='text-gray-500'>Non ci sono notifiche da visualizzare.</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -300,28 +292,28 @@ export function NotificationList({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t">
-          <p className="text-sm text-gray-500">
+        <div className='flex items-center justify-between pt-4 border-t'>
+          <p className='text-sm text-gray-500'>
             Pagina {page} di {totalPages}
           </p>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p - 1)}
+              variant='outline'
+              size='sm'
+              onClick={() => setPage(p => p - 1)}
               disabled={!hasPrevPage}
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
+              <ChevronLeft className='w-4 h-4 mr-1' />
               Precedente
             </Button>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
+              variant='outline'
+              size='sm'
+              onClick={() => setPage(p => p + 1)}
               disabled={!hasNextPage}
             >
               Successiva
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className='w-4 h-4 ml-1' />
             </Button>
           </div>
         </div>

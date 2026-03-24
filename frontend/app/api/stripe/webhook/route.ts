@@ -305,9 +305,16 @@ async function sendNotification(
  */
 async function alertAdmin(type: string, data: Record<string, string | number | boolean>) {
   try {
-    // Send to admin email or notification channel
-    console.info(`🚨 Admin alert: ${type}`, data);
-    // TODO: Implement admin alerting (email, Slack, etc.)
+    await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: `admin_alert_${type}`,
+        data,
+        channels: ['email'],
+        priority: 'high',
+      }),
+    });
   } catch (error) {
     console.error('Failed to alert admin:', error);
   }

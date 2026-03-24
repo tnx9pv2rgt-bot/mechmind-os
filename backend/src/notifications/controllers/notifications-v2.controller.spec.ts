@@ -23,6 +23,8 @@ describe('NotificationsV2Controller', () => {
             getPreferences: jest.fn(),
             updatePreference: jest.fn(),
             retryNotification: jest.fn(),
+            getNotificationById: jest.fn(),
+            deleteNotification: jest.fn(),
           },
         },
       ],
@@ -41,9 +43,15 @@ describe('NotificationsV2Controller', () => {
       const mockHistory = [{ id: 'n-001', type: 'BOOKING_CONFIRMATION' }];
       service.getHistory.mockResolvedValue(mockHistory as never);
 
-      const result = await controller.getHistory('cust-001', 'BOOKING_CONFIRMATION', '10', '5');
+      const result = await controller.getHistory(
+        'tenant-001',
+        'cust-001',
+        'BOOKING_CONFIRMATION',
+        '10',
+        '5',
+      );
 
-      expect(service.getHistory).toHaveBeenCalledWith('cust-001', {
+      expect(service.getHistory).toHaveBeenCalledWith('tenant-001', 'cust-001', {
         type: 'BOOKING_CONFIRMATION',
         limit: 10,
         offset: 5,
@@ -54,9 +62,9 @@ describe('NotificationsV2Controller', () => {
     it('should use default limit=50 and offset=0 when not provided', async () => {
       service.getHistory.mockResolvedValue([] as never);
 
-      await controller.getHistory('cust-001');
+      await controller.getHistory('tenant-001', 'cust-001');
 
-      expect(service.getHistory).toHaveBeenCalledWith('cust-001', {
+      expect(service.getHistory).toHaveBeenCalledWith('tenant-001', 'cust-001', {
         type: undefined,
         limit: 50,
         offset: 0,
@@ -188,10 +196,42 @@ describe('NotificationsV2Controller', () => {
   });
 
   describe('getStatus', () => {
-    it('should return status for notification id', async () => {
-      const result = await controller.getStatus('n-001');
+    it('should return status for notification id from database', async () => {
+      const mockNotification = {
+        id: 'n-001',
+        status: 'SENT',
+        channel: 'SMS',
+        type: 'BOOKING_CONFIRMATION',
+        sentAt: new Date('2026-03-15T10:00:00Z'),
+        deliveredAt: null,
+        failedAt: null,
+        retries: 0,
+        error: null,
+      };
+      service.getNotificationById.mockResolvedValue(mockNotification as never);
 
-      expect(result).toEqual({ id: 'n-001', status: 'PENDING' });
+      const result = await controller.getStatus('tenant-001', 'n-001');
+
+      expect(service.getNotificationById).toHaveBeenCalledWith('tenant-001', 'n-001');
+      expect(result).toEqual({
+        id: 'n-001',
+        status: 'SENT',
+        channel: 'SMS',
+        type: 'BOOKING_CONFIRMATION',
+        sentAt: mockNotification.sentAt,
+        deliveredAt: null,
+        failedAt: null,
+        retries: 0,
+        error: null,
+      });
+    });
+
+    it('should throw NotFoundException when notification not found', async () => {
+      service.getNotificationById.mockResolvedValue(null);
+
+      await expect(controller.getStatus('tenant-001', 'n-999')).rejects.toThrow(
+        'Notification n-999 not found',
+      );
     });
   });
 
@@ -200,17 +240,20 @@ describe('NotificationsV2Controller', () => {
       const mockResult = { success: true, notificationId: 'n-001' };
       service.retryNotification.mockResolvedValue(mockResult as never);
 
-      const result = await controller.retry('n-001');
+      const result = await controller.retry('tenant-001', 'n-001');
 
-      expect(service.retryNotification).toHaveBeenCalledWith('n-001');
+      expect(service.retryNotification).toHaveBeenCalledWith('tenant-001', 'n-001');
       expect(result).toEqual(mockResult);
     });
   });
 
   describe('delete', () => {
-    it('should return success true', async () => {
-      const result = await controller.delete('n-001');
+    it('should delegate to service.deleteNotification and return success', async () => {
+      service.deleteNotification.mockResolvedValue(undefined);
 
+      const result = await controller.delete('tenant-001', 'n-001');
+
+      expect(service.deleteNotification).toHaveBeenCalledWith('tenant-001', 'n-001');
       expect(result).toEqual({ success: true });
     });
   });

@@ -2,24 +2,41 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
+import { validateTransition, TransitionMap } from '../common/utils/state-machine';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 import { VehicleCheckInDto } from './dto/check-in.dto';
 import { VehicleCheckOutDto } from './dto/check-out.dto';
 
+const WORK_ORDER_TRANSITIONS: TransitionMap = {
+  PENDING: ['CHECKED_IN', 'OPEN', 'IN_PROGRESS'],
+  OPEN: ['CHECKED_IN', 'IN_PROGRESS'],
+  CHECKED_IN: ['IN_PROGRESS'],
+  IN_PROGRESS: ['WAITING_PARTS', 'QUALITY_CHECK', 'COMPLETED'],
+  WAITING_PARTS: ['IN_PROGRESS'],
+  QUALITY_CHECK: ['COMPLETED', 'IN_PROGRESS'],
+  COMPLETED: ['READY', 'INVOICED'],
+  READY: ['INVOICED'],
+  INVOICED: [],
+};
+
 interface WorkOrderFilters {
   status?: string;
   vehicleId?: string;
   customerId?: string;
+  page?: number;
+  limit?: number;
 }
 
 @Injectable()
 export class WorkOrderService {
   private readonly logger = new Logger(WorkOrderService.name);
+  private readonly MAX_TIMER_MINUTES = 8 * 60;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -56,8 +73,10 @@ export class WorkOrderService {
   async findAll(
     tenantId: string,
     filters?: WorkOrderFilters,
-  ): Promise<{ workOrders: unknown[]; total: number }> {
+  ): Promise<{ workOrders: unknown[]; total: number; page: number; limit: number; pages: number }> {
     try {
+      const page = filters?.page ?? 1;
+      const limit = filters?.limit ?? 20;
       const where: Record<string, unknown> = { tenantId };
 
       if (filters?.status) {
@@ -85,11 +104,13 @@ export class WorkOrderService {
             },
           },
           orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
         }),
         this.prisma.workOrder.count({ where }),
       ]);
 
-      return { workOrders, total };
+      return { workOrders, total, page, limit, pages: Math.ceil(total / limit) };
     } catch (error) {
       this.logger.error(`Failed to list work orders: ${error}`);
       throw new InternalServerErrorException('Failed to list work orders');
@@ -187,8 +208,8 @@ export class WorkOrderService {
         throw new NotFoundException(`Work order ${id} not found`);
       }
 
-      const workOrder = await this.prisma.workOrder.update({
-        where: { id },
+      const updated = await this.prisma.workOrder.updateMany({
+        where: { id, tenantId, version: existing.version },
         data: {
           vehicleId: dto.vehicleId,
           customerId: dto.customerId,
@@ -208,7 +229,16 @@ export class WorkOrderService {
           customerSignature: dto.customerSignature,
           assignedBayId: dto.assignedBayId,
           estimatedCompletion: dto.estimatedCompletion,
+          version: { increment: 1 },
         },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictException('Work order modified by another user. Refresh and retry.');
+      }
+
+      const workOrder = await this.prisma.workOrder.findFirst({
+        where: { id, tenantId },
         include: {
           vehicle: {
             select: {
@@ -223,7 +253,7 @@ export class WorkOrderService {
 
       return workOrder;
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
       }
       this.logger.error(`Failed to update work order ${id}: ${error}`);
@@ -244,26 +274,33 @@ export class WorkOrderService {
         throw new NotFoundException(`Work order ${id} not found`);
       }
 
-      if (
-        existing.status !== 'PENDING' &&
-        existing.status !== 'CHECKED_IN' &&
-        existing.status !== 'OPEN'
-      ) {
-        throw new BadRequestException(`Cannot start work order with status ${existing.status}`);
-      }
+      validateTransition(existing.status, 'IN_PROGRESS', WORK_ORDER_TRANSITIONS, 'work order');
 
-      const workOrder = await this.prisma.workOrder.update({
-        where: { id },
+      const updated = await this.prisma.workOrder.updateMany({
+        where: { id, tenantId, version: existing.version },
         data: {
           status: 'IN_PROGRESS',
           actualStartTime: new Date(),
+          version: { increment: 1 },
         },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictException('Work order modified by another user. Refresh and retry.');
+      }
+
+      const workOrder = await this.prisma.workOrder.findFirst({
+        where: { id, tenantId },
       });
 
       this.logger.log(`Work order ${id} started for tenant ${tenantId}`);
       return workOrder;
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
         throw error;
       }
       this.logger.error(`Failed to start work order ${id}: ${error}`);
@@ -284,22 +321,33 @@ export class WorkOrderService {
         throw new NotFoundException(`Work order ${id} not found`);
       }
 
-      if (existing.status !== 'IN_PROGRESS' && existing.status !== 'QUALITY_CHECK') {
-        throw new BadRequestException(`Cannot complete work order with status ${existing.status}`);
-      }
+      validateTransition(existing.status, 'COMPLETED', WORK_ORDER_TRANSITIONS, 'work order');
 
-      const workOrder = await this.prisma.workOrder.update({
-        where: { id },
+      const updated = await this.prisma.workOrder.updateMany({
+        where: { id, tenantId, version: existing.version },
         data: {
           status: 'COMPLETED',
           actualCompletionTime: new Date(),
+          version: { increment: 1 },
         },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictException('Work order modified by another user. Refresh and retry.');
+      }
+
+      const workOrder = await this.prisma.workOrder.findFirst({
+        where: { id, tenantId },
       });
 
       this.logger.log(`Work order ${id} completed for tenant ${tenantId}`);
       return workOrder;
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
         throw error;
       }
       this.logger.error(`Failed to complete work order ${id}: ${error}`);
@@ -312,49 +360,49 @@ export class WorkOrderService {
    */
   async createInvoiceFromWo(tenantId: string, id: string): Promise<unknown> {
     try {
+      // Include normalized relations to build invoice items
       const workOrder = await this.prisma.workOrder.findFirst({
         where: { id, tenantId },
+        include: {
+          services: { include: { service: true } },
+          parts: { include: { part: true } },
+        },
       });
 
       if (!workOrder) {
         throw new NotFoundException(`Work order ${id} not found`);
       }
 
-      if (workOrder.status === 'INVOICED') {
-        throw new BadRequestException('Work order is already invoiced');
-      }
+      validateTransition(workOrder.status, 'INVOICED', WORK_ORDER_TRANSITIONS, 'work order');
 
-      if (workOrder.status !== 'COMPLETED' && workOrder.status !== 'READY') {
-        throw new BadRequestException(
-          `Cannot invoice work order with status ${workOrder.status}. Must be COMPLETED or READY.`,
-        );
-      }
-
-      // Build invoice items from labor and parts
+      // Build invoice items from normalized WorkOrderService and WorkOrderPart relations
       const items: Record<string, unknown>[] = [];
 
-      if (workOrder.laborItems && Array.isArray(workOrder.laborItems)) {
-        for (const item of workOrder.laborItems as Record<string, unknown>[]) {
-          items.push({
-            type: 'LABOR',
-            description: (item.description as string) || 'Labor',
-            quantity: (item.hours as number) || 1,
-            unitPrice: (item.rate as number) || 0,
-            total: (item.total as number) || 0,
-          });
-        }
+      for (const woSvc of workOrder.services) {
+        const laborRate = woSvc.service.laborRate ?? woSvc.service.price;
+        // estimatedMinutes drives quantity in hours
+        const hours = parseFloat(((woSvc.actualMinutes ?? woSvc.estimatedMinutes) / 60).toFixed(2));
+        const unitPrice = Number(laborRate);
+        const lineTotal = parseFloat((hours * unitPrice).toFixed(2));
+        items.push({
+          type: 'LABOR',
+          description: woSvc.service.name,
+          quantity: hours,
+          unitPrice,
+          total: lineTotal,
+        });
       }
 
-      if (workOrder.partsUsed && Array.isArray(workOrder.partsUsed)) {
-        for (const part of workOrder.partsUsed as Record<string, unknown>[]) {
-          items.push({
-            type: 'PART',
-            description: (part.name as string) || 'Part',
-            quantity: (part.quantity as number) || 1,
-            unitPrice: (part.unitPrice as number) || 0,
-            total: (part.total as number) || 0,
-          });
-        }
+      for (const woPart of workOrder.parts) {
+        const unitPrice = Number(woPart.part.retailPrice);
+        const lineTotal = parseFloat((woPart.quantity * unitPrice).toFixed(2));
+        items.push({
+          type: 'PART',
+          description: woPart.part.name,
+          quantity: woPart.quantity,
+          unitPrice,
+          total: lineTotal,
+        });
       }
 
       const subtotal = workOrder.totalCost ? Number(workOrder.totalCost) : 0;
@@ -439,9 +487,7 @@ export class WorkOrderService {
       throw new NotFoundException(`Work order ${id} not found`);
     }
 
-    if (existing.status !== 'PENDING' && existing.status !== 'OPEN') {
-      throw new BadRequestException(`Cannot check in work order with status ${existing.status}`);
-    }
+    validateTransition(existing.status, 'CHECKED_IN', WORK_ORDER_TRANSITIONS, 'work order');
 
     const checkInData = {
       damageNotes: dto.damageNotes,
@@ -459,8 +505,8 @@ export class WorkOrderService {
         data: { mileage: dto.mileageIn },
       });
 
-      return tx.workOrder.update({
-        where: { id },
+      const updated = await tx.workOrder.updateMany({
+        where: { id, tenantId, version: existing.version },
         data: {
           status: 'CHECKED_IN',
           mileageIn: dto.mileageIn,
@@ -469,7 +515,16 @@ export class WorkOrderService {
           customerSignature: dto.customerSignature,
           checkInData: JSON.parse(JSON.stringify(checkInData)),
           estimatedCompletion: dto.estimatedPickup ? new Date(dto.estimatedPickup) : undefined,
+          version: { increment: 1 },
         },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictException('Work order modified by another user. Refresh and retry.');
+      }
+
+      return tx.workOrder.findFirst({
+        where: { id, tenantId },
         include: {
           vehicle: {
             select: { id: true, licensePlate: true, make: true, model: true },
@@ -494,11 +549,7 @@ export class WorkOrderService {
       throw new NotFoundException(`Work order ${id} not found`);
     }
 
-    if (existing.status !== 'COMPLETED' && existing.status !== 'READY') {
-      throw new BadRequestException(
-        `Cannot check out work order with status ${existing.status}. Must be COMPLETED or READY.`,
-      );
-    }
+    validateTransition(existing.status, 'READY', WORK_ORDER_TRANSITIONS, 'work order');
 
     if (existing.mileageIn && dto.mileageOut < existing.mileageIn) {
       throw new BadRequestException(
@@ -518,15 +569,24 @@ export class WorkOrderService {
         data: { mileage: dto.mileageOut },
       });
 
-      return tx.workOrder.update({
-        where: { id },
+      const updated = await tx.workOrder.updateMany({
+        where: { id, tenantId, version: existing.version },
         data: {
           status: 'READY',
           mileageOut: dto.mileageOut,
           fuelLevelOut: dto.fuelLevel,
           checkOutData: JSON.parse(JSON.stringify(checkOutData)),
           customerSignature: dto.customerSignature ?? existing.customerSignature,
+          version: { increment: 1 },
         },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictException('Work order modified by another user. Refresh and retry.');
+      }
+
+      return tx.workOrder.findFirst({
+        where: { id, tenantId },
         include: {
           vehicle: {
             select: { id: true, licensePlate: true, make: true, model: true },
@@ -589,14 +649,21 @@ export class WorkOrderService {
     }
 
     const stoppedAt = new Date();
-    const durationMinutes = Math.round((stoppedAt.getTime() - active.startedAt.getTime()) / 60000);
+    let durationMinutes = Math.round((stoppedAt.getTime() - active.startedAt.getTime()) / 60000);
+
+    if (durationMinutes > this.MAX_TIMER_MINUTES) {
+      this.logger.warn(
+        `Timer for technician ${technicianId} on WO ${workOrderId} exceeded ${this.MAX_TIMER_MINUTES} min (was ${durationMinutes}). Capping to ${this.MAX_TIMER_MINUTES} min.`,
+      );
+      durationMinutes = this.MAX_TIMER_MINUTES;
+    }
 
     const log = await this.prisma.technicianTimeLog.update({
       where: { id: active.id },
       data: { stoppedAt, durationMinutes },
     });
 
-    // Update WorkOrder laborHours with total accumulated time
+    // Internal: bounded query — logs scoped to single work order
     const allLogs = await this.prisma.technicianTimeLog.findMany({
       where: { workOrderId, stoppedAt: { not: null } },
     });
@@ -627,6 +694,7 @@ export class WorkOrderService {
       throw new NotFoundException(`Work order ${workOrderId} not found`);
     }
 
+    // Internal: bounded query — logs scoped to single work order
     const logs = await this.prisma.technicianTimeLog.findMany({
       where: { workOrderId },
       orderBy: { startedAt: 'desc' },

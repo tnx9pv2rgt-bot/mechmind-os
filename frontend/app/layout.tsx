@@ -5,6 +5,7 @@ import '../styles/globals.css';
 import { Providers } from '@/components/providers';
 import { StyledJsxRegistry } from '@/lib/styled-jsx-registry';
 import { Toaster } from 'sonner';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 
 const CookieConsent = dynamic(
   () => import('@/components/gdpr/CookieConsent').then(mod => mod.CookieConsent),
@@ -12,11 +13,13 @@ const CookieConsent = dynamic(
 );
 
 // Font optimization — adjustFontFallback generates size-adjust for zero CLS
+// preload: false avoids loading the font on pages that don't use it (e.g. auth)
+// Next.js still injects the font when the CSS variable is referenced
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
-  preload: true,
+  preload: false,
   adjustFontFallback: true,
 });
 
@@ -67,15 +70,9 @@ export const metadata: Metadata = {
   // Manifest
   manifest: '/manifest.json',
 
-  // Apple
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'MechMind OS',
-  },
-
   // Other
   other: {
+    'mobile-web-app-capable': 'yes',
     'cache-control': 'public, max-age=0, must-revalidate',
   },
 };
@@ -98,20 +95,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang='it' className={inter.variable} suppressHydrationWarning>
       <head>
-        {/* Preconnect to critical domains */}
-        <link rel='preconnect' href='https://fonts.googleapis.com' />
-        <link rel='preconnect' href='https://fonts.gstatic.com' crossOrigin='anonymous' />
-
-        {/* DNS prefetch for APIs */}
+        {/* DNS prefetch for APIs — no preconnect to Google Fonts (next/font self-hosts) */}
         <link rel='dns-prefetch' href='https://api.mechmind.com' />
         <link rel='dns-prefetch' href='https://supabase.co' />
-
-        {/* Performance hints */}
-        <meta name='format-detection' content='telephone=no' />
-        <meta name='mobile-web-app-capable' content='yes' />
-        <meta name='apple-mobile-web-app-capable' content='yes' />
-        <meta name='apple-mobile-web-app-status-bar-style' content='default' />
-        <meta name='apple-mobile-web-app-title' content='MechMind OS' />
+        <GoogleAnalytics />
       </head>
       <body
         className={`${inter.className} antialiased bg-[#f4f4f4] dark:bg-[#212121] transition-colors`}

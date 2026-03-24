@@ -60,17 +60,19 @@ describe('CsvImportExportService', () => {
         },
       ];
 
-      mockPrisma.customer.findMany.mockResolvedValue(mockCustomers);
+      mockPrisma.customer.findMany.mockResolvedValueOnce(mockCustomers).mockResolvedValueOnce([]);
 
       const result = await service.exportCustomers('t1');
 
       expect(result).toBeInstanceOf(Buffer);
       const csv = result.toString('utf-8');
-      expect(csv).toContain('firstName');
-      expect(csv).toContain('lastName');
-      expect(csv).toContain('email');
-      expect(csv).toContain('phone');
-      expect(csv).toContain('customerType');
+      expect(csv.startsWith('\uFEFF')).toBe(true);
+      expect(csv).toContain(';');
+      expect(csv).toContain('Nome');
+      expect(csv).toContain('Cognome');
+      expect(csv).toContain('Email');
+      expect(csv).toContain('Telefono');
+      expect(csv).toContain('Tipo Cliente');
       expect(csv).toContain('Mario');
       expect(csv).toContain('Rossi');
       expect(csv).toContain('+39012345');
@@ -92,25 +94,27 @@ describe('CsvImportExportService', () => {
           vin: 'VIN123456',
           fuelType: 'GASOLINE',
           mileage: 50000,
-          status: 'active',
+          status: 'ACTIVE',
           createdAt: new Date('2024-06-15T10:00:00Z'),
         },
       ];
 
-      mockPrisma.vehicle.findMany.mockResolvedValue(mockVehicles);
+      mockPrisma.vehicle.findMany.mockResolvedValueOnce(mockVehicles).mockResolvedValueOnce([]);
 
       const result = await service.exportVehicles('t1');
 
       expect(result).toBeInstanceOf(Buffer);
       const csv = result.toString('utf-8');
-      expect(csv).toContain('licensePlate');
-      expect(csv).toContain('make');
-      expect(csv).toContain('model');
-      expect(csv).toContain('year');
-      expect(csv).toContain('vin');
-      expect(csv).toContain('fuelType');
-      expect(csv).toContain('mileage');
-      expect(csv).toContain('status');
+      expect(csv.startsWith('\uFEFF')).toBe(true);
+      expect(csv).toContain(';');
+      expect(csv).toContain('Targa');
+      expect(csv).toContain('Marca');
+      expect(csv).toContain('Modello');
+      expect(csv).toContain('Anno');
+      expect(csv).toContain('Telaio (VIN)');
+      expect(csv).toContain('Alimentazione');
+      expect(csv).toContain('Chilometraggio');
+      expect(csv).toContain('Stato');
       expect(csv).toContain('AB123CD');
       expect(csv).toContain('Fiat');
       expect(csv).toContain('Punto');

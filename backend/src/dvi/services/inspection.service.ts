@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/services/prisma.service';
 import { S3Service } from '../../common/services/s3.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
 import {
   CreateInspectionDto,
   UpdateInspectionDto,
@@ -29,6 +30,16 @@ import {
   InspectionFinding,
   Prisma,
 } from '@prisma/client';
+
+const INSPECTION_TRANSITIONS: TransitionMap = {
+  IN_PROGRESS: ['PENDING_REVIEW', 'READY_FOR_CUSTOMER'],
+  PENDING_REVIEW: ['READY_FOR_CUSTOMER', 'IN_PROGRESS'],
+  READY_FOR_CUSTOMER: ['CUSTOMER_REVIEWING', 'APPROVED', 'DECLINED'],
+  CUSTOMER_REVIEWING: ['APPROVED', 'DECLINED'],
+  APPROVED: ['ARCHIVED'],
+  DECLINED: ['ARCHIVED', 'IN_PROGRESS'],
+  ARCHIVED: [],
+};
 
 const inspectionInclude = {
   vehicle: true,
@@ -137,26 +148,44 @@ export class InspectionService {
       customerId?: string;
       status?: InspectionStatus;
       mechanicId?: string;
+      page?: number;
+      limit?: number;
     },
-  ): Promise<InspectionSummaryDto[]> {
-    const inspections = await this.prisma.inspection.findMany({
-      where: {
-        tenantId,
-        ...(filters.vehicleId && { vehicleId: filters.vehicleId }),
-        ...(filters.customerId && { customerId: filters.customerId }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.mechanicId && { mechanicId: filters.mechanicId }),
-      },
-      include: {
-        vehicle: true,
-        customer: true,
-        mechanic: { select: { name: true } },
-        findings: { select: { severity: true } },
-      },
-      orderBy: { startedAt: 'desc' },
-    });
+  ): Promise<{
+    data: InspectionSummaryDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
 
-    return inspections.map(i => ({
+    const where = {
+      tenantId,
+      ...(filters.vehicleId && { vehicleId: filters.vehicleId }),
+      ...(filters.customerId && { customerId: filters.customerId }),
+      ...(filters.status && { status: filters.status }),
+      ...(filters.mechanicId && { mechanicId: filters.mechanicId }),
+    };
+
+    const [inspections, total] = await Promise.all([
+      this.prisma.inspection.findMany({
+        where,
+        include: {
+          vehicle: true,
+          customer: true,
+          mechanic: { select: { name: true } },
+          findings: { select: { severity: true } },
+        },
+        orderBy: { startedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.inspection.count({ where }),
+    ]);
+
+    const data = inspections.map(i => ({
       id: i.id,
       status: i.status,
       startedAt: i.startedAt,
@@ -166,6 +195,8 @@ export class InspectionService {
       issuesFound: i.findings.length,
       criticalIssues: i.findings.filter((f: InspectionFinding) => f.severity === 'CRITICAL').length,
     }));
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   /**
@@ -200,6 +231,11 @@ export class InspectionService {
           },
         });
       }
+    }
+
+    // Validate status transition if status is changing
+    if (dto.status && dto.status !== inspection.status) {
+      validateTransition(inspection.status, dto.status, INSPECTION_TRANSITIONS, 'inspection');
     }
 
     // Update inspection
@@ -345,8 +381,8 @@ export class InspectionService {
       throw new NotFoundException('Inspection not found');
     }
 
-    // Verify customer email (simple check - could be more sophisticated)
-    // In production, use signed URLs with JWT tokens instead
+    // Validate status transition
+    validateTransition(inspection.status, 'APPROVED', INSPECTION_TRANSITIONS, 'inspection');
 
     // Update approved findings
     if (dto.approvedFindingIds.length > 0) {
@@ -536,9 +572,7 @@ export class InspectionService {
 
     // Build estimate lines from findings
     const lines = inspection.findings.map((finding, index) => {
-      const costCents = finding.estimatedCost
-        ? BigInt(Math.round(Number(finding.estimatedCost) * 100))
-        : BigInt(0);
+      const costCents = finding.estimatedCost ? Math.round(Number(finding.estimatedCost) * 100) : 0;
       return {
         type: 'LABOR' as const,
         description: `${finding.title} — ${finding.description}`,
@@ -550,8 +584,8 @@ export class InspectionService {
       };
     });
 
-    const subtotalCents = lines.reduce((sum, l) => sum + l.totalCents, BigInt(0));
-    const vatCents = BigInt(Math.round(Number(subtotalCents) * 0.22));
+    const subtotalCents = lines.reduce((sum, l) => sum + l.totalCents, 0);
+    const vatCents = Math.round(subtotalCents * 0.22);
     const totalCents = subtotalCents + vatCents;
 
     const estimate = await this.prisma.estimate.create({
@@ -564,7 +598,7 @@ export class InspectionService {
         subtotalCents,
         vatCents,
         totalCents,
-        discountCents: BigInt(0),
+        discountCents: 0,
         createdBy,
         notes: `Generated from inspection ${inspectionId}`,
         lines: {

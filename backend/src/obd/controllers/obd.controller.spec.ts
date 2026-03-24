@@ -86,20 +86,32 @@ describe('ObdController', () => {
 
   describe('listDevices', () => {
     it('should delegate to service with tenantId and optional vehicleId', async () => {
-      service.listDevices.mockResolvedValue([mockDevice] as never);
+      const paginated = { data: [mockDevice], total: 1, page: 1, limit: 20, pages: 1 };
+      service.listDevices.mockResolvedValue(paginated as never);
 
       const result = await controller.listDevices(TENANT_ID, 'veh-001');
 
-      expect(service.listDevices).toHaveBeenCalledWith(TENANT_ID, 'veh-001');
-      expect(result).toEqual([mockDevice]);
+      expect(service.listDevices).toHaveBeenCalledWith(TENANT_ID, 'veh-001', undefined, undefined);
+      expect(result).toEqual(paginated);
     });
 
     it('should pass undefined when vehicleId not provided', async () => {
-      service.listDevices.mockResolvedValue([] as never);
+      const paginated = { data: [], total: 0, page: 1, limit: 20, pages: 0 };
+      service.listDevices.mockResolvedValue(paginated as never);
 
       await controller.listDevices(TENANT_ID);
 
-      expect(service.listDevices).toHaveBeenCalledWith(TENANT_ID, undefined);
+      expect(service.listDevices).toHaveBeenCalledWith(TENANT_ID, undefined, undefined, undefined);
+    });
+
+    it('should parse page and limit query params', async () => {
+      const paginated = { data: [], total: 10, page: 2, limit: 5, pages: 2 };
+      service.listDevices.mockResolvedValue(paginated as never);
+
+      const result = await controller.listDevices(TENANT_ID, undefined, '2', '5');
+
+      expect(service.listDevices).toHaveBeenCalledWith(TENANT_ID, undefined, 2, 5);
+      expect(result).toEqual(paginated);
     });
   });
 
@@ -152,7 +164,8 @@ describe('ObdController', () => {
 
   describe('getReadings', () => {
     it('should delegate to service with tenantId and parsed query', async () => {
-      service.getReadings.mockResolvedValue([mockReading] as never);
+      const paginated = { data: [mockReading], total: 1, page: 1, limit: 100, pages: 1 };
+      service.getReadings.mockResolvedValue(paginated as never);
       const query = {
         deviceId: 'dev-001',
         vehicleId: 'veh-001',
@@ -169,12 +182,14 @@ describe('ObdController', () => {
         from: new Date('2026-01-01'),
         to: new Date('2026-12-31'),
         limit: 100,
+        page: undefined,
       });
-      expect(result).toEqual([mockReading]);
+      expect(result).toEqual(paginated);
     });
 
     it('should pass undefined dates when not provided', async () => {
-      service.getReadings.mockResolvedValue([] as never);
+      const paginated = { data: [], total: 0, page: 1, limit: 100, pages: 0 };
+      service.getReadings.mockResolvedValue(paginated as never);
       const query = { deviceId: 'dev-001' };
 
       await controller.getReadings(TENANT_ID, query as never);
@@ -185,6 +200,7 @@ describe('ObdController', () => {
         from: undefined,
         to: undefined,
         limit: undefined,
+        page: undefined,
       });
     });
   });
@@ -202,7 +218,8 @@ describe('ObdController', () => {
 
   describe('getTroubleCodes', () => {
     it('should delegate to service with tenantId and filters', async () => {
-      service.getTroubleCodes.mockResolvedValue([mockTroubleCode] as never);
+      const paginated = { data: [mockTroubleCode], total: 1, page: 1, limit: 50, pages: 1 };
+      service.getTroubleCodes.mockResolvedValue(paginated as never);
 
       const result = await controller.getTroubleCodes(TENANT_ID, 'dev-001', 'veh-001', 'true');
 
@@ -210,12 +227,15 @@ describe('ObdController', () => {
         deviceId: 'dev-001',
         vehicleId: 'veh-001',
         active: true,
+        page: undefined,
+        limit: undefined,
       });
-      expect(result).toEqual([mockTroubleCode]);
+      expect(result).toEqual(paginated);
     });
 
     it('should pass undefined active when not provided', async () => {
-      service.getTroubleCodes.mockResolvedValue([] as never);
+      const paginated = { data: [], total: 0, page: 1, limit: 50, pages: 0 };
+      service.getTroubleCodes.mockResolvedValue(paginated as never);
 
       await controller.getTroubleCodes(TENANT_ID);
 
@@ -223,6 +243,8 @@ describe('ObdController', () => {
         deviceId: undefined,
         vehicleId: undefined,
         active: undefined,
+        page: undefined,
+        limit: undefined,
       });
     });
   });

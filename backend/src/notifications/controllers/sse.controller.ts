@@ -9,6 +9,7 @@ import {
   Query,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { SseService } from '../services/sse.service';
@@ -19,6 +20,7 @@ type AuthenticatedRequest = Omit<Request, 'user'> & {
 };
 import { v4 as uuidv4 } from 'uuid';
 
+@ApiTags('SSE Notifiche')
 @Controller('notifications/sse')
 @UseGuards(JwtAuthGuard)
 export class SseController {
@@ -39,6 +41,9 @@ export class SseController {
    * - userOnly: boolean (optional, filter to user-specific notifications only)
    */
   @Sse('stream')
+  @ApiOperation({ summary: 'Stream SSE notifiche in tempo reale' })
+  @ApiResponse({ status: 200, description: 'Stream SSE connesso' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   notificationsStream(
     @Req() req: AuthenticatedRequest,
     @Headers('last-event-id') lastEventId?: string,
@@ -71,6 +76,9 @@ export class SseController {
    * Useful for personal notification feeds
    */
   @Sse('stream/personal')
+  @ApiOperation({ summary: 'Stream SSE notifiche personali utente' })
+  @ApiResponse({ status: 200, description: 'Stream SSE personale connesso' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   personalNotificationsStream(
     @Req() req: AuthenticatedRequest,
     @Headers('last-event-id') _lastEventId?: string,

@@ -3,12 +3,16 @@ import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
 import { FatturapaService } from './services/fatturapa.service';
 import { PdfService } from './services/pdf.service';
+import { PaymentLinkService } from './services/payment-link.service';
+import { BnplService } from './services/bnpl.service';
 
 describe('InvoiceController', () => {
   let controller: InvoiceController;
   let service: jest.Mocked<InvoiceService>;
   let fatturapaService: jest.Mocked<FatturapaService>;
   let pdfService: jest.Mocked<PdfService>;
+  let paymentLinkService: jest.Mocked<PaymentLinkService>;
+  let bnplService: jest.Mocked<BnplService>;
 
   const TENANT_ID = 'tenant-001';
 
@@ -42,6 +46,8 @@ describe('InvoiceController', () => {
             send: jest.fn(),
             markPaid: jest.fn(),
             getStats: jest.fn(),
+            refundInvoice: jest.fn(),
+            exportCsv: jest.fn(),
           },
         },
         {
@@ -56,6 +62,21 @@ describe('InvoiceController', () => {
             generateInvoicePdf: jest.fn(),
           },
         },
+        {
+          provide: PaymentLinkService,
+          useValue: {
+            createPaymentLink: jest.fn(),
+            sendPaymentSms: jest.fn(),
+            handlePaymentWebhook: jest.fn(),
+          },
+        },
+        {
+          provide: BnplService,
+          useValue: {
+            createBnplOrder: jest.fn(),
+            handleBnplWebhook: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -63,6 +84,8 @@ describe('InvoiceController', () => {
     service = module.get(InvoiceService) as jest.Mocked<InvoiceService>;
     fatturapaService = module.get(FatturapaService) as jest.Mocked<FatturapaService>;
     pdfService = module.get(PdfService) as jest.Mocked<PdfService>;
+    paymentLinkService = module.get(PaymentLinkService) as jest.Mocked<PaymentLinkService>;
+    bnplService = module.get(BnplService) as jest.Mocked<BnplService>;
   });
 
   it('should be defined', () => {
@@ -71,7 +94,10 @@ describe('InvoiceController', () => {
 
   describe('findAll', () => {
     it('should delegate to service and return wrapped response', async () => {
-      const expected = { invoices: [mockInvoice], total: 1 };
+      const expected = {
+        data: [mockInvoice],
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      };
       service.findAll.mockResolvedValue(expected as never);
 
       const result = await controller.findAll(
@@ -82,30 +108,44 @@ describe('InvoiceController', () => {
         '2026-12-31',
       );
 
-      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
-        status: 'DRAFT',
-        customerId: 'cust-001',
-        dateFrom: '2026-01-01',
-        dateTo: '2026-12-31',
-      });
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        {
+          status: 'DRAFT',
+          customerId: 'cust-001',
+          dateFrom: '2026-01-01',
+          dateTo: '2026-12-31',
+        },
+        undefined,
+        undefined,
+      );
       expect(result).toEqual({
         success: true,
-        data: expected.invoices,
-        meta: { total: 1 },
+        data: expected.data,
+        meta: expected.meta,
       });
     });
 
     it('should pass undefined filters when not provided', async () => {
-      service.findAll.mockResolvedValue({ invoices: [], total: 0 });
+      const expected = {
+        data: [],
+        meta: { total: 0, page: 1, limit: 20, pages: 0 },
+      };
+      service.findAll.mockResolvedValue(expected as never);
 
       await controller.findAll(TENANT_ID);
 
-      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
-        status: undefined,
-        customerId: undefined,
-        dateFrom: undefined,
-        dateTo: undefined,
-      });
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        {
+          status: undefined,
+          customerId: undefined,
+          dateFrom: undefined,
+          dateTo: undefined,
+        },
+        undefined,
+        undefined,
+      );
     });
   });
 
@@ -133,6 +173,31 @@ describe('InvoiceController', () => {
 
       expect(service.getStats).toHaveBeenCalledWith(TENANT_ID);
       expect(result).toEqual({ success: true, data: stats });
+    });
+  });
+
+  describe('exportCsv', () => {
+    it('should call exportCsv and send CSV response with proper headers', async () => {
+      const csvContent = '\uFEFFNumero;Data;Cliente\nINV-2026-0001;2026-01-15;Mario Rossi';
+      service.exportCsv.mockResolvedValue(csvContent);
+
+      const res = {
+        set: jest.fn(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.exportCsv(TENANT_ID, '2026-01-01', '2026-03-31', res);
+
+      expect(service.exportCsv).toHaveBeenCalledWith(
+        TENANT_ID,
+        new Date('2026-01-01'),
+        new Date('2026-03-31'),
+      );
+      expect(res.set).toHaveBeenCalledWith({
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="fatture-2026-01-01-2026-03-31.csv"',
+      });
+      expect(res.send).toHaveBeenCalledWith(csvContent);
     });
   });
 
@@ -225,6 +290,73 @@ describe('InvoiceController', () => {
         'Content-Disposition': 'attachment; filename="fattura-inv-001.html"',
       });
       expect(res.send).toHaveBeenCalledWith(buf);
+    });
+  });
+
+  describe('refundInvoice', () => {
+    it('should delegate to service with tenantId, id, and amount', async () => {
+      const refundResult = { ...mockInvoice, status: 'REFUNDED' };
+      service.refundInvoice.mockResolvedValue(refundResult as never);
+
+      const result = await controller.refundInvoice(TENANT_ID, 'inv-001', 50);
+
+      expect(service.refundInvoice).toHaveBeenCalledWith(TENANT_ID, 'inv-001', 50);
+      expect(result).toEqual({ success: true, data: refundResult });
+    });
+
+    it('should allow full refund when amount is not provided', async () => {
+      const refundResult = { ...mockInvoice, status: 'REFUNDED' };
+      service.refundInvoice.mockResolvedValue(refundResult as never);
+
+      const result = await controller.refundInvoice(TENANT_ID, 'inv-001');
+
+      expect(service.refundInvoice).toHaveBeenCalledWith(TENANT_ID, 'inv-001', undefined);
+      expect(result).toEqual({ success: true, data: refundResult });
+    });
+  });
+
+  describe('generatePaymentLink', () => {
+    it('should delegate to paymentLinkService.createPaymentLink', async () => {
+      const linkResult = {
+        url: 'https://app.mechmind.io/portal/invoices/inv-001?pay=true',
+        linkId: 'cs_test',
+      };
+      paymentLinkService.createPaymentLink.mockResolvedValue(linkResult);
+
+      const result = await controller.generatePaymentLink(TENANT_ID, 'inv-001');
+
+      expect(paymentLinkService.createPaymentLink).toHaveBeenCalledWith('inv-001', TENANT_ID);
+      expect(result).toEqual({ success: true, data: linkResult });
+    });
+  });
+
+  describe('sendPaymentSms', () => {
+    it('should delegate to paymentLinkService.sendPaymentSms', async () => {
+      const smsResult = {
+        sent: true,
+        paymentUrl: 'https://app.mechmind.io/portal/invoices/inv-001?pay=true',
+      };
+      paymentLinkService.sendPaymentSms.mockResolvedValue(smsResult);
+
+      const result = await controller.sendPaymentSms(TENANT_ID, 'inv-001');
+
+      expect(paymentLinkService.sendPaymentSms).toHaveBeenCalledWith('inv-001', TENANT_ID);
+      expect(result).toEqual({ success: true, data: smsResult });
+    });
+  });
+
+  describe('createBnplOrder', () => {
+    it('should delegate to bnplService.createBnplOrder', async () => {
+      const bnplResult = {
+        redirectUrl: 'https://app.mechmind.io/portal/invoices/inv-001?bnpl=success',
+        orderId: 'bnpl_test',
+      };
+      bnplService.createBnplOrder.mockResolvedValue(bnplResult);
+
+      const result = await controller.createBnplOrder(TENANT_ID, 'inv-001');
+
+      expect(bnplService.createBnplOrder).toHaveBeenCalledWith('inv-001', TENANT_ID);
+      expect(result).toEqual({ success: true, data: bnplResult });
     });
   });
 });

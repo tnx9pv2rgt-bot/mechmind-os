@@ -45,42 +45,42 @@ interface DashboardConfig {
 const DASHBOARDS: Record<DashboardType, DashboardConfig> = {
   overview: {
     id: 'overview',
-    name: 'Booking Overview',
+    name: 'Panoramica Prenotazioni',
     description: 'Prenotazioni giornaliere, tasso completamento',
     icon: BarChart3,
     defaultHeight: 800,
   },
   revenue: {
     id: 'revenue',
-    name: 'Revenue Analytics',
+    name: 'Analisi Ricavi',
     description: 'Fatturato mensile, trend anno/anno',
     icon: BarChart3,
     defaultHeight: 800,
   },
   customers: {
     id: 'customers',
-    name: 'Customer Insights',
+    name: 'Insight Clienti',
     description: 'Nuovi clienti, retention rate',
     icon: BarChart3,
     defaultHeight: 800,
   },
   mechanics: {
     id: 'mechanics',
-    name: 'Mechanic Performance',
+    name: 'Performance Tecnici',
     description: 'Ore lavorate, efficienza',
     icon: BarChart3,
     defaultHeight: 800,
   },
   vehicles: {
     id: 'vehicles',
-    name: 'Vehicle Analytics',
+    name: 'Analisi Veicoli',
     description: 'Servizi per marca/modello',
     icon: BarChart3,
     defaultHeight: 800,
   },
   executive: {
     id: 'executive',
-    name: 'Executive Summary',
+    name: 'Riepilogo Esecutivo',
     description: 'KPI principali riepilogativi',
     icon: BarChart3,
     defaultHeight: 800,
@@ -112,8 +112,8 @@ async function fetchDashboardUrl(dashboard: DashboardType, expiryMinutes = 10): 
   )
   
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Unknown error' }))
-    throw new Error(error.message || `Failed to fetch dashboard URL: ${response.status}`)
+    const error = await response.json().catch(() => ({ message: 'Errore sconosciuto' }))
+    throw new Error(error.message || `Errore nel recupero URL dashboard: ${response.status}`)
   }
   
   return response.json()
@@ -123,7 +123,7 @@ async function fetchMetabaseConfig(): Promise<MetabaseConfigResponse> {
   const response = await fetch('/api/analytics/metabase/config')
   
   if (!response.ok) {
-    throw new Error('Failed to fetch Metabase configuration')
+    throw new Error('Errore nel recupero configurazione Metabase')
   }
   
   return response.json()
@@ -272,7 +272,7 @@ export function MetabaseClient({
 
   const handleIframeError = useCallback(() => {
     setIsLoading(false)
-    setLoadError('Failed to load dashboard')
+    setLoadError('Impossibile caricare la dashboard')
   }, [])
 
   // Manual refresh handler

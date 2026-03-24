@@ -75,9 +75,9 @@ describe('ShopFloorController', () => {
     it('should delegate to service with bayId', async () => {
       service.getBay.mockResolvedValue(mockBay as never);
 
-      const result = await controller.getBay('bay-001');
+      const result = await controller.getBay(TENANT_ID, 'bay-001');
 
-      expect(service.getBay).toHaveBeenCalledWith('bay-001');
+      expect(service.getBay).toHaveBeenCalledWith(TENANT_ID, 'bay-001');
       expect(result).toEqual(mockBay);
     });
   });
@@ -94,9 +94,9 @@ describe('ShopFloorController', () => {
       const sensor = { id: 'sensor-001', type: 'temperature', name: 'Temp Sensor 1' };
       service.addBaySensor.mockResolvedValue(sensor as never);
 
-      const result = await controller.addBaySensor('bay-001', dto);
+      const result = await controller.addBaySensor(TENANT_ID, 'bay-001', dto);
 
-      expect(service.addBaySensor).toHaveBeenCalledWith('bay-001', {
+      expect(service.addBaySensor).toHaveBeenCalledWith(TENANT_ID, 'bay-001', {
         type: 'temperature',
         name: 'Temp Sensor 1',
         isActive: true,
@@ -112,9 +112,9 @@ describe('ShopFloorController', () => {
       const dto = { sensorId: 'sensor-001', value: 38.5, unit: 'celsius' } as never;
       service.processSensorReading.mockResolvedValue(undefined);
 
-      await controller.processSensorReading(dto);
+      await controller.processSensorReading(TENANT_ID, dto);
 
-      expect(service.processSensorReading).toHaveBeenCalledWith(dto);
+      expect(service.processSensorReading).toHaveBeenCalledWith(TENANT_ID, dto);
     });
   });
 
@@ -128,11 +128,15 @@ describe('ShopFloorController', () => {
       const assigned = { ...mockBay, status: 'occupied', vehicleId: 'vehicle-001' };
       service.assignVehicleToBay.mockResolvedValue(assigned as never);
 
-      const result = await controller.assignVehicleToBay('bay-001', dto);
+      const result = await controller.assignVehicleToBay(TENANT_ID, 'bay-001', dto);
 
-      expect(service.assignVehicleToBay).toHaveBeenCalledWith('bay-001', 'vehicle-001', 'wo-001', [
-        'tech-001',
-      ]);
+      expect(service.assignVehicleToBay).toHaveBeenCalledWith(
+        TENANT_ID,
+        'bay-001',
+        'vehicle-001',
+        'wo-001',
+        ['tech-001'],
+      );
       expect(result).toEqual(assigned);
     });
   });
@@ -141,9 +145,9 @@ describe('ShopFloorController', () => {
     it('should delegate to service with bayId', async () => {
       service.releaseBay.mockResolvedValue(mockBay as never);
 
-      const result = await controller.releaseBay('bay-001');
+      const result = await controller.releaseBay(TENANT_ID, 'bay-001');
 
-      expect(service.releaseBay).toHaveBeenCalledWith('bay-001');
+      expect(service.releaseBay).toHaveBeenCalledWith(TENANT_ID, 'bay-001');
       expect(result).toEqual(mockBay);
     });
   });
@@ -154,9 +158,9 @@ describe('ShopFloorController', () => {
       const location = { technicianId: 'tech-001', x: 10, y: 20, floor: 1 };
       service.updateTechnicianLocation.mockResolvedValue(location as never);
 
-      const result = await controller.updateTechnicianLocation('tech-001', dto);
+      const result = await controller.updateTechnicianLocation(TENANT_ID, 'tech-001', dto);
 
-      expect(service.updateTechnicianLocation).toHaveBeenCalledWith('tech-001', {
+      expect(service.updateTechnicianLocation).toHaveBeenCalledWith(TENANT_ID, 'tech-001', {
         x: 10,
         y: 20,
         floor: 1,
@@ -183,9 +187,9 @@ describe('ShopFloorController', () => {
       const progress = { workOrderId: 'wo-001', percentComplete: 60 };
       service.getWorkOrderProgress.mockResolvedValue(progress as never);
 
-      const result = await controller.getWorkOrderProgress('wo-001');
+      const result = await controller.getWorkOrderProgress(TENANT_ID, 'wo-001');
 
-      expect(service.getWorkOrderProgress).toHaveBeenCalledWith('wo-001');
+      expect(service.getWorkOrderProgress).toHaveBeenCalledWith(TENANT_ID, 'wo-001');
       expect(result).toEqual(progress);
     });
   });
@@ -196,9 +200,9 @@ describe('ShopFloorController', () => {
       const updated = { workOrderId: 'wo-001', status: 'in_progress' };
       service.updateJobStatus.mockResolvedValue(updated as never);
 
-      const result = await controller.updateJobStatus('wo-001', dto);
+      const result = await controller.updateJobStatus(TENANT_ID, 'wo-001', dto);
 
-      expect(service.updateJobStatus).toHaveBeenCalledWith('wo-001', 'in_progress');
+      expect(service.updateJobStatus).toHaveBeenCalledWith(TENANT_ID, 'wo-001', 'in_progress');
       expect(result).toEqual(updated);
     });
   });

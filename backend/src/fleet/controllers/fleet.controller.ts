@@ -10,6 +10,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -48,10 +49,30 @@ export class FleetController {
 
   @Get()
   @ApiOperation({ summary: 'List all active fleets' })
-  @ApiResponse({ status: 200, description: 'List of fleets', type: [FleetResponseDto] })
-  async findAll(@CurrentUser('tenantId') tenantId: string): Promise<FleetResponseDto[]> {
-    const fleets = await this.fleetService.findAll(tenantId);
-    return fleets as unknown as FleetResponseDto[];
+  @ApiResponse({ status: 200, description: 'List of fleets' })
+  async findAll(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: FleetResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const result = await this.fleetService.findAll(
+      tenantId,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
+    return result as unknown as {
+      data: FleetResponseDto[];
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
   }
 
   @Get(':id')

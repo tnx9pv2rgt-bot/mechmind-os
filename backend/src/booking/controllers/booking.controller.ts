@@ -32,7 +32,9 @@ import {
   UpdateBookingDto,
   BookingResponseDto,
   ConflictResponseDto,
+  CalendarQueryDto,
 } from '../dto/create-booking.dto';
+import { RescheduleBookingDto } from '../dto/reschedule-booking.dto';
 import { FindAvailableSlotsDto, CreateSlotDto } from '../dto/booking-slot.dto';
 import { BookingStatus } from '@prisma/client';
 
@@ -96,6 +98,82 @@ export class BookingController {
     return {
       success: true,
       data: booking,
+    };
+  }
+
+  @Get('calendar')
+  @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Get bookings formatted for calendar view',
+    description:
+      'Returns bookings within a date range, formatted with title, color, and bay info for calendar rendering',
+  })
+  @ApiQuery({ name: 'from', required: true, description: 'Start date (ISO string)' })
+  @ApiQuery({ name: 'to', required: true, description: 'End date (ISO string)' })
+  @ApiQuery({ name: 'bayId', required: false, description: 'Filter by lift/bay position' })
+  @ApiResponse({
+    status: 200,
+    description: 'Calendar events returned successfully',
+  })
+  async getCalendarBookings(@CurrentTenant() tenantId: string, @Query() query: CalendarQueryDto) {
+    const { from, to, bayId } = query;
+    const statusColorMap: Record<string, string> = {
+      PENDING: '#f59e0b',
+      CONFIRMED: '#3b82f6',
+      CHECKED_IN: '#8b5cf6',
+      IN_PROGRESS: '#f97316',
+      COMPLETED: '#22c55e',
+      CANCELLED: '#ef4444',
+      NO_SHOW: '#6b7280',
+    };
+
+    const result = await this.bookingService.findAll(tenantId, {
+      fromDate: new Date(from),
+      toDate: new Date(to),
+      limit: 1000,
+      offset: 0,
+    });
+
+    let bookings = result.bookings;
+
+    if (bayId) {
+      bookings = bookings.filter(b => b.liftPosition === bayId);
+    }
+
+    const events = bookings.map(booking => {
+      const vehicleInfo = booking.vehicle
+        ? `${booking.vehicle.make ?? ''} ${booking.vehicle.model ?? ''}`.trim()
+        : '';
+      const plateInfo = booking.vehicle?.licensePlate ?? '';
+      const title = vehicleInfo
+        ? plateInfo
+          ? `${plateInfo} - ${vehicleInfo}`
+          : vehicleInfo
+        : plateInfo || `Booking #${booking.id.slice(0, 8)}`;
+
+      const endDate = new Date(booking.scheduledDate);
+      endDate.setMinutes(endDate.getMinutes() + booking.durationMinutes);
+
+      return {
+        id: booking.id,
+        title,
+        start: booking.scheduledDate,
+        end: endDate,
+        status: booking.status,
+        color: statusColorMap[booking.status] || '#6b7280',
+        bayId: booking.liftPosition || null,
+        customerId: booking.customerId || null,
+      };
+    });
+
+    return {
+      success: true,
+      data: events,
+      meta: {
+        total: events.length,
+        from,
+        to,
+      },
     };
   }
 
@@ -168,6 +246,44 @@ export class BookingController {
     return {
       success: true,
       data: booking,
+    };
+  }
+
+  @Patch(':id/reschedule')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Reschedule a booking',
+    description:
+      'Updates the scheduled date and optionally moves to a new slot. Only PENDING and CONFIRMED bookings can be rescheduled.',
+  })
+  @ApiParam({ name: 'id', description: 'Booking ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Booking rescheduled successfully',
+    type: BookingResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Booking cannot be rescheduled (invalid status)',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Booking or slot not found',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'New slot is not available',
+  })
+  async rescheduleBooking(
+    @CurrentTenant() tenantId: string,
+    @Param('id') bookingId: string,
+    @Body() dto: RescheduleBookingDto,
+  ) {
+    const booking = await this.bookingService.rescheduleBooking(tenantId, bookingId, dto);
+    return {
+      success: true,
+      data: booking,
+      message: 'Booking rescheduled successfully',
     };
   }
 

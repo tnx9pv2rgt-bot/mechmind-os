@@ -15,6 +15,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { ZeroBounceService, EmailVerificationResult } from './zerobounce';
@@ -52,6 +53,7 @@ export interface EmailValidationResultWithSuggestion extends EmailVerificationRe
   typoCorrected?: string;
 }
 
+@ApiTags('Validazione Esterna')
 @Controller('api/validation')
 export class ValidationController {
   private readonly logger = new Logger(ValidationController.name);
@@ -86,6 +88,9 @@ export class ValidationController {
   // ==================== EMAIL VALIDATION ====================
 
   @Get('email')
+  @ApiOperation({ summary: 'Valida indirizzo email tramite ZeroBounce' })
+  @ApiResponse({ status: 200, description: 'Risultato validazione email' })
+  @ApiResponse({ status: 429, description: 'Rate limit superato' })
   async validateEmail(
     @Query('email') email: string,
     @Headers('x-forwarded-for') forwardedFor: string,
@@ -190,6 +195,9 @@ export class ValidationController {
   // ==================== VAT VALIDATION ====================
 
   @Post('vat')
+  @ApiOperation({ summary: 'Valida partita IVA tramite VIES' })
+  @ApiResponse({ status: 201, description: 'Risultato validazione P.IVA' })
+  @ApiResponse({ status: 429, description: 'Rate limit superato' })
   async validateVat(
     @Body() dto: VatValidationDto,
     @Headers('x-forwarded-for') forwardedFor: string,
@@ -285,6 +293,9 @@ export class ValidationController {
   // ==================== ADDRESS VALIDATION ====================
 
   @Get('address/autocomplete')
+  @ApiOperation({ summary: 'Autocompletamento indirizzo tramite Google Places' })
+  @ApiResponse({ status: 200, description: 'Suggerimenti indirizzo restituiti' })
+  @ApiResponse({ status: 429, description: 'Rate limit superato' })
   async autocompleteAddress(
     @Query('input') input: string,
     @Query('language') language: string = 'it',
@@ -346,6 +357,9 @@ export class ValidationController {
   }
 
   @Get('address/details')
+  @ApiOperation({ summary: 'Ottieni dettagli indirizzo per Place ID' })
+  @ApiResponse({ status: 200, description: 'Dettagli indirizzo restituiti' })
+  @ApiResponse({ status: 429, description: 'Rate limit superato' })
   async getAddressDetails(
     @Query('placeId') placeId: string,
     @Headers('x-forwarded-for') forwardedFor: string,
@@ -403,6 +417,9 @@ export class ValidationController {
   }
 
   @Get('postalcode/validate')
+  @ApiOperation({ summary: 'Valida codice postale italiano' })
+  @ApiResponse({ status: 200, description: 'Risultato validazione CAP' })
+  @ApiResponse({ status: 429, description: 'Rate limit superato' })
   async validatePostalCode(
     @Query('code') code: string,
     @Headers('x-forwarded-for') forwardedFor: string,

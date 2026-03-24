@@ -41,14 +41,30 @@ export class FleetService {
     return fleet;
   }
 
-  async findAll(tenantId: string): Promise<Record<string, unknown>[]> {
-    return this.prisma.fleet.findMany({
-      where: {
-        tenantId,
-        isActive: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(
+    tenantId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: Record<string, unknown>[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const where = { tenantId, isActive: true };
+
+    const [data, total] = await Promise.all([
+      this.prisma.fleet.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.fleet.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async findById(tenantId: string, id: string): Promise<Record<string, unknown>> {

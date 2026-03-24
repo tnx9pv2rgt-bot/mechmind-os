@@ -71,6 +71,8 @@ describe('InspectionController', () => {
         customerId: undefined,
         status: 'IN_PROGRESS',
         mechanicId: undefined,
+        page: undefined,
+        limit: undefined,
       });
       expect(result).toEqual([mockInspection]);
     });

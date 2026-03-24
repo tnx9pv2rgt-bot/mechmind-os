@@ -9,6 +9,7 @@ const mockPrisma = {
     findMany: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(),
+    count: jest.fn(),
   },
 };
 
@@ -48,13 +49,15 @@ describe('TireService', () => {
     it('should return tire sets with filters', async () => {
       const sets = [{ id: '1', brand: 'Michelin' }];
       mockPrisma.tireSet.findMany.mockResolvedValue(sets);
+      mockPrisma.tireSet.count.mockResolvedValue(1);
 
       const result = await service.findAll('t1', { season: 'WINTER' as never });
-      expect(result).toEqual(sets);
+      expect(result).toEqual({ data: sets, total: 1, page: 1, limit: 20, pages: 1 });
     });
 
     it('should filter by vehicleId', async () => {
       mockPrisma.tireSet.findMany.mockResolvedValue([]);
+      mockPrisma.tireSet.count.mockResolvedValue(0);
       await service.findAll('t1', { vehicleId: 'v1' });
       expect(mockPrisma.tireSet.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ vehicleId: 'v1' }) }),
@@ -63,6 +66,7 @@ describe('TireService', () => {
 
     it('should filter by isStored', async () => {
       mockPrisma.tireSet.findMany.mockResolvedValue([]);
+      mockPrisma.tireSet.count.mockResolvedValue(0);
       await service.findAll('t1', { isStored: true });
       expect(mockPrisma.tireSet.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ isStored: true }) }),

@@ -645,10 +645,20 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                         <div className='flex items-center justify-end gap-2'>
                           {transfer.status === 'pending' && (
                             <>
-                              <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                className='h-8 w-8 p-0'
+                                aria-label='Approva trasferimento'
+                              >
                                 <CheckCircle2 className='h-4 w-4 text-status-ready' />
                               </Button>
-                              <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                className='h-8 w-8 p-0'
+                                aria-label='Rifiuta trasferimento'
+                              >
                                 <XCircle className='h-4 w-4 text-status-urgent' />
                               </Button>
                             </>
@@ -820,6 +830,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                   <button
                     onClick={() => setTransferQuantity(Math.max(1, transferQuantity - 1))}
                     className='h-8 w-8 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700'
+                    aria-label='Diminuisci quantità'
                   >
                     <Minus className='h-4 w-4' />
                   </button>
@@ -832,6 +843,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                   <button
                     onClick={() => setTransferQuantity(transferQuantity + 1)}
                     className='h-8 w-8 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700'
+                    aria-label='Aumenta quantità'
                   >
                     <PlusIcon className='h-4 w-4' />
                   </button>

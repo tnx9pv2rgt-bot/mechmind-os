@@ -144,6 +144,148 @@ describe('TenantSettingsService', () => {
     });
   });
 
+  describe('completeOnboarding', () => {
+    it('should merge onboarding data and set onboardingCompleted to true', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: { city: 'Roma' },
+      });
+      prisma.tenant.update.mockResolvedValue({
+        settings: {
+          city: 'Roma',
+          ragioneSociale: 'Officina Test',
+          partitaIva: '12345678901',
+          numberOfBays: 4,
+          onboardingCompleted: true,
+        },
+      });
+
+      const dto = {
+        ragioneSociale: 'Officina Test',
+        partitaIva: '12345678901',
+        numberOfBays: 4,
+      };
+
+      const result = await service.completeOnboarding(TENANT_ID, dto);
+
+      expect(result.onboardingCompleted).toBe(true);
+      expect(result.ragioneSociale).toBe('Officina Test');
+      expect(prisma.tenant.update).toHaveBeenCalledWith({
+        where: { id: TENANT_ID },
+        data: {
+          settings: {
+            city: 'Roma',
+            ragioneSociale: 'Officina Test',
+            partitaIva: '12345678901',
+            numberOfBays: 4,
+            onboardingCompleted: true,
+          },
+        },
+        select: { settings: true },
+      });
+    });
+
+    it('should throw NotFoundException when tenant not found', async () => {
+      prisma.tenant.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.completeOnboarding('invalid', { ragioneSociale: 'X', partitaIva: '12345678901' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should preserve existing settings when completing onboarding', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: { logoUrl: 'https://logo.png', defaultVatRate: 22 },
+      });
+      prisma.tenant.update.mockResolvedValue({
+        settings: {
+          logoUrl: 'https://logo.png',
+          defaultVatRate: 22,
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+          onboardingCompleted: true,
+        },
+      });
+
+      const result = await service.completeOnboarding(TENANT_ID, {
+        ragioneSociale: 'Test',
+        partitaIva: '12345678901',
+      });
+
+      expect(result.logoUrl).toBe('https://logo.png');
+      expect(result.onboardingCompleted).toBe(true);
+    });
+  });
+
+  describe('getOnboardingStatus', () => {
+    it('should return completed true when onboardingCompleted is set', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+          businessHours: { monday: { open: '08:00', close: '18:00' } },
+          numberOfBays: 4,
+          slotDurationMinutes: 60,
+          defaultVatRate: 22,
+          invoiceNumberFormat: 'FT-{YEAR}-{SEQ}',
+          currency: 'EUR',
+          onboardingCompleted: true,
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.completed).toBe(true);
+      expect(result.steps).toEqual({
+        ragioneSociale: true,
+        partitaIva: true,
+        businessHours: true,
+        numberOfBays: true,
+        slotDurationMinutes: true,
+        defaultVatRate: true,
+        invoiceNumberFormat: true,
+        currency: true,
+      });
+    });
+
+    it('should return completed false and partial steps when fields are missing', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.completed).toBe(false);
+      expect(result.steps.ragioneSociale).toBe(true);
+      expect(result.steps.partitaIva).toBe(true);
+      expect(result.steps.businessHours).toBe(false);
+      expect(result.steps.numberOfBays).toBe(false);
+      expect(result.steps.slotDurationMinutes).toBe(false);
+      expect(result.steps.defaultVatRate).toBe(false);
+      expect(result.steps.invoiceNumberFormat).toBe(false);
+      expect(result.steps.currency).toBe(false);
+    });
+
+    it('should return all false steps for empty settings', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {},
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.completed).toBe(false);
+      expect(Object.values(result.steps).every(v => v === false)).toBe(true);
+    });
+
+    it('should throw NotFoundException when tenant not found', async () => {
+      prisma.tenant.findUnique.mockResolvedValue(null);
+
+      await expect(service.getOnboardingStatus('invalid')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('partMarkupMatrix settings', () => {
     it('should store matrix pricing rules in settings', async () => {
       prisma.tenant.findUnique.mockResolvedValue({ settings: {} });

@@ -24,6 +24,7 @@ export default function PortalMaintenancePage() {
     data: rawData,
     error: swrError,
     isLoading,
+    mutate,
   } = useSWR<{ data: MaintenanceSchedule[] }>('/api/portal/maintenance', fetcher);
 
   const maintenance = rawData?.data || [];
@@ -74,7 +75,7 @@ export default function PortalMaintenancePage() {
         <div className='text-center py-16'>
           <p className='text-apple-red mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => mutate()}
             className='text-apple-blue hover:underline'
           >
             Riprova

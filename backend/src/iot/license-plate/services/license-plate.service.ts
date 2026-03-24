@@ -155,7 +155,7 @@ export class LicensePlateService {
     if (type === EntryExitType.ENTRY) {
       await this.createParkingSession(record.id, normalizedPlate, detection, options.tenantId);
     } else {
-      await this.closeParkingSession(normalizedPlate, record.id);
+      await this.closeParkingSession(normalizedPlate, record.id, options.tenantId);
     }
 
     // Notify if unauthorized
@@ -201,7 +201,10 @@ export class LicensePlateService {
   /**
    * Lookup vehicle by license plate
    */
-  async lookupVehicle(licensePlate: string): Promise<{
+  async lookupVehicle(
+    tenantId: string,
+    licensePlate: string,
+  ): Promise<{
     vehicle?: {
       id: string;
       make: string;
@@ -217,9 +220,9 @@ export class LicensePlateService {
     const validation = await this.validatePlate(licensePlate);
     const normalizedPlate = validation.normalizedPlate;
 
-    // Find vehicle
+    // Find vehicle filtered by tenant
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { licensePlate: normalizedPlate },
+      where: { licensePlate: normalizedPlate, customer: { tenantId } },
       include: {
         customer: true,
         inspections: {
@@ -231,7 +234,7 @@ export class LicensePlateService {
 
     // Get recent entry/exit history
     const recentHistory = await this.prisma.vehicleEntryExit.findMany({
-      where: { licensePlate: normalizedPlate },
+      where: { licensePlate: normalizedPlate, tenantId },
       orderBy: { timestamp: 'desc' },
       take: 10,
     });
@@ -240,6 +243,7 @@ export class LicensePlateService {
     const activeSession = await this.prisma.parkingSession.findFirst({
       where: {
         licensePlate: normalizedPlate,
+        tenantId,
         status: 'ACTIVE',
       },
     });
@@ -294,15 +298,12 @@ export class LicensePlateService {
   /**
    * Get active parking sessions
    */
-  async getActiveSessions(tenantId?: string): Promise<ParkingSession[]> {
-    const where: Prisma.ParkingSessionWhereInput = { status: 'ACTIVE' };
-
-    if (tenantId) {
-      where.vehicle = { customer: { tenantId } };
-    }
-
+  async getActiveSessions(
+    tenantId: string,
+    pagination: { page: number; limit: number } = { page: 1, limit: 20 },
+  ): Promise<ParkingSession[]> {
     const sessions = await this.prisma.parkingSession.findMany({
-      where,
+      where: { tenantId, status: 'ACTIVE' },
       include: {
         entry: true,
         vehicle: {
@@ -310,6 +311,8 @@ export class LicensePlateService {
         },
       },
       orderBy: { entryTime: 'desc' },
+      skip: (pagination.page - 1) * pagination.limit,
+      take: pagination.limit,
     });
 
     return sessions.map(s => ({
@@ -369,9 +372,9 @@ export class LicensePlateService {
   /**
    * Get camera by ID
    */
-  async getCamera(cameraId: string): Promise<LprCamera> {
-    const camera = await this.prisma.lprCamera.findUnique({
-      where: { id: cameraId },
+  async getCamera(tenantId: string, cameraId: string): Promise<LprCamera> {
+    const camera = await this.prisma.lprCamera.findFirst({
+      where: { id: cameraId, tenantId },
     });
 
     if (!camera) {
@@ -396,6 +399,7 @@ export class LicensePlateService {
   async getCameras(tenantId: string): Promise<LprCamera[]> {
     const cameras = await this.prisma.lprCamera.findMany({
       where: { tenantId },
+      take: 100,
     });
 
     return cameras.map(c => ({
@@ -413,7 +417,19 @@ export class LicensePlateService {
   /**
    * Update camera status
    */
-  async updateCameraStatus(cameraId: string, isActive: boolean): Promise<LprCamera> {
+  async updateCameraStatus(
+    tenantId: string,
+    cameraId: string,
+    isActive: boolean,
+  ): Promise<LprCamera> {
+    // Verify camera belongs to tenant
+    const existing = await this.prisma.lprCamera.findFirst({
+      where: { id: cameraId, tenantId },
+    });
+    if (!existing) {
+      throw new NotFoundException('Camera not found');
+    }
+
     const camera = await this.prisma.lprCamera.update({
       where: { id: cameraId },
       data: { isActive },
@@ -440,6 +456,7 @@ export class LicensePlateService {
         camera: { tenantId },
         processedAt: { gte: from, lte: to },
       },
+      take: 10000,
     });
 
     const totalDetections = detections.length;
@@ -608,11 +625,16 @@ export class LicensePlateService {
     });
   }
 
-  private async closeParkingSession(licensePlate: string, exitId: string): Promise<void> {
+  private async closeParkingSession(
+    licensePlate: string,
+    exitId: string,
+    tenantId?: string,
+  ): Promise<void> {
     const session = await this.prisma.parkingSession.findFirst({
       where: {
         licensePlate,
         status: 'ACTIVE',
+        ...(tenantId && { tenantId }),
       },
     });
 

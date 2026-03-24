@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from './fixtures/auth.fixture';
+import type { Page } from '@playwright/test';
 
 /**
  * Customers page functional audit

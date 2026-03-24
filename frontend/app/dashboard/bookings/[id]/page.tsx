@@ -1,10 +1,14 @@
-'use client'
+'use client';
 
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { AppleCard, AppleCardContent } from '@/components/ui/apple-card'
-import { AppleButton } from '@/components/ui/apple-button'
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import {
   ArrowLeft,
   Calendar,
@@ -23,120 +27,423 @@ import {
   CheckCircle,
   FileText,
   History,
-} from 'lucide-react'
-import { useBooking, useUpdateBooking } from '@/hooks/useApi'
+  PlayCircle,
+  UserX,
+  ClipboardList,
+} from 'lucide-react';
+import { useBooking, useUpdateBooking } from '@/hooks/useApi';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  StatusTimeline,
+  type TimelineEvent,
+  type TimelineStepConfig,
+} from '@/components/ui/status-timeline';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }>; textColor: string }> = {
+/** Valid status transitions for the booking state machine. */
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  pending: ['confirmed', 'cancelled', 'no_show'],
+  confirmed: ['in_progress', 'cancelled', 'no_show'],
+  in_progress: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+  no_show: [],
+};
+
+function canTransitionTo(currentStatus: string, targetStatus: string): boolean {
+  return (ALLOWED_TRANSITIONS[currentStatus] ?? []).includes(targetStatus);
+}
+
+const statusConfig: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    icon: React.ComponentType<{ className?: string }>;
+    textColor: string;
+  }
+> = {
   pending: { label: 'In attesa', color: 'bg-amber-500', icon: Clock3, textColor: 'text-amber-600' },
-  confirmed: { label: 'Confermato', color: 'bg-blue-500', icon: CheckCircle, textColor: 'text-blue-600' },
-  in_progress: { label: 'In lavorazione', color: 'bg-green-500', icon: Wrench, textColor: 'text-green-600' },
-  completed: { label: 'Completato', color: 'bg-zinc-500', icon: CheckCircle2, textColor: 'text-zinc-600' },
-  cancelled: { label: 'Cancellato', color: 'bg-red-500', icon: X, textColor: 'text-red-600' },
+  confirmed: {
+    label: 'Confermato',
+    color: 'bg-green-500',
+    icon: CheckCircle,
+    textColor: 'text-green-600',
+  },
+  in_progress: {
+    label: 'In lavorazione',
+    color: 'bg-blue-500',
+    icon: Wrench,
+    textColor: 'text-blue-600',
+  },
+  completed: {
+    label: 'Completato',
+    color: 'bg-blue-600',
+    icon: CheckCircle2,
+    textColor: 'text-blue-600',
+  },
+  cancelled: { label: 'Annullato', color: 'bg-red-500', icon: X, textColor: 'text-red-600' },
+  no_show: { label: 'Non presentato', color: 'bg-gray-400', icon: UserX, textColor: 'text-gray-600' },
+};
+
+const BOOKING_TIMELINE_STEPS: TimelineStepConfig[] = [
+  { key: 'pending', label: 'In attesa conferma', icon: Clock3 },
+  { key: 'confirmed', label: 'Confermata', icon: CheckCircle },
+  { key: 'in_progress', label: 'In lavorazione', icon: Wrench },
+  { key: 'completed', label: 'Completata', icon: CheckCircle2 },
+];
+
+const BOOKING_TIMELINE_STEPS_CANCELLED: TimelineStepConfig[] = [
+  { key: 'pending', label: 'In attesa conferma', icon: Clock3 },
+  { key: 'confirmed', label: 'Confermata', icon: CheckCircle },
+  { key: 'cancelled', label: 'Annullata', icon: X },
+];
+
+const BOOKING_TIMELINE_STEPS_NO_SHOW: TimelineStepConfig[] = [
+  { key: 'pending', label: 'In attesa conferma', icon: Clock3 },
+  { key: 'confirmed', label: 'Confermata', icon: CheckCircle },
+  { key: 'no_show', label: 'Non presentato', icon: UserX },
+];
+
+function buildTimelineEvents(booking: {
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}): TimelineEvent[] {
+  const events: TimelineEvent[] = [
+    { id: 'created', status: 'pending', timestamp: booking.createdAt },
+  ];
+
+  const statusOrder = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+  const currentIdx = statusOrder.indexOf(booking.status);
+
+  if (currentIdx >= 1 && booking.status !== 'cancelled' && booking.status !== 'no_show') {
+    events.push({ id: 'confirmed', status: 'confirmed', timestamp: booking.updatedAt });
+  }
+  if (currentIdx >= 2 && booking.status !== 'cancelled' && booking.status !== 'no_show') {
+    events.push({ id: 'in_progress', status: 'in_progress', timestamp: booking.updatedAt });
+  }
+  if (currentIdx >= 3 && booking.status === 'completed') {
+    events.push({ id: 'completed', status: 'completed', timestamp: booking.updatedAt });
+  }
+  if (booking.status === 'cancelled') {
+    events.push({ id: 'cancelled', status: 'cancelled', timestamp: booking.updatedAt });
+  }
+  if (booking.status === 'no_show') {
+    events.push({ id: 'no_show', status: 'no_show', timestamp: booking.updatedAt });
+  }
+
+  return events;
 }
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
-}
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+};
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } }
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
+};
+
+const cancelReasonSchema = z.object({
+  reason: z.string().min(1, 'Inserisci un motivo per la cancellazione'),
+});
+type CancelReasonForm = z.infer<typeof cancelReasonSchema>;
+
+const rescheduleSchema = z.object({
+  scheduledDate: z.string().min(1, 'Data e orario obbligatori'),
+});
+type RescheduleForm = z.infer<typeof rescheduleSchema>;
+
+const editBookingSchema = z.object({
+  scheduledDate: z.string().min(1, 'Data e orario obbligatori'),
+  notes: z.string().optional(),
+});
+type EditBookingForm = z.infer<typeof editBookingSchema>;
+
+function Skeleton({ className = '' }: { className?: string }): React.JSX.Element {
+  return <div className={`bg-gray-200 dark:bg-[#424242] rounded animate-pulse ${className}`} />;
 }
 
-function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`bg-gray-200 dark:bg-[#424242] rounded animate-pulse ${className}`} />
-}
+export default function BookingDetailPage(): React.JSX.Element {
+  const params = useParams();
+  const router = useRouter();
+  const bookingId = params.id as string;
+  const { data: booking, isLoading, error } = useBooking(bookingId);
+  const updateBooking = useUpdateBooking();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [noShowConfirmOpen, setNoShowConfirmOpen] = useState(false);
 
-export default function BookingDetailPage() {
-  const params = useParams()
-  const bookingId = params.id as string
-  const { data: booking, isLoading, error } = useBooking(bookingId)
-  const updateBooking = useUpdateBooking()
+  const cancelForm = useForm<CancelReasonForm>({
+    resolver: zodResolver(cancelReasonSchema),
+    defaultValues: { reason: '' },
+  });
+
+  const rescheduleForm = useForm<RescheduleForm>({
+    resolver: zodResolver(rescheduleSchema),
+    defaultValues: { scheduledDate: '' },
+  });
+
+  const editForm = useForm<EditBookingForm>({
+    resolver: zodResolver(editBookingSchema),
+    defaultValues: { scheduledDate: '', notes: '' },
+  });
+
+  const openEditDialog = (): void => {
+    editForm.reset({
+      notes: booking?.notes ?? '',
+      scheduledDate: booking?.scheduledAt
+        ? new Date(booking.scheduledAt).toISOString().slice(0, 16)
+        : '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const openRescheduleDialog = (): void => {
+    rescheduleForm.reset({
+      scheduledDate: booking?.scheduledAt
+        ? new Date(booking.scheduledAt).toISOString().slice(0, 16)
+        : '',
+    });
+    setRescheduleDialogOpen(true);
+  };
+
+  const handleSaveEdit = (data: EditBookingForm): void => {
+    const payload: Record<string, unknown> = { id: bookingId };
+    if (data.notes !== (booking?.notes ?? '')) payload.notes = data.notes;
+    if (data.scheduledDate) payload.scheduledAt = new Date(data.scheduledDate).toISOString();
+
+    updateBooking.mutate(payload as { id: string } & Record<string, unknown>, {
+      onSuccess: () => {
+        toast.success('Prenotazione aggiornata con successo');
+        setEditDialogOpen(false);
+      },
+      onError: () => toast.error("Errore nell'aggiornamento della prenotazione"),
+    });
+  };
+
+  const handleReschedule = (data: RescheduleForm): void => {
+    updateBooking.mutate(
+      { id: bookingId, scheduledAt: new Date(data.scheduledDate).toISOString() },
+      {
+        onSuccess: () => {
+          toast.success('Prenotazione riprogrammata con successo');
+          setRescheduleDialogOpen(false);
+        },
+        onError: () => toast.error('Errore nella riprogrammazione'),
+      },
+    );
+  };
+
+  const handleConfirm = (): void => {
+    updateBooking.mutate(
+      { id: bookingId, status: 'confirmed' },
+      {
+        onSuccess: () => toast.success('Prenotazione confermata'),
+        onError: () => toast.error('Errore nella conferma della prenotazione'),
+      },
+    );
+  };
+
+  const handleStartProgress = (): void => {
+    updateBooking.mutate(
+      { id: bookingId, status: 'in_progress' },
+      {
+        onSuccess: () => toast.success('Lavoro avviato'),
+        onError: () => toast.error("Errore nell'avvio del lavoro"),
+      },
+    );
+  };
+
+  const handleComplete = (): void => {
+    updateBooking.mutate(
+      { id: bookingId, status: 'completed' },
+      {
+        onSuccess: () => toast.success('Lavoro completato con successo'),
+        onError: () => toast.error('Errore nel completamento del lavoro'),
+      },
+    );
+  };
+
+  const handleCancelWithReason = (data: CancelReasonForm): void => {
+    updateBooking.mutate(
+      { id: bookingId, status: 'cancelled', cancelReason: data.reason },
+      {
+        onSuccess: () => {
+          toast.success('Prenotazione annullata');
+          setCancelDialogOpen(false);
+          cancelForm.reset();
+        },
+        onError: () => toast.error("Errore nell'annullamento della prenotazione"),
+      },
+    );
+  };
+
+  const handleNoShow = (): void => {
+    updateBooking.mutate(
+      { id: bookingId, status: 'no_show' },
+      {
+        onSuccess: () => {
+          toast.success('Prenotazione segnata come non presentato');
+          setNoShowConfirmOpen(false);
+        },
+        onError: () => toast.error('Errore nel cambio stato'),
+      },
+    );
+  };
+
+  const handleConvertToWorkOrder = async (): Promise<void> => {
+    try {
+      const res = await fetch('/api/work-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId }),
+      });
+      if (!res.ok) throw new Error('Errore creazione ordine di lavoro');
+      const data: { data?: { id?: string }; id?: string } = await res.json();
+      const workOrderId = data.data?.id ?? data.id;
+      toast.success('Ordine di lavoro creato con successo');
+      if (workOrderId) {
+        router.push(`/dashboard/work-orders/${workOrderId}`);
+      }
+    } catch {
+      toast.error("Errore nella creazione dell'ordine di lavoro");
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-apple-light-gray dark:bg-[#353535] p-6 space-y-6">
-        <Skeleton className="h-24 w-full" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-3 space-y-6">
-            <Skeleton className="h-64" />
-            <Skeleton className="h-48" />
+      <div className='min-h-screen bg-apple-light-gray dark:bg-[#353535] p-4 sm:p-6 space-y-6'>
+        <Skeleton className='h-24 w-full' />
+        <div className='grid grid-cols-1 lg:grid-cols-12 gap-6'>
+          <div className='lg:col-span-3 space-y-6'>
+            <Skeleton className='h-64' />
+            <Skeleton className='h-48' />
           </div>
-          <div className="lg:col-span-6 space-y-6">
-            <Skeleton className="h-48" />
-            <Skeleton className="h-64" />
+          <div className='lg:col-span-6 space-y-6'>
+            <Skeleton className='h-48' />
+            <Skeleton className='h-64' />
           </div>
-          <div className="lg:col-span-3 space-y-6">
-            <Skeleton className="h-56" />
-            <Skeleton className="h-48" />
+          <div className='lg:col-span-3 space-y-6'>
+            <Skeleton className='h-56' />
+            <Skeleton className='h-48' />
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !booking) {
     return (
-      <div className="min-h-screen bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-apple-gray dark:text-[#636366] mx-auto mb-4" />
-          <h2 className="text-title-2 text-apple-dark dark:text-[#ececec] mb-2">Prenotazione non trovata</h2>
-          <Link href="/dashboard/bookings">
-            <AppleButton variant="secondary">Torna alle prenotazioni</AppleButton>
+      <div className='min-h-screen bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center'>
+        <div className='text-center'>
+          <AlertCircle className='h-12 w-12 text-apple-gray dark:text-[#636366] mx-auto mb-4' />
+          <h2 className='text-title-2 text-apple-dark dark:text-[#ececec] mb-2'>
+            Prenotazione non trovata
+          </h2>
+          <Link href='/dashboard/bookings'>
+            <AppleButton variant='secondary'>Torna alle prenotazioni</AppleButton>
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
-  const status = statusConfig[booking.status] || statusConfig.pending
-  const StatusIcon = status.icon
-  const scheduledDate = new Date(booking.scheduledAt)
+  const status = statusConfig[booking.status] || statusConfig.pending;
+  const StatusIcon = status.icon;
+  const scheduledDate = new Date(booking.scheduledAt);
+
+  function getTimelineSteps(): TimelineStepConfig[] {
+    if (booking?.status === 'cancelled') return BOOKING_TIMELINE_STEPS_CANCELLED;
+    if (booking?.status === 'no_show') return BOOKING_TIMELINE_STEPS_NO_SHOW;
+    return BOOKING_TIMELINE_STEPS;
+  }
 
   return (
-    <div className="min-h-screen bg-apple-light-gray dark:bg-[#353535]">
-      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
-        <div className="px-6 py-4">
-          <Link href="/dashboard/bookings" className="flex items-center gap-2 text-apple-gray dark:text-[#636366] hover:text-apple-dark transition-colors mb-3">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Torna alle prenotazioni</span>
+    <div className='min-h-screen bg-apple-light-gray dark:bg-[#353535]'>
+      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+        <div className='px-4 sm:px-6 py-4'>
+          <Breadcrumb
+            items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Prenotazioni', href: '/dashboard/bookings' },
+              { label: `#${booking.id.slice(0, 8)}` },
+            ]}
+          />
+          <Link
+            href='/dashboard/bookings'
+            className='flex items-center gap-2 text-apple-gray dark:text-[#636366] hover:text-apple-dark transition-colors mb-3'
+          >
+            <ArrowLeft className='h-4 w-4' />
+            <span className='text-sm'>Torna alle prenotazioni</span>
           </Link>
-          <div className="flex items-center justify-between">
+          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[#ececec]">{booking.serviceName || booking.serviceCategory}</h1>
-              <p className="text-apple-gray dark:text-[#636366] text-body mt-0.5">
-                {booking.id.slice(0, 8)} • {booking.vehiclePlate} {booking.vehicleBrand || ''}
+              <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>
+                {booking.serviceName || booking.serviceCategory}
+              </h1>
+              <p className='text-apple-gray dark:text-[#636366] text-body mt-0.5'>
+                {booking.id.slice(0, 8)} &bull; {booking.vehiclePlate} {booking.vehicleBrand || ''}
               </p>
             </div>
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${status.color} text-white font-medium`}>
-              <StatusIcon className="h-4 w-4" />
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${status.color} text-white font-medium`}
+            >
+              <StatusIcon className='h-4 w-4' />
               <span>{status.label}</span>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="p-6">
+      <div className='p-4 sm:p-6'>
         <motion.div
           variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+          initial='hidden'
+          animate='visible'
+          className='grid grid-cols-1 lg:grid-cols-12 gap-6'
         >
-          {/* LEFT - Customer */}
-          <div className="lg:col-span-3 space-y-6">
+          {/* LEFT - Customer & Vehicle */}
+          <div className='lg:col-span-3 space-y-6'>
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4">Cliente</h2>
-                  <div className="space-y-4">
-                    <p className="text-title-2 text-apple-dark dark:text-[#ececec]">{booking.customerName}</p>
+                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4'>
+                    Cliente
+                  </h2>
+                  <div className='space-y-4'>
+                    <p className='text-title-2 text-apple-dark dark:text-[#ececec]'>
+                      {booking.customerName}
+                    </p>
                     {booking.customerPhone && (
-                      <div className="space-y-2 pt-2 border-t border-apple-border/20 dark:border-[#424242]">
-                        <a href={`tel:${booking.customerPhone}`} className="flex items-center gap-3 text-body text-apple-dark dark:text-[#ececec] hover:text-apple-blue transition-colors">
-                          <Phone className="h-4 w-4 text-apple-gray dark:text-[#636366]" />
+                      <div className='space-y-2 pt-2 border-t border-apple-border/20 dark:border-[#424242]'>
+                        <a
+                          href={`tel:${booking.customerPhone}`}
+                          className='flex items-center gap-3 text-body text-apple-dark dark:text-[#ececec] hover:text-apple-blue transition-colors min-h-[44px]'
+                        >
+                          <Phone className='h-4 w-4 text-apple-gray dark:text-[#636366]' />
                           {booking.customerPhone}
+                        </a>
+                        <a
+                          href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='flex items-center gap-3 text-body text-apple-dark dark:text-[#ececec] hover:text-green-600 transition-colors min-h-[44px]'
+                        >
+                          <MessageCircle className='h-4 w-4 text-green-500' />
+                          WhatsApp
                         </a>
                       </div>
                     )}
@@ -148,20 +455,24 @@ export default function BookingDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2">
-                    <Car className="h-5 w-5 text-apple-gray dark:text-[#636366]" />
+                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
+                    <Car className='h-5 w-5 text-apple-gray dark:text-[#636366]' />
                     Veicolo
                   </h2>
-                  <div className="space-y-4">
+                  <div className='space-y-4'>
                     <div>
-                      <p className="text-title-2 text-apple-dark dark:text-[#ececec]">
+                      <p className='text-title-2 text-apple-dark dark:text-[#ececec]'>
                         {booking.vehicleBrand || ''} {booking.vehicleModel || ''}
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-apple-border/20 dark:border-[#424242]">
+                    <div className='grid grid-cols-2 gap-3 pt-2 border-t border-apple-border/20 dark:border-[#424242]'>
                       <div>
-                        <p className="text-caption text-apple-gray dark:text-[#636366] uppercase tracking-wider">Targa</p>
-                        <p className="text-body font-mono text-apple-dark dark:text-[#ececec]">{booking.vehiclePlate}</p>
+                        <p className='text-caption text-apple-gray dark:text-[#636366] uppercase tracking-wider'>
+                          Targa
+                        </p>
+                        <p className='text-body font-mono text-apple-dark dark:text-[#ececec]'>
+                          {booking.vehiclePlate}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -171,44 +482,59 @@ export default function BookingDetailPage() {
           </div>
 
           {/* CENTER - Details */}
-          <div className="lg:col-span-6 space-y-6">
+          <div className='lg:col-span-6 space-y-6'>
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4">Dettagli Appuntamento</h2>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="flex items-center gap-3 p-3 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl">
-                      <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-apple-blue" />
+                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4'>
+                    Dettagli Appuntamento
+                  </h2>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6'>
+                    <div className='flex items-center gap-3 p-3 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'>
+                      <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                        <Calendar className='h-5 w-5 text-apple-blue' />
                       </div>
                       <div>
-                        <p className="text-caption text-apple-gray dark:text-[#636366]">Data</p>
-                        <p className="text-body font-medium text-apple-dark dark:text-[#ececec]">
-                          {scheduledDate.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        <p className='text-caption text-apple-gray dark:text-[#636366]'>Data</p>
+                        <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
+                          {scheduledDate.toLocaleDateString('it-IT', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 p-3 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl">
-                      <div className="w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center">
-                        <Clock className="h-5 w-5 text-apple-purple" />
+                    <div className='flex items-center gap-3 p-3 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'>
+                      <div className='w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
+                        <Clock className='h-5 w-5 text-apple-purple' />
                       </div>
                       <div>
-                        <p className="text-caption text-apple-gray dark:text-[#636366]">Orario</p>
-                        <p className="text-body font-medium text-apple-dark dark:text-[#ececec]">
-                          {scheduledDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                        <p className='text-caption text-apple-gray dark:text-[#636366]'>Orario</p>
+                        <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
+                          {scheduledDate.toLocaleTimeString('it-IT', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className='space-y-4'>
                     <div>
-                      <p className="text-caption text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-1">Servizio</p>
-                      <p className="text-body text-apple-dark dark:text-[#ececec]">{booking.serviceName || booking.serviceCategory}</p>
+                      <p className='text-caption text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-1'>
+                        Servizio
+                      </p>
+                      <p className='text-body text-apple-dark dark:text-[#ececec]'>
+                        {booking.serviceName || booking.serviceCategory}
+                      </p>
                     </div>
                     {booking.notes && (
                       <div>
-                        <p className="text-caption text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-1">Note</p>
-                        <p className="text-body text-apple-dark dark:text-[#ececec] bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 p-3 rounded-xl">
+                        <p className='text-caption text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-1'>
+                          Note
+                        </p>
+                        <p className='text-body text-apple-dark dark:text-[#ececec] bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 p-3 rounded-xl'>
                           {booking.notes}
                         </p>
                       </div>
@@ -221,86 +547,124 @@ export default function BookingDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2">
-                    <History className="h-5 w-5 text-apple-gray dark:text-[#636366]" />
+                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
+                    <History className='h-5 w-5 text-apple-gray dark:text-[#636366]' />
                     Cronologia
                   </h2>
-                  <div className="relative">
-                    <div className="absolute left-[19px] top-2 bottom-0 w-0.5 bg-apple-border/30 dark:bg-[#424242]" />
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-4 relative">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 bg-green-100 dark:bg-green-900/30">
-                          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div className="flex-1 pt-1">
-                          <p className="text-body text-apple-dark dark:text-[#ececec]">Prenotazione creata</p>
-                          <span className="text-footnote text-apple-gray dark:text-[#636366]">
-                            {new Date(booking.createdAt).toLocaleDateString('it-IT')} {new Date(booking.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </div>
-                      {booking.updatedAt !== booking.createdAt && (
-                        <div className="flex items-start gap-4 relative">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 bg-blue-100 dark:bg-blue-900/30">
-                            <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex-1 pt-1">
-                            <p className="text-body text-apple-dark dark:text-[#ececec]">Ultimo aggiornamento</p>
-                            <span className="text-footnote text-apple-gray dark:text-[#636366]">
-                              {new Date(booking.updatedAt).toLocaleDateString('it-IT')} {new Date(booking.updatedAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <StatusTimeline
+                    currentStatus={booking.status}
+                    events={buildTimelineEvents(booking)}
+                    steps={getTimelineSteps()}
+                    variant='tracker'
+                    showActor={false}
+                    compact
+                  />
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
           </div>
 
           {/* RIGHT - Actions */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className='lg:col-span-3 space-y-6'>
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4">Azioni Rapide</h2>
-                  <div className="space-y-3">
-                    {booking.customerPhone && (
-                      <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-                        <AppleButton variant="secondary" className="w-full justify-start gap-3">
-                          <MessageCircle className="h-5 w-5 text-green-500" />
-                          WhatsApp Cliente
-                        </AppleButton>
-                      </a>
-                    )}
-                    <AppleButton variant="secondary" className="w-full justify-start gap-3">
-                      <Edit3 className="h-5 w-5" />
+                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4'>
+                    Azioni
+                  </h2>
+                  <div className='space-y-3'>
+                    <AppleButton
+                      variant='secondary'
+                      className='w-full justify-start gap-3 min-h-[44px]'
+                      onClick={openEditDialog}
+                      disabled={booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show'}
+                    >
+                      <Edit3 className='h-5 w-5' />
                       Modifica Prenotazione
                     </AppleButton>
-                    <AppleButton variant="secondary" className="w-full justify-start gap-3">
-                      <Printer className="h-5 w-5" />
-                      Stampa Ordine
+
+                    <AppleButton
+                      variant='secondary'
+                      className='w-full justify-start gap-3 min-h-[44px]'
+                      onClick={openRescheduleDialog}
+                      disabled={booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show'}
+                    >
+                      <Calendar className='h-5 w-5' />
+                      Riprogramma
+                    </AppleButton>
+
+                    <AppleButton
+                      variant='secondary'
+                      className='w-full justify-start gap-3 min-h-[44px]'
+                      onClick={handleConvertToWorkOrder}
+                      disabled={booking.status === 'cancelled' || booking.status === 'no_show'}
+                    >
+                      <ClipboardList className='h-5 w-5' />
+                      Converti in OdL
+                    </AppleButton>
+
+                    <AppleButton
+                      variant='secondary'
+                      className='w-full justify-start gap-3 min-h-[44px]'
+                      onClick={() => window.print()}
+                    >
+                      <Printer className='h-5 w-5' />
+                      Stampa
                     </AppleButton>
                   </div>
-                  <div className="pt-4 mt-4 border-t border-apple-border/20 dark:border-[#424242] space-y-2">
-                    <AppleButton
-                      className="w-full"
-                      onClick={() => updateBooking.mutate({ id: bookingId, status: 'completed' })}
-                      disabled={booking.status === 'completed' || updateBooking.isPending}
-                    >
-                      <CheckCircle2 className="h-5 w-5 mr-2" />
-                      Completa Lavoro
-                    </AppleButton>
-                    <AppleButton
-                      variant="ghost"
-                      className="w-full text-apple-red hover:text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20"
-                      onClick={() => updateBooking.mutate({ id: bookingId, status: 'cancelled' })}
-                      disabled={booking.status === 'cancelled' || updateBooking.isPending}
-                    >
-                      <X className="h-5 w-5 mr-2" />
-                      Annulla Prenotazione
-                    </AppleButton>
+                  <div className='pt-4 mt-4 border-t border-apple-border/20 dark:border-[#424242] space-y-2'>
+                    {canTransitionTo(booking.status, 'confirmed') && (
+                      <AppleButton
+                        className='w-full min-h-[44px]'
+                        onClick={handleConfirm}
+                        disabled={updateBooking.isPending}
+                      >
+                        <CheckCircle className='h-5 w-5 mr-2' />
+                        Conferma Prenotazione
+                      </AppleButton>
+                    )}
+                    {canTransitionTo(booking.status, 'in_progress') && (
+                      <AppleButton
+                        className='w-full min-h-[44px]'
+                        onClick={handleStartProgress}
+                        disabled={updateBooking.isPending}
+                      >
+                        <PlayCircle className='h-5 w-5 mr-2' />
+                        Avvia Lavorazione
+                      </AppleButton>
+                    )}
+                    {canTransitionTo(booking.status, 'completed') && (
+                      <AppleButton
+                        className='w-full min-h-[44px]'
+                        onClick={handleComplete}
+                        disabled={updateBooking.isPending}
+                      >
+                        <CheckCircle2 className='h-5 w-5 mr-2' />
+                        Completa Lavoro
+                      </AppleButton>
+                    )}
+                    {canTransitionTo(booking.status, 'no_show') && (
+                      <AppleButton
+                        variant='ghost'
+                        className='w-full min-h-[44px] text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800'
+                        onClick={() => setNoShowConfirmOpen(true)}
+                        disabled={updateBooking.isPending}
+                      >
+                        <UserX className='h-5 w-5 mr-2' />
+                        Segna Non Presentato
+                      </AppleButton>
+                    )}
+                    {canTransitionTo(booking.status, 'cancelled') && (
+                      <AppleButton
+                        variant='ghost'
+                        className='w-full min-h-[44px] text-apple-red hover:text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20'
+                        onClick={() => setCancelDialogOpen(true)}
+                        disabled={updateBooking.isPending}
+                      >
+                        <X className='h-5 w-5 mr-2' />
+                        Annulla Prenotazione
+                      </AppleButton>
+                    )}
                   </div>
                 </AppleCardContent>
               </AppleCard>
@@ -309,14 +673,21 @@ export default function BookingDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4">Preventivo</h2>
-                  <div className="space-y-3">
-                    <div className="pt-3 flex items-center justify-between">
-                      <span className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">Costo Stimato</span>
-                      <span className="text-title-2 font-bold text-apple-dark dark:text-[#ececec]">
+                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4'>
+                    Preventivo
+                  </h2>
+                  <div className='space-y-3'>
+                    <div className='pt-3 flex items-center justify-between'>
+                      <span className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
+                        Costo Stimato
+                      </span>
+                      <span className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
                         {booking.estimatedCost
-                          ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(booking.estimatedCost)
-                          : '—'}
+                          ? new Intl.NumberFormat('it-IT', {
+                              style: 'currency',
+                              currency: 'EUR',
+                            }).format(booking.estimatedCost)
+                          : '\u2014'}
                       </span>
                     </div>
                   </div>
@@ -326,6 +697,181 @@ export default function BookingDetailPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Cancel dialog with reason */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <form onSubmit={cancelForm.handleSubmit(handleCancelWithReason)}>
+            <DialogHeader>
+              <DialogTitle>Annulla prenotazione</DialogTitle>
+              <DialogDescription>
+                Inserisci il motivo della cancellazione. Questa azione non può essere annullata.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='py-4'>
+              <label
+                htmlFor='cancel-reason'
+                className='block text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1'
+              >
+                Motivo
+              </label>
+              <textarea
+                id='cancel-reason'
+                rows={3}
+                {...cancelForm.register('reason')}
+                placeholder='Inserisci il motivo della cancellazione...'
+                className='w-full rounded-lg border border-apple-border/30 dark:border-[#424242] bg-white dark:bg-[#353535] px-3 py-2 text-sm text-apple-dark dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none'
+              />
+              {cancelForm.formState.errors.reason && (
+                <p className='text-xs text-red-500 mt-1'>{cancelForm.formState.errors.reason.message}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <AppleButton
+                variant='secondary'
+                onClick={() => setCancelDialogOpen(false)}
+                disabled={updateBooking.isPending}
+                type='button'
+              >
+                Indietro
+              </AppleButton>
+              <AppleButton
+                type='submit'
+                disabled={updateBooking.isPending}
+                className='bg-red-600 hover:bg-red-700 text-white'
+              >
+                {updateBooking.isPending ? 'Annullamento...' : 'Annulla Prenotazione'}
+              </AppleButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule dialog */}
+      <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
+        <DialogContent>
+          <form onSubmit={rescheduleForm.handleSubmit(handleReschedule)}>
+            <DialogHeader>
+              <DialogTitle>Riprogramma prenotazione</DialogTitle>
+              <DialogDescription>
+                Seleziona una nuova data e orario per la prenotazione.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='py-4'>
+              <label
+                htmlFor='reschedule-date'
+                className='block text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1'
+              >
+                Nuova data e orario
+              </label>
+              <input
+                id='reschedule-date'
+                type='datetime-local'
+                {...rescheduleForm.register('scheduledDate')}
+                className='w-full rounded-lg border border-apple-border/30 dark:border-[#424242] bg-white dark:bg-[#353535] px-3 py-2 text-sm text-apple-dark dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+              />
+              {rescheduleForm.formState.errors.scheduledDate && (
+                <p className='text-xs text-red-500 mt-1'>{rescheduleForm.formState.errors.scheduledDate.message}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <AppleButton
+                variant='secondary'
+                onClick={() => setRescheduleDialogOpen(false)}
+                disabled={updateBooking.isPending}
+                type='button'
+              >
+                Annulla
+              </AppleButton>
+              <AppleButton
+                type='submit'
+                disabled={updateBooking.isPending}
+              >
+                {updateBooking.isPending ? 'Salvataggio...' : 'Riprogramma'}
+              </AppleButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <form onSubmit={editForm.handleSubmit(handleSaveEdit)}>
+            <DialogHeader>
+              <DialogTitle>Modifica Prenotazione</DialogTitle>
+              <DialogDescription>
+                Modifica i dettagli della prenotazione.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-4 py-2'>
+              <div>
+                <label
+                  htmlFor='edit-scheduled-date'
+                  className='block text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1'
+                >
+                  Data e Orario
+                </label>
+                <input
+                  id='edit-scheduled-date'
+                  type='datetime-local'
+                  {...editForm.register('scheduledDate')}
+                  className='w-full rounded-lg border border-apple-border/30 dark:border-[#424242] bg-white dark:bg-[#353535] px-3 py-2 text-sm text-apple-dark dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+                />
+                {editForm.formState.errors.scheduledDate && (
+                  <p className='text-xs text-red-500 mt-1'>{editForm.formState.errors.scheduledDate.message}</p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor='edit-notes'
+                  className='block text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1'
+                >
+                  Note
+                </label>
+                <textarea
+                  id='edit-notes'
+                  rows={4}
+                  {...editForm.register('notes')}
+                  placeholder='Aggiungi note alla prenotazione...'
+                  className='w-full rounded-lg border border-apple-border/30 dark:border-[#424242] bg-white dark:bg-[#353535] px-3 py-2 text-sm text-apple-dark dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none'
+                />
+                {editForm.formState.errors.notes && (
+                  <p className='text-xs text-red-500 mt-1'>{editForm.formState.errors.notes.message}</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <AppleButton
+                variant='secondary'
+                onClick={() => setEditDialogOpen(false)}
+                disabled={updateBooking.isPending}
+                type='button'
+              >
+                Annulla
+              </AppleButton>
+              <AppleButton
+                type='submit'
+                disabled={updateBooking.isPending || editForm.formState.isSubmitting}
+              >
+                {updateBooking.isPending ? 'Salvataggio...' : 'Salva modifiche'}
+              </AppleButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* No-show confirm */}
+      <ConfirmDialog
+        open={noShowConfirmOpen}
+        onOpenChange={setNoShowConfirmOpen}
+        title='Segna come non presentato'
+        description='Sei sicuro di voler segnare il cliente come non presentato? Questa azione non può essere annullata.'
+        confirmLabel='Segna Non Presentato'
+        variant='default'
+        onConfirm={handleNoShow}
+        loading={updateBooking.isPending}
+      />
     </div>
-  )
+  );
 }

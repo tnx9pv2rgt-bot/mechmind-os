@@ -1,623 +1,545 @@
-/**
- * SUBSCRIPTION MANAGEMENT PAGE
- *
- * User-facing subscription management interface
- */
-
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import useSWR from 'swr';
-// Local type definitions to avoid @prisma/client import in client components
-type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
-const FeatureFlag = {
-  BASIC: 'BASIC',
-  STANDARD: 'STANDARD',
-  PREMIUM: 'PREMIUM',
-  AI_ANALYSIS: 'AI_ANALYSIS',
-  UNLIMITED_USERS: 'UNLIMITED_USERS',
-  API_ACCESS: 'API_ACCESS',
-  PRIORITY_SUPPORT: 'PRIORITY_SUPPORT',
-} as const;
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import {
   CreditCard,
-  Calendar,
-  Sparkles,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
-  ArrowRight,
   Loader2,
+  Sparkles,
+  Users,
+  Car,
+  HardDrive,
+  ArrowRight,
+  Crown,
+  Building2,
+  Zap,
+  AlertTriangle,
 } from 'lucide-react';
-import { PricingCards } from '@/components/subscription/PricingCards';
-import subscriptionService, {
-  SubscriptionData,
-  UsageStats,
-  PricingPlan,
-} from '@/lib/subscription/service';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
-interface SubscriptionPageData {
-  subscription: SubscriptionData;
-  usage: UsageStats;
-  pricing: { plans: PricingPlan[]; aiAddon: { name: string; monthlyPrice: number } };
+interface SubscriptionInfo {
+  plan: string;
+  status: string;
+  billingCycle: string;
+  nextRenewal: string;
+  price: number;
+  usage: {
+    users: { current: number; limit: number | null };
+    vehicles: { current: number; limit: number | null };
+    storage: { current: number; limit: number | null };
+  };
+  stripe?: {
+    customerId?: string;
+    subscriptionId?: string;
+  };
 }
 
-async function fetchSubscriptionData(): Promise<SubscriptionPageData> {
-  const timeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
-    Promise.race([
-      promise,
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms)),
-    ]);
-  const [subscription, usage, pricing] = await timeout(
-    Promise.all([
-      subscriptionService.getCurrentSubscription(),
-      subscriptionService.getUsageStats(),
-      subscriptionService.getPricing(),
-    ]),
-    10000
-  );
-  return { subscription, usage, pricing };
+interface ApiResponse {
+  data?: SubscriptionInfo;
+  plan?: string;
+  status?: string;
+  billingCycle?: string;
+  nextRenewal?: string;
+  price?: number;
+  usage?: SubscriptionInfo['usage'];
+  stripe?: SubscriptionInfo['stripe'];
 }
 
-export default function SubscriptionPage() {
-  const router = useRouter();
-  const {
-    data: pageData,
-    isLoading: loading,
-    mutate,
-  } = useSWR<SubscriptionPageData>('subscription-page-data', fetchSubscriptionData, {
-    onError: () => {
-      toast.error('Errore nel caricamento dei dati abbonamento');
-    },
+const fetcher = (url: string): Promise<SubscriptionInfo> =>
+  fetch(url).then(async (res) => {
+    if (!res.ok) throw new Error('Errore nel caricamento');
+    const json: ApiResponse = await res.json();
+    return (json.data || json) as SubscriptionInfo;
   });
 
-  const subscription = pageData?.subscription ?? null;
-  const usage = pageData?.usage ?? null;
-  const pricing = pageData?.pricing ?? null;
+const TIERS = [
+  {
+    id: 'FREE',
+    name: 'Free',
+    price: 0,
+    cycle: '/mese',
+    icon: Zap,
+    color: 'from-slate-400 to-slate-500',
+    limits: { users: 2, vehicles: 10 },
+    features: [
+      'Gestione clienti base',
+      'Fino a 10 veicoli',
+      '2 utenti',
+      'Prenotazioni online',
+      'Supporto community',
+    ],
+    notIncluded: [
+      'Fatturazione elettronica',
+      'Ispezioni digitali',
+      'Analisi avanzate',
+      'Supporto prioritario',
+      'API access',
+    ],
+  },
+  {
+    id: 'STARTER',
+    name: 'Starter',
+    price: 29,
+    cycle: '/mese',
+    icon: Building2,
+    color: 'from-emerald-500 to-teal-600',
+    limits: { users: 5, vehicles: 50 },
+    features: [
+      'Tutto del piano Free',
+      'Fino a 50 veicoli',
+      '5 utenti',
+      'Fatturazione elettronica',
+      'Ispezioni digitali',
+      'Gestione ricambi',
+      'Supporto email',
+    ],
+    notIncluded: [
+      'Multi-sede',
+      'Analisi avanzate',
+      'API access',
+      'Supporto prioritario',
+    ],
+  },
+  {
+    id: 'PROFESSIONAL',
+    name: 'Professional',
+    price: 79,
+    cycle: '/mese',
+    icon: Crown,
+    color: 'from-blue-500 to-indigo-600',
+    popular: true,
+    limits: { users: 20, vehicles: 500 },
+    features: [
+      'Tutto del piano Starter',
+      'Fino a 500 veicoli',
+      '20 utenti',
+      'Multi-sede (fino a 3)',
+      'Analisi avanzate',
+      'API access',
+      'Branding personalizzato',
+      'Supporto prioritario',
+      'Integrazioni OBD',
+    ],
+    notIncluded: ['Utenti illimitati', 'White label', 'Account manager dedicato'],
+  },
+  {
+    id: 'ENTERPRISE',
+    name: 'Enterprise',
+    price: -1,
+    cycle: '',
+    icon: Sparkles,
+    color: 'from-purple-500 to-pink-600',
+    limits: { users: -1, vehicles: -1 },
+    features: [
+      'Tutto del piano Professional',
+      'Utenti illimitati',
+      'Veicoli illimitati',
+      'Sedi illimitate',
+      'White label',
+      'AI Assistant add-on',
+      'Account manager dedicato',
+      'Integrazioni personalizzate',
+      'SLA garantito',
+      'Verifica blockchain',
+    ],
+    notIncluded: [],
+  },
+];
 
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+};
+
+const staggerContainer = {
+  animate: { transition: { staggerChildren: 0.08 } },
+};
+
+const staggerItem = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+export default function SubscriptionPage() {
+  const { data: subscription, isLoading, error } = useSWR<SubscriptionInfo>(
+    '/api/dashboard/subscription',
+    fetcher,
+    { onError: () => toast.error('Errore nel caricamento dei dati abbonamento') }
+  );
   const [processing, setProcessing] = useState(false);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleUpgrade = async (
-    plan: SubscriptionPlan,
-    billingCycle: 'monthly' | 'yearly',
-    aiAddon: boolean
-  ) => {
+  const handleUpgrade = async (planId: string) => {
+    if (planId === 'ENTERPRISE') {
+      window.open('mailto:vendite@mechmind.io?subject=Richiesta Piano Enterprise', '_blank');
+      return;
+    }
+    setProcessing(true);
     try {
-      setProcessing(true);
-      setError(null);
-
-      // For paid plans, create Stripe checkout session
-      if (plan !== 'TRIAL') {
-        const successUrl = `${window.location.origin}/dashboard/subscription?success=true`;
-        const cancelUrl = `${window.location.origin}/dashboard/subscription?canceled=true`;
-
-        const { url } = await subscriptionService.createCheckoutSession(
-          plan,
-          billingCycle,
-          aiAddon,
-          successUrl,
-          cancelUrl
-        );
-
-        // Redirect to Stripe Checkout
-        window.location.href = url;
-        return;
+      const res = await fetch('/api/dashboard/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId }),
+      });
+      if (!res.ok) {
+        const data: { error?: { message?: string } } = await res.json().catch(() => ({}));
+        throw new Error(data?.error?.message || 'Errore durante upgrade');
       }
-
-      // For trial or manual upgrades
-      await subscriptionService.upgradeSubscription(plan, billingCycle, aiAddon);
-      await mutate();
-      setShowUpgradeDialog(false);
-      setSuccess('Subscription upgraded successfully!');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to upgrade subscription';
-      setError(msg);
-      toast.error(msg);
+      const data: { url?: string } = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.success('Piano aggiornato con successo');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore durante upgrade');
     } finally {
       setProcessing(false);
     }
   };
 
-  const handleCancel = async (immediate: boolean = false) => {
+  const handleManagePortal = async () => {
+    setProcessing(true);
     try {
-      setProcessing(true);
-      setError(null);
-      await subscriptionService.cancelSubscription(immediate);
-      await mutate();
-      setShowCancelDialog(false);
-      setSuccess(
-        immediate ? 'Subscription cancelled immediately' : 'Subscription will cancel at period end'
-      );
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to cancel subscription';
-      setError(msg);
-      toast.error(msg);
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnUrl: window.location.href }),
+      });
+      if (!res.ok) throw new Error('Errore apertura portale');
+      const data: { url?: string } = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore apertura portale Stripe');
     } finally {
       setProcessing(false);
     }
-  };
-
-  const handleToggleAiAddon = async () => {
-    if (!subscription) return;
-
-    try {
-      setProcessing(true);
-      setError(null);
-      await subscriptionService.toggleAiAddon(!subscription.aiAddonEnabled);
-      await mutate();
-      setSuccess(subscription.aiAddonEnabled ? 'AI Add-on disabled' : 'AI Add-on enabled');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to toggle AI add-on';
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const getPlanName = (plan: string) => {
-    const names: Record<string, string> = {
-      STARTER: 'Piccole',
-      PROFESSIONAL: 'Medie',
-      ENTERPRISE: 'Grandi',
-      TRIAL: 'Trial',
-      FREE: 'Free',
-    };
-    return names[plan] || plan;
   };
 
   const getStatusBadge = (status: string) => {
-    const configs: Record<string, { color: string; icon: typeof CheckCircle2 }> = {
-      ACTIVE: { color: 'bg-green-500', icon: CheckCircle2 },
-      TRIAL: { color: 'bg-blue-500', icon: Calendar },
-      PAST_DUE: { color: 'bg-yellow-500', icon: AlertTriangle },
-      UNPAID: { color: 'bg-red-500', icon: XCircle },
-      CANCELLED: { color: 'bg-gray-500', icon: XCircle },
-      EXPIRED: { color: 'bg-red-700', icon: XCircle },
+    const configs: Record<string, { bg: string; text: string; label: string }> = {
+      ACTIVE: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', label: 'Attivo' },
+      TRIAL: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-300', label: 'Trial' },
+      PAST_DUE: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', label: 'Scaduto' },
+      CANCELLED: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-300', label: 'Cancellato' },
+      UNPAID: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', label: 'Non pagato' },
     };
-
-    const config = configs[status] || configs.ACTIVE;
-    const Icon = config.icon;
-
-    return (
-      <Badge className={`${config.color} text-white flex items-center space-x-1`}>
-        <Icon className='w-3 h-3' />
-        <span>{status}</span>
-      </Badge>
-    );
+    const c = configs[status] || configs.ACTIVE;
+    return <Badge className={`${c.bg} ${c.text} border-0`}>{c.label}</Badge>;
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 MB';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
-  if (loading) {
+  const usagePercent = (current: number, limit: number | null): number => {
+    if (limit === null || limit <= 0) return 0;
+    return Math.min(100, Math.round((current / limit) * 100));
+  };
+
+  // Loading state
+  if (isLoading) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <Loader2 className='w-8 h-8 animate-spin' />
+      <div className='min-h-screen flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
       </div>
     );
   }
 
-  if (!subscription || !usage) {
+  // Error state
+  if (error) {
     return (
-      <div className='max-w-6xl mx-auto p-6 space-y-8'>
-        <div>
-          <h1 className='text-3xl font-bold'>Abbonamento</h1>
-          <p className='text-gray-600 dark:text-gray-400 mt-2'>
-            Gestisci il tuo piano e la fatturazione
-          </p>
-        </div>
-        <Card>
-          <CardContent className='flex flex-col items-center justify-center py-16 text-center'>
-            <CreditCard className='w-12 h-12 text-gray-300 mb-4' />
-            <h3 className='text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2'>
-              Nessun abbonamento attivo
+      <div className='min-h-screen flex items-center justify-center p-8'>
+        <AppleCard className='max-w-md w-full'>
+          <AppleCardContent className='text-center py-12'>
+            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
+              Errore di caricamento
             </h3>
-            <p className='text-gray-500 dark:text-gray-400 max-w-md mb-6'>
-              Connetti il backend per gestire il tuo abbonamento, oppure scegli un piano dalla
-              pagina Fatturazione.
+            <p className='text-body text-apple-gray dark:text-[#636366]'>
+              Impossibile caricare i dati dell&apos;abbonamento. Riprova pi&uacute; tardi.
             </p>
-            <Button onClick={() => router.push('/dashboard/billing')}>
-              <ArrowRight className='w-4 h-4 mr-2' />
-              Vai alla Fatturazione
-            </Button>
-          </CardContent>
-        </Card>
+          </AppleCardContent>
+        </AppleCard>
       </div>
     );
   }
+
+  const currentPlan = subscription?.plan || 'FREE';
 
   return (
-    <div className='max-w-6xl mx-auto p-6 space-y-8'>
-      <div>
-        <h1 className='text-3xl font-bold'>Subscription</h1>
-        <p className='text-gray-600 dark:text-gray-400 mt-2'>Manage your plan and billing</p>
-      </div>
-
-      {/* Success/Error Messages */}
-      {error && (
-        <Alert variant='destructive'>
-          <AlertTriangle className='h-4 w-4' />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className='bg-green-50 dark:bg-green-900/20 border-green-200'>
-          <CheckCircle2 className='h-4 w-4 text-green-600' />
-          <AlertTitle className='text-green-800 dark:text-green-300'>Success</AlertTitle>
-          <AlertDescription className='text-green-700 dark:text-green-300'>
-            {success}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Current Plan Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center justify-between'>
-            <span>Current Plan</span>
-            {getStatusBadge(subscription.status)}
-          </CardTitle>
-          <CardDescription>
-            {subscription.status === 'TRIAL'
-              ? `Trial ends on ${new Date(subscription.trialEndsAt || '').toLocaleDateString()}`
-              : `Current period ends on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='flex items-center justify-between'>
+    <div className='min-h-screen'>
+      {/* Header */}
+      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+        <div className='px-4 sm:px-8 py-5'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <p className='text-3xl font-bold'>{getPlanName(subscription.plan)}</p>
-              <p className='text-gray-600 dark:text-gray-400'>
-                {subscription.aiAddonEnabled && (
-                  <span className='inline-flex items-center'>
-                    <Sparkles className='w-4 h-4 mr-1 text-purple-500' />
-                    with AI Add-on
-                  </span>
-                )}
+              <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Abbonamento</h1>
+              <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+                Gestisci il tuo piano e monitora l&apos;utilizzo
               </p>
             </div>
-            <div className='flex space-x-3'>
-              <Button variant='outline' onClick={() => setShowUpgradeDialog(true)}>
-                Change Plan
-              </Button>
-              {subscription.status === 'ACTIVE' && (
-                <Button variant='destructive' onClick={() => setShowCancelDialog(true)}>
-                  Cancel
-                </Button>
-              )}
-            </div>
+            <AppleButton
+              variant='secondary'
+              onClick={handleManagePortal}
+              disabled={processing}
+            >
+              <CreditCard className='w-4 h-4 mr-2' />
+              Gestisci Abbonamento
+            </AppleButton>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </header>
 
-      {/* Usage Tabs */}
-      <Tabs defaultValue='usage' className='w-full'>
-        <TabsList>
-          <TabsTrigger value='usage'>Usage</TabsTrigger>
-          <TabsTrigger value='features'>Features</TabsTrigger>
-          <TabsTrigger value='billing'>Billing</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='usage' className='space-y-6'>
-          {/* Usage Cards */}
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-            {/* Users */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium text-gray-500'>Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>
-                  {usage.usage.users.current} /{' '}
-                  {usage.usage.users.limit === null ? '∞' : usage.usage.users.limit}
+      <div className='p-4 sm:p-8 max-w-7xl mx-auto space-y-8'>
+        {/* Current Plan Card */}
+        {subscription && (
+          <motion.div initial='initial' animate='animate' variants={fadeIn}>
+            <AppleCard>
+              <AppleCardHeader>
+                <div className='flex items-center gap-3'>
+                  <CreditCard className='h-5 w-5 text-apple-blue' />
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                    Piano Attuale
+                  </h2>
                 </div>
-                <Progress value={usage.usage.users.percentage} className='mt-2' />
-              </CardContent>
-            </Card>
-
-            {/* Locations */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium text-gray-500'>Locations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>
-                  {usage.usage.locations.current} /{' '}
-                  {usage.usage.locations.limit === null ? '∞' : usage.usage.locations.limit}
-                </div>
-                <Progress value={usage.usage.locations.percentage} className='mt-2' />
-              </CardContent>
-            </Card>
-
-            {/* API Calls */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium text-gray-500'>API Calls</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>
-                  {usage.usage.apiCalls.current.toLocaleString()} /{' '}
-                  {usage.usage.apiCalls.limit === null
-                    ? '∞'
-                    : usage.usage.apiCalls.limit.toLocaleString()}
-                </div>
-                <Progress value={usage.usage.apiCalls.percentage} className='mt-2' />
-              </CardContent>
-            </Card>
-
-            {/* Storage */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium text-gray-500'>Storage</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>
-                  {formatBytes(usage.usage.storage.current)} /{' '}
-                  {usage.usage.storage.limit === null
-                    ? '∞'
-                    : formatBytes(usage.usage.storage.limit)}
-                </div>
-                <Progress value={usage.usage.storage.percentage} className='mt-2' />
-              </CardContent>
-            </Card>
-
-            {/* Customers */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium text-gray-500'>Customers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>
-                  {usage.usage.customers.current.toLocaleString()} /{' '}
-                  {usage.usage.customers.limit === null
-                    ? '∞'
-                    : usage.usage.customers.limit.toLocaleString()}
-                </div>
-                <Progress value={usage.usage.customers.percentage} className='mt-2' />
-              </CardContent>
-            </Card>
-
-            {/* Inspections */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium text-gray-500'>Inspections</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>
-                  {usage.usage.inspections.current.toLocaleString()} /{' '}
-                  {usage.usage.inspections.limit === null
-                    ? '∞'
-                    : usage.usage.inspections.limit.toLocaleString()}
-                </div>
-                <Progress value={usage.usage.inspections.percentage} className='mt-2' />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* AI Addon Card */}
-          <Card className={subscription.aiAddonEnabled ? 'border-purple-200 bg-purple-50' : ''}>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center space-x-4'>
-                  <div
-                    className={`p-3 rounded-full ${subscription.aiAddonEnabled ? 'bg-purple-100' : 'bg-gray-100'}`}
-                  >
-                    <Sparkles
-                      className={`w-6 h-6 ${subscription.aiAddonEnabled ? 'text-purple-600' : 'text-gray-400'}`}
-                    />
-                  </div>
-                  <div>
-                    <h3 className='font-semibold'>AI Assistant Add-on</h3>
-                    <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {subscription.aiAddonEnabled
-                        ? 'Active - AI-powered inspections and voice assistant enabled'
-                        : 'Add AI-powered features for €200/month'}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant={subscription.aiAddonEnabled ? 'outline' : 'default'}
-                  onClick={handleToggleAiAddon}
-                  disabled={processing || subscription.plan === 'STARTER'}
-                >
-                  {processing ? (
-                    <Loader2 className='w-4 h-4 animate-spin' />
-                  ) : subscription.aiAddonEnabled ? (
-                    'Disable'
-                  ) : (
-                    'Enable'
-                  )}
-                </Button>
-              </div>
-              {subscription.plan === 'STARTER' && (
-                <p className='text-sm text-orange-600 mt-3'>
-                  AI Add-on requires Medium plan or higher
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value='features'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Available Features</CardTitle>
-              <CardDescription>Features included in your current plan</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                {Object.values(FeatureFlag).map(feature => {
-                  const hasFeature = subscription.features.includes(feature);
-                  return (
-                    <div
-                      key={feature}
-                      className={`flex items-center space-x-3 p-3 rounded-lg ${
-                        hasFeature
-                          ? 'bg-green-50 dark:bg-green-900/20'
-                          : 'bg-gray-50 dark:bg-gray-800'
-                      }`}
-                    >
-                      {hasFeature ? (
-                        <CheckCircle2 className='w-5 h-5 text-green-500' />
-                      ) : (
-                        <XCircle className='w-5 h-5 text-gray-300' />
-                      )}
-                      <span
-                        className={
-                          hasFeature
-                            ? 'text-gray-900 dark:text-white'
-                            : 'text-gray-500 dark:text-gray-400'
-                        }
-                      >
-                        {feature.replace(/_/g, ' ')}
-                      </span>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+                  <div className='flex items-center gap-4'>
+                    <div className='w-14 h-14 bg-gradient-to-br from-apple-blue to-apple-purple rounded-2xl flex items-center justify-center'>
+                      <Crown className='w-7 h-7 text-white' />
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value='billing'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing Information</CardTitle>
-              <CardDescription>Manage your payment method and invoices</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {subscription.stripe.paymentMethodRequired ? (
-                <Alert>
-                  <CreditCard className='h-4 w-4' />
-                  <AlertTitle>Payment Method Required</AlertTitle>
-                  <AlertDescription>
-                    Please add a payment method to continue using MechMind OS after your trial ends.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'>
-                  <div className='flex items-center space-x-3'>
-                    <CreditCard className='w-5 h-5 text-gray-500' />
                     <div>
-                      <p className='font-medium'>Payment Method</p>
-                      <p className='text-sm text-gray-500'>Managed via Stripe</p>
+                      <div className='flex items-center gap-3'>
+                        <h3 className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                          {TIERS.find((t) => t.id === currentPlan)?.name || currentPlan}
+                        </h3>
+                        {getStatusBadge(subscription.status)}
+                      </div>
+                      <p className='text-body text-apple-gray dark:text-[#636366] mt-1'>
+                        {subscription.price != null && subscription.price > 0
+                          ? `${subscription.price.toFixed(2).replace('.', ',')} /mese`
+                          : 'Gratuito'}
+                        {subscription.billingCycle === 'yearly' && ' (fatturazione annuale)'}
+                      </p>
                     </div>
                   </div>
-                  <Button
-                    variant='outline'
-                    onClick={() => window.open('https://billing.stripe.com', '_blank')}
-                  >
-                    Manage
-                  </Button>
+                  {subscription.nextRenewal && (
+                    <div className='text-right'>
+                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                        Prossimo rinnovo
+                      </p>
+                      <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
+                        {new Date(subscription.nextRenewal).toLocaleDateString('it-IT')}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        )}
 
-              <Separator />
-
-              <div className='space-y-4'>
-                <h4 className='font-medium'>Billing Period</h4>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <p className='text-sm text-gray-500'>Start Date</p>
-                    <p className='font-medium'>
-                      {new Date(subscription.currentPeriodStart).toLocaleDateString()}
-                    </p>
+        {/* Usage Meters */}
+        {subscription?.usage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4'>
+              Utilizzo
+            </h3>
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+              <AppleCard>
+                <AppleCardContent>
+                  <div className='flex items-center gap-3 mb-3'>
+                    <div className='w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center'>
+                      <Users className='w-5 h-5 text-blue-600' />
+                    </div>
+                    <div>
+                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Utenti</p>
+                      <p className='text-title-3 font-bold text-apple-dark dark:text-[#ececec]'>
+                        {subscription.usage.users.current} /{' '}
+                        {subscription.usage.users.limit === null ? 'Illimitati' : subscription.usage.users.limit}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className='text-sm text-gray-500'>End Date</p>
-                    <p className='font-medium'>
-                      {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                    </p>
+                  <Progress value={usagePercent(subscription.usage.users.current, subscription.usage.users.limit)} className='h-2' />
+                </AppleCardContent>
+              </AppleCard>
+
+              <AppleCard>
+                <AppleCardContent>
+                  <div className='flex items-center gap-3 mb-3'>
+                    <div className='w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center'>
+                      <Car className='w-5 h-5 text-green-600' />
+                    </div>
+                    <div>
+                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Veicoli</p>
+                      <p className='text-title-3 font-bold text-apple-dark dark:text-[#ececec]'>
+                        {subscription.usage.vehicles.current} /{' '}
+                        {subscription.usage.vehicles.limit === null ? 'Illimitati' : subscription.usage.vehicles.limit}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  <Progress value={usagePercent(subscription.usage.vehicles.current, subscription.usage.vehicles.limit)} className='h-2' />
+                </AppleCardContent>
+              </AppleCard>
 
-      {/* Upgrade Dialog */}
-      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <DialogContent className='max-w-6xl max-h-[90vh] overflow-y-auto'>
-          <DialogHeader>
-            <DialogTitle>Change Your Plan</DialogTitle>
-            <DialogDescription>Choose the plan that works best for your business</DialogDescription>
-          </DialogHeader>
-
-          {pricing && (
-            <PricingCards
-              plans={pricing.plans}
-              currentPlan={subscription.plan}
-              onSelectPlan={handleUpgrade}
-              loading={processing}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Cancel Dialog */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel Subscription</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel your subscription?
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className='space-y-4 py-4'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
-              Your data will be retained for 6 months. You can reactivate your subscription at any
-              time during this period.
-            </p>
-
-            <div className='bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg'>
-              <p className='text-sm text-yellow-800 dark:text-yellow-300'>
-                <strong>Tip:</strong> You can also choose to cancel at the end of your current
-                billing period to continue using the service until then.
-              </p>
+              <AppleCard>
+                <AppleCardContent>
+                  <div className='flex items-center gap-3 mb-3'>
+                    <div className='w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center'>
+                      <HardDrive className='w-5 h-5 text-purple-600' />
+                    </div>
+                    <div>
+                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Storage</p>
+                      <p className='text-title-3 font-bold text-apple-dark dark:text-[#ececec]'>
+                        {formatBytes(subscription.usage.storage.current)} /{' '}
+                        {subscription.usage.storage.limit === null ? 'Illimitato' : formatBytes(subscription.usage.storage.limit)}
+                      </p>
+                    </div>
+                  </div>
+                  <Progress value={usagePercent(subscription.usage.storage.current, subscription.usage.storage.limit)} className='h-2' />
+                </AppleCardContent>
+              </AppleCard>
             </div>
-          </div>
+          </motion.div>
+        )}
 
-          <DialogFooter className='flex space-x-2'>
-            <Button variant='outline' onClick={() => setShowCancelDialog(false)}>
-              Keep Subscription
-            </Button>
-            <Button variant='destructive' onClick={() => handleCancel(false)} disabled={processing}>
-              {processing ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Cancel at Period End'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Plan Comparison */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-4'>
+            Confronto Piani
+          </h3>
+          <motion.div
+            className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'
+            variants={staggerContainer}
+            initial='initial'
+            animate='animate'
+          >
+            {TIERS.map((tier) => {
+              const Icon = tier.icon;
+              const isCurrent = currentPlan === tier.id;
+              const isHigher =
+                TIERS.findIndex((t) => t.id === tier.id) >
+                TIERS.findIndex((t) => t.id === currentPlan);
+
+              return (
+                <motion.div key={tier.id} variants={staggerItem}>
+                  <AppleCard
+                    className={`h-full flex flex-col relative ${
+                      isCurrent ? 'ring-2 ring-apple-blue' : ''
+                    } ${tier.popular ? 'ring-2 ring-apple-blue' : ''}`}
+                  >
+                    {isCurrent && (
+                      <div className='bg-apple-blue text-white text-xs font-bold uppercase tracking-wider text-center py-2 rounded-t-xl'>
+                        Piano Attuale
+                      </div>
+                    )}
+                    {tier.popular && !isCurrent && (
+                      <div className='bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-bold uppercase tracking-wider text-center py-2 rounded-t-xl'>
+                        Consigliato
+                      </div>
+                    )}
+                    <AppleCardHeader className='pb-2'>
+                      <div className='flex items-center gap-3'>
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tier.color} flex items-center justify-center`}>
+                          <Icon className='w-5 h-5 text-white' />
+                        </div>
+                        <h4 className='text-title-3 font-bold text-apple-dark dark:text-[#ececec]'>
+                          {tier.name}
+                        </h4>
+                      </div>
+                    </AppleCardHeader>
+                    <AppleCardContent className='flex-1 flex flex-col'>
+                      {/* Price */}
+                      <div className='mb-4'>
+                        {tier.price === -1 ? (
+                          <p className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+                            Su misura
+                          </p>
+                        ) : tier.price === 0 ? (
+                          <p className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+                            Gratuito
+                          </p>
+                        ) : (
+                          <div>
+                            <span className='text-3xl font-bold text-apple-dark dark:text-[#ececec]'>
+                              &euro;{tier.price}
+                            </span>
+                            <span className='text-apple-gray dark:text-[#636366]'>{tier.cycle}</span>
+                          </div>
+                        )}
+                        <p className='text-footnote text-apple-gray dark:text-[#636366] mt-1'>
+                          {tier.limits.users === -1 ? 'Utenti illimitati' : `${tier.limits.users} utenti`},{' '}
+                          {tier.limits.vehicles === -1 ? 'veicoli illimitati' : `${tier.limits.vehicles} veicoli`}
+                        </p>
+                      </div>
+
+                      {/* Features */}
+                      <div className='space-y-2 flex-1 mb-4'>
+                        {tier.features.map((f) => (
+                          <div key={f} className='flex items-start gap-2'>
+                            <CheckCircle2 className='w-4 h-4 text-green-500 flex-shrink-0 mt-0.5' />
+                            <span className='text-sm text-apple-dark dark:text-[#ececec]'>{f}</span>
+                          </div>
+                        ))}
+                        {tier.notIncluded?.map((f) => (
+                          <div key={f} className='flex items-start gap-2'>
+                            <XCircle className='w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5' />
+                            <span className='text-sm text-gray-400 dark:text-gray-500'>{f}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* CTA */}
+                      <AppleButton
+                        variant={isCurrent ? 'secondary' : 'primary'}
+                        className='w-full min-h-[44px]'
+                        onClick={() => handleUpgrade(tier.id)}
+                        disabled={isCurrent || processing || (!isHigher && !isCurrent && tier.id !== 'ENTERPRISE')}
+                      >
+                        {isCurrent ? (
+                          'Attivo'
+                        ) : processing ? (
+                          <Loader2 className='w-4 h-4 animate-spin' />
+                        ) : tier.price === -1 ? (
+                          <>
+                            Contatta Vendite
+                            <ArrowRight className='w-4 h-4 ml-2' />
+                          </>
+                        ) : isHigher ? (
+                          'Upgrade'
+                        ) : (
+                          'Seleziona'
+                        )}
+                      </AppleButton>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

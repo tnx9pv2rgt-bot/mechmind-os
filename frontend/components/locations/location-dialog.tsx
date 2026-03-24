@@ -91,18 +91,18 @@ export function LocationDialog({
   const [createdLocationName, setCreatedLocationName] = useState('');
 
   const handleSubmit = async (data: Record<string, unknown>) => {
-    const locationData = data as LocationFormData;
-    // TODO: Replace with useCreateLocation() hook when LocationController is created
-    const res = await fetch('/api/settings', {
-      method: 'PUT',
+    const res = await fetch('/api/locations', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ locations: [locationData] }),
+      body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(`Errore salvataggio sede: ${res.status}`);
-    setCreatedLocationName(locationData.name);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as Record<string, string>).message || `Errore salvataggio sede: ${res.status}`);
+    }
+    setCreatedLocationName((data.name as string) || 'Nuova sede');
     setIsSuccess(true);
 
-    // Reset dopo 3 secondi
     setTimeout(() => {
       setIsSuccess(false);
       onOpenChange(false);
@@ -151,7 +151,7 @@ export function LocationDialog({
                     </motion.div>
                     <div>
                       <DialogTitle className='text-title-1 font-semibold text-apple-dark'>
-                        {isEdit ? 'Modifica Location' : 'Nuova Location'}
+                        {isEdit ? 'Modifica Sede' : 'Nuova Sede'}
                       </DialogTitle>
                       <DialogDescription className='text-body text-apple-gray mt-1'>
                         {isEdit
@@ -236,11 +236,11 @@ export function LocationDialog({
                 variants={successItemVariants}
                 className='text-title-1 font-semibold text-apple-dark mb-2'
               >
-                {isEdit ? 'Location Aggiornata!' : 'Location Creata!'}
+                {isEdit ? 'Sede Aggiornata!' : 'Sede Creata!'}
               </motion.h3>
 
               <motion.p variants={successItemVariants} className='text-body text-apple-gray mb-6'>
-                La location{' '}
+                La sede{' '}
                 <span className='font-semibold text-apple-dark'>{createdLocationName}</span> è stata{' '}
                 {isEdit ? 'aggiornata' : 'creata'} con successo
               </motion.p>
@@ -260,7 +260,7 @@ export function LocationDialog({
                   Chiudi
                 </AppleButton>
                 <AppleButton icon={<ArrowRight className='h-4 w-4' />} iconPosition='right'>
-                  Visualizza Location
+                  Visualizza Sede
                 </AppleButton>
               </motion.div>
             </motion.div>

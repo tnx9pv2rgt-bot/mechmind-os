@@ -1,5 +1,7 @@
+import './telemetry';
 import './instrument';
 import { NestFactory } from '@nestjs/core';
+import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -19,6 +21,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, {
     logger: new LoggerService(),
+    rawBody: true,
   });
 
   const configService = app.get(ConfigService);
@@ -59,11 +62,14 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global prefix (exclude health check endpoints)
-  const apiVersion = configService.get('API_VERSION', 'v1');
-  app.setGlobalPrefix(apiVersion, {
-    exclude: ['health', 'liveness', 'readiness'],
+  // URI versioning (default v1)
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
   });
+
+  // Health endpoints are excluded from versioning via @Controller({ version: '' })
+  // No global prefix needed — URI versioning already adds /v1/
 
   // Swagger documentation
   const swaggerConfig = new DocumentBuilder()

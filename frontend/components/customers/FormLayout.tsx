@@ -41,11 +41,11 @@ export function FormLayout({
   const pathname = usePathname();
 
   return (
-    <div className='fixed inset-0 bg-white dark:bg-[#212121] flex items-center justify-center p-4 overflow-hidden'>
+    <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'>
       <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
         {/* Glass Card Container */}
         <motion.div
-          className='relative z-10 w-full h-full bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple rounded-[40px] shadow-2xl border border-apple-border/20 dark:border-[#424242]/50 overflow-hidden flex flex-col'
+          className='relative z-10 w-full h-full bg-[#2f2f2f] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden flex flex-col'
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -54,23 +54,23 @@ export function FormLayout({
           <div className='px-10 pt-8 pb-4'>
             <div className='flex items-center justify-between mb-6'>
               <div>
-                <h1 className='text-3xl font-semibold text-gray-900 dark:text-[#ececec] tracking-tight'>
+                <h1 className='text-3xl font-semibold text-white tracking-tight'>
                   {title}
                 </h1>
-                <p className='text-gray-500 dark:text-[#636366] mt-1'>{subtitle}</p>
+                <p className='text-[#888] mt-1'>{subtitle}</p>
               </div>
               <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-400'>Step</span>
-                <span className='text-2xl font-bold text-black dark:text-[#ececec]'>{step}</span>
-                <span className='text-gray-400'>/</span>
-                <span className='text-gray-400'>{totalSteps}</span>
+                <span className='text-sm text-[#888]'>Step</span>
+                <span className='text-2xl font-bold text-white'>{step}</span>
+                <span className='text-[#888]'>/</span>
+                <span className='text-[#888]'>{totalSteps}</span>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className='h-2 bg-gray-200 dark:bg-[#424242] rounded-full overflow-hidden'>
+            <div className='h-2 bg-[#4e4e4e] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-black dark:bg-[#ececec]'
+                className='h-full bg-white'
                 initial={{ width: 0 }}
                 animate={{ width: `${(step / totalSteps) * 100}%` }}
                 transition={{ duration: 0.5 }}
@@ -85,18 +85,18 @@ export function FormLayout({
                   href={s.href}
                   className={`flex items-center gap-2 transition-all ${
                     s.num === step
-                      ? 'text-black dark:text-[#ececec] cursor-default'
+                      ? 'text-white cursor-default'
                       : s.num < step
-                        ? 'text-black dark:text-[#ececec] hover:opacity-70 cursor-pointer hover:scale-105'
-                        : 'text-gray-400 cursor-not-allowed'
+                        ? 'text-white hover:opacity-70 cursor-pointer hover:scale-105'
+                        : 'text-[#888] cursor-not-allowed'
                   }`}
                   onClick={e => s.num > step && e.preventDefault()}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                       s.num <= step
-                        ? 'bg-black dark:bg-[#ececec] text-white dark:text-[#212121]'
-                        : 'bg-gray-200 dark:bg-[#424242] text-gray-500'
+                        ? 'bg-white text-[#0d0d0d]'
+                        : 'bg-[#4e4e4e] text-[#888]'
                     }`}
                   >
                     {s.num < step ? '✓' : s.num}
@@ -112,14 +112,14 @@ export function FormLayout({
 
           {/* Navigation Buttons - Fixed Footer */}
           {(onBack || onNext) && (
-            <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-t border-apple-border/20 dark:border-[#424242]/50 z-50 pointer-events-auto'>
+            <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e] z-50 pointer-events-auto'>
               <div className='flex items-center justify-between'>
                 {onBack ? (
                   <Button
                     type='button'
                     onClick={onBack}
                     disabled={isSubmitting}
-                    className='rounded-full px-6 h-12 border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-black dark:text-[#ececec] hover:bg-gray-100 dark:hover:bg-[#424242] transition-all'
+                    className='rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5 transition-all'
                   >
                     <ChevronLeft className='w-5 h-5 mr-2' />
                     Indietro
@@ -137,10 +137,10 @@ export function FormLayout({
                       onNext();
                     }}
                     disabled={isSubmitting}
-                    className={`rounded-full px-8 h-12 shadow-lg hover:shadow-xl transition-all ${
+                    className={`rounded-full px-8 h-[52px] transition-all ${
                       isLastStep
-                        ? 'bg-apple-green hover:bg-green-600 text-white border-0'
-                        : 'border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-black dark:text-[#ececec] hover:bg-gray-100 dark:hover:bg-[#424242]'
+                        ? 'bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
+                        : 'bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
                     }`}
                   >
                     {isSubmitting ? (

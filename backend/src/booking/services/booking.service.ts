@@ -10,6 +10,7 @@ import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
 import { CreateBookingDto, ReserveSlotDto, UpdateBookingDto } from '../dto/create-booking.dto';
+import { RescheduleBookingDto } from '../dto/reschedule-booking.dto';
 import { validateTransition, TransitionMap } from '@common/utils/state-machine';
 
 const BOOKING_TRANSITIONS: TransitionMap = {
@@ -273,7 +274,22 @@ export class BookingService {
       vapiCallId,
       technicianId,
       liftPosition,
+      idempotencyKey,
     } = dto;
+
+    // Idempotency check: return existing booking if key already used
+    if (idempotencyKey) {
+      const existing = await this.prisma.booking.findUnique({
+        where: { idempotencyKey },
+        include: {
+          customer: true,
+          vehicle: true,
+          services: { include: { service: true } },
+          slot: true,
+        },
+      });
+      if (existing) return existing;
+    }
 
     return this.prisma.withTenant(tenantId, async prisma => {
       // Validate slot
@@ -296,6 +312,7 @@ export class BookingService {
           vapiCallId: vapiCallId || null,
           technicianId: technicianId || null,
           liftPosition: liftPosition || null,
+          idempotencyKey: idempotencyKey || null,
           tenant: { connect: { id: tenantId } },
           customer: { connect: { id: customerId } },
           slot: { connect: { id: slotId } },
@@ -604,6 +621,109 @@ export class BookingService {
           {},
         ),
       };
+    });
+  }
+
+  /**
+   * Reschedule a booking to a new date and optionally a new slot
+   */
+  async rescheduleBooking(
+    tenantId: string,
+    bookingId: string,
+    dto: RescheduleBookingDto,
+  ): Promise<BookingWithRelations> {
+    const { newDate, newSlotId, reason } = dto;
+
+    return this.prisma.withTenant(tenantId, async prisma => {
+      const existing = await prisma.booking.findFirst({
+        where: { id: bookingId, tenantId },
+        include: { slot: true },
+      });
+
+      if (!existing) {
+        throw new NotFoundException(`Booking ${bookingId} not found`);
+      }
+
+      const reschedulableStatuses: string[] = [BookingStatus.PENDING, BookingStatus.CONFIRMED];
+
+      if (!reschedulableStatuses.includes(existing.status)) {
+        throw new BadRequestException(
+          `Cannot reschedule booking with status ${existing.status}. Only PENDING and CONFIRMED bookings can be rescheduled.`,
+        );
+      }
+
+      const updateData: Prisma.BookingUpdateInput = {
+        scheduledDate: new Date(newDate),
+      };
+
+      // If moving to a new slot, validate and update slot assignments
+      if (newSlotId && newSlotId !== existing.slotId) {
+        const newSlot = await prisma.bookingSlot.findFirst({
+          where: { id: newSlotId, tenantId },
+        });
+
+        if (!newSlot) {
+          throw new NotFoundException(`Slot ${newSlotId} not found`);
+        }
+
+        if (newSlot.status !== 'AVAILABLE') {
+          throw new ConflictException(
+            `Slot ${newSlotId} is not available (status: ${newSlot.status})`,
+          );
+        }
+
+        // Free old slot
+        if (existing.slotId) {
+          await prisma.bookingSlot.update({
+            where: { id: existing.slotId },
+            data: { status: 'AVAILABLE' },
+          });
+        }
+
+        // Book new slot
+        await prisma.bookingSlot.update({
+          where: { id: newSlotId },
+          data: { status: 'BOOKED' },
+        });
+
+        updateData.slot = { connect: { id: newSlotId } };
+      }
+
+      const booking = await prisma.booking.update({
+        where: { id: bookingId },
+        data: updateData,
+        include: bookingInclude,
+      });
+
+      // Create reschedule event
+      await prisma.bookingEvent.create({
+        data: {
+          eventType: 'booking_rescheduled',
+          payload: {
+            previousDate: existing.scheduledDate.toISOString(),
+            newDate,
+            previousSlotId: existing.slotId,
+            newSlotId: newSlotId || existing.slotId,
+            reason: reason || null,
+          },
+          booking: { connect: { id: booking.id } },
+        },
+      });
+
+      // Emit event
+      this.eventEmitter.emit('booking.rescheduled', {
+        bookingId: booking.id,
+        tenantId,
+        previousDate: existing.scheduledDate,
+        newDate: booking.scheduledDate,
+        reason,
+      });
+
+      this.logger.log(
+        `Booking ${bookingId} rescheduled from ${existing.scheduledDate.toISOString()} to ${newDate}`,
+      );
+
+      return booking;
     });
   }
 }

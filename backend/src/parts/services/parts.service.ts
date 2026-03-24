@@ -24,6 +24,16 @@ import {
   InventoryMovementResponseDto,
 } from '../dto/parts.dto';
 import { MovementType, OrderStatus, Prisma } from '@prisma/client';
+import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
+
+const PURCHASE_ORDER_TRANSITIONS: TransitionMap = {
+  DRAFT: ['SENT'],
+  SENT: ['ACKNOWLEDGED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'],
+  ACKNOWLEDGED: ['PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'],
+  PARTIALLY_RECEIVED: ['RECEIVED', 'CANCELLED'],
+  RECEIVED: [],
+  CANCELLED: [],
+};
 
 type PartWithRelations = Prisma.PartGetPayload<{
   include: { supplier: true; inventory: true };
@@ -91,8 +101,23 @@ export class PartsService {
 
   async getParts(
     tenantId: string,
-    filters: { category?: string; supplierId?: string; lowStock?: boolean; search?: string },
-  ): Promise<PartResponseDto[]> {
+    filters: {
+      category?: string;
+      supplierId?: string;
+      lowStock?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<{
+    data: PartResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
     const where: Record<string, unknown> = { tenantId, isActive: true };
 
     if (filters.category) {
@@ -111,19 +136,24 @@ export class PartsService {
       ];
     }
 
-    const parts = await this.prisma.part.findMany({
-      where,
-      include: { supplier: true, inventory: true },
-      orderBy: { name: 'asc' },
-    });
+    const [parts, total] = await Promise.all([
+      this.prisma.part.findMany({
+        where,
+        include: { supplier: true, inventory: true },
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.part.count({ where }),
+    ]);
 
-    const dtos = parts.map(p => this.mapPartToDto(p));
+    let dtos = parts.map(p => this.mapPartToDto(p));
 
     if (filters.lowStock) {
-      return dtos.filter(p => p.isLowStock);
+      dtos = dtos.filter(p => p.isLowStock);
     }
 
-    return dtos;
+    return { data: dtos, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async getPart(tenantId: string, id: string): Promise<PartResponseDto> {
@@ -173,11 +203,31 @@ export class PartsService {
     });
   }
 
-  async getSuppliers(tenantId: string) {
-    return this.prisma.supplier.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: { name: 'asc' },
-    });
+  async getSuppliers(
+    tenantId: string,
+    options?: { page?: number; limit?: number },
+  ): Promise<{
+    data: unknown[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 50;
+    const where = { tenantId, isActive: true };
+
+    const [data, total] = await Promise.all([
+      this.prisma.supplier.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.supplier.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   // ============== INVENTORY ==============
@@ -316,14 +366,35 @@ export class PartsService {
   async getPurchaseOrders(
     tenantId: string,
     status?: OrderStatus,
-  ): Promise<PurchaseOrderResponseDto[]> {
-    const orders = await this.prisma.purchaseOrder.findMany({
-      where: { tenantId, ...(status && { status }) },
-      include: { supplier: true, items: { include: { part: true } } },
-      orderBy: { orderDate: 'desc' },
-    });
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: PurchaseOrderResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const where = { tenantId, ...(status && { status }) };
 
-    return orders.map(o => this.mapOrderToDto(o));
+    const [orders, total] = await Promise.all([
+      this.prisma.purchaseOrder.findMany({
+        where,
+        include: { supplier: true, items: { include: { part: true } } },
+        orderBy: { orderDate: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.purchaseOrder.count({ where }),
+    ]);
+
+    return {
+      data: orders.map(o => this.mapOrderToDto(o)),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
   }
 
   async receiveOrder(
@@ -339,6 +410,16 @@ export class PartsService {
 
     if (!order) {
       throw new NotFoundException('Purchase order not found');
+    }
+
+    // Validate that the order is in a state that allows receiving
+    const targetStatus = OrderStatus.RECEIVED; // Will be refined below
+    if (
+      order.status !== OrderStatus.SENT &&
+      order.status !== OrderStatus.ACKNOWLEDGED &&
+      order.status !== OrderStatus.PARTIALLY_RECEIVED
+    ) {
+      validateTransition(order.status, targetStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
     }
 
     const transactions = [];
@@ -380,28 +461,60 @@ export class PartsService {
       );
     }
 
-    // Check if order fully received
+    // Internal: bounded query — items scoped to single order
     const allItems = await this.prisma.purchaseOrderItem.findMany({
       where: { orderId },
     });
     const fullyReceived = allItems.every(i => i.receivedQty >= i.quantity);
     const partiallyReceived = allItems.some(i => i.receivedQty > 0);
 
+    const newStatus = fullyReceived
+      ? OrderStatus.RECEIVED
+      : partiallyReceived
+        ? OrderStatus.PARTIALLY_RECEIVED
+        : order.status;
+
+    // Validate state transition for the computed new status
+    if (newStatus !== order.status) {
+      validateTransition(order.status, newStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
+    }
+
     transactions.push(
       this.prisma.purchaseOrder.update({
         where: { id: orderId },
         data: {
-          status: fullyReceived
-            ? OrderStatus.RECEIVED
-            : partiallyReceived
-              ? OrderStatus.PARTIALLY_RECEIVED
-              : OrderStatus.SENT,
+          status: newStatus,
           receivedAt: fullyReceived ? new Date() : undefined,
         },
       }),
     );
 
     await this.prisma.$transaction(transactions);
+  }
+
+  async updateOrderStatus(
+    tenantId: string,
+    orderId: string,
+    newStatus: OrderStatus,
+  ): Promise<PurchaseOrderResponseDto> {
+    const order = await this.prisma.purchaseOrder.findFirst({
+      where: { id: orderId, tenantId },
+      include: { supplier: true, items: { include: { part: true } } },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Purchase order not found');
+    }
+
+    validateTransition(order.status, newStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
+
+    const updated = await this.prisma.purchaseOrder.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+      include: { supplier: true, items: { include: { part: true } } },
+    });
+
+    return this.mapOrderToDto(updated);
   }
 
   // ============== MATRIX PRICING ==============
@@ -442,9 +555,11 @@ export class PartsService {
   // ============== LOW STOCK ALERTS ==============
 
   async getLowStockAlerts(tenantId: string): Promise<LowStockAlertDto[]> {
+    // Internal: bounded query — only returns parts below reorder point (post-filter)
     const parts = await this.prisma.part.findMany({
       where: { tenantId, isActive: true },
       include: { supplier: true, inventory: true },
+      take: 500,
     });
 
     return parts

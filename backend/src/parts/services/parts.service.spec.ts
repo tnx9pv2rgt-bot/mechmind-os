@@ -23,6 +23,7 @@ interface MockPartDelegate {
   findMany: jest.Mock;
   create: jest.Mock;
   update: jest.Mock;
+  count: jest.Mock;
 }
 
 interface MockInventoryItemDelegate {
@@ -38,6 +39,7 @@ interface MockInventoryMovementDelegate {
 interface MockSupplierDelegate {
   create: jest.Mock;
   findMany: jest.Mock;
+  count: jest.Mock;
 }
 
 interface MockPurchaseOrderDelegate {
@@ -197,6 +199,7 @@ describe('PartsService', () => {
         findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        count: jest.fn(),
       },
       inventoryItem: {
         create: jest.fn(),
@@ -209,6 +212,7 @@ describe('PartsService', () => {
       supplier: {
         create: jest.fn(),
         findMany: jest.fn(),
+        count: jest.fn(),
       },
       purchaseOrder: {
         count: jest.fn(),
@@ -454,22 +458,28 @@ describe('PartsService', () => {
         makeMockPart({ id: 'part-002', sku: 'ENG-001', name: 'Oil Filter' }),
       ];
       prisma.part.findMany.mockResolvedValue(parts);
+      prisma.part.count.mockResolvedValue(2);
 
       // Act
       const result = await service.getParts(TENANT_ID, {});
 
       // Assert
-      expect(prisma.part.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID, isActive: true },
-        include: { supplier: true, inventory: true },
-        orderBy: { name: 'asc' },
-      });
-      expect(result).toHaveLength(2);
+      expect(prisma.part.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, isActive: true },
+          include: { supplier: true, inventory: true },
+          orderBy: { name: 'asc' },
+          skip: 0,
+          take: 20,
+        }),
+      );
+      expect(result.data).toHaveLength(2);
     });
 
     it('should always filter by tenantId for tenant isolation', async () => {
       // Arrange
       prisma.part.findMany.mockResolvedValue([]);
+      prisma.part.count.mockResolvedValue(0);
 
       // Act
       await service.getParts(TENANT_ID, {});
@@ -482,6 +492,7 @@ describe('PartsService', () => {
     it('should filter by category when provided', async () => {
       // Arrange
       prisma.part.findMany.mockResolvedValue([makeMockPart()]);
+      prisma.part.count.mockResolvedValue(1);
 
       // Act
       await service.getParts(TENANT_ID, { category: 'BRAKES' });
@@ -494,6 +505,7 @@ describe('PartsService', () => {
     it('should filter by supplierId when provided', async () => {
       // Arrange
       prisma.part.findMany.mockResolvedValue([makeMockPart()]);
+      prisma.part.count.mockResolvedValue(1);
 
       // Act
       await service.getParts(TENANT_ID, { supplierId: SUPPLIER_ID });
@@ -506,6 +518,7 @@ describe('PartsService', () => {
     it('should apply search filter across name, sku, and description', async () => {
       // Arrange
       prisma.part.findMany.mockResolvedValue([makeMockPart()]);
+      prisma.part.count.mockResolvedValue(1);
 
       // Act
       await service.getParts(TENANT_ID, { search: 'brake' });
@@ -532,29 +545,33 @@ describe('PartsService', () => {
         minStockLevel: 5,
       });
       prisma.part.findMany.mockResolvedValue([highStockPart, lowStockPart]);
+      prisma.part.count.mockResolvedValue(2);
 
       // Act
       const result = await service.getParts(TENANT_ID, { lowStock: true });
 
       // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].isLowStock).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].isLowStock).toBe(true);
     });
 
-    it('should return empty array when no parts match', async () => {
+    it('should return empty data when no parts match', async () => {
       // Arrange
       prisma.part.findMany.mockResolvedValue([]);
+      prisma.part.count.mockResolvedValue(0);
 
       // Act
       const result = await service.getParts(TENANT_ID, {});
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should combine multiple filters simultaneously', async () => {
       // Arrange
       prisma.part.findMany.mockResolvedValue([]);
+      prisma.part.count.mockResolvedValue(0);
 
       // Act
       await service.getParts(TENANT_ID, {
@@ -823,13 +840,14 @@ describe('PartsService', () => {
   });
 
   describe('getSuppliers', () => {
-    it('should return all active suppliers for a tenant', async () => {
+    it('should return all active suppliers for a tenant with pagination', async () => {
       // Arrange
       const suppliers = [
         makeMockSupplier(),
         makeMockSupplier({ id: 'supplier-002', name: 'Bosch' }),
       ];
       prisma.supplier.findMany.mockResolvedValue(suppliers);
+      prisma.supplier.count.mockResolvedValue(2);
 
       // Act
       const result = await service.getSuppliers(TENANT_ID);
@@ -838,13 +856,19 @@ describe('PartsService', () => {
       expect(prisma.supplier.findMany).toHaveBeenCalledWith({
         where: { tenantId: TENANT_ID, isActive: true },
         orderBy: { name: 'asc' },
+        skip: 0,
+        take: 50,
       });
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(50);
     });
 
     it('should filter by tenantId for tenant isolation', async () => {
       // Arrange
       prisma.supplier.findMany.mockResolvedValue([]);
+      prisma.supplier.count.mockResolvedValue(0);
 
       // Act
       await service.getSuppliers('other-tenant');
@@ -1279,22 +1303,28 @@ describe('PartsService', () => {
       // Arrange
       const orders = [makeMockPurchaseOrder()];
       prisma.purchaseOrder.findMany.mockResolvedValue(orders);
+      prisma.purchaseOrder.count.mockResolvedValue(1);
 
       // Act
       const result = await service.getPurchaseOrders(TENANT_ID);
 
       // Assert
-      expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID },
-        include: { supplier: true, items: { include: { part: true } } },
-        orderBy: { orderDate: 'desc' },
-      });
-      expect(result).toHaveLength(1);
+      expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID },
+          include: { supplier: true, items: { include: { part: true } } },
+          orderBy: { orderDate: 'desc' },
+          skip: 0,
+          take: 20,
+        }),
+      );
+      expect(result.data).toHaveLength(1);
     });
 
     it('should filter by status when provided', async () => {
       // Arrange
       prisma.purchaseOrder.findMany.mockResolvedValue([]);
+      prisma.purchaseOrder.count.mockResolvedValue(0);
 
       // Act
       await service.getPurchaseOrders(TENANT_ID, OrderStatus.SENT);
@@ -1307,6 +1337,7 @@ describe('PartsService', () => {
     it('should not include status filter when status is undefined', async () => {
       // Arrange
       prisma.purchaseOrder.findMany.mockResolvedValue([]);
+      prisma.purchaseOrder.count.mockResolvedValue(0);
 
       // Act
       await service.getPurchaseOrders(TENANT_ID);
@@ -1319,6 +1350,7 @@ describe('PartsService', () => {
     it('should always enforce tenantId for tenant isolation', async () => {
       // Arrange
       prisma.purchaseOrder.findMany.mockResolvedValue([]);
+      prisma.purchaseOrder.count.mockResolvedValue(0);
 
       // Act
       await service.getPurchaseOrders('other-tenant', OrderStatus.DRAFT);
@@ -1657,6 +1689,7 @@ describe('PartsService', () => {
       expect(prisma.part.findMany).toHaveBeenCalledWith({
         where: { tenantId: TENANT_ID, isActive: true },
         include: { supplier: true, inventory: true },
+        take: 500,
       });
     });
 
@@ -1749,12 +1782,13 @@ describe('PartsService', () => {
       prisma.purchaseOrder.findMany.mockResolvedValue([
         makeMockPurchaseOrder({ expectedDate: null }),
       ]);
+      prisma.purchaseOrder.count.mockResolvedValue(1);
 
       // Act
       const result = await service.getPurchaseOrders(TENANT_ID);
 
       // Assert
-      expect(result[0].expectedDate).toBeUndefined();
+      expect(result.data[0].expectedDate).toBeUndefined();
     });
   });
 });

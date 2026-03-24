@@ -109,7 +109,20 @@ export class SubscriptionService {
     };
   }
 
-  async getAllSubscriptions(filters?: { status?: SubscriptionStatus; plan?: SubscriptionPlan }) {
+  async getAllSubscriptions(filters?: {
+    status?: SubscriptionStatus;
+    plan?: SubscriptionPlan;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: Awaited<ReturnType<PrismaService['subscription']['findMany']>>;
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
     const where: Prisma.SubscriptionWhereInput = {};
 
     if (filters?.status) {
@@ -119,23 +132,28 @@ export class SubscriptionService {
       where.plan = filters.plan;
     }
 
-    const subscriptions = await this.prisma.subscription.findMany({
-      where,
-      include: {
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            isActive: true,
+    const [data, total] = await Promise.all([
+      this.prisma.subscription.findMany({
+        where,
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              isActive: true,
+            },
           },
+          features: true,
         },
-        features: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.subscription.count({ where }),
+    ]);
 
-    return subscriptions;
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   // ==========================================

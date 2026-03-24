@@ -3,32 +3,48 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FuelLevel } from '@prisma/client';
 
 export class VehicleCheckOutDto {
-  @ApiProperty({ description: 'Mileage at delivery' })
+  @ApiProperty({ description: 'Chilometraggio alla riconsegna', example: 125050 })
   @IsInt()
   @Min(0)
   mileageOut: number;
 
-  @ApiProperty({ description: 'Fuel level at delivery', enum: FuelLevel })
+  @ApiProperty({
+    description: 'Livello carburante alla riconsegna',
+    enum: FuelLevel,
+    example: 'THREE_QUARTERS',
+  })
   @IsEnum(FuelLevel)
   fuelLevel: FuelLevel;
 
-  @ApiPropertyOptional({ description: 'Photo URLs of vehicle at checkout' })
+  @ApiPropertyOptional({
+    description: 'URL foto del veicolo alla riconsegna',
+    example: ['https://s3.example.com/checkout1.jpg'],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   photos?: string[];
 
-  @ApiPropertyOptional({ description: 'Customer signature (base64)' })
+  @ApiPropertyOptional({
+    description: 'Firma del cliente alla riconsegna (base64)',
+    example: 'data:image/png;base64,...',
+  })
   @IsOptional()
   @IsString()
   customerSignature?: string;
 
-  @ApiPropertyOptional({ description: 'Whether courtesy car was returned' })
+  @ApiPropertyOptional({
+    description: 'Auto di cortesia restituita',
+    example: true,
+  })
   @IsOptional()
   @IsBoolean()
   courtesyCarReturned?: boolean;
 
-  @ApiPropertyOptional({ description: 'Checkout notes' })
+  @ApiPropertyOptional({
+    description: 'Note alla riconsegna',
+    example: 'Veicolo lavato e sanificato',
+  })
   @IsOptional()
   @IsString()
   notes?: string;

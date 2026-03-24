@@ -96,6 +96,13 @@ export const NOTIFICATION_EVENTS = {
     template: 'parts-arrived',
     subject: 'Ricambi arrivati — lavoro può riprendere',
   },
+
+  // Review
+  REVIEW_REQUEST: {
+    channels: ['SMS', 'EMAIL'] as const,
+    template: 'review-request',
+    subject: 'Come ti sei trovato? Lascia una recensione',
+  },
 } as const;
 
 export type NotificationEventKey = keyof typeof NOTIFICATION_EVENTS;

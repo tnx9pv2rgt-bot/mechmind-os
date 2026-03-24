@@ -9,56 +9,105 @@ export const config = {
 };
 
 // =============================================================================
-// Public Routes — no tenant resolution needed
+// Route Classification
 // =============================================================================
 
-const PUBLIC_ROUTES = [
-  '/api/tenant',
+/** Routes that require NO authentication at all */
+const PUBLIC_PATHS = [
+  '/auth',
+  '/portal/login',
+  '/portal/register',
+  '/portal/reset-password',
+  '/portal/invite',
+  '/onboarding',
+  '/demo',
+  '/landing',
+  '/terms',
+  '/privacy',
   '/api/auth',
   '/api/webhooks',
   '/api/health',
-  '/auth',
+  '/api/tenant',
+  '/_next',
+  '/favicon.ico',
   '/tenant-select',
   '/subscription',
   '/setup',
   '/billing',
-  '/landing',
-  '/demo',
-  '/portal/login',
-  '/portal/register',
-  '/portal/reset-password',
 ];
 
-function isPublicRoute(pathname: string): boolean {
+function isPublicPath(pathname: string): boolean {
   if (pathname === '/') return true;
-  return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  return PUBLIC_PATHS.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+function isDashboardPath(pathname: string): boolean {
+  return pathname.startsWith('/dashboard');
+}
+
+function isPortalPath(pathname: string): boolean {
+  return pathname.startsWith('/portal') && !isPublicPath(pathname);
 }
 
 // =============================================================================
 // Main Middleware — Edge-compatible (NO Prisma, NO Node.js APIs)
 // =============================================================================
 
-export function middleware(request: NextRequest) {
+export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // Create response
   const response = NextResponse.next();
 
+  // =========================================================================
   // Security headers
+  // =========================================================================
   response.headers.set('X-DNS-Prefetch-Control', 'on');
-  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=63072000; includeSubDomains; preload'
+  );
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
 
-  // =============================================================================
-  // TENANT RESOLUTION (cookie/header only — no DB calls in middleware)
-  // =============================================================================
+  // =========================================================================
+  // AUTH GUARD — redirect unauthenticated users
+  // =========================================================================
 
-  if (!isPublicRoute(pathname)) {
+  if (!isPublicPath(pathname)) {
+    const authToken = request.cookies.get('auth_token')?.value;
+    const portalToken = request.cookies.get('portal_token')?.value;
+
+    // Dashboard paths require auth_token
+    if (isDashboardPath(pathname) && !authToken) {
+      const loginUrl = new URL('/auth', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Portal paths require portal_token OR auth_token
+    if (isPortalPath(pathname) && !portalToken && !authToken) {
+      const loginUrl = new URL('/portal/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // =========================================================================
+  // TENANT RESOLUTION (cookie/header only — no DB calls in middleware)
+  // =========================================================================
+
+  if (!isPublicPath(pathname)) {
     let tenantId =
-      request.cookies.get('tenant_id')?.value || request.headers.get('x-tenant-id') || '';
-    let tenantSlug =
-      request.cookies.get('tenant_slug')?.value || request.headers.get('x-tenant-slug') || '';
+      request.cookies.get('tenant_id')?.value ||
+      request.headers.get('x-tenant-id') ||
+      '';
+    const tenantSlug =
+      request.cookies.get('tenant_slug')?.value ||
+      request.headers.get('x-tenant-slug') ||
+      '';
     const demoSession = request.cookies.get('demo_session')?.value;
 
     // Fallback: extract tenantId from JWT in auth_token cookie
@@ -68,10 +117,15 @@ export function middleware(request: NextRequest) {
         try {
           const parts = authToken.split('.');
           if (parts.length === 3) {
-            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-            if (payload.tenantId) {
+            const payload = JSON.parse(
+              atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+            ) as Record<string, unknown>;
+            if (typeof payload.tenantId === 'string') {
               tenantId = payload.tenantId;
-            } else if (payload.sub && payload.sub.includes(':')) {
+            } else if (
+              typeof payload.sub === 'string' &&
+              payload.sub.includes(':')
+            ) {
               tenantId = payload.sub.split(':')[1];
             }
           }
@@ -88,26 +142,25 @@ export function middleware(request: NextRequest) {
       response.headers.set('x-tenant-slug', tenantSlug);
     }
 
-    // Allow demo sessions through without tenant
+    // Require tenant context for non-demo sessions
     if (!tenantId && !tenantSlug && !demoSession) {
-      // For API routes without tenant context, return 400
-      if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
+      // API routes without tenant → 400
+      if (
+        pathname.startsWith('/api/') &&
+        !pathname.startsWith('/api/auth')
+      ) {
         return NextResponse.json(
-          { error: { code: 'TENANT_REQUIRED', message: 'Tenant identifier is required' } },
+          {
+            error: {
+              code: 'TENANT_REQUIRED',
+              message: 'Tenant identifier is required',
+            },
+          },
           { status: 400 }
         );
       }
-      // For page routes that require auth, redirect to login
-      if (
-        pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/portal/dashboard') ||
-        pathname.startsWith('/portal/bookings') ||
-        pathname.startsWith('/portal/inspections') ||
-        pathname.startsWith('/portal/documents') ||
-        pathname.startsWith('/portal/maintenance') ||
-        pathname.startsWith('/portal/settings') ||
-        pathname.startsWith('/portal/warranty')
-      ) {
+      // Page routes that need tenant → redirect to auth
+      if (isDashboardPath(pathname) || isPortalPath(pathname)) {
         const loginUrl = new URL('/auth', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
@@ -115,15 +168,58 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // =============================================================================
+  // =========================================================================
+  // CSRF — Double-Submit Cookie Pattern
+  // =========================================================================
+
+  // Set CSRF cookie if not present (on any request — the cookie is non-HttpOnly)
+  if (!request.cookies.get('csrf-token')?.value) {
+    const csrfBytes = new Uint8Array(32);
+    crypto.getRandomValues(csrfBytes);
+    const csrfToken = Array.from(csrfBytes, b => b.toString(16).padStart(2, '0')).join('');
+    response.cookies.set('csrf-token', csrfToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60,
+    });
+  }
+
+  // Validate CSRF on mutating API requests (POST/PUT/PATCH/DELETE)
+  const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  const CSRF_SKIP_PATHS = ['/api/auth', '/api/webhooks', '/api/stripe/webhook', '/api/csrf'];
+  if (
+    pathname.startsWith('/api/') &&
+    MUTATING_METHODS.includes(request.method) &&
+    !CSRF_SKIP_PATHS.some(p => pathname.startsWith(p))
+  ) {
+    const cookieToken = request.cookies.get('csrf-token')?.value;
+    const headerToken = request.headers.get('x-csrf-token');
+
+    if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+      return NextResponse.json(
+        { error: { code: 'CSRF_INVALID', message: 'Token CSRF non valido' } },
+        { status: 403 },
+      );
+    }
+  }
+
+  // =========================================================================
   // CACHE STRATEGY
-  // =============================================================================
+  // =========================================================================
 
   if (pathname.startsWith('/api/')) {
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate'
+    );
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
-  } else if (pathname.startsWith('/dashboard/') || pathname.startsWith('/portal/')) {
+  } else if (
+    pathname.startsWith('/dashboard/') ||
+    pathname.startsWith('/portal/')
+  ) {
     response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
   } else {
     response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');

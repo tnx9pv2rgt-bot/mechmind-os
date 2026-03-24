@@ -22,6 +22,7 @@ export default function PortalInspectionsPage() {
     data: rawData,
     error: swrError,
     isLoading,
+    mutate,
   } = useSWR<{ data: CustomerInspection[] }>('/api/portal/inspections', fetcher);
 
   const inspections = rawData?.data || [];
@@ -80,7 +81,7 @@ export default function PortalInspectionsPage() {
         <div className='text-center py-16'>
           <p className='text-apple-red mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => mutate()}
             className='text-apple-blue hover:underline'
           >
             Riprova

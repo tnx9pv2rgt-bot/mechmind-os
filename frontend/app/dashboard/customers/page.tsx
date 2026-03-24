@@ -1,372 +1,510 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
-import { AppleButton } from '@/components/ui/apple-button';
-import { Input } from '@/components/ui/input';
 import {
   Users,
   Search,
   Plus,
   Mail,
   Phone,
-  Star,
-  TrendingUp,
-  Gift,
-  Download,
+  MoreHorizontal,
+  Eye,
+  Pencil,
   Trash2,
-  AlertTriangle,
+  Upload,
+  AlertCircle,
+  Download,
+  ArrowLeft,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useCustomers, useGdprExport, useGdprDelete } from '@/hooks/useApi';
+import { toast } from 'sonner';
+import { Pagination } from '@/components/ui/pagination';
+import { useCustomers, useDeleteCustomer, useGdprExport } from '@/hooks/useApi';
+import { formatPhone, timeAgo } from '@/lib/utils/format';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+
+type CustomerType = 'all' | 'private' | 'business';
+
+const PAGE_SIZE = 20;
+
+const colors = {
+  bg: '#1a1a1a',
+  surface: '#2f2f2f',
+  surfaceHover: '#383838',
+  border: '#4e4e4e',
+  borderSubtle: '#3a3a3a',
+  textPrimary: '#ffffff',
+  textSecondary: '#b4b4b4',
+  textTertiary: '#888888',
+  textMuted: '#666666',
+  accent: '#ffffff',
+  success: '#34d399',
+  warning: '#fbbf24',
+  error: '#f87171',
+  info: '#60a5fa',
+  purple: '#a78bfa',
+  glow: 'rgba(255,255,255,0.03)',
+  glowStrong: 'rgba(255,255,255,0.06)',
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
-  },
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-const headerVariants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-};
+export default function CustomersPage(): React.ReactElement {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('q') || '';
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
 
-const loyaltyColors: Record<string, string> = {
-  Bronze: 'bg-amber-700',
-  Silver: 'bg-slate-400',
-  Gold: 'bg-amber-400',
-  Platinum: 'bg-gradient-to-r from-slate-300 to-white',
-};
-
-function GdprDeleteDialog({
-  customerName,
-  customerId,
-  onClose,
-}: {
-  customerName: string;
-  customerId: string;
-  onClose: () => void;
-}) {
-  const [confirmText, setConfirmText] = useState('');
-  const gdprDelete = useGdprDelete();
-
-  const expectedText = `ELIMINA ${customerName.toUpperCase()}`;
-  const canDelete = confirmText === expectedText;
-
-  return (
-    <div
-      className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm'
-      role='dialog'
-      aria-modal='true'
-      aria-label='Elimina dati cliente'
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className='bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4'
-      >
-        <div className='flex items-center gap-3 mb-4'>
-          <div className='w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center'>
-            <AlertTriangle className='h-6 w-6 text-red-600 dark:text-red-400' />
-          </div>
-          <div>
-            <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] dark:text-[#ececec]'>
-              Elimina dati cliente
-            </h3>
-            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-              Azione irreversibile — GDPR Art. 17
-            </p>
-          </div>
-        </div>
-
-        <p className='text-body text-apple-gray dark:text-[#636366] mb-4'>
-          Tutti i dati personali di <strong>{customerName}</strong> verranno eliminati
-          permanentemente. Questa azione non può essere annullata.
-        </p>
-
-        <div className='mb-4'>
-          <label className='text-caption text-apple-gray dark:text-[#636366] dark:text-[#636366] uppercase tracking-wider block mb-1'>
-            Digita <strong>{expectedText}</strong> per confermare
-          </label>
-          <Input
-            value={confirmText}
-            onChange={e => setConfirmText(e.target.value)}
-            placeholder={expectedText}
-            className='h-12 rounded-xl border-2 border-red-200 dark:border-red-700/30 bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900/30'
-          />
-        </div>
-
-        <div className='flex gap-3'>
-          <AppleButton variant='secondary' className='flex-1' onClick={onClose}>
-            Annulla
-          </AppleButton>
-          <AppleButton
-            className='flex-1 bg-red-600 hover:bg-red-700'
-            disabled={!canDelete || gdprDelete.isPending}
-            onClick={async () => {
-              await gdprDelete.mutateAsync(customerId);
-              onClose();
-            }}
-          >
-            <Trash2 className='h-4 w-4 mr-2' />
-            {gdprDelete.isPending ? 'Eliminazione...' : 'Elimina'}
-          </AppleButton>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-export default function CustomersPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [customerType, setCustomerType] = useState<CustomerType>('all');
+  const [page, setPage] = useState(initialPage);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const deleteCustomer = useDeleteCustomer();
+  const gdprExport = useGdprExport();
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Sync URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    if (page > 1) params.set('page', String(page));
+    const qs = params.toString();
+    const newUrl = qs ? `?${qs}` : '/dashboard/customers';
+    window.history.replaceState(null, '', newUrl);
+  }, [debouncedSearch, page]);
+
   const {
     data: customersData,
     isLoading,
     error,
-  } = useCustomers({ search: searchQuery || undefined });
-  const gdprExport = useGdprExport();
+    refetch,
+  } = useCustomers({
+    search: debouncedSearch || undefined,
+    page,
+    limit: PAGE_SIZE,
+  });
 
   const customers = customersData?.data ?? [];
   const total = customersData?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Filter by type client-side (until backend supports it)
+  const filteredCustomers = customerType === 'all'
+    ? customers
+    : customers.filter((c) => {
+        const raw = c as unknown as Record<string, unknown>;
+        const notes = typeof raw.notes === 'string' ? raw.notes : undefined;
+        if (customerType === 'business') {
+          return notes?.includes('"customerType":"business"') || raw.companyName;
+        }
+        return !notes?.includes('"customerType":"business"');
+      });
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteCustomer.mutateAsync(deleteTarget.id);
+      toast.success(`Cliente "${deleteTarget.name}" eliminato`);
+      setDeleteTarget(null);
+    } catch {
+      toast.error('Errore durante l\'eliminazione del cliente');
+    }
+  }, [deleteTarget, deleteCustomer]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
-    <div>
-      {deleteTarget && (
-        <GdprDeleteDialog
-          customerName={deleteTarget.name}
-          customerId={deleteTarget.id}
-          onClose={() => setDeleteTarget(null)}
-        />
-      )}
+    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title='Eliminare il cliente?'
+        description={`Stai per eliminare definitivamente il cliente "${deleteTarget?.name || ''}" e tutti i suoi dati associati. Questa azione non può essere annullata (GDPR Art. 17).`}
+        confirmLabel='Elimina'
+        variant='danger'
+        onConfirm={handleDelete}
+        loading={deleteCustomer.isPending}
+      />
 
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Clienti</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
-              Gestisci il tuo database clienti
-            </p>
+      {/* Header */}
+      <header
+        className="sticky top-0 z-30 backdrop-blur-xl border-b"
+        style={{
+          backgroundColor: `${colors.bg}cc`,
+          borderColor: colors.borderSubtle,
+        }}
+      >
+        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="p-2 rounded-xl transition-colors hover:bg-white/5"
+              aria-label="Torna alla dashboard"
+            >
+              <ArrowLeft className="h-5 w-5" style={{ color: colors.textSecondary }} />
+            </Link>
+            <div>
+              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
+                Clienti
+              </h1>
+              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
+                {isLoading ? 'Caricamento...' : `${total} clienti totali`}
+              </p>
+            </div>
           </div>
-          <Link href='/dashboard/customers/new'>
-            <AppleButton icon={<Plus className='h-4 w-4' />}>Nuovo Cliente</AppleButton>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/customers/import">
+              <button
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium transition-colors border"
+                style={{
+                  borderColor: colors.border,
+                  color: colors.textPrimary,
+                  backgroundColor: 'transparent',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Importa CSV</span>
+                <span className="sm:hidden">Importa</span>
+              </button>
+            </Link>
+            <Link href="/dashboard/customers/new/step1">
+              <button
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: colors.accent,
+                  color: colors.bg,
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nuovo Cliente</span>
+                <span className="sm:hidden">Nuovo</span>
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className='p-8 space-y-6'>
-        {/* Stats */}
-        <motion.div
-          variants={containerVariants}
-          initial='hidden'
-          animate='visible'
-          className='grid grid-cols-1 sm:grid-cols-4 gap-bento'
-        >
-          {[
-            {
-              label: 'Clienti Totali',
-              value: isLoading ? '—' : String(total),
-              icon: Users,
-              color: 'bg-apple-blue',
-            },
-            {
-              label: 'Nuovi questo mese',
-              value: isLoading ? '—' : '—',
-              icon: TrendingUp,
-              color: 'bg-apple-green',
-            },
-            {
-              label: 'Clienti VIP',
-              value: isLoading ? '—' : '—',
-              icon: Star,
-              color: 'bg-apple-purple',
-            },
-            {
-              label: 'Programma Fedeltà',
-              value: isLoading ? '—' : '—',
-              icon: Gift,
-              color: 'bg-apple-orange',
-            },
-          ].map(stat => (
-            <motion.div key={stat.label} variants={cardVariants}>
-              <AppleCard>
-                <AppleCardContent className='flex items-center gap-4'>
-                  <div
-                    className={`w-12 h-12 rounded-2xl ${stat.color} flex items-center justify-center`}
-                  >
-                    <stat.icon className='h-6 w-6 text-white' />
-                  </div>
-                  <div>
-                    <p className='text-apple-gray dark:text-[#636366] text-sm'>{stat.label}</p>
-                    <p className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
-                      {stat.value}
-                    </p>
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-          ))}
+      <div className="p-4 sm:p-8 space-y-6">
+        {/* Search + Filter */}
+        <motion.div variants={itemVariants} initial="hidden" animate="visible">
+          <div
+            className="rounded-2xl border p-4 space-y-4"
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: colors.borderSubtle,
+            }}
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: colors.textMuted }} />
+              <input
+                type="text"
+                placeholder="Cerca clienti per nome, email o telefono..."
+                aria-label="Cerca clienti"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 h-12 rounded-xl border text-sm focus:outline-none focus:border-white/30 transition-colors"
+                style={{
+                  backgroundColor: colors.glowStrong,
+                  borderColor: colors.borderSubtle,
+                  color: colors.textPrimary,
+                }}
+              />
+            </div>
+            {/* Filter Chips */}
+            <div className="flex items-center justify-center flex-wrap gap-2">
+              {[
+                { value: 'all' as const, label: 'Tutti' },
+                { value: 'private' as const, label: 'Privati' },
+                { value: 'business' as const, label: 'Aziende' },
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => { setCustomerType(filter.value); setPage(1); }}
+                  className="h-10 px-4 rounded-full text-sm font-medium transition-colors border"
+                  style={
+                    customerType === filter.value
+                      ? { backgroundColor: colors.accent, color: colors.bg, borderColor: colors.accent }
+                      : { backgroundColor: 'transparent', color: colors.textSecondary, borderColor: colors.border }
+                  }
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
-        {/* Search */}
-        <motion.div variants={cardVariants} initial='hidden' animate='visible'>
-          <AppleCard>
-            <AppleCardContent>
-              <div className='relative'>
-                <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
-                <Input
-                  placeholder='Cerca clienti per nome, email o telefono...'
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className='pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
-                />
-              </div>
-            </AppleCardContent>
-          </AppleCard>
-        </motion.div>
-
-        {/* Customers Grid */}
+        {/* Content */}
         {isLoading ? (
-          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento'>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <AppleCard key={i}>
-                <AppleCardContent>
-                  <div className='flex items-center gap-4 mb-4'>
-                    <div className='w-14 h-14 rounded-full bg-gray-200 dark:bg-[#424242] animate-pulse' />
-                    <div>
-                      <div className='w-32 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse mb-2' />
-                      <div className='w-16 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse' />
-                    </div>
-                  </div>
-                  <div className='space-y-2'>
-                    <div className='w-full h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse' />
-                    <div className='w-3/4 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse' />
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            ))}
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white" />
           </div>
         ) : error ? (
-          <div className='text-center py-12 text-apple-gray dark:text-[#636366]'>
-            <Users className='h-12 w-12 mx-auto mb-4 opacity-50' />
-            <p>Impossibile caricare i clienti. Riprova.</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
+            <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
+              Impossibile caricare i clienti
+            </p>
+            <p className="text-sm mb-4" style={{ color: colors.textTertiary }}>
+              Si è verificato un errore. Riprova.
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="h-10 px-4 rounded-full text-sm font-medium border transition-colors hover:bg-white/5"
+              style={{ borderColor: colors.border, color: colors.textPrimary }}
+            >
+              Riprova
+            </button>
           </div>
-        ) : customers.length === 0 ? (
-          <div className='text-center py-12 text-apple-gray dark:text-[#636366]'>
-            <Users className='h-12 w-12 mx-auto mb-4 opacity-50' />
-            <p>Nessun cliente trovato</p>
+        ) : filteredCustomers.length === 0 && !debouncedSearch ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Users className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
+            <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
+              Nessun cliente ancora
+            </p>
+            <p className="text-sm mb-4" style={{ color: colors.textTertiary }}>
+              Aggiungi il primo cliente per iniziare a gestire la tua officina.
+            </p>
+            <Link href="/dashboard/customers/new/step1">
+              <button
+                className="h-10 px-4 rounded-full text-sm font-medium transition-colors"
+                style={{ backgroundColor: colors.accent, color: colors.bg }}
+              >
+                + Aggiungi Cliente
+              </button>
+            </Link>
+          </div>
+        ) : filteredCustomers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Search className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
+            <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
+              Nessun risultato
+            </p>
+            <p className="text-sm mb-4" style={{ color: colors.textTertiary }}>
+              Nessun cliente trovato per &quot;{debouncedSearch}&quot;
+            </p>
+            <button
+              onClick={() => { setSearchQuery(''); setCustomerType('all'); }}
+              className="h-10 px-4 rounded-full text-sm font-medium border transition-colors hover:bg-white/5"
+              style={{ borderColor: colors.border, color: colors.textPrimary }}
+            >
+              Cancella filtri
+            </button>
           </div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial='hidden'
-            animate='visible'
-            className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento'
-          >
-            {customers.map(customer => {
-              const fullName = `${customer.firstName} ${customer.lastName}`;
-              const initials = `${customer.firstName?.[0] || ''}${customer.lastName?.[0] || ''}`;
-              return (
-                <motion.div key={customer.id} variants={cardVariants}>
-                  <AppleCard hover className='animate-fade-in'>
-                    <AppleCardContent>
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='flex items-center gap-4'>
-                          <div className='w-14 h-14 rounded-full bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center text-white font-semibold text-lg'>
-                            {initials}
-                          </div>
-                          <div>
-                            <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                              {fullName}
-                            </h3>
-                            {customer.loyaltyTier && (
-                              <>
-                                <span
-                                  className={`inline-block w-3 h-3 rounded-full ${loyaltyColors[customer.loyaltyTier] || 'bg-gray-300'} mt-1`}
-                                />
-                                <span className='text-footnote text-apple-gray dark:text-[#636366] ml-2'>
-                                  {customer.loyaltyTier}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
+            {/* Data Table */}
+            <motion.div variants={itemVariants}>
+              <div
+                className="rounded-2xl border overflow-hidden"
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderSubtle,
+                }}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr
+                        className="text-left border-b"
+                        style={{ borderColor: colors.borderSubtle }}
+                      >
+                        <th className="px-4 sm:px-6 py-4 font-medium text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>Nome</th>
+                        <th className="px-4 sm:px-6 py-4 font-medium text-xs uppercase tracking-wider hidden md:table-cell" style={{ color: colors.textTertiary }}>Email</th>
+                        <th className="px-4 sm:px-6 py-4 font-medium text-xs uppercase tracking-wider hidden lg:table-cell" style={{ color: colors.textTertiary }}>Telefono</th>
+                        <th className="px-4 sm:px-6 py-4 font-medium text-xs uppercase tracking-wider hidden sm:table-cell" style={{ color: colors.textTertiary }}>Veicoli</th>
+                        <th className="px-4 sm:px-6 py-4 font-medium text-xs uppercase tracking-wider hidden xl:table-cell" style={{ color: colors.textTertiary }}>Ultimo Servizio</th>
+                        <th className="px-4 sm:px-6 py-4 font-medium text-xs uppercase tracking-wider text-right" style={{ color: colors.textTertiary }}>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCustomers.map((customer) => {
+                        const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Senza nome';
+                        const initials = `${customer.firstName?.[0] || ''}${customer.lastName?.[0] || ''}`.toUpperCase() || '??';
+                        const vehicleCount = customer.vehicles?.length ?? 0;
 
-                      <div className='space-y-2 mb-4'>
-                        <div className='flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366]'>
-                          <Mail className='h-4 w-4' />
-                          <span className='truncate'>{customer.email}</span>
-                        </div>
-                        <div className='flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366]'>
-                          <Phone className='h-4 w-4' />
-                          <span>{customer.phone}</span>
-                        </div>
-                      </div>
-
-                      <div className='grid grid-cols-3 gap-2 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
-                        <div className='text-center'>
-                          <p className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                            {customer.vehicles?.length ?? 0}
-                          </p>
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>
-                            Veicoli
-                          </p>
-                        </div>
-                        <div className='text-center'>
-                          <p className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                            {customer.visitCount ?? 0}
-                          </p>
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Visite</p>
-                        </div>
-                        <div className='text-center'>
-                          <p className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
-                            {customer.totalSpent
-                              ? `€${customer.totalSpent.toLocaleString('it-IT')}`
-                              : '—'}
-                          </p>
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Totale</p>
-                        </div>
-                      </div>
-
-                      {/* GDPR Actions + Detail */}
-                      <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242] flex items-center justify-between'>
-                        <div className='flex gap-2'>
-                          <button
-                            onClick={() => gdprExport.mutate(customer.id)}
-                            disabled={gdprExport.isPending}
-                            className='p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-apple-gray dark:text-[#636366] hover:text-apple-blue transition-colors'
-                            title='Esporta dati (GDPR)'
+                        return (
+                          <tr
+                            key={customer.id}
+                            className="border-b last:border-0 transition-colors cursor-pointer group"
+                            style={{ borderColor: colors.borderSubtle }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.surfaceHover; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                           >
-                            <Download className='h-4 w-4' />
-                          </button>
-                          <button
-                            onClick={() => setDeleteTarget({ id: customer.id, name: fullName })}
-                            className='p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-apple-gray dark:text-[#636366] hover:text-red-600 transition-colors'
-                            title='Elimina dati (GDPR Art. 17)'
-                          >
-                            <Trash2 className='h-4 w-4' />
-                          </button>
-                        </div>
-                        <AppleButton variant='ghost' size='sm'>
-                          Dettagli
-                        </AppleButton>
-                      </div>
-                    </AppleCardContent>
-                  </AppleCard>
-                </motion.div>
-              );
-            })}
+                            <td className="px-4 sm:px-6 py-4">
+                              <Link
+                                href={`/dashboard/customers/${customer.id}`}
+                                className="flex items-center gap-3"
+                              >
+                                <div
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
+                                  style={{
+                                    backgroundColor: colors.borderSubtle,
+                                    color: colors.textPrimary,
+                                  }}
+                                >
+                                  {initials}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate" style={{ color: colors.textPrimary }}>
+                                    {fullName}
+                                  </p>
+                                  {customer.loyaltyTier && (
+                                    <span className="text-xs" style={{ color: colors.textMuted }}>
+                                      {customer.loyaltyTier}
+                                    </span>
+                                  )}
+                                </div>
+                              </Link>
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 hidden md:table-cell" style={{ color: colors.textSecondary }}>
+                              <div className="flex items-center gap-2 truncate">
+                                <Mail className="h-4 w-4 flex-shrink-0" style={{ color: colors.textMuted }} />
+                                <span className="truncate">{customer.email || 'N/D'}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 hidden lg:table-cell" style={{ color: colors.textSecondary }}>
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 flex-shrink-0" style={{ color: colors.textMuted }} />
+                                <span>{customer.phone ? formatPhone(customer.phone) : 'N/D'}</span>
+                              </div>
+                            </td>
+                            <td
+                              className="px-4 sm:px-6 py-4 text-center hidden sm:table-cell"
+                              style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+                            >
+                              {vehicleCount}
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 hidden xl:table-cell" style={{ color: colors.textSecondary }}>
+                              {customer.updatedAt ? timeAgo(customer.updatedAt) : 'Mai'}
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 text-right">
+                              <div className="relative inline-block">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === customer.id ? null : customer.id);
+                                  }}
+                                  className="p-2 rounded-lg transition-colors hover:bg-white/5"
+                                  aria-label="Azioni cliente"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" style={{ color: colors.textMuted }} />
+                                </button>
+                                {openMenuId === customer.id && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-40"
+                                      onClick={() => setOpenMenuId(null)}
+                                    />
+                                    <div
+                                      className="absolute right-0 top-full mt-1 z-50 rounded-xl shadow-xl border py-1 min-w-[180px]"
+                                      style={{
+                                        backgroundColor: colors.surface,
+                                        borderColor: colors.border,
+                                      }}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          router.push(`/dashboard/customers/${customer.id}`);
+                                        }}
+                                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/5"
+                                        style={{ color: colors.textPrimary }}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                        Vedi dettaglio
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          router.push(`/dashboard/customers/${customer.id}?tab=anagrafica&edit=true`);
+                                        }}
+                                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/5"
+                                        style={{ color: colors.textPrimary }}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                        Modifica
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          gdprExport.mutate(customer.id, {
+                                            onSuccess: () => toast.success('Export GDPR avviato'),
+                                            onError: () => toast.error('Errore durante l\'export'),
+                                          });
+                                        }}
+                                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/5"
+                                        style={{ color: colors.textPrimary }}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                        Esporta dati (GDPR)
+                                      </button>
+                                      <div className="my-1" style={{ borderTop: `1px solid ${colors.borderSubtle}` }} />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          setDeleteTarget({ id: customer.id, name: fullName });
+                                        }}
+                                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/5"
+                                        style={{ color: colors.error }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        Elimina
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Pagination */}
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </motion.div>
         )}
       </div>

@@ -296,61 +296,81 @@ describe('GdprRequestService', () => {
   // =========================================================================
   describe('listRequests', () => {
     it('should list all requests for a tenant', async () => {
+      prisma.dataSubjectRequest.count.mockResolvedValue(1);
       const result = await service.listRequests(TENANT_ID);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(REQUEST_ID);
-      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID },
-        orderBy: { receivedAt: 'desc' },
-      });
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(REQUEST_ID);
+      expect(result.total).toBe(1);
+      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID },
+          orderBy: { receivedAt: 'desc' },
+          skip: 0,
+          take: 20,
+        }),
+      );
     });
 
     it('should filter by status', async () => {
+      prisma.dataSubjectRequest.count.mockResolvedValue(0);
       await service.listRequests(TENANT_ID, { status: 'IN_PROGRESS' });
 
-      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID, status: 'IN_PROGRESS' },
-        orderBy: { receivedAt: 'desc' },
-      });
+      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, status: 'IN_PROGRESS' },
+          orderBy: { receivedAt: 'desc' },
+        }),
+      );
     });
 
     it('should filter by type', async () => {
+      prisma.dataSubjectRequest.count.mockResolvedValue(0);
       await service.listRequests(TENANT_ID, { type: 'DELETION' });
 
-      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID, requestType: 'DELETION' },
-        orderBy: { receivedAt: 'desc' },
-      });
+      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, requestType: 'DELETION' },
+          orderBy: { receivedAt: 'desc' },
+        }),
+      );
     });
 
     it('should filter pending requests', async () => {
+      prisma.dataSubjectRequest.count.mockResolvedValue(0);
       await service.listRequests(TENANT_ID, { pending: true });
 
-      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith({
-        where: {
-          tenantId: TENANT_ID,
-          status: { notIn: ['COMPLETED', 'REJECTED', 'CANCELLED'] },
-        },
-        orderBy: { receivedAt: 'desc' },
-      });
+      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            tenantId: TENANT_ID,
+            status: { notIn: ['COMPLETED', 'REJECTED', 'CANCELLED'] },
+          },
+          orderBy: { receivedAt: 'desc' },
+        }),
+      );
     });
 
-    it('should return empty array when no requests found', async () => {
+    it('should return empty data when no requests found', async () => {
       prisma.dataSubjectRequest.findMany.mockResolvedValue([]);
+      prisma.dataSubjectRequest.count.mockResolvedValue(0);
 
       const result = await service.listRequests(TENANT_ID);
 
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should apply no extra filters when filters object is empty', async () => {
+      prisma.dataSubjectRequest.count.mockResolvedValue(0);
       await service.listRequests(TENANT_ID, {});
 
-      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID },
-        orderBy: { receivedAt: 'desc' },
-      });
+      expect(prisma.dataSubjectRequest.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID },
+          orderBy: { receivedAt: 'desc' },
+        }),
+      );
     });
   });
 
@@ -372,6 +392,11 @@ describe('GdprRequestService', () => {
     });
 
     it('should set completedAt and slaMet when status is COMPLETED', async () => {
+      // Request must be IN_PROGRESS to transition to COMPLETED
+      prisma.dataSubjectRequest.findFirst.mockResolvedValue({
+        ...mockRequest,
+        status: 'IN_PROGRESS',
+      });
       const completedRequest = {
         ...mockRequest,
         status: 'COMPLETED',
@@ -710,6 +735,7 @@ describe('GdprRequestService', () => {
           tenantId: TENANT_ID,
         },
         orderBy: { deadlineAt: 'asc' },
+        take: 200,
       });
     });
 
@@ -723,6 +749,7 @@ describe('GdprRequestService', () => {
           status: { notIn: ['COMPLETED', 'REJECTED', 'CANCELLED'] },
         },
         orderBy: { deadlineAt: 'asc' },
+        take: 200,
       });
     });
 
@@ -800,6 +827,55 @@ describe('GdprRequestService', () => {
       const result = await service.getStatistics(TENANT_ID);
 
       expect(result.slaComplianceRate).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // State Machine
+  // =========================================================================
+  describe('State Machine', () => {
+    it('should reject COMPLETED → IN_PROGRESS (updateStatus)', async () => {
+      prisma.dataSubjectRequest.findFirst.mockResolvedValue({
+        ...mockRequest,
+        status: 'COMPLETED',
+      });
+
+      await expect(service.updateStatus(REQUEST_ID, TENANT_ID, 'IN_PROGRESS')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should reject REJECTED → VERIFIED (verifyIdentity)', async () => {
+      prisma.dataSubjectRequest.findFirst.mockResolvedValue({
+        ...mockRequest,
+        status: 'REJECTED',
+      });
+
+      await expect(
+        service.verifyIdentity(REQUEST_ID, TENANT_ID, { method: 'EMAIL' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject COMPLETED → REJECTED (rejectRequest)', async () => {
+      prisma.dataSubjectRequest.findFirst.mockResolvedValue({
+        ...mockRequest,
+        status: 'COMPLETED',
+      });
+
+      await expect(service.rejectRequest(REQUEST_ID, TENANT_ID, 'Too late')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should reject CANCELLED → IN_PROGRESS (assignRequest)', async () => {
+      prisma.dataSubjectRequest.findFirst.mockResolvedValue({
+        ...mockRequest,
+        status: 'CANCELLED',
+      });
+
+      await expect(service.assignRequest(REQUEST_ID, TENANT_ID, USER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

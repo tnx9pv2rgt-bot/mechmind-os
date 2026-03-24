@@ -1,35 +1,13 @@
 /**
- * GET /api/maintenance/overdue
- * Get all overdue maintenance schedules
+ * GET /api/maintenance/overdue — Get overdue maintenance items (proxy to backend)
  */
 
 export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from 'next/server'
-import { getOverdueItems } from '@/lib/services/maintenanceService'
+import { NextRequest } from 'next/server';
+import { proxyToNestJS, getQueryParams } from '@/lib/auth/api-proxy';
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const vehicleId = searchParams.get('vehicleId') || undefined
-    
-    const items = await getOverdueItems(vehicleId)
-    
-    return NextResponse.json({
-      success: true,
-      data: items,
-      count: items.length
-    })
-  } catch (error) {
-    console.error('Get overdue items error:', error)
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch overdue maintenance items',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
-  }
+  const params = getQueryParams(request);
+  return proxyToNestJS({ backendPath: 'v1/fleets/maintenance/overdue', params });
 }

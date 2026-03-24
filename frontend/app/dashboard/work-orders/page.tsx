@@ -1,444 +1,664 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
+import { toast } from 'sonner';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
-import { AppleButton } from '@/components/ui/apple-button';
-import { Input } from '@/components/ui/input';
 import {
   ClipboardList,
   Plus,
-  Wrench,
-  CheckCircle,
-  Search,
-  Filter,
-  Loader2,
   Eye,
-  Play,
-  FileText,
+  Search,
+  LayoutList,
+  LayoutGrid,
+  User,
+  Car,
+  Clock,
   AlertCircle,
-  Activity,
+  ArrowLeft,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
+import { formatCurrency, formatDate, timeAgo } from '@/lib/utils/format';
 
-interface WorkOrder {
-  id: string;
-  woNumber: string;
-  vehicleMake: string;
-  vehicleModel: string;
-  vehiclePlate: string;
-  customerName: string;
-  status: WorkOrderStatus;
-  totalCost: number;
-  createdAt: string;
-}
-
-type WorkOrderStatus =
-  | 'OPEN'
-  | 'PENDING'
-  | 'IN_PROGRESS'
-  | 'WAITING_PARTS'
-  | 'READY'
-  | 'COMPLETED'
-  | 'INVOICED';
-
-type StatusFilterValue = 'ALL' | WorkOrderStatus;
-
-const statusConfig: Record<WorkOrderStatus, { color: string; bg: string; label: string }> = {
-  OPEN: {
-    color: 'text-gray-700 dark:text-gray-300',
-    bg: 'bg-gray-200 dark:bg-gray-700',
-    label: 'Aperto',
-  },
-  PENDING: {
-    color: 'text-yellow-700 dark:text-yellow-300',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-    label: 'In Attesa',
-  },
-  IN_PROGRESS: {
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
-    label: 'In Lavorazione',
-  },
-  WAITING_PARTS: {
-    color: 'text-orange-700 dark:text-orange-300',
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
-    label: 'Attesa Ricambi',
-  },
-  READY: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
-    label: 'Pronto',
-  },
-  COMPLETED: {
-    color: 'text-purple-700 dark:text-purple-300',
-    bg: 'bg-purple-100 dark:bg-purple-900/40',
-    label: 'Completato',
-  },
-  INVOICED: {
-    color: 'text-teal-700 dark:text-teal-300',
-    bg: 'bg-teal-100 dark:bg-teal-900/40',
-    label: 'Fatturato',
-  },
+// =============================================================================
+// Design Tokens
+// =============================================================================
+const colors = {
+  bg: '#1a1a1a',
+  surface: '#2f2f2f',
+  surfaceHover: '#383838',
+  border: '#4e4e4e',
+  borderSubtle: '#3a3a3a',
+  textPrimary: '#ffffff',
+  textSecondary: '#b4b4b4',
+  textTertiary: '#888888',
+  textMuted: '#666666',
+  accent: '#ffffff',
+  success: '#34d399',
+  warning: '#fbbf24',
+  error: '#f87171',
+  info: '#60a5fa',
+  purple: '#a78bfa',
+  glow: 'rgba(255,255,255,0.03)',
+  glowStrong: 'rgba(255,255,255,0.06)',
 };
 
-const statusOptions: { value: StatusFilterValue; label: string }[] = [
-  { value: 'ALL', label: 'Tutti gli stati' },
-  { value: 'OPEN', label: 'Aperto' },
-  { value: 'PENDING', label: 'In Attesa' },
-  { value: 'IN_PROGRESS', label: 'In Lavorazione' },
-  { value: 'WAITING_PARTS', label: 'Attesa Ricambi' },
-  { value: 'READY', label: 'Pronto' },
-  { value: 'COMPLETED', label: 'Completato' },
-  { value: 'INVOICED', label: 'Fatturato' },
-];
-
+// =============================================================================
+// Animation Variants
+// =============================================================================
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+    transition: { staggerChildren: 0.05 },
   },
 };
 
-const statsCardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
-  },
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
-const listItemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
-  },
-};
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
+// =============================================================================
+// Types & Config
+// =============================================================================
+interface WorkOrder {
+  id: string;
+  woNumber: string;
+  status: string;
+  priority?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
+  customerName?: string;
+  technicianName?: string;
+  totalCost: number;
+  estimatedHours?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export default function WorkOrdersPage() {
+interface WorkOrdersResponse {
+  data: WorkOrder[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+type ViewMode = 'list' | 'kanban';
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; barColor: string }> = {
+  DRAFT: { label: 'Bozza', color: colors.textMuted, barColor: colors.textMuted },
+  OPEN: { label: 'Aperto', color: colors.info, barColor: colors.info },
+  IN_PROGRESS: { label: 'In Lavorazione', color: colors.warning, barColor: colors.warning },
+  QC: { label: 'Controllo Qualit\u00e0', color: colors.purple, barColor: colors.purple },
+  COMPLETED: { label: 'Completato', color: colors.success, barColor: colors.success },
+  DELIVERED: { label: 'Consegnato', color: '#22d3ee', barColor: '#22d3ee' },
+  CANCELLED: { label: 'Annullato', color: colors.error, barColor: colors.error },
+  PENDING: { label: 'In Attesa', color: colors.warning, barColor: colors.warning },
+  WAITING_PARTS: { label: 'Attesa Ricambi', color: '#fb923c', barColor: '#fb923c' },
+  READY: { label: 'Pronto', color: colors.success, barColor: colors.success },
+  INVOICED: { label: 'Fatturato', color: '#22d3ee', barColor: '#22d3ee' },
+};
+
+const KANBAN_COLUMNS = ['DRAFT', 'OPEN', 'IN_PROGRESS', 'QC', 'COMPLETED', 'DELIVERED'] as const;
+
+const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
+  LOW: { label: 'Bassa', color: colors.textMuted },
+  NORMAL: { label: 'Normale', color: colors.info },
+  HIGH: { label: 'Alta', color: '#fb923c' },
+  URGENT: { label: 'Urgente', color: colors.error },
+};
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Tutti gli stati' },
+  { value: 'DRAFT', label: 'Bozza' },
+  { value: 'OPEN', label: 'Aperto' },
+  { value: 'IN_PROGRESS', label: 'In Lavorazione' },
+  { value: 'QC', label: 'Controllo Qualit\u00e0' },
+  { value: 'COMPLETED', label: 'Completato' },
+  { value: 'DELIVERED', label: 'Consegnato' },
+  { value: 'CANCELLED', label: 'Annullato' },
+];
+
+export default function WorkOrdersPage(): React.ReactElement {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('ALL');
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
-  const {
-    data: workOrdersData,
-    isLoading,
-    mutate,
-  } = useSWR<{ data?: WorkOrder[] } | WorkOrder[]>('/api/work-orders', fetcher);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const buildUrl = useCallback((): string => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(PAGE_SIZE));
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (statusFilter) params.set('status', statusFilter);
+    return `/api/dashboard/work-orders?${params.toString()}`;
+  }, [page, debouncedSearch, statusFilter]);
+
+  const { data: rawData, error, isLoading, mutate } = useSWR<WorkOrdersResponse | WorkOrder[]>(
+    buildUrl(),
+    fetcher,
+  );
 
   const workOrders: WorkOrder[] = (() => {
-    if (!workOrdersData) return [];
-    const list = (workOrdersData as { data?: WorkOrder[] }).data || workOrdersData || [];
-    return Array.isArray(list) ? list : [];
+    if (!rawData) return [];
+    if (Array.isArray(rawData)) return rawData;
+    if ('data' in rawData && Array.isArray(rawData.data)) return rawData.data;
+    return [];
   })();
 
-  const handleStart = async (id: string) => {
-    setActionLoading(id);
+  const total = (() => {
+    if (!rawData) return 0;
+    if (Array.isArray(rawData)) return rawData.length;
+    if ('total' in rawData) return rawData.total;
+    return workOrders.length;
+  })();
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const handleChangeStatus = async (woId: string, newStatus: string): Promise<void> => {
     try {
-      const res = await fetch(`/api/work-orders/${id}/start`, { method: 'POST' });
-      if (!res.ok) throw new Error('Errore avvio');
+      const res = await fetch(`/api/dashboard/work-orders/${woId}/transition`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error?.message || json.message || 'Transizione non consentita');
+      }
+      toast.success(`Stato aggiornato a "${STATUS_CONFIG[newStatus]?.label || newStatus}"`);
       mutate();
-    } catch {
-      // silent
-    } finally {
-      setActionLoading(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore durante il cambio stato');
     }
   };
 
-  const handleComplete = async (id: string) => {
-    setActionLoading(id);
-    try {
-      const res = await fetch(`/api/work-orders/${id}/complete`, { method: 'POST' });
-      if (!res.ok) throw new Error('Errore completamento');
-      mutate();
-    } catch {
-      // silent
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  const getStatus = (status: string): { label: string; color: string; barColor: string } =>
+    STATUS_CONFIG[status] || { label: status, color: colors.textMuted, barColor: colors.textMuted };
 
-  const handleInvoice = async (id: string) => {
-    setActionLoading(id);
-    try {
-      const res = await fetch(`/api/work-orders/${id}/invoice`, { method: 'POST' });
-      if (!res.ok) throw new Error('Errore fatturazione');
-      mutate();
-    } catch {
-      // silent
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const filteredWorkOrders = workOrders.filter(wo => {
-    const matchesSearch =
-      !searchQuery ||
-      wo.woNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wo.vehiclePlate?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || wo.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Compute stats client-side
-  const activeCount = workOrders.filter(
-    wo =>
-      wo.status === 'OPEN' ||
-      wo.status === 'PENDING' ||
-      wo.status === 'IN_PROGRESS' ||
-      wo.status === 'WAITING_PARTS' ||
-      wo.status === 'READY'
-  ).length;
-  const inProgressCount = workOrders.filter(wo => wo.status === 'IN_PROGRESS').length;
-  const completedCount = workOrders.filter(
-    wo => wo.status === 'COMPLETED' || wo.status === 'INVOICED'
-  ).length;
-  const totalCount = workOrders.length;
-
-  const statCards = [
-    {
-      label: 'Attivi',
-      value: String(activeCount),
-      icon: Activity,
-      color: 'bg-apple-blue',
-    },
-    {
-      label: 'In Lavorazione',
-      value: String(inProgressCount),
-      icon: Wrench,
-      color: 'bg-apple-orange',
-    },
-    {
-      label: 'Completati',
-      value: String(completedCount),
-      icon: CheckCircle,
-      color: 'bg-apple-green',
-    },
-    {
-      label: 'Totale',
-      value: String(totalCount),
-      icon: ClipboardList,
-      color: 'bg-purple-500',
-    },
-  ];
+  // KPI counts
+  const openCount = workOrders.filter(w => w.status === 'OPEN').length;
+  const inProgressCount = workOrders.filter(w => w.status === 'IN_PROGRESS').length;
+  const completedCount = workOrders.filter(w => w.status === 'COMPLETED').length;
 
   return (
-    <div>
+    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Ordini di Lavoro</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
-              Gestisci le lavorazioni della tua officina
-            </p>
+      <header
+        className="sticky top-0 z-30 backdrop-blur-xl border-b"
+        style={{
+          backgroundColor: `${colors.bg}cc`,
+          borderColor: colors.borderSubtle,
+        }}
+      >
+        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="p-2 rounded-xl transition-colors hover:bg-white/5"
+              style={{ color: colors.textTertiary }}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div>
+              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
+                Ordini di Lavoro
+              </h1>
+              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
+                Gestisci le lavorazioni della tua officina
+              </p>
+            </div>
           </div>
-          <AppleButton
-            icon={<Plus className='h-4 w-4' />}
-            onClick={() => router.push('/dashboard/work-orders/new')}
-          >
-            Nuovo Ordine
-          </AppleButton>
+          <div className="flex items-center gap-3">
+            {/* View Toggle */}
+            <div
+              className="flex items-center rounded-full overflow-hidden border"
+              style={{ borderColor: colors.borderSubtle }}
+            >
+              <button
+                onClick={() => setViewMode('list')}
+                className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                style={{
+                  backgroundColor: viewMode === 'list' ? colors.textPrimary : 'transparent',
+                  color: viewMode === 'list' ? colors.bg : colors.textTertiary,
+                }}
+                aria-label="Vista lista"
+                title="Vista lista"
+              >
+                <LayoutList className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                style={{
+                  backgroundColor: viewMode === 'kanban' ? colors.textPrimary : 'transparent',
+                  color: viewMode === 'kanban' ? colors.bg : colors.textTertiary,
+                }}
+                aria-label="Vista kanban"
+                title="Vista kanban"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+            </div>
+            <Link href="/dashboard/work-orders/new">
+              <button
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-colors min-h-[44px]"
+                style={{
+                  backgroundColor: colors.textPrimary,
+                  color: colors.bg,
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Nuovo OdL
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
       <motion.div
-        className='p-8 space-y-6'
-        initial='hidden'
-        animate='visible'
+        className="p-4 sm:p-8 space-y-6"
+        initial="hidden"
+        animate="visible"
         variants={containerVariants}
       >
-        {/* Stats */}
-        <motion.div
-          className='grid grid-cols-1 sm:grid-cols-4 gap-bento'
-          variants={containerVariants}
-        >
-          {statCards.map(stat => (
-            <motion.div key={stat.label} variants={statsCardVariants}>
-              <AppleCard hover={false}>
-                <AppleCardContent>
-                  <div className='flex items-center justify-between mb-3'>
-                    <div
-                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
-                    >
-                      <stat.icon className='h-5 w-5 text-white' />
-                    </div>
-                  </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
-                    {isLoading ? '...' : stat.value}
-                  </p>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366]'>{stat.label}</p>
-                </AppleCardContent>
-              </AppleCard>
+        {/* KPI Cards */}
+        <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4" variants={containerVariants}>
+          {[
+            { label: 'Totale OdL', value: total, icon: ClipboardList, iconColor: colors.textPrimary },
+            { label: 'Aperti', value: openCount, icon: AlertCircle, iconColor: colors.info },
+            { label: 'In Lavorazione', value: inProgressCount, icon: Clock, iconColor: colors.warning },
+            { label: 'Completati', value: completedCount, icon: Car, iconColor: colors.success },
+          ].map((kpi) => (
+            <motion.div
+              key={kpi.label}
+              className="rounded-2xl border h-[120px] flex flex-col justify-center px-5"
+              style={{
+                backgroundColor: colors.surface,
+                borderColor: colors.borderSubtle,
+              }}
+              variants={itemVariants}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <kpi.icon className="h-4 w-4" style={{ color: kpi.iconColor }} />
+                <span className="text-[13px]" style={{ color: colors.textTertiary }}>{kpi.label}</span>
+              </div>
+              <span
+                className="text-[32px] font-light"
+                style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+              >
+                {isLoading ? '...' : kpi.value}
+              </span>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Filters */}
-        <motion.div variants={listItemVariants}>
-          <AppleCard hover={false}>
-            <AppleCardContent>
-              <div className='flex flex-col sm:flex-row gap-4'>
-                <div className='relative flex-1'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
-                  <Input
-                    placeholder='Cerca per numero ordine o targa veicolo...'
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className='pl-10'
-                  />
-                </div>
-                <div className='relative'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
-                  <select
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value as StatusFilterValue)}
-                    className='h-10 pl-10 pr-4 rounded-md border border-gray-300 dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-sm text-gray-900 dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none cursor-pointer'
-                  >
-                    {statusOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </AppleCardContent>
-          </AppleCard>
+        {/* Status Filter Pills */}
+        <motion.div className="flex justify-center flex-wrap gap-2" variants={itemVariants}>
+          {STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { setStatusFilter(opt.value); setPage(1); }}
+              className="h-10 px-4 rounded-full text-[13px] font-medium transition-all border"
+              style={{
+                backgroundColor: statusFilter === opt.value ? colors.textPrimary : 'transparent',
+                color: statusFilter === opt.value ? colors.bg : colors.textSecondary,
+                borderColor: statusFilter === opt.value ? colors.textPrimary : colors.borderSubtle,
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
         </motion.div>
 
-        {/* Work Order List */}
-        <motion.div variants={listItemVariants}>
-          <AppleCard hover={false}>
-            <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
-                Elenco Ordini di Lavoro
-              </h2>
-            </AppleCardHeader>
-            <AppleCardContent>
-              {isLoading ? (
-                <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
-                </div>
-              ) : filteredWorkOrders.length === 0 ? (
-                <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>
-                    Nessun ordine di lavoro trovato
-                  </p>
-                  <AppleButton
-                    variant='ghost'
-                    className='mt-4'
-                    onClick={() => router.push('/dashboard/work-orders/new')}
-                  >
-                    Crea il primo ordine
-                  </AppleButton>
-                </div>
-              ) : (
-                <motion.div
-                  className='space-y-3'
-                  variants={containerVariants}
-                  initial='hidden'
-                  animate='visible'
-                >
-                  {filteredWorkOrders.map((wo, index) => {
-                    const status = statusConfig[wo.status] || statusConfig.OPEN;
-                    return (
-                      <motion.div
-                        key={wo.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a] hover:shadow-apple transition-all duration-300'
-                        variants={listItemVariants}
-                        custom={index}
-                        whileHover={{ scale: 1.005, x: 4 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                            <ClipboardList className='h-6 w-6 text-apple-blue' />
-                          </div>
-                          <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                              {wo.woNumber}
-                            </p>
-                            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                              {wo.vehicleMake} {wo.vehicleModel} &bull; {wo.vehiclePlate}
-                            </p>
-                          </div>
-                        </div>
-                        <div className='flex items-center gap-4'>
+        {/* Search */}
+        <motion.div
+          className="rounded-2xl border p-4"
+          style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+          variants={itemVariants}
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.textMuted }} />
+            <input
+              type="text"
+              placeholder="Cerca per numero OdL, cliente, targa..."
+              aria-label="Cerca ordini di lavoro"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-11 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
+              style={{
+                backgroundColor: colors.glowStrong,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: colors.borderSubtle,
+                color: colors.textPrimary,
+              }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Content */}
+        {isLoading ? (
+          <motion.div className="flex items-center justify-center py-20" variants={itemVariants}>
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.textMuted }} />
+          </motion.div>
+        ) : error ? (
+          <motion.div className="flex flex-col items-center justify-center py-20 text-center" variants={itemVariants}>
+            <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
+            <p className="text-[15px] mb-4" style={{ color: colors.textTertiary }}>
+              Impossibile caricare gli ordini di lavoro
+            </p>
+            <button
+              onClick={() => mutate()}
+              className="px-4 py-2 rounded-full text-sm border transition-colors hover:bg-white/5"
+              style={{ borderColor: colors.border, color: colors.textSecondary }}
+            >
+              Riprova
+            </button>
+          </motion.div>
+        ) : workOrders.length === 0 && !debouncedSearch && !statusFilter ? (
+          <motion.div className="flex flex-col items-center justify-center py-20 text-center" variants={itemVariants}>
+            <ClipboardList className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
+            <p className="text-[15px] mb-1" style={{ color: colors.textPrimary }}>
+              Nessun ordine di lavoro
+            </p>
+            <p className="text-[13px] mb-6" style={{ color: colors.textTertiary }}>
+              Crea il primo ordine di lavoro per iniziare a gestire le lavorazioni.
+            </p>
+            <Link href="/dashboard/work-orders/new">
+              <button
+                className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+                style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+              >
+                + Nuovo Ordine di Lavoro
+              </button>
+            </Link>
+          </motion.div>
+        ) : workOrders.length === 0 ? (
+          <motion.div className="flex flex-col items-center justify-center py-20 text-center" variants={itemVariants}>
+            <Search className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
+            <p className="text-[15px] mb-1" style={{ color: colors.textPrimary }}>
+              Nessun risultato
+            </p>
+            <p className="text-[13px] mb-6" style={{ color: colors.textTertiary }}>
+              Nessun ordine trovato per i filtri selezionati
+            </p>
+            <button
+              onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
+              className="px-4 py-2 rounded-full text-sm border transition-colors hover:bg-white/5"
+              style={{ borderColor: colors.border, color: colors.textSecondary }}
+            >
+              Resetta filtri
+            </button>
+          </motion.div>
+        ) : viewMode === 'list' ? (
+          <>
+            {/* List View */}
+            <motion.div
+              className="rounded-2xl border overflow-hidden"
+              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              variants={itemVariants}
+            >
+              <motion.div variants={containerVariants}>
+                {workOrders.map((wo, idx) => {
+                  const status = getStatus(wo.status);
+                  const priority = PRIORITY_CONFIG[wo.priority || 'NORMAL'] || PRIORITY_CONFIG.NORMAL;
+                  return (
+                    <motion.div
+                      key={wo.id}
+                      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors group"
+                      style={{
+                        borderBottom: idx < workOrders.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
+                      }}
+                      variants={itemVariants}
+                      onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                    >
+                      {/* Status color bar */}
+                      <div
+                        className="w-1 h-12 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: status.barColor }}
+                      />
+
+                      {/* Main info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>
+                            {wo.woNumber || `#${wo.id.slice(0, 8)}`}
+                          </span>
                           <span
-                            className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
+                            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: `${status.barColor}20`,
+                              color: status.barColor,
+                            }}
                           >
                             {status.label}
                           </span>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[#ececec] min-w-[100px] text-right'>
-                            {formatCurrency(wo.totalCost ?? 0)}
-                          </p>
-                          <div className='flex items-center gap-2'>
-                            <AppleButton
-                              variant='ghost'
-                              size='sm'
-                              icon={<Eye className='h-3.5 w-3.5' />}
-                              onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
-                            >
-                              Visualizza
-                            </AppleButton>
-                            {(wo.status === 'PENDING' || wo.status === 'OPEN') && (
-                              <AppleButton
-                                variant='secondary'
-                                size='sm'
-                                icon={<Play className='h-3.5 w-3.5' />}
-                                loading={actionLoading === wo.id}
-                                onClick={() => handleStart(wo.id)}
-                              >
-                                Avvia
-                              </AppleButton>
-                            )}
-                            {wo.status === 'IN_PROGRESS' && (
-                              <AppleButton
-                                variant='secondary'
-                                size='sm'
-                                icon={<CheckCircle className='h-3.5 w-3.5' />}
-                                loading={actionLoading === wo.id}
-                                onClick={() => handleComplete(wo.id)}
-                              >
-                                Completa
-                              </AppleButton>
-                            )}
-                            {(wo.status === 'COMPLETED' || wo.status === 'READY') && (
-                              <AppleButton
-                                variant='secondary'
-                                size='sm'
-                                icon={<FileText className='h-3.5 w-3.5' />}
-                                loading={actionLoading === wo.id}
-                                onClick={() => handleInvoice(wo.id)}
-                              >
-                                Fattura
-                              </AppleButton>
-                            )}
-                          </div>
+                          <span className="text-[11px] font-medium" style={{ color: priority.color }}>
+                            {priority.label}
+                          </span>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AppleCardContent>
-          </AppleCard>
-        </motion.div>
+                        <div className="flex items-center gap-3 text-[13px]" style={{ color: colors.textTertiary }}>
+                          {wo.customerName && (
+                            <span className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              {wo.customerName}
+                            </span>
+                          )}
+                          {wo.vehiclePlate && (
+                            <span className="font-mono font-bold text-[12px]" style={{ color: colors.textSecondary }}>
+                              {wo.vehiclePlate}
+                            </span>
+                          )}
+                          {wo.vehicleMake && (
+                            <span>{wo.vehicleMake} {wo.vehicleModel || ''}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right side */}
+                      <div className="flex items-center gap-4">
+                        {wo.technicianName && (
+                          <span className="text-[12px] hidden lg:block" style={{ color: colors.textMuted }}>
+                            {wo.technicianName}
+                          </span>
+                        )}
+                        <span
+                          className="text-[12px] hidden sm:block"
+                          style={{ color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {formatDate(wo.createdAt)}
+                        </span>
+                        <ChevronRight
+                          className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ color: colors.textMuted }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </motion.div>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
+        ) : (
+          /* Kanban View */
+          <motion.div className="flex gap-4 overflow-x-auto pb-4" variants={itemVariants}>
+            {KANBAN_COLUMNS.map((colStatus) => {
+              const colConfig = getStatus(colStatus);
+              const colItems = workOrders.filter((wo) => wo.status === colStatus);
+              return (
+                <div
+                  key={colStatus}
+                  className="flex-shrink-0 w-[280px] sm:w-[300px] rounded-2xl border"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderColor: colors.borderSubtle,
+                  }}
+                >
+                  {/* Column Header */}
+                  <div
+                    className="px-4 py-3 border-b flex items-center justify-between"
+                    style={{ borderColor: colors.borderSubtle }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colConfig.barColor }} />
+                      <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>
+                        {colConfig.label}
+                      </span>
+                    </div>
+                    <span
+                      className="text-[12px] font-medium px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: colors.glowStrong,
+                        color: colors.textTertiary,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {colItems.length}
+                    </span>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="p-3 space-y-3 max-h-[60vh] overflow-y-auto">
+                    {colItems.length === 0 ? (
+                      <p className="text-[12px] text-center py-4" style={{ color: colors.textMuted }}>
+                        Nessun ordine
+                      </p>
+                    ) : (
+                      colItems.map((wo) => (
+                        <KanbanCard
+                          key={wo.id}
+                          wo={wo}
+                          onChangeStatus={handleChangeStatus}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </motion.div>
+        )}
       </motion.div>
+    </div>
+  );
+}
+
+/* --- Kanban Card --- */
+function KanbanCard({
+  wo,
+  onChangeStatus,
+}: {
+  wo: WorkOrder;
+  onChangeStatus: (id: string, status: string) => Promise<void>;
+}): React.ReactElement {
+  const router = useRouter();
+  const [transitioning, setTransitioning] = useState(false);
+
+  const NEXT_STATUS: Record<string, string> = {
+    DRAFT: 'OPEN',
+    OPEN: 'IN_PROGRESS',
+    IN_PROGRESS: 'QC',
+    QC: 'COMPLETED',
+    COMPLETED: 'DELIVERED',
+  };
+
+  const nextStatus = NEXT_STATUS[wo.status];
+  const nextLabel = nextStatus ? STATUS_CONFIG[nextStatus]?.label : null;
+
+  const handleAdvance = async (e: React.MouseEvent): Promise<void> => {
+    e.stopPropagation();
+    if (!nextStatus || transitioning) return;
+    setTransitioning(true);
+    try {
+      await onChangeStatus(wo.id, nextStatus);
+    } finally {
+      setTransitioning(false);
+    }
+  };
+
+  const priority = PRIORITY_CONFIG[wo.priority || 'NORMAL'] || PRIORITY_CONFIG.NORMAL;
+
+  return (
+    <div
+      onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
+      className="p-3 rounded-xl border cursor-pointer transition-colors"
+      style={{
+        backgroundColor: colors.bg,
+        borderColor: colors.borderSubtle,
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.bg; }}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[12px] font-semibold" style={{ color: colors.textPrimary }}>
+          {wo.woNumber || `#${wo.id.slice(0, 8)}`}
+        </span>
+        <span className="text-[10px] font-medium" style={{ color: priority.color }}>
+          {priority.label}
+        </span>
+      </div>
+
+      {wo.customerName && (
+        <div className="flex items-center gap-1.5 mb-1">
+          <User className="h-3 w-3 flex-shrink-0" style={{ color: colors.textMuted }} />
+          <span className="text-[12px] truncate" style={{ color: colors.textSecondary }}>
+            {wo.customerName}
+          </span>
+        </div>
+      )}
+
+      {wo.vehiclePlate && (
+        <div className="flex items-center gap-1.5 mb-1">
+          <Car className="h-3 w-3 flex-shrink-0" style={{ color: colors.textMuted }} />
+          <span className="text-[12px] font-mono font-bold" style={{ color: colors.textSecondary }}>
+            {wo.vehiclePlate}
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-1.5 mt-2 text-[11px]" style={{ color: colors.textMuted }}>
+        <Clock className="h-3 w-3" />
+        {timeAgo(wo.createdAt)}
+      </div>
+
+      {nextStatus && nextLabel && (
+        <button
+          onClick={handleAdvance}
+          disabled={transitioning}
+          className="mt-3 w-full text-[12px] font-medium py-1.5 rounded-lg transition-colors disabled:opacity-50 min-h-[32px] border"
+          style={{
+            backgroundColor: 'transparent',
+            borderColor: colors.borderSubtle,
+            color: colors.textSecondary,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.glowStrong; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+        >
+          {transitioning ? 'Aggiornamento...' : `Avanza a ${nextLabel}`}
+        </button>
+      )}
     </div>
   );
 }

@@ -37,8 +37,12 @@ export class TireService {
       vehicleId?: string;
       season?: string;
       isStored?: boolean;
+      page?: number;
+      limit?: number;
     },
-  ): Promise<TireSet[]> {
+  ): Promise<{ data: TireSet[]; total: number; page: number; limit: number; pages: number }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
     const where: Prisma.TireSetWhereInput = {
       tenantId,
       isActive: true,
@@ -54,10 +58,17 @@ export class TireService {
       where.isStored = filters.isStored;
     }
 
-    return this.prisma.tireSet.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
+    const [data, total] = await Promise.all([
+      this.prisma.tireSet.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.tireSet.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async findById(tenantId: string, id: string): Promise<TireSet> {

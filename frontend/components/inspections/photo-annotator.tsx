@@ -92,20 +92,24 @@ export function PhotoAnnotator({
 
               <span className='text-xs text-gray-400'>Direzione freccia:</span>
               <div className='flex gap-1'>
-                {(['up', 'down', 'left', 'right'] as const).map(dir => (
-                  <Button
-                    key={dir}
-                    size='icon'
-                    variant={arrowDirection === dir ? 'default' : 'ghost'}
-                    className='h-8 w-8'
-                    onClick={() => setArrowDirection(dir)}
-                  >
-                    {dir === 'up' && <ArrowUp className='h-4 w-4' />}
-                    {dir === 'down' && <ArrowDown className='h-4 w-4' />}
-                    {dir === 'left' && <ArrowLeft className='h-4 w-4' />}
-                    {dir === 'right' && <ArrowRight className='h-4 w-4' />}
-                  </Button>
-                ))}
+                {(['up', 'down', 'left', 'right'] as const).map(dir => {
+                  const dirLabels = { up: 'Su', down: 'Giù', left: 'Sinistra', right: 'Destra' };
+                  return (
+                    <Button
+                      key={dir}
+                      size='icon'
+                      variant={arrowDirection === dir ? 'default' : 'ghost'}
+                      className='h-8 w-8'
+                      onClick={() => setArrowDirection(dir)}
+                      aria-label={`Freccia ${dirLabels[dir]}`}
+                    >
+                      {dir === 'up' && <ArrowUp className='h-4 w-4' />}
+                      {dir === 'down' && <ArrowDown className='h-4 w-4' />}
+                      {dir === 'left' && <ArrowLeft className='h-4 w-4' />}
+                      {dir === 'right' && <ArrowRight className='h-4 w-4' />}
+                    </Button>
+                  );
+                })}
               </div>
             </>
           ) : (

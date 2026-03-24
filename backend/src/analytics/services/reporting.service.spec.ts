@@ -486,10 +486,10 @@ describe('ReportingService', () => {
       expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
     });
 
-    it('should propagate errors from database', async () => {
+    it('should silently handle missing refresh function', async () => {
       mockPrisma.$executeRaw.mockRejectedValue(new Error('Function not found'));
 
-      await expect(service.refreshAnalyticsViews()).rejects.toThrow('Function not found');
+      await expect(service.refreshAnalyticsViews()).resolves.toBeUndefined();
     });
   });
 

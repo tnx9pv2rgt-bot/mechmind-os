@@ -1,13 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
+import { Request } from 'express';
 import { GdprWebhookController } from './gdpr-webhook.controller';
 import { GdprRequestService } from '../services/gdpr-request.service';
 import { LoggerService } from '@common/services/logger.service';
+
+const GDPR_WEBHOOK_SECRET = 'test-secret-key';
+
+/** Build a valid HMAC-SHA256 hex signature for the given payload. */
+function buildSignature(payload: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+}
+
+/** Create a minimal Express Request mock with the given headers. */
+function mockReq(headers: Record<string, string> = {}): Request {
+  return { headers } as unknown as Request;
+}
 
 describe('GdprWebhookController', () => {
   let controller: GdprWebhookController;
   let requestService: jest.Mocked<GdprRequestService>;
   let loggerService: jest.Mocked<LoggerService>;
+  let configService: jest.Mocked<ConfigService>;
 
   const TENANT_ID = 'tenant-001';
 
@@ -29,12 +45,22 @@ describe('GdprWebhookController', () => {
             error: jest.fn(),
           },
         },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'GDPR_WEBHOOK_SECRET') return GDPR_WEBHOOK_SECRET;
+              return undefined;
+            }),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<GdprWebhookController>(GdprWebhookController);
     requestService = module.get(GdprRequestService) as jest.Mocked<GdprRequestService>;
     loggerService = module.get(LoggerService) as jest.Mocked<LoggerService>;
+    configService = module.get(ConfigService) as jest.Mocked<ConfigService>;
   });
 
   it('should be defined', () => {
@@ -52,12 +78,17 @@ describe('GdprWebhookController', () => {
       source: 'WEB_FORM',
     };
 
+    function validReq(): Request {
+      const sig = buildSignature(JSON.stringify(validBody), GDPR_WEBHOOK_SECRET);
+      return mockReq({ 'x-webhook-signature': sig });
+    }
+
     it('should delegate to requestService.createRequest and return ticket info', async () => {
       requestService.createRequest.mockResolvedValue({
         ticketNumber: 'GDPR-2026-0001',
       } as never);
 
-      const result = await controller.handleDataSubjectRequest(validBody, 'sig-123');
+      const result = await controller.handleDataSubjectRequest(validBody, validReq());
 
       expect(requestService.createRequest).toHaveBeenCalledWith({
         tenantId: TENANT_ID,
@@ -80,7 +111,7 @@ describe('GdprWebhookController', () => {
         ticketNumber: 'GDPR-2026-0002',
       } as never);
 
-      await controller.handleDataSubjectRequest(validBody, 'sig-123');
+      await controller.handleDataSubjectRequest(validBody, validReq());
 
       expect(loggerService.log).toHaveBeenCalledWith(
         'Received data subject request webhook from WEB_FORM',
@@ -88,26 +119,55 @@ describe('GdprWebhookController', () => {
       );
     });
 
-    it('should throw BadRequestException when tenantId is missing', async () => {
-      const invalidBody = { ...validBody, tenantId: undefined } as never;
+    it('should throw UnauthorizedException when signature header is missing', async () => {
+      await expect(controller.handleDataSubjectRequest(validBody, mockReq({}))).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
 
-      await expect(controller.handleDataSubjectRequest(invalidBody, 'sig')).rejects.toThrow(
+    it('should throw UnauthorizedException when signature is invalid', async () => {
+      await expect(
+        controller.handleDataSubjectRequest(
+          validBody,
+          mockReq({ 'x-webhook-signature': 'invalid-signature' }),
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException when GDPR_WEBHOOK_SECRET is not configured', async () => {
+      (configService.get as jest.Mock).mockReturnValue(undefined);
+
+      await expect(controller.handleDataSubjectRequest(validBody, validReq())).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw BadRequestException when tenantId is missing (valid signature)', async () => {
+      const bodyWithoutTenant = { ...validBody, tenantId: undefined } as never;
+      const sig = buildSignature(JSON.stringify(bodyWithoutTenant), GDPR_WEBHOOK_SECRET);
+      const req = mockReq({ 'x-webhook-signature': sig });
+
+      await expect(controller.handleDataSubjectRequest(bodyWithoutTenant, req)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should throw BadRequestException when requestType is missing', async () => {
-      const invalidBody = { ...validBody, requestType: undefined } as never;
+    it('should throw BadRequestException when requestType is missing (valid signature)', async () => {
+      const bodyWithoutType = { ...validBody, requestType: undefined } as never;
+      const sig = buildSignature(JSON.stringify(bodyWithoutType), GDPR_WEBHOOK_SECRET);
+      const req = mockReq({ 'x-webhook-signature': sig });
 
-      await expect(controller.handleDataSubjectRequest(invalidBody, 'sig')).rejects.toThrow(
+      await expect(controller.handleDataSubjectRequest(bodyWithoutType, req)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should throw BadRequestException when source is missing', async () => {
-      const invalidBody = { ...validBody, source: undefined } as never;
+    it('should throw BadRequestException when source is missing (valid signature)', async () => {
+      const bodyWithoutSource = { ...validBody, source: undefined } as never;
+      const sig = buildSignature(JSON.stringify(bodyWithoutSource), GDPR_WEBHOOK_SECRET);
+      const req = mockReq({ 'x-webhook-signature': sig });
 
-      await expect(controller.handleDataSubjectRequest(invalidBody, 'sig')).rejects.toThrow(
+      await expect(controller.handleDataSubjectRequest(bodyWithoutSource, req)).rejects.toThrow(
         BadRequestException,
       );
     });

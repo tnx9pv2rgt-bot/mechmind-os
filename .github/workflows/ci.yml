@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: mechmind
+          POSTGRES_PASSWORD: mechmind
+          POSTGRES_DB: mechmind_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mechmind"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-test-secret-do-not-use-in-production
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+        working-directory: backend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: backend
+
+      - name: Run tests
+        run: npx jest --forceExit --ci
+        working-directory: backend
+
+      - name: Build
+        run: npm run build
+        working-directory: backend
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend

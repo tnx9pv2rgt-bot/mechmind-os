@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { InvoiceService } from './invoice.service';
 import { PrismaService } from '../common/services/prisma.service';
+import { EncryptionService } from '../common/services/encryption.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
@@ -19,6 +20,7 @@ interface MockInvoiceDelegate {
   delete: jest.Mock;
   groupBy: jest.Mock;
   aggregate: jest.Mock;
+  updateMany: jest.Mock;
 }
 
 interface MockPrisma {
@@ -77,6 +79,7 @@ function makeMockInvoice(overrides: Record<string, unknown> = {}): Record<string
 describe('InvoiceService', () => {
   let service: InvoiceService;
   let prisma: MockPrisma;
+  let encryption: { decrypt: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -89,12 +92,21 @@ describe('InvoiceService', () => {
         delete: jest.fn(),
         groupBy: jest.fn(),
         aggregate: jest.fn(),
+        updateMany: jest.fn(),
       },
       $transaction: jest.fn(),
     };
 
+    encryption = {
+      decrypt: jest.fn((val: string) => val.replace('enc-', '')),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [InvoiceService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        InvoiceService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EncryptionService, useValue: encryption },
+      ],
     }).compile();
 
     service = module.get<InvoiceService>(InvoiceService);
@@ -112,12 +124,17 @@ describe('InvoiceService', () => {
 
       const result = await service.findAll(TENANT_ID);
 
-      expect(result).toEqual({ invoices, total: 1 });
+      expect(result).toEqual({
+        data: invoices,
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      });
       expect(prisma.invoice.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: TENANT_ID },
           include: { customer: true },
           orderBy: { createdAt: 'desc' },
+          skip: 0,
+          take: 20,
         }),
       );
       expect(prisma.invoice.count).toHaveBeenCalledWith({
@@ -188,7 +205,7 @@ describe('InvoiceService', () => {
       expect(result).toEqual(invoice);
       expect(prisma.invoice.findFirst).toHaveBeenCalledWith({
         where: { id: INVOICE_ID, tenantId: TENANT_ID },
-        include: { customer: true },
+        include: { customer: true, invoiceItems: true },
       });
     });
 
@@ -450,12 +467,13 @@ describe('InvoiceService', () => {
     it('should delete a DRAFT invoice', async () => {
       const existing = makeMockInvoice({ status: 'DRAFT' });
       prisma.invoice.findFirst.mockResolvedValue(existing);
-      prisma.invoice.delete.mockResolvedValue(existing);
+      prisma.invoice.update.mockResolvedValue(existing);
 
       await service.remove(TENANT_ID, INVOICE_ID);
 
-      expect(prisma.invoice.delete).toHaveBeenCalledWith({
+      expect(prisma.invoice.update).toHaveBeenCalledWith({
         where: { id: INVOICE_ID },
+        data: { deletedAt: expect.any(Date), status: 'CANCELLED' },
       });
     });
 
@@ -604,6 +622,93 @@ describe('InvoiceService', () => {
           count: 0,
         },
       });
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // exportCsv
+  // -----------------------------------------------------------------------
+
+  describe('exportCsv', () => {
+    const from = new Date('2026-01-01');
+    const to = new Date('2026-03-31');
+
+    it('should return CSV with BOM, header, and invoice rows', async () => {
+      const invoices = [
+        makeMockInvoice({
+          invoiceNumber: 'INV-2026-0001',
+          status: 'PAID',
+          subtotal: new Decimal('100.00'),
+          taxAmount: new Decimal('22.00'),
+          total: new Decimal('122.00'),
+          createdAt: new Date('2026-02-15'),
+          paidAt: new Date('2026-02-20'),
+          paymentMethod: 'BONIFICO',
+          customer: {
+            id: CUSTOMER_ID,
+            encryptedFirstName: 'enc-Mario',
+            encryptedLastName: 'enc-Rossi',
+            partitaIva: '12345678901',
+            codiceFiscale: 'RSSMRA80A01H501Z',
+          },
+        }),
+      ];
+
+      prisma.invoice.findMany.mockResolvedValue(invoices);
+
+      const csv = await service.exportCsv(TENANT_ID, from, to);
+
+      // Starts with UTF-8 BOM
+      expect(csv.charCodeAt(0)).toBe(0xfeff);
+
+      const lines = csv.replace('\uFEFF', '').split('\n');
+      expect(lines[0]).toBe(
+        'Numero;Data;Cliente;CF/P.IVA;Imponibile;IVA;Totale;Stato;Data Pagamento;Metodo Pagamento',
+      );
+      expect(lines[1]).toBe(
+        'INV-2026-0001;2026-02-15;Mario Rossi;12345678901;100.00;22.00;122.00;Pagata;2026-02-20;BONIFICO',
+      );
+
+      expect(encryption.decrypt).toHaveBeenCalledWith('enc-Mario');
+      expect(encryption.decrypt).toHaveBeenCalledWith('enc-Rossi');
+    });
+
+    it('should return only header when no invoices exist in date range', async () => {
+      prisma.invoice.findMany.mockResolvedValue([]);
+
+      const csv = await service.exportCsv(TENANT_ID, from, to);
+
+      const lines = csv.replace('\uFEFF', '').split('\n');
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toBe(
+        'Numero;Data;Cliente;CF/P.IVA;Imponibile;IVA;Totale;Stato;Data Pagamento;Metodo Pagamento',
+      );
+    });
+
+    it('should use codiceFiscale when partitaIva is not available', async () => {
+      const invoices = [
+        makeMockInvoice({
+          status: 'DRAFT',
+          createdAt: new Date('2026-01-10'),
+          paidAt: null,
+          paymentMethod: null,
+          customer: {
+            id: CUSTOMER_ID,
+            encryptedFirstName: 'enc-Luca',
+            encryptedLastName: 'enc-Bianchi',
+            partitaIva: null,
+            codiceFiscale: 'BNCLCU90B01H501X',
+          },
+        }),
+      ];
+
+      prisma.invoice.findMany.mockResolvedValue(invoices);
+
+      const csv = await service.exportCsv(TENANT_ID, from, to);
+      const lines = csv.replace('\uFEFF', '').split('\n');
+
+      expect(lines[1]).toContain('BNCLCU90B01H501X');
+      expect(lines[1]).toContain('Bozza');
     });
   });
 });

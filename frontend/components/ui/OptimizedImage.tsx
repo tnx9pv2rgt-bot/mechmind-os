@@ -1,42 +1,43 @@
-'use client'
+'use client';
 
-import Image from 'next/image'
-import { useState, useCallback } from 'react'
-import { cn } from '@/lib/utils'
+import Image from 'next/image';
+import { useState, useCallback } from 'react';
+import { cn } from '@/lib/utils';
 
 interface OptimizedImageProps {
-  src: string
-  alt: string
-  width?: number
-  height?: number
-  fill?: boolean
-  priority?: boolean
-  className?: string
-  containerClassName?: string
-  sizes?: string
-  quality?: number
-  placeholder?: 'blur' | 'empty'
-  blurDataURL?: string
-  loading?: 'lazy' | 'eager'
-  onLoad?: () => void
-  onError?: () => void
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  fill?: boolean;
+  priority?: boolean;
+  className?: string;
+  containerClassName?: string;
+  sizes?: string;
+  quality?: number;
+  placeholder?: 'blur' | 'empty';
+  blurDataURL?: string;
+  loading?: 'lazy' | 'eager';
+  onLoad?: () => void;
+  onError?: () => void;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 }
 
 // Default blur placeholder (tiny transparent pixel)
-const DEFAULT_BLUR_DATA_URL = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA'
+const DEFAULT_BLUR_DATA_URL =
+  'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
 
 // Generate responsive sizes string
 const generateSizes = (width?: number): string => {
   if (width) {
-    return `(max-width: ${width}px) 100vw, ${width}px`
+    return `(max-width: ${width}px) 100vw, ${width}px`;
   }
-  return '(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
-}
+  return '(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw';
+};
 
 /**
  * OptimizedImage Component
- * 
+ *
  * Features:
  * - Automatic WebP/AVIF format selection
  * - Responsive sizes
@@ -44,7 +45,7 @@ const generateSizes = (width?: number): string => {
  * - Priority loading for above-fold images
  * - Error handling with fallback
  * - Smooth fade-in animation
- * 
+ *
  * @example
  * <OptimizedImage
  *   src="/images/hero.jpg"
@@ -72,29 +73,29 @@ export function OptimizedImage({
   onError,
   objectFit = 'cover',
 }: OptimizedImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [hasError, setHasError] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const handleLoad = useCallback(() => {
-    setIsLoaded(true)
-    onLoad?.()
-  }, [onLoad])
+    setIsLoaded(true);
+    onLoad?.();
+  }, [onLoad]);
 
   const handleError = useCallback(() => {
-    setHasError(true)
-    onError?.()
-  }, [onError])
+    setHasError(true);
+    onError?.();
+  }, [onError]);
 
   // Generate sizes if not provided
-  const responsiveSizes = sizes || generateSizes(width)
+  const responsiveSizes = sizes || generateSizes(width);
 
   // Object fit style
-  const objectFitStyle = { objectFit }
+  const objectFitStyle = { objectFit };
 
   // Error state fallback
   if (hasError) {
     return (
-      <div 
+      <div
         className={cn(
           'bg-gray-100 dark:bg-gray-800 flex items-center justify-center',
           fill ? 'w-full h-full' : '',
@@ -102,48 +103,44 @@ export function OptimizedImage({
         )}
         style={!fill ? { width, height } : undefined}
       >
-        <div className="text-gray-400 dark:text-gray-600 text-center p-4">
-          <svg 
-            className="w-8 h-8 mx-auto mb-2" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+        <div className='text-gray-400 dark:text-gray-600 text-center p-4'>
+          <svg
+            className='w-8 h-8 mx-auto mb-2'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+            aria-hidden='true'
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={1.5} 
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={1.5}
+              d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
             />
           </svg>
-          <span className="text-sm">Failed to load image</span>
+          <span className='text-sm'>Impossibile caricare l&apos;immagine</span>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div 
-      className={cn(
-        'relative overflow-hidden',
-        fill ? 'w-full h-full' : '',
-        containerClassName
-      )}
+    <div
+      className={cn('relative overflow-hidden', fill ? 'w-full h-full' : '', containerClassName)}
       style={!fill ? { width, height } : undefined}
     >
       {/* Loading placeholder */}
       {!isLoaded && (
-        <div 
+        <div
           className={cn(
             'absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse',
             fill ? 'w-full h-full' : ''
           )}
           style={!fill ? { width, height } : undefined}
-          aria-hidden="true"
+          aria-hidden='true'
         />
       )}
-      
+
       <Image
         src={src}
         alt={alt}
@@ -167,7 +164,7 @@ export function OptimizedImage({
         style={objectFitStyle}
       />
     </div>
-  )
+  );
 }
 
 /**
@@ -179,10 +176,10 @@ export function AvatarImage({
   size = 40,
   className,
 }: {
-  src: string
-  alt: string
-  size?: number
-  className?: string
+  src: string;
+  alt: string;
+  size?: number;
+  className?: string;
 }) {
   return (
     <OptimizedImage
@@ -194,7 +191,7 @@ export function AvatarImage({
       sizes={`${size}px`}
       quality={90}
     />
-  )
+  );
 }
 
 /**
@@ -205,9 +202,9 @@ export function HeroImage({
   alt,
   className,
 }: {
-  src: string
-  alt: string
-  className?: string
+  src: string;
+  alt: string;
+  className?: string;
 }) {
   return (
     <OptimizedImage
@@ -216,10 +213,10 @@ export function HeroImage({
       fill
       priority
       className={cn('object-cover', className)}
-      sizes="100vw"
+      sizes='100vw'
       quality={90}
     />
-  )
+  );
 }
 
 /**
@@ -230,9 +227,9 @@ export function ThumbnailImage({
   alt,
   className,
 }: {
-  src: string
-  alt: string
-  className?: string
+  src: string;
+  alt: string;
+  className?: string;
 }) {
   return (
     <OptimizedImage
@@ -241,10 +238,10 @@ export function ThumbnailImage({
       width={200}
       height={150}
       className={cn('rounded-md', className)}
-      sizes="200px"
+      sizes='200px'
       quality={75}
     />
-  )
+  );
 }
 
-export default OptimizedImage
+export default OptimizedImage;

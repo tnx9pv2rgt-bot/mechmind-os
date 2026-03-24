@@ -4,11 +4,13 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
-import { Shield, Plus, FileText, AlertTriangle, Calendar, TrendingUp, Car } from 'lucide-react';
+import Link from 'next/link';
+import { Shield, Plus, FileText, AlertTriangle, Calendar, TrendingUp, Car, ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Dialog,
   DialogContent,
@@ -17,50 +19,63 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
 import { WarrantyCard, ClaimsList, ExpiringAlert, WarrantyForm } from '@/components/warranty';
+import type { WarrantyWithClaims, WarrantyClaim } from '@/lib/services/warrantyService';
+import { WarrantyStatus } from '@/lib/services/warrantyService';
 
-// Types defined locally to avoid importing Prisma client-side
-enum WarrantyStatus {
-  ACTIVE = 'ACTIVE',
-  EXPIRING_SOON = 'EXPIRING_SOON',
-  EXPIRED = 'EXPIRED',
-  VOID = 'VOID',
-}
+const colors = {
+  bg: '#1a1a1a',
+  surface: '#2f2f2f',
+  surfaceHover: '#383838',
+  border: '#4e4e4e',
+  borderSubtle: '#3a3a3a',
+  textPrimary: '#ffffff',
+  textSecondary: '#b4b4b4',
+  textTertiary: '#888888',
+  textMuted: '#666666',
+  accent: '#ffffff',
+  success: '#34d399',
+  warning: '#fbbf24',
+  error: '#f87171',
+  info: '#60a5fa',
+  purple: '#a78bfa',
+  glow: 'rgba(255,255,255,0.03)',
+  glowStrong: 'rgba(255,255,255,0.06)',
+};
 
-interface WarrantyWithClaims {
-  id: string;
-  tenantId: string;
-  warrantyNumber: string;
-  vehicleId: string;
-  coverageType: string;
-  startDate: string;
-  expirationDate: string;
-  status: WarrantyStatus;
-  mileageLimit: number | null;
-  maxClaimAmount: number | null;
-  deductibleAmount: number | null;
-  createdAt: string;
-  updatedAt: string;
-  claims: WarrantyClaim[];
-  vehicle?: { id: string; vin: string; make: string; model: string; year: number };
-}
+const createWarrantySchema = z.object({
+  vehicleId: z.string().min(1, 'Seleziona un veicolo'),
+  type: z.string().min(1, 'Seleziona il tipo di garanzia'),
+  provider: z.string().min(1, 'Inserisci il fornitore'),
+  startDate: z.date({ required_error: 'La data di inizio è obbligatoria' }),
+  expirationDate: z.date({ required_error: 'La data di scadenza è obbligatoria' }),
+  currentKm: z.number().min(0, 'I km attuali non possono essere negativi'),
+  maxCoverage: z.number().min(0, 'La copertura massima non può essere negativa'),
+  deductible: z.number().min(0, 'La franchigia non può essere negativa'),
+  coverageKm: z.number().min(0, 'I km di copertura non possono essere negativi').nullable().optional(),
+  terms: z.string().optional(),
+  certificateUrl: z.string().optional(),
+});
 
-interface WarrantyClaim {
-  id: string;
-  status: string;
-  description: string;
-  amount: number | null;
-  submittedDate: string;
-  warranty?: { vehicle?: { make: string; model: string } };
-}
+type ClaimWithVehicle = WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } };
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+};
 
 export default function WarrantyDashboardPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [isCreating, setIsCreating] = React.useState(false);
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<'warranties' | 'claims'>('warranties');
+  const [page, setPage] = React.useState(1);
+  const PAGE_SIZE = 20;
 
   const {
     data: warrantiesData,
@@ -73,7 +88,7 @@ export default function WarrantyDashboardPage() {
     isLoading: claimsLoading,
     mutate: mutateClaims,
   } = useSWR<{
-    data?: (WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[];
+    data?: ClaimWithVehicle[];
   }>('/api/warranties/claims', fetcher);
   const {
     data: expiringData,
@@ -88,14 +103,12 @@ export default function WarrantyDashboardPage() {
 
   React.useEffect(() => {
     if (warrantiesError) {
-      toast({
-        title: 'Errore nel caricamento',
+      toast.error('Errore nel caricamento', {
         description:
           warrantiesError instanceof Error ? warrantiesError.message : 'Errore sconosciuto',
-        variant: 'error',
       });
     }
-  }, [warrantiesError, toast]);
+  }, [warrantiesError]);
 
   const handleCreateWarranty = async (data: {
     vehicleId: string;
@@ -110,6 +123,11 @@ export default function WarrantyDashboardPage() {
     terms?: string;
     certificateUrl?: string;
   }) => {
+    const result = createWarrantySchema.safeParse(data);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
     try {
       setIsCreating(true);
       const res = await fetch('/api/warranties', {
@@ -121,19 +139,14 @@ export default function WarrantyDashboardPage() {
         const err = await res.json();
         throw new Error(err.error || 'Errore nella creazione della garanzia');
       }
-      toast({
-        title: 'Garanzia creata',
-        description: 'La garanzia è stata creata con successo',
-      });
+      toast.success('Garanzia creata con successo');
       setCreateDialogOpen(false);
       mutateWarranties();
       mutateClaims();
       mutateExpiring();
     } catch (error) {
-      toast({
-        title: 'Errore nella creazione',
+      toast.error('Errore nella creazione', {
         description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
       });
     } finally {
       setIsCreating(false);
@@ -152,155 +165,193 @@ export default function WarrantyDashboardPage() {
     return { active, expiringSoon, expired, pendingClaims };
   }, [warranties, claims]);
 
+  const statCards = [
+    { label: 'Garanzie Attive', value: stats.active, icon: Shield, iconColor: colors.success },
+    { label: 'In Scadenza', value: stats.expiringSoon, icon: Calendar, iconColor: colors.warning },
+    { label: 'Scadute', value: stats.expired, icon: AlertTriangle, iconColor: colors.error },
+    { label: 'Reclami in Attesa', value: stats.pendingClaims, icon: FileText, iconColor: colors.info },
+  ];
+
+  const tabs = [
+    { key: 'warranties' as const, label: 'Garanzie' },
+    { key: 'claims' as const, label: 'Reclami' },
+  ];
+
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-96'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' />
+      <div className='min-h-screen flex items-center justify-center' style={{ backgroundColor: colors.bg }}>
+        <Loader2 className='h-8 w-8 animate-spin' style={{ color: colors.textMuted }} />
       </div>
     );
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-            Gestione Garanzie
-          </h1>
-          <p className='text-sm text-gray-500 dark:text-[#636366] mt-1'>
-            Monitora le garanzie e gestisci i reclami
-          </p>
-        </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className='h-4 w-4 mr-2' />
-              Nuova Garanzia
-            </Button>
-          </DialogTrigger>
-          <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
-            <DialogHeader>
-              <DialogTitle>Nuova Garanzia</DialogTitle>
-              <DialogDescription>Aggiungi una nuova garanzia per un veicolo</DialogDescription>
-            </DialogHeader>
-            <WarrantyForm
-              onSubmit={handleCreateWarranty}
-              onCancel={() => setCreateDialogOpen(false)}
-              isLoading={isCreating}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Expiring Alert */}
-      {expiringWarranties.length > 0 && (
-        <ExpiringAlert
-          warranties={expiringWarranties as never}
-          onViewAll={() => router.push('/dashboard/warranty?tab=expiring')}
-          onViewWarranty={id => router.push(`/dashboard/warranty/${id}`)}
-        />
-      )}
-
-      {/* Stats */}
-      <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
-              <Shield className='h-4 w-4 text-green-600' />
-              Garanzie Attive
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-              {stats.active}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
-              <Calendar className='h-4 w-4 text-amber-600' />
-              In Scadenza
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-              {stats.expiringSoon}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
-              <AlertTriangle className='h-4 w-4 text-red-600' />
-              Scadute
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-              {stats.expired}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium text-gray-600 flex items-center gap-2'>
-              <FileText className='h-4 w-4 text-blue-600' />
-              Reclami in Attesa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-              {stats.pendingClaims}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs defaultValue='warranties' className='space-y-4'>
-        <TabsList>
-          <TabsTrigger value='warranties'>Garanzie</TabsTrigger>
-          <TabsTrigger value='claims'>Reclami</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='warranties' className='space-y-4'>
-          {warranties.length === 0 ? (
-            <div className='text-center py-12 bg-gray-50 dark:bg-[#353535] rounded-lg'>
-              <Shield className='h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4' />
-              <h3 className='text-lg font-medium text-gray-900 dark:text-[#ececec]'>
-                Nessuna garanzia
-              </h3>
-              <p className='text-sm text-gray-500 dark:text-[#636366] mt-1'>
-                Crea una garanzia per iniziare a monitorare la copertura
+      <header
+        className='sticky top-0 z-30 backdrop-blur-xl border-b'
+        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
+      >
+        <div className='px-8 py-5 flex items-center justify-between'>
+          <div className='flex items-center gap-4'>
+            <Link href='/dashboard'>
+              <button
+                className='w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5'
+                style={{ color: colors.textSecondary }}
+              >
+                <ArrowLeft className='h-5 w-5' />
+              </button>
+            </Link>
+            <div>
+              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
+                Gestione Garanzie
+              </h1>
+              <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
+                Monitora le garanzie e gestisci i reclami
               </p>
-              <Button className='mt-4' onClick={() => setCreateDialogOpen(true)}>
-                <Plus className='h-4 w-4 mr-2' />
-                Crea Garanzia
-              </Button>
             </div>
-          ) : (
-            <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4'>
-              {warranties.map(warranty => (
-                <WarrantyCard
-                  key={warranty.id}
-                  warranty={warranty as never}
-                  onClick={() => router.push(`/dashboard/warranty/${warranty.id}`)}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+          </div>
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                className='h-10 px-5 rounded-full text-sm font-medium flex items-center gap-2 transition-colors hover:opacity-90'
+                style={{ backgroundColor: colors.accent, color: colors.bg }}
+              >
+                <Plus className='h-4 w-4' />
+                Nuova Garanzia
+              </button>
+            </DialogTrigger>
+            <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
+              <DialogHeader>
+                <DialogTitle>Nuova Garanzia</DialogTitle>
+                <DialogDescription>Aggiungi una nuova garanzia per un veicolo</DialogDescription>
+              </DialogHeader>
+              <WarrantyForm
+                onSubmit={handleCreateWarranty}
+                onCancel={() => setCreateDialogOpen(false)}
+                isLoading={isCreating}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </header>
 
-        <TabsContent value='claims'>
-          <ClaimsList
-            claims={claims as never}
-            showVehicle
-            onClaimClick={claim => router.push(`/dashboard/warranty/claims/${claim.id}`)}
-          />
-        </TabsContent>
-      </Tabs>
+      <motion.div className='p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
+        {/* Expiring Alert */}
+        {expiringWarranties.length > 0 && (
+          <motion.div variants={itemVariants}>
+            <ExpiringAlert
+              warranties={expiringWarranties}
+              onViewAll={() => router.push('/dashboard/warranty?tab=expiring')}
+              onViewWarranty={id => router.push(`/dashboard/warranty/${id}`)}
+            />
+          </motion.div>
+        )}
+
+        {/* Stats */}
+        <motion.div className='grid grid-cols-2 lg:grid-cols-4 gap-4' variants={containerVariants}>
+          {statCards.map(stat => (
+            <motion.div
+              key={stat.label}
+              variants={itemVariants}
+              className='rounded-2xl border h-[120px] flex flex-col justify-center px-5'
+              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+            >
+              <div className='flex items-center gap-3 mb-3'>
+                <div
+                  className='w-10 h-10 rounded-xl flex items-center justify-center'
+                  style={{ backgroundColor: `${stat.iconColor}15` }}
+                >
+                  <stat.icon className='h-5 w-5' style={{ color: stat.iconColor }} />
+                </div>
+              </div>
+              <p
+                className='text-2xl font-semibold'
+                style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+              >
+                {stat.value}
+              </p>
+              <p className='text-[13px]' style={{ color: colors.textTertiary }}>{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Tabs */}
+        <motion.div variants={itemVariants} className='flex justify-center flex-wrap gap-2'>
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => { setActiveTab(tab.key); setPage(1); }}
+              className='h-10 px-4 rounded-full text-sm font-medium transition-colors'
+              style={activeTab === tab.key
+                ? { backgroundColor: colors.accent, color: colors.bg }
+                : { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, color: colors.textSecondary }
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Warranties Tab */}
+        {activeTab === 'warranties' && (
+          <motion.div variants={itemVariants}>
+            {warranties.length === 0 ? (
+              <div
+                className='rounded-2xl border flex flex-col items-center justify-center py-16 text-center'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div
+                  className='w-16 h-16 rounded-2xl flex items-center justify-center mb-4'
+                  style={{ backgroundColor: `${colors.success}15` }}
+                >
+                  <Shield className='h-8 w-8' style={{ color: colors.borderSubtle }} />
+                </div>
+                <p className='text-base font-medium mb-1' style={{ color: colors.textPrimary }}>
+                  Nessuna garanzia
+                </p>
+                <p className='text-[13px] max-w-sm mb-6' style={{ color: colors.textTertiary }}>
+                  Crea una garanzia per iniziare a monitorare la copertura
+                </p>
+                <button
+                  className='h-10 px-5 rounded-full text-sm font-medium flex items-center gap-2 transition-colors hover:opacity-90'
+                  style={{ backgroundColor: colors.accent, color: colors.bg }}
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  <Plus className='h-4 w-4' />
+                  Crea Garanzia
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4'>
+                  {warranties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(warranty => (
+                    <WarrantyCard
+                      key={warranty.id}
+                      warranty={warranty}
+                      onClick={() => router.push(`/dashboard/warranty/${warranty.id}`)}
+                    />
+                  ))}
+                </div>
+                <div className='mt-4'>
+                  <Pagination page={page} totalPages={Math.ceil(warranties.length / PAGE_SIZE)} onPageChange={setPage} />
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+
+        {/* Claims Tab */}
+        {activeTab === 'claims' && (
+          <motion.div variants={itemVariants}>
+            <ClaimsList
+              claims={claims}
+              showVehicle
+              onClaimClick={claim => router.push(`/dashboard/warranty/claims/${claim.id}`)}
+            />
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 }

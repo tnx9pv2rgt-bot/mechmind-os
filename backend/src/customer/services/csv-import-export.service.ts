@@ -41,79 +41,107 @@ export class CsvImportExportService {
   ) {}
 
   async exportCustomers(tenantId: string): Promise<Buffer> {
-    const customers = await this.prisma.customer.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: 'asc' },
-    });
-
     const csvStringifier = createObjectCsvStringifier({
       header: [
-        { id: 'firstName', title: 'firstName' },
-        { id: 'lastName', title: 'lastName' },
-        { id: 'email', title: 'email' },
-        { id: 'phone', title: 'phone' },
-        { id: 'customerType', title: 'customerType' },
-        { id: 'codiceFiscale', title: 'codiceFiscale' },
-        { id: 'partitaIva', title: 'partitaIva' },
-        { id: 'address', title: 'address' },
-        { id: 'city', title: 'city' },
-        { id: 'postalCode', title: 'postalCode' },
-        { id: 'province', title: 'province' },
+        { id: 'firstName', title: 'Nome' },
+        { id: 'lastName', title: 'Cognome' },
+        { id: 'email', title: 'Email' },
+        { id: 'phone', title: 'Telefono' },
+        { id: 'customerType', title: 'Tipo Cliente' },
+        { id: 'codiceFiscale', title: 'Codice Fiscale' },
+        { id: 'partitaIva', title: 'Partita IVA' },
+        { id: 'address', title: 'Indirizzo' },
+        { id: 'city', title: 'Città' },
+        { id: 'postalCode', title: 'CAP' },
+        { id: 'province', title: 'Provincia' },
       ],
+      fieldDelimiter: ';',
     });
 
-    const records: CustomerCsvRow[] = customers.map(c => ({
-      firstName: c.encryptedFirstName ? this.encryption.decrypt(c.encryptedFirstName) : '',
-      lastName: c.encryptedLastName ? this.encryption.decrypt(c.encryptedLastName) : '',
-      email: c.encryptedEmail ? this.encryption.decrypt(c.encryptedEmail) : '',
-      phone: this.encryption.decrypt(c.encryptedPhone),
-      customerType: c.customerType ?? '',
-      codiceFiscale: c.codiceFiscale ?? '',
-      partitaIva: c.partitaIva ?? '',
-      address: c.address ?? '',
-      city: c.city ?? '',
-      postalCode: c.postalCode ?? '',
-      province: c.province ?? '',
-    }));
+    const records: CustomerCsvRow[] = [];
+    let cursor: string | undefined;
 
-    const csvContent = csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
+    while (true) {
+      const batch = await this.prisma.customer.findMany({
+        where: { tenantId, deletedAt: null },
+        take: 500,
+        orderBy: { id: 'asc' },
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      });
+
+      if (batch.length === 0) break;
+
+      for (const c of batch) {
+        records.push({
+          firstName: c.encryptedFirstName ? this.encryption.decrypt(c.encryptedFirstName) : '',
+          lastName: c.encryptedLastName ? this.encryption.decrypt(c.encryptedLastName) : '',
+          email: c.encryptedEmail ? this.encryption.decrypt(c.encryptedEmail) : '',
+          phone: this.encryption.decrypt(c.encryptedPhone),
+          customerType: c.customerType ?? '',
+          codiceFiscale: c.codiceFiscale ?? '',
+          partitaIva: c.partitaIva ?? '',
+          address: c.address ?? '',
+          city: c.city ?? '',
+          postalCode: c.postalCode ?? '',
+          province: c.province ?? '',
+        });
+      }
+
+      cursor = batch[batch.length - 1].id;
+    }
+
+    const csvContent =
+      '\uFEFF' + csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
 
     return Buffer.from(csvContent, 'utf-8');
   }
 
   async exportVehicles(tenantId: string): Promise<Buffer> {
-    const vehicles = await this.prisma.vehicle.findMany({
-      where: {
-        customer: { tenantId },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-
     const csvStringifier = createObjectCsvStringifier({
       header: [
-        { id: 'licensePlate', title: 'licensePlate' },
-        { id: 'make', title: 'make' },
-        { id: 'model', title: 'model' },
-        { id: 'year', title: 'year' },
-        { id: 'vin', title: 'vin' },
-        { id: 'fuelType', title: 'fuelType' },
-        { id: 'mileage', title: 'mileage' },
-        { id: 'status', title: 'status' },
+        { id: 'licensePlate', title: 'Targa' },
+        { id: 'make', title: 'Marca' },
+        { id: 'model', title: 'Modello' },
+        { id: 'year', title: 'Anno' },
+        { id: 'vin', title: 'Telaio (VIN)' },
+        { id: 'fuelType', title: 'Alimentazione' },
+        { id: 'mileage', title: 'Chilometraggio' },
+        { id: 'status', title: 'Stato' },
       ],
+      fieldDelimiter: ';',
     });
 
-    const records: VehicleCsvRow[] = vehicles.map(v => ({
-      licensePlate: v.licensePlate,
-      make: v.make,
-      model: v.model,
-      year: v.year?.toString() ?? '',
-      vin: v.vin ?? '',
-      fuelType: v.fuelType ?? '',
-      mileage: v.mileage?.toString() ?? '',
-      status: v.status,
-    }));
+    const records: VehicleCsvRow[] = [];
+    let cursor: string | undefined;
 
-    const csvContent = csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
+    while (true) {
+      const batch = await this.prisma.vehicle.findMany({
+        where: { customer: { tenantId } },
+        take: 500,
+        orderBy: { id: 'asc' },
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      });
+
+      if (batch.length === 0) break;
+
+      for (const v of batch) {
+        records.push({
+          licensePlate: v.licensePlate,
+          make: v.make,
+          model: v.model,
+          year: v.year?.toString() ?? '',
+          vin: v.vin ?? '',
+          fuelType: v.fuelType ?? '',
+          mileage: v.mileage?.toString() ?? '',
+          status: v.status,
+        });
+      }
+
+      cursor = batch[batch.length - 1].id;
+    }
+
+    const csvContent =
+      '\uFEFF' + csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
 
     return Buffer.from(csvContent, 'utf-8');
   }

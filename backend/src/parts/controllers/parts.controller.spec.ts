@@ -65,7 +65,8 @@ describe('PartsController', () => {
   describe('getParts', () => {
     it('should delegate to service with tenantId and query filters', async () => {
       const query = { category: 'brakes', search: 'pad' };
-      service.getParts.mockResolvedValue([mockPart] as never);
+      const paginated = { data: [mockPart], total: 1, page: 1, limit: 20, pages: 1 };
+      service.getParts.mockResolvedValue(paginated as never);
 
       const result = await controller.getParts(TENANT_ID, query as never);
 
@@ -74,8 +75,10 @@ describe('PartsController', () => {
         supplierId: undefined,
         lowStock: undefined,
         search: 'pad',
+        page: undefined,
+        limit: undefined,
       });
-      expect(result).toEqual([mockPart]);
+      expect(result).toEqual(paginated);
     });
   });
 
@@ -117,14 +120,23 @@ describe('PartsController', () => {
   });
 
   describe('getSuppliers', () => {
-    it('should delegate to service with tenantId', async () => {
-      const suppliers = [{ id: 'sup-001', name: 'Auto Parts Inc' }];
-      service.getSuppliers.mockResolvedValue(suppliers as never);
+    it('should delegate to service with tenantId and pagination', async () => {
+      const paginated = {
+        data: [{ id: 'sup-001', name: 'Auto Parts Inc' }],
+        total: 1,
+        page: 1,
+        limit: 50,
+        pages: 1,
+      };
+      service.getSuppliers.mockResolvedValue(paginated as never);
 
       const result = await controller.getSuppliers(TENANT_ID);
 
-      expect(service.getSuppliers).toHaveBeenCalledWith(TENANT_ID);
-      expect(result).toEqual(suppliers);
+      expect(service.getSuppliers).toHaveBeenCalledWith(TENANT_ID, {
+        page: undefined,
+        limit: undefined,
+      });
+      expect(result).toEqual(paginated);
     });
   });
 
@@ -178,13 +190,24 @@ describe('PartsController', () => {
 
   describe('getPurchaseOrders', () => {
     it('should delegate to service with tenantId and optional status', async () => {
-      const orders = [{ id: 'po-001', status: 'PENDING' }];
-      service.getPurchaseOrders.mockResolvedValue(orders as never);
+      const paginated = {
+        data: [{ id: 'po-001', status: 'PENDING' }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        pages: 1,
+      };
+      service.getPurchaseOrders.mockResolvedValue(paginated as never);
 
       const result = await controller.getPurchaseOrders(TENANT_ID, 'PENDING' as never);
 
-      expect(service.getPurchaseOrders).toHaveBeenCalledWith(TENANT_ID, 'PENDING');
-      expect(result).toEqual(orders);
+      expect(service.getPurchaseOrders).toHaveBeenCalledWith(
+        TENANT_ID,
+        'PENDING',
+        undefined,
+        undefined,
+      );
+      expect(result).toEqual(paginated);
     });
   });
 

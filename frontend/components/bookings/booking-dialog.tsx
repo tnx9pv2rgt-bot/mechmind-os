@@ -121,10 +121,7 @@ export function BookingDialog({
 
           {/* Form Content */}
           <div className="relative px-6 py-5">
-            <BookingForm
-              onSuccess={handleSubmit}
-              onCancel={handleCancel}
-            />
+            <BookingForm />
           </div>
         </motion.div>
       </DialogContent>
@@ -197,10 +194,7 @@ export function BookingButton({
           </DialogHeader>
 
           <div className="px-6 py-5">
-            <BookingForm
-              onSuccess={handleSuccess}
-              onCancel={() => setOpen(false)}
-            />
+            <BookingForm />
           </div>
         </div>
       </DialogContent>
@@ -293,10 +287,7 @@ export function BookingFormCard({ onBookingCreated, className }: BookingFormCard
 
       {/* Form */}
       <div className="px-6 py-5">
-        <BookingForm
-          onSuccess={handleSubmit}
-          onCancel={() => {}}
-        />
+        <BookingForm />
       </div>
     </motion.div>
   )

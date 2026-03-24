@@ -1,4 +1,4 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE, APP_INTERCEPTOR, APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -24,8 +24,15 @@ import { AccountingModule } from './accounting/accounting.module';
 import { AdminModule } from './admin/admin.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { WorkOrderModule } from './work-order/work-order.module';
+import { CannedJobModule } from './canned-job/canned-job.module';
+import { SmsModule } from './sms/sms.module';
+import { ReviewModule } from './reviews/review.module';
+import { CampaignModule } from './campaign/campaign.module';
+import { LocationModule } from './location/location.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 @Module({
   imports: [
@@ -68,6 +75,11 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     AdminModule,
     InvoiceModule,
     WorkOrderModule,
+    CannedJobModule,
+    SmsModule,
+    ReviewModule,
+    CampaignModule,
+    LocationModule,
   ],
   providers: [
     // Global exception filter
@@ -97,6 +109,11 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
     },
+    // Idempotency interceptor (caches POST/PUT/PATCH responses by Idempotency-Key header)
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
+    },
     // Global rate limiting guard
     {
       provide: APP_GUARD,
@@ -104,4 +121,8 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

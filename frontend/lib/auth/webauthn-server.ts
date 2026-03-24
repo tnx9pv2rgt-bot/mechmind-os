@@ -33,7 +33,7 @@ function base64URLToBuffer(base64url: string): Uint8Array {
 
 const RP_ID = process.env.NEXT_PUBLIC_RP_ID || 'localhost';
 const RP_NAME = process.env.NEXT_PUBLIC_RP_NAME || 'MechMind OS - Gestionale Officine';
-const ORIGIN = process.env.NEXT_PUBLIC_ORIGIN || 'http://localhost:3000';
+const ORIGIN = process.env.NEXT_PUBLIC_ORIGIN || 'http://localhost:3002';
 
 // =============================================================================
 // Registration Functions

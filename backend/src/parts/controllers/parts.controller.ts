@@ -2,7 +2,18 @@
  * MechMind OS - Parts Catalog Controller
  */
 
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -35,6 +46,7 @@ export class PartsController {
   // ============== PARTS ==============
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create new part' })
   @ApiResponse({ status: 201, type: PartResponseDto })
@@ -47,16 +59,26 @@ export class PartsController {
 
   @Get()
   @ApiOperation({ summary: 'List parts' })
-  @ApiResponse({ status: 200, type: [PartResponseDto] })
+  @ApiResponse({ status: 200 })
   async getParts(
     @CurrentUser('tenantId') tenantId: string,
     @Query() query: PartQueryDto,
-  ): Promise<PartResponseDto[]> {
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: PartResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     return this.partsService.getParts(tenantId, {
       category: query.category,
       supplierId: query.supplierId,
       lowStock: query.lowStock,
       search: query.search,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 
@@ -85,6 +107,7 @@ export class PartsController {
   // ============== SUPPLIERS ==============
 
   @Post('suppliers')
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create supplier' })
   async createSupplier(@CurrentUser('tenantId') tenantId: string, @Body() dto: CreateSupplierDto) {
@@ -93,8 +116,21 @@ export class PartsController {
 
   @Get('suppliers/list')
   @ApiOperation({ summary: 'List suppliers' })
-  async getSuppliers(@CurrentUser('tenantId') tenantId: string) {
-    return this.partsService.getSuppliers(tenantId);
+  async getSuppliers(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: unknown[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    return this.partsService.getSuppliers(tenantId, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 
   // ============== INVENTORY ==============
@@ -132,6 +168,7 @@ export class PartsController {
   // ============== PURCHASE ORDERS ==============
 
   @Post('purchase-orders')
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create purchase order' })
   @ApiResponse({ status: 201, type: PurchaseOrderResponseDto })
@@ -145,12 +182,25 @@ export class PartsController {
 
   @Get('purchase-orders/list')
   @ApiOperation({ summary: 'List purchase orders' })
-  @ApiResponse({ status: 200, type: [PurchaseOrderResponseDto] })
+  @ApiResponse({ status: 200 })
   async getPurchaseOrders(
     @CurrentUser('tenantId') tenantId: string,
     @Query('status') status?: OrderStatus,
-  ): Promise<PurchaseOrderResponseDto[]> {
-    return this.partsService.getPurchaseOrders(tenantId, status);
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: PurchaseOrderResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    return this.partsService.getPurchaseOrders(
+      tenantId,
+      status,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Post('purchase-orders/:id/receive')

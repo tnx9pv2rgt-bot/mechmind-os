@@ -33,22 +33,22 @@ interface WarrantyCardProps {
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   ACTIVE: {
-    label: 'Active',
+    label: 'Attiva',
     color: 'bg-green-100 text-green-800 border-green-200',
     icon: <CheckCircle2 className='h-4 w-4' />,
   },
   EXPIRING_SOON: {
-    label: 'Expiring Soon',
+    label: 'In Scadenza',
     color: 'bg-amber-100 text-amber-800 border-amber-200',
     icon: <AlertTriangle className='h-4 w-4' />,
   },
   EXPIRED: {
-    label: 'Expired',
+    label: 'Scaduta',
     color: 'bg-red-100 text-red-800 border-red-200',
     icon: <XCircle className='h-4 w-4' />,
   },
   VOID: {
-    label: 'Void',
+    label: 'Annullata',
     color: 'bg-gray-100 text-gray-800 border-gray-200',
     icon: <XCircle className='h-4 w-4' />,
   },
@@ -56,19 +56,19 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 
 const typeConfig: Record<string, { label: string; color: string }> = {
   MANUFACTURER: {
-    label: 'Manufacturer',
+    label: 'Produttore',
     color: 'bg-blue-100 text-blue-800',
   },
   EXTENDED: {
-    label: 'Extended',
+    label: 'Estesa',
     color: 'bg-purple-100 text-purple-800',
   },
   DEALER: {
-    label: 'Dealer',
+    label: 'Concessionario',
     color: 'bg-teal-100 text-teal-800',
   },
   AS_IS: {
-    label: 'As-Is',
+    label: 'Come-&Egrave;',
     color: 'bg-gray-100 text-gray-800',
   },
 };
@@ -164,7 +164,7 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
               <h3 className='font-semibold text-gray-900'>
                 {warranty.vehicle
                   ? `${warranty.vehicle.make} ${warranty.vehicle.model} ${warranty.vehicle.year}`
-                  : 'Vehicle Warranty'}
+                  : 'Garanzia Veicolo'}
               </h3>
               <p className='text-sm text-gray-500'>{String(w.provider ?? '')}</p>
             </div>
@@ -186,8 +186,8 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
         {/* Progress */}
         <div className='space-y-2'>
           <div className='flex items-center justify-between text-sm'>
-            <span className='text-gray-600'>Coverage Period</span>
-            <span className='font-medium text-gray-900'>{progress}% elapsed</span>
+            <span className='text-gray-600'>Periodo Copertura</span>
+            <span className='font-medium text-gray-900'>{progress}% trascorso</span>
           </div>
           <Progress value={progress} className='h-2' />
           <div className='flex items-center justify-between text-xs text-gray-500'>
@@ -210,7 +210,7 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
           >
             <Calendar className='h-4 w-4' />
             <span className='font-medium'>
-              {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Expires today'}
+              {daysRemaining > 0 ? `${daysRemaining} giorni rimanenti` : 'Scade oggi'}
             </span>
           </div>
         )}
@@ -220,21 +220,23 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
           <div className='bg-gray-50 rounded-lg p-3'>
             <div className='flex items-center gap-2 text-xs text-gray-600 mb-1'>
               <Euro className='h-3 w-3' />
-              <span>Remaining</span>
+              <span>Rimanente</span>
             </div>
             <div className='font-semibold text-gray-900'>{formatCurrency(remainingCoverage)}</div>
-            <div className='text-xs text-gray-500'>of {formatCurrency(maxCoverage)}</div>
+            <div className='text-xs text-gray-500'>di {formatCurrency(maxCoverage)}</div>
           </div>
           <div className='bg-gray-50 rounded-lg p-3'>
             <div className='flex items-center gap-2 text-xs text-gray-600 mb-1'>
               <Gauge className='h-3 w-3' />
-              <span>Coverage</span>
+              <span>Copertura</span>
             </div>
             <div className='font-semibold text-gray-900'>
-              {warranty.mileageLimit ? `${warranty.mileageLimit.toLocaleString()} km` : 'Unlimited'}
+              {warranty.mileageLimit
+                ? `${warranty.mileageLimit.toLocaleString()} km`
+                : 'Illimitato'}
             </div>
             <div className='text-xs text-gray-500'>
-              Deductible:{' '}
+              Franchigia:{' '}
               {formatCurrency((w.deductible as number) ?? warranty.deductibleAmount ?? 0)}
             </div>
           </div>
@@ -244,9 +246,12 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
         {totalClaims > 0 && (
           <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
             <span className='text-sm text-gray-600'>
-              {totalClaims} claim{totalClaims !== 1 ? 's' : ''} filed
+              {totalClaims} reclam{totalClaims !== 1 ? 'i' : 'o'} presentat
+              {totalClaims !== 1 ? 'i' : 'o'}
             </span>
-            <span className='text-sm text-gray-900'>{approvedClaims} approved</span>
+            <span className='text-sm text-gray-900'>
+              {approvedClaims} approvat{approvedClaims !== 1 ? 'i' : 'o'}
+            </span>
           </div>
         )}
       </CardContent>

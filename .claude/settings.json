@@ -1,73 +1,112 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "alwaysThinkingEnabled": true,
   "permissions": {
-    "allow": [
-      "Bash(npm run *)",
-      "Bash(npx prisma *)",
-      "Bash(npx prettier *)",
-      "Bash(npx eslint *)",
-      "Bash(npx jest *)",
-      "Bash(npx playwright *)",
-      "Bash(docker compose *)",
-      "Bash(docker ps *)",
-      "Bash(docker logs *)",
-      "Bash(git status)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git branch *)",
-      "Bash(git stash *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(gh pr *)",
-      "Bash(gh issue *)",
-      "Bash(ls *)",
-      "Bash(pwd)",
-      "Bash(node *)",
-      "Bash(npx ts-node *)",
-      "Bash(curl *)",
-      "Bash(render *)",
-      "Read",
-      "Glob",
-      "Grep",
-      "mcp__postgres__query"
-    ],
     "deny": [
-      "Bash(rm -rf /)",
-      "Bash(rm -rf /*)",
-      "Bash(rm -rf ~)",
-      "Bash(sudo *)",
-      "Bash(curl * | bash)",
-      "Bash(wget * | bash)",
-      "Bash(git push --force *)",
-      "Bash(git reset --hard *)",
-      "Bash(git clean -f *)",
-      "Bash(npx prisma migrate reset *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(npx prisma migrate reset*)",
+      "Bash(DROP TABLE*)",
+      "Bash(DELETE FROM*)",
+      "Bash(chmod 777*)",
       "Read(.env)",
       "Read(.env.*)",
+      "Read(backend/.env*)",
       "Read(**/.env)",
       "Read(**/.env.*)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Write(.env)",
-      "Write(.env.*)",
+      "Read(~/.ssh/*)",
+      "Read(~/.aws/*)",
+      "Read(~/.gnupg/*)",
       "Edit(.env)",
-      "Edit(.env.*)"
+      "Edit(.env.*)",
+      "Edit(backend/.env*)",
+      "Edit(**/.env)",
+      "Edit(~/.bashrc)",
+      "Edit(~/.zshrc)"
+    ],
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(npx jest *)",
+      "Bash(npx prisma generate*)",
+      "Bash(npx prisma migrate dev*)",
+      "Bash(npx prisma migrate deploy*)",
+      "Bash(npx prisma db seed*)",
+      "Bash(npx prettier *)",
+      "Bash(curl *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(docker *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git push origin*)",
+      "Bash(git status*)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git checkout *)",
+      "Bash(git branch *)",
+      "Bash(git stash*)",
+      "Bash(node *)",
+      "Bash(cd *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(jq *)"
     ]
   },
-  "env": {
-    "MAX_THINKING_TOKENS": "16000"
-  },
   "hooks": {
-    "PostToolUse": [
+    "Stop": [
       {
-        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path // empty' | while read -r f; do case \"$f\" in *.ts|*.tsx|*.js|*.jsx) npx prettier --write \"$f\" 2>/dev/null || true;; esac; done",
-            "timeout": 10000
+            "command": "#!/bin/bash\nINPUT=$(cat)\nif [ \"$(echo \"$INPUT\" | jq -r '.stop_hook_active // false')\" = \"true\" ]; then exit 0; fi\n\nFAILED=0\n\n# TypeScript backend\nif [ -d \"backend\" ]; then\n  BE=$(cd backend && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error TS' || true)\n  if [ \"$BE\" -gt 0 ]; then\n    echo \"\" >&2\n    echo \"===== STOP HOOK: BACKEND TS ERRORS ($BE) =====\" >&2\n    cd backend && npx tsc --noEmit --pretty false 2>&1 | head -25 >&2\n    FAILED=1\n  fi\nfi\n\n# TypeScript frontend\nif [ -d \"frontend\" ]; then\n  FE=$(cd frontend && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error TS' || true)\n  if [ \"$FE\" -gt 0 ]; then\n    echo \"\" >&2\n    echo \"===== STOP HOOK: FRONTEND TS ERRORS ($FE) =====\" >&2\n    cd frontend && npx tsc --noEmit --pretty false 2>&1 | head -25 >&2\n    FAILED=1\n  fi\nfi\n\n# ESLint backend\nif [ -d \"backend\" ]; then\n  LINT_OUT=$(cd backend && npm run lint 2>&1)\n  LINT_ERR=$(echo \"$LINT_OUT\" | grep -cE '\\d+ error' || true)\n  if [ \"$LINT_ERR\" -gt 0 ]; then\n    echo \"\" >&2\n    echo \"===== STOP HOOK: ESLINT ERRORS =====\" >&2\n    echo \"$LINT_OUT\" | tail -10 >&2\n    FAILED=1\n  fi\nfi\n\nif [ \"$FAILED\" -gt 0 ]; then\n  echo \"\" >&2\n  echo \"BLOCCATO: Fixa tutti gli errori sopra prima di finire.\" >&2\n  exit 2\nfi\nexit 0"
           }
-        ]
+        ],
+        "description": "BLOCCA se TypeScript o ESLint hanno errori in backend/frontend"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\nCONTENT=$(echo \"$INPUT\" | jq -r '.tool_input.content // .tool_input.new_str // empty' 2>/dev/null)\n\n# Guard 1: Block mock/demo data in API routes\nif echo \"$FILE\" | grep -qE 'app/api/.*route\\.ts'; then\n  if echo \"$CONTENT\" | grep -qiE 'DEMO_DATA|demoData|mockData|isDemoMode|demo.mode|getDemoData|fakeDat'; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: mock/demo data nelle route API. Usa SOLO proxy diretto al backend NestJS reale.\"}}'\n    exit 0\n  fi\nfi\n\n# Guard 2: Block @ts-ignore / @ts-expect-error\nif echo \"$CONTENT\" | grep -qE '@ts-ignore|@ts-expect-error'; then\n  jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: @ts-ignore/@ts-expect-error. Fixa il tipo correttamente.\"}}'\n  exit 0\nfi\n\n# Guard 3: Block console.log in production code\nif echo \"$FILE\" | grep -qvE '\\.(spec|test)\\.ts'; then\n  if echo \"$CONTENT\" | grep -qE 'console\\.log\\('; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: console.log in production. Usa Logger del framework (this.logger.log/warn/error).\"}}'\n    exit 0\n  fi\nfi\n\nexit 0"
+          }
+        ],
+        "description": "BLOCCA scrittura di mock data, @ts-ignore, console.log in produzione"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\n\n# Block push to main/master\nif echo \"$COMMAND\" | grep -qE 'git\\s+push.*\\s+(main|master)'; then\n  echo \"BLOCCATO: push diretto a main/master vietato. Usa un feature branch.\" >&2\n  exit 2\nfi\n\nexit 0"
+          }
+        ],
+        "description": "BLOCCA push diretto a main/master"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\n[ -z \"$FILE\" ] && exit 0\n[ ! -f \"$FILE\" ] && exit 0\n\n# Auto-format with Prettier if applicable\nEXT=\"${FILE##*.}\"\ncase \"$EXT\" in\n  ts|tsx|js|jsx|json|css|md)\n    npx prettier --write \"$FILE\" 2>/dev/null || true\n    ;;\nesac\n\n# Log file change\nmkdir -p .claude/logs 2>/dev/null\necho \"[$(date -Iseconds)] EDIT: $FILE\" >> .claude/logs/file-changes.log\nexit 0"
+          }
+        ],
+        "description": "Auto-format Prettier + log ogni file modificato"
       }
     ]
   }

@@ -1,4 +1,5 @@
-import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Res, VERSION_NEUTRAL } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { PrismaService } from '../services/prisma.service';
@@ -18,8 +19,9 @@ interface ComponentCheck {
   error?: string;
 }
 
+@ApiTags('Health')
 @SkipThrottle()
-@Controller()
+@Controller({ version: VERSION_NEUTRAL })
 export class HealthController {
   constructor(
     private readonly prisma: PrismaService,
@@ -32,6 +34,9 @@ export class HealthController {
    * Returns 200 if all healthy, 503 if any critical component is down
    */
   @Get('health')
+  @ApiOperation({ summary: 'Health check completo (DB + Redis)' })
+  @ApiResponse({ status: 200, description: 'Tutti i componenti funzionanti o degradati' })
+  @ApiResponse({ status: 503, description: 'Database non raggiungibile' })
   async health(@Res() res: Response): Promise<void> {
     const checks: Record<string, ComponentCheck> = {};
 
@@ -68,6 +73,8 @@ export class HealthController {
    * Always returns 200 if the server can respond
    */
   @Get('liveness')
+  @ApiOperation({ summary: 'Liveness probe - il processo e vivo?' })
+  @ApiResponse({ status: 200, description: 'Processo attivo' })
   liveness(): { status: string } {
     return { status: 'ok' };
   }
@@ -77,6 +84,9 @@ export class HealthController {
    * Returns 200 only if DB is reachable
    */
   @Get('readiness')
+  @ApiOperation({ summary: 'Readiness probe - il server puo gestire richieste?' })
+  @ApiResponse({ status: 200, description: 'Server pronto' })
+  @ApiResponse({ status: 503, description: 'Server non pronto' })
   async readiness(@Res() res: Response): Promise<void> {
     const dbCheck = await this.checkDatabase();
 

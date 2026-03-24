@@ -68,6 +68,12 @@ describe('CustomerService', () => {
         update: jest.fn().mockResolvedValue(mockDbCustomer),
         count: jest.fn().mockResolvedValue(1),
       },
+      workOrder: {
+        count: jest.fn().mockResolvedValue(0),
+      },
+      invoice: {
+        count: jest.fn().mockResolvedValue(0),
+      },
     } as unknown as Record<string, jest.Mock | Record<string, jest.Mock>>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -237,6 +243,60 @@ describe('CustomerService', () => {
       const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.gdprConsent).toBe(false);
       expect(createCall.data.marketingConsent).toBe(false);
+    });
+
+    it('should encrypt codiceFiscale and pecEmail as PII (P027)', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+      const dtoWithFiscal: CreateCustomerDto = {
+        phone: '+390123456789',
+        codiceFiscale: 'RSSMRA85M01H501Z',
+        pecEmail: 'azienda@pec.it',
+        partitaIva: '12345678901',
+        sdiCode: 'M5UXCR1',
+      };
+
+      const dbCustomerWithFiscal = {
+        ...mockDbCustomer,
+        codiceFiscale: 'enc_RSSMRA85M01H501Z',
+        pecEmail: 'enc_azienda@pec.it',
+        partitaIva: '12345678901',
+        sdiCode: 'M5UXCR1',
+        customerType: 'PERSONA',
+      };
+      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(dbCustomerWithFiscal);
+
+      // Act
+      const result = await service.create(TENANT_ID, dtoWithFiscal);
+
+      // Assert - codiceFiscale and pecEmail are encrypted
+      expect(encryption.encrypt).toHaveBeenCalledWith('RSSMRA85M01H501Z');
+      expect(encryption.encrypt).toHaveBeenCalledWith('azienda@pec.it');
+
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
+      expect(createCall.data.codiceFiscale).toBe('enc_RSSMRA85M01H501Z');
+      expect(createCall.data.pecEmail).toBe('enc_azienda@pec.it');
+      // partitaIva and sdiCode are NOT encrypted (not PII)
+      expect(createCall.data.partitaIva).toBe('12345678901');
+      expect(createCall.data.sdiCode).toBe('M5UXCR1');
+
+      // Assert - decrypted in response
+      expect(result.codiceFiscale).toBe('RSSMRA85M01H501Z');
+      expect(result.pecEmail).toBe('azienda@pec.it');
+    });
+
+    it('should handle null fiscal PII fields in create', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+      const dtoNoFiscal: CreateCustomerDto = { phone: '+390123456789' };
+
+      // Act
+      await service.create(TENANT_ID, dtoNoFiscal);
+
+      // Assert
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
+      expect(createCall.data.codiceFiscale).toBeNull();
+      expect(createCall.data.pecEmail).toBeNull();
     });
   });
 
@@ -776,6 +836,48 @@ describe('CustomerService', () => {
       // Assert
       expect(logger.log).toHaveBeenCalledWith(`Updated customer ${CUSTOMER_ID}`);
     });
+
+    it('should encrypt codiceFiscale and pecEmail on update (P027)', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      const updatedDb = {
+        ...mockDbCustomer,
+        codiceFiscale: 'enc_RSSMRA85M01H501Z',
+        pecEmail: 'enc_azienda@pec.it',
+      };
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(updatedDb);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        codiceFiscale: 'RSSMRA85M01H501Z',
+        pecEmail: 'azienda@pec.it',
+      });
+
+      // Assert
+      expect(encryption.encrypt).toHaveBeenCalledWith('RSSMRA85M01H501Z');
+      expect(encryption.encrypt).toHaveBeenCalledWith('azienda@pec.it');
+
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.codiceFiscale).toBe('enc_RSSMRA85M01H501Z');
+      expect(updateCall.data.pecEmail).toBe('enc_azienda@pec.it');
+    });
+
+    it('should clear codiceFiscale and pecEmail when set to empty string', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        codiceFiscale: '',
+        pecEmail: '',
+      });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.codiceFiscale).toBeNull();
+      expect(updateCall.data.pecEmail).toBeNull();
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -808,6 +910,9 @@ describe('CustomerService', () => {
           encryptedLastName: null,
           phoneHash: 'DELETED',
           notes: 'Customer data deleted per GDPR request',
+          // Fiscal PII also cleared (P027)
+          codiceFiscale: null,
+          pecEmail: null,
         },
       });
     });

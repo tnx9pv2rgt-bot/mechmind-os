@@ -171,7 +171,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
     setStatus('loading');
 
     try {
-      // TODO: Replace with useCreateBooking() when fully integrated
+      // POST to /api/bookings proxies to NestJS /v1/bookings
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

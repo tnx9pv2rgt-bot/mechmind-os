@@ -4,6 +4,7 @@ import { NotificationsApiController } from './notifications-api.controller';
 import { NotificationOrchestratorService } from '../services/notification.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
+import { PrismaService } from '../../common/services/prisma.service';
 import { NotificationType, NotificationChannel } from '../dto/send-notification.dto';
 
 describe('NotificationsApiController', () => {
@@ -11,6 +12,7 @@ describe('NotificationsApiController', () => {
   let notificationService: jest.Mocked<NotificationOrchestratorService>;
   let emailService: jest.Mocked<EmailService>;
   let smsService: jest.Mocked<SmsService>;
+  let prisma: { notification: Record<string, jest.Mock> };
 
   const mockResult = {
     success: true,
@@ -20,6 +22,15 @@ describe('NotificationsApiController', () => {
   };
 
   beforeEach(async () => {
+    prisma = {
+      notification: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        count: jest.fn(),
+        groupBy: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [NotificationsApiController],
       providers: [
@@ -50,6 +61,10 @@ describe('NotificationsApiController', () => {
             healthCheck: jest.fn(),
           },
         },
+        {
+          provide: PrismaService,
+          useValue: prisma,
+        },
       ],
     }).compile();
 
@@ -76,7 +91,7 @@ describe('NotificationsApiController', () => {
         channel: NotificationChannel.EMAIL,
       };
 
-      const result = await controller.sendNotification(dto as never);
+      const result = await controller.sendNotification('tenant-001', dto as never);
 
       expect(notificationService.notifyCustomer).toHaveBeenCalledWith(
         'cust-001',
@@ -97,7 +112,7 @@ describe('NotificationsApiController', () => {
       const errorResult = { ...mockResult, success: false, error: 'Delivery failed' };
       notificationService.notifyCustomer.mockResolvedValue(errorResult as never);
 
-      const result = await controller.sendNotification({
+      const result = await controller.sendNotification('tenant-001', {
         customerId: 'cust-001',
         tenantId: 'tenant-001',
         type: NotificationType.BOOKING_CONFIRMATION,
@@ -123,7 +138,7 @@ describe('NotificationsApiController', () => {
         notes: 'Bring old oil filter',
       };
 
-      const result = await controller.sendBookingConfirmation(dto as never);
+      const result = await controller.sendBookingConfirmation('tenant-001', dto as never);
 
       expect(notificationService.notifyCustomer).toHaveBeenCalledWith(
         'cust-001',
@@ -160,7 +175,7 @@ describe('NotificationsApiController', () => {
         channel: NotificationChannel.SMS,
       };
 
-      await controller.sendBookingConfirmation(dto as never);
+      await controller.sendBookingConfirmation('tenant-001', dto as never);
 
       expect(notificationService.notifyCustomer).toHaveBeenCalledWith(
         'cust-001',
@@ -186,7 +201,7 @@ describe('NotificationsApiController', () => {
         reminderType: '24h',
       };
 
-      const result = await controller.sendBookingReminder(dto as never);
+      const result = await controller.sendBookingReminder('tenant-001', dto as never);
 
       expect(notificationService.notifyCustomer).toHaveBeenCalledWith(
         'cust-001',
@@ -223,7 +238,7 @@ describe('NotificationsApiController', () => {
         downloadUrl: 'https://example.com/invoice.pdf',
       };
 
-      const result = await controller.sendInvoiceReady(dto as never);
+      const result = await controller.sendInvoiceReady('tenant-001', dto as never);
 
       expect(notificationService.notifyCustomer).toHaveBeenCalledWith(
         'cust-001',
@@ -393,15 +408,49 @@ describe('NotificationsApiController', () => {
 
   describe('getNotificationStatus', () => {
     it('should return status for notification id', async () => {
-      const result = await controller.getNotificationStatus('notif-001');
+      const sentDate = new Date('2026-03-15T10:00:00Z');
+      const deliveredDate = new Date('2026-03-15T10:01:00Z');
+      prisma.notification.findFirst.mockResolvedValue({
+        id: 'notif-001',
+        status: 'DELIVERED',
+        channel: 'EMAIL',
+        sentAt: sentDate,
+        deliveredAt: deliveredDate,
+        failedAt: null,
+        error: null,
+      });
 
+      const result = await controller.getNotificationStatus('tenant-001', 'notif-001');
+
+      expect(prisma.notification.findFirst).toHaveBeenCalledWith({
+        where: { id: 'notif-001', tenantId: 'tenant-001' },
+        select: {
+          id: true,
+          status: true,
+          channel: true,
+          sentAt: true,
+          deliveredAt: true,
+          failedAt: true,
+          error: true,
+        },
+      });
       expect(result).toEqual({
         id: 'notif-001',
-        status: 'delivered',
-        channel: 'email',
-        sentAt: expect.any(String),
-        deliveredAt: expect.any(String),
+        status: 'DELIVERED',
+        channel: 'EMAIL',
+        sentAt: sentDate.toISOString(),
+        deliveredAt: deliveredDate.toISOString(),
+        failedAt: null,
+        error: null,
       });
+    });
+
+    it('should throw NotFoundException when notification not found', async () => {
+      prisma.notification.findFirst.mockResolvedValue(null);
+
+      await expect(controller.getNotificationStatus('tenant-001', 'notif-999')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -468,19 +517,36 @@ describe('NotificationsApiController', () => {
   });
 
   describe('getStats', () => {
-    it('should return mock statistics', async () => {
+    it('should return real statistics from database', async () => {
+      prisma.notification.count.mockResolvedValue(5);
+      prisma.notification.groupBy.mockImplementation(async (args: { by: string[] }) => {
+        if (args.by[0] === 'channel') {
+          return [
+            { channel: 'SMS', _count: { id: 3 } },
+            { channel: 'EMAIL', _count: { id: 2 } },
+          ];
+        }
+        if (args.by[0] === 'status') {
+          return [
+            { status: 'SENT', _count: { id: 2 } },
+            { status: 'DELIVERED', _count: { id: 2 } },
+            { status: 'FAILED', _count: { id: 1 } },
+          ];
+        }
+        if (args.by[0] === 'type') {
+          return [{ type: 'BOOKING_CONFIRMATION', _count: { id: 5 } }];
+        }
+        return [];
+      });
+
       const result = await controller.getStats('tenant-001', '2026-01-01', '2026-03-16');
 
-      expect(result).toEqual({
-        total: 0,
-        byChannel: { sms: 0, email: 0 },
-        byStatus: { sent: 0, delivered: 0, failed: 0 },
-        byType: {},
-        period: {
-          from: '2026-01-01',
-          to: '2026-03-16',
-        },
-      });
+      expect(result.total).toBe(5);
+      expect(result.byChannel).toEqual({ SMS: 3, EMAIL: 2 });
+      expect(result.byStatus).toEqual({ SENT: 2, DELIVERED: 2, FAILED: 1 });
+      expect(result.byType).toEqual({ BOOKING_CONFIRMATION: 5 });
+      expect(result.period.from).toBe(new Date('2026-01-01').toISOString());
+      expect(result.period.to).toBe(new Date('2026-03-16').toISOString());
     });
   });
 

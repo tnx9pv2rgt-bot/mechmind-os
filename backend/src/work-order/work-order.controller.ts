@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Res,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -6,10 +18,13 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiQuery,
+  ApiProduces,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentTenant, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { WorkOrderService } from './work-order.service';
+import { PdfService } from '../invoice/services/pdf.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 import { VehicleCheckInDto } from './dto/check-in.dto';
@@ -20,33 +35,43 @@ import { VehicleCheckOutDto } from './dto/check-out.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('work-orders')
 export class WorkOrderController {
-  constructor(private readonly workOrderService: WorkOrderService) {}
+  constructor(
+    private readonly workOrderService: WorkOrderService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all work orders' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'vehicleId', required: false })
   @ApiQuery({ name: 'customerId', required: false })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Work orders listed' })
   async findAll(
     @CurrentTenant() tenantId: string,
     @Query('status') status?: string,
     @Query('vehicleId') vehicleId?: string,
     @Query('customerId') customerId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     const result = await this.workOrderService.findAll(tenantId, {
       status,
       vehicleId,
       customerId,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
     return {
       success: true,
       data: result.workOrders,
-      meta: { total: result.total },
+      meta: { total: result.total, page: result.page, limit: result.limit, pages: result.pages },
     };
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new work order' })
   @ApiResponse({ status: 201, description: 'Work order created' })
   async create(@CurrentTenant() tenantId: string, @Body() dto: CreateWorkOrderDto) {
@@ -101,6 +126,7 @@ export class WorkOrderController {
   }
 
   @Post(':id/invoice')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create an invoice from a work order' })
   @ApiParam({ name: 'id', description: 'Work order ID' })
   @ApiResponse({ status: 201, description: 'Invoice created from work order' })
@@ -174,5 +200,23 @@ export class WorkOrderController {
   async getTimer(@CurrentTenant() tenantId: string, @Param('id') id: string) {
     const result = await this.workOrderService.getTimer(tenantId, id);
     return { success: true, data: result };
+  }
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Download work order as PDF (HTML)' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiProduces('text/html')
+  @ApiResponse({ status: 200, description: 'PDF HTML generated' })
+  async downloadPdf(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.pdfService.generateWorkOrderPdf(id, tenantId);
+    res.set({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Disposition': `inline; filename="ordine-lavoro-${id}.html"`,
+    });
+    res.send(buffer);
   }
 }

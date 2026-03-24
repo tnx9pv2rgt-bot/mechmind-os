@@ -3,13 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const BACKEND_URL = (
-  process.env.BACKEND_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  'http://localhost:3000'
-)
-  .replace(/\/+$/, '')
-  .replace(/\/v1$/, '');
+import { BACKEND_BASE } from '@/lib/config';
 
 export async function GET() {
   try {
@@ -20,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ data: [] });
     }
 
-    const res = await fetch(`${BACKEND_URL}/v1/work-orders?portal=true`, {
+    const res = await fetch(`${BACKEND_BASE}/v1/work-orders?portal=true`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(10000),
     });

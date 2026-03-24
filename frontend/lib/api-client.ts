@@ -66,6 +66,14 @@ export async function apiClient<T>(
     'x-client-version': '10.0.0',
   }
 
+  // Attach CSRF token on mutating requests (double-submit cookie pattern)
+  if (method !== 'GET' && typeof document !== 'undefined') {
+    const csrfMatch = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]*)/)
+    if (csrfMatch?.[1]) {
+      headers['X-CSRF-Token'] = decodeURIComponent(csrfMatch[1])
+    }
+  }
+
   const res = await fetch(url, {
     method,
     headers,

@@ -173,20 +173,15 @@ describe('VoiceWebhookController', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should accept webhook without timestamp for backward compatibility', async () => {
+    it('should reject webhook without timestamp', async () => {
       // Arrange
       const payload = buildPayload();
       const signature = generateSignature(payload as unknown as Record<string, unknown>, undefined);
 
-      // Act
-      const result = await controller.handleCallEvent(
-        payload,
-        signature,
-        undefined as unknown as string,
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
+      // Act & Assert
+      await expect(
+        controller.handleCallEvent(payload, signature, undefined as unknown as string),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw BadRequestException when service processing fails', async () => {
@@ -333,25 +328,19 @@ describe('VoiceWebhookController', () => {
       expect(vapiWebhookService.processWebhook).toHaveBeenCalledWith(payload);
     });
 
-    it('should construct signed payload without timestamp when not provided', async () => {
+    it('should reject webhook without timestamp even if signature is valid', async () => {
       // Arrange
       const payload = buildPayload();
-      // The signature must match just `JSON.stringify(payload)` (no timestamp prefix)
       const signedPayload = JSON.stringify(payload);
       const correctSignature = crypto
         .createHmac('sha256', WEBHOOK_SECRET)
         .update(signedPayload)
         .digest('hex');
 
-      // Act
-      const result = await controller.handleCallEvent(
-        payload,
-        correctSignature,
-        undefined as unknown as string,
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
+      // Act & Assert
+      await expect(
+        controller.handleCallEvent(payload, correctSignature, undefined as unknown as string),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

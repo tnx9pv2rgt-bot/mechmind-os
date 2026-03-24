@@ -6,7 +6,8 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for non-Vercel hosting (Render, Docker)
-  output: 'standalone',
+  // Only enable in production — standalone breaks dev server static file serving
+  ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),
 
   // Image optimization
   images: {
@@ -33,6 +34,7 @@ const nextConfig = {
 
   // Experimental features
   experimental: {
+    instrumentationHook: true,
     serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     optimizePackageImports: [
       'framer-motion',
@@ -116,11 +118,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.stripe.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.stripe.com https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co blob:",
-              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
+              "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com blob:",
+              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.analytics.google.com http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
               "frame-src 'self' https://accounts.google.com https://www.google.com https://js.stripe.com https://hooks.stripe.com",
               "media-src 'self'",
               "object-src 'none'",
@@ -257,5 +259,5 @@ module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
   project: process.env.SENTRY_PROJECT || '',
   widenClientFileUpload: true,
   hideSourceMaps: true,
-  disableLogger: true,
+  telemetry: false,
 });

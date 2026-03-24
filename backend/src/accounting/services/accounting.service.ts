@@ -270,6 +270,7 @@ export class AccountingService {
     entityType: string,
     entityId: string,
   ): Promise<AccountingSync[]> {
+    // Internal: bounded query — sync records scoped to single entity
     return this.prisma.accountingSync.findMany({
       where: {
         tenantId,

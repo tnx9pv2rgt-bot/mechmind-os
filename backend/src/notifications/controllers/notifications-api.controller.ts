@@ -8,14 +8,25 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import {
   NotificationOrchestratorService,
   NotificationResult,
 } from '../services/notification.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
+import { PrismaService } from '../../common/services/prisma.service';
 import {
   SendNotificationDto,
   SendBookingConfirmationDto,
@@ -27,9 +38,12 @@ import {
   NotificationType,
   NotificationChannel,
 } from '../dto/send-notification.dto';
+import { CurrentTenant } from '../../auth/decorators/current-user.decorator';
 
 @ApiTags('Notifications')
 @Controller('notifications/api')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class NotificationsApiController {
   private readonly logger = new Logger(NotificationsApiController.name);
 
@@ -37,6 +51,7 @@ export class NotificationsApiController {
     private readonly notificationService: NotificationOrchestratorService,
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
@@ -46,10 +61,13 @@ export class NotificationsApiController {
   @ApiOperation({ summary: 'Send a notification to a customer' })
   @ApiResponse({ status: 200, description: 'Notification sent successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request data' })
-  async sendNotification(@Body() dto: SendNotificationDto) {
+  async sendNotification(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: SendNotificationDto,
+  ) {
     const result = await this.notificationService.notifyCustomer(
       dto.customerId,
-      dto.tenantId,
+      tenantId,
       dto.type,
       dto.data,
       dto.channel,
@@ -70,10 +88,13 @@ export class NotificationsApiController {
   @Post('booking/confirmation')
   @ApiOperation({ summary: 'Send booking confirmation notification' })
   @ApiResponse({ status: 200, description: 'Confirmation sent' })
-  async sendBookingConfirmation(@Body() dto: SendBookingConfirmationDto) {
+  async sendBookingConfirmation(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: SendBookingConfirmationDto,
+  ) {
     const result = await this.notificationService.notifyCustomer(
       dto.customerId,
-      dto.tenantId,
+      tenantId,
       NotificationType.BOOKING_CONFIRMATION,
       {
         service: dto.service,
@@ -100,10 +121,13 @@ export class NotificationsApiController {
   @Post('booking/reminder')
   @ApiOperation({ summary: 'Send booking reminder notification' })
   @ApiResponse({ status: 200, description: 'Reminder sent' })
-  async sendBookingReminder(@Body() dto: SendBookingReminderDto) {
+  async sendBookingReminder(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: SendBookingReminderDto,
+  ) {
     const result = await this.notificationService.notifyCustomer(
       dto.customerId,
-      dto.tenantId,
+      tenantId,
       NotificationType.BOOKING_REMINDER,
       {
         service: dto.service,
@@ -130,10 +154,13 @@ export class NotificationsApiController {
   @Post('invoice/ready')
   @ApiOperation({ summary: 'Send invoice ready notification' })
   @ApiResponse({ status: 200, description: 'Invoice notification sent' })
-  async sendInvoiceReady(@Body() dto: SendInvoiceReadyDto) {
+  async sendInvoiceReady(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: SendInvoiceReadyDto,
+  ) {
     const result = await this.notificationService.notifyCustomer(
       dto.customerId,
-      dto.tenantId,
+      tenantId,
       NotificationType.INVOICE_READY,
       {
         invoiceNumber: dto.invoiceNumber,
@@ -259,15 +286,43 @@ export class NotificationsApiController {
   @Get('status/:notificationId')
   @ApiOperation({ summary: 'Get notification delivery status' })
   @ApiParam({ name: 'notificationId', description: 'Notification ID' })
-  async getNotificationStatus(@Param('notificationId') notificationId: string) {
-    // Query from database
-    // For now, return mock data
+  async getNotificationStatus(
+    @CurrentTenant() tenantId: string,
+    @Param('notificationId') notificationId: string,
+  ): Promise<{
+    id: string;
+    status: string;
+    channel: string;
+    sentAt: string | null;
+    deliveredAt: string | null;
+    failedAt: string | null;
+    error: string | null;
+  }> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id: notificationId, tenantId },
+      select: {
+        id: true,
+        status: true,
+        channel: true,
+        sentAt: true,
+        deliveredAt: true,
+        failedAt: true,
+        error: true,
+      },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification ${notificationId} not found`);
+    }
+
     return {
-      id: notificationId,
-      status: 'delivered',
-      channel: 'email',
-      sentAt: new Date().toISOString(),
-      deliveredAt: new Date().toISOString(),
+      id: notification.id,
+      status: notification.status,
+      channel: notification.channel,
+      sentAt: notification.sentAt?.toISOString() ?? null,
+      deliveredAt: notification.deliveredAt?.toISOString() ?? null,
+      failedAt: notification.failedAt?.toISOString() ?? null,
+      error: notification.error,
     };
   }
 
@@ -331,31 +386,69 @@ export class NotificationsApiController {
    */
   @Get('stats')
   @ApiOperation({ summary: 'Get notification statistics' })
-  @ApiQuery({ name: 'tenantId', required: false })
   @ApiQuery({ name: 'from', required: false })
   @ApiQuery({ name: 'to', required: false })
   async getStats(
-    @Query('tenantId') tenantId?: string,
+    @CurrentTenant() tenantId: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
-  ) {
-    // Query statistics from database
-    // For now, return mock data
+  ): Promise<{
+    total: number;
+    byChannel: Record<string, number>;
+    byStatus: Record<string, number>;
+    byType: Record<string, number>;
+    period: { from: string; to: string };
+  }> {
+    const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = to ? new Date(to) : new Date();
+
+    const where = {
+      tenantId,
+      createdAt: { gte: fromDate, lte: toDate },
+    };
+
+    const [total, byChannelRaw, byStatusRaw, byTypeRaw] = await Promise.all([
+      this.prisma.notification.count({ where }),
+      this.prisma.notification.groupBy({
+        by: ['channel'],
+        where,
+        _count: { id: true },
+      }),
+      this.prisma.notification.groupBy({
+        by: ['status'],
+        where,
+        _count: { id: true },
+      }),
+      this.prisma.notification.groupBy({
+        by: ['type'],
+        where,
+        _count: { id: true },
+      }),
+    ]);
+
+    const byChannel: Record<string, number> = {};
+    for (const row of byChannelRaw) {
+      byChannel[row.channel] = row._count.id;
+    }
+
+    const byStatus: Record<string, number> = {};
+    for (const row of byStatusRaw) {
+      byStatus[row.status] = row._count.id;
+    }
+
+    const byType: Record<string, number> = {};
+    for (const row of byTypeRaw) {
+      byType[row.type] = row._count.id;
+    }
+
     return {
-      total: 0,
-      byChannel: {
-        sms: 0,
-        email: 0,
-      },
-      byStatus: {
-        sent: 0,
-        delivered: 0,
-        failed: 0,
-      },
-      byType: {},
+      total,
+      byChannel,
+      byStatus,
+      byType,
       period: {
-        from: from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        to: to || new Date().toISOString(),
+        from: fromDate.toISOString(),
+        to: toDate.toISOString(),
       },
     };
   }
@@ -386,7 +479,7 @@ export class NotificationsApiController {
   @ApiParam({ name: 'customerId', description: 'Customer ID' })
   async getCustomerPreferences(
     @Param('customerId') customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.notificationService.getCustomerPreferences(customerId, tenantId);
   }
@@ -399,7 +492,7 @@ export class NotificationsApiController {
   @ApiParam({ name: 'customerId', description: 'Customer ID' })
   async updateCustomerPreferences(
     @Param('customerId') customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body() preferences: Record<string, unknown>,
   ) {
     await this.notificationService.updateCustomerPreferences(customerId, tenantId, preferences);

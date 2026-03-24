@@ -39,7 +39,7 @@ describe('ShopFloorService', () => {
           provide: PrismaService,
           useValue: {
             user: {
-              findUnique: jest.fn(),
+              findFirst: jest.fn(),
               findMany: jest.fn(),
             },
           },
@@ -148,7 +148,7 @@ describe('ShopFloorService', () => {
         config: { threshold: 50 },
       };
 
-      const result = await service.addBaySensor(mockBayId, sensor);
+      const result = await service.addBaySensor(mockTenantId, mockBayId, sensor);
 
       expect(result.id).toMatch(/^sensor-/);
       expect(result.type).toBe(SensorType.ULTRASONIC);
@@ -167,7 +167,7 @@ describe('ShopFloorService', () => {
         config: {},
       };
 
-      const result = await service.addBaySensor(mockBayId, sensor);
+      const result = await service.addBaySensor(mockTenantId, mockBayId, sensor);
 
       expect(result.type).toBe(SensorType.PIR);
       expect(result.batteryLevel).toBeUndefined();
@@ -186,7 +186,7 @@ describe('ShopFloorService', () => {
         data: { distance: 30 },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledWith(
         `shopfloor:sensor:${mockBayId}`,
@@ -203,7 +203,7 @@ describe('ShopFloorService', () => {
         data: { presence: true },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       // Should publish both the event and the sensor reading
       expect(redis.publish).toHaveBeenCalledWith(
@@ -225,7 +225,7 @@ describe('ShopFloorService', () => {
         data: { rfidTag: 'TAG-001' },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledWith(
         'shopfloor:events',
@@ -242,7 +242,7 @@ describe('ShopFloorService', () => {
         data: {},
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       // Should only publish the sensor reading, not an event
       expect(redis.publish).toHaveBeenCalledTimes(1);
@@ -261,7 +261,7 @@ describe('ShopFloorService', () => {
         data: { beaconId: 'BEACON-001' },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       // Beacon reading only logs, no event created
       expect(redis.publish).toHaveBeenCalledTimes(1);
@@ -276,7 +276,7 @@ describe('ShopFloorService', () => {
         data: {},
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledTimes(1);
     });
@@ -294,7 +294,7 @@ describe('ShopFloorService', () => {
         },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledWith(
         'shopfloor:events',
@@ -311,7 +311,7 @@ describe('ShopFloorService', () => {
         data: {},
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledTimes(1);
     });
@@ -325,7 +325,7 @@ describe('ShopFloorService', () => {
         data: { pressure: 500 },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledWith(
         'shopfloor:events',
@@ -342,7 +342,7 @@ describe('ShopFloorService', () => {
         data: { pressure: 50 },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       expect(redis.publish).toHaveBeenCalledTimes(1);
     });
@@ -356,7 +356,7 @@ describe('ShopFloorService', () => {
         data: { distance: 100 },
       };
 
-      await service.processSensorReading(reading);
+      await service.processSensorReading(mockTenantId, reading);
 
       // Only sensor publish, no event
       expect(redis.publish).toHaveBeenCalledTimes(1);
@@ -367,9 +367,13 @@ describe('ShopFloorService', () => {
 
   describe('assignVehicleToBay', () => {
     it('should create an event, invalidate cache, and return bay', async () => {
-      const result = await service.assignVehicleToBay(mockBayId, mockVehicleId, mockWorkOrderId, [
-        mockTechnicianId,
-      ]);
+      const result = await service.assignVehicleToBay(
+        mockTenantId,
+        mockBayId,
+        mockVehicleId,
+        mockWorkOrderId,
+        [mockTechnicianId],
+      );
 
       expect(redis.publish).toHaveBeenCalledWith(
         'shopfloor:events',
@@ -384,7 +388,7 @@ describe('ShopFloorService', () => {
 
   describe('releaseBay', () => {
     it('should create exit event, invalidate cache, and return bay', async () => {
-      const result = await service.releaseBay(mockBayId);
+      const result = await service.releaseBay(mockTenantId, mockBayId);
 
       expect(redis.publish).toHaveBeenCalledWith(
         'shopfloor:events',
@@ -407,7 +411,7 @@ describe('ShopFloorService', () => {
       };
       redis.get.mockResolvedValue(JSON.stringify(cachedBay));
 
-      const result = await service.getBay(mockBayId);
+      const result = await service.getBay(mockTenantId, mockBayId);
 
       expect(result).toEqual(cachedBay);
       expect(redis.setex).not.toHaveBeenCalled();
@@ -416,7 +420,7 @@ describe('ShopFloorService', () => {
     it('should return mock bay and cache it when no cache exists', async () => {
       redis.get.mockResolvedValue(null);
 
-      const result = await service.getBay(mockBayId);
+      const result = await service.getBay(mockTenantId, mockBayId);
 
       expect(result.id).toBe(mockBayId);
       expect(result.status).toBe(BayStatus.AVAILABLE);
@@ -440,12 +444,16 @@ describe('ShopFloorService', () => {
     const location = { x: 10, y: 20, floor: 1, beaconId: 'BEACON-A' };
 
     it('should update location when technician exists', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
         id: mockTechnicianId,
         name: 'Mario Rossi',
       });
 
-      const result = await service.updateTechnicianLocation(mockTechnicianId, location);
+      const result = await service.updateTechnicianLocation(
+        mockTenantId,
+        mockTechnicianId,
+        location,
+      );
 
       expect(result.technicianId).toBe(mockTechnicianId);
       expect(result.name).toBe('Mario Rossi');
@@ -461,11 +469,11 @@ describe('ShopFloorService', () => {
     });
 
     it('should throw NotFoundException when technician does not exist', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateTechnicianLocation(mockTechnicianId, location)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.updateTechnicianLocation(mockTenantId, mockTechnicianId, location),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -492,6 +500,7 @@ describe('ShopFloorService', () => {
       expect(result[0].technicianId).toBe('tech-1');
       expect(prisma.user.findMany).toHaveBeenCalledWith({
         where: { tenantId: mockTenantId, isActive: true },
+        take: 200,
       });
     });
 
@@ -517,7 +526,7 @@ describe('ShopFloorService', () => {
 
   describe('getWorkOrderProgress', () => {
     it('should throw NotFoundException (scaffold)', async () => {
-      await expect(service.getWorkOrderProgress(mockWorkOrderId)).rejects.toThrow(
+      await expect(service.getWorkOrderProgress(mockTenantId, mockWorkOrderId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -527,9 +536,9 @@ describe('ShopFloorService', () => {
 
   describe('updateJobStatus', () => {
     it('should create status change event and throw (delegates to getWorkOrderProgress)', async () => {
-      await expect(service.updateJobStatus(mockWorkOrderId, JobStatus.IN_PROGRESS)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.updateJobStatus(mockTenantId, mockWorkOrderId, JobStatus.IN_PROGRESS),
+      ).rejects.toThrow(NotFoundException);
 
       expect(redis.publish).toHaveBeenCalledWith(
         'shopfloor:events',

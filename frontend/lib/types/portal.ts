@@ -291,6 +291,13 @@ export interface DashboardData {
   }
   recentDocuments: Document[]
   unreadNotifications: number
+  unpaidInvoices?: {
+    count: number
+    total: number
+  }
+  activeRepairs?: {
+    count: number
+  }
 }
 
 // ============================================

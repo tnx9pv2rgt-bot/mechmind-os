@@ -57,11 +57,12 @@ describe('FleetController', () => {
 
   describe('findAll', () => {
     it('should delegate to service with tenantId', async () => {
-      service.findAll.mockResolvedValue([mockFleet] as never);
+      const paginated = { data: [mockFleet], total: 1, page: 1, limit: 20, pages: 1 };
+      service.findAll.mockResolvedValue(paginated as never);
 
       const result = await controller.findAll(TENANT_ID);
 
-      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID);
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, undefined, undefined);
       expect(result).toBeDefined();
     });
   });

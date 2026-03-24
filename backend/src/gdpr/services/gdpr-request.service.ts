@@ -1,6 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
+import { validateTransition, TransitionMap } from '@common/utils/state-machine';
+
+const GDPR_REQUEST_TRANSITIONS: TransitionMap = {
+  RECEIVED: ['VERIFICATION_PENDING', 'VERIFIED', 'IN_PROGRESS', 'REJECTED', 'CANCELLED'],
+  VERIFICATION_PENDING: ['VERIFIED', 'REJECTED', 'CANCELLED'],
+  VERIFIED: ['IN_PROGRESS', 'REJECTED', 'CANCELLED'],
+  IN_PROGRESS: ['COMPLETED', 'REJECTED', 'CANCELLED'],
+  COMPLETED: [],
+  REJECTED: [],
+  CANCELLED: [],
+};
 
 /**
  * Data Subject Request entity from Prisma
@@ -258,8 +269,18 @@ export class GdprRequestService {
       status?: RequestStatus;
       type?: DataSubjectRequestType;
       pending?: boolean;
+      page?: number;
+      limit?: number;
     },
-  ): Promise<DataSubjectRequestResponse[]> {
+  ): Promise<{
+    data: DataSubjectRequestResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
     const where: Record<string, unknown> = { tenantId };
 
     if (filters?.status) {
@@ -276,14 +297,25 @@ export class GdprRequestService {
       };
     }
 
-    const requests = await this.prisma.withTenant(tenantId, async prisma => {
-      return prisma.dataSubjectRequest.findMany({
-        where,
-        orderBy: { receivedAt: 'desc' },
-      });
+    const [requests, total] = await this.prisma.withTenant(tenantId, async prisma => {
+      return Promise.all([
+        prisma.dataSubjectRequest.findMany({
+          where,
+          orderBy: { receivedAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.dataSubjectRequest.count({ where }),
+      ]);
     });
 
-    return requests.map((r: DataSubjectRequest) => this.mapToResponse(r));
+    return {
+      data: requests.map((r: DataSubjectRequest) => this.mapToResponse(r)),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -303,9 +335,7 @@ export class GdprRequestService {
   ): Promise<DataSubjectRequestResponse> {
     const request = await this.getRequest(requestId, tenantId);
 
-    if (request.status === 'COMPLETED' || request.status === 'REJECTED') {
-      throw new BadRequestException('Cannot modify completed or rejected requests');
-    }
+    validateTransition(request.status, status, GDPR_REQUEST_TRANSITIONS, 'GDPR request');
 
     const updateData: Record<string, unknown> = { status };
 
@@ -354,9 +384,7 @@ export class GdprRequestService {
   ): Promise<VerificationResult> {
     const request = await this.getRequest(requestId, tenantId);
 
-    if (request.status !== 'RECEIVED' && request.status !== 'VERIFICATION_PENDING') {
-      throw new BadRequestException('Request is not pending verification');
-    }
+    validateTransition(request.status, 'VERIFIED', GDPR_REQUEST_TRANSITIONS, 'GDPR request');
 
     const verifiedAt = new Date();
 
@@ -400,6 +428,9 @@ export class GdprRequestService {
     tenantId: string,
     userId: string,
   ): Promise<DataSubjectRequestResponse> {
+    const request = await this.getRequest(requestId, tenantId);
+    validateTransition(request.status, 'IN_PROGRESS', GDPR_REQUEST_TRANSITIONS, 'GDPR request');
+
     const updated = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.update({
         where: { id: requestId },
@@ -435,9 +466,7 @@ export class GdprRequestService {
   ): Promise<DataSubjectRequestResponse> {
     const request = await this.getRequest(requestId, tenantId);
 
-    if (request.status === 'COMPLETED') {
-      throw new BadRequestException('Cannot reject completed request');
-    }
+    validateTransition(request.status, 'REJECTED', GDPR_REQUEST_TRANSITIONS, 'GDPR request');
 
     const updated = await this.prisma.withTenant(tenantId, async prisma => {
       return prisma.dataSubjectRequest.update({
@@ -484,9 +513,11 @@ export class GdprRequestService {
       where.tenantId = tenantId;
     }
 
+    // Internal: bounded by pending status filter (typically < 50 active requests per tenant)
     const requests = await this.prisma.dataSubjectRequest.findMany({
       where,
       orderBy: { deadlineAt: 'asc' },
+      take: 200,
     });
 
     const overdue: DataSubjectRequestResponse[] = [];

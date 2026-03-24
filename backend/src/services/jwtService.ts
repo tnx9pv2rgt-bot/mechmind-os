@@ -7,10 +7,17 @@
 
 import jwt from 'jsonwebtoken';
 
-// Configurazione da env vars
-const JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret-change-in-production';
-const JWT_REFRESH_SECRET =
-  process.env.JWT_REFRESH_SECRET || 'default-refresh-secret-change-in-production';
+// Configurazione da env vars — NESSUN fallback: l'app DEVE crashare senza secret
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`FATAL: ${name} environment variable is required`);
+  }
+  return value;
+}
+
+const JWT_SECRET: string = requireEnv('JWT_SECRET');
+const JWT_REFRESH_SECRET: string = requireEnv('JWT_REFRESH_SECRET');
 
 // Expiry times
 const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minuti

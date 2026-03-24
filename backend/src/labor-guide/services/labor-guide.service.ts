@@ -31,11 +31,31 @@ export class LaborGuideService {
     });
   }
 
-  async findAllGuides(tenantId: string): Promise<LaborGuide[]> {
-    return this.prisma.laborGuide.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: { name: 'asc' },
-    });
+  async findAllGuides(
+    tenantId: string,
+    options?: { page?: number; limit?: number },
+  ): Promise<{
+    data: LaborGuide[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 50;
+    const where = { tenantId, isActive: true };
+
+    const [data, total] = await Promise.all([
+      this.prisma.laborGuide.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.laborGuide.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async findGuideById(
@@ -176,7 +196,15 @@ export class LaborGuideService {
     make: string,
     model?: string,
     category?: string,
-  ): Promise<LaborGuideEntry[]> {
+    page = 1,
+    limit = 50,
+  ): Promise<{
+    data: LaborGuideEntry[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     const where: Prisma.LaborGuideEntryWhereInput = {
       tenantId,
       make: { equals: make, mode: 'insensitive' },
@@ -191,10 +219,17 @@ export class LaborGuideService {
       where.category = { equals: category, mode: 'insensitive' };
     }
 
-    return this.prisma.laborGuideEntry.findMany({
-      where,
-      include: { guide: { select: { id: true, name: true, source: true } } },
-      orderBy: [{ category: 'asc' }, { operationName: 'asc' }],
-    });
+    const [data, total] = await Promise.all([
+      this.prisma.laborGuideEntry.findMany({
+        where,
+        include: { guide: { select: { id: true, name: true, source: true } } },
+        orderBy: [{ category: 'asc' }, { operationName: 'asc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.laborGuideEntry.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 }

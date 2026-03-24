@@ -64,12 +64,12 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({
     description: 'Vehicle status',
-    example: 'active',
-    enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+    example: 'ACTIVE',
+    enum: ['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'],
   })
   @IsOptional()
   @IsString()
-  @IsIn(['active', 'in_service', 'waiting_parts', 'ready'])
+  @IsIn(['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'])
   status?: string;
 
   @ApiPropertyOptional({
@@ -165,12 +165,12 @@ export class UpdateVehicleDto {
 
   @ApiPropertyOptional({
     description: 'Vehicle status',
-    example: 'active',
-    enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+    example: 'ACTIVE',
+    enum: ['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'],
   })
   @IsOptional()
   @IsString()
-  @IsIn(['active', 'in_service', 'waiting_parts', 'ready'])
+  @IsIn(['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'])
   status?: string;
 
   @ApiPropertyOptional({

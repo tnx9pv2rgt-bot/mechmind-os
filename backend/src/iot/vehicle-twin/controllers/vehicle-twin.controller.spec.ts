@@ -50,9 +50,9 @@ describe('VehicleTwinController', () => {
     it('should delegate to service.getOrCreateTwin', async () => {
       service.getOrCreateTwin.mockResolvedValue(mockTwinState as never);
 
-      const result = await controller.getTwinState(VEHICLE_ID);
+      const result = await controller.getTwinState('tenant-test', VEHICLE_ID);
 
-      expect(service.getOrCreateTwin).toHaveBeenCalledWith(VEHICLE_ID);
+      expect(service.getOrCreateTwin).toHaveBeenCalledWith('tenant-test', VEHICLE_ID);
       expect(result).toEqual(mockTwinState);
     });
   });
@@ -63,9 +63,14 @@ describe('VehicleTwinController', () => {
       const expected = { id: COMPONENT_ID, health: 80 };
       service.updateComponentStatus.mockResolvedValue(expected as never);
 
-      const result = await controller.updateComponent(VEHICLE_ID, COMPONENT_ID, dto);
+      const result = await controller.updateComponent('tenant-test', VEHICLE_ID, COMPONENT_ID, dto);
 
-      expect(service.updateComponentStatus).toHaveBeenCalledWith(VEHICLE_ID, COMPONENT_ID, dto);
+      expect(service.updateComponentStatus).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        COMPONENT_ID,
+        dto,
+      );
       expect(result).toEqual(expected);
     });
   });
@@ -81,9 +86,10 @@ describe('VehicleTwinController', () => {
       const expected = { id: 'hist-001', componentId: COMPONENT_ID };
       service.recordComponentHistory.mockResolvedValue(expected as never);
 
-      const result = await controller.recordHistory(VEHICLE_ID, dto);
+      const result = await controller.recordHistory('tenant-test', VEHICLE_ID, dto);
 
       expect(service.recordComponentHistory).toHaveBeenCalledWith(
+        'tenant-test',
         VEHICLE_ID,
         expect.objectContaining({ componentId: COMPONENT_ID, type: 'replacement' }),
       );
@@ -101,9 +107,10 @@ describe('VehicleTwinController', () => {
       const expected = { id: 'dmg-001', type: 'scratch' };
       service.recordDamage.mockResolvedValue(expected as never);
 
-      const result = await controller.recordDamage(VEHICLE_ID, dto);
+      const result = await controller.recordDamage('tenant-test', VEHICLE_ID, dto);
 
       expect(service.recordDamage).toHaveBeenCalledWith(
+        'tenant-test',
         VEHICLE_ID,
         expect.objectContaining({ type: 'scratch', severity: 'minor' }),
       );
@@ -116,9 +123,9 @@ describe('VehicleTwinController', () => {
       const alerts = [{ id: 'alert-001', component: 'brakes', severity: 'high' }];
       service.getPredictiveAlerts.mockResolvedValue(alerts as never);
 
-      const result = await controller.getPredictiveAlerts(VEHICLE_ID);
+      const result = await controller.getPredictiveAlerts('tenant-test', VEHICLE_ID);
 
-      expect(service.getPredictiveAlerts).toHaveBeenCalledWith(VEHICLE_ID);
+      expect(service.getPredictiveAlerts).toHaveBeenCalledWith('tenant-test', VEHICLE_ID);
       expect(result).toEqual(alerts);
     });
   });
@@ -132,9 +139,13 @@ describe('VehicleTwinController', () => {
       };
       service.getWearPrediction.mockResolvedValue(prediction as never);
 
-      const result = await controller.getWearPrediction(VEHICLE_ID, COMPONENT_ID);
+      const result = await controller.getWearPrediction('tenant-test', VEHICLE_ID, COMPONENT_ID);
 
-      expect(service.getWearPrediction).toHaveBeenCalledWith(VEHICLE_ID, COMPONENT_ID);
+      expect(service.getWearPrediction).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        COMPONENT_ID,
+      );
       expect(result).toEqual(prediction);
     });
   });
@@ -144,9 +155,9 @@ describe('VehicleTwinController', () => {
       const config = { modelUrl: '/models/car.glb', colorScheme: 'health' };
       service.getVisualizationConfig.mockResolvedValue(config as never);
 
-      const result = await controller.getVisualizationConfig(VEHICLE_ID);
+      const result = await controller.getVisualizationConfig('tenant-test', VEHICLE_ID);
 
-      expect(service.getVisualizationConfig).toHaveBeenCalledWith(VEHICLE_ID);
+      expect(service.getVisualizationConfig).toHaveBeenCalledWith('tenant-test', VEHICLE_ID);
       expect(result).toEqual(config);
     });
   });
@@ -157,9 +168,13 @@ describe('VehicleTwinController', () => {
       const updated = { modelUrl: '/models/car.glb', colorScheme: 'temperature' };
       service.updateVisualizationConfig.mockResolvedValue(updated as never);
 
-      const result = await controller.updateVisualizationConfig(VEHICLE_ID, dto);
+      const result = await controller.updateVisualizationConfig('tenant-test', VEHICLE_ID, dto);
 
-      expect(service.updateVisualizationConfig).toHaveBeenCalledWith(VEHICLE_ID, dto);
+      expect(service.updateVisualizationConfig).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        dto,
+      );
       expect(result).toEqual(updated);
     });
   });
@@ -170,9 +185,10 @@ describe('VehicleTwinController', () => {
       service.getHealthTrend.mockResolvedValue(trend as never);
       const query = { from: '2026-01-01', to: '2026-03-16' } as never;
 
-      const result = await controller.getHealthTrend(VEHICLE_ID, query);
+      const result = await controller.getHealthTrend('tenant-test', VEHICLE_ID, query);
 
       expect(service.getHealthTrend).toHaveBeenCalledWith(
+        'tenant-test',
         VEHICLE_ID,
         new Date('2026-01-01'),
         new Date('2026-03-16'),

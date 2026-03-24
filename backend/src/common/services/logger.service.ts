@@ -40,22 +40,30 @@ export class LoggerService implements NestLoggerService {
     }
   }
 
+  logWithCorrelation(message: string, correlationId?: string, context?: string): void {
+    this.printMessage('log', message, context, correlationId);
+  }
+
   private printMessage(
     level: 'log' | 'error' | 'warn' | 'debug' | 'verbose',
     message: string,
     context?: string,
+    correlationId?: string,
   ): void {
     const timestamp = new Date().toISOString();
     const ctx = context || this.context || 'Application';
     const logFormat = this.configService?.get('LOG_FORMAT') || 'simple';
 
     if (logFormat === 'json') {
-      const logEntry = {
+      const logEntry: Record<string, string> = {
         timestamp,
         level: level.toUpperCase(),
         context: ctx,
         message,
       };
+      if (correlationId) {
+        logEntry.correlationId = correlationId;
+      }
       console.log(JSON.stringify(logEntry));
     } else {
       const colorMap = {

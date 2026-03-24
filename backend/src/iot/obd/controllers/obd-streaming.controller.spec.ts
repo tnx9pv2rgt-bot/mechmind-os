@@ -66,9 +66,9 @@ describe('ObdStreamingController', () => {
         interval: 500,
       };
 
-      const result = await controller.startStreaming(dto as never);
+      const result = await controller.startStreaming('tenant-test', dto as never);
 
-      expect(service.startStreaming).toHaveBeenCalledWith('device-001', {
+      expect(service.startStreaming).toHaveBeenCalledWith('tenant-test', 'device-001', {
         adapterType: 'ELM327',
         protocol: 'AUTO',
         sensors: ['RPM', 'SPEED'],
@@ -82,9 +82,9 @@ describe('ObdStreamingController', () => {
     it('should delegate to service with stream id', async () => {
       service.stopStreaming.mockResolvedValue(undefined);
 
-      await controller.stopStreaming('stream-001');
+      await controller.stopStreaming('tenant-test', 'stream-001');
 
-      expect(service.stopStreaming).toHaveBeenCalledWith('stream-001');
+      expect(service.stopStreaming).toHaveBeenCalledWith('tenant-test', 'stream-001');
     });
   });
 
@@ -92,16 +92,16 @@ describe('ObdStreamingController', () => {
     it('should return all active streams mapped to response DTOs', async () => {
       service.getAllActiveStreams.mockReturnValue([mockStream, mockStream] as never);
 
-      const result = await controller.getActiveStreams();
+      const result = await controller.getActiveStreams('tenant-test');
 
-      expect(service.getAllActiveStreams).toHaveBeenCalled();
+      expect(service.getAllActiveStreams).toHaveBeenCalledWith('tenant-test');
       expect(result).toEqual([mockStreamResponse, mockStreamResponse]);
     });
 
     it('should return empty array when no active streams', async () => {
       service.getAllActiveStreams.mockReturnValue([] as never);
 
-      const result = await controller.getActiveStreams();
+      const result = await controller.getActiveStreams('tenant-test');
 
       expect(result).toEqual([]);
     });
@@ -111,18 +111,18 @@ describe('ObdStreamingController', () => {
     it('should return stream response for active device', async () => {
       service.getActiveStream.mockReturnValue(mockStream as never);
 
-      const result = await controller.getDeviceStream('device-001');
+      const result = await controller.getDeviceStream('tenant-test', 'device-001');
 
-      expect(service.getActiveStream).toHaveBeenCalledWith('device-001');
+      expect(service.getActiveStream).toHaveBeenCalledWith('tenant-test', 'device-001');
       expect(result).toEqual(mockStreamResponse);
     });
 
     it('should return null when device has no active stream', async () => {
       service.getActiveStream.mockReturnValue(undefined as never);
 
-      const result = await controller.getDeviceStream('device-999');
+      const result = await controller.getDeviceStream('tenant-test', 'device-999');
 
-      expect(service.getActiveStream).toHaveBeenCalledWith('device-999');
+      expect(service.getActiveStream).toHaveBeenCalledWith('tenant-test', 'device-999');
       expect(result).toBeNull();
     });
   });
@@ -138,12 +138,12 @@ describe('ObdStreamingController', () => {
       };
       service.captureFreezeFrame.mockResolvedValue(mockFreezeFrame as never);
 
-      const result = await controller.captureFreezeFrame({
+      const result = await controller.captureFreezeFrame('tenant-test', {
         deviceId: 'device-001',
         dtcCode: 'P0301',
       } as never);
 
-      expect(service.captureFreezeFrame).toHaveBeenCalledWith('device-001', 'P0301');
+      expect(service.captureFreezeFrame).toHaveBeenCalledWith('tenant-test', 'device-001', 'P0301');
       expect(result).toEqual({
         id: 'ff-001',
         deviceId: 'device-001',
@@ -159,9 +159,9 @@ describe('ObdStreamingController', () => {
       const mockResults = [{ testId: '01', value: 100, min: 0, max: 200, status: 'PASS' }];
       service.getMode06Tests.mockResolvedValue(mockResults as never);
 
-      const result = await controller.getMode06Tests('device-001');
+      const result = await controller.getMode06Tests('tenant-test', 'device-001');
 
-      expect(service.getMode06Tests).toHaveBeenCalledWith('device-001');
+      expect(service.getMode06Tests).toHaveBeenCalledWith('tenant-test', 'device-001');
       expect(result).toEqual(mockResults);
     });
   });
@@ -179,12 +179,16 @@ describe('ObdStreamingController', () => {
       };
       service.executeEvapTest.mockResolvedValue(mockEvapTest as never);
 
-      const result = await controller.executeEvapTest({
+      const result = await controller.executeEvapTest('tenant-test', {
         deviceId: 'device-001',
         testType: 'LEAK_TEST',
       } as never);
 
-      expect(service.executeEvapTest).toHaveBeenCalledWith('device-001', 'LEAK_TEST');
+      expect(service.executeEvapTest).toHaveBeenCalledWith(
+        'tenant-test',
+        'device-001',
+        'LEAK_TEST',
+      );
       expect(result).toEqual({
         id: 'evap-001',
         deviceId: 'device-001',
@@ -213,9 +217,10 @@ describe('ObdStreamingController', () => {
         aggregation: 'avg',
       };
 
-      const result = await controller.getSensorHistory(query as never);
+      const result = await controller.getSensorHistory('tenant-test', query as never);
 
       expect(service.getSensorHistory).toHaveBeenCalledWith(
+        'tenant-test',
         'device-001',
         'RPM',
         new Date('2026-01-01T00:00:00Z'),
@@ -230,9 +235,9 @@ describe('ObdStreamingController', () => {
     it('should delegate to service and return deleted count', async () => {
       service.applyRetentionPolicy.mockResolvedValue(42 as never);
 
-      const result = await controller.applyRetentionPolicy('device-001', 30);
+      const result = await controller.applyRetentionPolicy('tenant-test', 'device-001', 30);
 
-      expect(service.applyRetentionPolicy).toHaveBeenCalledWith('device-001', 30);
+      expect(service.applyRetentionPolicy).toHaveBeenCalledWith('tenant-test', 'device-001', 30);
       expect(result).toEqual({ deleted: 42 });
     });
   });

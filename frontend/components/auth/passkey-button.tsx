@@ -150,7 +150,7 @@ export function PasskeyButton({
       whileTap={{ scale: disabled ? 1 : 0.98 }}
       className={cn(
         'relative inline-flex items-center justify-center gap-3 font-medium transition-all duration-300',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50',
+        'focus:outline-none focus-visible:ring-0',
         'disabled:opacity-60 disabled:cursor-not-allowed',
         variantStyles[variant],
         sizeStyles[size],

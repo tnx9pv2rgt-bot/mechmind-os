@@ -22,6 +22,7 @@ export default function PortalWarrantyPage() {
     data: rawData,
     error: swrError,
     isLoading,
+    mutate,
   } = useSWR<{ data: WarrantyInfo[] }>('/api/portal/warranty', fetcher);
 
   const warranties = rawData?.data || [];
@@ -61,7 +62,7 @@ export default function PortalWarrantyPage() {
         <div className='text-center py-16'>
           <p className='text-apple-red mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => mutate()}
             className='text-apple-blue hover:underline'
           >
             Riprova

@@ -245,6 +245,7 @@ export const FormAnalyticsDashboard: React.FC<DashboardProps> = ({
         onClick={() => setIsVisible(true)}
         className={`fixed ${positionClasses[position]} w-10 h-10 bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 transition-all z-50`}
         title='Show Analytics'
+        aria-label='Mostra analytics'
       >
         <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
           <path
@@ -295,6 +296,7 @@ export const FormAnalyticsDashboard: React.FC<DashboardProps> = ({
                   setIsVisible(false);
                 }}
                 className='text-gray-400 hover:text-gray-600 ml-2'
+                aria-label='Chiudi analytics'
               >
                 ×
               </button>
@@ -353,6 +355,7 @@ export const FormAnalyticsDashboard: React.FC<DashboardProps> = ({
                 onClick={() => setIsExpanded(false)}
                 className='text-gray-400 hover:text-gray-600 p-1'
                 title='Minimize'
+                aria-label='Riduci pannello'
               >
                 <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                   <path
@@ -366,7 +369,8 @@ export const FormAnalyticsDashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={() => setIsVisible(false)}
                 className='text-gray-400 hover:text-gray-600 p-1'
-                title='Close'
+                title='Chiudi'
+                aria-label='Chiudi'
               >
                 ×
               </button>

@@ -55,6 +55,12 @@ interface FatturapaData {
     divisa: string;
     causale?: string;
     bollo?: boolean;
+    ritenuta?: {
+      tipoRitenuta: string;
+      importoRitenuta: number;
+      aliquotaRitenuta: number;
+      causalePagamento: string;
+    };
   };
   items: FatturapaLineItem[];
   riepilogoIva: FatturapaRiepilogoIva[];
@@ -119,6 +125,15 @@ export class FatturapaService {
       throw new NotFoundException(`Tenant ${tenantId} not found`);
     }
 
+    const tenantSettings = (tenant.settings ?? {}) as Record<string, string>;
+    const tenantPiva = tenantSettings.partitaIva ?? '';
+
+    if (!tenantPiva || tenantPiva.trim() === '') {
+      throw new BadRequestException(
+        'Impossibile generare FatturaPA: P.IVA tenant mancante. Configurare in Impostazioni.',
+      );
+    }
+
     const customer = invoice.customer;
 
     if (!customer.codiceFiscale && !customer.partitaIva) {
@@ -127,14 +142,16 @@ export class FatturapaService {
       );
     }
 
+    if (customer.codiceFiscale && !/^[A-Z0-9]{16}$/.test(customer.codiceFiscale.toUpperCase())) {
+      throw new BadRequestException('Codice Fiscale non valido');
+    }
+
     const customerName = customer.encryptedFirstName
       ? this.encryption.decrypt(customer.encryptedFirstName)
       : '';
     const customerSurname = customer.encryptedLastName
       ? this.encryption.decrypt(customer.encryptedLastName)
       : '';
-
-    const tenantSettings = (tenant.settings ?? {}) as Record<string, string>;
 
     const items = this.buildLineItems(invoice.invoiceItems, invoice.items);
     const riepilogoIva = this.buildRiepilogoIva(items);
@@ -170,10 +187,19 @@ export class FatturapaService {
       invoice: {
         tipoDocumento: DOC_TYPE_MAP[invoice.documentType] ?? 'TD01',
         numero: invoice.invoiceNumber,
-        data: invoice.createdAt.toISOString().split('T')[0],
+        // Art. 226 #8: use operationDate if set, otherwise createdAt
+        data: (invoice.operationDate ?? invoice.createdAt).toISOString().split('T')[0],
         divisa: 'EUR',
         causale: invoice.notes ?? undefined,
         bollo: invoice.stampDuty,
+        ritenuta: invoice.ritenutaType
+          ? {
+              tipoRitenuta: invoice.ritenutaType,
+              importoRitenuta: Number(invoice.ritenutaAmount ?? 0),
+              aliquotaRitenuta: Number(invoice.ritenutaRate ?? 0),
+              causalePagamento: invoice.ritenutaCausale ?? 'A',
+            }
+          : undefined,
       },
       items,
       riepilogoIva,
@@ -214,6 +240,7 @@ export class FatturapaService {
       vatRate: Decimal;
       discount: Decimal;
       subtotal: Decimal;
+      naturaIva?: string | null;
     }>,
     legacyItems: unknown,
   ): FatturapaLineItem[] {
@@ -224,13 +251,15 @@ export class FatturapaService {
         const discount = Number(item.discount);
         const discountMultiplier = 1 - discount / 100;
         const prezzoTotale = qty * price * discountMultiplier;
+        const aliquotaIva = Number(item.vatRate);
         return {
           numero: item.position || idx + 1,
           descrizione: item.description,
           quantita: qty,
           prezzoUnitario: price,
           prezzoTotale,
-          aliquotaIva: Number(item.vatRate),
+          aliquotaIva,
+          natura: aliquotaIva === 0 ? (item.naturaIva ?? 'N4') : undefined,
         };
       });
     }
@@ -256,20 +285,23 @@ export class FatturapaService {
   }
 
   private buildRiepilogoIva(items: FatturapaLineItem[]): FatturapaRiepilogoIva[] {
-    const byRate = new Map<number, { imponibile: number; imposta: number }>();
+    // Group by rate+natura key to handle multiple Natura codes at 0%
+    const byKey = new Map<string, { aliquotaIva: number; imponibile: number; imposta: number; natura?: string }>();
 
     for (const item of items) {
-      const existing = byRate.get(item.aliquotaIva) ?? { imponibile: 0, imposta: 0 };
+      const natura = item.aliquotaIva === 0 ? (item.natura ?? 'N4') : undefined;
+      const key = natura ? `0_${natura}` : String(item.aliquotaIva);
+      const existing = byKey.get(key) ?? { aliquotaIva: item.aliquotaIva, imponibile: 0, imposta: 0, natura };
       existing.imponibile += item.prezzoTotale;
       existing.imposta += item.prezzoTotale * (item.aliquotaIva / 100);
-      byRate.set(item.aliquotaIva, existing);
+      byKey.set(key, existing);
     }
 
-    return Array.from(byRate.entries()).map(([aliquotaIva, { imponibile, imposta }]) => ({
+    return Array.from(byKey.values()).map(({ aliquotaIva, imponibile, imposta, natura }) => ({
       aliquotaIva,
       imponibile,
       imposta,
-      natura: aliquotaIva === 0 ? 'N4' : undefined,
+      natura,
     }));
   }
 
@@ -282,11 +314,11 @@ export class FatturapaService {
     <DatiTrasmissione>
       <IdTrasmittente>
         <IdPaese>IT</IdPaese>
-        <IdCodice>${data.tenant.partitaIva}</IdCodice>
+        <IdCodice>${this.escapeXml(data.tenant.partitaIva)}</IdCodice>
       </IdTrasmittente>
       <ProgressivoInvio>${this.escapeXml(data.invoice.numero)}</ProgressivoInvio>
       <FormatoTrasmissione>FPR12</FormatoTrasmissione>
-      <CodiceDestinatario>${codiceDestinatario}</CodiceDestinatario>${
+      <CodiceDestinatario>${this.escapeXml(codiceDestinatario)}</CodiceDestinatario>${
         data.customer.pecEmail
           ? `
       <PECDestinatario>${this.escapeXml(data.customer.pecEmail)}</PECDestinatario>`
@@ -297,20 +329,20 @@ export class FatturapaService {
       <DatiAnagrafici>
         <IdFiscaleIVA>
           <IdPaese>IT</IdPaese>
-          <IdCodice>${data.tenant.partitaIva}</IdCodice>
+          <IdCodice>${this.escapeXml(data.tenant.partitaIva)}</IdCodice>
         </IdFiscaleIVA>
-        <CodiceFiscale>${data.tenant.codiceFiscale}</CodiceFiscale>
+        <CodiceFiscale>${this.escapeXml(data.tenant.codiceFiscale)}</CodiceFiscale>
         <Anagrafica>
           <Denominazione>${this.escapeXml(data.tenant.ragioneSociale)}</Denominazione>
         </Anagrafica>
-        <RegimeFiscale>${data.tenant.regimeFiscale}</RegimeFiscale>
+        <RegimeFiscale>${this.escapeXml(data.tenant.regimeFiscale)}</RegimeFiscale>
       </DatiAnagrafici>
       <Sede>
         <Indirizzo>${this.escapeXml(data.tenant.indirizzo)}</Indirizzo>
-        <CAP>${data.tenant.cap}</CAP>
+        <CAP>${this.escapeXml(data.tenant.cap)}</CAP>
         <Comune>${this.escapeXml(data.tenant.comune)}</Comune>
-        <Provincia>${data.tenant.provincia}</Provincia>
-        <Nazione>${data.tenant.nazione}</Nazione>
+        <Provincia>${this.escapeXml(data.tenant.provincia)}</Provincia>
+        <Nazione>${this.escapeXml(data.tenant.nazione)}</Nazione>
       </Sede>
     </CedentePrestatore>
     <CessionarioCommittente>
@@ -319,13 +351,13 @@ export class FatturapaService {
           ? `
         <IdFiscaleIVA>
           <IdPaese>IT</IdPaese>
-          <IdCodice>${data.customer.partitaIva}</IdCodice>
+          <IdCodice>${this.escapeXml(data.customer.partitaIva!)}</IdCodice>
         </IdFiscaleIVA>`
           : ''
       }${
         data.customer.codiceFiscale
           ? `
-        <CodiceFiscale>${data.customer.codiceFiscale}</CodiceFiscale>`
+        <CodiceFiscale>${this.escapeXml(data.customer.codiceFiscale)}</CodiceFiscale>`
           : ''
       }
         <Anagrafica>${
@@ -340,19 +372,19 @@ export class FatturapaService {
       </DatiAnagrafici>
       <Sede>
         <Indirizzo>${this.escapeXml(data.customer.indirizzo)}</Indirizzo>
-        <CAP>${data.customer.cap}</CAP>
+        <CAP>${this.escapeXml(data.customer.cap)}</CAP>
         <Comune>${this.escapeXml(data.customer.comune)}</Comune>
-        <Provincia>${data.customer.provincia}</Provincia>
-        <Nazione>${data.customer.nazione}</Nazione>
+        <Provincia>${this.escapeXml(data.customer.provincia)}</Provincia>
+        <Nazione>${this.escapeXml(data.customer.nazione)}</Nazione>
       </Sede>
     </CessionarioCommittente>
   </FatturaElettronicaHeader>
   <FatturaElettronicaBody>
     <DatiGenerali>
       <DatiGeneraliDocumento>
-        <TipoDocumento>${data.invoice.tipoDocumento}</TipoDocumento>
-        <Divisa>${data.invoice.divisa}</Divisa>
-        <Data>${data.invoice.data}</Data>
+        <TipoDocumento>${this.escapeXml(data.invoice.tipoDocumento)}</TipoDocumento>
+        <Divisa>${this.escapeXml(data.invoice.divisa)}</Divisa>
+        <Data>${this.escapeXml(data.invoice.data)}</Data>
         <Numero>${this.escapeXml(data.invoice.numero)}</Numero>${
           data.invoice.bollo
             ? `
@@ -360,6 +392,16 @@ export class FatturapaService {
           <BolloVirtuale>SI</BolloVirtuale>
           <ImportoBollo>2.00</ImportoBollo>
         </DatiBollo>`
+            : ''
+        }${
+          data.invoice.ritenuta
+            ? `
+        <DatiRitenuta>
+          <TipoRitenuta>${this.escapeXml(data.invoice.ritenuta.tipoRitenuta)}</TipoRitenuta>
+          <ImportoRitenuta>${data.invoice.ritenuta.importoRitenuta.toFixed(2)}</ImportoRitenuta>
+          <AliquotaRitenuta>${data.invoice.ritenuta.aliquotaRitenuta.toFixed(2)}</AliquotaRitenuta>
+          <CausalePagamento>${this.escapeXml(data.invoice.ritenuta.causalePagamento)}</CausalePagamento>
+        </DatiRitenuta>`
             : ''
         }${
           data.invoice.causale
@@ -404,12 +446,12 @@ ${data.riepilogoIva
   .join('\n')}
     </DatiBeniServizi>
     <DatiPagamento>
-      <CondizioniPagamento>${data.pagamento.condizioniPagamento}</CondizioniPagamento>
+      <CondizioniPagamento>${this.escapeXml(data.pagamento.condizioniPagamento)}</CondizioniPagamento>
       <DettaglioPagamento>
-        <ModalitaPagamento>${data.pagamento.modalitaPagamento}</ModalitaPagamento>${
+        <ModalitaPagamento>${this.escapeXml(data.pagamento.modalitaPagamento)}</ModalitaPagamento>${
           data.pagamento.dataScadenzaPagamento
             ? `
-        <DataScadenzaPagamento>${data.pagamento.dataScadenzaPagamento}</DataScadenzaPagamento>`
+        <DataScadenzaPagamento>${this.escapeXml(data.pagamento.dataScadenzaPagamento)}</DataScadenzaPagamento>`
             : ''
         }
         <ImportoPagamento>${data.pagamento.importoPagamento.toFixed(2)}</ImportoPagamento>

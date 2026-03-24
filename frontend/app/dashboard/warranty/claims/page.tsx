@@ -5,24 +5,20 @@ import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
 import { FileText, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { Pagination } from '@/components/ui/pagination';
 import { ClaimsList } from '@/components/warranty';
+import type { WarrantyClaim } from '@/lib/services/warrantyService';
 
-interface WarrantyClaim {
-  id: string;
-  status: string;
-  description: string;
-  amount: number | null;
-  submittedDate: string;
-  warranty?: { vehicle?: { make: string; model: string } };
-}
+type ClaimWithVehicle = WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } };
 
 export default function ClaimsPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const [page, setPage] = React.useState(1);
+  const PAGE_SIZE = 20;
 
   const {
     data: claimsData,
@@ -30,40 +26,33 @@ export default function ClaimsPage() {
     isLoading,
     mutate,
   } = useSWR<{
-    data?: (WarrantyClaim & { warranty?: { vehicle?: { make: string; model: string } } })[];
+    data?: ClaimWithVehicle[];
   }>('/api/warranties/claims', fetcher);
 
   const claims = claimsData?.data || [];
 
   React.useEffect(() => {
     if (claimsError) {
-      toast({
-        title: 'Errore nel caricamento dei reclami',
+      toast.error('Errore nel caricamento dei reclami', {
         description: claimsError instanceof Error ? claimsError.message : 'Errore sconosciuto',
-        variant: 'error',
       });
     }
-  }, [claimsError, toast]);
+  }, [claimsError]);
 
-  const handleReviewClaim = (claim: WarrantyClaim) => {
+  const handleReviewClaim = (claim: ClaimWithVehicle) => {
     // Navigate to claim detail page for review
     router.push(`/dashboard/warranty/claims/${claim.id}?action=review`);
   };
 
-  const handlePayClaim = async (claim: WarrantyClaim) => {
+  const handlePayClaim = async (claim: ClaimWithVehicle) => {
     try {
       const payRes = await fetch(`/api/warranties/claims/${claim.id}/pay`, { method: 'POST' });
       if (!payRes.ok) throw new Error('Errore nel pagamento');
-      toast({
-        title: 'Reclamo pagato',
-        description: 'Il reclamo è stato contrassegnato come pagato',
-      });
+      toast.success('Reclamo contrassegnato come pagato');
       mutate();
     } catch (error) {
-      toast({
-        title: 'Errore',
+      toast.error('Errore', {
         description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
       });
     }
   };
@@ -144,12 +133,13 @@ export default function ClaimsPage() {
         </CardHeader>
         <CardContent>
           <ClaimsList
-            claims={claims as never}
+            claims={claims.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)}
             showVehicle
             onClaimClick={claim => router.push(`/dashboard/warranty/claims/${claim.id}`)}
-            onReviewClaim={handleReviewClaim as never}
-            onPayClaim={handlePayClaim as never}
+            onReviewClaim={handleReviewClaim}
+            onPayClaim={handlePayClaim}
           />
+          <Pagination page={page} totalPages={Math.ceil(claims.length / PAGE_SIZE)} onPageChange={setPage} />
         </CardContent>
       </Card>
     </div>

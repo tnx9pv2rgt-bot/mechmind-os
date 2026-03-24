@@ -28,7 +28,9 @@ interface UseMFAReturn {
   }>;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { BACKEND_BASE } from '@/lib/config';
+
+const API_BASE = BACKEND_BASE;
 
 export function useMFA(options: UseMFAOptions = {}): UseMFAReturn {
   const router = useRouter();

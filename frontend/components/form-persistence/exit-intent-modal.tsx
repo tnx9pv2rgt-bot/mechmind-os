@@ -72,81 +72,70 @@ export function ExitIntentModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-2xl">
+    <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
+      <DialogContent className='sm:max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-2xl'>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl overflow-hidden"
+          className='bg-white rounded-2xl overflow-hidden'
         >
           {/* Header con gradiente */}
-          <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6" />
+          <div className='bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white'>
+            <div className='flex items-start justify-between'>
+              <div className='flex items-center gap-3'>
+                <div className='w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center'>
+                  <AlertTriangle className='w-6 h-6' />
                 </div>
                 <div>
-                  <DialogHeader className="space-y-1">
-                    <DialogTitle className="text-xl font-semibold text-white">
-                      {title}
-                    </DialogTitle>
+                  <DialogHeader className='space-y-1'>
+                    <DialogTitle className='text-xl font-semibold text-white'>{title}</DialogTitle>
                   </DialogHeader>
                 </div>
               </div>
               <Button
-                variant="ghost"
-                size="icon"
+                variant='ghost'
+                size='icon'
                 onClick={handleClose}
-                className="text-white/80 hover:text-white hover:bg-white/20"
+                className='text-white/80 hover:text-white hover:bg-white/20'
+                aria-label='Chiudi'
               >
-                <X className="w-5 h-5" />
+                <X className='w-5 h-5' />
               </Button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-6">
-            <DialogDescription className="text-gray-600 text-base">
-              {subtitle}
-            </DialogDescription>
+          <div className='p-6 space-y-6'>
+            <DialogDescription className='text-gray-600 text-base'>{subtitle}</DialogDescription>
 
             {showExpiryInfo && (
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-sm text-blue-700">
-                <Clock className="w-4 h-4 flex-shrink-0" />
+              <div className='flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-sm text-blue-700'>
+                <Clock className='w-4 h-4 flex-shrink-0' />
                 <span>
-                  I tuoi dati rimarranno salvati per <strong>{daysUntilExpiry} giorni</strong>. 
-                  Puoi tornare in qualsiasi momento per completare la registrazione.
+                  I tuoi dati rimarranno salvati per <strong>{daysUntilExpiry} giorni</strong>. Puoi
+                  tornare in qualsiasi momento per completare la registrazione.
                 </span>
               </div>
             )}
 
             {/* Actions */}
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <Button
                 onClick={handleCompleteNow}
-                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium"
+                className='w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium'
               >
-                <ArrowRight className="w-4 h-4 mr-2" />
+                <ArrowRight className='w-4 h-4 mr-2' />
                 {completeButtonText}
               </Button>
 
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handleSaveForLater}
-                  className="flex-1 h-11"
-                >
-                  <Save className="w-4 h-4 mr-2" />
+              <div className='flex gap-3'>
+                <Button variant='outline' onClick={handleSaveForLater} className='flex-1 h-11'>
+                  <Save className='w-4 h-4 mr-2' />
                   {saveButtonText}
                 </Button>
-                <Button
-                  variant="ghost"
-                  onClick={handleClose}
-                  className="h-11 px-4"
-                >
+                <Button variant='ghost' onClick={handleClose} className='h-11 px-4'>
                   Chiudi
                 </Button>
               </div>
@@ -181,40 +170,37 @@ export function ExitIntentInline({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-4 right-4 z-50 max-w-sm"
+          className='fixed bottom-4 right-4 z-50 max-w-sm'
         >
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-5">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
+          <div className='bg-white rounded-2xl shadow-2xl border border-gray-200 p-5'>
+            <div className='flex items-start gap-3 mb-4'>
+              <div className='w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0'>
+                <AlertTriangle className='w-5 h-5 text-amber-600' />
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">Stai lasciando la pagina?</h4>
-                <p className="text-sm text-gray-500 mt-1">
+                <h4 className='font-semibold text-gray-900'>Stai lasciando la pagina?</h4>
+                <p className='text-sm text-gray-500 mt-1'>
                   I tuoi dati sono stati salvati automaticamente.
                 </p>
               </div>
               <button
                 onClick={onDismiss}
-                className="text-gray-400 hover:text-gray-600"
+                className='text-gray-400 hover:text-gray-600'
+                aria-label='Chiudi'
               >
-                <X className="w-4 h-4" />
+                <X className='w-4 h-4' />
               </button>
             </div>
-            
-            <div className="flex gap-2">
+
+            <div className='flex gap-2'>
               <Button
-                size="sm"
+                size='sm'
                 onClick={onComplete}
-                className="flex-1 bg-amber-500 hover:bg-amber-600"
+                className='flex-1 bg-amber-500 hover:bg-amber-600'
               >
                 Completa
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onSave}
-              >
+              <Button size='sm' variant='outline' onClick={onSave}>
                 Salva
               </Button>
             </div>

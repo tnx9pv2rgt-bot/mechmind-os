@@ -14,11 +14,16 @@ import {
   Query,
   UseGuards,
   Request,
+  Req,
   Headers,
+  HttpCode,
   BadRequestException,
+  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RawBodyRequest } from '@nestjs/common/interfaces';
+import Stripe from 'stripe';
 import { Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -30,6 +35,7 @@ import { FeatureAccessService } from '../services/feature-access.service';
 // FeatureGuard and RequireFeature available for route-level feature gating
 import { CheckLimit, LimitGuard } from '../guards/limit.guard';
 import { PLAN_PRICING, AI_ADDON, PLAN_FEATURES, getFormattedPrice } from '../config/pricing.config';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 // DTOs
 class UpgradeSubscriptionDto {
@@ -62,6 +68,8 @@ interface RequestWithTenant extends ExpressRequest {
   tenantId: string;
 }
 
+@ApiTags('Subscription')
+@ApiBearerAuth()
 @Controller('subscription')
 @UseGuards(JwtAuthGuard)
 export class SubscriptionController {
@@ -298,34 +306,52 @@ export class StripeWebhookController {
   ) {}
 
   @Post()
+  @HttpCode(200)
   async handleWebhook(
+    @Req() req: RawBodyRequest<ExpressRequest>,
     @Headers('stripe-signature') signature: string,
-    @Body() payload: Record<string, unknown>,
-  ) {
+  ): Promise<{ received: true }> {
     if (!signature) {
       throw new BadRequestException('Missing stripe-signature header');
     }
-    if (!payload || Object.keys(payload).length === 0) {
-      throw new BadRequestException('Missing webhook payload');
+
+    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+    if (!webhookSecret) {
+      throw new InternalServerErrorException('STRIPE_WEBHOOK_SECRET non configurato');
     }
 
-    const eventType = payload.type as string;
-    const data = payload.data as Record<string, unknown> | undefined;
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+      throw new BadRequestException('Raw body non disponibile');
+    }
 
-    switch (eventType) {
+    let event: Stripe.Event;
+    try {
+      const stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY', ''));
+      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    } catch (err) {
+      this.logger.error(
+        `Stripe webhook signature verification failed: ${err instanceof Error ? err.message : 'Unknown'}`,
+      );
+      throw new BadRequestException(
+        `Webhook signature verification failed: ${err instanceof Error ? err.message : 'Unknown'}`,
+      );
+    }
+
+    const data = event.data;
+
+    switch (event.type) {
       case 'charge.refunded':
-        this.logger.log(`Charge refunded: ${JSON.stringify(data?.object ?? {})}`);
-        // Invoice status update handled by InvoiceService.refundInvoice
+        this.logger.log(`Charge refunded: ${JSON.stringify(data.object ?? {})}`);
         break;
 
       case 'charge.dispute.created':
-        this.logger.warn(`Dispute created: ${JSON.stringify(data?.object ?? {})}`);
-        // In production: notify admin via email/Slack, log for audit
+        this.logger.warn(`Dispute created: ${JSON.stringify(data.object ?? {})}`);
         break;
 
       case 'customer.subscription.deleted': {
         this.logger.log('Subscription deleted via Stripe');
-        const subscriptionObj = data?.object as Record<string, unknown> | undefined;
+        const subscriptionObj = data.object as unknown as Record<string, unknown>;
         const tenantId = (subscriptionObj?.metadata as Record<string, string>)?.tenantId;
         if (tenantId) {
           try {
@@ -342,8 +368,18 @@ export class StripeWebhookController {
         break;
       }
 
+      case 'checkout.session.completed': {
+        const sessionObj = data.object as unknown as Record<string, unknown>;
+        const metadata = (sessionObj?.metadata as Record<string, string>) ?? {};
+        const invoiceId = metadata.invoiceId;
+        if (invoiceId) {
+          this.logger.log(`Checkout session completed for invoice: ${invoiceId}`);
+        }
+        break;
+      }
+
       default:
-        this.logger.log(`Unhandled Stripe event: ${eventType}`);
+        this.logger.log(`Unhandled Stripe event: ${event.type}`);
     }
 
     return { received: true };

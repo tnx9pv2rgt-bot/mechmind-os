@@ -66,12 +66,20 @@ export class InspectionController {
   async findAll(
     @CurrentUser('tenantId') tenantId: string,
     @Query() query: InspectionQueryDto,
-  ): Promise<InspectionSummaryDto[]> {
+  ): Promise<{
+    data: InspectionSummaryDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     return this.inspectionService.findAll(tenantId, {
       vehicleId: query.vehicleId,
       customerId: query.customerId,
       status: query.status,
       mechanicId: query.mechanicId,
+      page: query.page,
+      limit: query.limit,
     });
   }
 

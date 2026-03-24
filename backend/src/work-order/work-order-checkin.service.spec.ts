@@ -17,6 +17,7 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
       workOrder: {
         findFirst: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
         create: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
@@ -45,9 +46,10 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
   describe('checkIn', () => {
     it('should check in a vehicle and update status to CHECKED_IN', async () => {
       const existing = { id: WO_ID, tenantId: TENANT_ID, status: 'PENDING', vehicleId: 'v1' };
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
+      const checkedIn = { ...existing, status: 'CHECKED_IN' };
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(checkedIn);
       prisma.vehicle.update.mockResolvedValue({});
-      prisma.workOrder.update.mockResolvedValue({ ...existing, status: 'CHECKED_IN' });
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.checkIn(TENANT_ID, WO_ID, {
         vehicleId: 'v1',
@@ -64,9 +66,10 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
 
     it('should allow check-in without a booking', async () => {
       const existing = { id: WO_ID, tenantId: TENANT_ID, status: 'OPEN', vehicleId: 'v1' };
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
+      const checkedIn = { ...existing, status: 'CHECKED_IN' };
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(checkedIn);
       prisma.vehicle.update.mockResolvedValue({});
-      prisma.workOrder.update.mockResolvedValue({ ...existing, status: 'CHECKED_IN' });
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.checkIn(TENANT_ID, WO_ID, {
         vehicleId: 'v1',
@@ -120,13 +123,10 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
         vehicleId: 'v1',
         mileageIn: 50000,
       };
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
+      const checkedOut = { ...existing, status: 'READY', mileageOut: 50050 };
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(checkedOut);
       prisma.vehicle.update.mockResolvedValue({});
-      prisma.workOrder.update.mockResolvedValue({
-        ...existing,
-        status: 'READY',
-        mileageOut: 50050,
-      });
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.checkOut(TENANT_ID, WO_ID, {
         mileageOut: 50050,

@@ -130,19 +130,19 @@ function getWarrantyStatus(
   color: string;
 } {
   if (warrantyStatus === 'VOID') {
-    return { label: 'Voided', variant: 'destructive', color: 'text-red-600 bg-red-50' };
+    return { label: 'Annullata', variant: 'destructive', color: 'text-red-600 bg-red-50' };
   }
   if (daysRemaining <= 0) {
-    return { label: 'Expired', variant: 'destructive', color: 'text-red-600 bg-red-50' };
+    return { label: 'Scaduta', variant: 'destructive', color: 'text-red-600 bg-red-50' };
   }
   if (daysRemaining <= 30) {
     return {
-      label: 'Expiring Soon',
+      label: 'In Scadenza',
       variant: 'outline',
       color: 'text-orange-600 bg-orange-50 border-orange-200',
     };
   }
-  return { label: 'Active', variant: 'default', color: 'text-green-600 bg-green-50' };
+  return { label: 'Attiva', variant: 'default', color: 'text-green-600 bg-green-50' };
 }
 
 /**
@@ -247,8 +247,8 @@ function CountdownTimer({ expirationDate }: { expirationDate: string }) {
   if (isExpired) {
     return (
       <div className='text-center'>
-        <div className='text-4xl font-bold text-red-600'>Expired</div>
-        <p className='text-sm text-gray-500 mt-1'>Warranty coverage has ended</p>
+        <div className='text-4xl font-bold text-red-600'>Scaduta</div>
+        <p className='text-sm text-gray-500 mt-1'>La copertura della garanzia &egrave; terminata</p>
       </div>
     );
   }
@@ -315,8 +315,8 @@ function NewClaimForm({
     }));
 
     toast({
-      title: 'Files uploaded',
-      description: `${files.length} file(s) ready for submission`,
+      title: 'File caricati',
+      description: `${files.length} file pronti per l'invio`,
     });
   };
 
@@ -327,14 +327,14 @@ function NewClaimForm({
     try {
       await createWarrantyClaim(warrantyId, formData);
       toast({
-        title: 'Claim submitted',
-        description: 'Your warranty claim has been submitted for review',
+        title: 'Reclamo inviato',
+        description: 'Il tuo reclamo in garanzia è stato inviato per la revisione',
       });
       onSubmit();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to submit claim',
+        title: 'Errore',
+        description: error instanceof Error ? error.message : "Errore nell'invio del reclamo",
         variant: 'destructive',
       });
     } finally {
@@ -346,7 +346,7 @@ function NewClaimForm({
     <form onSubmit={handleSubmit} className='space-y-4'>
       <div className='space-y-2'>
         <label htmlFor='claimAmount' className='text-sm font-medium text-gray-900'>
-          Claim Amount
+          Importo Reclamo
         </label>
         <div className='relative'>
           <DollarSign className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
@@ -368,11 +368,11 @@ function NewClaimForm({
 
       <div className='space-y-2'>
         <label htmlFor='issueDescription' className='text-sm font-medium text-gray-900'>
-          Issue Description
+          Descrizione Problema
         </label>
         <Textarea
           id='issueDescription'
-          placeholder='Describe the issue in detail...'
+          placeholder='Descrivi il problema nel dettaglio...'
           rows={4}
           value={formData.issueDescription}
           onChange={e => setFormData(prev => ({ ...prev, issueDescription: e.target.value }))}
@@ -382,11 +382,11 @@ function NewClaimForm({
 
       <div className='space-y-2'>
         <label htmlFor='photo-upload' className='text-sm font-medium text-gray-900'>
-          Photo Evidence
+          Foto Evidenza
         </label>
         <div className='border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-gray-300 transition-colors'>
           <Upload className='mx-auto h-8 w-8 text-gray-400 mb-2' />
-          <p className='text-sm text-gray-600 mb-2'>Upload photos of the issue</p>
+          <p className='text-sm text-gray-600 mb-2'>Carica foto del problema</p>
           <Input
             type='file'
             accept='image/*'
@@ -401,20 +401,20 @@ function NewClaimForm({
             size='sm'
             onClick={() => document.getElementById('photo-upload')?.click()}
           >
-            Select Files
+            Seleziona File
           </Button>
         </div>
         {uploadedFiles.length > 0 && (
-          <p className='text-sm text-green-600'>{uploadedFiles.length} file(s) selected</p>
+          <p className='text-sm text-green-600'>{uploadedFiles.length} file selezionati</p>
         )}
       </div>
 
       <DialogFooter className='gap-2'>
         <Button type='button' variant='outline' onClick={onCancel}>
-          Cancel
+          Annulla
         </Button>
         <Button type='submit' loading={isSubmitting}>
-          Submit Claim
+          Invia Reclamo
         </Button>
       </DialogFooter>
     </form>
@@ -443,14 +443,14 @@ function ClaimDetailDialog({
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <FileText className='h-5 w-5' />
-            Claim Details
+            Dettagli Reclamo
           </DialogTitle>
-          <DialogDescription>Submitted on {formatDate(claim.submittedDate)}</DialogDescription>
+          <DialogDescription>Inviato il {formatDate(claim.submittedDate)}</DialogDescription>
         </DialogHeader>
 
         <div className='space-y-4'>
           <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-            <span className='text-sm font-medium text-gray-600'>Status</span>
+            <span className='text-sm font-medium text-gray-600'>Stato</span>
             <Badge
               variant='outline'
               className={cn('flex items-center gap-1', statusConfig.bgColor, statusConfig.color)}
@@ -461,20 +461,20 @@ function ClaimDetailDialog({
           </div>
 
           <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-            <span className='text-sm font-medium text-gray-600'>Amount</span>
+            <span className='text-sm font-medium text-gray-600'>Importo</span>
             <span className='text-lg font-semibold text-gray-900'>
               {formatCurrency(claim.amount)}
             </span>
           </div>
 
           <div className='space-y-2'>
-            <span className='text-sm font-medium text-gray-600'>Description</span>
+            <span className='text-sm font-medium text-gray-600'>Descrizione</span>
             <p className='text-sm text-gray-800 bg-gray-50 p-3 rounded-lg'>{claim.description}</p>
           </div>
 
           {claim.documents.length > 0 && (
             <div className='space-y-2'>
-              <span className='text-sm font-medium text-gray-600'>Evidence Photos</span>
+              <span className='text-sm font-medium text-gray-600'>Foto Evidenza</span>
               <div className='grid grid-cols-3 gap-2'>
                 {claim.documents.map((url, index) => (
                   <div
@@ -483,7 +483,7 @@ function ClaimDetailDialog({
                   >
                     <img
                       src={url}
-                      alt={`Evidence ${index + 1}`}
+                      alt={`Evidenza ${index + 1}`}
                       className='w-full h-full object-cover'
                     />
                   </div>
@@ -494,7 +494,7 @@ function ClaimDetailDialog({
 
           {claim.reviewedDate && (
             <div className='text-sm text-gray-500'>
-              Reviewed on {formatDate(claim.reviewedDate)}
+              Revisionato il {formatDate(claim.reviewedDate)}
             </div>
           )}
         </div>
@@ -527,8 +527,8 @@ function BlockchainVerificationCard({
       setIsVerified(true);
       setIsVerifying(false);
       toast({
-        title: 'Verification Complete',
-        description: 'Warranty verified on blockchain',
+        title: 'Verifica Completata',
+        description: 'Garanzia verificata su blockchain',
       });
     }, 2000);
   };
@@ -542,9 +542,9 @@ function BlockchainVerificationCard({
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-lg'>
           <Shield className='h-5 w-5 text-blue-600' />
-          Blockchain Verification
+          Verifica Blockchain
         </CardTitle>
-        <CardDescription>Verify warranty authenticity on the blockchain</CardDescription>
+        <CardDescription>Verifica l'autenticità della garanzia su blockchain</CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
         {/* QR Code Placeholder */}
@@ -557,7 +557,7 @@ function BlockchainVerificationCard({
         {/* Contract Address */}
         <div className='space-y-1'>
           <label htmlFor='contractAddress' className='text-xs font-medium text-gray-500 uppercase'>
-            Contract Address
+            Indirizzo Contratto
           </label>
           <div className='flex items-center gap-2 p-2 bg-gray-50 rounded-lg'>
             <code id='contractAddress' className='text-xs text-gray-600 flex-1 truncate'>
@@ -569,7 +569,7 @@ function BlockchainVerificationCard({
               className='h-6 w-6'
               onClick={() => {
                 navigator.clipboard.writeText(contractAddress);
-                toast({ title: 'Address copied' });
+                toast({ title: 'Indirizzo copiato' });
               }}
             >
               <FileText className='h-3 w-3' />
@@ -581,14 +581,14 @@ function BlockchainVerificationCard({
         {isVerified && (
           <div className='flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg'>
             <CheckCircle2 className='h-5 w-5' />
-            <span className='text-sm font-medium'>Verified on Blockchain</span>
+            <span className='text-sm font-medium'>Verificato su Blockchain</span>
           </div>
         )}
       </CardContent>
       <CardFooter className='flex gap-2'>
         <Button variant='outline' className='flex-1' onClick={handleOpenExplorer}>
           <ExternalLink className='h-4 w-4 mr-2' />
-          View on Explorer
+          Visualizza su Explorer
         </Button>
         <Button
           className='flex-1'
@@ -599,12 +599,12 @@ function BlockchainVerificationCard({
           {isVerified ? (
             <>
               <CheckCircle2 className='h-4 w-4 mr-2' />
-              Verified
+              Verificato
             </>
           ) : (
             <>
               <Shield className='h-4 w-4 mr-2' />
-              Verify
+              Verifica
             </>
           )}
         </Button>
@@ -652,7 +652,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
         });
       } catch (error) {
         toast({
-          title: 'Error loading warranty data',
+          title: 'Errore nel caricamento dati garanzia',
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive',
         });
@@ -669,12 +669,12 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
     try {
       await updateWarrantyAlerts(warrantyId, alertSettings);
       toast({
-        title: 'Settings updated',
-        description: 'Alert preferences saved successfully',
+        title: 'Impostazioni aggiornate',
+        description: 'Preferenze avvisi salvate con successo',
       });
     } catch (error) {
       toast({
-        title: 'Error updating settings',
+        title: 'Errore aggiornamento impostazioni',
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       });
@@ -694,8 +694,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
       <Card className='w-full'>
         <CardContent className='flex flex-col items-center justify-center py-12'>
           <AlertTriangle className='h-12 w-12 text-amber-500 mb-4' />
-          <h3 className='text-lg font-semibold text-gray-900'>Warranty Not Found</h3>
-          <p className='text-sm text-gray-500 mt-1'>The requested warranty could not be loaded</p>
+          <h3 className='text-lg font-semibold text-gray-900'>Garanzia Non Trovata</h3>
+          <p className='text-sm text-gray-500 mt-1'>La garanzia richiesta non è stata trovata</p>
         </CardContent>
       </Card>
     );
@@ -715,20 +715,22 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Warranty Dashboard</h1>
-          <p className='text-sm text-gray-500 mt-1'>Manage warranty coverage and claims</p>
+          <h1 className='text-2xl font-bold text-gray-900'>Pannello Garanzie</h1>
+          <p className='text-sm text-gray-500 mt-1'>Gestisci coperture e reclami in garanzia</p>
         </div>
         <Dialog open={isNewClaimModalOpen} onOpenChange={setIsNewClaimModalOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className='h-4 w-4 mr-2' />
-              New Claim
+              Nuovo Reclamo
             </Button>
           </DialogTrigger>
           <DialogContent className='max-w-lg'>
             <DialogHeader>
-              <DialogTitle>Submit New Claim</DialogTitle>
-              <DialogDescription>File a new warranty claim for this vehicle</DialogDescription>
+              <DialogTitle>Invia Nuovo Reclamo</DialogTitle>
+              <DialogDescription>
+                Presenta un nuovo reclamo in garanzia per questo veicolo
+              </DialogDescription>
             </DialogHeader>
             <NewClaimForm
               warrantyId={warrantyId}
@@ -753,7 +755,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                 <div>
                   <CardTitle className='text-xl flex items-center gap-2'>
                     <Shield className='h-6 w-6 text-blue-600' />
-                    Warranty Coverage
+                    Copertura Garanzia
                   </CardTitle>
                   <CardDescription className='mt-1'>
                     {formatDate(String(warranty.startDate))} -{' '}
@@ -769,7 +771,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               {/* Countdown Timer */}
               <div className='bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6'>
                 <h3 className='text-sm font-medium text-gray-600 text-center mb-4'>
-                  Time Remaining
+                  Tempo Rimanente
                 </h3>
                 <CountdownTimer expirationDate={String(warranty.expirationDate)} />
               </div>
@@ -777,8 +779,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               {/* Progress Bar */}
               <div className='space-y-2'>
                 <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600'>Coverage Period</span>
-                  <span className='font-medium text-gray-900'>{progress}% elapsed</span>
+                  <span className='text-gray-600'>Periodo Copertura</span>
+                  <span className='font-medium text-gray-900'>{progress}% trascorso</span>
                 </div>
                 <Progress value={progress} className='h-2' />
                 <div className='flex items-center justify-between text-xs text-gray-500'>
@@ -792,19 +794,19 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <div className='flex items-center gap-2 text-sm text-gray-600 mb-1'>
                     <Wallet className='h-4 w-4' />
-                    <span>Remaining Coverage</span>
+                    <span>Copertura Residua</span>
                   </div>
                   <div className='text-2xl font-bold text-gray-900'>
                     {formatCurrency(remainingCoverage)}
                   </div>
                   <div className='text-xs text-gray-500'>
-                    of {formatCurrency(maxCoverage)} total
+                    di {formatCurrency(maxCoverage)} totale
                   </div>
                 </div>
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <div className='flex items-center gap-2 text-sm text-gray-600 mb-1'>
                     <Activity className='h-4 w-4' />
-                    <span>Warranty Type</span>
+                    <span>Tipo Garanzia</span>
                   </div>
                   <div
                     className={cn(
@@ -825,10 +827,12 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-lg'>
                 <FileText className='h-5 w-5' />
-                Claim History
+                Storico Reclami
               </CardTitle>
               <CardDescription>
-                {claims.length === 0 ? 'No claims filed yet' : `${claims.length} claim(s) filed`}
+                {claims.length === 0
+                  ? 'Nessun reclamo presentato'
+                  : `${claims.length} reclamo/i presentati`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -836,7 +840,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                 <div className='text-center py-8'>
                   <CheckCircle2 className='h-12 w-12 text-green-500 mx-auto mb-3' />
                   <p className='text-sm text-gray-500'>
-                    No claims have been filed for this warranty
+                    Nessun reclamo presentato per questa garanzia
                   </p>
                 </div>
               ) : (
@@ -898,9 +902,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-lg'>
                 <Calendar className='h-5 w-5 text-orange-500' />
-                Upcoming Expirations
+                Scadenze in Arrivo
               </CardTitle>
-              <CardDescription>Warranties expiring soon</CardDescription>
+              <CardDescription>Garanzie in scadenza</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue='30' className='w-full'>
@@ -935,7 +939,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                         return daysLeft <= parseInt(days) && daysLeft > parseInt(days) - 30;
                       }).length === 0 && (
                         <p className='text-sm text-gray-500 text-center py-4'>
-                          No warranties expiring in this period
+                          Nessuna garanzia in scadenza in questo periodo
                         </p>
                       )}
                     </div>
@@ -950,15 +954,15 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-lg'>
                 <Bell className='h-5 w-5 text-purple-500' />
-                Alert Settings
+                Impostazioni Avvisi
               </CardTitle>
-              <CardDescription>Configure expiration reminders</CardDescription>
+              <CardDescription>Configura promemoria scadenze</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                   <Settings className='h-4 w-4 text-gray-500' />
-                  <span className='text-sm text-gray-700'>Email Alerts</span>
+                  <span className='text-sm text-gray-700'>Avvisi Email</span>
                 </div>
                 <Switch
                   checked={alertSettings.email}
@@ -971,7 +975,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                   <Settings className='h-4 w-4 text-gray-500' />
-                  <span className='text-sm text-gray-700'>SMS Alerts</span>
+                  <span className='text-sm text-gray-700'>Avvisi SMS</span>
                 </div>
                 <Switch
                   checked={alertSettings.sms}
@@ -981,7 +985,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               <Separator />
               <div className='space-y-2'>
                 <label htmlFor='daysBeforeExpiry' className='text-sm text-gray-700'>
-                  Days Before Expiry
+                  Giorni Prima della Scadenza
                 </label>
                 <Input
                   id='daysBeforeExpiry'
@@ -1000,7 +1004,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             </CardContent>
             <CardFooter>
               <Button variant='outline' className='w-full' onClick={handleUpdateAlerts}>
-                Save Settings
+                Salva Impostazioni
               </Button>
             </CardFooter>
           </Card>

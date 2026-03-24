@@ -151,7 +151,7 @@ export class VoiceWebhookController {
    */
   private validateTimestamp(timestamp: string): boolean {
     if (!timestamp) {
-      return true; // Allow if no timestamp (backward compatibility)
+      throw new UnauthorizedException('Missing timestamp header');
     }
 
     const timestampMs = parseInt(timestamp, 10);

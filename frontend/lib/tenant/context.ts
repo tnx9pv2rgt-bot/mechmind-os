@@ -35,7 +35,89 @@ export const requireTenantId = async (): Promise<string> => {
 };
 
 export const tryGetTenantContext = async (): Promise<TenantContext | null> => {
-  return null; // TODO: implement
+  // First check module-level cache
+  if (_currentTenantContext) {
+    return _currentTenantContext;
+  }
+
+  // On the server side, try to read from cookies
+  if (typeof window === 'undefined') {
+    try {
+      // Dynamic import to avoid bundling next/headers on client
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const tenantId = cookieStore.get('tenant_id')?.value;
+      const tenantSlug = cookieStore.get('tenant_slug')?.value;
+      const authToken = cookieStore.get('auth_token')?.value;
+
+      if (!tenantId && !authToken) {
+        return null;
+      }
+
+      // Try to extract tenant info from JWT if tenantId cookie is missing
+      let extractedTenantId = tenantId || '';
+      if (!extractedTenantId && authToken) {
+        try {
+          const parts = authToken.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8')) as {
+              tenantId?: string;
+              sub?: string;
+              userId?: string;
+              userRole?: string;
+            };
+            extractedTenantId = payload.tenantId || '';
+            if (!extractedTenantId && payload.sub) {
+              const subParts = payload.sub.split(':');
+              if (subParts.length >= 2) extractedTenantId = subParts[1];
+            }
+          }
+        } catch {
+          /* ignore JWT decode errors */
+        }
+      }
+
+      if (!extractedTenantId) {
+        return null;
+      }
+
+      return {
+        tenantId: extractedTenantId,
+        tenantSlug: tenantSlug || '',
+        permissions: [],
+        subscriptionTier: 'PROFESSIONAL',
+        subscriptionStatus: 'ACTIVE',
+        features: [],
+      };
+    } catch {
+      // cookies() may throw outside of request context
+      return null;
+    }
+  }
+
+  // On the client side, try to read from document cookies
+  try {
+    const cookieString = document.cookie;
+    const tenantIdMatch = cookieString.match(/(?:^|;\s*)tenant_id=([^;]*)/);
+    const tenantSlugMatch = cookieString.match(/(?:^|;\s*)tenant_slug=([^;]*)/);
+    const tenantId = tenantIdMatch ? decodeURIComponent(tenantIdMatch[1]) : '';
+    const tenantSlug = tenantSlugMatch ? decodeURIComponent(tenantSlugMatch[1]) : '';
+
+    if (!tenantId) {
+      return null;
+    }
+
+    return {
+      tenantId,
+      tenantSlug: tenantSlug || '',
+      permissions: [],
+      subscriptionTier: 'PROFESSIONAL',
+      subscriptionStatus: 'ACTIVE',
+      features: [],
+    };
+  } catch {
+    return null;
+  }
 };
 
 export class NoTenantContextError extends Error {

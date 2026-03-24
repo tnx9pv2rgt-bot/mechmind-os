@@ -1,214 +1,113 @@
 import { test as base, expect, type Page, type Locator } from '@playwright/test';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Types for auth fixture
-export interface AuthPage {
-  page: Page;
-  login(email: string, password: string): Promise<void>;
-  logout(): Promise<void>;
-  expectLoggedIn(): Promise<void>;
-  expectLoggedOut(): Promise<void>;
-}
-
-/**
- * AuthPage helper class for authentication operations
- */
-export class AuthPageHelper implements AuthPage {
-  constructor(public page: Page) {}
-
-  /**
-   * Login with credentials
-   */
-  async login(email: string, password: string): Promise<void> {
-    await this.page.goto('/auth');
-    await this.page.getByLabel(/email/i).fill(email);
-    await this.page.getByLabel(/password/i).fill(password);
-    await this.page.getByRole('button', { name: /login|accedi|entra/i }).click();
-    await this.page.waitForURL(/dashboard|mfa|2fa/);
-  }
-
-  /**
-   * Logout current user
-   */
-  async logout(): Promise<void> {
-    // Try different logout patterns
-    const userMenu = this.page.locator('[data-testid="user-menu"], button:has-text("Utente"), .user-avatar').first();
-    
-    if (await userMenu.isVisible().catch(() => false)) {
-      await userMenu.click();
-      await this.page.getByRole('menuitem', { name: /logout|esci|sign out/i }).click();
-    } else {
-      // Direct logout via URL
-      await this.page.goto('/api/auth/signout');
-    }
-    
-    await this.page.waitForURL(/auth|login/);
-  }
-
-  /**
-   * Assert user is logged in
-   */
-  async expectLoggedIn(): Promise<void> {
-    await expect(this.page).toHaveURL(/dashboard|app/);
-    await expect(this.page.getByText(/dashboard|benvenuto|welcome/i)).toBeVisible();
-  }
-
-  /**
-   * Assert user is logged out
-   */
-  async expectLoggedOut(): Promise<void> {
-    await expect(this.page).toHaveURL(/auth|login/);
-    await expect(this.page.getByLabel(/email/i)).toBeVisible();
-  }
-}
-
-/**
- * Page Object for MFA flow
- */
-export class MFAPage {
-  constructor(private page: Page) {}
-
-  async enterTOTPCode(code: string): Promise<void> {
-    const inputs = this.page.locator('input[type="text"], input[type="number"], [data-testid="totp-input"]');
-    
-    // Handle single input or multiple digit inputs
-    const count = await inputs.count();
-    if (count === 1) {
-      await inputs.first().fill(code);
-    } else {
-      // Multiple digit inputs
-      for (let i = 0; i < code.length; i++) {
-        await inputs.nth(i).fill(code[i]);
-      }
-    }
-    
-    await this.page.getByRole('button', { name: /verifica|verify|conferma/i }).click();
-  }
-
-  async selectRecoveryCode(): Promise<void> {
-    await this.page.getByText(/codice di recupero|recovery code|backup code/i).click();
-  }
-
-  async enterRecoveryCode(code: string): Promise<void> {
-    await this.page.getByLabel(/codice di recupero|recovery code/i).fill(code);
-    await this.page.getByRole('button', { name: /verifica|verify/i }).click();
-  }
-
-  async expectMFARequired(): Promise<void> {
-    await expect(this.page).toHaveURL(/mfa|2fa|two-factor/);
-    await expect(this.page.getByText(/verifica a due fattori|two.factor|2fa/i)).toBeVisible();
-  }
-
-  async expectMFASetup(): Promise<void> {
-    await expect(this.page.getByText(/configura 2fa|setup mfa|configurazione/i)).toBeVisible();
-    await expect(this.page.locator('img[alt*="QR"], canvas, svg')).toBeVisible();
-  }
-}
-
-/**
- * Page Object for Dashboard
- */
-export class DashboardPage {
-  constructor(private page: Page) {}
-
-  async navigateTo(section: string): Promise<void> {
-    const sectionMap: Record<string, string> = {
-      'bookings': 'Prenotazioni',
-      'customers': 'Clienti',
-      'vehicles': 'Veicoli',
-      'inventory': 'Magazzino',
-      'invoices': 'Fatture',
-      'reports': 'Report',
-      'settings': 'Impostazioni',
-    };
-
-    const label = sectionMap[section] || section;
-    await this.page.click(`nav a:has-text("${label}"), [data-testid="nav-${section}"]`);
-    await this.page.waitForURL(new RegExp(section));
-  }
-
-  async expectOnDashboard(): Promise<void> {
-    await expect(this.page).toHaveURL(/dashboard/);
-    await expect(this.page.getByRole('heading', { name: /dashboard|panoramica/i })).toBeVisible();
-  }
-
-  async getNotification(): Promise<Locator> {
-    return this.page.locator('[data-testid="toast"], .toast, .notification').first();
-  }
-
-  async dismissAllNotifications(): Promise<void> {
-    const dismissButtons = this.page.locator('[data-testid="toast-dismiss"], .toast-close');
-    const count = await dismissButtons.count();
-    for (let i = 0; i < count; i++) {
-      await dismissButtons.nth(i).click().catch(() => {});
-    }
-  }
-}
-
-/**
- * Extended test fixture with auth helpers
- */
-export type TestFixtures = {
-  authPage: AuthPage;
-  mfaPage: MFAPage;
-  dashboardPage: DashboardPage;
-  adminPage: Page;
-  userPage: Page;
-  mechanicPage: Page;
+// =============================================================================
+// Mock user for /api/auth/me
+// =============================================================================
+const MOCK_USER = {
+  user: {
+    id: 'test-user-id',
+    email: 'admin@demo.it',
+    name: 'Admin Test',
+    role: 'ADMIN',
+    tenantId: 'test-tenant-id',
+    tenantName: 'Officina Test',
+  },
 };
 
-export const test = base.extend<TestFixtures>({
-  // Auth page helper
-  authPage: async ({ page }, use) => {
-    const authPage = new AuthPageHelper(page);
-    await use(authPage);
+// =============================================================================
+// Extended test with auto auth mocking
+// =============================================================================
+
+/**
+ * Extended test that automatically:
+ * 1. Sets auth cookies (auth_token, tenant_id, tenant_slug, portal_token)
+ * 2. Mocks /api/auth/me to return a valid user
+ * 3. Mocks /api/auth/refresh to return success
+ *
+ * All dashboard/portal tests should import { test, expect } from this file.
+ */
+export const test = base.extend<{
+  autoAuth: void;
+  adminPage: Page;
+  mechanicPage: Page;
+  userPage: Page;
+  mfaPage: { expectMFASetup: () => Promise<void>; expectMFARequired: () => Promise<void>; enterTOTPCode: (code: string) => Promise<void>; selectRecoveryCode: () => Promise<void>; enterRecoveryCode: (code: string) => Promise<void> };
+}>({
+  autoAuth: [async ({ page }, use) => {
+    // Set auth cookies for middleware
+    await page.context().addCookies([
+      { name: 'auth_token', value: 'mock-jwt-token', domain: 'localhost', path: '/' },
+      { name: 'tenant_id', value: 'test-tenant-id', domain: 'localhost', path: '/' },
+      { name: 'tenant_slug', value: 'demo', domain: 'localhost', path: '/' },
+      { name: 'portal_token', value: 'mock-portal-token', domain: 'localhost', path: '/' },
+      { name: 'cookie_consent', value: 'accepted', domain: 'localhost', path: '/' },
+    ]);
+
+    // Dismiss cookie consent dialogs (they use localStorage)
+    await page.addInitScript(() => {
+      localStorage.setItem('cookie-consent', JSON.stringify({ necessary: true, analytics: true, timestamp: new Date().toISOString() }));
+      localStorage.setItem('mechmind-cookie-consent', 'accepted');
+    });
+
+    // Mock auth endpoint so AuthGuard doesn't redirect
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_USER),
+      });
+    });
+
+    // Mock auth refresh
+    await page.route('**/api/auth/refresh', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await use();
+  }, { auto: true }],
+
+  // adminPage is just the regular page (auto-auth already sets ADMIN role)
+  adminPage: async ({ page }, use) => {
+    await use(page);
   },
 
-  // MFA page helper
+  // mechanicPage is the regular page (tests can override the role mock if needed)
+  mechanicPage: async ({ page }, use) => {
+    await use(page);
+  },
+
+  // userPage is the regular page (for non-admin user tests)
+  userPage: async ({ page }, use) => {
+    await use(page);
+  },
+
+  // mfaPage provides helper methods for MFA testing
   mfaPage: async ({ page }, use) => {
-    const mfaPage = new MFAPage(page);
-    await use(mfaPage);
-  },
-
-  // Dashboard page helper
-  dashboardPage: async ({ page }, use) => {
-    const dashboardPage = new DashboardPage(page);
-    await use(dashboardPage);
-  },
-
-  // Pre-authenticated admin page
-  adminPage: async ({ browser }, use) => {
-    const context = await browser.newContext({
-      storageState: path.join(__dirname, '../.auth/admin.json'),
+    await use({
+      async expectMFASetup() {
+        const { expect: e } = await import('@playwright/test');
+        await e(page.getByText(/configura|setup|mfa|2fa/i)).toBeVisible({ timeout: 10000 });
+      },
+      async expectMFARequired() {
+        const { expect: e } = await import('@playwright/test');
+        await e(page.getByText(/codice|verifica|mfa|2fa/i)).toBeVisible({ timeout: 10000 });
+      },
+      async enterTOTPCode(code: string) {
+        await page.locator('input[type="text"]').first().fill(code);
+        await page.getByRole('button', { name: /verifica|verify|conferma/i }).click();
+      },
+      async selectRecoveryCode() {
+        await page.getByText(/codice di recupero|recovery code|backup/i).click();
+      },
+      async enterRecoveryCode(code: string) {
+        await page.getByLabel(/codice di recupero|recovery code/i).fill(code);
+        await page.getByRole('button', { name: /verifica|verify|conferma/i }).click();
+      },
     });
-    const page = await context.newPage();
-    await use(page);
-    await context.close();
-  },
-
-  // Pre-authenticated user page
-  userPage: async ({ browser }, use) => {
-    const context = await browser.newContext({
-      storageState: path.join(__dirname, '../.auth/user.json'),
-    });
-    const page = await context.newPage();
-    await use(page);
-    await context.close();
-  },
-
-  // Pre-authenticated mechanic page
-  mechanicPage: async ({ browser }, use) => {
-    const context = await browser.newContext({
-      storageState: path.join(__dirname, '../.auth/mechanic.json'),
-    });
-    const page = await context.newPage();
-    await use(page);
-    await context.close();
   },
 });
 

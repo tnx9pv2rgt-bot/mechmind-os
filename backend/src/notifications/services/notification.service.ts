@@ -19,6 +19,10 @@ import {
   NotificationChannel,
   SendNotificationDto,
 } from '../dto/send-notification.dto';
+import {
+  NotificationType as PrismaNotificationType,
+  NotificationChannel as PrismaNotificationChannel,
+} from '@prisma/client';
 
 // Events
 export class NotificationSentEvent {
@@ -82,6 +86,7 @@ export class NotificationOrchestratorService {
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     @InjectQueue('notification-queue') private readonly notificationQueue: Queue,
+    @InjectQueue('sms-queue') private readonly smsQueue: Queue,
   ) {}
 
   /**
@@ -287,7 +292,7 @@ export class NotificationOrchestratorService {
   }
 
   /**
-   * Send SMS notification based on type
+   * Send SMS notification via BullMQ queue with retry (P025 fix)
    */
   private async sendSmsNotification(
     customer: CustomerInfo,
@@ -302,49 +307,83 @@ export class NotificationOrchestratorService {
     const s = data as Record<string, string>;
 
     try {
-      switch (type) {
-        case NotificationType.BOOKING_CONFIRMATION:
-          return await this.smsService.sendBookingConfirmation(customer.phone, {
+      const templateMap: Record<
+        string,
+        { templateType: string; templateData: Record<string, string> }
+      > = {
+        [NotificationType.BOOKING_CONFIRMATION]: {
+          templateType: 'booking_confirmation',
+          templateData: {
             date: s.date,
             time: s.time,
             service: s.service,
             workshopName: workshop.name,
             bookingCode: s.bookingCode,
-          });
-
-        case NotificationType.BOOKING_REMINDER:
-          return await this.smsService.sendBookingReminder(customer.phone, {
+          },
+        },
+        [NotificationType.BOOKING_REMINDER]: {
+          templateType: 'booking_reminder',
+          templateData: {
             date: s.date,
             time: s.time,
             service: s.service,
             workshopName: workshop.name,
             bookingCode: s.bookingCode,
-          });
-
-        case NotificationType.BOOKING_CANCELLED:
-          return await this.smsService.sendBookingCancelled(customer.phone, {
+          },
+        },
+        [NotificationType.BOOKING_CANCELLED]: {
+          templateType: 'booking_cancelled',
+          templateData: {
             date: s.date,
             service: s.service,
             workshopName: workshop.name,
             bookingCode: s.bookingCode,
             cancellationReason: s.cancellationReason,
-          });
-
-        case NotificationType.INVOICE_READY:
-          return await this.smsService.sendInvoiceReady(customer.phone, {
+          },
+        },
+        [NotificationType.INVOICE_READY]: {
+          templateType: 'invoice_ready',
+          templateData: {
             invoiceNumber: s.invoiceNumber,
             amount: s.amount,
             downloadUrl: s.downloadUrl,
             workshopName: workshop.name,
-          });
+          },
+        },
+      };
 
-        default:
-          // For unsupported types, return failure to trigger fallback
-          return { success: false, error: `SMS not supported for type: ${type}` };
+      const template = templateMap[type];
+      if (!template) {
+        return { success: false, error: `SMS not supported for type: ${type}` };
       }
+
+      const job = await this.smsQueue.add(
+        'send-sms',
+        {
+          to: customer.phone,
+          body: '',
+          category: template.templateType,
+          templateType: template.templateType,
+          templateData: template.templateData,
+          tenantId: workshop.id,
+        },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 30000 },
+        },
+      );
+
+      this.logger.log(
+        `SMS queued for ${customer.phone.slice(0, 4)}*** via sms-queue (job ${job.id})`,
+      );
+
+      return {
+        success: true,
+        messageId: `sms-job-${job.id}`,
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`SMS sending failed: ${errorMessage}`);
+      this.logger.error(`SMS queue failed: ${errorMessage}`);
       return { success: false, error: errorMessage };
     }
   }
@@ -466,8 +505,10 @@ export class NotificationOrchestratorService {
       attempts: 3,
       backoff: {
         type: 'exponential',
-        delay: 5000,
+        delay: 60000,
       },
+      removeOnFail: { count: 0 }, // Keep failed jobs in DLQ for inspection
+      removeOnComplete: { count: 1000, age: 7 * 24 * 3600 }, // Keep last 1000 or 7 days
     });
 
     this.logger.log(`Notification queued: ${jobId}`);
@@ -561,8 +602,8 @@ export class NotificationOrchestratorService {
    * Get customer notification preferences
    */
   async getCustomerPreferences(
-    _customerId: string,
-    _tenantId: string,
+    customerId: string,
+    tenantId: string,
   ): Promise<{
     preferredChannel: NotificationChannel;
     bookingConfirmations: boolean;
@@ -570,7 +611,6 @@ export class NotificationOrchestratorService {
     invoiceNotifications: boolean;
     promotionalMessages: boolean;
   }> {
-    // Default preferences
     const defaults = {
       preferredChannel: NotificationChannel.AUTO,
       bookingConfirmations: true,
@@ -580,11 +620,41 @@ export class NotificationOrchestratorService {
     };
 
     try {
-      // Query from database if preferences are stored
-      // This would typically query a notification_preferences table
-      return defaults;
-    } catch (_error) {
-      this.logger.warn(`Could not fetch preferences for customer ${_customerId}`);
+      const prefs = await this.prisma.customerNotificationPreference.findMany({
+        where: { customerId },
+      });
+
+      if (prefs.length === 0) {
+        return defaults;
+      }
+
+      // Derive preferences from per-channel records
+      const smsEnabled = prefs.find(p => p.channel === 'SMS')?.enabled ?? true;
+      const emailEnabled = prefs.find(p => p.channel === 'EMAIL')?.enabled ?? true;
+
+      // Determine preferred channel from what's enabled
+      let preferredChannel = NotificationChannel.AUTO;
+      if (smsEnabled && !emailEnabled) preferredChannel = NotificationChannel.SMS;
+      else if (!smsEnabled && emailEnabled) preferredChannel = NotificationChannel.EMAIL;
+      else if (smsEnabled && emailEnabled) preferredChannel = NotificationChannel.AUTO;
+
+      // Check customer marketing consent
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: customerId, tenantId },
+        select: { marketingConsent: true },
+      });
+
+      return {
+        preferredChannel,
+        bookingConfirmations: smsEnabled || emailEnabled,
+        bookingReminders: smsEnabled || emailEnabled,
+        invoiceNotifications: emailEnabled,
+        promotionalMessages: customer?.marketingConsent ?? false,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Could not fetch preferences for customer ${customerId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       return defaults;
     }
   }
@@ -594,10 +664,42 @@ export class NotificationOrchestratorService {
    */
   async updateCustomerPreferences(
     customerId: string,
-    _tenantId: string,
-    _preferences: Partial<ReturnType<typeof this.getCustomerPreferences>>,
+    tenantId: string,
+    preferences: Record<string, unknown>,
   ): Promise<void> {
-    // Implementation would update database
+    // Update per-channel preferences
+    if (preferences.preferredChannel !== undefined) {
+      const preferred = String(preferences.preferredChannel).toUpperCase();
+      const isValidChannel = preferred === 'SMS' || preferred === 'EMAIL';
+      const isAuto = preferred === 'AUTO';
+
+      if (isValidChannel || isAuto) {
+        const channels = ['SMS', 'EMAIL'] as const;
+        for (const ch of channels) {
+          await this.prisma.customerNotificationPreference.upsert({
+            where: { customerId_channel: { customerId, channel: ch } },
+            update: { enabled: ch === preferred || isAuto },
+            create: {
+              customerId,
+              channel: ch,
+              enabled: ch === preferred || isAuto,
+            },
+          });
+        }
+      }
+    }
+
+    // Update marketing consent on customer record
+    if (preferences.promotionalMessages !== undefined) {
+      await this.prisma.customer.updateMany({
+        where: { id: customerId, tenantId },
+        data: {
+          marketingConsent: preferences.promotionalMessages as boolean,
+          marketingConsentAt: new Date(),
+        },
+      });
+    }
+
     this.logger.log(`Updated preferences for customer ${customerId}`);
   }
 
@@ -668,28 +770,86 @@ export class NotificationOrchestratorService {
   }
 
   private async getWorkshopInfo(tenantId: string): Promise<WorkshopInfo> {
-    // In a real implementation, fetch from database
-    // For now, return mock data
+    try {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          id: true,
+          name: true,
+          settings: true,
+        },
+      });
+
+      if (tenant) {
+        const settings = (tenant.settings as Record<string, unknown>) || {};
+        return {
+          id: tenant.id,
+          name: tenant.name || 'Officina',
+          address: (settings.address as string) || '',
+          phone: (settings.phone as string) || '',
+        };
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not fetch workshop info for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+
+    // Fallback defaults
     return {
       id: tenantId,
-      name: 'Officia Meccanica',
-      address: 'Via Roma 123, Milano',
-      phone: '+39 02 1234567',
+      name: 'Officina',
+      address: '',
+      phone: '',
     };
   }
 
   private async logNotification(
-    notificationId: string,
+    _notificationId: string,
     customerId: string,
     tenantId: string,
     type: NotificationType,
     result: NotificationResult,
   ): Promise<void> {
-    // Log to database for analytics and audit
-    // This would typically insert into a notifications table
-    this.logger.debug(
-      `[${notificationId}] Logged: ${type} to ${customerId} via ${result.channel} - ${result.success ? 'success' : 'failed'}`,
-    );
+    try {
+      const typeMap: Record<string, PrismaNotificationType> = {
+        [NotificationType.BOOKING_CONFIRMATION]: PrismaNotificationType.BOOKING_CONFIRMATION,
+        [NotificationType.BOOKING_REMINDER]: PrismaNotificationType.BOOKING_REMINDER,
+        [NotificationType.BOOKING_CANCELLED]: PrismaNotificationType.STATUS_UPDATE,
+        [NotificationType.INVOICE_READY]: PrismaNotificationType.INVOICE_READY,
+        [NotificationType.GDPR_EXPORT_READY]: PrismaNotificationType.STATUS_UPDATE,
+        [NotificationType.WELCOME]: PrismaNotificationType.STATUS_UPDATE,
+        [NotificationType.PASSWORD_RESET]: PrismaNotificationType.STATUS_UPDATE,
+        [NotificationType.CUSTOM]: PrismaNotificationType.STATUS_UPDATE,
+      };
+
+      const channelMap: Record<string, PrismaNotificationChannel> = {
+        [NotificationChannel.SMS]: PrismaNotificationChannel.SMS,
+        [NotificationChannel.EMAIL]: PrismaNotificationChannel.EMAIL,
+        [NotificationChannel.BOTH]: PrismaNotificationChannel.EMAIL,
+        [NotificationChannel.AUTO]: PrismaNotificationChannel.SMS,
+      };
+
+      await this.prisma.notification.create({
+        data: {
+          customerId,
+          tenantId,
+          type: typeMap[type] || PrismaNotificationType.STATUS_UPDATE,
+          channel: channelMap[result.channel] || PrismaNotificationChannel.EMAIL,
+          status: result.success ? 'SENT' : 'FAILED',
+          message: '',
+          messageId: result.messageId ?? null,
+          sentAt: result.success ? new Date() : null,
+          failedAt: result.success ? null : new Date(),
+          error: result.error ?? null,
+          metadata: { fallbackUsed: result.fallbackUsed ?? false },
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to log notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   private generateId(): string {

@@ -46,8 +46,8 @@ export function NotificationBell() {
   const ctxRecord = ctx as unknown as Record<string, unknown>;
   const isConnected = (ctxRecord.isConnected as boolean) ?? ctx.isRealtimeConnected ?? false;
   const reconnectAttempt = (ctxRecord.reconnectAttempt as number) ?? 0;
-  const reconnect = (ctxRecord.reconnect as (() => void)) ?? ctx.refetch;
-  
+  const reconnect = (ctxRecord.reconnect as () => void) ?? ctx.refetch;
+
   const [isOpen, setIsOpen] = useState(false);
 
   // Close dropdown when clicking outside
@@ -58,11 +58,11 @@ export function NotificationBell() {
         setIsOpen(false);
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
@@ -83,7 +83,7 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="notification-bell-container relative">
+    <div className='notification-bell-container relative'>
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -92,22 +92,30 @@ export function NotificationBell() {
           'hover:bg-apple-light-gray/50 focus:outline-none focus:ring-2 focus:ring-apple-blue/50',
           isOpen && 'bg-apple-light-gray'
         )}
-        aria-label="Notifiche"
+        aria-label='Notifiche'
       >
-        <Bell className={cn(
-          'h-5 w-5 transition-colors',
-          isConnected ? 'text-apple-dark' : 'text-apple-gray'
-        )} />
-        
+        <Bell
+          className={cn(
+            'h-5 w-5 transition-colors',
+            isConnected ? 'text-apple-dark' : 'text-apple-gray'
+          )}
+        />
+
         {/* Connection status dot */}
-        <span className={cn(
-          'absolute top-1 right-1 w-2 h-2 rounded-full',
-          isConnected ? 'bg-apple-green' : reconnectAttempt > 0 ? 'bg-apple-orange' : 'bg-apple-red'
-        )} />
-        
+        <span
+          className={cn(
+            'absolute top-1 right-1 w-2 h-2 rounded-full',
+            isConnected
+              ? 'bg-apple-green'
+              : reconnectAttempt > 0
+                ? 'bg-apple-orange'
+                : 'bg-apple-red'
+          )}
+        />
+
         {/* Unread count badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-apple-red text-white text-[10px] font-bold rounded-full px-1 animate-in zoom-in">
+          <span className='absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-apple-red text-white text-[10px] font-bold rounded-full px-1 animate-in zoom-in'>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -115,42 +123,44 @@ export function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <AppleCard className="absolute right-0 top-full mt-2 w-96 z-50 shadow-apple-lg animate-in fade-in slide-in-from-top-2">
+        <AppleCard className='absolute right-0 top-full mt-2 w-96 z-50 shadow-apple-lg animate-in fade-in slide-in-from-top-2'>
           {/* Header */}
-          <div className="p-4 border-b border-apple-border/30 flex items-center justify-between">
+          <div className='p-4 border-b border-apple-border/30 flex items-center justify-between'>
             <div>
-              <h3 className="text-body font-semibold text-apple-dark">Notifiche</h3>
-              <div className="flex items-center gap-2 mt-0.5">
+              <h3 className='text-body font-semibold text-apple-dark'>Notifiche</h3>
+              <div className='flex items-center gap-2 mt-0.5'>
                 {isConnected ? (
                   <>
-                    <Wifi className="h-3 w-3 text-apple-green" />
-                    <p className="text-footnote text-apple-gray">Connessione attiva</p>
+                    <Wifi className='h-3 w-3 text-apple-green' />
+                    <p className='text-footnote text-apple-gray'>Connessione attiva</p>
                   </>
                 ) : (
                   <>
-                    <WifiOff className="h-3 w-3 text-apple-red" />
-                    <p className="text-footnote text-apple-red">
-                      {reconnectAttempt > 0 ? `Riconnessione... (${reconnectAttempt})` : 'Disconnesso'}
+                    <WifiOff className='h-3 w-3 text-apple-red' />
+                    <p className='text-footnote text-apple-red'>
+                      {reconnectAttempt > 0
+                        ? `Riconnessione... (${reconnectAttempt})`
+                        : 'Disconnesso'}
                     </p>
                   </>
                 )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-1">
+
+            <div className='flex items-center gap-1'>
               {!isConnected && (
-                <AppleButton 
-                  variant="ghost" 
-                  size="sm" 
+                <AppleButton
+                  variant='ghost'
+                  size='sm'
                   onClick={reconnect}
-                  className="text-apple-blue"
+                  className='text-apple-blue'
                 >
                   Riconnetti
                 </AppleButton>
               )}
               {unreadCount > 0 && (
-                <AppleButton variant="ghost" size="sm" onClick={markAllAsRead}>
-                  <CheckCheck className="h-4 w-4 mr-1" />
+                <AppleButton variant='ghost' size='sm' onClick={markAllAsRead}>
+                  <CheckCheck className='h-4 w-4 mr-1' />
                   Tutte
                 </AppleButton>
               )}
@@ -158,64 +168,69 @@ export function NotificationBell() {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className='max-h-[400px] overflow-y-auto'>
             {notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <Bell className="h-12 w-12 text-apple-gray/30 mx-auto mb-3" />
-                <p className="text-body text-apple-gray">Nessuna notifica</p>
-                <p className="text-footnote text-apple-gray/70 mt-1">
+              <div className='p-8 text-center'>
+                <Bell className='h-12 w-12 text-apple-gray/30 mx-auto mb-3' />
+                <p className='text-body text-apple-gray'>Nessuna notifica</p>
+                <p className='text-footnote text-apple-gray/70 mt-1'>
                   Le notifiche appariranno qui in tempo reale
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-apple-border/30">
-                {notifications.map((notification) => (
-                  <div 
-                    key={notification.id} 
+              <div className='divide-y divide-apple-border/30'>
+                {notifications.map(notification => (
+                  <div
+                    key={notification.id}
                     className={cn(
                       'p-4 hover:bg-apple-light-gray/30 transition-colors cursor-pointer',
                       !notification.isRead && 'bg-apple-blue/5'
                     )}
                     onClick={() => markAsRead(notification.id)}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className='flex items-start gap-3'>
                       {/* Type Icon */}
-                      <span className={cn(
-                        'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg',
-                        notificationTypeColors[notification.type] || 'text-gray-600 bg-gray-50'
-                      )}>
+                      <span
+                        className={cn(
+                          'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg',
+                          notificationTypeColors[notification.type] || 'text-gray-600 bg-gray-50'
+                        )}
+                      >
                         {notificationTypeEmojis[notification.type] || '🔔'}
                       </span>
-                      
+
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={cn(
-                            'text-body font-medium truncate',
-                            !notification.isRead && 'font-semibold text-apple-dark'
-                          )}>
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-start justify-between gap-2'>
+                          <p
+                            className={cn(
+                              'text-body font-medium truncate',
+                              !notification.isRead && 'font-semibold text-apple-dark'
+                            )}
+                          >
                             {notification.title}
                           </p>
-                          <span className="text-footnote text-apple-gray flex-shrink-0">
+                          <span className='text-footnote text-apple-gray flex-shrink-0'>
                             {formatTime(notification.timestamp)}
                           </span>
                         </div>
-                        <p className="text-footnote text-apple-gray mt-0.5 line-clamp-2">
+                        <p className='text-footnote text-apple-gray mt-0.5 line-clamp-2'>
                           {notification.message}
                         </p>
                       </div>
 
                       {/* Mark as read button */}
                       {!notification.isRead && (
-                        <button 
-                          onClick={(e) => {
+                        <button
+                          onClick={e => {
                             e.stopPropagation();
                             markAsRead(notification.id);
                           }}
-                          className="flex-shrink-0 p-1.5 rounded-full hover:bg-apple-light-gray transition-colors"
-                          title="Segna come letta"
+                          className='flex-shrink-0 p-1.5 rounded-full hover:bg-apple-light-gray transition-colors'
+                          title='Segna come letta'
+                          aria-label='Segna come letta'
                         >
-                          <Check className="h-4 w-4 text-apple-gray" />
+                          <Check className='h-4 w-4 text-apple-gray' />
                         </button>
                       )}
                     </div>
@@ -227,8 +242,8 @@ export function NotificationBell() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-apple-border/30 text-center">
-              <p className="text-footnote text-apple-gray">
+            <div className='p-3 border-t border-apple-border/30 text-center'>
+              <p className='text-footnote text-apple-gray'>
                 {notifications.length} notifiche totali
               </p>
             </div>

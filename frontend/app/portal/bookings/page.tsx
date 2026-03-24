@@ -6,11 +6,14 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
+import { toast } from 'sonner';
 import { Plus, Filter, Calendar } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { PortalPageWrapper } from '@/components/portal';
 import { BookingList } from '@/components/portal';
+import { Pagination } from '@/components/ui/pagination';
 import { Booking, Customer } from '@/lib/types/portal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // ============================================
 // MAIN COMPONENT
@@ -19,6 +22,11 @@ import { Booking, Customer } from '@/lib/types/portal';
 export default function PortalBookingsPage() {
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
   const [customer] = useState<Customer | null>(null);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const {
     data: rawData,
@@ -55,19 +63,40 @@ export default function PortalBookingsPage() {
   }, [filter, bookings]);
 
   const handleCancel = (id: string) => {
-    if (confirm('Sei sicuro di voler cancellare questa prenotazione?')) {
-      mutate(
+    setCancelBookingId(id);
+    setCancelConfirmOpen(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelBookingId) return;
+    setCancelLoading(true);
+    try {
+      const res = await fetch(`/api/bookings/${cancelBookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+      if (!res.ok) {
+        throw new Error('Errore dal server');
+      }
+      await mutate(
         current =>
           current
             ? {
                 ...current,
                 data: current.data.map(b =>
-                  b.id === id ? { ...b, status: 'cancelled' as Booking['status'] } : b
+                  b.id === cancelBookingId ? { ...b, status: 'cancelled' as Booking['status'] } : b
                 ),
               }
             : current,
         false
       );
+      toast.success('Prenotazione cancellata');
+    } catch {
+      toast.error('Errore durante la cancellazione della prenotazione');
+    } finally {
+      setCancelLoading(false);
+      setCancelBookingId(null);
     }
   };
 
@@ -101,7 +130,7 @@ export default function PortalBookingsPage() {
         <div className='text-center py-16'>
           <p className='text-apple-red mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => mutate()}
             className='text-apple-blue hover:underline'
           >
             Riprova
@@ -128,7 +157,7 @@ export default function PortalBookingsPage() {
           {(['all', 'upcoming', 'past'] as const).map(f => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); setPage(1); }}
               className={`
                 px-4 py-2 rounded-lg text-sm font-medium transition-all
                 ${
@@ -153,12 +182,19 @@ export default function PortalBookingsPage() {
 
       {/* Bookings List */}
       {filteredBookings.length > 0 ? (
-        <BookingList
-          bookings={filteredBookings}
-          onCancel={handleCancel}
-          onReschedule={handleReschedule}
-          onViewDetails={handleViewDetails}
-        />
+        <>
+          <BookingList
+            bookings={filteredBookings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)}
+            onCancel={handleCancel}
+            onReschedule={handleReschedule}
+            onViewDetails={handleViewDetails}
+          />
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(filteredBookings.length / PAGE_SIZE)}
+            onPageChange={setPage}
+          />
+        </>
       ) : (
         <div className='text-center py-16'>
           <Calendar className='h-16 w-16 mx-auto text-apple-gray/30 mb-4' />
@@ -177,6 +213,16 @@ export default function PortalBookingsPage() {
           </Link>
         </div>
       )}
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        onOpenChange={setCancelConfirmOpen}
+        title='Cancella prenotazione'
+        description='Sei sicuro di voler cancellare questa prenotazione?'
+        confirmLabel='Cancella'
+        variant='danger'
+        onConfirm={confirmCancel}
+        loading={cancelLoading}
+      />
     </PortalPageWrapper>
   );
 }

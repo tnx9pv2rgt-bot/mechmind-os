@@ -255,14 +255,12 @@ describe('EstimateService', () => {
     });
 
     it('should recalculate totals when discountCents changes', async () => {
-      const existing = { id: '1', status: 'DRAFT', customerId: 'c1', discountCents: BigInt(0) };
+      const existing = { id: '1', status: 'DRAFT', customerId: 'c1', discountCents: 0 };
       mockPrisma.estimate.findFirst
         .mockResolvedValueOnce(existing) // findById call in update
-        .mockResolvedValueOnce({ discountCents: BigInt(500) }); // recalculateTotals
-      mockPrisma.estimate.update.mockResolvedValue({ ...existing, discountCents: BigInt(500) });
-      mockPrisma.estimateLine.findMany.mockResolvedValue([
-        { totalCents: BigInt(10000), vatRate: 0.22 },
-      ]);
+        .mockResolvedValueOnce({ discountCents: 500 }); // recalculateTotals
+      mockPrisma.estimate.update.mockResolvedValue({ ...existing, discountCents: 500 });
+      mockPrisma.estimateLine.findMany.mockResolvedValue([{ totalCents: 10000, vatRate: 0.22 }]);
 
       const result = await service.update('t1', '1', { discountCents: 500 } as never);
       expect(result).toBeDefined();
@@ -271,15 +269,13 @@ describe('EstimateService', () => {
 
   describe('addLine', () => {
     it('should add a line to a DRAFT estimate', async () => {
-      const estimate = { id: '1', status: 'DRAFT', customerId: 'c1', discountCents: BigInt(0) };
+      const estimate = { id: '1', status: 'DRAFT', customerId: 'c1', discountCents: 0 };
       mockPrisma.estimate.findFirst
         .mockResolvedValueOnce(estimate) // findById in addLine
-        .mockResolvedValueOnce({ discountCents: BigInt(0) }); // recalculateTotals
+        .mockResolvedValueOnce({ discountCents: 0 }); // recalculateTotals
       mockPrisma.estimateLine.create.mockResolvedValue({ id: 'l1' });
-      mockPrisma.estimateLine.findMany.mockResolvedValue([
-        { totalCents: BigInt(5000), vatRate: 0.22 },
-      ]);
-      mockPrisma.estimate.update.mockResolvedValue({ ...estimate, subtotalCents: BigInt(5000) });
+      mockPrisma.estimateLine.findMany.mockResolvedValue([{ totalCents: 5000, vatRate: 0.22 }]);
+      mockPrisma.estimate.update.mockResolvedValue({ ...estimate, subtotalCents: 5000 });
 
       const result = await service.addLine('t1', '1', {
         type: 'LABOR',
@@ -318,8 +314,8 @@ describe('EstimateService', () => {
       });
       mockPrisma.estimateLine.delete.mockResolvedValue({ id: 'l1' });
       mockPrisma.estimateLine.findMany.mockResolvedValue([]);
-      mockPrisma.estimate.findFirst.mockResolvedValue({ discountCents: BigInt(0) });
-      mockPrisma.estimate.update.mockResolvedValue({ id: '1', subtotalCents: BigInt(0) });
+      mockPrisma.estimate.findFirst.mockResolvedValue({ discountCents: 0 });
+      mockPrisma.estimate.update.mockResolvedValue({ id: '1', subtotalCents: 0 });
 
       const result = await service.removeLine('t1', 'l1');
       expect(result).toBeDefined();
@@ -448,6 +444,48 @@ describe('EstimateService', () => {
     it('convertToBooking should throw NotFoundException if findById returns null (line 320)', async () => {
       jest.spyOn(service, 'findById').mockResolvedValue(null as never);
       await expect(service.convertToBooking('t1', '1', 'b1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('State Machine', () => {
+    it('should reject REJECTED → SENT (send)', async () => {
+      mockPrisma.estimate.findFirst.mockResolvedValue({
+        id: '1',
+        status: 'REJECTED',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+      });
+      await expect(service.send('t1', '1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject DRAFT → ACCEPTED (accept)', async () => {
+      mockPrisma.estimate.findFirst.mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+      });
+      await expect(service.accept('t1', '1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject EXPIRED → ACCEPTED (accept)', async () => {
+      mockPrisma.estimate.findFirst.mockResolvedValue({
+        id: '1',
+        status: 'EXPIRED',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+      });
+      await expect(service.accept('t1', '1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject CONVERTED → SENT (send)', async () => {
+      mockPrisma.estimate.findFirst.mockResolvedValue({
+        id: '1',
+        status: 'CONVERTED',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+      });
+      await expect(service.send('t1', '1')).rejects.toThrow(BadRequestException);
     });
   });
 });

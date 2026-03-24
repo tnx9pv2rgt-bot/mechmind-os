@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Res,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -18,8 +19,11 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiQuery,
+  ApiProduces,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { EstimateService } from '../services/estimate.service';
+import { PdfService } from '../../invoice/services/pdf.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
@@ -37,9 +41,13 @@ import { EstimateStatus } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('estimates')
 export class EstimateController {
-  constructor(private readonly estimateService: EstimateService) {}
+  constructor(
+    private readonly estimateService: EstimateService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new estimate' })
   @ApiResponse({ status: 201, description: 'Estimate created', type: EstimateResponseDto })
@@ -117,6 +125,7 @@ export class EstimateController {
   }
 
   @Post(':id/lines')
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Add a line to an estimate' })
   @ApiParam({ name: 'id', description: 'Estimate ID' })
@@ -208,6 +217,7 @@ export class EstimateController {
   }
 
   @Post(':id/convert-to-work-order')
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Convert accepted estimate to work order' })
   @ApiParam({ name: 'id', description: 'Estimate ID' })
@@ -222,5 +232,24 @@ export class EstimateController {
       data: workOrder,
       message: 'Estimate converted to work order',
     };
+  }
+
+  @Get(':id/pdf')
+  @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Download estimate as PDF (HTML)' })
+  @ApiParam({ name: 'id', description: 'Estimate ID' })
+  @ApiProduces('text/html')
+  @ApiResponse({ status: 200, description: 'PDF HTML generated' })
+  async downloadPdf(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.pdfService.generateEstimatePdf(id, tenantId);
+    res.set({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Disposition': `inline; filename="preventivo-${id}.html"`,
+    });
+    res.send(buffer);
   }
 }

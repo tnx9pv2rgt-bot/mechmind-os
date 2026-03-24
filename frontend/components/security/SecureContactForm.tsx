@@ -57,9 +57,9 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
 
     // Client-side validation
     const errors: string[] = [];
-    if (!formData.name.trim()) errors.push('Name is required');
-    if (!formData.email.trim()) errors.push('Email is required');
-    if (!formData.message.trim()) errors.push('Message is required');
+    if (!formData.name.trim()) errors.push('Il nome è obbligatorio');
+    if (!formData.email.trim()) errors.push("L'email è obbligatoria");
+    if (!formData.message.trim()) errors.push('Il messaggio è obbligatorio');
 
     // Security validation
     const protectionValidation = validateProtection();
@@ -102,12 +102,12 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
   return (
     <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
       {/* Honeypot field - hidden from real users */}
-      <HoneypotField name={honeypotName} label='Leave this field empty' />
+      <HoneypotField name={honeypotName} label='Lascia questo campo vuoto' />
 
       {/* Security badge */}
       <div className='flex items-center gap-2 text-xs text-muted-foreground mb-4'>
         <Shield className='w-4 h-4' />
-        <span>Protected by enterprise-grade security</span>
+        <span>Protetto da sicurezza di livello enterprise</span>
       </div>
 
       {/* Validation errors */}
@@ -137,21 +137,21 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
         <Alert className='bg-green-50 border-green-200'>
           <CheckCircle className='h-4 w-4 text-green-600' />
           <AlertDescription className='text-green-800'>
-            Message sent successfully! We&apos;ll get back to you soon.
+            Messaggio inviato con successo! Ti risponderemo al più presto.
           </AlertDescription>
         </Alert>
       )}
 
       {/* Form fields */}
       <div className='space-y-2'>
-        <Label htmlFor='name'>Name *</Label>
+        <Label htmlFor='name'>Nome *</Label>
         <Input
           id='name'
           name='name'
           value={formData.name}
           onChange={handleChange}
           disabled={isLoading}
-          placeholder='Your name'
+          placeholder='Il tuo nome'
           maxLength={100}
         />
       </div>
@@ -171,31 +171,31 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
       </div>
 
       <div className='space-y-2'>
-        <Label htmlFor='subject'>Subject</Label>
+        <Label htmlFor='subject'>Oggetto</Label>
         <Input
           id='subject'
           name='subject'
           value={formData.subject}
           onChange={handleChange}
           disabled={isLoading}
-          placeholder='Message subject'
+          placeholder='Oggetto del messaggio'
           maxLength={200}
         />
       </div>
 
       <div className='space-y-2'>
-        <Label htmlFor='message'>Message *</Label>
+        <Label htmlFor='message'>Messaggio *</Label>
         <Textarea
           id='message'
           name='message'
           value={formData.message}
           onChange={handleChange}
           disabled={isLoading}
-          placeholder='Your message...'
+          placeholder='Il tuo messaggio...'
           rows={5}
           maxLength={5000}
         />
-        <p className='text-xs text-muted-foreground'>{formData.message.length} / 5000 characters</p>
+        <p className='text-xs text-muted-foreground'>{formData.message.length} / 5000 caratteri</p>
       </div>
 
       {/* Submit button */}
@@ -203,25 +203,25 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
         {isLoading ? (
           <>
             <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-            Sending...
+            Invio...
           </>
         ) : (
-          'Send Message'
+          'Invia Messaggio'
         )}
       </Button>
 
       {/* reCAPTCHA badge notice */}
       {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
         <p className='text-xs text-muted-foreground text-center'>
-          This site is protected by reCAPTCHA and the Google{' '}
+          Questo sito è protetto da reCAPTCHA e si applicano la{' '}
           <a href='https://policies.google.com/privacy' className='underline'>
             Privacy Policy
           </a>{' '}
-          and{' '}
+          e i{' '}
           <a href='https://policies.google.com/terms' className='underline'>
-            Terms of Service
+            Termini di Servizio
           </a>{' '}
-          apply.
+          di Google.
         </p>
       )}
     </form>

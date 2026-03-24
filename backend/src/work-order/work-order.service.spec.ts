@@ -19,6 +19,7 @@ interface MockWorkOrderDelegate {
   count: jest.Mock;
   create: jest.Mock;
   update: jest.Mock;
+  updateMany: jest.Mock;
 }
 
 interface MockInvoiceDelegate {
@@ -102,6 +103,7 @@ describe('WorkOrderService', () => {
         count: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
       },
       invoice: {
         findFirst: jest.fn(),
@@ -129,11 +131,13 @@ describe('WorkOrderService', () => {
 
       const result = await service.findAll(TENANT_ID);
 
-      expect(result).toEqual({ workOrders, total: 1 });
+      expect(result).toEqual({ workOrders, total: 1, page: 1, limit: 20, pages: 1 });
       expect(prisma.workOrder.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: TENANT_ID },
           orderBy: { createdAt: 'desc' },
+          skip: 0,
+          take: 20,
         }),
       );
     });
@@ -292,21 +296,20 @@ describe('WorkOrderService', () => {
 
     it('should update an existing work order', async () => {
       const existing = makeMockWorkOrder();
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
-
       const updated = makeMockWorkOrder({
         diagnosis: 'Updated diagnosis',
         laborHours: 2.5,
         laborCost: 125,
       });
-      prisma.workOrder.update.mockResolvedValue(updated);
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.update(TENANT_ID, WO_ID, dto);
 
       expect(result).toEqual(updated);
-      expect(prisma.workOrder.update).toHaveBeenCalledWith(
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: WO_ID },
+          where: expect.objectContaining({ id: WO_ID, tenantId: TENANT_ID }),
           data: expect.objectContaining({
             diagnosis: 'Updated diagnosis',
             laborHours: 2.5,
@@ -326,7 +329,7 @@ describe('WorkOrderService', () => {
 
     it('should throw InternalServerErrorException on unexpected error', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder());
-      prisma.workOrder.update.mockRejectedValue(new Error('DB error'));
+      prisma.workOrder.updateMany.mockRejectedValue(new Error('DB error'));
 
       await expect(service.update(TENANT_ID, WO_ID, dto)).rejects.toThrow(
         InternalServerErrorException,
@@ -334,8 +337,10 @@ describe('WorkOrderService', () => {
     });
 
     it('should serialize laborItems and partsUsed as JSON', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder());
-      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder());
+      const existing = makeMockWorkOrder();
+      const updated = makeMockWorkOrder();
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const dtoWithItems: UpdateWorkOrderDto = {
         laborItems: [{ description: 'Brake pad replacement', hours: 1.5, rate: 80 }],
@@ -344,7 +349,7 @@ describe('WorkOrderService', () => {
 
       await service.update(TENANT_ID, WO_ID, dtoWithItems);
 
-      expect(prisma.workOrder.update).toHaveBeenCalledWith(
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             laborItems: JSON.parse(JSON.stringify(dtoWithItems.laborItems)),
@@ -362,30 +367,33 @@ describe('WorkOrderService', () => {
   describe('start', () => {
     it('should start a PENDING work order', async () => {
       const existing = makeMockWorkOrder({ status: 'PENDING' });
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
-
       const started = makeMockWorkOrder({
         status: 'IN_PROGRESS',
         actualStartTime: new Date(),
       });
-      prisma.workOrder.update.mockResolvedValue(started);
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(started);
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.start(TENANT_ID, WO_ID);
 
       expect(result).toEqual(started);
-      expect(prisma.workOrder.update).toHaveBeenCalledWith({
-        where: { id: WO_ID },
-        data: {
-          status: 'IN_PROGRESS',
-          actualStartTime: expect.any(Date),
-        },
-      });
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: WO_ID, tenantId: TENANT_ID }),
+          data: expect.objectContaining({
+            status: 'IN_PROGRESS',
+            actualStartTime: expect.any(Date),
+          }),
+        }),
+      );
     });
 
     it('should start a CHECKED_IN work order', async () => {
       const existing = makeMockWorkOrder({ status: 'CHECKED_IN' });
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
-      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.findFirst
+        .mockResolvedValueOnce(existing)
+        .mockResolvedValueOnce(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.start(TENANT_ID, WO_ID);
 
@@ -394,8 +402,10 @@ describe('WorkOrderService', () => {
 
     it('should start an OPEN work order', async () => {
       const existing = makeMockWorkOrder({ status: 'OPEN' });
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
-      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.findFirst
+        .mockResolvedValueOnce(existing)
+        .mockResolvedValueOnce(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.start(TENANT_ID, WO_ID);
 
@@ -423,30 +433,33 @@ describe('WorkOrderService', () => {
   describe('complete', () => {
     it('should complete an IN_PROGRESS work order', async () => {
       const existing = makeMockWorkOrder({ status: 'IN_PROGRESS' });
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
-
       const completed = makeMockWorkOrder({
         status: 'COMPLETED',
         actualCompletionTime: new Date(),
       });
-      prisma.workOrder.update.mockResolvedValue(completed);
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(completed);
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.complete(TENANT_ID, WO_ID);
 
       expect(result).toEqual(completed);
-      expect(prisma.workOrder.update).toHaveBeenCalledWith({
-        where: { id: WO_ID },
-        data: {
-          status: 'COMPLETED',
-          actualCompletionTime: expect.any(Date),
-        },
-      });
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: WO_ID, tenantId: TENANT_ID }),
+          data: expect.objectContaining({
+            status: 'COMPLETED',
+            actualCompletionTime: expect.any(Date),
+          }),
+        }),
+      );
     });
 
     it('should complete a QUALITY_CHECK work order', async () => {
       const existing = makeMockWorkOrder({ status: 'QUALITY_CHECK' });
-      prisma.workOrder.findFirst.mockResolvedValue(existing);
-      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'COMPLETED' }));
+      prisma.workOrder.findFirst
+        .mockResolvedValueOnce(existing)
+        .mockResolvedValueOnce(makeMockWorkOrder({ status: 'COMPLETED' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.complete(TENANT_ID, WO_ID);
 
@@ -476,8 +489,19 @@ describe('WorkOrderService', () => {
       const wo = makeMockWorkOrder({
         status: 'COMPLETED',
         totalCost: 500,
-        laborItems: [{ description: 'Brake repair', hours: 2, rate: 80, total: 160 }],
-        partsUsed: [{ name: 'Brake pads', quantity: 2, unitPrice: 45, total: 90 }],
+        services: [
+          {
+            actualMinutes: 120,
+            estimatedMinutes: 120,
+            service: { name: 'Brake repair', laborRate: 80, price: 80 },
+          },
+        ],
+        parts: [
+          {
+            quantity: 2,
+            part: { name: 'Brake pads', retailPrice: 45 },
+          },
+        ],
       });
       prisma.workOrder.findFirst.mockResolvedValue(wo);
       prisma.invoice.findFirst.mockResolvedValue(null);
@@ -531,7 +555,7 @@ describe('WorkOrderService', () => {
     });
 
     it('should create an invoice from a READY work order', async () => {
-      const wo = makeMockWorkOrder({ status: 'READY', totalCost: 200 });
+      const wo = makeMockWorkOrder({ status: 'READY', totalCost: 200, services: [], parts: [] });
       prisma.workOrder.findFirst.mockResolvedValue(wo);
       prisma.invoice.findFirst.mockResolvedValue(null);
 
@@ -549,7 +573,7 @@ describe('WorkOrderService', () => {
     });
 
     it('should throw BadRequestException when work order is already INVOICED', async () => {
-      const wo = makeMockWorkOrder({ status: 'INVOICED' });
+      const wo = makeMockWorkOrder({ status: 'INVOICED', services: [], parts: [] });
       prisma.workOrder.findFirst.mockResolvedValue(wo);
 
       await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
@@ -558,7 +582,7 @@ describe('WorkOrderService', () => {
     });
 
     it('should throw BadRequestException when status is PENDING', async () => {
-      const wo = makeMockWorkOrder({ status: 'PENDING' });
+      const wo = makeMockWorkOrder({ status: 'PENDING', services: [], parts: [] });
       prisma.workOrder.findFirst.mockResolvedValue(wo);
 
       await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
@@ -575,7 +599,12 @@ describe('WorkOrderService', () => {
     });
 
     it('should increment invoice number when previous invoices exist', async () => {
-      const wo = makeMockWorkOrder({ status: 'COMPLETED', totalCost: 100 });
+      const wo = makeMockWorkOrder({
+        status: 'COMPLETED',
+        totalCost: 100,
+        services: [],
+        parts: [],
+      });
       prisma.workOrder.findFirst.mockResolvedValue(wo);
       prisma.invoice.findFirst.mockResolvedValue({
         invoiceNumber: `INV-${YEAR}-0003`,
@@ -604,8 +633,8 @@ describe('WorkOrderService', () => {
       const wo = makeMockWorkOrder({
         status: 'COMPLETED',
         totalCost: 0,
-        laborItems: null,
-        partsUsed: null,
+        services: [],
+        parts: [],
       });
       prisma.workOrder.findFirst.mockResolvedValue(wo);
       prisma.invoice.findFirst.mockResolvedValue(null);
@@ -628,6 +657,79 @@ describe('WorkOrderService', () => {
           }),
         }),
       );
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // State Machine — validateTransition coverage
+  // -----------------------------------------------------------------------
+
+  describe('State Machine', () => {
+    beforeEach(() => {
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder());
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+    });
+
+    it('should allow PENDING → IN_PROGRESS (start)', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'PENDING' }));
+      await expect(service.start(TENANT_ID, WO_ID)).resolves.toBeDefined();
+    });
+
+    it('should allow OPEN → CHECKED_IN (checkIn)', async () => {
+      const checkedInWo = makeMockWorkOrder({ status: 'CHECKED_IN' });
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'OPEN' }));
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
+        fn({
+          vehicle: { update: jest.fn().mockResolvedValue({}) },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValue(checkedInWo),
+          },
+        }),
+      );
+
+      await expect(
+        service.checkIn(TENANT_ID, WO_ID, {
+          vehicleId: VEHICLE_ID,
+          mileageIn: 50000,
+          fuelLevel: '3/4',
+        } as never),
+      ).resolves.toBeDefined();
+    });
+
+    it('should reject INVOICED → IN_PROGRESS (start)', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'INVOICED' }));
+      await expect(service.start(TENANT_ID, WO_ID)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject PENDING → COMPLETED (complete)', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'PENDING' }));
+      await expect(service.complete(TENANT_ID, WO_ID)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject IN_PROGRESS → INVOICED (createInvoiceFromWo)', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(
+        makeMockWorkOrder({ status: 'IN_PROGRESS', services: [], parts: [] }),
+      );
+      await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should reject INVOICED → INVOICED (createInvoiceFromWo)', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(
+        makeMockWorkOrder({ status: 'INVOICED', services: [], parts: [] }),
+      );
+      await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should allow IN_PROGRESS → WAITING_PARTS transition message', async () => {
+      // This verifies the transition map exists and covers WAITING_PARTS
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'WAITING_PARTS' }));
+      // WAITING_PARTS can only go to IN_PROGRESS, not COMPLETED
+      await expect(service.complete(TENANT_ID, WO_ID)).rejects.toThrow(BadRequestException);
     });
   });
 });

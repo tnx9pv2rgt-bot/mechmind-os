@@ -97,6 +97,9 @@ export class MfaRequiredResponseDto {
 
   @ApiProperty({ description: 'Methods available for MFA' })
   methods: ('totp' | 'backup')[];
+
+  @ApiProperty({ description: 'Risk level that triggered MFA', required: false })
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export class MfaLoginDto {

@@ -49,6 +49,7 @@ export class LicensePlateController {
   @ApiOperation({ summary: 'Detect license plate from image' })
   @ApiResponse({ status: 201, type: LicensePlateDetectionDto })
   async detectLicensePlate(
+    @CurrentUser('tenantId') tenantId: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: DetectLicensePlateDto,
   ): Promise<LicensePlateDetectionDto> {
@@ -56,22 +57,27 @@ export class LicensePlateController {
       cameraId: dto.cameraId,
       provider: dto.provider,
       minConfidence: dto.minConfidence,
+      tenantId,
     });
   }
 
   @Post('entry-exit')
   @ApiOperation({ summary: 'Record vehicle entry or exit' })
   @ApiResponse({ status: 201, type: VehicleEntryExitDto })
-  async recordEntryExit(@Body() dto: RecordEntryExitDto): Promise<VehicleEntryExitDto> {
+  async recordEntryExit(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: RecordEntryExitDto,
+  ): Promise<VehicleEntryExitDto> {
     // Get the detection first
     const detection = await this.licensePlateService.detectLicensePlate(
       Buffer.from(''), // Mock - would get actual detection
-      { cameraId: dto.cameraId },
+      { cameraId: dto.cameraId, tenantId },
     );
 
     return await this.licensePlateService.recordEntryExit(detection, dto.type, {
       location: dto.location,
       isAuthorized: dto.isAuthorized,
+      tenantId,
     });
   }
 
@@ -96,8 +102,11 @@ export class LicensePlateController {
   @Get('cameras/:id')
   @ApiOperation({ summary: 'Get camera details' })
   @ApiResponse({ status: 200, type: LprCameraDto })
-  async getCamera(@Param('id') cameraId: string): Promise<LprCameraDto> {
-    return await this.licensePlateService.getCamera(cameraId);
+  async getCamera(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') cameraId: string,
+  ): Promise<LprCameraDto> {
+    return await this.licensePlateService.getCamera(tenantId, cameraId);
   }
 
   @Patch('cameras/:id/status')
@@ -105,10 +114,11 @@ export class LicensePlateController {
   @ApiOperation({ summary: 'Update camera status' })
   @ApiResponse({ status: 200, type: LprCameraDto })
   async updateCameraStatus(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id') cameraId: string,
     @Body('isActive') isActive: boolean,
   ): Promise<LprCameraDto> {
-    return await this.licensePlateService.updateCameraStatus(cameraId, isActive);
+    return await this.licensePlateService.updateCameraStatus(tenantId, cameraId, isActive);
   }
 
   @Get('lookup/:plate')
@@ -119,16 +129,21 @@ export class LicensePlateController {
     @CurrentUser('tenantId') tenantId: string,
     @Param('plate') plate: string,
   ): Promise<VehicleLookupResponseDto> {
-    return await this.licensePlateService.lookupVehicle(plate);
+    return await this.licensePlateService.lookupVehicle(tenantId, plate);
   }
 
   @Get('sessions/active')
   @ApiOperation({ summary: 'Get active parking sessions' })
   @ApiResponse({ status: 200, type: [ParkingSessionDto] })
   async getActiveSessions(
-    @CurrentUser('tenantId') tenantId?: string,
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ): Promise<ParkingSessionDto[]> {
-    return await this.licensePlateService.getActiveSessions(tenantId);
+    return await this.licensePlateService.getActiveSessions(tenantId, {
+      page: page ? Number(page) : 1,
+      limit: limit ? Math.min(Number(limit), 100) : 20,
+    });
   }
 
   @Get('stats')

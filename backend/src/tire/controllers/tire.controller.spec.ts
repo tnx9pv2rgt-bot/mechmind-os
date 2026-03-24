@@ -69,7 +69,8 @@ describe('TireController', () => {
 
   describe('findAll', () => {
     it('should delegate to service with tenantId and query filters', async () => {
-      service.findAll.mockResolvedValue([mockTireSet] as never);
+      const paginated = { data: [mockTireSet], total: 1, page: 1, limit: 20, pages: 1 };
+      service.findAll.mockResolvedValue(paginated as never);
       const query = { vehicleId: 'veh-001', season: 'SUMMER', isStored: false };
 
       const result = await controller.findAll(TENANT_ID, query as never);
@@ -78,8 +79,10 @@ describe('TireController', () => {
         vehicleId: 'veh-001',
         season: 'SUMMER',
         isStored: false,
+        page: undefined,
+        limit: undefined,
       });
-      expect(result).toEqual([mockTireSet]);
+      expect(result).toEqual(paginated);
     });
   });
 

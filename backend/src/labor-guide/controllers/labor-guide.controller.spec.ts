@@ -74,25 +74,37 @@ describe('LaborGuideController', () => {
   });
 
   describe('findAllGuides', () => {
-    it('should delegate to service with tenantId', async () => {
-      service.findAllGuides.mockResolvedValue([mockGuide] as never);
+    it('should delegate to service with tenantId and pagination', async () => {
+      const paginated = { data: [mockGuide], total: 1, page: 1, limit: 50, pages: 1 };
+      service.findAllGuides.mockResolvedValue(paginated as never);
 
       const result = await controller.findAllGuides(TENANT_ID);
 
-      expect(service.findAllGuides).toHaveBeenCalledWith(TENANT_ID);
-      expect(result).toEqual([mockGuide]);
+      expect(service.findAllGuides).toHaveBeenCalledWith(TENANT_ID, {
+        page: undefined,
+        limit: undefined,
+      });
+      expect(result).toEqual(paginated);
     });
   });
 
   describe('searchEntries', () => {
     it('should delegate to service with tenantId, make, model, and category', async () => {
-      service.searchEntries.mockResolvedValue([mockEntry] as never);
+      const paginated = { data: [mockEntry], total: 1, page: 1, limit: 50, pages: 1 };
+      service.searchEntries.mockResolvedValue(paginated as never);
       const query = { make: 'Toyota', model: 'Corolla', category: 'Brakes' };
 
       const result = await controller.searchEntries(TENANT_ID, query as never);
 
-      expect(service.searchEntries).toHaveBeenCalledWith(TENANT_ID, 'Toyota', 'Corolla', 'Brakes');
-      expect(result).toEqual([mockEntry]);
+      expect(service.searchEntries).toHaveBeenCalledWith(
+        TENANT_ID,
+        'Toyota',
+        'Corolla',
+        'Brakes',
+        undefined,
+        undefined,
+      );
+      expect(result).toEqual(paginated);
     });
   });
 

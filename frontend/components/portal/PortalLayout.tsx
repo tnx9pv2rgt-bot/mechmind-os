@@ -9,6 +9,7 @@ import {
   Calendar,
   ClipboardCheck,
   FileText,
+  FolderOpen,
   Wrench,
   Shield,
   Settings,
@@ -19,6 +20,7 @@ import {
   User,
   ChevronRight,
   Bell,
+  MessageCircle,
 } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Customer } from '@/lib/types/portal';
@@ -30,13 +32,15 @@ import { usePortalCustomer } from './portal-customer-context';
 
 const navigation = [
   { name: 'Dashboard', href: '/portal/dashboard', icon: LayoutDashboard },
-  { name: 'Prenotazioni', href: '/portal/bookings', icon: Calendar, badge: 'NEW' },
+  { name: 'Prenotazioni', href: '/portal/bookings', icon: Calendar },
   { name: 'Riparazioni', href: '/portal/repairs', icon: Car },
   { name: 'Fatture', href: '/portal/invoices', icon: FileText },
   { name: 'Ispezioni', href: '/portal/inspections', icon: ClipboardCheck },
-  { name: 'Documenti', href: '/portal/documents', icon: FileText },
+  { name: 'Documenti', href: '/portal/documents', icon: FolderOpen },
   { name: 'Manutenzione', href: '/portal/maintenance', icon: Wrench },
-  { name: 'Garanzia', href: '/portal/warranty', icon: Shield },
+  { name: 'Garanzie', href: '/portal/warranty', icon: Shield },
+  { name: 'Messaggi', href: '/portal/messages', icon: MessageCircle },
+  { name: 'Notifiche', href: '/portal/notifications', icon: Bell },
   { name: 'Impostazioni', href: '/portal/settings', icon: Settings },
 ];
 
@@ -211,16 +215,6 @@ export function PortalLayout({ children, customer: customerProp }: PortalLayoutP
                     >
                       <Icon className='h-5 w-5 flex-shrink-0' />
                       <span className='flex-1'>{item.name}</span>
-                      {item.badge && (
-                        <span
-                          className={`
-                          px-2 py-0.5 text-[10px] rounded-full font-semibold
-                          ${isActive ? 'bg-white/20 text-white' : 'bg-apple-green text-white'}
-                        `}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
                       {isActive && <ChevronRight className='h-4 w-4 opacity-50' />}
                     </Link>
                   </li>

@@ -18,6 +18,7 @@ describe('BookingService', () => {
     booking: {
       create: jest.Mock;
       findFirst: jest.Mock;
+      findUnique: jest.Mock;
       findMany: jest.Mock;
       update: jest.Mock;
       count: jest.Mock;
@@ -68,6 +69,7 @@ describe('BookingService', () => {
           status: 'CONFIRMED',
         }),
         findFirst: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue(null),
         findMany: jest.fn(),
         update: jest.fn(),
         count: jest.fn(),
@@ -328,6 +330,50 @@ describe('BookingService', () => {
       await service.createBooking(TENANT_ID, dtoNoVehicle);
 
       expect(prisma.booking.create).toHaveBeenCalled();
+    });
+
+    it('should return existing booking when idempotencyKey already exists', async () => {
+      const existingBooking = {
+        id: 'booking-existing',
+        tenantId: TENANT_ID,
+        scheduledDate: new Date(dto.scheduledDate),
+        source: 'WEB',
+        idempotencyKey: 'idem-key-001',
+      };
+      // findUnique on the top-level prisma (before withTenant) returns existing booking
+      (prisma.booking.findUnique as jest.Mock) = jest.fn().mockResolvedValue(existingBooking);
+
+      const dtoWithKey = { ...dto, idempotencyKey: 'idem-key-001' };
+      const result = await service.createBooking(TENANT_ID, dtoWithKey);
+
+      expect(result).toEqual(existingBooking);
+      // Should NOT have called booking.create since we returned early
+      expect(prisma.booking.create).not.toHaveBeenCalled();
+    });
+
+    it('should create new booking when idempotencyKey is new', async () => {
+      const mockBooking = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        scheduledDate: new Date(dto.scheduledDate),
+        source: 'WEB',
+        idempotencyKey: 'idem-key-new',
+      };
+      // findUnique returns null → key not seen before
+      (prisma.booking.findUnique as jest.Mock) = jest.fn().mockResolvedValue(null);
+      (prisma.booking.create as jest.Mock).mockResolvedValue(mockBooking);
+
+      const dtoWithKey = { ...dto, idempotencyKey: 'idem-key-new' };
+      const result = await service.createBooking(TENANT_ID, dtoWithKey);
+
+      expect(result).toEqual(mockBooking);
+      expect(prisma.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            idempotencyKey: 'idem-key-new',
+          }),
+        }),
+      );
     });
   });
 

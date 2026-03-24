@@ -1,6 +1,6 @@
 /**
  * PRICING CARDS COMPONENT
- * 
+ *
  * Displays pricing tiers with features and upgrade CTAs
  */
 
@@ -8,7 +8,14 @@
 
 import { useState } from 'react';
 type SubscriptionPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -41,24 +48,28 @@ interface PlanFeatures {
 interface PricingCardsProps {
   plans: PricingPlan[];
   currentPlan?: SubscriptionPlan;
-  onSelectPlan: (plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly', aiAddon: boolean) => void;
+  onSelectPlan: (
+    plan: SubscriptionPlan,
+    billingCycle: 'monthly' | 'yearly',
+    aiAddon: boolean
+  ) => void;
   loading?: boolean;
 }
 
 const PLAN_ICONS: Record<string, typeof Sparkles> = {
-  'STARTER': Building2,
-  'PROFESSIONAL': Building2,
-  'ENTERPRISE': Crown,
-  'TRIAL': Sparkles,
-  'FREE': Sparkles,
+  STARTER: Building2,
+  PROFESSIONAL: Building2,
+  ENTERPRISE: Crown,
+  TRIAL: Sparkles,
+  FREE: Sparkles,
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  'STARTER': 'from-emerald-500 to-teal-600',
-  'PROFESSIONAL': 'from-blue-500 to-indigo-600',
-  'ENTERPRISE': 'from-purple-500 to-pink-600',
-  'TRIAL': 'from-gray-400 to-gray-500',
-  'FREE': 'from-slate-400 to-slate-500',
+  STARTER: 'from-emerald-500 to-teal-600',
+  PROFESSIONAL: 'from-blue-500 to-indigo-600',
+  ENTERPRISE: 'from-purple-500 to-pink-600',
+  TRIAL: 'from-gray-400 to-gray-500',
+  FREE: 'from-slate-400 to-slate-500',
 };
 
 export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: PricingCardsProps) {
@@ -75,22 +86,26 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
   };
 
   const allFeatures = [
-    { name: 'Vehicle Inspections', key: 'inspections' },
-    { name: 'Customer Management', key: 'customers' },
-    { name: 'Booking System', key: 'bookings' },
-    { name: 'OBD Integration', key: 'obd', plan: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'Inventory Management', key: 'inventory', plan: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'Multi-Location Support', key: 'multi_location', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'API Access', key: 'api', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'Advanced Analytics', key: 'analytics', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'Custom Branding', key: 'branding', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'Priority Support', key: 'support', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
-    { name: 'AI Vehicle Inspections', key: 'ai', plan: 'ENTERPRISE', addon: true },
-    { name: 'Voice AI Assistant', key: 'voice', plan: 'ENTERPRISE', addon: true },
+    { name: 'Ispezioni Veicoli', key: 'inspections' },
+    { name: 'Gestione Clienti', key: 'customers' },
+    { name: 'Sistema Prenotazioni', key: 'bookings' },
+    { name: 'Integrazione OBD', key: 'obd', plan: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'] },
+    {
+      name: 'Gestione Inventario',
+      key: 'inventory',
+      plan: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'],
+    },
+    { name: 'Supporto Multi-Sede', key: 'multi_location', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Accesso API', key: 'api', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Analisi Avanzate', key: 'analytics', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Branding Personalizzato', key: 'branding', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Supporto Prioritario', key: 'support', plan: ['PROFESSIONAL', 'ENTERPRISE'] },
+    { name: 'Ispezioni Veicoli AI', key: 'ai', plan: 'ENTERPRISE', addon: true },
+    { name: 'Assistente Vocale AI', key: 'voice', plan: 'ENTERPRISE', addon: true },
     { name: 'White Label', key: 'white_label', plan: 'ENTERPRISE' },
-    { name: 'Blockchain Verification', key: 'blockchain', plan: 'ENTERPRISE' },
-    { name: 'Custom Integrations', key: 'integrations', plan: 'ENTERPRISE' },
-    { name: 'Dedicated Account Manager', key: 'manager', plan: 'ENTERPRISE' },
+    { name: 'Verifica Blockchain', key: 'blockchain', plan: 'ENTERPRISE' },
+    { name: 'Integrazioni Personalizzate', key: 'integrations', plan: 'ENTERPRISE' },
+    { name: 'Account Manager Dedicato', key: 'manager', plan: 'ENTERPRISE' },
   ];
 
   const getPlanLimits = (plan: SubscriptionPlan) => {
@@ -100,57 +115,63 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
       case 'PROFESSIONAL':
         return { users: '10', locations: '2', apiCalls: '25,000/mo', storage: '50 GB' };
       case 'ENTERPRISE':
-        return { users: 'Unlimited', locations: 'Unlimited', apiCalls: 'Unlimited', storage: 'Unlimited' };
+        return {
+          users: 'Illimitati',
+          locations: 'Illimitate',
+          apiCalls: 'Illimitate',
+          storage: 'Illimitato',
+        };
       default:
         return { users: '-', locations: '-', apiCalls: '-', storage: '-' };
     }
   };
 
   return (
-    <div className="space-y-8">
+    <div className='space-y-8'>
       {/* Billing Toggle */}
-      <div className="flex flex-col items-center space-y-4">
-        <div className="flex items-center space-x-4">
-          <span className={cn(
-            "text-sm font-medium",
-            billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'
-          )}>
-            Monthly
+      <div className='flex flex-col items-center space-y-4'>
+        <div className='flex items-center space-x-4'>
+          <span
+            className={cn(
+              'text-sm font-medium',
+              billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'
+            )}
+          >
+            Mensile
           </span>
           <Switch
             checked={billingCycle === 'yearly'}
-            onCheckedChange={(checked) => setBillingCycle(checked ? 'yearly' : 'monthly')}
+            onCheckedChange={checked => setBillingCycle(checked ? 'yearly' : 'monthly')}
           />
-          <span className={cn(
-            "text-sm font-medium",
-            billingCycle === 'yearly' ? 'text-gray-900' : 'text-gray-500'
-          )}>
-            Yearly
+          <span
+            className={cn(
+              'text-sm font-medium',
+              billingCycle === 'yearly' ? 'text-gray-900' : 'text-gray-500'
+            )}
+          >
+            Annuale
           </span>
           {billingCycle === 'yearly' && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              Save 15%
+            <Badge variant='secondary' className='bg-green-100 text-green-800'>
+              Risparmia 15%
             </Badge>
           )}
         </div>
 
         {/* AI Addon Toggle */}
-        <div className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg">
-          <Sparkles className="w-5 h-5 text-purple-600" />
-          <div className="flex-1">
-            <p className="font-medium text-purple-900">AI Assistant Add-on</p>
-            <p className="text-sm text-purple-700">€200/month - AI inspections & voice assistant</p>
+        <div className='flex items-center space-x-3 p-4 bg-purple-50 rounded-lg'>
+          <Sparkles className='w-5 h-5 text-purple-600' />
+          <div className='flex-1'>
+            <p className='font-medium text-purple-900'>Add-on Assistente AI</p>
+            <p className='text-sm text-purple-700'>€200/mese - Ispezioni AI e assistente vocale</p>
           </div>
-          <Switch
-            checked={aiAddon}
-            onCheckedChange={setAiAddon}
-          />
+          <Switch checked={aiAddon} onCheckedChange={setAiAddon} />
         </div>
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {displayPlans.map((plan) => {
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        {displayPlans.map(plan => {
           const Icon = PLAN_ICONS[plan.id];
           const isCurrentPlan = currentPlan === plan.id;
           const limits = getPlanLimits(plan.id);
@@ -159,106 +180,111 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
             <Card
               key={plan.id}
               className={cn(
-                "relative flex flex-col transition-all duration-200",
-                isCurrentPlan && "ring-2 ring-blue-500",
-                selectedPlan === plan.id && loading && "opacity-70"
+                'relative flex flex-col transition-all duration-200',
+                isCurrentPlan && 'ring-2 ring-blue-500',
+                selectedPlan === plan.id && loading && 'opacity-70'
               )}
             >
               {isCurrentPlan && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500">
-                  Current Plan
+                <Badge className='absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500'>
+                  Piano Attuale
                 </Badge>
               )}
 
-              <CardHeader className={cn(
-                "text-white rounded-t-lg",
-                "bg-gradient-to-br",
-                PLAN_COLORS[plan.id]
-              )}>
-                <div className="flex items-center space-x-3">
-                  <Icon className="w-8 h-8" />
+              <CardHeader
+                className={cn('text-white rounded-t-lg', 'bg-gradient-to-br', PLAN_COLORS[plan.id])}
+              >
+                <div className='flex items-center space-x-3'>
+                  <Icon className='w-8 h-8' />
                   <div>
-                    <CardTitle className="text-xl">{plan.nameIt}</CardTitle>
-                    <CardDescription className="text-white/80">
-                      {plan.name}
-                    </CardDescription>
+                    <CardTitle className='text-xl'>{plan.nameIt}</CardTitle>
+                    <CardDescription className='text-white/80'>{plan.name}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1 pt-6">
+              <CardContent className='flex-1 pt-6'>
                 {/* Price */}
-                <div className="mb-6">
+                <div className='mb-6'>
                   {plan.isCustomPricing ? (
-                    <div className="text-3xl font-bold">Custom</div>
+                    <div className='text-3xl font-bold'>Personalizzato</div>
                   ) : (
                     <>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-4xl font-bold">
-                          {billingCycle === 'monthly' ? plan.monthlyPriceFormatted : plan.yearlyPriceFormatted}
+                      <div className='flex items-baseline space-x-2'>
+                        <span className='text-4xl font-bold'>
+                          {billingCycle === 'monthly'
+                            ? plan.monthlyPriceFormatted
+                            : plan.yearlyPriceFormatted}
                         </span>
-                        <span className="text-gray-500">/month</span>
+                        <span className='text-gray-500'>/mese</span>
                       </div>
                       {billingCycle === 'yearly' && (
-                        <p className="text-sm text-green-600 mt-1">
-                          Billed annually (15% savings)
+                        <p className='text-sm text-green-600 mt-1'>
+                          Fatturato annualmente (15% di risparmio)
                         </p>
                       )}
                     </>
                   )}
                   {aiAddon && !plan.isCustomPricing && (
-                    <p className="text-sm text-purple-600 mt-2">
-                      + €200/month for AI Add-on
-                    </p>
+                    <p className='text-sm text-purple-600 mt-2'>+ €200/mese per Add-on AI</p>
                   )}
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-600 mb-6">{plan.description}</p>
+                <p className='text-gray-600 mb-6'>{plan.description}</p>
 
                 {/* Limits */}
-                <div className="space-y-2 mb-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Users</span>
-                    <span className="font-medium">{limits.users}</span>
+                <div className='space-y-2 mb-6 p-4 bg-gray-50 rounded-lg'>
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-gray-600'>Utenti</span>
+                    <span className='font-medium'>{limits.users}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Locations</span>
-                    <span className="font-medium">{limits.locations}</span>
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-gray-600'>Sedi</span>
+                    <span className='font-medium'>{limits.locations}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">API Calls</span>
-                    <span className="font-medium">{limits.apiCalls}</span>
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-gray-600'>Chiamate API</span>
+                    <span className='font-medium'>{limits.apiCalls}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Storage</span>
-                    <span className="font-medium">{limits.storage}</span>
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-gray-600'>Spazio</span>
+                    <span className='font-medium'>{limits.storage}</span>
                   </div>
                 </div>
 
                 {/* Features */}
-                <div className="space-y-2">
-                  {allFeatures.map((feature) => {
-                    const included = (feature.plan as string[] | undefined)?.includes(plan.id) ?? true;
+                <div className='space-y-2'>
+                  {allFeatures.map(feature => {
+                    const included =
+                      (feature.plan as string[] | undefined)?.includes(plan.id) ?? true;
                     const isAddon = feature.addon;
                     const showWithAddon = isAddon && aiAddon;
 
                     return (
-                      <div key={feature.key} className="flex items-center space-x-3">
+                      <div key={feature.key} className='flex items-center space-x-3'>
                         {included ? (
-                          <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <Check className='w-5 h-5 text-green-500 flex-shrink-0' />
                         ) : showWithAddon ? (
-                          <Check className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                          <Check className='w-5 h-5 text-purple-500 flex-shrink-0' />
                         ) : (
-                          <X className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                          <X className='w-5 h-5 text-gray-300 flex-shrink-0' />
                         )}
-                        <span className={cn(
-                          "text-sm",
-                          included ? "text-gray-700" : showWithAddon ? "text-purple-700" : "text-gray-400"
-                        )}>
+                        <span
+                          className={cn(
+                            'text-sm',
+                            included
+                              ? 'text-gray-700'
+                              : showWithAddon
+                                ? 'text-purple-700'
+                                : 'text-gray-400'
+                          )}
+                        >
                           {feature.name}
                           {isAddon && showWithAddon && (
-                            <Badge variant="outline" className="ml-2 text-xs">AI Add-on</Badge>
+                            <Badge variant='outline' className='ml-2 text-xs'>
+                              AI Add-on
+                            </Badge>
                           )}
                         </span>
                       </div>
@@ -269,15 +295,18 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
 
               <CardFooter>
                 <Button
-                  className="w-full"
+                  className='w-full'
                   variant={isCurrentPlan ? 'outline' : 'default'}
                   disabled={isCurrentPlan || loading || plan.isCustomPricing}
                   onClick={() => handleSelectPlan(plan.id)}
                 >
-                  {isCurrentPlan ? 'Current Plan' : 
-                   plan.isCustomPricing ? 'Contact Sales' : 
-                   loading && selectedPlan === plan.id ? 'Processing...' : 
-                   'Select Plan'}
+                  {isCurrentPlan
+                    ? 'Piano Attuale'
+                    : plan.isCustomPricing
+                      ? 'Contatta Vendite'
+                      : loading && selectedPlan === plan.id
+                        ? 'Elaborazione...'
+                        : 'Seleziona Piano'}
                 </Button>
               </CardFooter>
             </Card>
@@ -286,16 +315,18 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
       </div>
 
       {/* Enterprise CTA */}
-      <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-        <CardContent className="flex flex-col md:flex-row items-center justify-between p-8">
+      <Card className='bg-gradient-to-r from-purple-600 to-pink-600 text-white'>
+        <CardContent className='flex flex-col md:flex-row items-center justify-between p-8'>
           <div>
-            <h3 className="text-2xl font-bold mb-2">Need a custom solution?</h3>
-            <p className="text-white/80">
-              Contact our sales team for enterprise pricing tailored to your needs.
+            <h3 className='text-2xl font-bold mb-2'>
+              Hai bisogno di una soluzione personalizzata?
+            </h3>
+            <p className='text-white/80'>
+              Contatta il nostro team vendite per un piano enterprise su misura per le tue esigenze.
             </p>
           </div>
-          <Button variant="secondary" size="lg" className="mt-4 md:mt-0">
-            Contact Sales
+          <Button variant='secondary' size='lg' className='mt-4 md:mt-0'>
+            Contatta Vendite
           </Button>
         </CardContent>
       </Card>

@@ -26,8 +26,8 @@ describe('EstimateService — convertToWorkOrder', () => {
         description: 'Oil change',
         type: 'LABOR',
         quantity: 1,
-        unitPriceCents: BigInt(5000),
-        totalCents: BigInt(5000),
+        unitPriceCents: 5000,
+        totalCents: 5000,
       },
     ],
   };

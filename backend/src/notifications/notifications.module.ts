@@ -29,6 +29,7 @@ import { NotificationsGateway } from './gateways/notifications.gateway';
 // Processors
 import { EmailProcessor } from './processors/email.processor';
 import { NotificationProcessor } from './processors/notification.processor';
+import { SmsProcessor } from './processors/sms.processor';
 
 @Module({
   imports: [
@@ -59,6 +60,18 @@ import { NotificationProcessor } from './processors/notification.processor';
           removeOnFail: 100,
         },
       },
+      {
+        name: 'sms-queue',
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 30000,
+          },
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
+      },
     ),
   ],
   controllers: [
@@ -86,6 +99,7 @@ import { NotificationProcessor } from './processors/notification.processor';
     // Processors
     EmailProcessor,
     NotificationProcessor,
+    SmsProcessor,
   ],
   exports: [
     NotificationsService,

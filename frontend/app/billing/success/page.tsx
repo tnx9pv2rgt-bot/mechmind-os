@@ -39,9 +39,8 @@ function BillingSuccessContent() {
           setError('Pagamento in attesa o incompleto')
           setIsLoading(false)
         }
-      } catch (err: unknown) {
-        console.error('Session verification error:', err)
-        // Don't show error - the webhook will handle it
+      } catch (_err: unknown) {
+        // Session verification failed - the webhook will handle it
         setIsLoading(false)
       }
     }

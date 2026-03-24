@@ -93,11 +93,13 @@ function createPrismaMock() {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     obdReading: {
       create: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
     },
     obdTroubleCode: {
       create: jest.fn(),
@@ -106,6 +108,7 @@ function createPrismaMock() {
       findMany: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      count: jest.fn(),
     },
     vehicle: {
       findFirst: jest.fn(),
@@ -224,19 +227,26 @@ describe('ObdService', () => {
   describe('listDevices', () => {
     it('should list all devices for tenant', async () => {
       prisma.obdDevice.findMany.mockResolvedValue([makeDevice()]);
+      prisma.obdDevice.count.mockResolvedValue(1);
 
       const result = await service.listDevices(TENANT_ID);
 
-      expect(prisma.obdDevice.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID },
-        include: { vehicle: true },
-        orderBy: { lastConnected: 'desc' },
-      });
-      expect(result).toHaveLength(1);
+      expect(prisma.obdDevice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID },
+          include: { vehicle: true },
+          orderBy: { lastConnected: 'desc' },
+          skip: 0,
+          take: 20,
+        }),
+      );
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
     it('should filter by vehicleId when provided', async () => {
       prisma.obdDevice.findMany.mockResolvedValue([]);
+      prisma.obdDevice.count.mockResolvedValue(0);
 
       await service.listDevices(TENANT_ID, VEHICLE_ID);
 
@@ -247,11 +257,13 @@ describe('ObdService', () => {
       );
     });
 
-    it('should return empty array when no devices exist', async () => {
+    it('should return empty data when no devices exist', async () => {
       prisma.obdDevice.findMany.mockResolvedValue([]);
+      prisma.obdDevice.count.mockResolvedValue(0);
 
       const result = await service.listDevices(TENANT_ID);
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 
@@ -363,19 +375,25 @@ describe('ObdService', () => {
   describe('getReadings', () => {
     it('should return readings with default limit', async () => {
       prisma.obdReading.findMany.mockResolvedValue([makeReading()]);
+      prisma.obdReading.count.mockResolvedValue(1);
 
       const result = await service.getReadings(TENANT_ID, {});
 
       expect(prisma.obdReading.findMany).toHaveBeenCalledWith({
         where: { device: { tenantId: TENANT_ID } },
         orderBy: { recordedAt: 'desc' },
+        skip: 0,
         take: 100,
       });
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(100);
     });
 
     it('should apply all filters', async () => {
       prisma.obdReading.findMany.mockResolvedValue([]);
+      prisma.obdReading.count.mockResolvedValue(0);
       const from = new Date('2026-01-01');
       const to = new Date('2026-12-31');
 
@@ -396,6 +414,7 @@ describe('ObdService', () => {
           recordedAt: { lte: to },
         },
         orderBy: { recordedAt: 'desc' },
+        skip: 0,
         take: 50,
       });
     });
@@ -645,19 +664,25 @@ describe('ObdService', () => {
   describe('getTroubleCodes', () => {
     it('should return trouble codes for tenant', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([makeTroubleCode()]);
+      prisma.obdTroubleCode.count.mockResolvedValue(1);
 
       const result = await service.getTroubleCodes(TENANT_ID, {});
 
-      expect(prisma.obdTroubleCode.findMany).toHaveBeenCalledWith({
-        where: { device: { tenantId: TENANT_ID } },
-        orderBy: [{ severity: 'desc' }, { firstSeenAt: 'desc' }],
-      });
-      expect(result).toHaveLength(1);
-      expect(result[0].code).toBe('P0301');
+      expect(prisma.obdTroubleCode.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { device: { tenantId: TENANT_ID } },
+          orderBy: [{ severity: 'desc' }, { firstSeenAt: 'desc' }],
+          skip: 0,
+          take: 50,
+        }),
+      );
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].code).toBe('P0301');
     });
 
     it('should apply deviceId filter', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([]);
+      prisma.obdTroubleCode.count.mockResolvedValue(0);
 
       await service.getTroubleCodes(TENANT_ID, { deviceId: DEVICE_ID });
 
@@ -670,6 +695,7 @@ describe('ObdService', () => {
 
     it('should apply vehicleId filter', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([]);
+      prisma.obdTroubleCode.count.mockResolvedValue(0);
 
       await service.getTroubleCodes(TENANT_ID, { vehicleId: VEHICLE_ID });
 
@@ -683,6 +709,7 @@ describe('ObdService', () => {
 
     it('should apply active filter', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([]);
+      prisma.obdTroubleCode.count.mockResolvedValue(0);
 
       await service.getTroubleCodes(TENANT_ID, { active: true });
 
@@ -1243,12 +1270,13 @@ describe('ObdService', () => {
         clearedAt: null,
       });
       prisma.obdTroubleCode.findMany.mockResolvedValue([code]);
+      prisma.obdTroubleCode.count.mockResolvedValue(1);
 
       const result = await service.getTroubleCodes(TENANT_ID, {});
 
-      expect(result[0].symptoms).toBeUndefined();
-      expect(result[0].causes).toBeUndefined();
-      expect(result[0].clearedAt).toBeUndefined();
+      expect(result.data[0].symptoms).toBeUndefined();
+      expect(result.data[0].causes).toBeUndefined();
+      expect(result.data[0].clearedAt).toBeUndefined();
     });
   });
 });

@@ -587,10 +587,20 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                               </td>
                               <td className='px-6 py-4 text-right'>
                                 <div className='flex items-center justify-end gap-2'>
-                                  <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                                  <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    className='h-8 w-8 p-0'
+                                    aria-label='Modifica permessi'
+                                  >
                                     <Edit2 className='h-4 w-4 text-gray-400' />
                                   </Button>
-                                  <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                                  <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    className='h-8 w-8 p-0'
+                                    aria-label='Rimuovi utente'
+                                  >
                                     <Trash2 className='h-4 w-4 text-status-urgent' />
                                   </Button>
                                 </div>

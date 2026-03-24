@@ -41,6 +41,7 @@ describe('BookingController', () => {
             findAll: jest.fn(),
             findById: jest.fn(),
             updateBooking: jest.fn(),
+            rescheduleBooking: jest.fn(),
             cancelBooking: jest.fn(),
             getStats: jest.fn(),
           },
@@ -224,6 +225,153 @@ describe('BookingController', () => {
       await controller.getStats(TENANT_ID);
 
       expect(bookingService.getStats).toHaveBeenCalledWith(TENANT_ID, undefined, undefined);
+    });
+  });
+
+  // ==================== CALENDAR & RESCHEDULE ENDPOINTS ====================
+
+  describe('getCalendarBookings', () => {
+    it('should return bookings formatted as calendar events', async () => {
+      const scheduledDate = new Date('2026-04-01T09:00:00Z');
+      const bookingsWithRelations = [
+        {
+          id: 'book-001',
+          tenantId: TENANT_ID,
+          customerId: 'cust-001',
+          status: 'CONFIRMED',
+          scheduledDate,
+          durationMinutes: 60,
+          liftPosition: 'Ponte A',
+          customer: { id: 'cust-001' },
+          vehicle: { licensePlate: 'AB123CD', make: 'Fiat', model: 'Punto' },
+        },
+      ];
+      bookingService.findAll.mockResolvedValue({
+        bookings: bookingsWithRelations,
+        total: 1,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+
+      expect(bookingService.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        fromDate: new Date('2026-04-01'),
+        toDate: new Date('2026-04-30'),
+        limit: 1000,
+        offset: 0,
+      });
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]).toEqual({
+        id: 'book-001',
+        title: 'AB123CD - Fiat Punto',
+        start: scheduledDate,
+        end: new Date('2026-04-01T10:00:00Z'),
+        status: 'CONFIRMED',
+        color: '#3b82f6',
+        bayId: 'Ponte A',
+        customerId: 'cust-001',
+      });
+      expect(result.meta).toEqual({
+        total: 1,
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+    });
+
+    it('should filter by bayId when provided', async () => {
+      const bookingsWithRelations = [
+        {
+          id: 'book-001',
+          customerId: 'cust-001',
+          status: 'PENDING',
+          scheduledDate: new Date('2026-04-01T09:00:00Z'),
+          durationMinutes: 30,
+          liftPosition: 'Ponte A',
+          customer: { id: 'cust-001' },
+          vehicle: { licensePlate: 'AB123CD', make: 'Fiat', model: 'Punto' },
+        },
+        {
+          id: 'book-002',
+          customerId: 'cust-002',
+          status: 'CONFIRMED',
+          scheduledDate: new Date('2026-04-01T10:00:00Z'),
+          durationMinutes: 60,
+          liftPosition: 'Ponte B',
+          customer: { id: 'cust-002' },
+          vehicle: { licensePlate: 'EF456GH', make: 'Toyota', model: 'Yaris' },
+        },
+      ];
+      bookingService.findAll.mockResolvedValue({
+        bookings: bookingsWithRelations,
+        total: 2,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+        bayId: 'Ponte A',
+      });
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('book-001');
+    });
+
+    it('should handle bookings without customer or vehicle', async () => {
+      const scheduledDate = new Date('2026-04-01T09:00:00Z');
+      bookingService.findAll.mockResolvedValue({
+        bookings: [
+          {
+            id: 'book-003',
+            customerId: null,
+            status: 'CANCELLED',
+            scheduledDate,
+            durationMinutes: 45,
+            liftPosition: null,
+            customer: null,
+            vehicle: null,
+          },
+        ],
+        total: 1,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+
+      expect(result.data[0].title).toBe('Booking #book-003');
+      expect(result.data[0].color).toBe('#ef4444');
+      expect(result.data[0].bayId).toBeNull();
+      expect(result.data[0].customerId).toBeNull();
+    });
+  });
+
+  describe('rescheduleBooking', () => {
+    it('should delegate to service and return rescheduled booking', async () => {
+      const rescheduled = { ...mockBooking, scheduledDate: new Date('2026-04-05T14:00:00Z') };
+      bookingService.rescheduleBooking.mockResolvedValue(rescheduled as never);
+      const dto = { newDate: '2026-04-05T14:00:00Z', reason: 'Customer request' };
+
+      const result = await controller.rescheduleBooking(TENANT_ID, 'book-001', dto as never);
+
+      expect(bookingService.rescheduleBooking).toHaveBeenCalledWith(TENANT_ID, 'book-001', dto);
+      expect(result).toEqual({
+        success: true,
+        data: rescheduled,
+        message: 'Booking rescheduled successfully',
+      });
+    });
+
+    it('should pass newSlotId when provided', async () => {
+      bookingService.rescheduleBooking.mockResolvedValue(mockBooking as never);
+      const dto = { newDate: '2026-04-05T14:00:00Z', newSlotId: 'slot-002' };
+
+      await controller.rescheduleBooking(TENANT_ID, 'book-001', dto as never);
+
+      expect(bookingService.rescheduleBooking).toHaveBeenCalledWith(TENANT_ID, 'book-001', dto);
     });
   });
 

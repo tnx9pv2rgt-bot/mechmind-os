@@ -132,8 +132,26 @@ export class NotificationWebhookController {
   @ApiResponse({ status: 400, description: 'Invalid webhook payload' })
   async handleTwilioWebhook(
     @Body() payload: TwilioWebhookPayload,
-    @Headers('x-twilio-signature') _signature: string,
+    @Headers('x-twilio-signature') signature: string,
   ): Promise<{ received: boolean }> {
+    // Verify Twilio signature
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    const webhookUrl = this.configService.get<string>('TWILIO_WEBHOOK_URL');
+    if (authToken && webhookUrl && signature) {
+      const isValid = this.verifyTwilioSignature(
+        authToken,
+        signature,
+        webhookUrl,
+        payload as unknown as Record<string, unknown>,
+      );
+      if (!isValid) {
+        this.logger.error('Twilio webhook signature verification failed');
+        throw new UnauthorizedException('Invalid webhook signature');
+      }
+    } else if (authToken && !signature) {
+      throw new UnauthorizedException('Missing x-twilio-signature header');
+    }
+
     if (!payload?.MessageSid || !payload?.MessageStatus) {
       return { received: true };
     }
@@ -343,8 +361,8 @@ export class NotificationWebhookController {
 
     const webhookSecret = this.configService.get<string>('RESEND_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      this.logger.warn('RESEND_WEBHOOK_SECRET not configured, skipping verification');
-      return true;
+      this.logger.error('RESEND_WEBHOOK_SECRET non configurato — webhook rifiutato');
+      return false;
     }
 
     try {
@@ -360,6 +378,33 @@ export class NotificationWebhookController {
         `Signature verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return false;
+    }
+  }
+
+  /**
+   * Verify Twilio webhook signature using HMAC-SHA1
+   * See: https://www.twilio.com/docs/usage/security#validating-requests
+   */
+  private verifyTwilioSignature(
+    authToken: string,
+    signature: string,
+    url: string,
+    params: Record<string, unknown>,
+  ): boolean {
+    try {
+      // Sort params alphabetically and concatenate key+value
+      const sortedKeys = Object.keys(params).sort();
+      let data = url;
+      for (const key of sortedKeys) {
+        data += key + (params[key] ?? '');
+      }
+      const expectedSignature = crypto.createHmac('sha1', authToken).update(data).digest('base64');
+      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+    } catch (error) {
+      this.logger.error(
+        `Twilio signature verification error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      throw new UnauthorizedException('Invalid webhook signature');
     }
   }
 

@@ -54,16 +54,23 @@ export class ShopFloorController {
   @Get('bays/:id')
   @ApiOperation({ summary: 'Get bay details' })
   @ApiResponse({ status: 200, type: BayResponseDto })
-  async getBay(@Param('id') bayId: string): Promise<BayResponseDto> {
-    return await this.shopFloorService.getBay(bayId);
+  async getBay(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') bayId: string,
+  ): Promise<BayResponseDto> {
+    return await this.shopFloorService.getBay(tenantId, bayId);
   }
 
   @Post('bays/:id/sensors')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Add sensor to bay' })
   @ApiResponse({ status: 201 })
-  async addBaySensor(@Param('id') bayId: string, @Body() dto: AddBaySensorDto): Promise<BaySensor> {
-    return await this.shopFloorService.addBaySensor(bayId, {
+  async addBaySensor(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') bayId: string,
+    @Body() dto: AddBaySensorDto,
+  ): Promise<BaySensor> {
+    return await this.shopFloorService.addBaySensor(tenantId, bayId, {
       type: dto.type,
       name: dto.name,
       isActive: dto.isActive === 'true',
@@ -75,8 +82,11 @@ export class ShopFloorController {
   @Post('sensor-readings')
   @ApiOperation({ summary: 'Process sensor reading' })
   @ApiResponse({ status: 201 })
-  async processSensorReading(@Body() dto: SensorReadingDto): Promise<void> {
-    await this.shopFloorService.processSensorReading(dto);
+  async processSensorReading(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: SensorReadingDto,
+  ): Promise<void> {
+    await this.shopFloorService.processSensorReading(tenantId, dto);
   }
 
   @Post('bays/:id/assign')
@@ -84,10 +94,12 @@ export class ShopFloorController {
   @ApiOperation({ summary: 'Assign vehicle to bay' })
   @ApiResponse({ status: 200, type: BayResponseDto })
   async assignVehicleToBay(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id') bayId: string,
     @Body() dto: AssignVehicleDto,
   ): Promise<BayResponseDto> {
     return await this.shopFloorService.assignVehicleToBay(
+      tenantId,
       bayId,
       dto.vehicleId,
       dto.workOrderId,
@@ -99,18 +111,22 @@ export class ShopFloorController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Release bay' })
   @ApiResponse({ status: 200, type: BayResponseDto })
-  async releaseBay(@Param('id') bayId: string): Promise<BayResponseDto> {
-    return await this.shopFloorService.releaseBay(bayId);
+  async releaseBay(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') bayId: string,
+  ): Promise<BayResponseDto> {
+    return await this.shopFloorService.releaseBay(tenantId, bayId);
   }
 
   @Post('technicians/:id/location')
   @ApiOperation({ summary: 'Update technician location' })
   @ApiResponse({ status: 200, type: TechnicianLocationDto })
   async updateTechnicianLocation(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id') technicianId: string,
     @Body() dto: UpdateTechnicianLocationDto,
   ): Promise<TechnicianLocationDto> {
-    return await this.shopFloorService.updateTechnicianLocation(technicianId, {
+    return await this.shopFloorService.updateTechnicianLocation(tenantId, technicianId, {
       x: dto.x,
       y: dto.y,
       floor: dto.floor,
@@ -130,8 +146,11 @@ export class ShopFloorController {
   @Get('work-orders/:id/progress')
   @ApiOperation({ summary: 'Get work order progress' })
   @ApiResponse({ status: 200, type: WorkOrderProgressDto })
-  async getWorkOrderProgress(@Param('id') workOrderId: string): Promise<WorkOrderProgressDto> {
-    return await this.shopFloorService.getWorkOrderProgress(workOrderId);
+  async getWorkOrderProgress(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') workOrderId: string,
+  ): Promise<WorkOrderProgressDto> {
+    return await this.shopFloorService.getWorkOrderProgress(tenantId, workOrderId);
   }
 
   @Patch('work-orders/:id/status')
@@ -139,10 +158,11 @@ export class ShopFloorController {
   @ApiOperation({ summary: 'Update job status' })
   @ApiResponse({ status: 200, type: WorkOrderProgressDto })
   async updateJobStatus(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id') workOrderId: string,
     @Body() dto: UpdateJobStatusDto,
   ): Promise<WorkOrderProgressDto> {
-    return await this.shopFloorService.updateJobStatus(workOrderId, dto.status);
+    return await this.shopFloorService.updateJobStatus(tenantId, workOrderId, dto.status);
   }
 
   @Get('analytics')

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { MapPin, CreditCard, Building2, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { FormLayout } from '@/components/customers/FormLayout';
 import { useFormSession } from '@/hooks/useFormSession';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,7 @@ export default function Step2Page() {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     saveStep(2, data);
+    toast.success('Indirizzo e dati fiscali salvati');
     await new Promise(r => setTimeout(r, 300));
     router.push('/dashboard/customers/new/step3');
   };
@@ -80,8 +82,8 @@ export default function Step2Page() {
 
   if (!isLoaded) {
     return (
-      <div className='fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#212121] flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-blue-500' />
+      <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-white' />
       </div>
     );
   }
@@ -102,34 +104,34 @@ export default function Step2Page() {
       >
         {/* Section Header with Icon */}
         <div className='flex items-center gap-3 mb-6'>
-          <div className='w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center'>
+          <div className='w-12 h-12 rounded-2xl bg-[#4e4e4e] flex items-center justify-center'>
             <MapPin className='w-6 h-6 text-white' />
           </div>
           <div>
-            <h2 className='text-xl font-semibold text-gray-900 dark:text-[#ececec]'>Indirizzo</h2>
-            <p className='text-gray-500 dark:text-[#636366] text-sm'>
+            <h2 className='text-xl font-semibold text-white'>Indirizzo</h2>
+            <p className='text-[#888] text-sm'>
               Dati di residenza del cliente
             </p>
           </div>
         </div>
 
         {/* Indirizzo */}
-        <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
           <Label
             htmlFor='address'
-            className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+            className='text-sm font-medium text-white mb-2 block'
           >
             Indirizzo
           </Label>
           <div className='relative'>
-            <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+            <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
             <Input
               id='address'
               {...register('address')}
               autoComplete='street-address'
               aria-invalid={!!errors.address}
               aria-describedby={errors.address ? 'address-error' : undefined}
-              className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+              className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
               placeholder='Via Roma 123'
             />
           </div>
@@ -139,7 +141,7 @@ export default function Step2Page() {
                 id='address-error'
                 role='alert'
                 aria-live='assertive'
-                className='text-red-500 dark:text-red-400 text-sm mt-2'
+                className='text-red-400 text-sm mt-2'
               >
                 {errors.address.message}
               </p>
@@ -149,10 +151,10 @@ export default function Step2Page() {
 
         {/* Città, CAP, Provincia */}
         <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-          <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+          <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
             <Label
               htmlFor='province'
-              className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+              className='text-sm font-medium text-white mb-2 block'
             >
               Provincia
             </Label>
@@ -162,7 +164,7 @@ export default function Step2Page() {
               autoComplete='address-level1'
               aria-invalid={!!errors.province}
               aria-describedby={errors.province ? 'province-error' : undefined}
-              className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase'
+              className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none uppercase'
               placeholder='MI'
               maxLength={2}
             />
@@ -172,17 +174,17 @@ export default function Step2Page() {
                   id='province-error'
                   role='alert'
                   aria-live='assertive'
-                  className='text-red-500 dark:text-red-400 text-sm mt-2'
+                  className='text-red-400 text-sm mt-2'
                 >
                   {errors.province.message}
                 </p>
               )}
             </div>
           </div>
-          <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+          <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
             <Label
               htmlFor='zipCode'
-              className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+              className='text-sm font-medium text-white mb-2 block'
             >
               CAP
             </Label>
@@ -192,7 +194,7 @@ export default function Step2Page() {
               autoComplete='postal-code'
               aria-invalid={!!errors.zipCode}
               aria-describedby={errors.zipCode ? 'zipCode-error' : undefined}
-              className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+              className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
               placeholder='20100'
               maxLength={5}
             />
@@ -202,17 +204,17 @@ export default function Step2Page() {
                   id='zipCode-error'
                   role='alert'
                   aria-live='assertive'
-                  className='text-red-500 dark:text-red-400 text-sm mt-2'
+                  className='text-red-400 text-sm mt-2'
                 >
                   {errors.zipCode.message}
                 </p>
               )}
             </div>
           </div>
-          <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+          <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
             <Label
               htmlFor='city'
-              className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+              className='text-sm font-medium text-white mb-2 block'
             >
               Città
             </Label>
@@ -222,7 +224,7 @@ export default function Step2Page() {
               autoComplete='address-level2'
               aria-invalid={!!errors.city}
               aria-describedby={errors.city ? 'city-error' : undefined}
-              className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+              className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
               placeholder='Milano'
             />
             <div className='min-h-[20px]'>
@@ -231,7 +233,7 @@ export default function Step2Page() {
                   id='city-error'
                   role='alert'
                   aria-live='assertive'
-                  className='text-red-500 dark:text-red-400 text-sm mt-2'
+                  className='text-red-400 text-sm mt-2'
                 >
                   {errors.city.message}
                 </p>
@@ -242,36 +244,36 @@ export default function Step2Page() {
 
         {/* Dati Fiscali Section */}
         <div className='flex items-center gap-3 mb-6 pt-4'>
-          <div className='w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center'>
+          <div className='w-12 h-12 rounded-2xl bg-[#4e4e4e] flex items-center justify-center'>
             <CreditCard className='w-6 h-6 text-white' />
           </div>
           <div>
-            <h2 className='text-xl font-semibold text-gray-900 dark:text-[#ececec]'>
+            <h2 className='text-xl font-semibold text-white'>
               Dati Fiscali
             </h2>
-            <p className='text-gray-500 dark:text-[#636366] text-sm'>
+            <p className='text-[#888] text-sm'>
               Informazioni fiscali del cliente
             </p>
           </div>
         </div>
 
         {/* Codice Fiscale */}
-        <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
           <Label
             htmlFor='fiscalCode'
-            className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+            className='text-sm font-medium text-white mb-2 block'
           >
             Codice Fiscale
           </Label>
           <div className='relative'>
-            <CreditCard className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+            <CreditCard className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
             <Input
               id='fiscalCode'
               {...register('fiscalCode')}
               autoComplete='off'
               aria-invalid={!!errors.fiscalCode}
               aria-describedby={errors.fiscalCode ? 'fiscalCode-error' : undefined}
-              className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase'
+              className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none uppercase'
               placeholder='RSSMRA80A01F205X'
               maxLength={16}
             />
@@ -282,7 +284,7 @@ export default function Step2Page() {
                 id='fiscalCode-error'
                 role='alert'
                 aria-live='assertive'
-                className='text-red-500 dark:text-red-400 text-sm mt-2'
+                className='text-red-400 text-sm mt-2'
               >
                 {errors.fiscalCode.message}
               </p>
@@ -291,10 +293,10 @@ export default function Step2Page() {
         </div>
 
         {/* P.IVA */}
-        <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'>
+        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
           <Label
             htmlFor='vatNumber'
-            className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+            className='text-sm font-medium text-white mb-2 block'
           >
             Partita IVA {isBusiness && <span className='text-red-500'>*</span>}
           </Label>
@@ -305,7 +307,7 @@ export default function Step2Page() {
             aria-required={isBusiness}
             aria-invalid={!!errors.vatNumber}
             aria-describedby={errors.vatNumber ? 'vatNumber-error' : undefined}
-            className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+            className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
             placeholder='IT12345678901'
           />
           <div className='min-h-[20px]'>
@@ -314,7 +316,7 @@ export default function Step2Page() {
                 id='vatNumber-error'
                 role='alert'
                 aria-live='assertive'
-                className='text-red-500 dark:text-red-400 text-sm mt-2'
+                className='text-red-400 text-sm mt-2'
               >
                 Partita IVA richiesta per aziende
               </p>
@@ -327,9 +329,9 @@ export default function Step2Page() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[#424242]'
+            className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'
           >
-            <div className='flex items-center gap-2 text-sm text-blue-600 mb-4'>
+            <div className='flex items-center gap-2 text-sm text-[#888] mb-4'>
               <Building2 className='w-4 h-4' />
               <span className='font-medium'>Dati fatturazione elettronica</span>
             </div>
@@ -338,7 +340,7 @@ export default function Step2Page() {
               <div>
                 <Label
                   htmlFor='sdiCode'
-                  className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+                  className='text-sm font-medium text-white mb-2 block'
                 >
                   Codice SDI
                 </Label>
@@ -346,7 +348,7 @@ export default function Step2Page() {
                   id='sdiCode'
                   {...register('sdiCode')}
                   autoComplete='off'
-                  className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase'
+                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none uppercase'
                   placeholder='XXXXXXX'
                   maxLength={7}
                 />
@@ -354,7 +356,7 @@ export default function Step2Page() {
               <div>
                 <Label
                   htmlFor='pec'
-                  className='text-sm font-medium text-gray-700 dark:text-[#ececec] mb-2 block'
+                  className='text-sm font-medium text-white mb-2 block'
                 >
                   PEC
                 </Label>
@@ -363,7 +365,7 @@ export default function Step2Page() {
                   type='email'
                   {...register('pec')}
                   autoComplete='email'
-                  className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
                   placeholder='pec@azienda.it'
                 />
               </div>

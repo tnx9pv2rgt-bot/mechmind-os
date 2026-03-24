@@ -4,6 +4,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateWorkOrderDto } from './create-work-order.dto';
 
 export class UpdateWorkOrderDto extends PartialType(CreateWorkOrderDto) {
+  @ApiPropertyOptional({ description: 'Versione corrente per optimistic locking', example: 0 })
+  @IsOptional()
+  @IsNumber()
+  version?: number;
+
   @ApiPropertyOptional({ description: 'Array of labor line items (JSON)' })
   @IsOptional()
   @IsArray()
@@ -14,27 +19,27 @@ export class UpdateWorkOrderDto extends PartialType(CreateWorkOrderDto) {
   @IsArray()
   partsUsed?: Record<string, unknown>[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Ore di manodopera', example: 2.5 })
   @IsOptional()
   @IsNumber()
   laborHours?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Costo manodopera', example: 125.0 })
   @IsOptional()
   @IsNumber()
   laborCost?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Costo ricambi', example: 85.5 })
   @IsOptional()
   @IsNumber()
   partsCost?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Costo totale', example: 210.5 })
   @IsOptional()
   @IsNumber()
   totalCost?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Chilometraggio in uscita', example: 125430 })
   @IsOptional()
   @IsNumber()
   mileageOut?: number;
@@ -49,12 +54,15 @@ export class UpdateWorkOrderDto extends PartialType(CreateWorkOrderDto) {
   @IsString()
   customerSignature?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'ID della baia assegnata', example: 'bay-001' })
   @IsOptional()
   @IsString()
   assignedBayId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Data stimata di completamento',
+    example: '2026-03-17T16:00:00Z',
+  })
   @IsOptional()
   @IsObject()
   estimatedCompletion?: Date;

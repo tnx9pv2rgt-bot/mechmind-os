@@ -90,17 +90,43 @@ export class ObdService {
   /**
    * List all devices for tenant
    */
-  async listDevices(tenantId: string, vehicleId?: string): Promise<ObdDeviceResponseDto[]> {
-    const devices = await this.prisma.obdDevice.findMany({
-      where: {
-        tenantId,
-        ...(vehicleId && { vehicleId }),
-      },
-      include: { vehicle: true },
-      orderBy: { lastConnected: 'desc' },
-    });
+  async listDevices(
+    tenantId: string,
+    vehicleId?: string,
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: ObdDeviceResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    // Cap limit to prevent excessive queries
+    const cappedLimit = Math.min(limit, 100);
+    const where = {
+      tenantId,
+      ...(vehicleId && { vehicleId }),
+    };
 
-    return devices.map(d => this.mapDeviceToDto(d));
+    const [devices, total] = await Promise.all([
+      this.prisma.obdDevice.findMany({
+        where,
+        include: { vehicle: true },
+        orderBy: { lastConnected: 'desc' },
+        skip: (page - 1) * cappedLimit,
+        take: cappedLimit,
+      }),
+      this.prisma.obdDevice.count({ where }),
+    ]);
+
+    return {
+      data: devices.map(d => this.mapDeviceToDto(d)),
+      total,
+      page,
+      limit: cappedLimit,
+      pages: Math.ceil(total / cappedLimit),
+    };
   }
 
   /**
@@ -165,21 +191,49 @@ export class ObdService {
    */
   async getReadings(
     tenantId: string,
-    filters: { deviceId?: string; vehicleId?: string; from?: Date; to?: Date; limit?: number },
-  ): Promise<ObdReadingResponseDto[]> {
-    const readings = await this.prisma.obdReading.findMany({
-      where: {
-        device: { tenantId },
-        ...(filters.deviceId && { deviceId: filters.deviceId }),
-        ...(filters.vehicleId && { device: { vehicleId: filters.vehicleId } }),
-        ...(filters.from && { recordedAt: { gte: filters.from } }),
-        ...(filters.to && { recordedAt: { lte: filters.to } }),
-      },
-      orderBy: { recordedAt: 'desc' },
-      take: filters.limit || 100,
-    });
+    filters: {
+      deviceId?: string;
+      vehicleId?: string;
+      from?: Date;
+      to?: Date;
+      limit?: number;
+      page?: number;
+    },
+  ): Promise<{
+    data: ObdReadingResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 100;
 
-    return readings.map(r => this.mapReadingToDto(r));
+    const where = {
+      device: { tenantId },
+      ...(filters.deviceId && { deviceId: filters.deviceId }),
+      ...(filters.vehicleId && { device: { vehicleId: filters.vehicleId } }),
+      ...(filters.from && { recordedAt: { gte: filters.from } }),
+      ...(filters.to && { recordedAt: { lte: filters.to } }),
+    };
+
+    const [readings, total] = await Promise.all([
+      this.prisma.obdReading.findMany({
+        where,
+        orderBy: { recordedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.obdReading.count({ where }),
+    ]);
+
+    return {
+      data: readings.map(r => this.mapReadingToDto(r)),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -220,7 +274,7 @@ export class ObdService {
       orderBy: { recordedAt: 'desc' },
     });
 
-    // Batch fetch all existing active codes for this device in one query
+    // Internal: bounded query — scoped to input codes array
     const codesToCheck = codes.map(c => c.code);
     const existingCodes = await this.prisma.obdTroubleCode.findMany({
       where: { deviceId, code: { in: codesToCheck }, isActive: true },
@@ -276,7 +330,7 @@ export class ObdService {
           severity === TroubleCodeSeverity.CRITICAL || severity === TroubleCodeSeverity.HIGH,
       );
 
-      // Fetch the newly created codes to get their IDs for notifications
+      // Internal: bounded query — scoped to critical codes just created
       if (criticalCodes.length > 0) {
         const newlyCreated = await this.prisma.obdTroubleCode.findMany({
           where: {
@@ -313,19 +367,47 @@ export class ObdService {
    */
   async getTroubleCodes(
     tenantId: string,
-    filters: { deviceId?: string; vehicleId?: string; active?: boolean },
-  ): Promise<TroubleCodeResponseDto[]> {
-    const codes = await this.prisma.obdTroubleCode.findMany({
-      where: {
-        device: { tenantId },
-        ...(filters.deviceId && { deviceId: filters.deviceId }),
-        ...(filters.vehicleId && { device: { vehicleId: filters.vehicleId } }),
-        ...(filters.active !== undefined && { isActive: filters.active }),
-      },
-      orderBy: [{ severity: 'desc' }, { firstSeenAt: 'desc' }],
-    });
+    filters: {
+      deviceId?: string;
+      vehicleId?: string;
+      active?: boolean;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<{
+    data: TroubleCodeResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 50;
 
-    return codes.map(c => this.mapTroubleCodeToDto(c));
+    const where = {
+      device: { tenantId },
+      ...(filters.deviceId && { deviceId: filters.deviceId }),
+      ...(filters.vehicleId && { device: { vehicleId: filters.vehicleId } }),
+      ...(filters.active !== undefined && { isActive: filters.active }),
+    };
+
+    const [codes, total] = await Promise.all([
+      this.prisma.obdTroubleCode.findMany({
+        where,
+        orderBy: [{ severity: 'desc' }, { firstSeenAt: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.obdTroubleCode.count({ where }),
+    ]);
+
+    return {
+      data: codes.map(c => this.mapTroubleCodeToDto(c)),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
   }
 
   /**

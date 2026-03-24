@@ -3,10 +3,11 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { CheckCircle2, AlertCircle, Loader2, Shield, Mail } from 'lucide-react';
 import Link from 'next/link';
+import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
+import { btnPrimary } from '@/components/auth/auth-styles';
 
-function MagicLinkVerifyContent() {
+function MagicLinkVerifyContent(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -21,7 +22,7 @@ function MagicLinkVerifyContent() {
       return;
     }
 
-    const verify = async () => {
+    const verify = async (): Promise<void> => {
       try {
         const res = await fetch('/api/auth/magic-link/verify', {
           method: 'POST',
@@ -29,7 +30,7 @@ function MagicLinkVerifyContent() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await res.json();
+        const data = (await res.json()) as { success?: boolean; error?: string };
 
         if (res.ok && data.success) {
           setStatus('success');
@@ -50,39 +51,61 @@ function MagicLinkVerifyContent() {
   }, [token, router]);
 
   return (
-    <div className="relative text-center">
-      {/* Logo */}
-      <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-        <Shield className="h-8 w-8" />
-      </div>
-
+    <div className="text-center space-y-5">
       {status === 'verifying' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-blue-500" />
-          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-[#ececec]">Verifica in corso...</h2>
-          <p className="text-sm text-gray-500 dark:text-[#636366]">Stiamo verificando il tuo link di accesso</p>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          <h1 className="text-[28px] font-normal text-white tracking-tight">
+            Verifica in corso...
+          </h1>
+          <p className="text-[15px] text-[#b4b4b4] leading-relaxed">
+            Stiamo verificando il tuo link di accesso
+          </p>
         </motion.div>
       )}
 
       {status === 'success' && (
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-          <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
-          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-[#ececec]">Accesso effettuato!</h2>
-          <p className="text-sm text-gray-500 dark:text-[#636366]">Reindirizzamento alla dashboard...</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-4"
+        >
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+            <span className="text-2xl text-white">✓</span>
+          </div>
+          <h1 className="text-[28px] font-normal text-white tracking-tight">
+            Accesso effettuato!
+          </h1>
+          <p className="text-[15px] text-[#b4b4b4] leading-relaxed">
+            Reindirizzamento alla dashboard...
+          </p>
         </motion.div>
       )}
 
       {status === 'error' && (
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-[#ececec]">Link non valido</h2>
-          <p className="mb-6 text-sm text-gray-500 dark:text-[#636366]">{error}</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-5"
+        >
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+            <span className="text-2xl text-[#b4b4b4]">✕</span>
+          </div>
+          <h1 className="text-[28px] font-normal text-white tracking-tight">
+            Link non valido
+          </h1>
+          <p className="text-[15px] text-[#b4b4b4] leading-relaxed" role="alert">{error}</p>
+          <button
+            onClick={() => router.push('/auth')}
+            className={btnPrimary}
+          >
+            Richiedi nuovo link
+          </button>
           <Link
             href="/auth"
-            className="inline-flex items-center gap-2 rounded-2xl bg-blue-500 px-6 py-3 font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-600"
+            className="inline-flex items-center min-h-[44px] text-[14px] font-medium text-[#888] hover:text-white transition-colors"
           >
-            <Mail className="h-5 w-5" />
-            Richiedi nuovo link
+            Torna al login
           </Link>
         </motion.div>
       )}
@@ -90,34 +113,19 @@ function MagicLinkVerifyContent() {
   );
 }
 
-function LoadingFallback() {
+export default function MagicLinkVerifyPage(): React.ReactElement {
   return (
-    <div className="relative text-center">
-      <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-        <Shield className="h-8 w-8" />
-      </div>
-      <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-blue-500" />
-      <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-[#ececec]">Caricamento...</h2>
-    </div>
-  );
-}
-
-export default function MagicLinkVerifyPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50/50 via-white to-purple-50/30 dark:from-[#212121] dark:via-[#212121] dark:to-[#212121] p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="w-full max-w-[420px]"
+    <AuthSplitLayout>
+      <Suspense
+        fallback={
+          <div className="text-center space-y-4">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <p className="text-[15px] text-[#b4b4b4]">Caricamento...</p>
+          </div>
+        }
       >
-        <div className="relative overflow-hidden rounded-[32px] bg-white/70 dark:bg-[#2f2f2f]/70 p-10 shadow-2xl backdrop-blur-3xl ring-1 ring-white/50 dark:ring-[#424242]/50">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent" />
-          <Suspense fallback={<LoadingFallback />}>
-            <MagicLinkVerifyContent />
-          </Suspense>
-        </div>
-      </motion.div>
-    </div>
+        <MagicLinkVerifyContent />
+      </Suspense>
+    </AuthSplitLayout>
   );
 }

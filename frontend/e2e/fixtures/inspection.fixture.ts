@@ -1,13 +1,9 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect } from './auth.fixture';
+import type { Page } from '@playwright/test';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { InspectionPage } from '../pages/inspection.page';
 import { WarrantyPage } from '../pages/warranty.page';
 import { AIDamagePage } from '../pages/ai-damage.page';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /**
  * Extended test fixtures for inspection testing

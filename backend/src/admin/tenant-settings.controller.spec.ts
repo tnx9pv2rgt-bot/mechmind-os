@@ -19,6 +19,8 @@ describe('TenantSettingsController', () => {
             getSettings: jest.fn(),
             updateSettings: jest.fn(),
             updateLogo: jest.fn(),
+            completeOnboarding: jest.fn(),
+            getOnboardingStatus: jest.fn(),
           },
         },
         {
@@ -60,6 +62,43 @@ describe('TenantSettingsController', () => {
 
       expect(service.updateSettings).toHaveBeenCalledWith(TENANT_ID, dto);
       expect(result).toEqual({ success: true, data: updated });
+    });
+  });
+
+  describe('getOnboardingStatus', () => {
+    it('should return onboarding status wrapped in success response', async () => {
+      const status = {
+        completed: false,
+        steps: {
+          ragioneSociale: true,
+          partitaIva: true,
+          businessHours: false,
+          numberOfBays: false,
+          slotDurationMinutes: false,
+          defaultVatRate: false,
+          invoiceNumberFormat: false,
+          currency: false,
+        },
+      };
+      service.getOnboardingStatus.mockResolvedValue(status);
+
+      const result = await controller.getOnboardingStatus(TENANT_ID);
+
+      expect(service.getOnboardingStatus).toHaveBeenCalledWith(TENANT_ID);
+      expect(result).toEqual({ success: true, data: status });
+    });
+  });
+
+  describe('completeOnboarding', () => {
+    it('should delegate to service and return settings', async () => {
+      const dto = { ragioneSociale: 'Test', partitaIva: '12345678901', numberOfBays: 4 };
+      const settings = { ...dto, onboardingCompleted: true };
+      service.completeOnboarding.mockResolvedValue(settings);
+
+      const result = await controller.completeOnboarding(TENANT_ID, dto);
+
+      expect(service.completeOnboarding).toHaveBeenCalledWith(TENANT_ID, dto);
+      expect(result).toEqual({ success: true, data: settings });
     });
   });
 

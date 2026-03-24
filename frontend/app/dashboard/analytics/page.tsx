@@ -1,450 +1,645 @@
 'use client';
 
-/**
- * MechMind OS - Analytics Dashboard Page
- *
- * Integrates Metabase BI dashboards for comprehensive business intelligence.
- * Provides multiple dashboard views: bookings, revenue, customers, mechanics, vehicles.
- *
- * @module AnalyticsPage
- */
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
-  BarChart3,
-  Users,
-  Car,
   Euro,
+  Users,
+  ClipboardList,
+  TrendingUp,
+  Percent,
+  Loader2,
+  AlertCircle,
   Calendar,
-  Settings,
+  BarChart3,
+  PieChart as PieChartIcon,
   Wrench,
-  LayoutDashboard,
-  PieChart,
+  ArrowLeft,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
-import type { DashboardType } from './metabase-client';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  Legend,
+} from 'recharts';
+import { WorkloadHeatmap } from '@/components/analytics/workload-heatmap';
+import { ConversionFunnel } from '@/components/analytics/conversion-funnel';
+import { EfficiencyGauges } from '@/components/analytics/efficiency-gauges';
+import { RevenueSankey } from '@/components/analytics/revenue-sankey';
+import { RevenueTreemap } from '@/components/analytics/revenue-treemap';
+import { KpiBulletChart } from '@/components/analytics/kpi-bullet-chart';
+import { LiveKpiTicker } from '@/components/analytics/live-kpi-ticker';
+import { AnomalyAlerts } from '@/components/analytics/anomaly-alerts';
+import { BigBoardToggle } from '@/components/analytics/big-board-toggle';
+import { RealtimeActivityFeed } from '@/components/analytics/realtime-activity-feed';
+import { ExportMenu } from '@/components/analytics/export-menu';
+import { DashboardCustomizer, useDashboardPrefs } from '@/components/analytics/dashboard-customizer';
+import { PeriodComparison } from '@/components/analytics/period-comparison';
+import { useAnalyticsKeyboard, KeyboardShortcutsOverlay } from '@/components/analytics/keyboard-nav';
 
-const MetabaseDashboardSelector = dynamic(
-  () => import('./metabase-client').then(m => ({ default: m.MetabaseDashboardSelector })),
-  {
-    ssr: false,
-    loading: () => <div className='h-96 animate-pulse bg-gray-100 dark:bg-[#353535] rounded-2xl' />,
-  }
-);
-
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  },
-};
-
-const headerVariants = {
-  hidden: { opacity: 0, y: -20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  },
-};
-
-// Dashboard KPIs type
-interface DashboardKpis {
-  clientiTotali: number;
-  veicoliTotali: number;
-  fatturatoMese: number;
-  prenotazioniOggi: number;
-  workOrderAperti: number;
+interface AnalyticsKPIs {
+  revenue: number;
+  completedOrders: number;
+  newCustomers: number;
+  avgTicket: number;
+  conversionRate: number;
 }
 
-// KPI Card component
-interface KPICardProps {
-  label: string;
-  value: string;
-  icon: React.ElementType;
-  color: string;
-  loading?: boolean;
+interface RevenueData {
+  period: string;
+  revenue: number;
 }
 
-function KPICard({ label, value, icon: Icon, color, loading }: KPICardProps) {
-  return (
-    <AppleCard>
-      <AppleCardContent>
-        <div className='flex items-center justify-between mb-3'>
-          <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center`}>
-            <Icon className='h-5 w-5 text-white' />
-          </div>
-        </div>
-        {loading ? (
-          <div className='animate-pulse h-7 w-24 bg-gray-200 dark:bg-[#424242] rounded mt-1' />
-        ) : (
-          <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>{value}</p>
-        )}
-        <p className='text-footnote text-apple-gray dark:text-[#636366] mt-1'>{label}</p>
-      </AppleCardContent>
-    </AppleCard>
-  );
+interface WorkOrderStatusData {
+  status: string;
+  count: number;
 }
 
-// Dashboard type info
-const DASHBOARD_INFO: Record<
-  DashboardType,
-  {
-    title: string;
-    description: string;
-    icon: React.ElementType;
-    features: string[];
-  }
-> = {
-  overview: {
-    title: 'Booking Overview',
-    description: 'Metriche complete sulle prenotazioni',
-    icon: Calendar,
-    features: [
-      'Prenotazioni giornaliere/settimanali',
-      'Tasso di completamento',
-      'Tasso di cancellazione',
-      'Distribuzione oraria',
-      'Utilizzo slot',
-    ],
-  },
-  revenue: {
-    title: 'Revenue Analytics',
-    description: 'Analisi fatturato e trend',
-    icon: Euro,
-    features: [
-      'Fatturato mensile/annuale',
-      'Trend anno su anno',
-      'Metodi di pagamento',
-      'Revenue per servizio',
-      'Previsioni',
-    ],
-  },
-  customers: {
-    title: 'Customer Insights',
-    description: 'Analisi clienti e retention',
-    icon: Users,
-    features: [
-      'Nuovi clienti',
-      'Retention rate',
-      'Customer LTV',
-      'Cohort analysis',
-      'Segmentazione',
-    ],
-  },
-  mechanics: {
-    title: 'Mechanic Performance',
-    description: 'Performance team tecnico',
-    icon: Wrench,
-    features: [
-      'Ore lavorate',
-      'Efficienza',
-      'Servizi completati',
-      'Revenue generato',
-      'Valutazioni',
-    ],
-  },
-  vehicles: {
-    title: 'Vehicle Analytics',
-    description: 'Analisi per marca/modello',
-    icon: Car,
-    features: [
-      'Servizi per marca',
-      'Distribuzione modelli',
-      'Frequenza servizi',
-      'Età media veicoli',
-      'Trend stagionali',
-    ],
-  },
-  executive: {
-    title: 'Executive Summary',
-    description: 'KPI strategici riepilogativi',
-    icon: PieChart,
-    features: [
-      'KPI principali',
-      'Confronto periodi',
-      'Obiettivi vs Risultati',
-      'Analisi margini',
-      'Trend strategici',
-    ],
-  },
+interface TopService {
+  name: string;
+  count: number;
+}
+
+interface CustomerTrend {
+  period: string;
+  newCustomers: number;
+  returningCustomers: number;
+}
+
+interface CapacityData {
+  period: string;
+  utilization: number;
+}
+
+interface TechnicianRevenue {
+  name: string;
+  revenue: number;
+}
+
+interface AnalyticsResponse {
+  kpis: AnalyticsKPIs;
+  revenueChart: RevenueData[];
+  workOrdersByStatus: WorkOrderStatusData[];
+  topServices: TopService[];
+  customerTrends: CustomerTrend[];
+  capacityUtilization: CapacityData[];
+  revenueByTechnician: TechnicianRevenue[];
+}
+
+const colors = {
+  bg: '#1a1a1a',
+  surface: '#2f2f2f',
+  surfaceHover: '#383838',
+  border: '#4e4e4e',
+  borderSubtle: '#3a3a3a',
+  textPrimary: '#ffffff',
+  textSecondary: '#b4b4b4',
+  textTertiary: '#888888',
+  textMuted: '#666666',
+  accent: '#ffffff',
+  success: '#34d399',
+  warning: '#fbbf24',
+  error: '#f87171',
+  info: '#60a5fa',
+  purple: '#a78bfa',
+  glow: 'rgba(255,255,255,0.03)',
+  glowStrong: 'rgba(255,255,255,0.06)',
+};
+
+const PERIOD_OPTIONS = [
+  { value: 'today', label: 'Oggi' },
+  { value: 'week', label: 'Settimana' },
+  { value: 'month', label: 'Mese' },
+  { value: 'quarter', label: 'Trimestre' },
+  { value: 'year', label: 'Anno' },
+];
+
+const PIE_COLORS = [colors.info, colors.success, colors.warning, colors.purple, colors.error, '#5ac8fa', '#ffcc00'];
+
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Bozza',
+  OPEN: 'Aperto',
+  IN_PROGRESS: 'In Lavorazione',
+  QC: 'Controllo Qualità',
+  COMPLETED: 'Completato',
+  DELIVERED: 'Consegnato',
+  CANCELLED: 'Annullato',
 };
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
 }
 
-export default function AnalyticsPage() {
-  const [selectedDashboard, setSelectedDashboard] = useState<DashboardType>('overview');
-  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
-  const [kpisLoading, setKpisLoading] = useState(true);
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
+};
 
-  useEffect(() => {
-    fetch('/api/analytics/dashboard-kpis')
-      .then(r => {
-        if (!r.ok) throw new Error('KPI fetch failed');
-        return r.json();
-      })
-      .then(d => setKpis(d.data ?? d))
-      .catch(() => setKpis(null))
-      .finally(() => setKpisLoading(false));
-  }, []);
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+};
+
+const SECTION_IDS = ['kpi', 'charts', 'gauges', 'heatmap', 'funnel', 'sankey', 'treemap', 'bullet', 'control-center'] as const;
+
+const kpiIconColors: Record<string, string> = {
+  Fatturato: colors.success,
+  'OdL Completati': colors.info,
+  'Clienti Nuovi': colors.purple,
+  'Ticket Medio': colors.warning,
+  'Tasso Conversione': colors.error,
+};
+
+export default function AnalyticsPage() {
+  const [period, setPeriod] = useState('month');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [showCustomRange, setShowCustomRange] = useState(false);
+  const { prefs } = useDashboardPrefs();
+  const { showShortcuts, setShowShortcuts } = useAnalyticsKeyboard([...SECTION_IDS]);
+
+  const queryParams = new URLSearchParams({ period });
+  if (showCustomRange && customFrom) queryParams.set('from', customFrom);
+  if (showCustomRange && customTo) queryParams.set('to', customTo);
+
+  const { data: rawData, error, isLoading, mutate } = useSWR<{ data?: AnalyticsResponse } | AnalyticsResponse>(
+    `/api/dashboard/analytics?${queryParams.toString()}`,
+    fetcher
+  );
+
+  const analytics: AnalyticsResponse | null = (() => {
+    if (!rawData) return null;
+    return (rawData as { data?: AnalyticsResponse }).data || (rawData as AnalyticsResponse);
+  })();
+
+  const kpis = analytics?.kpis || { revenue: 0, completedOrders: 0, newCustomers: 0, avgTicket: 0, conversionRate: 0 };
+  const revenueChart = analytics?.revenueChart || [];
+  const workOrdersByStatus = analytics?.workOrdersByStatus || [];
+  const topServices = analytics?.topServices || [];
+  const customerTrends = analytics?.customerTrends || [];
+  const capacityUtilization = analytics?.capacityUtilization || [];
+  const revenueByTechnician = analytics?.revenueByTechnician || [];
+
+  const kpiCards = [
+    { label: 'Fatturato', value: formatCurrency(kpis.revenue), icon: Euro },
+    { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList },
+    { label: 'Clienti Nuovi', value: String(kpis.newCustomers), icon: Users },
+    { label: 'Ticket Medio', value: formatCurrency(kpis.avgTicket), icon: TrendingUp },
+    { label: 'Tasso Conversione', value: `${kpis.conversionRate.toFixed(1)}%`, icon: Percent },
+  ];
 
   return (
-    <div>
+    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Analytics BI</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
-              Dashboard Metabase - Insight avanzati sulla tua officina
-            </p>
-          </div>
-          <div className='flex items-center gap-3'>
-            <div className='flex items-center gap-2 px-4 py-2 rounded-full bg-apple-light-gray/50 dark:bg-[#353535] border border-apple-border dark:border-[#424242]'>
-              <LayoutDashboard className='h-4 w-4 text-apple-gray' />
-              <span className='text-body text-apple-dark dark:text-[#ececec]'>Metabase BI</span>
+      <header
+        className='sticky top-0 z-30 backdrop-blur-xl border-b'
+        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
+      >
+        <div className='px-6 lg:px-8 py-5 flex items-center justify-between'>
+          <div className='flex items-center gap-4'>
+            <Link
+              href='/dashboard'
+              className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors'
+              style={{ color: colors.textSecondary }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              <ArrowLeft className='h-5 w-5' />
+            </Link>
+            <div>
+              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
+                Analytics
+              </h1>
+              <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
+                Analisi complete dell&apos;attivita della tua officina
+              </p>
             </div>
+          </div>
+          <div className='flex items-center gap-2'>
+            <ExportMenu />
+            <DashboardCustomizer />
           </div>
         </div>
       </header>
 
-      <div className='p-8 space-y-8'>
-        {/* KPI Summary Cards — Real data from DB */}
-        <motion.div
-          variants={containerVariants}
-          initial='hidden'
-          animate='visible'
-          className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-bento'
-        >
-          <motion.div variants={itemVariants}>
-            <KPICard
-              label='Fatturato Mese'
-              value={kpis ? formatCurrency(kpis.fatturatoMese) : '–'}
-              icon={Euro}
-              color='bg-apple-green'
-              loading={kpisLoading}
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <KPICard
-              label='Veicoli Totali'
-              value={kpis ? String(kpis.veicoliTotali) : '–'}
-              icon={Car}
-              color='bg-apple-blue'
-              loading={kpisLoading}
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <KPICard
-              label='Clienti Totali'
-              value={kpis ? String(kpis.clientiTotali) : '–'}
-              icon={Users}
-              color='bg-apple-purple'
-              loading={kpisLoading}
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <KPICard
-              label='Prenotazioni Oggi'
-              value={kpis ? String(kpis.prenotazioniOggi) : '–'}
-              icon={Calendar}
-              color='bg-apple-orange'
-              loading={kpisLoading}
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <KPICard
-              label='Ordini Aperti'
-              value={kpis ? String(kpis.workOrderAperti) : '–'}
-              icon={Wrench}
-              color='bg-black dark:bg-[#ececec] dark:text-[#212121]'
-              loading={kpisLoading}
-            />
-          </motion.div>
+      <motion.div className='p-6 lg:p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
+        {/* Live KPI Ticker */}
+        <motion.div variants={itemVariants}>
+          <LiveKpiTicker />
         </motion.div>
 
-        {/* Dashboard Selection */}
-        <motion.div variants={containerVariants} initial='hidden' animate='visible'>
-          <motion.div variants={itemVariants}>
-            <AppleCard>
-              <AppleCardHeader>
-                <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center'>
-                    <BarChart3 className='h-5 w-5 text-white' />
-                  </div>
-                  <div>
-                    <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
-                      Dashboard Metabase
-                    </h3>
-                    <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                      Seleziona una dashboard per visualizzare le analisi dettagliate
-                    </p>
-                  </div>
-                </div>
-              </AppleCardHeader>
-              <AppleCardContent>
-                <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'>
-                  {(Object.keys(DASHBOARD_INFO) as DashboardType[]).map(key => {
-                    const info = DASHBOARD_INFO[key];
-                    const isActive = selectedDashboard === key;
-
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setSelectedDashboard(key)}
-                        className={`
-                          p-4 rounded-2xl text-left transition-all duration-200 group
-                          ${
-                            isActive
-                              ? 'bg-apple-blue text-white shadow-lg shadow-apple-blue/25'
-                              : 'bg-apple-light-gray/50 dark:bg-[#353535] hover:bg-apple-light-gray dark:hover:bg-[#424242]'
-                          }
-                        `}
-                      >
-                        <div
-                          className={`
-                          w-10 h-10 rounded-xl flex items-center justify-center mb-3
-                          ${isActive ? 'bg-white/20' : 'bg-white dark:bg-[#2f2f2f]'}
-                        `}
-                        >
-                          <info.icon
-                            className={`h-5 w-5 ${isActive ? 'text-white' : 'text-apple-blue'}`}
-                          />
-                        </div>
-                        <h4
-                          className={`
-                          text-sm font-semibold mb-1
-                          ${isActive ? 'text-white' : 'text-apple-dark dark:text-[#ececec]'}
-                        `}
-                        >
-                          {info.title}
-                        </h4>
-                        <p
-                          className={`
-                          text-xs
-                          ${isActive ? 'text-white/80' : 'text-apple-gray dark:text-[#636366]'}
-                        `}
-                        >
-                          {info.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </AppleCardContent>
-            </AppleCard>
-          </motion.div>
+        {/* Period Selector */}
+        <motion.div variants={itemVariants}>
+          <div className='flex flex-wrap items-center justify-center gap-2'>
+            <Calendar className='h-4 w-4' style={{ color: colors.textTertiary }} />
+            {PERIOD_OPTIONS.map(p => (
+              <button
+                key={p.value}
+                onClick={() => { setPeriod(p.value); setShowCustomRange(false); }}
+                className='h-10 px-4 rounded-full text-sm font-medium transition-all'
+                style={
+                  period === p.value && !showCustomRange
+                    ? { backgroundColor: colors.textPrimary, color: colors.bg }
+                    : { backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.borderSubtle}` }
+                }
+              >
+                {p.label}
+              </button>
+            ))}
+            <button
+              onClick={() => setShowCustomRange(!showCustomRange)}
+              className='h-10 px-4 rounded-full text-sm font-medium transition-all'
+              style={
+                showCustomRange
+                  ? { backgroundColor: colors.textPrimary, color: colors.bg }
+                  : { backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.borderSubtle}` }
+              }
+            >
+              Personalizzato
+            </button>
+            {showCustomRange && (
+              <div className='flex items-center gap-2'>
+                <input
+                  type='date'
+                  value={customFrom}
+                  onChange={e => setCustomFrom(e.target.value)}
+                  className='text-sm px-3 py-2 rounded-xl border focus:outline-none focus:border-white/30'
+                  style={{
+                    backgroundColor: colors.glowStrong,
+                    borderColor: colors.borderSubtle,
+                    color: colors.textPrimary,
+                  }}
+                />
+                <span style={{ color: colors.textTertiary }}>-</span>
+                <input
+                  type='date'
+                  value={customTo}
+                  onChange={e => setCustomTo(e.target.value)}
+                  className='text-sm px-3 py-2 rounded-xl border focus:outline-none focus:border-white/30'
+                  style={{
+                    backgroundColor: colors.glowStrong,
+                    borderColor: colors.borderSubtle,
+                    color: colors.textPrimary,
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </motion.div>
 
-        {/* Active Dashboard Info */}
-        <motion.div variants={containerVariants} initial='hidden' animate='visible'>
+        {/* Error */}
+        {error && (
           <motion.div variants={itemVariants}>
-            <AppleCard className='bg-gradient-to-br from-apple-blue/5 to-apple-purple/5 border-apple-blue/20'>
-              <AppleCardContent className='p-6'>
-                <div className='flex items-start gap-4'>
-                  <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center flex-shrink-0'>
-                    {(() => {
-                      const Icon = DASHBOARD_INFO[selectedDashboard].icon;
-                      return <Icon className='h-6 w-6 text-white' />;
-                    })()}
-                  </div>
-                  <div className='flex-1'>
-                    <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-1'>
-                      {DASHBOARD_INFO[selectedDashboard].title}
-                    </h3>
-                    <p className='text-body text-apple-gray dark:text-[#636366] mb-4'>
-                      {DASHBOARD_INFO[selectedDashboard].description}
-                    </p>
-                    <div className='flex flex-wrap gap-2'>
-                      {DASHBOARD_INFO[selectedDashboard].features.map(feature => (
-                        <span
-                          key={feature}
-                          className='px-3 py-1 rounded-full bg-white/80 dark:bg-[#2f2f2f]/80 text-xs text-apple-dark dark:text-[#ececec] border border-apple-border dark:border-[#424242]'
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </AppleCardContent>
-            </AppleCard>
+            <div
+              className='rounded-2xl border p-4 flex items-center justify-between'
+              style={{ backgroundColor: colors.surface, borderColor: colors.error + '33' }}
+            >
+              <div className='flex items-center gap-3'>
+                <AlertCircle className='h-5 w-5' style={{ color: colors.error }} />
+                <p className='text-[13px]' style={{ color: colors.textSecondary }}>
+                  Impossibile caricare i dati analytics. Verifica la connessione e riprova.
+                </p>
+              </div>
+              <button
+                onClick={() => mutate()}
+                className='px-4 py-2 rounded-xl text-sm font-medium transition-colors'
+                style={{ border: `1px solid ${colors.borderSubtle}`, color: colors.textSecondary }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                Riprova
+              </button>
+            </div>
           </motion.div>
-        </motion.div>
+        )}
 
-        {/* Embedded Metabase Dashboard */}
-        <motion.div variants={containerVariants} initial='hidden' animate='visible'>
-          <motion.div variants={itemVariants}>
-            <MetabaseDashboardSelector defaultDashboard={selectedDashboard} />
-          </motion.div>
-        </motion.div>
+        {/* Loading */}
+        {isLoading && (
+          <div className='flex items-center justify-center py-12'>
+            <Loader2 className='h-8 w-8 animate-spin' style={{ color: colors.textTertiary }} />
+          </div>
+        )}
 
-        {/* Setup Instructions (collapsible) */}
-        <motion.div variants={containerVariants} initial='hidden' animate='visible'>
-          <motion.div variants={itemVariants}>
-            <AppleCard className='bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/30'>
-              <AppleCardHeader>
-                <div className='flex items-center gap-3'>
-                  <Settings className='h-5 w-5 text-amber-600' />
-                  <h3 className='text-title-3 font-semibold text-amber-800 dark:text-amber-300'>
-                    Configurazione Metabase
-                  </h3>
-                </div>
-              </AppleCardHeader>
-              <AppleCardContent>
-                <div className='space-y-4 text-sm text-amber-700 dark:text-amber-300'>
-                  <p>Per abilitare i dashboard Metabase, assicurati che:</p>
-                  <ol className='list-decimal list-inside space-y-2 ml-2'>
-                    <li>
-                      Il container Metabase sia avviato:{' '}
-                      <code className='bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded'>
-                        docker-compose -f infrastructure/docker-compose.metabase.yml up -d
-                      </code>
-                    </li>
-                    <li>Le variabili d&apos;ambiente siano configurate nel backend (.env):</li>
-                  </ol>
-                  <pre className='bg-amber-100 dark:bg-amber-900/30 p-3 rounded-lg text-xs overflow-x-auto'>
-                    {`METABASE_URL=http://localhost:3001
-METABASE_SECRET_KEY=your-32-character-secret-key
-METABASE_EMBEDDING_ENABLED=true`}
-                  </pre>
-                  <p>
-                    Vedi la{' '}
-                    <a href='/docs/METABASE_SETUP.md' className='underline'>
-                      documentazione completa
-                    </a>{' '}
-                    per i dettagli di setup.
+        {/* KPI Row */}
+        {!isLoading && (
+          <motion.div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4' variants={containerVariants}>
+            {kpiCards.map(kpi => (
+              <motion.div
+                key={kpi.label}
+                variants={itemVariants}
+                className='rounded-2xl border h-[120px] flex flex-col justify-center px-5'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='flex items-center gap-2 mb-2'>
+                  <kpi.icon className='h-4 w-4' style={{ color: kpiIconColors[kpi.label] || colors.textTertiary }} />
+                  <p className='text-[12px] font-medium uppercase tracking-wider' style={{ color: colors.textTertiary }}>
+                    {kpi.label}
                   </p>
                 </div>
-              </AppleCardContent>
-            </AppleCard>
+                <p
+                  className='text-[22px] font-semibold'
+                  style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {kpi.value}
+                </p>
+              </motion.div>
+            ))}
           </motion.div>
-        </motion.div>
-      </div>
+        )}
+
+        {/* Charts Grid */}
+        {!isLoading && (
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            {/* Revenue Bar Chart */}
+            <motion.div variants={itemVariants}>
+              <div
+                className='rounded-2xl border overflow-hidden'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
+                  <BarChart3 className='h-5 w-5' style={{ color: colors.success }} />
+                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Fatturato</h3>
+                </div>
+                <div className='p-5'>
+                  {revenueChart.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <BarChart3 className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
+                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    </div>
+                  ) : (
+                    <div className='h-72'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <BarChart data={revenueChart}>
+                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
+                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                          <Tooltip
+                            formatter={(value: number) => [formatCurrency(value), 'Fatturato']}
+                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                            labelStyle={{ color: colors.textSecondary }}
+                          />
+                          <Bar dataKey='revenue' fill={colors.success} radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Work Orders by Status - Pie Chart */}
+            <motion.div variants={itemVariants}>
+              <div
+                className='rounded-2xl border overflow-hidden'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
+                  <PieChartIcon className='h-5 w-5' style={{ color: colors.info }} />
+                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>OdL per Stato</h3>
+                </div>
+                <div className='p-5'>
+                  {workOrdersByStatus.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <PieChartIcon className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
+                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    </div>
+                  ) : (
+                    <div className='h-72'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <PieChart>
+                          <Pie
+                            data={workOrdersByStatus.map(d => ({ ...d, name: STATUS_LABELS[d.status] || d.status }))}
+                            cx='50%'
+                            cy='50%'
+                            outerRadius={100}
+                            innerRadius={50}
+                            paddingAngle={2}
+                            dataKey='count'
+                            nameKey='name'
+                            label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {workOrdersByStatus.map((_, i) => (
+                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Top Services - Horizontal Bar */}
+            <motion.div variants={itemVariants}>
+              <div
+                className='rounded-2xl border overflow-hidden'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
+                  <Wrench className='h-5 w-5' style={{ color: colors.warning }} />
+                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Top Servizi</h3>
+                </div>
+                <div className='p-5'>
+                  {topServices.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <Wrench className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
+                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    </div>
+                  ) : (
+                    <div className='h-72'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <BarChart data={topServices} layout='vertical'>
+                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
+                          <XAxis type='number' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <YAxis dataKey='name' type='category' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} width={120} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                          />
+                          <Bar dataKey='count' fill={colors.warning} radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Customer Trends - Line Chart */}
+            <motion.div variants={itemVariants}>
+              <div
+                className='rounded-2xl border overflow-hidden'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
+                  <Users className='h-5 w-5' style={{ color: colors.purple }} />
+                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Andamento Clienti</h3>
+                </div>
+                <div className='p-5'>
+                  {customerTrends.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <Users className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
+                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    </div>
+                  ) : (
+                    <div className='h-72'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <LineChart data={customerTrends}>
+                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
+                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                          />
+                          <Legend wrapperStyle={{ color: colors.textSecondary }} />
+                          <Line type='monotone' dataKey='newCustomers' name='Nuovi' stroke={colors.purple} strokeWidth={2} dot={false} />
+                          <Line type='monotone' dataKey='returningCustomers' name='Ritorno' stroke={colors.info} strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Capacity Utilization - Area Chart */}
+            <motion.div variants={itemVariants}>
+              <div
+                className='rounded-2xl border overflow-hidden'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
+                  <TrendingUp className='h-5 w-5' style={{ color: colors.success }} />
+                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Tasso Occupazione</h3>
+                </div>
+                <div className='p-5'>
+                  {capacityUtilization.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <TrendingUp className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
+                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    </div>
+                  ) : (
+                    <div className='h-72'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <AreaChart data={capacityUtilization}>
+                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
+                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} unit='%' domain={[0, 100]} />
+                          <Tooltip
+                            formatter={(value: number) => [`${value}%`, 'Occupazione']}
+                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                          />
+                          <Area type='monotone' dataKey='utilization' stroke={colors.success} fill={colors.success} fillOpacity={0.2} strokeWidth={2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Revenue per Technician - Bar Chart */}
+            <motion.div variants={itemVariants}>
+              <div
+                className='rounded-2xl border overflow-hidden'
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+              >
+                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
+                  <Wrench className='h-5 w-5' style={{ color: colors.info }} />
+                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Fatturato per Tecnico</h3>
+                </div>
+                <div className='p-5'>
+                  {revenueByTechnician.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <Wrench className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
+                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    </div>
+                  ) : (
+                    <div className='h-72'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <BarChart data={revenueByTechnician}>
+                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
+                          <XAxis dataKey='name' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                          <Tooltip
+                            formatter={(value: number) => [formatCurrency(value), 'Fatturato']}
+                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                          />
+                          <Bar dataKey='revenue' fill={colors.info} radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Advanced Analytics */}
+        {!isLoading && (
+          <div className='mt-8 space-y-6'>
+            <EfficiencyGauges />
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+              <WorkloadHeatmap />
+              <ConversionFunnel />
+            </div>
+            <RevenueSankey />
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+              <RevenueTreemap />
+              <KpiBulletChart />
+            </div>
+          </div>
+        )}
+
+        {/* Centro Controllo */}
+        {!isLoading && (
+          <div className='mt-8 space-y-6'>
+            <motion.div variants={itemVariants}>
+              <h2 className='text-xl font-semibold flex items-center gap-2' style={{ color: colors.textPrimary }}>
+                <span className='inline-block h-2 w-2 rounded-full animate-pulse' style={{ backgroundColor: colors.success }} />
+                Centro Controllo
+              </h2>
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <AnomalyAlerts />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <RealtimeActivityFeed />
+            </motion.div>
+          </div>
+        )}
+
+        {/* Confronto Periodi */}
+        {!isLoading && (
+          <motion.div variants={itemVariants} className='mt-8'>
+            <PeriodComparison />
+          </motion.div>
+        )}
+
+        {/* Big Board Toggle */}
+        <BigBoardToggle />
+      </motion.div>
+
+      {/* Keyboard Shortcuts Overlay */}
+      <KeyboardShortcutsOverlay open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   );
 }

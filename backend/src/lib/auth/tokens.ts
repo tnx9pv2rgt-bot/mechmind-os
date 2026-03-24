@@ -1,8 +1,17 @@
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-change-in-production';
-const JWT_EXPIRY = '1h';
+function requireEnvVar(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`FATAL: ${name} environment variable is required`);
+  }
+  return value;
+}
+
+const JWT_SECRET: string = requireEnvVar('JWT_SECRET');
+const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || JWT_SECRET;
+const JWT_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 export interface JWTPayload {
@@ -11,6 +20,7 @@ export interface JWTPayload {
   tenantId: string;
   role: string;
   jti: string; // unique token id for revocation
+  familyId?: string; // refresh token family for rotation tracking
   iat: number;
   exp: number;
 }
@@ -36,10 +46,24 @@ export function generateJWT(user: {
   );
 }
 
-export function generateRefreshToken(user: { id: string }): string {
-  return jwt.sign({ sub: user.id, jti: randomBytes(16).toString('hex') }, JWT_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRY,
-  });
+export function generateRefreshToken(user: { id: string }, familyId?: string): string {
+  return jwt.sign(
+    {
+      sub: user.id,
+      jti: randomBytes(16).toString('hex'),
+      familyId: familyId || randomBytes(16).toString('hex'),
+    },
+    JWT_REFRESH_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY },
+  );
+}
+
+export function verifyRefreshToken(token: string): JWTPayload | null {
+  try {
+    return jwt.verify(token, JWT_REFRESH_SECRET) as JWTPayload;
+  } catch {
+    return null;
+  }
 }
 
 export function verifyJWT(token: string): JWTPayload | null {

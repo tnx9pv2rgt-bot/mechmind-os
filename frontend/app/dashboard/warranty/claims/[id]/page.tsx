@@ -33,7 +33,8 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface WarrantyClaim {
   id: string;
@@ -108,7 +109,6 @@ export default function ClaimDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
   const claimId = params.id as string;
   const autoReview = searchParams.get('action') === 'review';
 
@@ -146,11 +146,7 @@ export default function ClaimDetailPage() {
       setIsLoading(true);
       const res = await fetch(`/api/warranties/claims/${claimId}`);
       if (!res.ok) {
-        toast({
-          title: 'Reclamo non trovato',
-          description: 'Il reclamo richiesto non è stato trovato',
-          variant: 'error',
-        });
+        toast.error('Reclamo non trovato', { description: 'Il reclamo richiesto non è stato trovato' });
         router.push('/dashboard/warranty/claims');
         return;
       }
@@ -161,11 +157,7 @@ export default function ClaimDetailPage() {
         setApprovedAmount(data.approvedAmount.toString());
       }
     } catch (error) {
-      toast({
-        title: 'Errore nel caricamento del reclamo',
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
-      });
+      toast.error('Errore nel caricamento del reclamo', { description: error instanceof Error ? error.message : 'Errore sconosciuto' });
     } finally {
       setIsLoading(false);
     }
@@ -191,21 +183,15 @@ export default function ClaimDetailPage() {
         const err = await reviewRes.json();
         throw new Error(err.error || 'Revisione fallita');
       }
-      toast({
-        title: reviewDecision === 'APPROVE' ? 'Reclamo approvato' : 'Reclamo rifiutato',
-        description:
-          reviewDecision === 'APPROVE'
-            ? 'Il reclamo è stato approvato con successo'
-            : 'Il reclamo è stato rifiutato',
+      toast.success(reviewDecision === 'APPROVE' ? 'Reclamo approvato' : 'Reclamo rifiutato', {
+        description: reviewDecision === 'APPROVE'
+          ? 'Il reclamo è stato approvato con successo'
+          : 'Il reclamo è stato rifiutato',
       });
       setReviewDialogOpen(false);
       loadClaim();
     } catch (error) {
-      toast({
-        title: 'Errore nella revisione del reclamo',
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
-      });
+      toast.error('Errore nella revisione del reclamo', { description: error instanceof Error ? error.message : 'Errore sconosciuto' });
     } finally {
       setIsReviewing(false);
     }
@@ -215,17 +201,10 @@ export default function ClaimDetailPage() {
     try {
       const payRes = await fetch(`/api/warranties/claims/${claimId}/pay`, { method: 'POST' });
       if (!payRes.ok) throw new Error('Errore nel pagamento');
-      toast({
-        title: 'Reclamo pagato',
-        description: 'Il reclamo è stato contrassegnato come pagato',
-      });
+      toast.success('Reclamo pagato', { description: 'Il reclamo è stato contrassegnato come pagato' });
       loadClaim();
     } catch (error) {
-      toast({
-        title: 'Errore',
-        description: error instanceof Error ? error.message : 'Errore sconosciuto',
-        variant: 'error',
-      });
+      toast.error('Errore', { description: error instanceof Error ? error.message : 'Errore sconosciuto' });
     }
   };
 
@@ -248,6 +227,14 @@ export default function ClaimDetailPage() {
 
   return (
     <div className='space-y-6'>
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Garanzie', href: '/dashboard/warranty' },
+          { label: 'Reclami', href: '/dashboard/warranty/claims' },
+          { label: claim.claimNumber },
+        ]}
+      />
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div className='flex items-center gap-4'>
@@ -255,6 +242,7 @@ export default function ClaimDetailPage() {
             variant='outline'
             size='icon'
             onClick={() => router.push('/dashboard/warranty/claims')}
+            aria-label='Torna ai reclami'
           >
             <ArrowLeft className='h-4 w-4' />
           </Button>
