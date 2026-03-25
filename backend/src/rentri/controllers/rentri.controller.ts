@@ -25,12 +25,17 @@ import { RentriService } from '../services/rentri.service';
 import { FirService } from '../services/fir.service';
 import { MudService } from '../services/mud.service';
 import { CreateWasteEntryDto, WasteEntryQueryDto } from '../dto/waste-entry.dto';
-import { CreateFirDto, UpdateFirStatusDto, VidimateFirDto, FirQueryDto } from '../dto/waste-fir.dto';
+import {
+  CreateFirDto,
+  UpdateFirStatusDto,
+  VidimateFirDto,
+  FirQueryDto,
+} from '../dto/waste-fir.dto';
 import { CreateTransporterDto, UpdateTransporterDto } from '../dto/waste-transporter.dto';
 import { CreateDestinationDto, UpdateDestinationDto } from '../dto/waste-destination.dto';
 
 @ApiTags('RENTRI - Gestione Rifiuti')
-@Controller('v1/rentri')
+@Controller('rentri')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class RentriController {
@@ -170,9 +175,7 @@ export class RentriController {
   @Get('transporters')
   @ApiOperation({ summary: 'Elenco trasportatori rifiuti' })
   @ApiResponse({ status: 200, description: 'Lista trasportatori' })
-  async getTransporters(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<unknown[]> {
+  async getTransporters(@CurrentUser('tenantId') tenantId: string): Promise<unknown[]> {
     return this.rentriService.findAllTransporters(tenantId);
   }
 
@@ -205,9 +208,7 @@ export class RentriController {
   @Get('destinations')
   @ApiOperation({ summary: 'Elenco impianti di destinazione' })
   @ApiResponse({ status: 200, description: 'Lista destinazioni' })
-  async getDestinations(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<unknown[]> {
+  async getDestinations(@CurrentUser('tenantId') tenantId: string): Promise<unknown[]> {
     return this.rentriService.findAllDestinations(tenantId);
   }
 
@@ -240,18 +241,14 @@ export class RentriController {
   @Get('dashboard')
   @ApiOperation({ summary: 'Dashboard riepilogativa gestione rifiuti' })
   @ApiResponse({ status: 200, description: 'Dati dashboard rifiuti' })
-  async getDashboard(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<unknown> {
+  async getDashboard(@CurrentUser('tenantId') tenantId: string): Promise<unknown> {
     return this.rentriService.getDashboard(tenantId);
   }
 
   @Get('alerts')
   @ApiOperation({ summary: 'Avvisi e scadenze gestione rifiuti' })
   @ApiResponse({ status: 200, description: 'Lista avvisi' })
-  async getAlerts(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<unknown[]> {
+  async getAlerts(@CurrentUser('tenantId') tenantId: string): Promise<unknown[]> {
     return this.rentriService.getAlerts(tenantId);
   }
 

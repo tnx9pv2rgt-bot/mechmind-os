@@ -25,7 +25,7 @@ import {
 } from './dto/security-incident.dto';
 
 @ApiTags('Security Incidents (NIS2)')
-@Controller('v1/security-incidents')
+@Controller('security-incidents')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SecurityIncidentController {
   constructor(private readonly service: SecurityIncidentService) {}

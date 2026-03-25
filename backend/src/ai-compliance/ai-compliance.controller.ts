@@ -5,22 +5,8 @@
  * and compliance dashboard.
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -35,7 +21,7 @@ import {
 import { AiDecisionLog } from '@prisma/client';
 
 @ApiTags('AI Compliance (EU AI Act)')
-@Controller('v1/ai-compliance')
+@Controller('ai-compliance')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class AiComplianceController {
@@ -56,9 +42,7 @@ export class AiComplianceController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'AI compliance dashboard statistics' })
   @ApiResponse({ status: 200, type: AiComplianceDashboardDto })
-  async getDashboard(
-    @CurrentUser('tenantId') tenantId: string,
-  ): Promise<AiComplianceDashboardDto> {
+  async getDashboard(@CurrentUser('tenantId') tenantId: string): Promise<AiComplianceDashboardDto> {
     return this.aiComplianceService.getDashboard(tenantId);
   }
 
