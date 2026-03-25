@@ -154,7 +154,7 @@ function DemoExitIntent({ onClose }: { onClose: () => void }) {
       </p>
       <a
         href='/auth/register'
-        className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d] h-[36px] text-[13px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] transition-colors'
+        className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-white h-[36px] text-[13px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] transition-colors'
       >
         Registrati gratis
       </a>
