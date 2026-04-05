@@ -78,8 +78,8 @@ export default function PortalMessagesPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Messaggi</h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Messaggi</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Comunica con la tua officina
           </p>
         </div>
@@ -98,14 +98,14 @@ export default function PortalMessagesPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Messaggi</h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Messaggi</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Comunica con la tua officina
           </p>
         </div>
         <div className='text-center py-16'>
           <AlertCircle className='h-12 w-12 text-apple-red/40 mx-auto mb-4' />
-          <p className='text-apple-gray dark:text-[#636366] mb-4'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
             Impossibile caricare i messaggi
           </p>
           <button onClick={() => mutate()} className='text-apple-blue hover:underline'>
@@ -119,8 +119,8 @@ export default function PortalMessagesPage(): React.ReactElement {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Messaggi</h1>
-        <p className='text-apple-gray dark:text-[#636366] mt-1'>
+        <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Messaggi</h1>
+        <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
           Comunica con la tua officina
         </p>
       </div>
@@ -128,14 +128,14 @@ export default function PortalMessagesPage(): React.ReactElement {
       <AppleCard className='overflow-hidden'>
         <AppleCardContent className='p-0'>
           {/* Chat area */}
-          <div className='h-[500px] overflow-y-auto p-4 sm:p-6 space-y-4 bg-apple-light-gray/30 dark:bg-[#1a1a1a]'>
+          <div className='h-[500px] overflow-y-auto p-4 sm:p-6 space-y-4 bg-apple-light-gray/30 dark:bg-[var(--surface-tertiary)]'>
             {messages.length === 0 ? (
               <div className='flex flex-col items-center justify-center h-full text-center'>
                 <MessageCircle className='h-16 w-16 text-apple-gray/30 mb-4' />
-                <h3 className='text-lg font-medium text-apple-dark dark:text-[#ececec] mb-2'>
+                <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
                   Nessun messaggio
                 </h3>
-                <p className='text-apple-gray dark:text-[#636366] max-w-sm'>
+                <p className='text-apple-gray dark:text-[var(--text-secondary)] max-w-sm'>
                   Inizia una conversazione con la tua officina. Puoi chiedere informazioni su
                   preventivi, riparazioni o prenotazioni.
                 </p>
@@ -175,11 +175,11 @@ export default function PortalMessagesPage(): React.ReactElement {
                         className={`rounded-2xl px-4 py-3 ${
                           isCustomer
                             ? 'bg-apple-blue text-white rounded-br-sm'
-                            : 'bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] rounded-bl-sm shadow-sm'
+                            : 'bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] rounded-bl-sm shadow-sm'
                         }`}
                       >
                         <p className={`text-xs font-medium mb-1 ${
-                          isCustomer ? 'text-white/70' : 'text-apple-gray dark:text-[#636366]'
+                          isCustomer ? 'text-white/70' : 'text-apple-gray dark:text-[var(--text-secondary)]'
                         }`}>
                           {msg.senderName}
                         </p>
@@ -201,7 +201,7 @@ export default function PortalMessagesPage(): React.ReactElement {
 
                         <p
                           className={`text-[10px] mt-1 ${
-                            isCustomer ? 'text-white/50' : 'text-apple-gray/50 dark:text-[#636366]/50'
+                            isCustomer ? 'text-white/50' : 'text-apple-gray/50 dark:text-[var(--text-secondary)]/50'
                           }`}
                         >
                           {new Date(msg.createdAt).toLocaleTimeString('it-IT', {
@@ -219,7 +219,7 @@ export default function PortalMessagesPage(): React.ReactElement {
           </div>
 
           {/* Input area */}
-          <div className='border-t border-apple-border/20 dark:border-[#424242] p-4 bg-white dark:bg-[#2f2f2f]'>
+          <div className='border-t border-apple-border/20 dark:border-[var(--border-default)] p-4 bg-white dark:bg-[var(--surface-elevated)]'>
             <div className='flex items-end gap-3'>
               <div className='flex-1'>
                 <textarea
@@ -228,7 +228,7 @@ export default function PortalMessagesPage(): React.ReactElement {
                   onKeyDown={handleKeyDown}
                   placeholder='Scrivi un messaggio...'
                   rows={1}
-                  className='w-full resize-none rounded-xl border border-apple-border/30 dark:border-[#424242] bg-apple-light-gray/50 dark:bg-[#353535] px-4 py-3 text-sm text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:outline-none focus:ring-2 focus:ring-apple-blue/50 min-h-[44px] max-h-32'
+                  className='w-full resize-none rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] px-4 py-3 text-sm text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:outline-none focus:ring-2 focus:ring-apple-blue/50 min-h-[44px] max-h-32'
                   style={{ height: 'auto', overflow: 'hidden' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -247,7 +247,7 @@ export default function PortalMessagesPage(): React.ReactElement {
                 <Send className='h-4 w-4' />
               </AppleButton>
             </div>
-            <p className='text-[10px] text-apple-gray dark:text-[#636366] mt-2'>
+            <p className='text-[10px] text-apple-gray dark:text-[var(--text-secondary)] mt-2'>
               Premi Invio per inviare, Shift+Invio per andare a capo
             </p>
           </div>

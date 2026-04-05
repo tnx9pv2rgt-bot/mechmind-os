@@ -36,7 +36,7 @@ export function TeamSizeStep({ selected, onSelect }: TeamSizeStepProps): React.R
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
         <h2 className="text-xl font-normal text-white">Quanto è grande il tuo team?</h2>
-        <p className="mt-1 text-[13px] text-[#b4b4b4]">Adatteremo funzionalità e permessi</p>
+        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Adatteremo funzionalità e permessi</p>
       </div>
 
       <motion.div
@@ -59,7 +59,7 @@ export function TeamSizeStep({ selected, onSelect }: TeamSizeStepProps): React.R
                 'relative flex min-h-[64px] items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
                 isSelected
                   ? 'border-white/60 bg-white/10'
-                  : 'border-[#444] bg-[#3a3a3a] hover:border-[#666] hover:bg-[#404040]',
+                  : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
@@ -75,12 +75,12 @@ export function TeamSizeStep({ selected, onSelect }: TeamSizeStepProps): React.R
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[#999]'}>{size.icon}</span>
+              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{size.icon}</span>
               <div>
-                <span className={['text-[14px] font-medium', isSelected ? 'text-white' : 'text-[#ccc]'].join(' ')}>
+                <span className={['text-[14px] font-medium', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
                   {size.name}
                 </span>
-                <p className="text-[12px] text-[#888]">{size.description}</p>
+                <p className="text-[12px] text-[var(--text-tertiary)]">{size.description}</p>
               </div>
             </motion.button>
           );

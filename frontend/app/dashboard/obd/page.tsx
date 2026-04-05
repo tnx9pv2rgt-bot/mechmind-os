@@ -5,6 +5,8 @@ import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardHeader, AppleCardContent } from '@/components/ui/apple-card';
 import {
   Activity,
   Wifi,
@@ -43,34 +45,28 @@ interface DTCAlert {
   detectedAt: string;
 }
 
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function OBDPage() {
@@ -95,139 +91,83 @@ export default function OBDPage() {
   }, [mutateDevices]);
 
   return (
-    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
+    <div className='bg-[var(--surface-tertiary)]'>
       {/* Header */}
-      <header
-        className='sticky top-0 z-30 backdrop-blur-xl border-b'
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Link href='/dashboard'>
-              <button
-                className='w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5'
-                style={{ color: colors.textSecondary }}
-              >
-                <ArrowLeft className='h-5 w-5' />
-              </button>
-            </Link>
-            <div>
-              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
-                Diagnostica OBD
-              </h1>
-              <p className='text-[13px]' style={{ color: colors.textTertiary }}>
-                Monitoraggio dispositivi OBD-II e diagnostica veicoli
-              </p>
-            </div>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Diagnostica OBD</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Monitoraggio dispositivi OBD-II e diagnostica veicoli
+            </p>
           </div>
           <div className='flex items-center gap-3'>
-            <button
-              onClick={handleRefresh}
-              className='w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5'
-              style={{ color: colors.textSecondary }}
-            >
-              <RefreshCw className='h-4 w-4' />
-            </button>
+            <AppleButton variant='ghost' size='sm' onClick={handleRefresh} icon={<RefreshCw className='h-4 w-4' />} />
             <Link href='/dashboard/obd/alerts'>
-              <button
-                className='h-10 px-4 rounded-full border flex items-center gap-2 text-sm transition-colors hover:bg-white/5'
-                style={{ borderColor: colors.border, color: colors.textPrimary }}
-              >
-                <Bell className='h-4 w-4' />
+              <AppleButton variant='secondary' icon={<Bell className='h-4 w-4' />}>
                 Regole Alert
-              </button>
+              </AppleButton>
             </Link>
             <Link href='/dashboard/obd/pair'>
-              <button
-                className='h-10 px-4 rounded-full flex items-center gap-2 text-sm font-medium transition-colors'
-                style={{ backgroundColor: colors.accent, color: colors.bg }}
-              >
-                <Plus className='h-4 w-4' />
+              <AppleButton variant='primary' icon={<Plus className='h-4 w-4' />}>
                 Associa Dispositivo
-              </button>
+              </AppleButton>
             </Link>
           </div>
         </div>
       </header>
 
-      <motion.div className='p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
+      <motion.div className='p-4 sm:p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
         {/* Error */}
         {hasError && (
-          <motion.div variants={itemVariants}>
-            <div
-              className='rounded-2xl border p-6 flex items-center gap-4'
-              style={{
-                backgroundColor: colors.surface,
-                borderColor: colors.error,
-                borderLeftWidth: 4,
-              }}
-            >
-              <div
-                className='w-12 h-12 rounded-2xl flex items-center justify-center'
-                style={{ backgroundColor: `${colors.error}15` }}
-              >
-                <AlertTriangle className='h-6 w-6' style={{ color: colors.error }} />
-              </div>
-              <div className='flex-1'>
-                <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>
-                  Errore nel caricamento dei dati OBD
-                </h3>
-                <p className='text-[13px] mt-1' style={{ color: colors.textTertiary }}>
-                  Impossibile comunicare con il server. Verifica la connessione e riprova.
-                </p>
-              </div>
-              <button
-                onClick={handleRefresh}
-                className='h-10 px-4 rounded-full border flex items-center gap-2 text-sm transition-colors hover:bg-white/5'
-                style={{ borderColor: colors.border, color: colors.textPrimary }}
-              >
-                <RefreshCw className='h-4 w-4' /> Riprova
-              </button>
-            </div>
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardContent>
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Errore nel caricamento dei dati OBD. Impossibile comunicare con il server.
+                  </p>
+                  <AppleButton variant='ghost' className='mt-4' onClick={handleRefresh}>
+                    Riprova
+                  </AppleButton>
+                </div>
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         )}
 
         {/* Loading */}
         {devicesLoading && !hasError && (
-          <motion.div variants={itemVariants}>
+          <motion.div variants={listItemVariants}>
             <div className='flex items-center justify-center py-12'>
-              <Loader2 className='h-8 w-8 animate-spin' style={{ color: colors.textTertiary }} />
+              <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
             </div>
           </motion.div>
         )}
 
         {/* Stats */}
         {!devicesLoading && !hasError && (
-          <motion.div className='grid grid-cols-1 sm:grid-cols-3 gap-4' variants={containerVariants}>
+          <motion.div className='grid grid-cols-1 sm:grid-cols-3 gap-bento' variants={containerVariants}>
             {[
-              { label: 'Dispositivi Totali', value: devices.length, icon: Gauge, color: colors.info },
-              { label: 'Connessi', value: connectedCount, icon: Wifi, color: colors.success },
-              { label: 'Disconnessi', value: devices.length - connectedCount, icon: WifiOff, color: colors.error },
+              { label: 'Dispositivi Totali', value: devices.length, icon: Gauge, color: 'bg-apple-blue' },
+              { label: 'Connessi', value: connectedCount, icon: Wifi, color: 'bg-apple-green' },
+              { label: 'Disconnessi', value: devices.length - connectedCount, icon: WifiOff, color: 'bg-apple-red' },
             ].map(stat => (
-              <motion.div key={stat.label} variants={itemVariants}>
-                <div
-                  className='rounded-2xl border h-[120px] flex flex-col justify-center px-6'
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: colors.borderSubtle,
-                  }}
-                >
-                  <div className='flex items-center gap-3 mb-2'>
-                    <stat.icon className='h-5 w-5' style={{ color: stat.color }} />
-                    <span className='text-[13px]' style={{ color: colors.textTertiary }}>
-                      {stat.label}
-                    </span>
-                  </div>
-                  <p
-                    className='text-[32px] font-light'
-                    style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                  >
-                    {stat.value}
-                  </p>
-                </div>
+              <motion.div key={stat.label} variants={statsCardVariants}>
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <div className='flex items-center justify-between mb-3'>
+                      <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                        <stat.icon className='h-5 w-5 text-white' />
+                      </div>
+                    </div>
+                    <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      {stat.value}
+                    </p>
+                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  </AppleCardContent>
+                </AppleCard>
               </motion.div>
             ))}
           </motion.div>
@@ -235,100 +175,79 @@ export default function OBDPage() {
 
         {/* Devices Grid */}
         {!devicesLoading && !hasError && (
-          <motion.div variants={itemVariants}>
-            <div
-              className='rounded-2xl border'
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className='px-6 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                <Activity className='h-5 w-5' style={{ color: colors.info }} />
-                <h2 className='text-[17px] font-medium' style={{ color: colors.textPrimary }}>
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Dispositivi Collegati
                 </h2>
-              </div>
-              <div className='p-6'>
+              </AppleCardHeader>
+              <AppleCardContent>
                 {devices.length === 0 ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <div
-                      className='w-16 h-16 rounded-2xl flex items-center justify-center mb-4'
-                      style={{ backgroundColor: colors.glowStrong }}
-                    >
-                      <WifiOff className='h-8 w-8' style={{ color: colors.textTertiary }} />
-                    </div>
-                    <h3 className='text-[17px] font-medium mb-2' style={{ color: colors.textPrimary }}>
-                      Nessun dispositivo OBD
-                    </h3>
-                    <p className='text-[13px] max-w-md mb-6' style={{ color: colors.textTertiary }}>
-                      Associa il primo dispositivo OBD-II per iniziare il monitoraggio dei veicoli.
+                    <WifiOff className='h-12 w-12 text-apple-gray/40 mb-4' />
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      Nessun dispositivo OBD. Associa il primo dispositivo per iniziare.
                     </p>
                     <Link href='/dashboard/obd/pair'>
-                      <button
-                        className='h-10 px-4 rounded-full flex items-center gap-2 text-sm font-medium'
-                        style={{ backgroundColor: colors.accent, color: colors.bg }}
-                      >
-                        <Plus className='h-4 w-4' />
+                      <AppleButton variant='ghost' className='mt-4' icon={<Plus className='h-4 w-4' />}>
                         Associa Dispositivo
-                      </button>
+                      </AppleButton>
                     </Link>
                   </div>
                 ) : (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-                    {devices.map(device => (
+                  <motion.div
+                    className='space-y-3'
+                    variants={containerVariants}
+                    initial='hidden'
+                    animate='visible'
+                  >
+                    {devices.map((device, index) => (
                       <Link key={device.id} href={`/dashboard/obd/${device.vehicleId}`}>
-                        <div
-                          className='p-4 rounded-2xl transition-all cursor-pointer group'
-                          style={{ backgroundColor: colors.glowStrong }}
-                          onMouseEnter={e => {
-                            (e.currentTarget as HTMLDivElement).style.backgroundColor = colors.surfaceHover;
-                          }}
-                          onMouseLeave={e => {
-                            (e.currentTarget as HTMLDivElement).style.backgroundColor = colors.glowStrong;
-                          }}
+                        <motion.div
+                          className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                          variants={listItemVariants}
+                          custom={index}
+                          whileHover={{ scale: 1.005, x: 4 }}
+                          transition={{ duration: 0.2 }}
                         >
-                          <div className='flex items-center justify-between mb-3'>
-                            <div
-                              className='w-10 h-10 rounded-xl flex items-center justify-center'
-                              style={{ backgroundColor: `${colors.purple}15` }}
-                            >
-                              <Car className='h-5 w-5' style={{ color: colors.purple }} />
+                          <div className='flex items-center gap-4'>
+                            <div className='w-12 h-12 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
+                              <Car className='h-6 w-6 text-apple-purple' />
                             </div>
-                            <div
-                              className='flex items-center gap-1.5 px-2 py-1 rounded-full'
-                              style={{
-                                backgroundColor: device.connected ? `${colors.success}15` : `${colors.error}15`,
-                                color: device.connected ? colors.success : colors.error,
-                              }}
-                            >
-                              {device.connected ? <Wifi className='h-3 w-3' /> : <WifiOff className='h-3 w-3' />}
-                              <span className='text-[10px] font-semibold'>
-                                {device.connected ? 'Connesso' : 'Disconnesso'}
-                              </span>
+                            <div>
+                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                {device.vehicleName}
+                              </p>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                {device.vehiclePlate} &bull; ID: {device.deviceId}
+                              </p>
+                              {device.lastReadingAt && (
+                                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] opacity-70'>
+                                  Ultima lettura: {new Date(device.lastReadingAt).toLocaleString('it-IT')}
+                                </p>
+                              )}
                             </div>
                           </div>
-                          <p className='text-[15px] font-medium' style={{ color: colors.textPrimary }}>
-                            {device.vehicleName}
-                          </p>
-                          <p className='text-[12px]' style={{ color: colors.textTertiary }}>
-                            {device.vehiclePlate} - ID: {device.deviceId}
-                          </p>
-                          {device.lastReadingAt && (
-                            <p className='text-[10px] mt-1' style={{ color: colors.textMuted }}>
-                              Ultima lettura: {new Date(device.lastReadingAt).toLocaleString('it-IT')}
-                            </p>
-                          )}
-                          <div className='flex justify-end mt-2'>
-                            <ChevronRight
-                              className='h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity'
-                              style={{ color: colors.textTertiary }}
-                            />
+                          <div className='flex items-center gap-4'>
+                            <span
+                              className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
+                                device.connected
+                                  ? 'bg-green-100 dark:bg-green-900/40 text-apple-green dark:text-green-300'
+                                  : 'bg-red-100 dark:bg-red-900/40 text-apple-red dark:text-red-300'
+                              }`}
+                            >
+                              {device.connected ? 'Connesso' : 'Disconnesso'}
+                            </span>
+                            <ChevronRight className='h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]' />
                           </div>
-                        </div>
+                        </motion.div>
                       </Link>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
-              </div>
-            </div>
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         )}
       </motion.div>

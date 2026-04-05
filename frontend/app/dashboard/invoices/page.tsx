@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
-import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Pagination } from '@/components/ui/pagination';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Input } from '@/components/ui/input';
 import {
   FileText,
   Plus,
@@ -16,56 +16,15 @@ import {
   Send,
   CheckCircle,
   Search,
+  Filter,
   Loader2,
   Eye,
   CreditCard,
   AlertCircle,
-  ArrowLeft,
-  ChevronRight,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Pagination } from '@/components/ui/pagination';
 
-// =============================================================================
-// Design Tokens
-// =============================================================================
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
-// =============================================================================
-// Animation Variants
-// =============================================================================
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
-};
-
-// =============================================================================
-// Types & Config
-// =============================================================================
 interface Invoice {
   id: string;
   number: string;
@@ -87,12 +46,32 @@ interface InvoiceStats {
 
 type InvoiceStatus = 'ALL' | 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: 'Bozza', color: colors.textMuted },
-  SENT: { label: 'Inviata', color: colors.info },
-  PAID: { label: 'Pagata', color: colors.success },
-  OVERDUE: { label: 'Scaduta', color: colors.error },
-  CANCELLED: { label: 'Annullata', color: colors.textMuted },
+const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
+  DRAFT: {
+    color: 'text-apple-gray dark:text-[var(--text-secondary)]',
+    bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]',
+    label: 'Bozza',
+  },
+  SENT: {
+    color: 'text-apple-blue',
+    bg: 'bg-apple-blue/10',
+    label: 'Inviata',
+  },
+  PAID: {
+    color: 'text-apple-green',
+    bg: 'bg-apple-green/10',
+    label: 'Pagata',
+  },
+  OVERDUE: {
+    color: 'text-apple-red',
+    bg: 'bg-apple-red/10',
+    label: 'Scaduta',
+  },
+  CANCELLED: {
+    color: 'text-apple-orange',
+    bg: 'bg-apple-orange/10',
+    label: 'Annullata',
+  },
 };
 
 const statusOptions: { value: InvoiceStatus; label: string }[] = [
@@ -103,6 +82,33 @@ const statusOptions: { value: InvoiceStatus; label: string }[] = [
   { value: 'OVERDUE', label: 'Scaduta' },
   { value: 'CANCELLED', label: 'Annullata' },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -188,288 +194,246 @@ export default function InvoicesPage() {
   });
 
   const statCards = [
-    { label: 'Fatturato Mese', value: formatCurrency(stats.monthlyRevenue), icon: Euro, iconColor: colors.success },
-    { label: 'In Attesa', value: String(stats.pendingCount), icon: Clock, iconColor: colors.warning },
-    { label: 'Inviate', value: String(stats.sentCount), icon: Send, iconColor: colors.info },
-    { label: 'Pagate', value: String(stats.paidCount), icon: CheckCircle, iconColor: colors.success },
+    {
+      label: 'Fatturato Mese',
+      value: formatCurrency(stats.monthlyRevenue),
+      icon: Euro,
+      color: 'bg-apple-green',
+    },
+    {
+      label: 'In Attesa',
+      value: String(stats.pendingCount),
+      icon: Clock,
+      color: 'bg-apple-orange',
+    },
+    {
+      label: 'Inviate',
+      value: String(stats.sentCount),
+      icon: Send,
+      color: 'bg-apple-blue',
+    },
+    {
+      label: 'Pagate',
+      value: String(stats.paidCount),
+      icon: CheckCircle,
+      color: 'bg-apple-purple',
+    },
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur-xl border-b"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="p-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: colors.textTertiary }}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
-                Fatture
-              </h1>
-              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
-                Gestisci fatture e documenti fiscali
-              </p>
-            </div>
+      <header>
+        <div className='px-8 py-5 flex items-center justify-between'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Fatture</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Gestisci fatture e documenti fiscali
+            </p>
           </div>
-          <button
+          <AppleButton
+            icon={<Plus className='h-4 w-4' />}
             onClick={() => router.push('/dashboard/invoices/new')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-colors min-h-[44px]"
-            style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
           >
-            <Plus className="h-4 w-4" />
             Nuova Fattura
-          </button>
+          </AppleButton>
         </div>
       </header>
 
       <motion.div
-        className="p-4 sm:p-8 space-y-6"
-        initial="hidden"
-        animate="visible"
+        className='p-8 space-y-6'
+        initial='hidden'
+        animate='visible'
         variants={containerVariants}
       >
-        {/* KPI Cards */}
-        <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4" variants={containerVariants}>
-          {statCards.map((stat) => (
-            <motion.div
-              key={stat.label}
-              className="rounded-2xl border h-[120px] flex flex-col justify-center px-5"
-              style={{
-                backgroundColor: colors.surface,
-                borderColor: colors.borderSubtle,
-              }}
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <stat.icon className="h-4 w-4" style={{ color: stat.iconColor }} />
-                <span className="text-[13px]" style={{ color: colors.textTertiary }}>{stat.label}</span>
-              </div>
-              <span
-                className="text-[28px] font-light"
-                style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-              >
-                {isLoading ? '...' : stat.value}
-              </span>
+        {/* Stats */}
+        <motion.div
+          className='grid grid-cols-2 lg:grid-cols-4 gap-bento'
+          variants={containerVariants}
+        >
+          {statCards.map(stat => (
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div
+                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                    >
+                      <stat.icon className='h-5 w-5 text-white' />
+                    </div>
+                  </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {isLoading ? '...' : stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Status Filter Pills */}
-        <motion.div className="flex justify-center flex-wrap gap-2" variants={itemVariants}>
-          {statusOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setStatusFilter(opt.value)}
-              className="h-10 px-4 rounded-full text-[13px] font-medium transition-all border"
-              style={{
-                backgroundColor: statusFilter === opt.value ? colors.textPrimary : 'transparent',
-                color: statusFilter === opt.value ? colors.bg : colors.textSecondary,
-                borderColor: statusFilter === opt.value ? colors.textPrimary : colors.borderSubtle,
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </motion.div>
-
-        {/* Search */}
-        <motion.div
-          className="rounded-2xl border p-4"
-          style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-          variants={itemVariants}
-        >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.textMuted }} />
-            <input
-              type="text"
-              placeholder="Cerca per cliente o numero fattura..."
-              aria-label="Cerca fatture"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-              style={{
-                backgroundColor: colors.glowStrong,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: colors.borderSubtle,
-                color: colors.textPrimary,
-              }}
-            />
-          </div>
+        {/* Filters */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex flex-col sm:flex-row gap-4'>
+                <div className='relative flex-1'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Input
+                    placeholder='Cerca per numero o cliente...'
+                    aria-label='Cerca fatture'
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className='pl-10'
+                  />
+                </div>
+                <div className='relative'>
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value as InvoiceStatus)}
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                  >
+                    {statusOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Invoice List */}
-        <motion.div variants={itemVariants}>
-          {invoicesError || statsError ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-[15px] mb-4" style={{ color: colors.textTertiary }}>
-                Impossibile caricare le fatture
-              </p>
-              <button
-                onClick={() => { mutateInvoices(); mutateStats(); }}
-                className="px-4 py-2 rounded-full text-sm border transition-colors hover:bg-white/5"
-                style={{ borderColor: colors.border, color: colors.textSecondary }}
-              >
-                Riprova
-              </button>
-            </div>
-          ) : isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.textMuted }} />
-            </div>
-          ) : filteredInvoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <FileText className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-[15px] mb-1" style={{ color: colors.textPrimary }}>
-                Nessuna fattura trovata
-              </p>
-              <p className="text-[13px] mb-6" style={{ color: colors.textTertiary }}>
-                {searchQuery || statusFilter !== 'ALL'
-                  ? 'Prova a modificare i filtri di ricerca'
-                  : 'Crea la prima fattura per iniziare'}
-              </p>
-              {!searchQuery && statusFilter === 'ALL' && (
-                <button
-                  onClick={() => router.push('/dashboard/invoices/new')}
-                  className="px-5 py-2.5 rounded-full text-sm font-medium"
-                  style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                Elenco Fatture
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {invoicesError || statsError ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare le fatture
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => {
+                      mutateInvoices();
+                      mutateStats();
+                    }}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : isLoading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                </div>
+              ) : filteredInvoices.length === 0 ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Nessuna fattura trovata. Crea la prima fattura.
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => router.push('/dashboard/invoices/new')}
+                  >
+                    Crea la prima fattura
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className='space-y-3'
+                  variants={containerVariants}
+                  initial='hidden'
+                  animate='visible'
                 >
-                  + Nuova Fattura
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div
-                className="rounded-2xl border overflow-hidden"
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <motion.div variants={containerVariants} initial="hidden" animate="visible">
-                  {filteredInvoices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv, idx, arr) => {
+                  {filteredInvoices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv, index) => {
                     const status = statusConfig[inv.status] || statusConfig.DRAFT;
                     return (
                       <motion.div
                         key={inv.id}
-                        className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors group"
-                        style={{
-                          borderBottom: idx < arr.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                        }}
-                        variants={itemVariants}
-                        onClick={() => router.push(`/dashboard/invoices/${inv.id}`)}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        variants={listItemVariants}
+                        custom={index}
+                        whileHover={{ scale: 1.005, x: 4 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        {/* Status color bar */}
-                        <div
-                          className="w-1 h-12 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: status.color }}
-                        />
-
-                        {/* Icon */}
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: colors.glowStrong }}
-                        >
-                          <FileText className="h-5 w-5" style={{ color: colors.textTertiary }} />
+                        <div className='flex items-center gap-4'>
+                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                            <FileText className='h-6 w-6 text-apple-blue' />
+                          </div>
+                          <div>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              {inv.number || `#${inv.id.slice(0, 8)}`}
+                            </p>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              {inv.customerName} &bull; Scadenza: {new Date(inv.dueDate).toLocaleDateString('it-IT')}
+                            </p>
+                          </div>
                         </div>
-
-                        {/* Main info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>
-                            {inv.number || `#${inv.id.slice(0, 8)}`}
-                          </p>
-                          <p className="text-[13px]" style={{ color: colors.textTertiary }}>
-                            {inv.customerName} &bull; {new Date(inv.createdAt).toLocaleDateString('it-IT')}
-                          </p>
-                        </div>
-
-                        {/* Status badge */}
-                        <span
-                          className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full hidden sm:inline-block"
-                          style={{
-                            backgroundColor: `${status.color}20`,
-                            color: status.color,
-                          }}
-                        >
-                          {status.label}
-                        </span>
-
-                        {/* Amount */}
-                        <p
-                          className="text-[14px] font-semibold min-w-[100px] text-right"
-                          style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                        >
-                          {formatCurrency(inv.total)}
-                        </p>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => router.push(`/dashboard/invoices/${inv.id}`)}
-                            className="p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-white/5"
-                            style={{ color: colors.textMuted }}
-                            aria-label="Visualizza"
+                        <div className='flex items-center gap-4'>
+                          <span
+                            className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
                           >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          {inv.status === 'DRAFT' && (
-                            <button
-                              onClick={() => handleSend(inv.id)}
-                              disabled={actionLoading === inv.id}
-                              className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors hover:bg-white/5 disabled:opacity-50 flex items-center gap-1.5"
-                              style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
+                            {status.label}
+                          </span>
+                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[100px] text-right'>
+                            {formatCurrency(inv.total)}
+                          </p>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
+                            {new Date(inv.createdAt).toLocaleDateString('it-IT')}
+                          </p>
+                          <div className='flex items-center gap-2'>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              icon={<Eye className='h-3.5 w-3.5' />}
+                              onClick={() => router.push(`/dashboard/invoices/${inv.id}`)}
                             >
-                              {actionLoading === inv.id ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <Send className="h-3 w-3" />
-                              )}
-                              Invia
-                            </button>
-                          )}
-                          {inv.status === 'SENT' && (
-                            <button
-                              onClick={() => handlePay(inv.id)}
-                              disabled={actionLoading === inv.id}
-                              className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors hover:bg-white/5 disabled:opacity-50 flex items-center gap-1.5"
-                              style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
-                            >
-                              {actionLoading === inv.id ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <CreditCard className="h-3 w-3" />
-                              )}
-                              Segna Pagata
-                            </button>
-                          )}
+                              Visualizza
+                            </AppleButton>
+                            {inv.status === 'DRAFT' && (
+                              <AppleButton
+                                variant='secondary'
+                                size='sm'
+                                icon={<Send className='h-3.5 w-3.5' />}
+                                loading={actionLoading === inv.id}
+                                onClick={() => handleSend(inv.id)}
+                              >
+                                Invia
+                              </AppleButton>
+                            )}
+                            {inv.status === 'SENT' && (
+                              <AppleButton
+                                variant='secondary'
+                                size='sm'
+                                icon={<CreditCard className='h-3.5 w-3.5' />}
+                                loading={actionLoading === inv.id}
+                                onClick={() => handlePay(inv.id)}
+                              >
+                                Segna Pagata
+                              </AppleButton>
+                            )}
+                          </div>
                         </div>
-
-                        <ChevronRight
-                          className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ color: colors.textMuted }}
-                        />
                       </motion.div>
                     );
                   })}
+                  <Pagination page={page} totalPages={Math.ceil(filteredInvoices.length / PAGE_SIZE)} onPageChange={setPage} />
                 </motion.div>
-              </div>
-              <div className="mt-4">
-                <Pagination page={page} totalPages={Math.ceil(filteredInvoices.length / PAGE_SIZE)} onPageChange={setPage} />
-              </div>
-            </>
-          )}
+              )}
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
       </motion.div>
     </div>

@@ -477,7 +477,7 @@ export function InspectionForm({
           <div className='flex items-center justify-between'>
             <div>
               <h1 className='text-title-2 font-semibold text-white'>Ispezione Veicolo</h1>
-              <p className='text-body text-[#888]'>
+              <p className='text-body text-[var(--text-tertiary)]'>
                 Passo {currentStep} di {totalSteps}: {STEP_LABELS[currentStep - 1]}
               </p>
             </div>
@@ -486,7 +486,7 @@ export function InspectionForm({
             </Badge>
           </div>
           <Progress value={progress} className='h-2' />
-          <div className='flex justify-between text-sm text-[#888]'>
+          <div className='flex justify-between text-sm text-[var(--text-tertiary)]'>
             {STEP_LABELS.map((label, index) => (
               <span
                 key={label}
@@ -540,12 +540,12 @@ export function InspectionForm({
             {currentStep === 7 && <StepElectronicsOBD />}
 
             {/* Navigation Buttons */}
-            <div className='flex items-center justify-between pt-6 border-t border-[#4e4e4e]'>
+            <div className='flex items-center justify-between pt-6 border-t border-[var(--border-strong)]'>
               <Button
                 type='button'
                 onClick={handleSaveDraft}
                 disabled={isLoading}
-                className='gap-2 rounded-full h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
+                className='gap-2 rounded-full h-[52px] border border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'
               >
                 <Save className='h-4 w-4' />
                 Salva Bozza
@@ -557,7 +557,7 @@ export function InspectionForm({
                     type='button'
                     onClick={handleBack}
                     disabled={isLoading}
-                    className='gap-2 rounded-full h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
+                    className='gap-2 rounded-full h-[52px] border border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'
                   >
                     <ChevronLeft className='h-4 w-4' />
                     Indietro
@@ -569,7 +569,7 @@ export function InspectionForm({
                     type='button'
                     onClick={handleNext}
                     disabled={isLoading}
-                    className='gap-2 rounded-full h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
+                    className='gap-2 rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
                   >
                     Avanti
                     <ChevronRight className='h-4 w-4' />
@@ -578,7 +578,7 @@ export function InspectionForm({
                   <Button
                     type='submit'
                     disabled={isLoading}
-                    className='gap-2 rounded-full h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
+                    className='gap-2 rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
                   >
                     <Send className='h-4 w-4' />
                     Invia Ispezione
@@ -630,7 +630,7 @@ function StepHeaderInfo({
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='relative'>
-            <Search className='absolute left-3 top-3 h-4 w-4 text-[#888]' />
+            <Search className='absolute left-3 top-3 h-4 w-4 text-[var(--text-tertiary)]' />
             <Input
               placeholder='Cerca VIN o targa...'
               value={searchQuery}
@@ -754,9 +754,9 @@ function StepHeaderInfo({
           </Button>
 
           {form.watch('header.location.address') && (
-            <div className='p-3 bg-[#1a1a1a] rounded-2xl text-sm'>
+            <div className='p-3 bg-[var(--surface-tertiary)] rounded-2xl text-sm'>
               <p className='font-medium'>Posizione acquisita:</p>
-              <p className='text-[#888]'>{form.watch('header.location.address')}</p>
+              <p className='text-[var(--text-tertiary)]'>{form.watch('header.location.address')}</p>
             </div>
           )}
         </CardContent>
@@ -819,9 +819,9 @@ function StepExteriorInspection({
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          <div className='border-2 border-dashed border-[#4e4e4e] rounded-2xl p-8 text-center hover:border-white/30 transition-colors'>
-            <Upload className='h-8 w-8 mx-auto mb-4 text-[#888]' />
-            <p className='text-sm text-[#888] mb-2'>Trascina le foto o clicca per sfogliare</p>
+          <div className='border-2 border-dashed border-[var(--border-strong)] rounded-2xl p-8 text-center hover:border-white/30 transition-colors'>
+            <Upload className='h-8 w-8 mx-auto mb-4 text-[var(--text-tertiary)]' />
+            <p className='text-sm text-[var(--text-tertiary)] mb-2'>Trascina le foto o clicca per sfogliare</p>
             <Input
               type='file'
               accept='image/*'
@@ -1125,7 +1125,7 @@ function StepSensoryInspection({ moldRiskLevel }: { moldRiskLevel: MoldRiskLevel
                     step={1}
                   />
                 </FormControl>
-                <div className='flex justify-between text-sm text-[#888]'>
+                <div className='flex justify-between text-sm text-[var(--text-tertiary)]'>
                   <span>0%</span>
                   <span>50%</span>
                   <span>100%</span>
@@ -1167,7 +1167,7 @@ function StepSensoryInspection({ moldRiskLevel }: { moldRiskLevel: MoldRiskLevel
               control={form.control}
               name='sensory.odors.smokeIntensity'
               render={({ field }) => (
-                <FormItem className='ml-6 p-4 bg-[#1a1a1a] rounded-2xl'>
+                <FormItem className='ml-6 p-4 bg-[var(--surface-tertiary)] rounded-2xl'>
                   <FormLabel>Intensit&agrave; Fumo (1-10)</FormLabel>
                   <FormControl>
                     <Slider
@@ -1548,7 +1548,7 @@ function StepTiresSuspension() {
         </CardHeader>
         <CardContent className='space-y-6'>
           {tirePositions.map(({ key, label }) => (
-            <div key={key} className='p-4 bg-[#1a1a1a] rounded-2xl space-y-4'>
+            <div key={key} className='p-4 bg-[var(--surface-tertiary)] rounded-2xl space-y-4'>
               <h4 className='font-medium'>Pneumatico {label}</h4>
               <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                 <FormField
@@ -1777,7 +1777,7 @@ function StepElectronicsOBD() {
         </CardHeader>
         <CardContent className='space-y-4'>
           {/* Add new OBD code */}
-          <div className='p-4 bg-[#1a1a1a] rounded-2xl space-y-3'>
+          <div className='p-4 bg-[var(--surface-tertiary)] rounded-2xl space-y-3'>
             <div className='grid grid-cols-2 gap-3'>
               <Input
                 placeholder='Codice (es. P0301)'
@@ -1815,7 +1815,7 @@ function StepElectronicsOBD() {
               {obdCodes.map((code, index) => (
                 <div
                   key={index}
-                  className='flex items-center justify-between p-3 bg-[#2f2f2f] border border-[#4e4e4e] rounded-2xl'
+                  className='flex items-center justify-between p-3 bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'
                 >
                   <div className='flex items-center gap-3'>
                     <Badge className={severityColors[code.severity]}>
@@ -1823,7 +1823,7 @@ function StepElectronicsOBD() {
                     </Badge>
                     <div>
                       <span className='font-mono font-medium'>{code.code}</span>
-                      <p className='text-sm text-[#888]'>{code.description}</p>
+                      <p className='text-sm text-[var(--text-tertiary)]'>{code.description}</p>
                     </div>
                   </div>
                   <Button
@@ -1839,7 +1839,7 @@ function StepElectronicsOBD() {
               ))}
             </div>
           ) : (
-            <div className='text-center py-8 text-[#888]'>
+            <div className='text-center py-8 text-[var(--text-tertiary)]'>
               <CheckCircle className='h-8 w-8 mx-auto mb-2 text-green-400' />
               <p>Nessun codice OBD registrato</p>
               <p className='text-sm'>I sistemi del veicolo sembrano funzionare normalmente</p>

@@ -125,7 +125,7 @@ export default function PortalInvoiceDetailPage() {
     return (
       <div className='text-center py-16'>
         <AlertCircle className='h-12 w-12 text-apple-red/40 mx-auto mb-4' />
-        <p className='text-apple-gray dark:text-[#636366] mb-4'>
+        <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
           {fetchError ? 'Impossibile caricare la fattura' : 'Fattura non trovata'}
         </p>
         <button
@@ -152,10 +152,10 @@ export default function PortalInvoiceDetailPage() {
 
       {/* Header */}
       <div>
-        <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+        <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
           Fattura {invoice.number}
         </h1>
-        <p className='text-apple-gray dark:text-[#636366] mt-1'>
+        <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
           {invoice.shopName || 'Dettaglio fattura'}
         </p>
       </div>
@@ -169,10 +169,10 @@ export default function PortalInvoiceDetailPage() {
                 <FileText className='h-5 w-5 text-apple-blue' />
               </div>
               <div>
-                <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   {invoice.number}
                 </p>
-                <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                   Emessa il{' '}
                   {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('it-IT') : ''}
                 </p>
@@ -183,7 +183,7 @@ export default function PortalInvoiceDetailPage() {
             </div>
           </div>
           {invoice.dueDate && (
-            <p className='text-sm text-apple-gray dark:text-[#636366] mt-3'>
+            <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mt-3'>
               Scadenza: {new Date(invoice.dueDate).toLocaleDateString('it-IT')}
             </p>
           )}
@@ -201,7 +201,7 @@ export default function PortalInvoiceDetailPage() {
       {/* Items */}
       <AppleCard>
         <AppleCardHeader>
-          <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+          <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
             Dettaglio Voci
           </h2>
         </AppleCardHeader>
@@ -209,24 +209,24 @@ export default function PortalInvoiceDetailPage() {
           {(invoice.items || []).length === 0 ? (
             <div className='text-center py-8'>
               <FileText className='h-12 w-12 text-apple-gray mx-auto mb-4' />
-              <p className='text-apple-gray dark:text-[#636366]'>Nessuna voce</p>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Nessuna voce</p>
             </div>
           ) : (
             <div className='space-y-3'>
               {invoice.items.map(item => (
                 <div
                   key={item.id}
-                  className='flex items-center justify-between p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[#353535]'
+                  className='flex items-center justify-between p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                 >
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       {item.description}
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                       {item.quantity} x {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     {formatCurrency(item.total || item.quantity * item.unitPrice)}
                   </p>
                 </div>
@@ -235,24 +235,24 @@ export default function PortalInvoiceDetailPage() {
           )}
 
           {/* Totals */}
-          <div className='mt-6 pt-4 border-t border-apple-border/30 dark:border-[#424242] space-y-2'>
+          <div className='mt-6 pt-4 border-t border-apple-border/30 dark:border-[var(--border-default)] space-y-2'>
             <div className='flex justify-between text-sm'>
-              <span className='text-apple-gray dark:text-[#636366]'>Subtotale</span>
-              <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Subtotale</span>
+              <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                 {formatCurrency(invoice.subtotal)}
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-apple-gray dark:text-[#636366]'>IVA ({invoice.taxRate}%)</span>
-              <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>IVA ({invoice.taxRate}%)</span>
+              <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                 {formatCurrency(invoice.taxAmount)}
               </span>
             </div>
-            <div className='flex justify-between pt-2 border-t border-apple-border/30 dark:border-[#424242]'>
-              <span className='text-base font-semibold text-apple-dark dark:text-[#ececec]'>
+            <div className='flex justify-between pt-2 border-t border-apple-border/30 dark:border-[var(--border-default)]'>
+              <span className='text-base font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Totale
               </span>
-              <span className='text-xl font-bold text-apple-dark dark:text-[#ececec]'>
+              <span className='text-xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                 {formatCurrency(invoice.total)}
               </span>
             </div>
@@ -264,10 +264,10 @@ export default function PortalInvoiceDetailPage() {
       {invoice.notes && (
         <AppleCard>
           <AppleCardHeader>
-            <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>Note</h2>
+            <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Note</h2>
           </AppleCardHeader>
           <AppleCardContent>
-            <p className='text-sm text-apple-gray dark:text-[#636366] whitespace-pre-wrap'>
+            <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] whitespace-pre-wrap'>
               {invoice.notes}
             </p>
           </AppleCardContent>

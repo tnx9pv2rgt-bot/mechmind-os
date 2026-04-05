@@ -133,7 +133,7 @@ export default function SegmentsPage() {
 
   return (
     <div>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
             <Breadcrumb
@@ -143,8 +143,8 @@ export default function SegmentsPage() {
                 { label: 'Segmenti Clienti' },
               ]}
             />
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Segmenti Clienti</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Segmenti Clienti</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
               Crea segmenti per targettizzare le campagne marketing
             </p>
           </div>
@@ -161,30 +161,30 @@ export default function SegmentsPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center justify-between'>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Nuovo Segmento
                   </h2>
-                  <button onClick={() => setShowForm(false)}>
+                  <AppleButton variant='ghost' size='sm' onClick={() => setShowForm(false)} aria-label='Chiudi'>
                     <X className='h-5 w-5 text-apple-gray' />
-                  </button>
+                  </AppleButton>
                 </div>
               </AppleCardHeader>
               <AppleCardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                     <div>
-                      <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>Nome</label>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Nome</label>
                       <Input {...register('name')} placeholder='Es: Clienti inattivi > 6 mesi' />
-                      {errors.name && <p className='text-xs text-red-500 mt-1'>{errors.name.message}</p>}
+                      {errors.name && <p className='text-footnote text-apple-red mt-1'>{errors.name.message}</p>}
                     </div>
                     <div>
-                      <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>Descrizione</label>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Descrizione</label>
                       <Input {...register('description')} placeholder='Descrizione opzionale' />
                     </div>
                   </div>
 
                   <div>
-                    <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-3 block flex items-center gap-2'>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-3 block flex items-center gap-2'>
                       <Filter className='h-4 w-4' /> Condizioni
                     </label>
                     <div className='space-y-3'>
@@ -194,7 +194,7 @@ export default function SegmentsPage() {
                             <select
                               value={cond.logic}
                               onChange={e => updateCondition(i, 'logic', e.target.value)}
-                              className='text-xs px-2 py-1 rounded-lg border border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec]'
+                              className='text-footnote px-2 py-1 rounded-lg border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]'
                             >
                               <option value='AND'>E</option>
                               <option value='OR'>O</option>
@@ -203,7 +203,7 @@ export default function SegmentsPage() {
                           <select
                             value={cond.field}
                             onChange={e => updateCondition(i, 'field', e.target.value)}
-                            className='text-sm px-3 py-2 rounded-xl border border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec]'
+                            className='text-body px-3 py-2 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]'
                           >
                             {FIELD_OPTIONS.map(f => (
                               <option key={f.value} value={f.value}>{f.label}</option>
@@ -212,7 +212,7 @@ export default function SegmentsPage() {
                           <select
                             value={cond.operator}
                             onChange={e => updateCondition(i, 'operator', e.target.value)}
-                            className='text-sm px-3 py-2 rounded-xl border border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec]'
+                            className='text-body px-3 py-2 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]'
                           >
                             {OPERATOR_OPTIONS.map(o => (
                               <option key={o.value} value={o.value}>{o.label}</option>
@@ -225,9 +225,9 @@ export default function SegmentsPage() {
                             className='w-32'
                           />
                           {conditions.length > 1 && (
-                            <button type='button' onClick={() => removeCondition(i)}>
+                            <AppleButton variant='ghost' size='sm' type='button' onClick={() => removeCondition(i)} aria-label={`Rimuovi condizione ${i + 1}`}>
                               <X className='h-4 w-4 text-apple-red' />
-                            </button>
+                            </AppleButton>
                           )}
                         </div>
                       ))}
@@ -254,14 +254,14 @@ export default function SegmentsPage() {
             <AppleCardHeader>
               <div className='flex items-center gap-2'>
                 <Users className='h-5 w-5 text-apple-blue' />
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>Segmenti</h2>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Segmenti</h2>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               {error ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>Impossibile caricare i segmenti</p>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Impossibile caricare i segmenti</p>
                   <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>Riprova</AppleButton>
                 </div>
               ) : isLoading ? (
@@ -273,8 +273,8 @@ export default function SegmentsPage() {
                   <div className='w-16 h-16 rounded-2xl bg-apple-blue/10 flex items-center justify-center mb-4'>
                     <Users className='h-8 w-8 text-apple-blue/60' />
                   </div>
-                  <p className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-1'>Nessun segmento</p>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366] max-w-sm mb-6'>
+                  <p className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-1'>Nessun segmento</p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] max-w-sm mb-6'>
                     Crea il primo segmento per organizzare i clienti e inviare campagne mirate.
                   </p>
                   <AppleButton icon={<Plus className='h-4 w-4' />} onClick={() => setShowForm(true)}>
@@ -286,22 +286,22 @@ export default function SegmentsPage() {
                   {segments.map(seg => (
                     <div
                       key={seg.id}
-                      className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a] transition-colors'
+                      className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] transition-colors'
                     >
                       <div className='flex items-center gap-4'>
                         <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
                           <Users className='h-5 w-5 text-apple-blue' />
                         </div>
                         <div>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>{seg.name}</p>
-                          <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>{seg.name}</p>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                             {seg.description || `${seg.conditions?.length || 0} condizioni`}
                           </p>
                         </div>
                       </div>
                       <div className='text-right'>
-                        <p className='text-title-3 font-bold text-apple-dark dark:text-[#ececec]'>{seg.customerCount}</p>
-                        <p className='text-[10px] text-apple-gray dark:text-[#636366]'>clienti</p>
+                        <p className='text-title-3 font-bold text-apple-dark dark:text-[var(--text-primary)]'>{seg.customerCount}</p>
+                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>clienti</p>
                       </div>
                     </div>
                   ))}

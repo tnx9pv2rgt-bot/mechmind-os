@@ -4,16 +4,27 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EstimateStatus, Prisma } from '@prisma/client';
+import { EstimateStatus, PublicTokenType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/services/prisma.service';
 import { LoggerService } from '../../common/services/logger.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
 import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
 import { CreateEstimateDto, UpdateEstimateDto, CreateEstimateLineDto } from '../dto/estimate.dto';
 
+type ApprovalChannel = 'SMS' | 'WHATSAPP' | 'EMAIL';
+
+interface LineApprovalInput {
+  lineId: string;
+  approved: boolean;
+  reason?: string;
+}
+
 const ESTIMATE_TRANSITIONS: TransitionMap = {
   DRAFT: ['SENT'],
-  SENT: ['ACCEPTED', 'REJECTED', 'EXPIRED'],
+  SENT: ['ACCEPTED', 'REJECTED', 'PARTIALLY_APPROVED', 'EXPIRED'],
+  PARTIALLY_APPROVED: ['ACCEPTED', 'CONVERTED'],
   ACCEPTED: ['CONVERTED'],
   REJECTED: [],
   EXPIRED: [],
@@ -33,6 +44,8 @@ export class EstimateService {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly logger: LoggerService,
+    private readonly publicTokenService: PublicTokenService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(
@@ -352,6 +365,258 @@ export class EstimateService {
     this.logger.log(
       `Estimate ${estimate.estimateNumber} converted to booking ${bookingId} for tenant ${tenantId}`,
     );
+    return updated;
+  }
+
+  // ==================== PUBLIC APPROVAL ====================
+
+  /**
+   * Send estimate for customer approval via public token link
+   */
+  async sendForApproval(
+    tenantId: string,
+    estimateId: string,
+    channel: ApprovalChannel,
+  ): Promise<{ approvalUrl: string }> {
+    const estimate = await this.findById(tenantId, estimateId);
+
+    if (!estimate) {
+      throw new NotFoundException(`Estimate ${estimateId} not found`);
+    }
+
+    // Transition to SENT if still DRAFT
+    if (estimate.status === EstimateStatus.DRAFT) {
+      validateTransition(estimate.status, EstimateStatus.SENT, ESTIMATE_TRANSITIONS, 'estimate');
+    }
+
+    // Revoke any previous approval tokens for this estimate
+    await this.publicTokenService.revokeTokensForEntity(tenantId, 'Estimate', estimateId);
+
+    // Generate new public token (72h expiry)
+    const publicToken = await this.publicTokenService.generateToken(
+      tenantId,
+      PublicTokenType.ESTIMATE_APPROVAL,
+      estimateId,
+      'Estimate',
+      72,
+      { channel },
+    );
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'https://app.mechmind.io');
+    const approvalUrl = `${frontendUrl}/public/estimates/${publicToken.token}`;
+
+    // Update estimate with approval info
+    await this.prisma.estimate.update({
+      where: { id: estimateId },
+      data: {
+        status: EstimateStatus.SENT,
+        sentAt: new Date(),
+        approvalToken: publicToken.token,
+        approvalSentAt: new Date(),
+        approvalMethod: channel,
+      },
+    });
+
+    this.eventEmitter.emit('estimate.sentForApproval', {
+      estimateId,
+      tenantId,
+      customerId: estimate.customerId,
+      channel,
+      approvalUrl,
+    });
+
+    this.logger.log(
+      `Estimate ${estimate.estimateNumber} sent for approval via ${channel} for tenant ${tenantId}`,
+    );
+
+    return { approvalUrl };
+  }
+
+  /**
+   * Retrieve estimate by its public approval token (no auth required)
+   */
+  async getByApprovalToken(
+    token: string,
+  ): Promise<ReturnType<PrismaService['estimate']['findFirst']>> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+
+    const estimate = await this.prisma.estimate.findFirst({
+      where: { id: tokenRecord.entityId },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+
+    if (!estimate) {
+      throw new NotFoundException('Preventivo non trovato');
+    }
+
+    return estimate;
+  }
+
+  /**
+   * Process line-by-line approval/rejection from customer via public token
+   */
+  async processApproval(
+    token: string,
+    approvals: LineApprovalInput[],
+  ): Promise<ReturnType<PrismaService['estimate']['findFirst']>> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+    const estimateId = tokenRecord.entityId;
+    const tenantId = tokenRecord.tenantId;
+
+    const estimate = await this.prisma.estimate.findFirst({
+      where: { id: estimateId },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+
+    if (!estimate) {
+      throw new NotFoundException('Preventivo non trovato');
+    }
+
+    if (estimate.status !== EstimateStatus.SENT) {
+      throw new BadRequestException(
+        `Il preventivo non è in stato SENT. Stato attuale: ${estimate.status}`,
+      );
+    }
+
+    const now = new Date();
+
+    // Update each line's approval status
+    for (const approval of approvals) {
+      const lineExists = estimate.lines.some(l => l.id === approval.lineId);
+      if (!lineExists) {
+        throw new BadRequestException(`Riga preventivo ${approval.lineId} non trovata`);
+      }
+
+      await this.prisma.estimateLine.update({
+        where: { id: approval.lineId },
+        data: {
+          customerApproved: approval.approved,
+          approvedAt: approval.approved ? now : null,
+          rejectedAt: approval.approved ? null : now,
+          rejectedReason: approval.approved ? null : (approval.reason ?? null),
+        },
+      });
+    }
+
+    // Determine overall status based on line approvals
+    const updatedLines = await this.prisma.estimateLine.findMany({
+      where: { estimateId },
+    });
+
+    const allApproved = updatedLines.every(l => l.customerApproved === true);
+    const allRejected = updatedLines.every(l => l.customerApproved === false);
+
+    let newStatus: EstimateStatus;
+    if (allApproved) {
+      newStatus = EstimateStatus.ACCEPTED;
+    } else if (allRejected) {
+      newStatus = EstimateStatus.REJECTED;
+    } else {
+      newStatus = EstimateStatus.PARTIALLY_APPROVED;
+    }
+
+    const updated = await this.prisma.estimate.update({
+      where: { id: estimateId },
+      data: {
+        status: newStatus,
+        ...(newStatus === EstimateStatus.ACCEPTED && { acceptedAt: now }),
+        ...(newStatus === EstimateStatus.REJECTED && { rejectedAt: now }),
+      },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+
+    // Consume token after successful approval
+    await this.publicTokenService.consumeToken(token);
+
+    // Emit appropriate event
+    if (newStatus === EstimateStatus.ACCEPTED) {
+      this.eventEmitter.emit('estimate.approved', {
+        estimateId,
+        tenantId,
+        customerId: estimate.customerId,
+      });
+    } else if (newStatus === EstimateStatus.PARTIALLY_APPROVED) {
+      this.eventEmitter.emit('estimate.partiallyApproved', {
+        estimateId,
+        tenantId,
+        customerId: estimate.customerId,
+        approvedLineIds: updatedLines.filter(l => l.customerApproved === true).map(l => l.id),
+        rejectedLineIds: updatedLines.filter(l => l.customerApproved === false).map(l => l.id),
+      });
+    } else {
+      this.eventEmitter.emit('estimate.rejected', {
+        estimateId,
+        tenantId,
+        customerId: estimate.customerId,
+      });
+    }
+
+    this.logger.log(
+      `Estimate ${estimate.estimateNumber} approval processed: ${newStatus} for tenant ${tenantId}`,
+    );
+
+    return updated;
+  }
+
+  /**
+   * Approve all lines of an estimate via public token
+   */
+  async approveAll(token: string): Promise<ReturnType<PrismaService['estimate']['findFirst']>> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+    const estimateId = tokenRecord.entityId;
+    const tenantId = tokenRecord.tenantId;
+
+    const estimate = await this.prisma.estimate.findFirst({
+      where: { id: estimateId },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+
+    if (!estimate) {
+      throw new NotFoundException('Preventivo non trovato');
+    }
+
+    if (estimate.status !== EstimateStatus.SENT) {
+      throw new BadRequestException(
+        `Il preventivo non è in stato SENT. Stato attuale: ${estimate.status}`,
+      );
+    }
+
+    const now = new Date();
+
+    // Approve all lines
+    await this.prisma.estimateLine.updateMany({
+      where: { estimateId },
+      data: {
+        customerApproved: true,
+        approvedAt: now,
+        rejectedAt: null,
+        rejectedReason: null,
+      },
+    });
+
+    // Update estimate status to ACCEPTED
+    const updated = await this.prisma.estimate.update({
+      where: { id: estimateId },
+      data: {
+        status: EstimateStatus.ACCEPTED,
+        acceptedAt: now,
+      },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+
+    // Consume token
+    await this.publicTokenService.consumeToken(token);
+
+    this.eventEmitter.emit('estimate.approved', {
+      estimateId,
+      tenantId,
+      customerId: estimate.customerId,
+    });
+
+    this.logger.log(
+      `Estimate ${estimate.estimateNumber} fully approved via token for tenant ${tenantId}`,
+    );
+
     return updated;
   }
 

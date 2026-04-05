@@ -493,6 +493,183 @@ describe('ReportingService', () => {
     });
   });
 
+  // ============== safeViewQuery edge cases ==============
+
+  describe('safeViewQuery (via getDashboardSummary)', () => {
+    it('should return empty array when error contains "relation"', async () => {
+      mockPrisma.$queryRaw.mockRejectedValue(
+        new Error('relation "mv_dashboard_summary" does not exist'),
+      );
+
+      const result = await service.getDashboardSummary(tenantId);
+
+      // safeViewQuery returns [] then getDashboardSummary accesses [0] which is undefined → null
+      expect(result).toBeNull();
+    });
+
+    it('should return empty array when error contains "does not exist" (non-relation)', async () => {
+      mockPrisma.$queryRaw.mockRejectedValue(new Error('column "foo" does not exist'));
+
+      const result = await service.getDashboardSummary(tenantId);
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle non-Error thrown values', async () => {
+      mockPrisma.$queryRaw.mockRejectedValue('string error with relation message');
+
+      // String(error) includes "relation"
+      const result = await service.getDashboardSummary(tenantId);
+      expect(result).toBeNull();
+    });
+
+    it('should rethrow errors that do not match view-missing patterns', async () => {
+      mockPrisma.$queryRaw.mockRejectedValue(new Error('permission denied'));
+
+      await expect(service.getDashboardSummary(tenantId)).rejects.toThrow('permission denied');
+    });
+  });
+
+  // ============== getDashboardKpis ==============
+
+  describe('getDashboardKpis', () => {
+    let mockKpiPrisma: Record<string, Record<string, jest.Mock>>;
+
+    beforeEach(() => {
+      mockKpiPrisma = {
+        customer: { count: jest.fn().mockResolvedValue(0) },
+        vehicle: { count: jest.fn().mockResolvedValue(0) },
+        invoice: {
+          aggregate: jest.fn().mockResolvedValue({ _sum: { total: null, subtotal: null } }),
+        },
+        booking: { count: jest.fn().mockResolvedValue(0) },
+        workOrder: { count: jest.fn().mockResolvedValue(0) },
+        estimate: { count: jest.fn().mockResolvedValue(0) },
+      };
+    });
+
+    async function buildServiceWithKpiPrisma(): Promise<ReportingService> {
+      const mod = await Test.createTestingModule({
+        providers: [ReportingService, { provide: PrismaService, useValue: mockKpiPrisma }],
+      }).compile();
+      return mod.get<ReportingService>(ReportingService);
+    }
+
+    it('should return all zero KPIs when database is empty', async () => {
+      // invoice.aggregate is called 4 times: fatturatoMese, unpaidInvoices, overdueInvoices, laborRevenue, paymentsLast7d
+      mockKpiPrisma.invoice.aggregate
+        .mockResolvedValueOnce({ _sum: { total: null } }) // fatturatoMese
+        .mockResolvedValueOnce({ _sum: { total: null } }) // unpaidInvoices
+        .mockResolvedValueOnce({ _sum: { total: null } }) // overdueInvoices
+        .mockResolvedValueOnce({ _sum: { subtotal: null, total: null } }) // laborRevenue
+        .mockResolvedValueOnce({ _sum: { total: null } }); // paymentsLast7d
+
+      // workOrder.count called 4 times
+      mockKpiPrisma.workOrder.count
+        .mockResolvedValueOnce(0) // workOrderAperti
+        .mockResolvedValueOnce(0) // woCompletedThisMonth
+        .mockResolvedValueOnce(0) // woTotalThisMonth
+        .mockResolvedValueOnce(0) // woCompletedPrevMonth
+        .mockResolvedValueOnce(0); // woTotalPrevMonth
+
+      // estimate.count called 4 times
+      mockKpiPrisma.estimate.count
+        .mockResolvedValueOnce(0) // estimatesThisMonth
+        .mockResolvedValueOnce(0) // estimatesConvertedThisMonth
+        .mockResolvedValueOnce(0) // estimatesPrevMonth
+        .mockResolvedValueOnce(0); // estimatesConvertedPrevMonth
+
+      const svc = await buildServiceWithKpiPrisma();
+      const result = await svc.getDashboardKpis(tenantId);
+
+      expect(result.clientiTotali).toBe(0);
+      expect(result.veicoliTotali).toBe(0);
+      expect(result.fatturatoMese).toBe(0);
+      expect(result.prenotazioniOggi).toBe(0);
+      expect(result.workOrderAperti).toBe(0);
+      expect(result.efficiency).toBe(0);
+      expect(result.efficiencyChange).toBe(0);
+      expect(result.conversion).toBe(0);
+      expect(result.conversionChange).toBe(0);
+      expect(result.unpaidAmount).toBe(0);
+      expect(result.overdueAmount).toBe(0);
+      expect(result.grossMargin).toBe(0);
+      expect(result.cashFlow7d).toBe(0);
+      expect(result.revenueTarget).toBe(0);
+    });
+
+    it('should calculate efficiency and conversion with non-zero data', async () => {
+      mockKpiPrisma.customer.count.mockResolvedValue(50);
+      mockKpiPrisma.vehicle.count.mockResolvedValue(75);
+      mockKpiPrisma.booking.count.mockResolvedValue(3);
+
+      // invoice aggregates
+      mockKpiPrisma.invoice.aggregate
+        .mockResolvedValueOnce({ _sum: { total: 10000 } }) // fatturatoMese
+        .mockResolvedValueOnce({ _sum: { total: 2000 } }) // unpaidInvoices
+        .mockResolvedValueOnce({ _sum: { total: 500 } }) // overdueInvoices
+        .mockResolvedValueOnce({ _sum: { subtotal: 8000, total: 10000 } }) // laborRevenue
+        .mockResolvedValueOnce({ _sum: { total: 5000 } }); // paymentsLast7d
+
+      // workOrder.count: open, completedThisMonth, totalThisMonth, completedPrev, totalPrev
+      mockKpiPrisma.workOrder.count
+        .mockResolvedValueOnce(5) // workOrderAperti
+        .mockResolvedValueOnce(8) // woCompletedThisMonth
+        .mockResolvedValueOnce(10) // woTotalThisMonth
+        .mockResolvedValueOnce(6) // woCompletedPrevMonth
+        .mockResolvedValueOnce(10); // woTotalPrevMonth
+
+      // estimate.count
+      mockKpiPrisma.estimate.count
+        .mockResolvedValueOnce(20) // estimatesThisMonth
+        .mockResolvedValueOnce(15) // estimatesConvertedThisMonth
+        .mockResolvedValueOnce(10) // estimatesPrevMonth
+        .mockResolvedValueOnce(5); // estimatesConvertedPrevMonth
+
+      const svc = await buildServiceWithKpiPrisma();
+      const result = await svc.getDashboardKpis(tenantId);
+
+      expect(result.clientiTotali).toBe(50);
+      expect(result.veicoliTotali).toBe(75);
+      expect(result.fatturatoMese).toBe(10000);
+      expect(result.prenotazioniOggi).toBe(3);
+      expect(result.workOrderAperti).toBe(5);
+      // efficiency: 8/10 = 80%, prev: 6/10 = 60%, change = 20
+      expect(result.efficiency).toBe(80);
+      expect(result.efficiencyChange).toBe(20);
+      // conversion: 15/20 = 75%, prev: 5/10 = 50%, change = 25
+      expect(result.conversion).toBe(75);
+      expect(result.conversionChange).toBe(25);
+      expect(result.unpaidAmount).toBe(2000);
+      expect(result.overdueAmount).toBe(500);
+      // grossMargin: 8000/10000 = 80%
+      expect(result.grossMargin).toBe(80);
+      expect(result.cashFlow7d).toBe(5000);
+      // revenueTarget: round(10000 * 1.15) = 11500
+      expect(result.revenueTarget).toBe(11500);
+    });
+
+    it('should handle null _sum values gracefully (zero-division guard)', async () => {
+      mockKpiPrisma.invoice.aggregate
+        .mockResolvedValueOnce({ _sum: { total: null } })
+        .mockResolvedValueOnce({ _sum: { total: null } })
+        .mockResolvedValueOnce({ _sum: { total: null } })
+        .mockResolvedValueOnce({ _sum: { subtotal: null, total: null } })
+        .mockResolvedValueOnce({ _sum: { total: null } });
+
+      mockKpiPrisma.workOrder.count.mockResolvedValue(0);
+      mockKpiPrisma.estimate.count.mockResolvedValue(0);
+
+      const svc = await buildServiceWithKpiPrisma();
+      const result = await svc.getDashboardKpis(tenantId);
+
+      // All should be 0, no NaN
+      expect(result.grossMargin).toBe(0);
+      expect(result.efficiency).toBe(0);
+      expect(result.conversion).toBe(0);
+    });
+  });
+
   // ============== getCustomKPIs ==============
 
   describe('getCustomKPIs', () => {
@@ -541,6 +718,54 @@ describe('ReportingService', () => {
         .mockResolvedValueOnce([]);
 
       await expect(service.getCustomKPIs(tenantId)).rejects.toThrow('Connection lost');
+    });
+
+    it('should convert BigInt values to Number for JSON serialization', async () => {
+      const bookingMetrics = [{ today_bookings: BigInt(5), completed_today: BigInt(3) }];
+      const revenueMetrics = [{ month_revenue: BigInt(25000) }];
+      const customerMetrics = [
+        {
+          active_customers_30d: BigInt(150),
+          returning_customers: BigInt(80),
+          avg_bookings_per_customer: 2.5,
+        },
+      ];
+      const inventoryMetrics = [
+        { low_stock_count: BigInt(3), total_inventory_value: BigInt(45000) },
+      ];
+
+      mockPrisma.$queryRaw
+        .mockResolvedValueOnce(bookingMetrics)
+        .mockResolvedValueOnce(revenueMetrics)
+        .mockResolvedValueOnce(customerMetrics)
+        .mockResolvedValueOnce(inventoryMetrics);
+
+      const result = await service.getCustomKPIs(tenantId);
+
+      // BigInt values should be converted to Number
+      expect(result.bookings).toEqual({ today_bookings: 5, completed_today: 3 });
+      expect(result.revenue).toEqual({ month_revenue: 25000 });
+      expect(result.customers).toEqual({
+        active_customers_30d: 150,
+        returning_customers: 80,
+        avg_bookings_per_customer: 2.5,
+      });
+      expect(result.inventory).toEqual({ low_stock_count: 3, total_inventory_value: 45000 });
+    });
+
+    it('should use fallback defaults when query returns empty arrays', async () => {
+      mockPrisma.$queryRaw
+        .mockResolvedValueOnce([]) // booking - empty
+        .mockResolvedValueOnce([]) // revenue - empty
+        .mockResolvedValueOnce([]) // customer - empty
+        .mockResolvedValueOnce([]); // inventory - empty
+
+      const result = await service.getCustomKPIs(tenantId);
+
+      expect(result.bookings).toEqual({ today_bookings: 0, completed_today: 0 });
+      expect(result.revenue).toEqual({ month_revenue: 0 });
+      expect(result.customers).toEqual({});
+      expect(result.inventory).toEqual({ low_stock_count: 0, total_inventory_value: 0 });
     });
   });
 });

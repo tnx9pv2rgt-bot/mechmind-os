@@ -3,7 +3,7 @@ import { Home } from 'lucide-react';
 
 export default function NotFound(): React.ReactElement {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f4f4f4] px-6 dark:bg-[#212121]">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--surface-tertiary)] px-6 dark:bg-[var(--surface-primary)]">
       <div className="text-center">
         {/* Big 404 */}
         <p className="text-[120px] font-bold leading-none tracking-tighter text-gray-200 sm:text-[180px] dark:text-gray-800">

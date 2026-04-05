@@ -23,6 +23,7 @@ export function CtaSection(): React.ReactElement {
       const res = await fetch('/api/auth/demo-session', { method: 'POST' });
       if (res.ok) {
         localStorage.setItem('mechmind_demo', 'true');
+        localStorage.setItem('mechmind_demo_start', Date.now().toString());
         window.location.href = '/dashboard';
         return;
       }
@@ -32,10 +33,10 @@ export function CtaSection(): React.ReactElement {
     }
   }
   return (
-    <section className="bg-white py-20 dark:bg-[#212121] lg:py-28">
+    <section className="bg-white py-20 dark:bg-[var(--surface-primary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
-          className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl bg-[#0d0d0d] dark:bg-[#171717]"
+          className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl bg-[#0d0d0d] dark:bg-[var(--surface-secondary)]"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
@@ -70,7 +71,7 @@ export function CtaSection(): React.ReactElement {
             >
               <Link
                 href="/auth/register"
-                className="inline-flex h-14 min-w-[240px] items-center justify-center gap-2.5 rounded-full bg-white px-8 text-base font-semibold text-[#0d0d0d] transition-all duration-200 hover:bg-[#e5e5e5] active:scale-[0.97]"
+                className="inline-flex h-14 min-w-[240px] items-center justify-center gap-2.5 rounded-full border border-white/20 px-8 text-base font-medium text-white transition-all duration-200 hover:bg-white/10 active:scale-[0.97]"
               >
                 Prova gratis &rarr;
               </Link>

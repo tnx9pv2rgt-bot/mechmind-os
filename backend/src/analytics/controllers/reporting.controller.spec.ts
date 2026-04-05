@@ -7,11 +7,12 @@ import { KpiService } from '../services/kpi.service';
 describe('ReportingController', () => {
   let controller: ReportingController;
   let service: jest.Mocked<ReportingService>;
+  let module: TestingModule;
 
   const TENANT_ID = 'tenant-001';
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [ReportingController],
       providers: [
         {
@@ -282,6 +283,104 @@ describe('ReportingController', () => {
       expect(service.exportRevenue).toHaveBeenCalledWith(TENANT_ID, 2026, 'csv');
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockRes.send).toHaveBeenCalledWith(csvData);
+    });
+  });
+
+  // ============== SEARCH ==============
+
+  describe('search', () => {
+    it('should wrap search results in success response', async () => {
+      const searchService = module.get(SearchService) as jest.Mocked<SearchService>;
+      searchService.search.mockResolvedValue({
+        results: [{ id: '1', type: 'customer' }],
+        total: 1,
+      } as never);
+
+      const result = await controller.search(TENANT_ID, 'test query');
+
+      expect(searchService.search).toHaveBeenCalledWith(TENANT_ID, 'test query');
+      expect(result).toEqual({
+        success: true,
+        data: [{ id: '1', type: 'customer' }],
+        meta: { total: 1 },
+      });
+    });
+
+    it('should return empty results when nothing matches', async () => {
+      const searchService = module.get(SearchService) as jest.Mocked<SearchService>;
+      searchService.search.mockResolvedValue({ results: [], total: 0 } as never);
+
+      const result = await controller.search(TENANT_ID, 'nonexistent');
+
+      expect(result).toEqual({
+        success: true,
+        data: [],
+        meta: { total: 0 },
+      });
+    });
+  });
+
+  // ============== KPI DASHBOARD ==============
+
+  describe('getKpiDashboard', () => {
+    it('should wrap KPI data in success response', async () => {
+      const kpiService = module.get(KpiService) as jest.Mocked<KpiService>;
+      kpiService.getDashboardKpi.mockResolvedValue({ revenue: 5000, bookings: 20 } as never);
+
+      const result = await controller.getKpiDashboard(TENANT_ID, '2026-03-01', '2026-03-31');
+
+      expect(kpiService.getDashboardKpi).toHaveBeenCalledWith(
+        TENANT_ID,
+        new Date('2026-03-01'),
+        new Date('2026-03-31'),
+      );
+      expect(result).toEqual({
+        success: true,
+        data: { revenue: 5000, bookings: 20 },
+      });
+    });
+  });
+
+  // ============== EXPORT FORMAT BRANCHES ==============
+
+  describe('exportBookings — JSON format', () => {
+    it('should set Content-Type to application/json for JSON format', async () => {
+      const jsonData = JSON.stringify([{ id: '1' }]);
+      service.exportBookings.mockResolvedValue(jsonData as never);
+
+      const mockRes = { setHeader: jest.fn(), send: jest.fn() };
+      const dto = { from: '2026-03-01', to: '2026-03-31', format: 'json' as const };
+
+      await controller.exportBookings(TENANT_ID, mockRes as never, dto as never);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json');
+    });
+  });
+
+  describe('exportInventory — CSV format (default)', () => {
+    it('should default to CSV when format not provided', async () => {
+      const csvData = 'id,name\n1,Part';
+      service.exportInventory.mockResolvedValue(csvData as never);
+
+      const mockRes = { setHeader: jest.fn(), send: jest.fn() };
+
+      await controller.exportInventory(TENANT_ID, mockRes as never, undefined as never);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
+    });
+  });
+
+  describe('exportRevenue — JSON format', () => {
+    it('should set Content-Type to application/json for JSON format', async () => {
+      const jsonData = JSON.stringify({ revenue: [] });
+      service.exportRevenue.mockResolvedValue(jsonData as never);
+
+      const mockRes = { setHeader: jest.fn(), send: jest.fn() };
+      const dto = { from: '2026-01-01', to: '2026-12-31', format: 'json' as const };
+
+      await controller.exportRevenue(TENANT_ID, mockRes as never, dto as never);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json');
     });
   });
 

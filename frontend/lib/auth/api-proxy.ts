@@ -31,7 +31,7 @@ export async function proxyToNestJS(config: ProxyConfig): Promise<NextResponse> 
   const { backendPath, method = 'GET', body, params } = config;
   const cookieStore = await cookies();
 
-  const token = cookieStore.get('auth_token')?.value;
+  const token = cookieStore.get('auth_token')?.value || cookieStore.get('portal_token')?.value;
   let tenantId = cookieStore.get('tenant_id')?.value;
   let tenantSlug = cookieStore.get('tenant_slug')?.value;
 

@@ -119,7 +119,7 @@ export default function PortalDocumentsPage() {
             placeholder='Cerca per numero documento o titolo...'
             value={searchQuery}
             onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
-            className='pl-12 h-12 rounded-xl bg-white dark:bg-[#2f2f2f]'
+            className='pl-12 h-12 rounded-xl bg-white dark:bg-[var(--surface-elevated)]'
             aria-label='Cerca documenti'
           />
         </div>
@@ -143,7 +143,7 @@ export default function PortalDocumentsPage() {
               ${
                 activeTab === tab.key
                   ? 'bg-apple-blue text-white shadow-apple'
-                  : 'bg-white dark:bg-[#2f2f2f] text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] shadow-apple'
+                  : 'bg-white dark:bg-[var(--surface-elevated)] text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] shadow-apple'
               }
             `}
           >

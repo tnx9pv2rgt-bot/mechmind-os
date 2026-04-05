@@ -147,6 +147,45 @@ describe('InvoiceController', () => {
         undefined,
       );
     });
+
+    it('should parse page and limit from string query params', async () => {
+      const expected = {
+        data: [mockInvoice],
+        meta: { total: 1, page: 2, limit: 10, pages: 1 },
+      };
+      service.findAll.mockResolvedValue(expected as never);
+
+      const result = await controller.findAll(
+        TENANT_ID,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        '2',
+        '10',
+      );
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        {
+          status: undefined,
+          customerId: undefined,
+          dateFrom: undefined,
+          dateTo: undefined,
+        },
+        2,
+        10,
+      );
+      expect(result.success).toBe(true);
+    });
+
+    it('should pass page without limit', async () => {
+      service.findAll.mockResolvedValue({ data: [], meta: { total: 0 } } as never);
+
+      await controller.findAll(TENANT_ID, undefined, undefined, undefined, undefined, '3');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.anything(), 3, undefined);
+    });
   });
 
   describe('create', () => {

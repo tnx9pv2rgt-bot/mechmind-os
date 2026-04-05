@@ -249,7 +249,7 @@ export function RealtimeActivityFeed(): React.ReactElement {
                     {activity.description}
                   </p>
                 </div>
-                <span className="flex-shrink-0 text-[11px] text-[#666666] tabular-nums">
+                <span className="flex-shrink-0 text-[11px] text-[var(--text-tertiary)] tabular-nums">
                   {formatRelativeTime(activity.timestamp)}
                 </span>
               </motion.div>
@@ -260,7 +260,7 @@ export function RealtimeActivityFeed(): React.ReactElement {
 
       {isPaused && (
         <div className="mt-2 text-center">
-          <span className="text-[10px] text-[#666666] uppercase tracking-wider">
+          <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">
             Scorrimento in pausa
           </span>
         </div>

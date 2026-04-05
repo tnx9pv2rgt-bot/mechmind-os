@@ -50,33 +50,33 @@ type EstimateStatus = 'ALL' | 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'EXPI
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
   DRAFT: {
-    color: 'text-gray-700 dark:text-gray-300',
-    bg: 'bg-gray-200 dark:bg-gray-700',
+    color: 'text-apple-gray dark:text-[var(--text-secondary)]',
+    bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]',
     label: 'Bozza',
   },
   SENT: {
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    color: 'text-apple-blue',
+    bg: 'bg-apple-blue/10',
     label: 'Inviato',
   },
   ACCEPTED: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-apple-green',
+    bg: 'bg-apple-green/10',
     label: 'Accettato',
   },
   REJECTED: {
-    color: 'text-red-700 dark:text-red-300',
-    bg: 'bg-red-100 dark:bg-red-900/40',
+    color: 'text-apple-red',
+    bg: 'bg-apple-red/10',
     label: 'Rifiutato',
   },
   EXPIRED: {
-    color: 'text-orange-700 dark:text-orange-300',
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    color: 'text-apple-orange',
+    bg: 'bg-apple-orange/10',
     label: 'Scaduto',
   },
   CONVERTED: {
-    color: 'text-purple-700 dark:text-purple-300',
-    bg: 'bg-purple-100 dark:bg-purple-900/40',
+    color: 'text-apple-purple',
+    bg: 'bg-apple-purple/10',
     label: 'Convertito',
   },
 };
@@ -216,11 +216,11 @@ export default function EstimatesPage() {
   return (
     <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Preventivi</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Preventivi</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci i preventivi per i tuoi clienti
             </p>
           </div>
@@ -255,10 +255,10 @@ export default function EstimatesPage() {
                       <stat.icon className='h-5 w-5 text-white' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366]'>{stat.label}</p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -285,7 +285,7 @@ export default function EstimatesPage() {
                   <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value as EstimateStatus)}
-                    className='h-10 pl-10 pr-4 rounded-md border border-gray-300 dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-sm text-gray-900 dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none cursor-pointer'
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {statusOptions.map(opt => (
                       <option key={opt.value} value={opt.value}>
@@ -303,7 +303,7 @@ export default function EstimatesPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Elenco Preventivi
               </h2>
             </AppleCardHeader>
@@ -311,7 +311,7 @@ export default function EstimatesPage() {
               {estimatesError || statsError ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                     Impossibile caricare i preventivi
                   </p>
                   <AppleButton
@@ -332,7 +332,7 @@ export default function EstimatesPage() {
               ) : filteredEstimates.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                     Nessun preventivo. Crea il primo preventivo.
                   </p>
                   <AppleButton
@@ -355,7 +355,7 @@ export default function EstimatesPage() {
                     return (
                       <motion.div
                         key={est.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a] hover:shadow-apple transition-all duration-300'
+                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
@@ -366,10 +366,10 @@ export default function EstimatesPage() {
                             <FileText className='h-6 w-6 text-apple-blue' />
                           </div>
                           <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               {est.number || `#${est.id.slice(0, 8)}`}
                             </p>
-                            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                               {est.customerName} &bull; {est.vehiclePlate}{' '}
                               {est.vehicleBrand && `${est.vehicleBrand} ${est.vehicleModel || ''}`}
                             </p>
@@ -377,14 +377,14 @@ export default function EstimatesPage() {
                         </div>
                         <div className='flex items-center gap-4'>
                           <span
-                            className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
+                            className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
                           >
                             {status.label}
                           </span>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[#ececec] min-w-[100px] text-right'>
+                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[100px] text-right'>
                             {formatCurrency(est.total)}
                           </p>
-                          <p className='text-footnote text-apple-gray dark:text-[#636366] min-w-[80px] text-right'>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
                             {new Date(est.createdAt).toLocaleDateString('it-IT')}
                           </p>
                           <div className='flex items-center gap-2'>

@@ -5,11 +5,21 @@ import { Response } from 'express';
 import { PrismaService } from '../services/prisma.service';
 import { RedisService } from '../services/redis.service';
 import { LoggerService } from '../services/logger.service';
+import { ShutdownService } from '../services/shutdown.service';
+
+interface MemoryInfo {
+  rss: number;
+  heapUsed: number;
+  heapTotal: number;
+  external: number;
+  status: 'ok' | 'warning' | 'critical';
+}
 
 interface HealthCheckResult {
   status: 'ok' | 'degraded' | 'unhealthy';
   timestamp: string;
   uptime: number;
+  memory: MemoryInfo;
   checks: Record<string, ComponentCheck>;
 }
 
@@ -27,6 +37,7 @@ export class HealthController {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly logger: LoggerService,
+    private readonly shutdownService: ShutdownService,
   ) {}
 
   /**
@@ -59,6 +70,7 @@ export class HealthController {
       status: allUp ? 'ok' : dbUp ? 'degraded' : 'unhealthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      memory: this.getMemoryInfo(),
       checks,
     };
 
@@ -86,8 +98,18 @@ export class HealthController {
   @Get('readiness')
   @ApiOperation({ summary: 'Readiness probe - il server puo gestire richieste?' })
   @ApiResponse({ status: 200, description: 'Server pronto' })
-  @ApiResponse({ status: 503, description: 'Server non pronto' })
+  @ApiResponse({ status: 503, description: 'Server non pronto o in shutdown' })
   async readiness(@Res() res: Response): Promise<void> {
+    // During shutdown, immediately return 503 so the load balancer stops routing traffic
+    if (this.shutdownService.isShuttingDown) {
+      res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+        status: 'shutting_down',
+        timestamp: new Date().toISOString(),
+        message: 'Server is shutting down, draining in-flight requests',
+      });
+      return;
+    }
+
     const dbCheck = await this.checkDatabase();
 
     const statusCode = dbCheck.status === 'up' ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
@@ -107,6 +129,22 @@ export class HealthController {
       this.logger.error('Health check: database unreachable', (error as Error).message);
       return { status: 'down', latency: Date.now() - start, error: 'Database unreachable' };
     }
+  }
+
+  private getMemoryInfo(): MemoryInfo {
+    const mem = process.memoryUsage();
+    const heapUsedMb = mem.heapUsed / 1024 / 1024;
+    let status: 'ok' | 'warning' | 'critical' = 'ok';
+    if (heapUsedMb > 512) status = 'critical';
+    else if (heapUsedMb > 256) status = 'warning';
+
+    return {
+      rss: Math.round(mem.rss / 1024 / 1024),
+      heapUsed: Math.round(heapUsedMb),
+      heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+      external: Math.round(mem.external / 1024 / 1024),
+      status,
+    };
   }
 
   private async checkRedis(): Promise<ComponentCheck> {

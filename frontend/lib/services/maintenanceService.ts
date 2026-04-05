@@ -2,30 +2,32 @@
  * MechMind OS - Preventive Maintenance Service (Multi-Tenant)
  *
  * Service layer for managing vehicle preventive maintenance schedules.
- * All operations are scoped to the current tenant for data isolation.
+ * All operations delegate to the NestJS backend API.
  *
  * @module lib/services/maintenanceService
- * @version 2.0.0
- * @requires @prisma/client
+ * @version 3.0.0
  */
 
-import { prisma } from '@/lib/prisma';
-import type {
-  MaintenanceSchedule,
-  MaintenanceType,
-  NotificationLevel,
-  Prisma,
-} from '@prisma/client';
-import {
-  tryGetTenantContext,
-  requireTenantId,
-  NoTenantContextError,
-  buildTenantQuery,
-} from '@/lib/tenant/context';
+import { BACKEND_BASE } from '@/lib/config';
+import { requireTenantId } from '@/lib/tenant/context';
+
+const BACKEND_URL = BACKEND_BASE;
+const TIMEOUT_MS = 15_000;
 
 // =============================================================================
 // Type Definitions
 // =============================================================================
+
+export type MaintenanceType =
+  | 'OIL_CHANGE'
+  | 'TIRE_ROTATION'
+  | 'BRAKE_CHECK'
+  | 'FILTER'
+  | 'INSPECTION'
+  | 'BELTS'
+  | 'BATTERY';
+
+export type NotificationLevel = 'ALERT' | 'WARNING' | 'CRITICAL';
 
 export interface InspectionFinding {
   id: string;
@@ -93,7 +95,24 @@ export interface PaginatedMaintenance {
   totalPages: number;
 }
 
-export interface MaintenanceScheduleWithVehicle extends MaintenanceSchedule {
+export interface MaintenanceScheduleWithVehicle {
+  id: string;
+  tenantId: string;
+  vehicleId: string;
+  type: MaintenanceType;
+  intervalKm: number;
+  intervalMonths: number;
+  lastServiceDate: Date;
+  lastServiceKm: number;
+  nextDueDate: Date;
+  nextDueKm: number;
+  daysUntilDue: number;
+  kmUntilDue: number;
+  isOverdue: boolean;
+  notificationLevel: NotificationLevel;
+  alertSentAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   vehicle: {
     id: string;
     make: string;
@@ -111,13 +130,13 @@ export interface MaintenanceFilters {
   dueBefore?: Date;
   dueAfter?: Date;
   notificationLevel?: NotificationLevel;
-  tenantId?: string; // Optional override for admin operations
+  tenantId?: string;
 }
 
 export interface PaginationParams {
   page?: number;
   limit?: number;
-  sortBy?: keyof MaintenanceSchedule;
+  sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -178,19 +197,57 @@ const logger = {
 };
 
 // =============================================================================
+// Backend HTTP Helper
+// =============================================================================
+
+async function backendFetch<T>(
+  path: string,
+  options?: RequestInit & { tenantId?: string }
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  };
+
+  if (options?.tenantId) {
+    headers['x-tenant-id'] = options.tenantId;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new MaintenanceNotFoundError('unknown');
+      }
+      const body = await res.json().catch(() => ({}));
+      const msg = (body as { error?: { message?: string } })?.error?.message || `Backend error: ${res.status}`;
+      throw new Error(msg);
+    }
+
+    const body = await res.json();
+    return ((body as { data?: T }).data ?? body) as T;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// =============================================================================
 // Tenant Context Helper
 // =============================================================================
 
-/**
- * Get tenant ID from context or input
- */
 async function resolveTenantId(inputTenantId?: string): Promise<string> {
-  // If tenantId provided explicitly (e.g., for admin operations), use it
   if (inputTenantId) {
     return inputTenantId;
   }
 
-  // Otherwise, get from context
   try {
     return await requireTenantId();
   } catch {
@@ -225,16 +282,13 @@ export function calculateNextDue(
 
   const isOverdue = daysUntilDue < 0;
 
-  const result: NextDueCalculation = {
+  return {
     nextDueDate,
     nextDueKm,
     daysUntilDue,
     kmUntilDue,
     isOverdue,
   };
-
-  logger.debug('Next due calculated', result);
-  return result;
 }
 
 export async function createMaintenanceSchedule(
@@ -249,88 +303,11 @@ export async function createMaintenanceSchedule(
     type: data.type,
   });
 
-  try {
-    // Validate required fields
-    if (!data.vehicleId) {
-      throw new MaintenanceValidationError('Vehicle ID is required', 'vehicleId');
-    }
-    if (!data.type) {
-      throw new MaintenanceValidationError('Maintenance type is required', 'type');
-    }
-    if (data.intervalKm <= 0) {
-      throw new MaintenanceValidationError('Interval KM must be positive', 'intervalKm');
-    }
-    if (data.intervalMonths <= 0) {
-      throw new MaintenanceValidationError('Interval months must be positive', 'intervalMonths');
-    }
-    if (data.lastServiceKm < 0) {
-      throw new MaintenanceValidationError('Last service KM cannot be negative', 'lastServiceKm');
-    }
-
-    // Verify vehicle exists AND belongs to tenant
-    const vehicle = await prisma.vehicle.findFirst({
-      where: {
-        id: data.vehicleId,
-        tenantId,
-      },
-    });
-
-    if (!vehicle) {
-      throw new VehicleNotFoundError(data.vehicleId);
-    }
-
-    const nextDue = calculateNextDue(
-      data.lastServiceKm,
-      data.lastServiceDate,
-      data.intervalKm,
-      data.intervalMonths
-    );
-
-    // Create schedule with tenant ID
-    const schedule = await prisma.maintenanceSchedule.create({
-      data: {
-        tenantId,
-        vehicleId: data.vehicleId,
-        type: data.type,
-        intervalKm: data.intervalKm,
-        intervalMonths: data.intervalMonths,
-        lastServiceDate: data.lastServiceDate,
-        lastServiceKm: data.lastServiceKm,
-        nextDueDate: nextDue.nextDueDate,
-        nextDueKm: nextDue.nextDueKm,
-        daysUntilDue: nextDue.daysUntilDue,
-        kmUntilDue: nextDue.kmUntilDue,
-        isOverdue: nextDue.isOverdue,
-        notificationLevel: data.notificationLevel || 'ALERT',
-      },
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    logger.info('Maintenance schedule created', { tenantId, scheduleId: schedule.id });
-    return schedule;
-  } catch (error) {
-    if (
-      error instanceof MaintenanceValidationError ||
-      error instanceof VehicleNotFoundError ||
-      error instanceof TenantRequiredError
-    ) {
-      throw error;
-    }
-
-    logger.error('Failed to create maintenance schedule', error, { tenantId, data });
-    throw new Error('Failed to create maintenance schedule');
-  }
+  return backendFetch<MaintenanceScheduleWithVehicle>('v1/maintenance', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    tenantId,
+  });
 }
 
 export async function getMaintenanceScheduleById(
@@ -339,50 +316,10 @@ export async function getMaintenanceScheduleById(
 ): Promise<MaintenanceScheduleWithVehicle> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.debug('Fetching maintenance schedule', { tenantId, scheduleId: id });
-
-  try {
-    if (!id) {
-      throw new MaintenanceValidationError('Schedule ID is required');
-    }
-
-    // Must include tenantId in query for data isolation
-    const schedule = await prisma.maintenanceSchedule.findFirst({
-      where: {
-        id,
-        tenantId,
-      },
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    if (!schedule) {
-      throw new MaintenanceNotFoundError(id);
-    }
-
-    return schedule;
-  } catch (error) {
-    if (
-      error instanceof MaintenanceNotFoundError ||
-      error instanceof MaintenanceValidationError ||
-      error instanceof TenantRequiredError
-    ) {
-      throw error;
-    }
-
-    logger.error('Failed to fetch maintenance schedule', error, { tenantId, scheduleId: id });
-    throw new Error('Failed to fetch maintenance schedule');
-  }
+  return backendFetch<MaintenanceScheduleWithVehicle>(`v1/maintenance/${id}`, {
+    method: 'GET',
+    tenantId,
+  });
 }
 
 export async function updateMaintenanceSchedule(
@@ -392,82 +329,11 @@ export async function updateMaintenanceSchedule(
 ): Promise<MaintenanceScheduleWithVehicle> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.info('Updating maintenance schedule', { tenantId, scheduleId: id });
-
-  try {
-    if (!id) {
-      throw new MaintenanceValidationError('Schedule ID is required');
-    }
-
-    // Check if schedule exists AND belongs to tenant
-    const existing = await prisma.maintenanceSchedule.findFirst({
-      where: {
-        id,
-        tenantId,
-      },
-    });
-
-    if (!existing) {
-      throw new MaintenanceNotFoundError(id);
-    }
-
-    let updateData: Prisma.MaintenanceScheduleUpdateInput = { ...data };
-
-    if (
-      data.lastServiceDate ||
-      data.lastServiceKm !== undefined ||
-      data.intervalKm !== undefined ||
-      data.intervalMonths !== undefined
-    ) {
-      const lastDate = data.lastServiceDate || existing.lastServiceDate;
-      const lastKm = data.lastServiceKm !== undefined ? data.lastServiceKm : existing.lastServiceKm;
-      const intervalKm = data.intervalKm !== undefined ? data.intervalKm : existing.intervalKm;
-      const intervalMonths =
-        data.intervalMonths !== undefined ? data.intervalMonths : existing.intervalMonths;
-
-      const nextDue = calculateNextDue(lastKm, lastDate, intervalKm, intervalMonths);
-
-      updateData = {
-        ...updateData,
-        nextDueDate: nextDue.nextDueDate,
-        nextDueKm: nextDue.nextDueKm,
-        daysUntilDue: nextDue.daysUntilDue,
-        kmUntilDue: nextDue.kmUntilDue,
-        isOverdue: nextDue.isOverdue,
-      };
-    }
-
-    const schedule = await prisma.maintenanceSchedule.update({
-      where: { id },
-      data: updateData,
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    logger.info('Maintenance schedule updated', { tenantId, scheduleId: id });
-    return schedule;
-  } catch (error) {
-    if (
-      error instanceof MaintenanceNotFoundError ||
-      error instanceof MaintenanceValidationError ||
-      error instanceof TenantRequiredError
-    ) {
-      throw error;
-    }
-
-    logger.error('Failed to update maintenance schedule', error, { tenantId, scheduleId: id });
-    throw new Error('Failed to update maintenance schedule');
-  }
+  return backendFetch<MaintenanceScheduleWithVehicle>(`v1/maintenance/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    tenantId,
+  });
 }
 
 export async function deleteMaintenanceSchedule(
@@ -476,43 +342,12 @@ export async function deleteMaintenanceSchedule(
 ): Promise<{ success: boolean; deletedAt: Date }> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.info('Deleting maintenance schedule', { tenantId, scheduleId: id });
+  await backendFetch<void>(`v1/maintenance/${id}`, {
+    method: 'DELETE',
+    tenantId,
+  });
 
-  try {
-    if (!id) {
-      throw new MaintenanceValidationError('Schedule ID is required');
-    }
-
-    // Check if schedule exists AND belongs to tenant
-    const existing = await prisma.maintenanceSchedule.findFirst({
-      where: {
-        id,
-        tenantId,
-      },
-    });
-
-    if (!existing) {
-      throw new MaintenanceNotFoundError(id);
-    }
-
-    await prisma.maintenanceSchedule.delete({
-      where: { id },
-    });
-
-    logger.info('Maintenance schedule deleted', { tenantId, scheduleId: id });
-    return { success: true, deletedAt: new Date() };
-  } catch (error) {
-    if (
-      error instanceof MaintenanceNotFoundError ||
-      error instanceof MaintenanceValidationError ||
-      error instanceof TenantRequiredError
-    ) {
-      throw error;
-    }
-
-    logger.error('Failed to delete maintenance schedule', error, { tenantId, scheduleId: id });
-    throw new Error('Failed to delete maintenance schedule');
-  }
+  return { success: true, deletedAt: new Date() };
 }
 
 export async function listMaintenanceSchedules(
@@ -522,144 +357,45 @@ export async function listMaintenanceSchedules(
 ): Promise<PaginatedMaintenance> {
   const tenantId = filters.tenantId || (await resolveTenantId(inputTenantId));
 
-  logger.debug('Listing maintenance schedules', { tenantId, filters, pagination });
+  const params = new URLSearchParams();
+  if (filters.vehicleId) params.set('vehicleId', filters.vehicleId);
+  if (filters.type) params.set('type', filters.type);
+  if (filters.isOverdue !== undefined) params.set('isOverdue', String(filters.isOverdue));
+  if (filters.notificationLevel) params.set('notificationLevel', filters.notificationLevel);
+  if (filters.dueBefore) params.set('dueBefore', filters.dueBefore.toISOString());
+  if (filters.dueAfter) params.set('dueAfter', filters.dueAfter.toISOString());
+  if (pagination.page) params.set('page', String(pagination.page));
+  if (pagination.limit) params.set('limit', String(pagination.limit));
+  if (pagination.sortBy) params.set('sortBy', pagination.sortBy);
+  if (pagination.sortOrder) params.set('sortOrder', pagination.sortOrder);
 
-  try {
-    const page = pagination.page ?? 1;
-    const limit = pagination.limit ?? 20;
-    const skip = (page - 1) * limit;
-    const sortBy = pagination.sortBy ?? 'nextDueDate';
-    const sortOrder = pagination.sortOrder ?? 'asc';
+  const qs = params.toString();
+  const path = `v1/maintenance${qs ? `?${qs}` : ''}`;
 
-    // Build where clause WITH tenant isolation
-    const where: Prisma.MaintenanceScheduleWhereInput = {
-      tenantId, // Always filter by tenant
-    };
-
-    if (filters.vehicleId) {
-      where.vehicleId = filters.vehicleId;
-    }
-
-    if (filters.type) {
-      where.type = filters.type;
-    }
-
-    if (filters.isOverdue !== undefined) {
-      where.isOverdue = filters.isOverdue;
-    }
-
-    if (filters.notificationLevel) {
-      where.notificationLevel = filters.notificationLevel;
-    }
-
-    if (filters.dueBefore || filters.dueAfter) {
-      where.nextDueDate = {};
-      if (filters.dueAfter) {
-        where.nextDueDate.gte = filters.dueAfter;
-      }
-      if (filters.dueBefore) {
-        where.nextDueDate.lte = filters.dueBefore;
-      }
-    }
-
-    const [total, items] = await Promise.all([
-      prisma.maintenanceSchedule.count({ where }),
-      prisma.maintenanceSchedule.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          vehicle: {
-            select: {
-              id: true,
-              make: true,
-              model: true,
-              year: true,
-              licensePlate: true,
-              mileage: true,
-            },
-          },
-        },
-      }),
-    ]);
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
-  } catch (error) {
-    if (error instanceof TenantRequiredError) {
-      throw error;
-    }
-
-    logger.error('Failed to list maintenance schedules', error, { tenantId, filters, pagination });
-    throw new Error('Failed to list maintenance schedules');
-  }
+  return backendFetch<PaginatedMaintenance>(path, {
+    method: 'GET',
+    tenantId,
+  });
 }
 
 /**
  * Get overdue maintenance items for a tenant
- * CRITICAL: Always filters by tenantId for data isolation
  */
 export async function getOverdueItems(
   tenantIdOrVehicleId?: string,
   vehicleId?: string,
   inputTenantId?: string
 ): Promise<MaintenanceScheduleWithVehicle[]> {
-  // Handle both signatures for backward compatibility
-  const tenantContext = await tryGetTenantContext();
-  const actualTenantId = inputTenantId || tenantContext?.tenantId || tenantIdOrVehicleId;
-
+  const tenantId = inputTenantId || tenantIdOrVehicleId || (await resolveTenantId());
   const actualVehicleId = vehicleId || (inputTenantId ? tenantIdOrVehicleId : undefined);
 
-  if (!actualTenantId) {
-    throw new TenantRequiredError();
-  }
+  const params = new URLSearchParams({ isOverdue: 'true' });
+  if (actualVehicleId) params.set('vehicleId', actualVehicleId);
 
-  logger.debug('Fetching overdue maintenance items', {
-    tenantId: actualTenantId,
-    vehicleId: actualVehicleId,
-  });
-
-  try {
-    const where: Prisma.MaintenanceScheduleWhereInput = {
-      tenantId: actualTenantId,
-      isOverdue: true,
-    };
-
-    if (actualVehicleId) {
-      where.vehicleId = actualVehicleId;
-    }
-
-    const items = await prisma.maintenanceSchedule.findMany({
-      where,
-      orderBy: { nextDueDate: 'asc' },
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    return items;
-  } catch (error) {
-    logger.error('Failed to fetch overdue items', error, {
-      tenantId: actualTenantId,
-      vehicleId: actualVehicleId,
-    });
-    throw new Error('Failed to fetch overdue items');
-  }
+  return backendFetch<MaintenanceScheduleWithVehicle[]>(
+    `v1/maintenance/overdue?${params}`,
+    { method: 'GET', tenantId }
+  );
 }
 
 export async function getUpcomingItems(
@@ -669,54 +405,13 @@ export async function getUpcomingItems(
 ): Promise<MaintenanceScheduleWithVehicle[]> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.debug('Fetching upcoming maintenance items', { tenantId, days, vehicleId });
+  const params = new URLSearchParams({ days: String(days) });
+  if (vehicleId) params.set('vehicleId', vehicleId);
 
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const futureDate = new Date(today);
-    futureDate.setDate(futureDate.getDate() + days);
-
-    const where: Prisma.MaintenanceScheduleWhereInput = {
-      tenantId,
-      nextDueDate: {
-        gte: today,
-        lte: futureDate,
-      },
-      isOverdue: false,
-    };
-
-    if (vehicleId) {
-      where.vehicleId = vehicleId;
-    }
-
-    const items = await prisma.maintenanceSchedule.findMany({
-      where,
-      orderBy: { nextDueDate: 'asc' },
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    return items;
-  } catch (error) {
-    if (error instanceof TenantRequiredError) {
-      throw error;
-    }
-
-    logger.error('Failed to fetch upcoming items', error, { tenantId, days, vehicleId });
-    throw new Error('Failed to fetch upcoming items');
-  }
+  return backendFetch<MaintenanceScheduleWithVehicle[]>(
+    `v1/maintenance/upcoming?${params}`,
+    { method: 'GET', tenantId }
+  );
 }
 
 export async function markAsCompleted(
@@ -726,78 +421,14 @@ export async function markAsCompleted(
 ): Promise<MaintenanceScheduleWithVehicle> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.info('Marking maintenance as completed', { tenantId, scheduleId, ...data });
-
-  try {
-    if (!scheduleId) {
-      throw new MaintenanceValidationError('Schedule ID is required');
+  return backendFetch<MaintenanceScheduleWithVehicle>(
+    `v1/maintenance/${scheduleId}/complete`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+      tenantId,
     }
-
-    if (data.currentKm === undefined || data.currentKm < 0) {
-      throw new MaintenanceValidationError('Valid current KM is required', 'currentKm');
-    }
-
-    // Check schedule exists AND belongs to tenant
-    const schedule = await prisma.maintenanceSchedule.findFirst({
-      where: {
-        id: scheduleId,
-        tenantId,
-      },
-    });
-
-    if (!schedule) {
-      throw new MaintenanceNotFoundError(scheduleId);
-    }
-
-    const completionDate = data.date || new Date();
-
-    const nextDue = calculateNextDue(
-      data.currentKm,
-      completionDate,
-      schedule.intervalKm,
-      schedule.intervalMonths
-    );
-
-    const updated = await prisma.maintenanceSchedule.update({
-      where: { id: scheduleId },
-      data: {
-        lastServiceDate: completionDate,
-        lastServiceKm: data.currentKm,
-        nextDueDate: nextDue.nextDueDate,
-        nextDueKm: nextDue.nextDueKm,
-        daysUntilDue: nextDue.daysUntilDue,
-        kmUntilDue: nextDue.kmUntilDue,
-        isOverdue: nextDue.isOverdue,
-        alertSentAt: null,
-      },
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    logger.info('Maintenance marked as completed', { tenantId, scheduleId });
-    return updated;
-  } catch (error) {
-    if (
-      error instanceof MaintenanceNotFoundError ||
-      error instanceof MaintenanceValidationError ||
-      error instanceof TenantRequiredError
-    ) {
-      throw error;
-    }
-
-    logger.error('Failed to mark maintenance as completed', error, { tenantId, scheduleId, data });
-    throw new Error('Failed to mark maintenance as completed');
-  }
+  );
 }
 
 export async function checkOverdueStatus(inputTenantId?: string): Promise<{
@@ -807,211 +438,23 @@ export async function checkOverdueStatus(inputTenantId?: string): Promise<{
 }> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.info('Checking overdue status', { tenantId });
-
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Get schedules that need updating - scoped to tenant
-    const schedules = await prisma.maintenanceSchedule.findMany({
-      where: {
-        tenantId,
-        OR: [
-          { nextDueDate: { lt: today }, isOverdue: false },
-          { nextDueDate: { gte: today }, isOverdue: true },
-        ],
-      },
-      include: {
-        vehicle: {
-          select: {
-            id: true,
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
-            mileage: true,
-          },
-        },
-      },
-    });
-
-    let updated = 0;
-    let newlyOverdue = 0;
-    const alertsToSend: MaintenanceScheduleWithVehicle[] = [];
-
-    for (const schedule of schedules) {
-      const diffTime = schedule.nextDueDate.getTime() - today.getTime();
-      const daysUntilDue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const isOverdue = daysUntilDue < 0;
-
-      if (isOverdue && !schedule.isOverdue) {
-        newlyOverdue++;
-        if (!schedule.alertSentAt) {
-          alertsToSend.push(schedule);
-        }
-      }
-
-      await prisma.maintenanceSchedule.update({
-        where: { id: schedule.id },
-        data: {
-          daysUntilDue,
-          isOverdue,
-        },
-      });
-
-      updated++;
-    }
-
-    // Check for items due within 7 days
-    const dueSoon = await getUpcomingItems(7, undefined, tenantId);
-    for (const schedule of dueSoon) {
-      if (!schedule.alertSentAt && schedule.notificationLevel !== 'CRITICAL') {
-        alertsToSend.push(schedule);
-      }
-    }
-
-    logger.info('Overdue status check completed', {
-      tenantId,
-      updated,
-      newlyOverdue,
-      alertsToSend: alertsToSend.length,
-    });
-
-    return { updated, newlyOverdue, alertsToSend };
-  } catch (error) {
-    if (error instanceof TenantRequiredError) {
-      throw error;
-    }
-
-    logger.error('Failed to check overdue status', error, { tenantId });
-    throw new Error('Failed to check overdue status');
-  }
+  return backendFetch<{
+    updated: number;
+    newlyOverdue: number;
+    alertsToSend: MaintenanceScheduleWithVehicle[];
+  }>('v1/maintenance/check-overdue', {
+    method: 'POST',
+    tenantId,
+  });
 }
 
 export async function getMaintenanceSummary(inputTenantId?: string): Promise<MaintenanceSummary> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.debug('Fetching maintenance summary', { tenantId });
-
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const sevenDaysFromNow = new Date(today);
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-
-    const baseWhere = { tenantId };
-
-    const [total, overdue, dueSoon, upcoming, byVehicleData] = await Promise.all([
-      prisma.maintenanceSchedule.count({ where: baseWhere }),
-      prisma.maintenanceSchedule.count({
-        where: { ...baseWhere, isOverdue: true },
-      }),
-      prisma.maintenanceSchedule.count({
-        where: {
-          ...baseWhere,
-          nextDueDate: { gte: today, lte: sevenDaysFromNow },
-          isOverdue: false,
-        },
-      }),
-      prisma.maintenanceSchedule.count({
-        where: {
-          ...baseWhere,
-          nextDueDate: { gte: today, lte: thirtyDaysFromNow },
-          isOverdue: false,
-        },
-      }),
-      prisma.maintenanceSchedule.groupBy({
-        by: ['vehicleId'],
-        where: baseWhere,
-        _count: { id: true },
-      }),
-    ]);
-
-    // Get vehicle details for breakdown
-    const byVehicle: MaintenanceSummary['byVehicle'] = {};
-
-    for (const v of byVehicleData) {
-      const vehicle = await prisma.vehicle.findFirst({
-        where: {
-          id: v.vehicleId,
-          tenantId,
-        },
-        select: {
-          make: true,
-          model: true,
-          year: true,
-          licensePlate: true,
-        },
-      });
-
-      if (vehicle) {
-        const vehicleSchedules = await prisma.maintenanceSchedule.findMany({
-          where: {
-            tenantId,
-            vehicleId: v.vehicleId,
-          },
-          select: {
-            isOverdue: true,
-            nextDueDate: true,
-          },
-        });
-
-        byVehicle[v.vehicleId] = {
-          vehicleInfo: `${vehicle.make} ${vehicle.model} (${vehicle.year}) - ${vehicle.licensePlate}`,
-          total: v._count.id,
-          overdue: vehicleSchedules.filter(s => s.isOverdue).length,
-          upcoming: vehicleSchedules.filter(s => {
-            const dueDate = new Date(s.nextDueDate);
-            return !s.isOverdue && dueDate <= thirtyDaysFromNow && dueDate >= today;
-          }).length,
-        };
-      }
-    }
-
-    return {
-      total,
-      overdue,
-      dueSoon,
-      upcoming,
-      byVehicle,
-    };
-  } catch (error) {
-    if (error instanceof TenantRequiredError) {
-      throw error;
-    }
-
-    logger.error('Failed to fetch maintenance summary', error, { tenantId });
-    throw new Error('Failed to fetch maintenance summary');
-  }
-}
-
-// Helper function for mapping (placeholder)
-function mapFindingToMaintenanceType(category: string): MaintenanceType | null {
-  const mapping: Record<string, MaintenanceType> = {
-    OIL: 'OIL_CHANGE',
-    TIRE: 'TIRE_ROTATION',
-    BRAKE: 'BRAKE_CHECK',
-    FILTER: 'FILTER',
-    BELT: 'BELTS',
-    BATTERY: 'BATTERY',
-  };
-  return mapping[category.toUpperCase()] || null;
-}
-
-function mapSeverityToNotificationLevel(severity: string): NotificationLevel {
-  switch (severity) {
-    case 'CRITICAL':
-      return 'CRITICAL';
-    case 'HIGH':
-      return 'WARNING';
-    default:
-      return 'ALERT';
-  }
+  return backendFetch<MaintenanceSummary>('v1/maintenance/summary', {
+    method: 'GET',
+    tenantId,
+  });
 }
 
 export async function createFromInspection(
@@ -1021,57 +464,12 @@ export async function createFromInspection(
 ): Promise<MaintenanceScheduleWithVehicle[]> {
   const tenantId = await resolveTenantId(inputTenantId);
 
-  logger.info('Creating maintenance from inspection findings', {
-    tenantId,
-    inspectionId,
-    findingCount: findings.length,
-  });
-
-  try {
-    const created: MaintenanceScheduleWithVehicle[] = [];
-
-    for (const finding of findings) {
-      const maintenanceType = mapFindingToMaintenanceType(finding.category);
-
-      if (!maintenanceType) {
-        continue;
-      }
-
-      // Check if schedule already exists for this vehicle and type
-      const existing = await prisma.maintenanceSchedule.findFirst({
-        where: {
-          tenantId,
-          type: maintenanceType,
-        },
-      });
-
-      if (existing) {
-        logger.debug('Maintenance schedule already exists, skipping', {
-          tenantId,
-          vehicleId: existing.vehicleId,
-          type: maintenanceType,
-        });
-        continue;
-      }
-
-      logger.debug('Would create maintenance schedule for finding', {
-        tenantId,
-        findingId: finding.id,
-        type: maintenanceType,
-      });
-    }
-
-    return created;
-  } catch (error) {
-    if (error instanceof TenantRequiredError) {
-      throw error;
-    }
-
-    logger.error('Failed to create maintenance from inspection', error, {
+  return backendFetch<MaintenanceScheduleWithVehicle[]>(
+    'v1/maintenance/from-inspection',
+    {
+      method: 'POST',
+      body: JSON.stringify({ inspectionId, findings }),
       tenantId,
-      inspectionId,
-      findings,
-    });
-    throw new Error('Failed to create maintenance from inspection');
-  }
+    }
+  );
 }

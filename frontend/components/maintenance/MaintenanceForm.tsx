@@ -32,8 +32,7 @@ import {
 } from '@/components/ui/dialog'
 import { CalendarIcon, Loader2, Wrench, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { MaintenanceScheduleWithVehicle } from '@/lib/services/maintenanceService'
-import type { MaintenanceType, NotificationLevel } from '@prisma/client'
+import type { MaintenanceScheduleWithVehicle, MaintenanceType, NotificationLevel } from '@/lib/services/maintenanceService'
 
 const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: 'OIL_CHANGE', label: 'Cambio Olio' },

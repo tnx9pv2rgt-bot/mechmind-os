@@ -10,21 +10,6 @@ import { FeatureAccessService } from '../services/feature-access.service';
 import { RedisService } from '../../common/services/redis.service';
 import { FeatureFlag } from '@prisma/client';
 
-// Extend Express Request to include tenant info
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      tenantId?: string;
-      subscription?: {
-        plan: string;
-        status: string;
-        features: FeatureFlag[];
-      };
-    }
-  }
-}
-
 /**
  * Middleware that attaches subscription info to requests
  */

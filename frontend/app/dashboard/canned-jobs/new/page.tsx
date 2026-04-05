@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 /**
  * Redirect /dashboard/canned-jobs/new to the main page with ?action=create
@@ -15,8 +16,8 @@ export default function NewCannedJobPage() {
   }, [router]);
 
   return (
-    <div className='flex items-center justify-center h-96 bg-[#1a1a1a]'>
-      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-white' />
+    <div className='flex items-center justify-center h-96'>
+      <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
     </div>
   );
 }

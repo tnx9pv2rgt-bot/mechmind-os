@@ -22,7 +22,7 @@ export default function AuthError({
         <h1 className="text-[28px] font-normal text-white tracking-tight">
           Errore di autenticazione
         </h1>
-        <p className="text-[15px] text-[#b4b4b4] leading-relaxed" role="alert">
+        <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed" role="alert">
           Si è verificato un errore durante l&apos;autenticazione. Riprova.
         </p>
         <div className="flex flex-col gap-3">

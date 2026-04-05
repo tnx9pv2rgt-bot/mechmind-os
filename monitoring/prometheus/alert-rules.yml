@@ -1,0 +1,55 @@
+groups:
+  - name: mechmind-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate > 1%"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency > 500ms"
+          description: "P95 latency is {{ $value }}s"
+
+      - alert: BackendDown
+        expr: up{job="mechmind-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MechMind backend is down"
+          description: "Backend target has been down for more than 1 minute"
+
+      - alert: BruteForceDetected
+        expr: rate(auth_failures_total[1m]) > 0.333
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Brute force detected (>20 failures/min)"
+          description: "Auth failure rate is {{ $value }}/s"
+
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state == 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker OPEN for {{ $labels.service }}"
+          description: "{{ $labels.service }} circuit breaker has been open for 30s — service is failing fast"
+          runbook_url: "https://github.com/your-org/mechmind-os/blob/main/docs/runbooks/circuit-breaker-open.md"

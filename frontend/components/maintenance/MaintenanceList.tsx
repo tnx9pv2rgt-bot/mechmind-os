@@ -26,8 +26,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { MaintenanceScheduleWithVehicle } from '@/lib/services/maintenanceService';
-import type { MaintenanceType, NotificationLevel } from '@prisma/client';
+import type { MaintenanceScheduleWithVehicle, MaintenanceType, NotificationLevel } from '@/lib/services/maintenanceService';
 
 interface MaintenanceListProps {
   vehicleId?: string;
@@ -203,11 +202,11 @@ export function MaintenanceList({
       <CardContent>
         {filteredSchedules.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-12 text-center'>
-            <Wrench className='h-12 w-12 text-gray-300 dark:text-gray-600' />
-            <h3 className='mt-4 text-lg font-medium text-gray-900 dark:text-gray-100'>
+            <Wrench className='h-12 w-12 text-[var(--text-tertiary)]' />
+            <h3 className='mt-4 text-lg font-medium text-[var(--text-primary)]'>
               Nessuna manutenzione trovata
             </h3>
-            <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-sm text-[var(--text-secondary)]'>
               {searchQuery
                 ? 'Prova a modificare i filtri di ricerca'
                 : 'Crea una nuova programmazione per iniziare'}

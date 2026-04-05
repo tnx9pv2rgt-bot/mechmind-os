@@ -3,19 +3,21 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import {
   Package,
   Search,
   Plus,
   Truck,
-  CheckCircle,
   AlertCircle,
   X,
   ChevronDown,
-  ChevronRight,
   Loader2,
+  Eye,
+  Filter,
 } from 'lucide-react';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Input } from '@/components/ui/input';
 import { useSuppliers, useCreateSupplier, useParts } from '@/hooks/useApi';
 import { toast } from 'sonner';
 import { Pagination } from '@/components/ui/pagination';
@@ -24,50 +26,41 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 // =============================================================================
-// Design Tokens
-// =============================================================================
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
-// =============================================================================
 // Animation Variants
 // =============================================================================
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.05 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 // =============================================================================
 // Validation
 // =============================================================================
 const supplierSchema = z.object({
-  name: z.string().min(2, 'Il nome del fornitore \u00e8 obbligatorio'),
-  code: z.string().min(1, 'Il codice \u00e8 obbligatorio'),
+  name: z.string().min(2, 'Il nome del fornitore è obbligatorio'),
+  code: z.string().min(1, 'Il codice è obbligatorio'),
   contactName: z.string().optional(),
   email: z
     .string()
@@ -84,50 +77,38 @@ type SupplierFormData = z.infer<typeof supplierSchema>;
 // =============================================================================
 // Stock Config
 // =============================================================================
-function getStockConfig(currentStock?: number, minStockLevel?: number) {
-  if (currentStock === undefined || currentStock === null) {
-    return { color: colors.textMuted, label: 'N/D' };
-  }
-  if (currentStock <= 0) {
-    return { color: colors.error, label: 'Esaurito' };
-  }
-  if (minStockLevel && currentStock <= minStockLevel) {
-    return { color: colors.warning, label: 'Pochi rimasti' };
-  }
-  return { color: colors.success, label: 'Disponibile' };
+const stockConfig: Record<string, { color: string; bg: string; label: string }> = {
+  available: {
+    color: 'text-green-700 dark:text-green-300',
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    label: 'Disponibile',
+  },
+  low: {
+    color: 'text-orange-700 dark:text-orange-300',
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    label: 'Pochi rimasti',
+  },
+  out: {
+    color: 'text-red-700 dark:text-red-300',
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    label: 'Esaurito',
+  },
+  unknown: {
+    color: 'text-gray-700 dark:text-gray-300',
+    bg: 'bg-gray-200 dark:bg-gray-700',
+    label: 'N/D',
+  },
+};
+
+function getStockStatus(currentStock?: number | null, minStockLevel?: number | null): string {
+  if (currentStock === undefined || currentStock === null) return 'unknown';
+  if (currentStock <= 0) return 'out';
+  if (minStockLevel && currentStock <= minStockLevel) return 'low';
+  return 'available';
 }
 
-// =============================================================================
-// Skeleton Components
-// =============================================================================
-function ChipSkeleton() {
-  return (
-    <div className="flex gap-3">
-      {[1, 2, 3].map(i => (
-        <div
-          key={i}
-          className="h-10 w-24 rounded-full animate-pulse"
-          style={{ backgroundColor: colors.surfaceHover }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function PartRowSkeleton() {
-  return (
-    <div
-      className="flex items-center gap-4 p-5 rounded-xl animate-pulse"
-      style={{ backgroundColor: colors.surfaceHover }}
-    >
-      <div className="w-12 h-12 rounded-xl" style={{ backgroundColor: colors.surface }} />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 w-48 rounded" style={{ backgroundColor: colors.surface }} />
-        <div className="h-3 w-32 rounded" style={{ backgroundColor: colors.surface }} />
-      </div>
-      <div className="h-6 w-16 rounded" style={{ backgroundColor: colors.surface }} />
-    </div>
-  );
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
 }
 
 // =============================================================================
@@ -193,87 +174,71 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
 
   if (!open) return null;
 
-  const inputStyle = {
-    backgroundColor: colors.glowStrong,
-    borderWidth: 1,
-    borderStyle: 'solid' as const,
-    borderColor: colors.borderSubtle,
-    color: colors.textPrimary,
-  };
-
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Nuovo Fornitore"
+        role='dialog'
+        aria-modal='true'
+        aria-label='Nuovo Fornitore'
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Escape') onClose();
         }}
       >
         <motion.div
-          className="rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border"
-          style={{
-            backgroundColor: colors.surface,
-            borderColor: colors.borderSubtle,
-          }}
+          className='rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-apple-border/20 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)]'
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[20px] font-light" style={{ color: colors.textPrimary }}>
+          <div className='flex items-center justify-between mb-6'>
+            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
               Nuovo Fornitore
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl transition-colors hover:bg-white/5"
-              aria-label="Chiudi"
+              className='p-2 rounded-xl transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-white/5'
+              aria-label='Chiudi'
             >
-              <X className="h-5 w-5" style={{ color: colors.textTertiary }} />
+              <X className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
             </button>
           </div>
 
           <form onSubmit={rhfHandleSubmit(onSubmit)}>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <div>
-                <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
+                <label className='text-footnote mb-1.5 block text-apple-gray dark:text-[var(--text-secondary)]'>
                   Nome fornitore *
                 </label>
-                <input
+                <Input
                   {...register('name')}
-                  placeholder="Es. Autodoc Italia"
-                  className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                  style={inputStyle}
+                  placeholder='Es. Autodoc Italia'
                 />
-                {errors.name && <p className="text-xs mt-1" style={{ color: colors.error }}>{errors.name.message}</p>}
+                {errors.name && <p className='text-footnote mt-1 text-apple-red'>{errors.name.message}</p>}
               </div>
               <div>
-                <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
+                <label className='text-footnote mb-1.5 block text-apple-gray dark:text-[var(--text-secondary)]'>
                   Codice *
                 </label>
-                <input
+                <Input
                   {...register('code', {
                     onChange: () => setCodeManual(true),
                   })}
-                  placeholder="AUTO_GEN"
-                  className="w-full h-11 px-3 rounded-xl text-sm font-mono focus:outline-none focus:border-white/30 transition-colors"
-                  style={inputStyle}
+                  placeholder='AUTO_GEN'
+                  className='font-mono'
                 />
-                {errors.code && <p className="text-xs mt-1" style={{ color: colors.error }}>{errors.code.message}</p>}
+                {errors.code && <p className='text-footnote mt-1 text-apple-red'>{errors.code.message}</p>}
               </div>
 
               <button
-                type="button"
+                type='button'
                 onClick={() => setShowDetails(!showDetails)}
-                className="flex items-center gap-2 text-[13px] transition-colors hover:opacity-80"
-                style={{ color: colors.textTertiary }}
+                className='flex items-center gap-2 text-footnote transition-colors hover:opacity-80 text-apple-gray dark:text-[var(--text-secondary)]'
               >
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${showDetails ? 'rotate-180' : ''}`}
@@ -284,51 +249,44 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
               <AnimatePresence>
                 {showDetails && (
                   <motion.div
-                    className="space-y-3"
+                    className='space-y-3'
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                   >
-                    <input
+                    <Input
                       {...register('contactName')}
-                      placeholder="Contatto"
-                      className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                      style={inputStyle}
+                      placeholder='Contatto'
                     />
                     <div>
-                      <input
+                      <Input
                         {...register('email')}
-                        placeholder="Email"
-                        type="email"
-                        className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                        style={inputStyle}
+                        placeholder='Email'
+                        type='email'
                       />
-                      {errors.email && <p className="text-xs mt-1" style={{ color: colors.error }}>{errors.email.message}</p>}
+                      {errors.email && <p className='text-footnote mt-1 text-apple-red'>{errors.email.message}</p>}
                     </div>
                     <div>
-                      <input
+                      <Input
                         {...register('phone')}
-                        placeholder="Telefono"
-                        type="tel"
-                        className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                        style={inputStyle}
+                        placeholder='Telefono'
+                        type='tel'
                       />
-                      {errors.phone && <p className="text-xs mt-1" style={{ color: colors.error }}>{errors.phone.message}</p>}
+                      {errors.phone && <p className='text-footnote mt-1 text-apple-red'>{errors.phone.message}</p>}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            <div className="mt-6">
-              <button
-                className="w-full py-3 rounded-full text-sm font-medium transition-colors disabled:opacity-50"
-                type="submit"
-                disabled={createSupplier.isPending}
-                style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+            <div className='mt-6'>
+              <AppleButton
+                className='w-full'
+                type='submit'
+                loading={createSupplier.isPending}
               >
                 {createSupplier.isPending ? 'Aggiunta in corso...' : 'Aggiungi fornitore'}
-              </button>
+              </AppleButton>
             </div>
           </form>
         </motion.div>
@@ -376,321 +334,249 @@ export default function PartsPage() {
     return p.minStockLevel ? p.currentStock <= p.minStockLevel : p.currentStock <= 0;
   }).length;
 
+  const isLoading = partsQuery.isLoading || suppliersQuery.isLoading;
+
+  const statCards = [
+    {
+      label: 'Ricambi Totali',
+      value: String(totalParts),
+      icon: Package,
+      color: 'bg-apple-blue',
+    },
+    {
+      label: 'Fornitori',
+      value: String(suppliers.length),
+      icon: Truck,
+      color: 'bg-apple-green',
+    },
+    {
+      label: 'Stock Basso',
+      value: String(lowStockCount),
+      icon: AlertCircle,
+      color: lowStockCount > 0 ? 'bg-apple-orange' : 'bg-apple-green',
+    },
+  ];
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur-xl border-b"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="p-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: colors.textTertiary }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </Link>
-            <div>
-              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
-                Ricambi
-              </h1>
-              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
-                Gestione ricambi e fornitori
-              </p>
-            </div>
+      <header className=''>
+        <div className='px-8 py-5 flex items-center justify-between'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ricambi</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Gestione ricambi e fornitori
+            </p>
           </div>
-          <div className="flex gap-3">
-            <button
+          <div className='flex items-center gap-3'>
+            <AppleButton
+              variant='secondary'
+              icon={<Truck className='h-4 w-4' />}
               onClick={() => router.push('/dashboard/parts/orders/new')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-full transition-colors min-h-[44px] border hover:bg-white/5"
-              style={{ borderColor: colors.border, color: colors.textSecondary }}
             >
-              <Truck className="h-4 w-4" />
-              <span className="hidden sm:inline">Ordine Fornitore</span>
-            </button>
-            <button
+              Ordine Fornitore
+            </AppleButton>
+            <AppleButton
+              icon={<Plus className='h-4 w-4' />}
               onClick={() => router.push('/dashboard/parts/new')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-colors min-h-[44px]"
-              style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
             >
-              <Plus className="h-4 w-4" />
               Nuovo Ricambio
-            </button>
+            </AppleButton>
           </div>
         </div>
       </header>
 
       <motion.div
-        className="p-4 sm:p-8 space-y-6"
-        initial="hidden"
-        animate="visible"
+        className='p-8 space-y-6'
+        initial='hidden'
+        animate='visible'
         variants={containerVariants}
       >
-        {/* KPI Cards */}
-        <motion.div className="grid grid-cols-1 sm:grid-cols-3 gap-4" variants={containerVariants}>
-          {[
-            { label: 'Ricambi totali', value: totalParts.toString(), icon: Package, iconColor: colors.info },
-            { label: 'Fornitori', value: suppliers.length.toString(), icon: Truck, iconColor: colors.success },
-            {
-              label: 'Stock basso',
-              value: lowStockCount.toString(),
-              icon: AlertCircle,
-              iconColor: lowStockCount > 0 ? colors.warning : colors.success,
-            },
-          ].map(stat => (
-            <motion.div
-              key={stat.label}
-              className="rounded-2xl border h-[120px] flex flex-col justify-center px-5"
-              style={{
-                backgroundColor: colors.surface,
-                borderColor: colors.borderSubtle,
-              }}
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <stat.icon className="h-4 w-4" style={{ color: stat.iconColor }} />
-                <span className="text-[13px]" style={{ color: colors.textTertiary }}>{stat.label}</span>
-              </div>
-              <span
-                className="text-[32px] font-light"
-                style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-              >
-                {partsQuery.isLoading ? '...' : stat.value}
-              </span>
+        {/* Stats */}
+        <motion.div
+          className='grid grid-cols-2 lg:grid-cols-3 gap-bento'
+          variants={containerVariants}
+        >
+          {statCards.map(stat => (
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div
+                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                    >
+                      <stat.icon className='h-5 w-5 text-white' />
+                    </div>
+                  </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {isLoading ? '...' : stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Search */}
-        <motion.div
-          className="rounded-2xl border p-4"
-          style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-          variants={itemVariants}
-        >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.textMuted }} />
-            <input
-              placeholder="Cerca per codice OEM, marca o nome ricambio..."
-              aria-label="Cerca ricambi"
-              value={searchInput}
-              onChange={e => handleSearchChange(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-              style={{
-                backgroundColor: colors.glowStrong,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: colors.borderSubtle,
-                color: colors.textPrimary,
-              }}
-            />
-          </div>
-        </motion.div>
-
-        {/* Supplier Filter Pills */}
-        <motion.div className="flex justify-center flex-wrap gap-2" variants={itemVariants}>
-          {suppliersQuery.isLoading ? (
-            <ChipSkeleton />
-          ) : (
-            <>
-              <button
-                className="h-10 px-4 rounded-full text-[13px] font-medium transition-all border"
-                style={{
-                  backgroundColor: !selectedSupplierId ? colors.textPrimary : 'transparent',
-                  color: !selectedSupplierId ? colors.bg : colors.textSecondary,
-                  borderColor: !selectedSupplierId ? colors.textPrimary : colors.borderSubtle,
-                }}
-                onClick={() => setSelectedSupplierId(null)}
-              >
-                Tutti
-              </button>
-
-              {suppliers.map((supplier) => (
-                <button
-                  key={supplier.id}
-                  className="h-10 px-4 rounded-full text-[13px] font-medium transition-all border"
-                  style={{
-                    backgroundColor: selectedSupplierId === supplier.id ? colors.textPrimary : 'transparent',
-                    color: selectedSupplierId === supplier.id ? colors.bg : colors.textSecondary,
-                    borderColor: selectedSupplierId === supplier.id ? colors.textPrimary : colors.borderSubtle,
-                  }}
-                  onClick={() =>
-                    setSelectedSupplierId(selectedSupplierId === supplier.id ? null : supplier.id)
-                  }
+        {/* Filters */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex flex-col sm:flex-row gap-4'>
+                <div className='relative flex-1'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Input
+                    placeholder='Cerca per codice OEM, marca o nome ricambio...'
+                    aria-label='Cerca ricambi'
+                    value={searchInput}
+                    onChange={e => handleSearchChange(e.target.value)}
+                    className='pl-10'
+                  />
+                </div>
+                <div className='relative'>
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <select
+                    value={selectedSupplierId || ''}
+                    onChange={e => setSelectedSupplierId(e.target.value || null)}
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-sm text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                  >
+                    <option value=''>Tutti i fornitori</option>
+                    {suppliers.map(supplier => (
+                      <option key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <AppleButton
+                  variant='secondary'
+                  icon={<Plus className='h-4 w-4' />}
+                  onClick={() => setDialogOpen(true)}
                 >
-                  {supplier.name}
-                </button>
-              ))}
-
-              <button
-                className="h-10 px-4 rounded-full text-[13px] font-medium transition-all border-2 border-dashed flex items-center gap-1 hover:bg-white/5"
-                style={{
-                  borderColor: colors.borderSubtle,
-                  color: colors.textTertiary,
-                }}
-                onClick={() => setDialogOpen(true)}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Nuovo
-              </button>
-            </>
-          )}
+                  Nuovo Fornitore
+                </AppleButton>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Parts List */}
-        <motion.div variants={itemVariants}>
-          {/* Title */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[18px] font-light" style={{ color: colors.textPrimary }}>
-              Risultati{debouncedSearch ? ` per "${debouncedSearch}"` : ''}
-              {!partsQuery.isLoading && (
-                <span className="ml-2" style={{ color: colors.textMuted }}>({totalParts})</span>
-              )}
-            </h2>
-          </div>
-
-          {partsQuery.isError || suppliersQuery.isError ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-[15px] mb-4" style={{ color: colors.textTertiary }}>
-                Impossibile caricare i ricambi
-              </p>
-              <button
-                onClick={() => { partsQuery.refetch(); suppliersQuery.refetch(); }}
-                className="px-4 py-2 rounded-full text-sm border transition-colors hover:bg-white/5"
-                style={{ borderColor: colors.border, color: colors.textSecondary }}
-              >
-                Riprova
-              </button>
-            </div>
-          ) : partsQuery.isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <PartRowSkeleton key={i} />
-              ))}
-            </div>
-          ) : parts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Package className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-[15px] mb-1" style={{ color: colors.textPrimary }}>
-                {debouncedSearch
-                  ? `Nessun risultato per "${debouncedSearch}"`
-                  : 'Nessun ricambio trovato'}
-              </p>
-              <p className="text-[13px]" style={{ color: colors.textTertiary }}>
-                {debouncedSearch
-                  ? 'Prova a modificare la ricerca'
-                  : 'Aggiungi il primo ricambio per iniziare'}
-              </p>
-            </div>
-          ) : (
-            <div
-              className="rounded-2xl border overflow-hidden"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <motion.div variants={containerVariants} initial="hidden" animate="visible">
-                {parts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((part, idx, arr) => {
-                  const stock = getStockConfig(part.currentStock, part.minStockLevel);
-
-                  return (
-                    <motion.div
-                      key={part.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 cursor-pointer transition-colors group"
-                      style={{
-                        borderBottom: idx < arr.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                      }}
-                      variants={itemVariants}
-                      onClick={() => router.push(`/dashboard/parts/${part.id}`)}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={e => { if (e.key === 'Enter') router.push(`/dashboard/parts/${part.id}`); }}
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Icon */}
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: colors.glowStrong }}
-                        >
-                          <Package className="h-6 w-6" style={{ color: colors.textTertiary }} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>
-                              {part.name}
-                            </h3>
-                            <span
-                              className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor: `${stock.color}20`,
-                                color: stock.color,
-                              }}
-                            >
-                              {stock.label}
-                            </span>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                Elenco Ricambi
+                {debouncedSearch && ` — "${debouncedSearch}"`}
+                {!isLoading && <span className='text-apple-gray dark:text-[var(--text-secondary)] font-normal ml-2'>({totalParts})</span>}
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {partsQuery.isError || suppliersQuery.isError ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare i ricambi
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => {
+                      partsQuery.refetch();
+                      suppliersQuery.refetch();
+                    }}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : isLoading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                </div>
+              ) : parts.length === 0 ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <Package className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    {debouncedSearch
+                      ? `Nessun risultato per "${debouncedSearch}"`
+                      : 'Nessun ricambio trovato. Aggiungi il primo ricambio.'}
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => router.push('/dashboard/parts/new')}
+                  >
+                    Aggiungi il primo ricambio
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className='space-y-3'
+                  variants={containerVariants}
+                  initial='hidden'
+                  animate='visible'
+                >
+                  {parts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((part, index) => {
+                    const status = getStockStatus(part.currentStock, part.minStockLevel);
+                    const stock = stockConfig[status];
+                    return (
+                      <motion.div
+                        key={part.id}
+                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        variants={listItemVariants}
+                        custom={index}
+                        whileHover={{ scale: 1.005, x: 4 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className='flex items-center gap-4'>
+                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                            <Package className='h-6 w-6 text-apple-blue' />
                           </div>
-                          <p className="text-[13px] mb-0.5" style={{ color: colors.textTertiary }}>
-                            {part.brand && `Brand: ${part.brand} \u2022 `}
-                            Fornitore: {part.supplier?.name || part.supplierName || '\u2014'}
-                          </p>
-                          {part.partNumber && (
-                            <p className="text-[12px] font-mono" style={{ color: colors.textMuted }}>
-                              OEM: {part.partNumber}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          {part.retailPrice !== undefined && part.retailPrice !== null ? (
-                            <>
-                              <p
-                                className="text-[16px] font-semibold"
-                                style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+                          <div>
+                            <div className='flex items-center gap-2'>
+                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                {part.name}
+                              </p>
+                              <span
+                                className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${stock.bg} ${stock.color}`}
                               >
-                                &euro;{Number(part.retailPrice).toFixed(2)}
-                              </p>
-                              <p className="text-[11px]" style={{ color: colors.textMuted }}>
-                                IVA incl.
-                              </p>
-                            </>
-                          ) : (
-                            <p className="text-[13px]" style={{ color: colors.textMuted }}>&mdash;</p>
-                          )}
-                        </div>
-                        {part.currentStock !== undefined && (
-                          <div className="text-right">
-                            <p
-                              className="text-[14px] font-medium"
-                              style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                            >
-                              {part.currentStock}
-                            </p>
-                            <p className="text-[11px]" style={{ color: colors.textMuted }}>
-                              in stock
+                                {stock.label}
+                              </span>
+                            </div>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              {part.brand && `${part.brand} \u2022 `}
+                              Fornitore: {part.supplier?.name || part.supplierName || '\u2014'}
+                              {part.partNumber && ` \u2022 OEM: ${part.partNumber}`}
                             </p>
                           </div>
-                        )}
-                        <ChevronRight
-                          className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ color: colors.textMuted }}
-                        />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-              <div className="px-5 py-3" style={{ borderTop: `1px solid ${colors.borderSubtle}` }}>
-                <Pagination page={page} totalPages={Math.ceil(parts.length / PAGE_SIZE)} onPageChange={setPage} />
-              </div>
-            </div>
-          )}
+                        </div>
+                        <div className='flex items-center gap-4'>
+                          {part.retailPrice !== undefined && part.retailPrice !== null && (
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[100px] text-right'>
+                              {formatCurrency(Number(part.retailPrice))}
+                            </p>
+                          )}
+                          {part.currentStock !== undefined && part.currentStock !== null && (
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[60px] text-right'>
+                              {part.currentStock} in stock
+                            </p>
+                          )}
+                          <AppleButton
+                            variant='ghost'
+                            size='sm'
+                            icon={<Eye className='h-3.5 w-3.5' />}
+                            onClick={() => router.push(`/dashboard/parts/${part.id}`)}
+                          >
+                            Dettagli
+                          </AppleButton>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                  <Pagination page={page} totalPages={Math.ceil(parts.length / PAGE_SIZE)} onPageChange={setPage} />
+                </motion.div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
       </motion.div>
 

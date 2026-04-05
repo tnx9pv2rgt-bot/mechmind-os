@@ -133,7 +133,7 @@ export default function AdminSubscriptionsPage() {
       ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
       TRIAL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
       SUSPENDED: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-      CANCELLED: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+      CANCELLED: 'bg-apple-light-gray text-apple-gray dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]',
       PAST_DUE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
     };
     return <Badge className={`${colors[status] || colors.ACTIVE} border-0`}>{status}</Badge>;
@@ -155,10 +155,10 @@ export default function AdminSubscriptionsPage() {
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
             <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
+            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[#636366]'>
+            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
               Impossibile caricare i dati dei tenant.
             </p>
           </AppleCardContent>
@@ -169,10 +169,10 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className='min-h-screen'>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-4 sm:px-8 py-5'>
-          <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Gestione Abbonamenti</h1>
-          <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Gestione Abbonamenti</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
             Amministrazione tenant e statistiche revenue
           </p>
         </div>
@@ -190,8 +190,8 @@ export default function AdminSubscriptionsPage() {
                       <TrendingUp className='w-5 h-5 text-green-600' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>MRR</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>MRR</p>
+                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         &euro;{stats.mrr.toLocaleString('it-IT')}
                       </p>
                     </div>
@@ -208,8 +208,8 @@ export default function AdminSubscriptionsPage() {
                       <Building2 className='w-5 h-5 text-blue-600' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>ARR</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>ARR</p>
+                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         &euro;{stats.arr.toLocaleString('it-IT')}
                       </p>
                     </div>
@@ -226,8 +226,8 @@ export default function AdminSubscriptionsPage() {
                       <ArrowDownRight className='w-5 h-5 text-red-600' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Churn Rate</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Churn Rate</p>
+                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         {stats.churnRate.toFixed(1)}%
                       </p>
                     </div>
@@ -244,8 +244,8 @@ export default function AdminSubscriptionsPage() {
                       <UserPlus className='w-5 h-5 text-purple-600' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Nuove iscrizioni</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Nuove iscrizioni</p>
+                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         {stats.newSignups}
                       </p>
                     </div>
@@ -304,7 +304,7 @@ export default function AdminSubscriptionsPage() {
         <AppleCard>
           <AppleCardHeader>
             <div className='flex items-center justify-between'>
-              <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Tenant ({filteredTenants.length})
               </h2>
               <AppleButton variant='ghost' size='sm' onClick={() => mutate()}>
@@ -317,31 +317,31 @@ export default function AdminSubscriptionsPage() {
               <div className='overflow-x-auto'>
                 <table className='w-full'>
                   <thead>
-                    <tr className='border-b border-apple-border/30 dark:border-[#424242]'>
-                      <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider'>Nome</th>
-                      <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider'>Piano</th>
-                      <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider'>Stato</th>
-                      <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider'>MRR</th>
-                      <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider'>Registrazione</th>
-                      <th className='text-right py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider'>Azioni</th>
+                    <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Nome</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Piano</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Stato</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>MRR</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Registrazione</th>
+                      <th className='text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredTenants.map((tenant) => (
                       <tr
                         key={tenant.id}
-                        className='border-b border-apple-border/20 dark:border-[#424242]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[#353535] transition-colors'
+                        className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                       >
                         <td className='py-3 px-4'>
-                          <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>{tenant.name}</p>
-                          <p className='text-footnote text-apple-gray dark:text-[#636366]'>{tenant.slug}</p>
+                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{tenant.name}</p>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{tenant.slug}</p>
                         </td>
                         <td className='py-3 px-4'>{getPlanBadge(tenant.plan)}</td>
                         <td className='py-3 px-4'>{getStatusBadge(tenant.status)}</td>
-                        <td className='py-3 px-4 text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+                        <td className='py-3 px-4 text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                           &euro;{tenant.mrr.toLocaleString('it-IT')}
                         </td>
-                        <td className='py-3 px-4 text-body text-apple-gray dark:text-[#636366]'>
+                        <td className='py-3 px-4 text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                           {new Date(tenant.createdAt).toLocaleDateString('it-IT')}
                         </td>
                         <td className='py-3 px-4 text-right'>
@@ -369,7 +369,7 @@ export default function AdminSubscriptionsPage() {
             ) : (
               <div className='text-center py-12'>
                 <Users className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                <p className='text-body text-apple-gray dark:text-[#636366]'>
+                <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                   Nessun tenant trovato con i filtri selezionati.
                 </p>
               </div>
@@ -393,7 +393,7 @@ export default function AdminSubscriptionsPage() {
           <div className='space-y-4 py-4'>
             {actionType === 'plan' && (
               <div className='space-y-2'>
-                <label htmlFor='plan-select' className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+                <label htmlFor='plan-select' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                   Piano
                 </label>
                 <Select value={newPlan} onValueChange={setNewPlan}>
@@ -435,7 +435,7 @@ export default function AdminSubscriptionsPage() {
 
             {actionType !== 'plan' && (
               <div className='p-4 bg-red-50 dark:bg-red-900/20 rounded-xl'>
-                <p className='text-sm text-red-700 dark:text-red-300'>
+                <p className='text-body text-apple-red dark:text-red-300'>
                   {actionType === 'suspend'
                     ? "Il tenant verr\u00e0 sospeso e non potr\u00e0 accedere alla piattaforma."
                     : "L'abbonamento verr\u00e0 cancellato definitivamente."}

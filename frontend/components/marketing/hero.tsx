@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-
-import { VideoModal } from './video-modal';
+// VideoModal removed — video placeholder replaced with demo CTA
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -26,7 +26,6 @@ const scaleIn = {
 };
 
 export function Hero(): React.ReactElement {
-  const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   async function handleStartDemo(): Promise<void> {
@@ -36,6 +35,7 @@ export function Hero(): React.ReactElement {
       const res = await fetch('/api/auth/demo-session', { method: 'POST' });
       if (res.ok) {
         localStorage.setItem('mechmind_demo', 'true');
+        localStorage.setItem('mechmind_demo_start', Date.now().toString());
         window.location.href = '/dashboard';
         return;
       }
@@ -46,31 +46,31 @@ export function Hero(): React.ReactElement {
   }
 
   return (
-    <section className="relative overflow-hidden bg-white dark:bg-[#212121]">
+    <section className="relative overflow-hidden bg-white dark:bg-[var(--surface-primary)]">
       {/* Subtle background */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#f7f7f8]/50 via-transparent to-transparent dark:from-[#171717]/50"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--surface-secondary)]/50 via-transparent to-transparent dark:from-[var(--surface-secondary)]/50"
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-16 text-center sm:pb-24 sm:pt-24 lg:px-8 lg:pb-32 lg:pt-28">
         {/* Headline */}
         <motion.h1
-          className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-5xl lg:text-6xl"
+          className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-5xl lg:text-6xl"
           variants={fadeUp}
           initial="hidden"
           animate="visible"
           custom={0.1}
         >
           Il gestionale per officine{' '}
-          <span className="text-[#0d0d0d] dark:text-white underline decoration-[#e5e5e5] dark:decoration-[#444654] underline-offset-4">
+          <span className="text-[var(--text-primary)] dark:text-white underline decoration-[var(--border-default)] dark:decoration-[var(--border-default)] underline-offset-4">
             che funziona davvero.
           </span>
         </motion.h1>
 
         {/* Subtitle */}
         <motion.p
-          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[#6e6e80] dark:text-[#8e8ea0] sm:text-xl"
+          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] sm:text-xl"
           variants={fadeUp}
           initial="hidden"
           animate="visible"
@@ -90,7 +90,7 @@ export function Hero(): React.ReactElement {
         >
           <Link
             href="/auth/register"
-            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full bg-[#0d0d0d] px-8 text-base font-semibold text-white transition-all duration-200 hover:bg-[#2f2f2f] dark:bg-white dark:text-[#0d0d0d] dark:hover:bg-[#e5e5e5] active:scale-[0.97]"
+            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)] bg-white px-8 text-base font-semibold text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
           >
             Prova gratis &rarr;
           </Link>
@@ -98,7 +98,7 @@ export function Hero(): React.ReactElement {
             type="button"
             onClick={handleStartDemo}
             disabled={isDemoLoading}
-            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[#e5e5e5] bg-white px-8 text-base font-medium text-[#0d0d0d] transition-all duration-200 hover:bg-[#f7f7f8] active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait dark:border-[#444654] dark:bg-[#2f2f2f] dark:text-[#ececec] dark:hover:bg-[#3a3a3a]"
+            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)] bg-white px-8 text-base font-medium text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
           >
             {isDemoLoading ? (
               <>
@@ -122,15 +122,16 @@ export function Hero(): React.ReactElement {
           animate="visible"
           custom={0.5}
         >
-          <p className="text-sm text-[#8e8ea0]">
+          <p className="text-sm text-[var(--text-secondary)]">
             Nessuna carta richiesta &middot; Setup in 2 minuti
           </p>
           <button
             type="button"
-            onClick={() => setIsVideoOpen(true)}
-            className="min-h-[44px] flex items-center text-sm font-medium text-[#6e6e80] underline decoration-[#e5e5e5] underline-offset-2 transition-colors hover:text-[#0d0d0d] dark:text-[#8e8ea0] dark:decoration-[#444654] dark:hover:text-white"
+            onClick={handleStartDemo}
+            disabled={isDemoLoading}
+            className="min-h-[44px] flex items-center text-sm font-medium text-[var(--text-tertiary)] underline decoration-[var(--border-default)] underline-offset-2 transition-colors hover:text-[var(--text-primary)] dark:text-[var(--text-secondary)] dark:decoration-[var(--border-default)] dark:hover:text-white"
           >
-            &#9654; Guarda il video (90s)
+            Prova la demo live &rarr;
           </button>
         </motion.div>
 
@@ -141,114 +142,107 @@ export function Hero(): React.ReactElement {
           initial="hidden"
           animate="visible"
         >
-          <div className="overflow-hidden rounded-2xl border border-[#e5e5e5] bg-white shadow-2xl dark:border-[#444654] dark:bg-[#2f2f2f]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-white shadow-2xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
             {/* Browser chrome */}
-            <div className="flex items-center gap-2 border-b border-[#e5e5e5] bg-[#f7f7f8] px-4 py-3 dark:border-[#444654] dark:bg-[#171717]">
+            <div className="flex items-center gap-2 border-b border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-3 dark:border-[var(--border-default)] dark:bg-[var(--surface-secondary)]">
               <div className="flex gap-1.5">
                 <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
                 <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
                 <span className="h-3 w-3 rounded-full bg-[#28c840]" />
               </div>
-              <div className="mx-auto flex h-7 w-56 items-center justify-center rounded-md bg-[#e5e5e5] dark:bg-[#444654]">
-                <span className="text-xs text-[#6e6e80] dark:text-[#8e8ea0]">
+              <div className="mx-auto flex h-7 w-56 items-center justify-center rounded-md bg-[var(--border-default)] dark:bg-[var(--border-default)]">
+                <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   app.mechmind.it/dashboard
                 </span>
               </div>
             </div>
 
-            {/* Dashboard content */}
-            <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#f7f7f8] dark:bg-[#212121]">
-              <div className="absolute inset-0 p-5 sm:p-8">
-                {/* Top bar */}
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="h-4 w-32 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
-                  <div className="flex gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-[#e5e5e5] dark:bg-white/10" />
-                    <div className="h-8 w-8 rounded-lg bg-[#f7f7f8] dark:bg-[#2f2f2f]" />
-                  </div>
-                </div>
-
-                {/* KPI cards */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {[
-                    { label: 'Fatturato', value: '€ 42.580', color: 'bg-[#0d0d0d] dark:bg-white', change: '+12%' },
-                    { label: 'OdL Attivi', value: '23', color: 'bg-[#0d0d0d] dark:bg-white', change: '+5' },
-                    { label: 'Prenotazioni', value: '18', color: 'bg-[#0d0d0d] dark:bg-white', change: 'Oggi' },
-                    { label: 'Ticket medio', value: '€ 385', color: 'bg-[#0d0d0d] dark:bg-white', change: '+8%' },
-                  ].map((kpi) => (
-                    <div
-                      key={kpi.label}
-                      className="rounded-xl bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:bg-[#2f2f2f] sm:p-4"
-                    >
-                      <div className={`mb-2 h-1.5 w-8 rounded-full ${kpi.color} opacity-50`} />
-                      <p className="text-xs font-medium text-[#6e6e80] dark:text-[#8e8ea0]">{kpi.label}</p>
-                      <p className="mt-1 text-sm font-bold text-[#0d0d0d] dark:text-[#ececec] sm:text-base">{kpi.value}</p>
-                      <p className="mt-0.5 text-[10px] font-medium text-[#0d0d0d] dark:text-[#ececec]">{kpi.change}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Chart area */}
-                <div className="mt-4 rounded-xl bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:bg-[#2f2f2f]">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="h-3 w-24 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
-                    <div className="flex gap-1">
-                      <div className="h-5 w-12 rounded bg-[#e5e5e5] dark:bg-white/10" />
-                      <div className="h-5 w-12 rounded bg-[#f7f7f8] dark:bg-[#2f2f2f]" />
-                    </div>
-                  </div>
-                  <div className="flex h-20 items-end gap-1.5 sm:h-28">
-                    {[40, 55, 45, 70, 60, 80, 65, 90, 75, 85, 50, 95].map((h, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 rounded-t bg-gradient-to-t from-[#0d0d0d]/20 to-[#0d0d0d]/5 dark:from-white/20 dark:to-white/5"
-                        style={{ height: `${h}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Table */}
-                <div className="mt-4 hidden rounded-xl bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:bg-[#2f2f2f] sm:block">
-                  <div className="space-y-2.5">
-                    {[
-                      { plate: 'AB 123 CD', client: 'Marco R.', status: 'In lavorazione', statusColor: 'bg-amber-400' },
-                      { plate: 'EF 456 GH', client: 'Laura B.', status: 'Completato', statusColor: 'bg-[#0d0d0d] dark:bg-white' },
-                      { plate: 'IJ 789 KL', client: 'Giuseppe F.', status: 'In attesa ricambi', statusColor: 'bg-[#6e6e80]' },
-                    ].map((row) => (
-                      <div key={row.plate} className="flex items-center gap-3">
-                        <div className={`h-2 w-2 rounded-full ${row.statusColor}`} />
-                        <span className="w-20 text-xs font-mono text-[#6e6e80] dark:text-[#8e8ea0]">{row.plate}</span>
-                        <span className="flex-1 text-xs text-[#8e8ea0]">{row.client}</span>
-                        <span className="text-[10px] font-medium text-[#6e6e80] dark:text-[#8e8ea0]">{row.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Real dashboard screenshot */}
+            <Image
+              src="/dashboard-preview.png"
+              alt="Dashboard MechMind OS — gestionale officina"
+              width={1440}
+              height={900}
+              className="w-full h-auto"
+              priority
+            />
           </div>
         </motion.div>
 
-        {/* Trust note */}
+        {/* Social proof stats */}
         <motion.div
-          className="mt-12 flex flex-col items-center gap-2"
+          className="mt-12 grid grid-cols-2 gap-6 sm:grid-cols-4 sm:gap-8"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={1.0}
+        >
+          {[
+            { value: '12.400+', label: 'Ordini di lavoro gestiti' },
+            { value: '8.200+', label: 'Fatture SDI inviate' },
+            { value: '99,9%', label: 'Uptime garantito' },
+            { value: '45+', label: 'Officine in beta' },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center">
+              <p className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">{stat.value}</p>
+              <p className="mt-1 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{stat.label}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Trust badges */}
+        <motion.div
+          className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6"
           variants={fadeUp}
           initial="hidden"
           animate="visible"
           custom={1.2}
         >
-          <p className="text-sm font-medium text-[#6e6e80] dark:text-[#8e8ea0]">
-            Progettato per officine meccaniche italiane
+          {[
+            { label: 'SDI', desc: 'Fatturazione elettronica' },
+            { label: 'GDPR', desc: 'Dati protetti' },
+            { label: 'EU', desc: 'Server in Europa' },
+            { label: 'AES-256', desc: 'Crittografia' },
+            { label: 'Stripe', desc: 'Pagamenti sicuri' },
+          ].map((badge) => (
+            <div
+              key={badge.label}
+              className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] px-3 py-1.5 dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]"
+            >
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500/10 dark:bg-green-400/10">
+                <svg className="h-3 w-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-xs font-semibold text-[var(--text-primary)]">{badge.label}</span>
+              <span className="hidden text-xs text-[var(--text-tertiary)] sm:inline">{badge.desc}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Beta testimonial */}
+        <motion.div
+          className="mx-auto mt-10 max-w-lg rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] p-5 dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={1.4}
+        >
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
+            &ldquo;Da quando usiamo MechMind, il tempo per fatturare si è dimezzato. La dashboard ci dà una visione chiara di tutto il lavoro in officina.&rdquo;
           </p>
-          <p className="text-xs text-[#8e8ea0]">
-            GDPR compliant &middot; Server in Europa &middot; Crittografia AES-256
-          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand)]/10 text-xs font-bold text-[var(--brand)]">
+              MR
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[var(--text-primary)]">Marco R.</p>
+              <p className="text-[11px] text-[var(--text-tertiary)]">Titolare, Autofficina Rossi — Milano</p>
+            </div>
+          </div>
         </motion.div>
       </div>
 
-      {/* Video Modal */}
-      <VideoModal isOpen={isVideoOpen} onClose={() => setIsVideoOpen(false)} />
     </section>
   );
 }

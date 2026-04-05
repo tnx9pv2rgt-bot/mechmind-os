@@ -28,6 +28,8 @@ import {
   Pencil,
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { ErrorState } from '@/components/patterns/error-state';
 import { DetailSkeleton } from '@/components/patterns/loading-skeleton';
 import { EmptyState } from '@/components/patterns/empty-state';
@@ -35,7 +37,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDate, formatDateTime, formatPlate } from '@/lib/utils/format';
 
-/* ─── Types ─── */
+/* --- Types --- */
 interface LaborItem {
   id: string;
   description: string;
@@ -101,18 +103,17 @@ interface WorkOrderDetail {
   updatedAt: string;
 }
 
-/* ─── Status Config ─── */
+/* --- Status Config --- */
 const STATUS_PIPELINE = ['DRAFT', 'OPEN', 'IN_PROGRESS', 'QC', 'COMPLETED', 'DELIVERED'] as const;
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
-  DRAFT: { label: 'Bozza', bg: 'bg-gray-100 dark:bg-gray-800', color: 'text-gray-700 dark:text-gray-300' },
+  DRAFT: { label: 'Bozza', bg: 'bg-gray-200 dark:bg-gray-700', color: 'text-gray-700 dark:text-gray-300' },
   OPEN: { label: 'Aperto', bg: 'bg-blue-100 dark:bg-blue-900/40', color: 'text-blue-700 dark:text-blue-300' },
   IN_PROGRESS: { label: 'In Lavorazione', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  QC: { label: 'Controllo Qualità', bg: 'bg-purple-100 dark:bg-purple-900/40', color: 'text-purple-700 dark:text-purple-300' },
+  QC: { label: 'Controllo Qualita', bg: 'bg-purple-100 dark:bg-purple-900/40', color: 'text-purple-700 dark:text-purple-300' },
   COMPLETED: { label: 'Completato', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
   DELIVERED: { label: 'Consegnato', bg: 'bg-teal-100 dark:bg-teal-900/40', color: 'text-teal-700 dark:text-teal-300' },
   CANCELLED: { label: 'Annullato', bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-red-700 dark:text-red-300' },
-  // Fallback old statuses
   PENDING: { label: 'In Attesa', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
   WAITING_PARTS: { label: 'Attesa Ricambi', bg: 'bg-orange-100 dark:bg-orange-900/40', color: 'text-orange-700 dark:text-orange-300' },
   READY: { label: 'Pronto', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
@@ -120,10 +121,10 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
-  LOW: { label: 'Bassa', className: 'text-gray-500' },
-  NORMAL: { label: 'Normale', className: 'text-blue-500' },
-  HIGH: { label: 'Alta', className: 'text-orange-500' },
-  URGENT: { label: 'Urgente', className: 'text-red-600 font-bold' },
+  LOW: { label: 'Bassa', className: 'text-apple-gray' },
+  NORMAL: { label: 'Normale', className: 'text-apple-blue' },
+  HIGH: { label: 'Alta', className: 'text-apple-orange' },
+  URGENT: { label: 'Urgente', className: 'text-apple-red font-bold' },
 };
 
 const TABS = [
@@ -173,14 +174,13 @@ export default function WorkOrderDetailPage(): React.ReactElement {
 
   const getStatus = (s: string) => STATUS_CONFIG[s] || STATUS_CONFIG.DRAFT;
 
-  /* ─── Transition ─── */
+  /* --- Transition --- */
   const NEXT_STATUS: Record<string, string> = {
     DRAFT: 'OPEN',
     OPEN: 'IN_PROGRESS',
     IN_PROGRESS: 'QC',
     QC: 'COMPLETED',
     COMPLETED: 'DELIVERED',
-    // Fallback old statuses
     PENDING: 'IN_PROGRESS',
     WAITING_PARTS: 'IN_PROGRESS',
     READY: 'COMPLETED',
@@ -224,13 +224,15 @@ export default function WorkOrderDetailPage(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <header className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
+        <header>
           <div className="px-4 sm:px-8 py-5">
             <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
             <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
           </div>
         </header>
-        <div className="p-4 sm:p-8"><DetailSkeleton /></div>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+        </div>
       </div>
     );
   }
@@ -239,7 +241,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
   if (error || !wo) {
     return (
       <div className="min-h-screen">
-        <header className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
+        <header>
           <div className="px-4 sm:px-8 py-5">
             <Breadcrumb items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'OdL', href: '/dashboard/work-orders' }, { label: 'Errore' }]} />
           </div>
@@ -263,7 +265,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
+      <header>
         <div className="px-4 sm:px-8 py-5">
           <Breadcrumb items={[
             { label: 'Dashboard', href: '/dashboard' },
@@ -274,40 +276,40 @@ export default function WorkOrderDetailPage(): React.ReactElement {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
                   OdL #{wo.woNumber || wo.id.slice(0, 8)}
                 </h1>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${sc.bg} ${sc.color}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase ${sc.bg} ${sc.color}`}>
                   {sc.label}
                 </span>
-                <span className={`text-xs font-medium ${priority.className}`}>
+                <span className={`text-footnote font-medium ${priority.className}`}>
                   {priority.label}
                 </span>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1">
                 {wo.vehicleMake} {wo.vehicleModel} {wo.vehiclePlate ? `- ${formatPlate(wo.vehiclePlate)}` : ''}
                 {wo.customerName ? ` | ${wo.customerName}` : ''}
               </p>
             </div>
             <div className="flex items-center gap-2">
               {nextStatus && nextLabel && (
-                <button
+                <AppleButton
                   onClick={() => handleTransition()}
                   disabled={transitioning}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 min-h-[44px]"
+                  loading={transitioning}
+                  icon={<ChevronRight className="h-4 w-4" />}
                 >
-                  {transitioning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
                   Avanza a {nextLabel}
-                </button>
+                </AppleButton>
               )}
               {(wo.status === 'COMPLETED' || wo.status === 'READY') && (
-                <button
+                <AppleButton
+                  variant="secondary"
                   onClick={handleGenerateInvoice}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors min-h-[44px]"
+                  icon={<FileText className="h-4 w-4" />}
                 >
-                  <FileText className="h-4 w-4" />
                   Genera Fattura
-                </button>
+                </AppleButton>
               )}
             </div>
           </div>
@@ -321,15 +323,15 @@ export default function WorkOrderDetailPage(): React.ReactElement {
               return (
                 <div key={step} className="flex items-center">
                   {i > 0 && (
-                    <div className={`w-6 h-0.5 ${isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                    <div className={`w-6 h-0.5 ${isCompleted ? 'bg-apple-green' : 'bg-apple-border/20 dark:bg-[var(--border-default)]'}`} />
                   )}
                   <div
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${
                       isCurrent
-                        ? `${stepConfig.bg} ${stepConfig.color} ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-950`
+                        ? `${stepConfig.bg} ${stepConfig.color} ring-2 ring-offset-1 ring-apple-blue dark:ring-offset-[var(--surface-primary)]`
                         : isCompleted
                           ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                          : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'
                     }`}
                   >
                     {isCompleted ? (
@@ -355,8 +357,8 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   onClick={() => setTab(tab.key)}
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
                     isActive
-                      ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                      ? 'border-apple-blue text-apple-blue bg-apple-blue/5'
+                      : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -384,53 +386,59 @@ export default function WorkOrderDetailPage(): React.ReactElement {
           {/* Sidebar - Cost Summary */}
           <div className="lg:col-span-4">
             <div className="sticky top-4 space-y-4">
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Riepilogo Costi</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Manodopera</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(laborTotal)}</span>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Riepilogo Costi</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-body">
+                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">Manodopera</span>
+                      <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">{formatCurrency(laborTotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-body">
+                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">Ricambi</span>
+                      <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">{formatCurrency(partsTotal)}</span>
+                    </div>
+                    <div className="border-t border-apple-border/20 dark:border-[var(--border-default)] pt-3 flex justify-between">
+                      <span className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">Totale</span>
+                      <span className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]">{formatCurrency(grandTotal)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Ricambi</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(partsTotal)}</span>
-                  </div>
-                  <div className="border-t border-gray-200 dark:border-gray-800 pt-3 flex justify-between">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">Totale</span>
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(grandTotal)}</span>
-                  </div>
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
 
               {/* Quick Info */}
               {wo.customerName && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    Cliente
-                  </h3>
-                  <p className="text-sm text-gray-900 dark:text-white font-medium">{wo.customerName}</p>
-                  {wo.customerPhone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{wo.customerPhone}</p>}
-                  {wo.customerEmail && <p className="text-xs text-gray-500 dark:text-gray-400">{wo.customerEmail}</p>}
-                </div>
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                      <User className="h-4 w-4 text-apple-gray" />
+                      Cliente
+                    </h3>
+                    <p className="text-body text-apple-dark dark:text-[var(--text-primary)] font-medium">{wo.customerName}</p>
+                    {wo.customerPhone && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">{wo.customerPhone}</p>}
+                    {wo.customerEmail && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{wo.customerEmail}</p>}
+                  </AppleCardContent>
+                </AppleCard>
               )}
 
               {wo.vehiclePlate && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Car className="h-4 w-4 text-gray-400" />
-                    Veicolo
-                  </h3>
-                  <p className="font-mono font-bold text-sm text-gray-900 dark:text-white">{formatPlate(wo.vehiclePlate)}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {wo.vehicleMake} {wo.vehicleModel} {wo.vehicleYear ? `(${wo.vehicleYear})` : ''}
-                  </p>
-                  {wo.mileageIn && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Km ingresso: {wo.mileageIn.toLocaleString('it-IT')}
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                      <Car className="h-4 w-4 text-apple-gray" />
+                      Veicolo
+                    </h3>
+                    <p className="font-mono font-bold text-body text-apple-dark dark:text-[var(--text-primary)]">{formatPlate(wo.vehiclePlate)}</p>
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                      {wo.vehicleMake} {wo.vehicleModel} {wo.vehicleYear ? `(${wo.vehicleYear})` : ''}
                     </p>
-                  )}
-                </div>
+                    {wo.mileageIn && (
+                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                        Km ingresso: {wo.mileageIn.toLocaleString('it-IT')}
+                      </p>
+                    )}
+                  </AppleCardContent>
+                </AppleCard>
               )}
             </div>
           </div>
@@ -440,63 +448,67 @@ export default function WorkOrderDetailPage(): React.ReactElement {
   );
 }
 
-/* ─── Details Tab ─── */
+/* --- Details Tab --- */
 function DetailsTab({ wo }: { wo: WorkOrderDetail }): React.ReactElement {
   return (
     <div className="space-y-6">
       {/* Diagnosis & Request */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Wrench className="h-4 w-4 text-gray-400" />
-          Diagnosi e Richiesta
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Diagnosi</p>
-            <p className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
-              {wo.diagnosis || 'Nessuna diagnosi inserita'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Richiesta del cliente</p>
-            <p className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
-              {wo.customerRequest || 'Nessuna richiesta specificata'}
-            </p>
-          </div>
-          {wo.notes && (
+      <AppleCard hover={false}>
+        <AppleCardContent>
+          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-apple-gray" />
+            Diagnosi e Richiesta
+          </h3>
+          <div className="space-y-4">
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Note</p>
-              <p className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
-                {wo.notes}
+              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Diagnosi</p>
+              <p className="text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
+                {wo.diagnosis || 'Nessuna diagnosi inserita'}
               </p>
             </div>
-          )}
-        </div>
-      </div>
+            <div>
+              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Richiesta del cliente</p>
+              <p className="text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
+                {wo.customerRequest || 'Nessuna richiesta specificata'}
+              </p>
+            </div>
+            {wo.notes && (
+              <div>
+                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Note</p>
+                <p className="text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
+                  {wo.notes}
+                </p>
+              </div>
+            )}
+          </div>
+        </AppleCardContent>
+      </AppleCard>
 
       {/* Assignment */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Assegnazione</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Tecnico</p>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{wo.technicianName || 'Non assegnato'}</p>
+      <AppleCard hover={false}>
+        <AppleCardContent>
+          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Assegnazione</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Tecnico</p>
+              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{wo.technicianName || 'Non assegnato'}</p>
+            </div>
+            <div>
+              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Ore stimate</p>
+              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{wo.estimatedHours != null ? `${wo.estimatedHours} h` : '—'}</p>
+            </div>
+            <div>
+              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Ore effettive</p>
+              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{wo.actualHours != null ? `${wo.actualHours} h` : '—'}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ore stimate</p>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{wo.estimatedHours != null ? `${wo.estimatedHours} h` : '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ore effettive</p>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{wo.actualHours != null ? `${wo.actualHours} h` : '—'}</p>
-          </div>
-        </div>
-      </div>
+        </AppleCardContent>
+      </AppleCard>
     </div>
   );
 }
 
-/* ─── Labor Tab ─── */
+/* --- Labor Tab --- */
 function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string; onMutate: () => void }): React.ReactElement {
   const [laborItems, setLaborItems] = useState<LaborItem[]>(items);
   const [saving, setSaving] = useState(false);
@@ -536,81 +548,85 @@ function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string;
   const total = laborItems.reduce((s, i) => s + i.hours * i.costPerHour, 0);
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Clock className="h-4 w-4 text-gray-400" />
-          Lavorazioni
-        </h3>
-        <button
-          onClick={addItem}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors min-h-[32px]"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Aggiungi lavorazione
-        </button>
-      </div>
-
-      {laborItems.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Nessuna voce di manodopera</p>
-      ) : (
-        <div className="space-y-3">
-          {laborItems.map((item) => (
-            <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-              <Input
-                placeholder="Descrizione"
-                value={item.description}
-                onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                className="flex-1 h-9 text-sm"
-              />
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  placeholder="Ore"
-                  value={item.hours || ''}
-                  onChange={(e) => updateItem(item.id, 'hours', Number(e.target.value))}
-                  className="w-20 h-9 text-sm text-center"
-                />
-                <span className="text-xs text-gray-400">x</span>
-                <Input
-                  type="number"
-                  placeholder="EUR/h"
-                  value={item.costPerHour || ''}
-                  onChange={(e) => updateItem(item.id, 'costPerHour', Number(e.target.value))}
-                  className="w-24 h-9 text-sm text-center"
-                />
-                <span className="text-sm font-medium text-gray-900 dark:text-white w-20 text-right">
-                  {formatCurrency(item.hours * item.costPerHour)}
-                </span>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-gray-400 hover:text-red-500 transition-colors"
-                  aria-label="Rimuovi"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+    <AppleCard hover={false}>
+      <AppleCardContent>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
+            <Clock className="h-4 w-4 text-apple-gray" />
+            Lavorazioni
+          </h3>
+          <AppleButton
+            variant="ghost"
+            size="sm"
+            icon={<Plus className="h-3.5 w-3.5" />}
+            onClick={addItem}
+          >
+            Aggiungi lavorazione
+          </AppleButton>
         </div>
-      )}
 
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Totale Manodopera: {formatCurrency(total)}</span>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 min-h-[36px]"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Salva
-        </button>
-      </div>
-    </div>
+        {laborItems.length === 0 ? (
+          <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] text-center py-8">Nessuna voce di manodopera</p>
+        ) : (
+          <div className="space-y-3">
+            {laborItems.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+                <Input
+                  placeholder="Descrizione"
+                  value={item.description}
+                  onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                  className="flex-1 h-9 text-sm"
+                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Ore"
+                    value={item.hours || ''}
+                    onChange={(e) => updateItem(item.id, 'hours', Number(e.target.value))}
+                    className="w-20 h-9 text-sm text-center"
+                  />
+                  <span className="text-footnote text-apple-gray">x</span>
+                  <Input
+                    type="number"
+                    placeholder="EUR/h"
+                    value={item.costPerHour || ''}
+                    onChange={(e) => updateItem(item.id, 'costPerHour', Number(e.target.value))}
+                    className="w-24 h-9 text-sm text-center"
+                  />
+                  <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] w-20 text-right">
+                    {formatCurrency(item.hours * item.costPerHour)}
+                  </span>
+                  <AppleButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-apple-gray hover:text-apple-red"
+                    aria-label="Rimuovi"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </AppleButton>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)] flex items-center justify-between">
+          <span className="text-body font-medium text-apple-gray dark:text-[var(--text-secondary)]">Totale Manodopera: {formatCurrency(total)}</span>
+          <AppleButton
+            onClick={save}
+            loading={saving}
+            size="sm"
+          >
+            Salva
+          </AppleButton>
+        </div>
+      </AppleCardContent>
+    </AppleCard>
   );
 }
 
-/* ─── Parts Tab ─── */
+/* --- Parts Tab --- */
 function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; onMutate: () => void }): React.ReactElement {
   const [partItems, setPartItems] = useState<PartItem[]>(items);
   const [saving, setSaving] = useState(false);
@@ -650,81 +666,85 @@ function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; 
   const total = partItems.reduce((s, i) => s + i.quantity * i.unitCost, 0);
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Package className="h-4 w-4 text-gray-400" />
-          Ricambi
-        </h3>
-        <button
-          onClick={addItem}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors min-h-[32px]"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Aggiungi ricambio
-        </button>
-      </div>
-
-      {partItems.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Nessun ricambio inserito</p>
-      ) : (
-        <div className="space-y-3">
-          {partItems.map((item) => (
-            <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-              <Input
-                placeholder="Nome ricambio"
-                value={item.name}
-                onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                className="flex-1 h-9 text-sm"
-              />
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  placeholder="Qtà"
-                  value={item.quantity || ''}
-                  onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
-                  className="w-20 h-9 text-sm text-center"
-                />
-                <span className="text-xs text-gray-400">x</span>
-                <Input
-                  type="number"
-                  placeholder="EUR"
-                  value={item.unitCost || ''}
-                  onChange={(e) => updateItem(item.id, 'unitCost', Number(e.target.value))}
-                  className="w-24 h-9 text-sm text-center"
-                />
-                <span className="text-sm font-medium text-gray-900 dark:text-white w-20 text-right">
-                  {formatCurrency(item.quantity * item.unitCost)}
-                </span>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-gray-400 hover:text-red-500 transition-colors"
-                  aria-label="Rimuovi"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+    <AppleCard hover={false}>
+      <AppleCardContent>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
+            <Package className="h-4 w-4 text-apple-gray" />
+            Ricambi
+          </h3>
+          <AppleButton
+            variant="ghost"
+            size="sm"
+            icon={<Plus className="h-3.5 w-3.5" />}
+            onClick={addItem}
+          >
+            Aggiungi ricambio
+          </AppleButton>
         </div>
-      )}
 
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Totale Ricambi: {formatCurrency(total)}</span>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 min-h-[36px]"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Salva
-        </button>
-      </div>
-    </div>
+        {partItems.length === 0 ? (
+          <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] text-center py-8">Nessun ricambio inserito</p>
+        ) : (
+          <div className="space-y-3">
+            {partItems.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+                <Input
+                  placeholder="Nome ricambio"
+                  value={item.name}
+                  onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                  className="flex-1 h-9 text-sm"
+                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Qta"
+                    value={item.quantity || ''}
+                    onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
+                    className="w-20 h-9 text-sm text-center"
+                  />
+                  <span className="text-footnote text-apple-gray">x</span>
+                  <Input
+                    type="number"
+                    placeholder="EUR"
+                    value={item.unitCost || ''}
+                    onChange={(e) => updateItem(item.id, 'unitCost', Number(e.target.value))}
+                    className="w-24 h-9 text-sm text-center"
+                  />
+                  <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] w-20 text-right">
+                    {formatCurrency(item.quantity * item.unitCost)}
+                  </span>
+                  <AppleButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-apple-gray hover:text-apple-red"
+                    aria-label="Rimuovi"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </AppleButton>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)] flex items-center justify-between">
+          <span className="text-body font-medium text-apple-gray dark:text-[var(--text-secondary)]">Totale Ricambi: {formatCurrency(total)}</span>
+          <AppleButton
+            onClick={save}
+            loading={saving}
+            size="sm"
+          >
+            Salva
+          </AppleButton>
+        </div>
+      </AppleCardContent>
+    </AppleCard>
   );
 }
 
-/* ─── Timer Tab ─── */
+/* --- Timer Tab --- */
 function TimerTab({ entries, woId, onMutate }: { entries: TimeEntry[]; woId: string; onMutate: () => void }): React.ReactElement {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -782,64 +802,72 @@ function TimerTab({ entries, woId, onMutate }: { entries: TimeEntry[]; woId: str
   return (
     <div className="space-y-6">
       {/* Timer Display */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-8 text-center">
-        <p className="text-6xl font-mono font-bold text-gray-900 dark:text-white mb-6">
-          {formatTimer(elapsed)}
-        </p>
-        <div className="flex items-center justify-center gap-3">
-          {!isRunning ? (
-            <button
-              onClick={() => handleTimerAction('start')}
-              disabled={timerAction !== null}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 min-h-[44px]"
-            >
-              {timerAction === 'start' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              Avvia
-            </button>
-          ) : (
-            <button
-              onClick={() => handleTimerAction('stop')}
-              disabled={timerAction !== null}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 min-h-[44px]"
-            >
-              {timerAction === 'stop' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-              Ferma
-            </button>
-          )}
-        </div>
-      </div>
+      <AppleCard hover={false}>
+        <AppleCardContent>
+          <div className="text-center py-4">
+            <p className="text-6xl font-mono font-bold text-apple-dark dark:text-[var(--text-primary)] mb-6">
+              {formatTimer(elapsed)}
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              {!isRunning ? (
+                <AppleButton
+                  onClick={() => handleTimerAction('start')}
+                  disabled={timerAction !== null}
+                  loading={timerAction === 'start'}
+                  icon={<Play className="h-4 w-4" />}
+                >
+                  Avvia
+                </AppleButton>
+              ) : (
+                <AppleButton
+                  variant="secondary"
+                  onClick={() => handleTimerAction('stop')}
+                  disabled={timerAction !== null}
+                  loading={timerAction === 'stop'}
+                  icon={<Square className="h-4 w-4" />}
+                  className="!bg-apple-red !text-white hover:!bg-red-600"
+                >
+                  Ferma
+                </AppleButton>
+              )}
+            </div>
+          </div>
+        </AppleCardContent>
+      </AppleCard>
 
       {/* Time Entries History */}
       {entries.length > 0 && (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Registro Tempi</h3>
-          <div className="space-y-2">
-            {entries.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                <div>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {formatDateTime(entry.start)}
-                    {entry.end ? ` → ${formatDateTime(entry.end)}` : ' (in corso)'}
-                  </p>
-                  {entry.technicianName && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{entry.technicianName}</p>
+        <AppleCard hover={false}>
+          <AppleCardContent>
+            <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Registro Tempi</h3>
+            <div className="space-y-2">
+              {entries.map((entry) => (
+                <div key={entry.id} className="flex items-center justify-between py-2 border-b border-apple-border/10 dark:border-[var(--border-default)]/50 last:border-b-0">
+                  <div>
+                    <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                      {formatDateTime(entry.start)}
+                      {entry.end ? ` → ${formatDateTime(entry.end)}` : ' (in corso)'}
+                    </p>
+                    {entry.technicianName && (
+                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{entry.technicianName}</p>
+                    )}
+                  </div>
+                  {entry.duration != null && (
+                    <span className="text-body font-mono font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      {formatTimer(entry.duration * 60)}
+                    </span>
                   )}
                 </div>
-                {entry.duration != null && (
-                  <span className="text-sm font-mono font-medium text-gray-900 dark:text-white">
-                    {formatTimer(entry.duration * 60)}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </AppleCardContent>
+        </AppleCard>
       )}
     </div>
   );
 }
 
-/* ─── Photos Tab ─── */
+/* --- Photos Tab --- */
 function PhotosTab({ photos }: { photos: string[] }): React.ReactElement {
   if (photos.length === 0) {
     return (
@@ -855,7 +883,7 @@ function PhotosTab({ photos }: { photos: string[] }): React.ReactElement {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {photos.map((url, i) => (
-        <div key={i} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+        <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
           <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
         </div>
       ))}
@@ -863,49 +891,51 @@ function PhotosTab({ photos }: { photos: string[] }): React.ReactElement {
   );
 }
 
-/* ─── Audit Tab ─── */
+/* --- Audit Tab --- */
 function AuditTab({ entries }: { entries: AuditEntry[] }): React.ReactElement {
   if (entries.length === 0) {
     return (
       <EmptyState
         icon={History}
-        title="Nessuna attività registrata"
-        description="Lo storico delle attività apparirà qui quando vengono effettuati cambiamenti."
+        title="Nessuna attivita registrata"
+        description="Lo storico delle attivita apparira qui quando vengono effettuati cambiamenti."
         variant="first-time"
       />
     );
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
-      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-        <History className="h-4 w-4 text-gray-400" />
-        Storico Attività
-      </h3>
-      <div className="relative pl-6">
-        <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
-        <div className="space-y-4">
-          {entries.map((entry) => (
-            <div key={entry.id} className="relative">
-              <div className="absolute -left-4 top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-white dark:border-gray-950" />
-              <div>
-                <p className="text-sm text-gray-900 dark:text-white">
-                  {entry.action}
-                  {entry.fromStatus && entry.toStatus && (
-                    <span className="text-gray-500 dark:text-gray-400">
-                      {' '}({STATUS_CONFIG[entry.fromStatus]?.label || entry.fromStatus} → {STATUS_CONFIG[entry.toStatus]?.label || entry.toStatus})
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {formatDateTime(entry.createdAt)}
-                  {entry.userName && ` — ${entry.userName}`}
-                </p>
+    <AppleCard hover={false}>
+      <AppleCardContent>
+        <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+          <History className="h-4 w-4 text-apple-gray" />
+          Storico Attivita
+        </h3>
+        <div className="relative pl-6">
+          <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-apple-border/20 dark:bg-[var(--border-default)]" />
+          <div className="space-y-4">
+            {entries.map((entry) => (
+              <div key={entry.id} className="relative">
+                <div className="absolute -left-4 top-1 w-3 h-3 rounded-full bg-apple-blue border-2 border-white dark:border-[var(--surface-elevated)]" />
+                <div>
+                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                    {entry.action}
+                    {entry.fromStatus && entry.toStatus && (
+                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">
+                        {' '}({STATUS_CONFIG[entry.fromStatus]?.label || entry.fromStatus} → {STATUS_CONFIG[entry.toStatus]?.label || entry.toStatus})
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">
+                    {formatDateTime(entry.createdAt)}
+                    {entry.userName && ` — ${entry.userName}`}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
+      </AppleCardContent>
+    </AppleCard>
   );
 }

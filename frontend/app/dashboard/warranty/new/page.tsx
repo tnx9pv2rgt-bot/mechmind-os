@@ -8,13 +8,22 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Shield, Loader2 } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { ArrowLeft, Shield, Loader2, Save } from 'lucide-react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+};
 
 const warrantySchema = z.object({
   vehicleId: z.string().min(1, 'Seleziona un veicolo'),
@@ -103,226 +112,216 @@ export default function NewWarrantyPage() {
     }
   };
 
+  const selectClass = 'w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer';
+
   return (
-    <div className='container mx-auto max-w-3xl space-y-6 p-6 bg-[#1a1a1a] min-h-screen'>
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Garanzie', href: '/dashboard/warranty' },
-          { label: 'Nuova Garanzia' },
-        ]}
-      />
-
+    <div>
       {/* Header */}
-      <div className='flex items-center gap-4'>
-        <Button
-          variant='outline'
-          size='icon'
-          onClick={() => router.push('/dashboard/warranty')}
-          aria-label='Torna alle garanzie'
-          className='border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
-        >
-          <ArrowLeft className='h-4 w-4' />
-        </Button>
-        <div>
-          <h1 className='text-2xl font-bold text-white'>Nuova Garanzia</h1>
-          <p className='text-sm text-[#888]'>
-            Crea una nuova garanzia per un veicolo
-          </p>
+      <header className=''>
+        <div className='px-8 py-5'>
+          <Breadcrumb
+            items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Garanzie', href: '/dashboard/warranty' },
+              { label: 'Nuova Garanzia' },
+            ]}
+          />
+          <div className='flex items-center gap-3 mt-2'>
+            <AppleButton
+              variant='ghost'
+              size='sm'
+              onClick={() => router.push('/dashboard/warranty')}
+              icon={<ArrowLeft className='h-4 w-4' />}
+              aria-label='Torna alle garanzie'
+              className='min-w-[44px]'
+            />
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuova Garanzia</h1>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+                Crea una nuova garanzia per un veicolo
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <Card className='bg-[#2f2f2f] border border-[#4e4e4e] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2 text-white'>
-            <Shield className='h-5 w-5' />
-            Dettagli Garanzia
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
-            {/* Vehicle */}
-            <div>
-              <Label htmlFor='vehicleId' className='text-white'>Veicolo *</Label>
-              {vehiclesLoading ? (
-                <div className='flex items-center gap-2 mt-1'>
-                  <Loader2 className='h-4 w-4 animate-spin text-white' />
-                  <span className='text-sm text-[#888]'>Caricamento veicoli...</span>
+      <motion.div
+        className='p-8 max-w-3xl mx-auto space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Dettagli Garanzia */}
+          <motion.div variants={cardVariants} className='mb-6'>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
+                  <Shield className='h-5 w-5 text-apple-blue' />
+                  Dettagli Garanzia
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent className='space-y-5'>
+                {/* Vehicle */}
+                <div>
+                  <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Veicolo *</label>
+                  {vehiclesLoading ? (
+                    <div className='flex items-center gap-2 mt-1'>
+                      <Loader2 className='h-4 w-4 animate-spin text-apple-blue' />
+                      <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Caricamento veicoli...</span>
+                    </div>
+                  ) : (
+                    <select
+                      {...register('vehicleId')}
+                      className={selectClass}
+                    >
+                      <option value=''>Seleziona un veicolo...</option>
+                      {vehicles.map(v => (
+                        <option key={v.id} value={v.id}>
+                          {v.licensePlate} - {v.make} {v.model} ({v.year})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {errors.vehicleId && (
+                    <p className='text-footnote text-apple-red mt-1'>{errors.vehicleId.message}</p>
+                  )}
                 </div>
-              ) : (
-                <select
-                  id='vehicleId'
-                  {...register('vehicleId')}
-                  className='w-full mt-1 h-[52px] px-3 rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white text-sm outline-none'
-                >
-                  <option value=''>Seleziona un veicolo...</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.licensePlate} - {v.make} {v.model} ({v.year})
-                    </option>
-                  ))}
-                </select>
-              )}
-              {errors.vehicleId && (
-                <p className='text-xs text-red-500 mt-1'>{errors.vehicleId.message}</p>
-              )}
-            </div>
 
-            {/* Type + Provider */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-              <div>
-                <Label htmlFor='type' className='text-white'>Tipo Garanzia *</Label>
-                <select
-                  id='type'
-                  {...register('type')}
-                  className='w-full mt-1 h-[52px] px-3 rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white text-sm outline-none'
-                >
-                  {WARRANTY_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.type && <p className='text-xs text-red-500 mt-1'>{errors.type.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor='provider' className='text-white'>Fornitore *</Label>
-                <Input id='provider' {...register('provider')} className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none' />
-                {errors.provider && (
-                  <p className='text-xs text-red-500 mt-1'>{errors.provider.message}</p>
-                )}
-              </div>
-            </div>
+                {/* Type + Provider */}
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Tipo Garanzia *</label>
+                    <select
+                      {...register('type')}
+                      className={selectClass}
+                    >
+                      {WARRANTY_TYPES.map(t => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.type && <p className='text-footnote text-apple-red mt-1'>{errors.type.message}</p>}
+                  </div>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Fornitore *</label>
+                    <Input {...register('provider')} />
+                    {errors.provider && (
+                      <p className='text-footnote text-apple-red mt-1'>{errors.provider.message}</p>
+                    )}
+                  </div>
+                </div>
 
-            {/* Dates */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-              <div>
-                <Label htmlFor='startDate' className='text-white'>Data Inizio *</Label>
-                <Input id='startDate' type='date' {...register('startDate')} className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none' />
-                {errors.startDate && (
-                  <p className='text-xs text-red-500 mt-1'>{errors.startDate.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor='expirationDate' className='text-white'>Data Fine *</Label>
-                <Input
-                  id='expirationDate'
-                  type='date'
-                  {...register('expirationDate')}
-                  className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none'
+                {/* Dates */}
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Data Inizio *</label>
+                    <Input type='date' {...register('startDate')} />
+                    {errors.startDate && (
+                      <p className='text-footnote text-apple-red mt-1'>{errors.startDate.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Data Fine *</label>
+                    <Input type='date' {...register('expirationDate')} />
+                    {errors.expirationDate && (
+                      <p className='text-footnote text-apple-red mt-1'>{errors.expirationDate.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Coverage */}
+                <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Copertura Massima (EUR) *</label>
+                    <Input type='number' step='0.01' min={0} {...register('maxCoverage')} />
+                    {errors.maxCoverage && (
+                      <p className='text-footnote text-apple-red mt-1'>{errors.maxCoverage.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Franchigia (EUR)</label>
+                    <Input type='number' step='0.01' min={0} {...register('deductible')} />
+                    {errors.deductible && (
+                      <p className='text-footnote text-apple-red mt-1'>{errors.deductible.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Km Copertura</label>
+                    <Input type='number' min={0} {...register('coverageKm')} placeholder='Illimitata' />
+                  </div>
+                </div>
+
+                {/* Current Km */}
+                <div>
+                  <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Km Attuali *</label>
+                  <Input type='number' min={0} {...register('currentKm')} />
+                  {errors.currentKm && (
+                    <p className='text-footnote text-apple-red mt-1'>{errors.currentKm.message}</p>
+                  )}
+                </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+
+          {/* Terms */}
+          <motion.div variants={cardVariants} className='mb-6'>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  Termini e Condizioni
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <textarea
+                  {...register('terms')}
+                  placeholder='Descrivi i termini della garanzia...'
+                  rows={4}
+                  className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                 />
-                {errors.expirationDate && (
-                  <p className='text-xs text-red-500 mt-1'>{errors.expirationDate.message}</p>
-                )}
-              </div>
-            </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
 
-            {/* Coverage */}
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-              <div>
-                <Label htmlFor='maxCoverage' className='text-white'>Copertura Massima (€) *</Label>
-                <Input
-                  id='maxCoverage'
-                  type='number'
-                  step='0.01'
-                  min={0}
-                  {...register('maxCoverage')}
-                  className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none'
+          {/* Description */}
+          <motion.div variants={cardVariants} className='mb-6'>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  Descrizione Copertura
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <textarea
+                  {...register('description')}
+                  placeholder='Descrivi cosa copre la garanzia...'
+                  rows={3}
+                  className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                 />
-                {errors.maxCoverage && (
-                  <p className='text-xs text-red-500 mt-1'>{errors.maxCoverage.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor='deductible' className='text-white'>Franchigia (€)</Label>
-                <Input
-                  id='deductible'
-                  type='number'
-                  step='0.01'
-                  min={0}
-                  {...register('deductible')}
-                  className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none'
-                />
-                {errors.deductible && (
-                  <p className='text-xs text-red-500 mt-1'>{errors.deductible.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor='coverageKm' className='text-white'>Km Copertura</Label>
-                <Input
-                  id='coverageKm'
-                  type='number'
-                  min={0}
-                  {...register('coverageKm')}
-                  className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
-                  placeholder='Illimitata'
-                />
-              </div>
-            </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
 
-            {/* Current Km */}
-            <div>
-              <Label htmlFor='currentKm' className='text-white'>Km Attuali *</Label>
-              <Input
-                id='currentKm'
-                type='number'
-                min={0}
-                {...register('currentKm')}
-                className='mt-1 h-[52px] rounded-full border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none'
-              />
-              {errors.currentKm && (
-                <p className='text-xs text-red-500 mt-1'>{errors.currentKm.message}</p>
-              )}
-            </div>
-
-            {/* Terms */}
-            <div>
-              <Label htmlFor='terms' className='text-white'>Termini e Condizioni</Label>
-              <Textarea
-                id='terms'
-                {...register('terms')}
-                placeholder='Descrivi i termini della garanzia...'
-                rows={4}
-                className='mt-1 rounded-2xl border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] px-5 py-3 outline-none'
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label htmlFor='description' className='text-white'>Descrizione Copertura</Label>
-              <Textarea
-                id='description'
-                {...register('description')}
-                placeholder='Descrivi cosa copre la garanzia...'
-                rows={3}
-                className='mt-1 rounded-2xl border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] px-5 py-3 outline-none'
-              />
-            </div>
-
-            {/* Actions */}
-            <div className='flex items-center justify-end gap-3 pt-4 border-t border-[#4e4e4e]'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => router.push('/dashboard/warranty')}
-                className='rounded-full h-[52px] border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
-              >
-                Annulla
-              </Button>
-              <Button type='submit' disabled={isSubmitting} className='rounded-full h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                    Salvataggio...
-                  </>
-                ) : (
-                  'Crea Garanzia'
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          {/* Actions */}
+          <div className='flex items-center justify-end gap-3'>
+            <AppleButton
+              type='button'
+              variant='ghost'
+              onClick={() => router.push('/dashboard/warranty')}
+            >
+              Annulla
+            </AppleButton>
+            <AppleButton
+              type='submit'
+              loading={isSubmitting}
+              icon={<Save className='h-4 w-4' />}
+            >
+              Crea Garanzia
+            </AppleButton>
+          </div>
+        </form>
+      </motion.div>
     </div>
   );
 }

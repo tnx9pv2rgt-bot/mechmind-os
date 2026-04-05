@@ -84,13 +84,13 @@ function getEventConfig(type: string): {
       return {
         icon: <CheckCircle className="h-4 w-4" />,
         label: 'Disconnessione',
-        colorClass: 'text-[#888] bg-[#4e4e4e]/50',
+        colorClass: 'text-[var(--text-tertiary)] bg-[var(--border-strong)]/50',
       };
     default:
       return {
         icon: <Shield className="h-4 w-4" />,
         label: type.replace(/_/g, ' '),
-        colorClass: 'text-[#888] bg-[#4e4e4e]/50',
+        colorClass: 'text-[var(--text-tertiary)] bg-[var(--border-strong)]/50',
       };
   }
 }
@@ -122,13 +122,13 @@ export function SecurityActivityTimeline({
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="animate-pulse rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-4"
+            className="animate-pulse rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-4"
           >
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-full bg-[#4e4e4e]" />
+              <div className="h-8 w-8 rounded-full bg-[var(--border-strong)]" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-48 rounded bg-[#4e4e4e]" />
-                <div className="h-3 w-32 rounded bg-[#4e4e4e]" />
+                <div className="h-4 w-48 rounded bg-[var(--border-strong)]" />
+                <div className="h-3 w-32 rounded bg-[var(--border-strong)]" />
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ export function SecurityActivityTimeline({
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 text-[#888]">
+      <div className="flex flex-col items-center gap-3 py-8 text-[var(--text-tertiary)]">
         <Shield className="h-10 w-10" />
         <p className="text-sm">Nessuna attività di sicurezza registrata</p>
       </div>
@@ -160,7 +160,7 @@ export function SecurityActivityTimeline({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03 }}
             onClick={() => setExpandedId(isExpanded ? null : event.id)}
-            className="w-full rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-4 text-left transition-colors hover:border-white/20"
+            className="w-full rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-4 text-left transition-colors hover:border-white/20"
           >
             <div className="flex items-start gap-3">
               <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.colorClass}`}>
@@ -169,9 +169,9 @@ export function SecurityActivityTimeline({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-white">{config.label}</p>
-                  <ChevronDown className={`h-3.5 w-3.5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-3.5 w-3.5 text-[var(--text-tertiary)] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
-                <p className="mt-0.5 text-xs text-[#888]">
+                <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
                   {formatEventDate(event.timestamp)}
                 </p>
                 {isExpanded && (
@@ -179,9 +179,9 @@ export function SecurityActivityTimeline({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mt-3 space-y-1 border-t border-[#4e4e4e] pt-3"
+                    className="mt-3 space-y-1 border-t border-[var(--border-strong)] pt-3"
                   >
-                    <p className="text-xs text-[#b4b4b4]">
+                    <p className="text-xs text-[var(--text-secondary)]">
                       {event.location} | {event.os} | {event.browser}
                     </p>
                     {event.isTrustedDevice && (
@@ -191,7 +191,7 @@ export function SecurityActivityTimeline({
                       </p>
                     )}
                     {event.details && (
-                      <p className="text-xs text-[#888]">
+                      <p className="text-xs text-[var(--text-tertiary)]">
                         {event.type === 'login_failed' ? 'Motivo: ' : ''}{event.details}
                       </p>
                     )}
@@ -208,7 +208,7 @@ export function SecurityActivityTimeline({
           type="button"
           onClick={onLoadMore}
           disabled={isLoadingMore}
-          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[#4e4e4e] px-4 py-3 text-sm font-medium text-[#b4b4b4] transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
+          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--border-strong)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
         >
           {isLoadingMore ? (
             <Loader2 className="h-4 w-4 animate-spin" />

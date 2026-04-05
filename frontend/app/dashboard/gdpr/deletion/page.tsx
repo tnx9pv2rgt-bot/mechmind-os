@@ -81,7 +81,7 @@ export default function GdprDeletionPage() {
 
   return (
     <div>
-      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
+      <header className="">
         <div className="px-4 sm:px-8 py-5">
           <Breadcrumb
             items={[
@@ -100,10 +100,10 @@ export default function GdprDeletionPage() {
               Indietro
             </AppleButton>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[#ececec]">
+              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
                 Eliminazione Account
               </h1>
-              <p className="text-apple-gray dark:text-[#636366] text-body mt-1">
+              <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
                 Diritto alla cancellazione (Art. 17 GDPR)
               </p>
             </div>
@@ -124,10 +124,10 @@ export default function GdprDeletionPage() {
                   <div className="w-16 h-16 rounded-full bg-apple-blue flex items-center justify-center mx-auto">
                     <CheckCircle className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h3 className="text-headline font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Richiesta Ricevuta
                   </h3>
-                  <p className="text-sm text-apple-gray dark:text-[#636366] max-w-md mx-auto">
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md mx-auto">
                     La tua richiesta di eliminazione e stata registrata. Il tuo account sara
                     eliminato entro 30 giorni. Durante questo periodo puoi annullare la richiesta
                     accedendo al tuo account.
@@ -153,12 +153,12 @@ export default function GdprDeletionPage() {
               transition={{ duration: 0.5 }}
             >
               <div className="flex items-start gap-4 p-5 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                <AlertTriangle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-6 w-6 text-apple-red flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">
+                  <h3 className="text-body font-semibold text-red-800 dark:text-red-300 mb-1">
                     Questa azione e irreversibile
                   </h3>
-                  <p className="text-sm text-red-700 dark:text-red-400">
+                  <p className="text-body text-apple-red dark:text-apple-red">
                     Una volta confermata, tutti i tuoi dati personali saranno eliminati
                     permanentemente dopo un periodo di grazia di 30 giorni. Non sara possibile
                     recuperare i dati dopo l&apos;eliminazione.
@@ -175,7 +175,7 @@ export default function GdprDeletionPage() {
             >
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Cosa verra eliminato
                   </h2>
                 </AppleCardHeader>
@@ -188,9 +188,9 @@ export default function GdprDeletionPage() {
                           key={item.label}
                           className="flex items-center gap-3 p-3 rounded-xl bg-red-50/50 dark:bg-red-900/10"
                         >
-                          <XCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                          <XCircle className="h-4 w-4 text-apple-red flex-shrink-0" />
                           <ItemIcon className="h-4 w-4 text-apple-gray flex-shrink-0" />
-                          <span className="text-sm text-apple-dark dark:text-[#ececec]">
+                          <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
                             {item.label}
                           </span>
                         </div>
@@ -209,7 +209,7 @@ export default function GdprDeletionPage() {
             >
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Conferma Eliminazione
                   </h2>
                 </AppleCardHeader>
@@ -217,13 +217,13 @@ export default function GdprDeletionPage() {
                   <div className="space-y-5">
                     {error && (
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                        <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                        <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                        <AlertCircle className="h-4 w-4 text-apple-red flex-shrink-0" />
+                        <p className="text-body text-red-700 dark:text-red-300">{error}</p>
                       </div>
                     )}
 
                     <div>
-                      <Label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <Label className="mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
                         Password attuale
                       </Label>
                       <Input
@@ -237,8 +237,8 @@ export default function GdprDeletionPage() {
                     </div>
 
                     <div>
-                      <Label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Digita <span className="font-bold text-red-600">ELIMINA</span> per confermare
+                      <Label className="mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        Digita <span className="font-bold text-apple-red">ELIMINA</span> per confermare
                       </Label>
                       <Input
                         value={confirmation}
@@ -252,7 +252,7 @@ export default function GdprDeletionPage() {
                         autoComplete="off"
                       />
                       {confirmation.length > 0 && !isConfirmValid && (
-                        <p className="text-xs text-red-500 mt-1">
+                        <p className="text-footnote text-apple-red mt-1">
                           Devi digitare esattamente &quot;ELIMINA&quot;
                         </p>
                       )}
@@ -260,7 +260,7 @@ export default function GdprDeletionPage() {
 
                     <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
                       <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                      <p className="text-footnote text-amber-700 dark:text-amber-300">
                         Periodo di grazia: 30 giorni. Puoi annullare la richiesta accedendo al tuo
                         account entro questo periodo.
                       </p>

@@ -8,6 +8,7 @@ import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SubscriptionService } from './services/subscription.service';
 import { FeatureAccessService } from './services/feature-access.service';
+import { VoicePricingService } from './services/voice-pricing.service';
 import {
   SubscriptionController,
   AdminSubscriptionController,
@@ -24,11 +25,18 @@ import { AuthModule } from '../auth/auth.module';
   providers: [
     SubscriptionService,
     FeatureAccessService,
+    VoicePricingService,
     FeatureGuard,
     LimitGuard,
     ApiUsageMiddleware,
   ],
-  exports: [SubscriptionService, FeatureAccessService, FeatureGuard, LimitGuard],
+  exports: [
+    SubscriptionService,
+    FeatureAccessService,
+    VoicePricingService,
+    FeatureGuard,
+    LimitGuard,
+  ],
 })
 export class SubscriptionModule {
   configure(consumer: MiddlewareConsumer) {

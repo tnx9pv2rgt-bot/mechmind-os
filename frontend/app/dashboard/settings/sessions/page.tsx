@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import {
   Monitor,
   Smartphone,
@@ -12,9 +15,11 @@ import {
   Clock,
   Shield,
   LogOut,
-  ChevronLeft,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import Link from 'next/link';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface SessionInfo {
   id: string;
@@ -30,14 +35,16 @@ interface SessionInfo {
   isCurrent: boolean;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function DeviceIcon({ type }: { type: string }) {
   switch (type) {
     case 'phone':
-      return <Smartphone className="h-8 w-8 text-blue-500 dark:text-blue-400" />;
+      return <Smartphone className="h-8 w-8 text-apple-blue" />;
     case 'tablet':
-      return <Tablet className="h-8 w-8 text-purple-500 dark:text-purple-400" />;
+      return <Tablet className="h-8 w-8 text-apple-purple" />;
     default:
-      return <Monitor className="h-8 w-8 text-gray-600 dark:text-gray-300" />;
+      return <Monitor className="h-8 w-8 text-apple-gray dark:text-[var(--text-secondary)]" />;
   }
 }
 
@@ -55,6 +62,27 @@ function timeAgo(dateStr: string): string {
   if (diffDays < 7) return `${diffDays} giorni fa`;
   return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+// ─── Animations ──────────────────────────────────────────────────────────────
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function SessionsPage() {
   const queryClient = useQueryClient();
@@ -106,157 +134,178 @@ export default function SessionsPage() {
   const otherSessions = sessions?.filter(s => !s.isCurrent) || [];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
+    <div>
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/settings"
-          className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Sessioni attive
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+      <header className="">
+        <div className="px-8 py-5">
+          <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Sessioni attive</h1>
+          <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
             Dispositivi collegati al tuo account
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* Security notice */}
-      <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-        <Shield className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          Se noti un dispositivo che non riconosci, disconnettilo immediatamente e cambia la password.
-        </p>
-      </div>
+      <motion.div
+        className="p-8 max-w-3xl mx-auto space-y-6"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        {/* Security notice */}
+        <motion.div variants={listItemVariants}>
+          <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+            <Shield className="mt-0.5 h-5 w-5 shrink-0 text-apple-blue" />
+            <p className="text-body text-blue-800 dark:text-blue-200">
+              Se noti un dispositivo che non riconosci, disconnettilo immediatamente e cambia la password.
+            </p>
+          </div>
+        </motion.div>
 
-      {/* Loading state */}
-      {isLoading && (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800" />
-          ))}
-        </div>
-      )}
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+          </div>
+        )}
 
-      {/* Error state */}
-      {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm text-red-800 dark:text-red-200" role="alert">
-            Errore nel caricamento delle sessioni
-          </p>
-        </div>
-      ) : null}
+        {/* Error state */}
+        {error ? (
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardContent>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]" role="alert">
+                    Errore nel caricamento delle sessioni
+                  </p>
+                </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        ) : null}
 
-      {/* Current session */}
-      {currentSession && (
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Sessione corrente
-          </h2>
-          <div className="rounded-xl border-2 border-green-200 bg-white p-5 dark:border-green-800 dark:bg-gray-900">
-            <div className="flex items-center gap-4">
-              <DeviceIcon type={currentSession.deviceType} />
-              <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {currentSession.deviceName}
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                  {currentSession.ipAddress && (
-                    <span className="flex items-center gap-1">
-                      <Globe className="h-3.5 w-3.5" />
-                      {currentSession.ipAddress}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {timeAgo(currentSession.lastActiveAt)}
+        {/* Current session */}
+        {currentSession && (
+          <motion.div variants={listItemVariants}>
+            <h2 className="mb-3 text-footnote font-medium uppercase tracking-wider text-apple-gray dark:text-[var(--text-secondary)]">
+              Sessione corrente
+            </h2>
+            <AppleCard hover={false} className="ring-2 ring-green-200 dark:ring-green-800">
+              <AppleCardContent>
+                <div className="flex items-center gap-4">
+                  <DeviceIcon type={currentSession.deviceType} />
+                  <div className="flex-1">
+                    <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      {currentSession.deviceName}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      {currentSession.ipAddress && (
+                        <span className="flex items-center gap-1">
+                          <Globe className="h-3.5 w-3.5" />
+                          {currentSession.ipAddress}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        {timeAgo(currentSession.lastActiveAt)}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">
+                    Attiva
                   </span>
                 </div>
-              </div>
-              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
-                Attiva
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        )}
 
-      {/* Other sessions */}
-      {otherSessions.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Altri dispositivi ({otherSessions.length})
-            </h2>
-            <button
-              onClick={() => revokeAllMutation.mutate()}
-              disabled={revokeAllMutation.isPending}
-              className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 dark:text-red-400"
-            >
-              {revokeAllMutation.isPending ? 'Disconnettendo...' : 'Disconnetti tutti'}
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {otherSessions.map(session => (
-              <div
-                key={session.id}
-                className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900"
+        {/* Other sessions */}
+        {otherSessions.length > 0 && (
+          <motion.div variants={listItemVariants}>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-footnote font-medium uppercase tracking-wider text-apple-gray dark:text-[var(--text-secondary)]">
+                Altri dispositivi ({otherSessions.length})
+              </h2>
+              <AppleButton
+                variant="text"
+                size="sm"
+                onClick={() => revokeAllMutation.mutate()}
+                disabled={revokeAllMutation.isPending}
+                loading={revokeAllMutation.isPending}
+                className="text-red-600 dark:text-red-400"
               >
-                <DeviceIcon type={session.deviceType} />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {session.deviceName}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                    {session.city && session.country && (
-                      <span>{session.city}, {session.country}</span>
-                    )}
-                    {session.ipAddress && (
-                      <span className="flex items-center gap-1">
-                        <Globe className="h-3.5 w-3.5" />
-                        {session.ipAddress}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {timeAgo(session.lastActiveAt)}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setRevoking(session.id);
-                    revokeMutation.mutate(session.id);
-                  }}
-                  disabled={revoking === session.id}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {revoking === session.id ? 'Disconnetto...' : 'Disconnetti'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+                Disconnetti tutti
+              </AppleButton>
+            </div>
 
-      {/* Empty state */}
-      {!isLoading && otherSessions.length === 0 && currentSession && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-          <Shield className="mx-auto h-10 w-10 text-green-500" />
-          <p className="mt-3 font-medium text-gray-900 dark:text-white">
-            Nessun altro dispositivo collegato
-          </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Il tuo account è attivo solo su questo dispositivo
-          </p>
-        </div>
-      )}
+            <div className="space-y-3">
+              {otherSessions.map(session => (
+                <AppleCard key={session.id} hover={false}>
+                  <AppleCardContent>
+                    <div className="flex items-center gap-4">
+                      <DeviceIcon type={session.deviceType} />
+                      <div className="flex-1">
+                        <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          {session.deviceName}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                          {session.city && session.country && (
+                            <span>{session.city}, {session.country}</span>
+                          )}
+                          {session.ipAddress && (
+                            <span className="flex items-center gap-1">
+                              <Globe className="h-3.5 w-3.5" />
+                              {session.ipAddress}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {timeAgo(session.lastActiveAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <AppleButton
+                        variant="ghost"
+                        size="sm"
+                        icon={<LogOut className="h-4 w-4" />}
+                        onClick={() => {
+                          setRevoking(session.id);
+                          revokeMutation.mutate(session.id);
+                        }}
+                        disabled={revoking === session.id}
+                        loading={revoking === session.id}
+                        className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                      >
+                        Disconnetti
+                      </AppleButton>
+                    </div>
+                  </AppleCardContent>
+                </AppleCard>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && otherSessions.length === 0 && currentSession && (
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardContent>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Shield className="h-10 w-10 text-apple-green mb-3" />
+                  <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                    Nessun altro dispositivo collegato
+                  </p>
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                    Il tuo account e attivo solo su questo dispositivo
+                  </p>
+                </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 }

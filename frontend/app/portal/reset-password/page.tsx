@@ -60,7 +60,7 @@ export default function PortalResetPasswordPage(): React.ReactElement {
   };
 
   return (
-    <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
       <div className='w-full max-w-md'>
         {/* Logo */}
         <motion.div
@@ -71,8 +71,8 @@ export default function PortalResetPasswordPage(): React.ReactElement {
           <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
             <Car className='h-10 w-10 text-white' />
           </div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Recupera Password</h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Recupera Password</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Inserisci la tua email per ricevere il link di recupero
           </p>
         </motion.div>
@@ -92,10 +92,10 @@ export default function PortalResetPasswordPage(): React.ReactElement {
                   className='text-center py-4'
                 >
                   <CheckCircle className='h-12 w-12 text-green-500 mx-auto mb-4' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
                     Email inviata
                   </h2>
-                  <p className='text-apple-gray dark:text-[#636366] text-sm mb-6'>
+                  <p className='text-apple-gray dark:text-[var(--text-secondary)] text-sm mb-6'>
                     Se l&apos;indirizzo email corrisponde a un account esistente, riceverai un link per
                     reimpostare la password.
                   </p>
@@ -121,7 +121,7 @@ export default function PortalResetPasswordPage(): React.ReactElement {
 
                   <form onSubmit={handleSubmit} className='space-y-5'>
                     <div className='space-y-2'>
-                      <Label htmlFor='email' className='text-apple-dark dark:text-[#ececec]'>
+                      <Label htmlFor='email' className='text-apple-dark dark:text-[var(--text-primary)]'>
                         Email
                       </Label>
                       <div className='relative'>
@@ -133,7 +133,7 @@ export default function PortalResetPasswordPage(): React.ReactElement {
                           value={email}
                           onChange={e => setEmail(e.target.value)}
                           autoComplete='email'
-                          className='pl-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                          className='pl-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                         />
                       </div>
                     </div>
@@ -157,7 +157,7 @@ export default function PortalResetPasswordPage(): React.ReactElement {
         >
           <Link
             href='/portal/login'
-            className='text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors inline-flex items-center gap-1 min-h-[44px]'
+            className='text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1 min-h-[44px]'
           >
             <ArrowLeft className='h-4 w-4' />
             Torna al login

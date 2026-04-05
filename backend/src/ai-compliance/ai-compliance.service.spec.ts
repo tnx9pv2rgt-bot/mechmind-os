@@ -57,10 +57,7 @@ describe('AiComplianceService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AiComplianceService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [AiComplianceService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<AiComplianceService>(AiComplianceService);
@@ -234,9 +231,7 @@ describe('AiComplianceService', () => {
     it('should throw NotFoundException for non-existent decision', async () => {
       prisma.aiDecisionLog.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne(TENANT_ID, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(TENANT_ID, 'non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -244,8 +239,8 @@ describe('AiComplianceService', () => {
     it('should return compliance dashboard stats', async () => {
       prisma.$transaction.mockResolvedValue([
         10, // totalDecisions
-        2,  // overriddenCount
-        3,  // pendingReview
+        2, // overriddenCount
+        3, // pendingReview
         { _avg: { confidence: new Prisma.Decimal(0.85) } }, // avgResult
         [
           { featureName: 'damage_analysis', _count: 7 },
@@ -266,13 +261,7 @@ describe('AiComplianceService', () => {
     });
 
     it('should handle zero decisions gracefully', async () => {
-      prisma.$transaction.mockResolvedValue([
-        0,
-        0,
-        0,
-        { _avg: { confidence: null } },
-        [],
-      ]);
+      prisma.$transaction.mockResolvedValue([0, 0, 0, { _avg: { confidence: null } }, []]);
 
       const result = await service.getDashboard(TENANT_ID);
 

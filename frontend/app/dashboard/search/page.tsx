@@ -42,12 +42,12 @@ interface SearchResponse {
 }
 
 const TYPE_CONFIG: Record<string, { icon: typeof Users; label: string; color: string }> = {
-  customer: { icon: Users, label: 'Clienti', color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' },
-  vehicle: { icon: Car, label: 'Veicoli', color: 'bg-green-100 text-green-600 dark:bg-green-900/30' },
-  'work-order': { icon: Wrench, label: 'Ordini di Lavoro', color: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' },
-  invoice: { icon: Receipt, label: 'Fatture', color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' },
-  booking: { icon: CalendarDays, label: 'Prenotazioni', color: 'bg-teal-100 text-teal-600 dark:bg-teal-900/30' },
-  estimate: { icon: FileText, label: 'Preventivi', color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30' },
+  customer: { icon: Users, label: 'Clienti', color: 'bg-apple-blue/10 text-apple-blue dark:bg-blue-900/30' },
+  vehicle: { icon: Car, label: 'Veicoli', color: 'bg-apple-green/10 text-apple-green dark:bg-green-900/30' },
+  'work-order': { icon: Wrench, label: 'Ordini di Lavoro', color: 'bg-apple-orange/10 text-apple-orange dark:bg-orange-900/30' },
+  invoice: { icon: Receipt, label: 'Fatture', color: 'bg-apple-purple/10 text-apple-purple dark:bg-purple-900/30' },
+  booking: { icon: CalendarDays, label: 'Prenotazioni', color: 'bg-apple-blue/10 text-apple-blue dark:bg-teal-900/30' },
+  estimate: { icon: FileText, label: 'Preventivi', color: 'bg-apple-orange/10 text-apple-orange dark:bg-yellow-900/30' },
 };
 
 const fetcher = (url: string): Promise<SearchResponse> =>
@@ -106,10 +106,10 @@ export default function SearchPage() {
 
   return (
     <div className='min-h-screen'>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-4 sm:px-8 py-5'>
-          <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Ricerca</h1>
-          <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ricerca</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
             Cerca in tutto il sistema
           </p>
         </div>
@@ -124,7 +124,7 @@ export default function SearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder='Cerca clienti, veicoli, ordini, fatture...'
-            className='pl-12 h-14 rounded-2xl text-lg border-apple-border/50 dark:border-[#424242] dark:bg-[#2f2f2f] dark:text-[#ececec]'
+            className='pl-12 h-14 rounded-2xl text-title-3 border-apple-border/50 dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)]'
             aria-label='Ricerca globale'
             autoFocus
           />
@@ -137,8 +137,8 @@ export default function SearchPage() {
         {error && debouncedQuery.length >= 2 && (
           <AppleCard>
             <AppleCardContent className='text-center py-8'>
-              <AlertTriangle className='w-10 h-10 text-red-400 mx-auto mb-3' />
-              <p className='text-body text-apple-gray dark:text-[#636366]'>
+              <AlertTriangle className='w-10 h-10 text-apple-red/60 mx-auto mb-3' />
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                 Errore durante la ricerca. Riprova.
               </p>
             </AppleCardContent>
@@ -151,7 +151,7 @@ export default function SearchPage() {
             {results.length > 0 ? (
               <div className='space-y-6'>
                 {Object.entries(groupedResults).map(([type, items]) => {
-                  const config = TYPE_CONFIG[type] || { icon: FileText, label: type, color: 'bg-gray-100 text-gray-600' };
+                  const config = TYPE_CONFIG[type] || { icon: FileText, label: type, color: 'bg-apple-light-gray text-apple-gray' };
                   const Icon = config.icon;
 
                   return (
@@ -160,7 +160,7 @@ export default function SearchPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                     >
-                      <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-3 flex items-center gap-2'>
+                      <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3 flex items-center gap-2'>
                         <Icon className='w-5 h-5' />
                         {config.label}
                         <Badge variant='outline' className='ml-2'>{items.length}</Badge>
@@ -174,17 +174,17 @@ export default function SearchPage() {
                               animate={{ opacity: 1 }}
                               transition={{ delay: index * 0.03 }}
                               onClick={() => router.push(result.url)}
-                              className='w-full flex items-center justify-between p-4 hover:bg-apple-light-gray/50 dark:hover:bg-[#353535] transition-colors text-left border-b border-apple-border/10 dark:border-[#424242]/30 last:border-b-0 min-h-[44px]'
+                              className='w-full flex items-center justify-between p-4 hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)] transition-colors text-left border-b border-apple-border/10 dark:border-[var(--border-default)]/30 last:border-b-0 min-h-[44px]'
                             >
                               <div className='flex items-center gap-3 min-w-0'>
                                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${config.color}`}>
                                   <Icon className='w-4 h-4' />
                                 </div>
                                 <div className='min-w-0'>
-                                  <p className='text-body font-medium text-apple-dark dark:text-[#ececec] truncate'>
+                                  <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] truncate'>
                                     {result.title}
                                   </p>
-                                  <p className='text-footnote text-apple-gray dark:text-[#636366] truncate'>
+                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] truncate'>
                                     {result.subtitle}
                                   </p>
                                 </div>
@@ -202,10 +202,10 @@ export default function SearchPage() {
               <AppleCard>
                 <AppleCardContent className='text-center py-12'>
                   <Search className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-body font-medium text-apple-dark dark:text-[#ececec] mb-1'>
+                  <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
                     Nessun risultato per &ldquo;{debouncedQuery}&rdquo;
                   </h3>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                     Prova con termini di ricerca diversi.
                   </p>
                 </AppleCardContent>
@@ -219,10 +219,10 @@ export default function SearchPage() {
           <AppleCard>
             <AppleCardContent className='text-center py-12'>
               <Search className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-              <h3 className='text-body font-medium text-apple-dark dark:text-[#ececec] mb-1'>
+              <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
                 Inizia a digitare per cercare
               </h3>
-              <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                 Cerca clienti, veicoli, ordini di lavoro, fatture e prenotazioni.
               </p>
             </AppleCardContent>

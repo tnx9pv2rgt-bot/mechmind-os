@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InspectionService } from './inspection.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { S3Service } from '@common/services/s3.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
 import {
   CreateInspectionDto,
   UpdateInspectionDto,
@@ -333,6 +335,15 @@ describe('InspectionService', () => {
       }),
     };
 
+    const mockPublicTokenService = {
+      generateToken: jest.fn().mockResolvedValue({ token: 'test-token-123' }),
+      validateToken: jest.fn(),
+      consumeToken: jest.fn().mockResolvedValue({}),
+      revokeTokensForEntity: jest.fn().mockResolvedValue(0),
+    };
+
+    const mockEventEmitter = { emit: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InspectionService,
@@ -340,6 +351,8 @@ describe('InspectionService', () => {
         { provide: ConfigService, useValue: configService },
         { provide: S3Service, useValue: s3 },
         { provide: NotificationsService, useValue: notifications },
+        { provide: PublicTokenService, useValue: mockPublicTokenService },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 
@@ -752,7 +765,7 @@ describe('InspectionService', () => {
       // Assert
       expect(prisma.inspection.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: INSPECTION_ID },
+          where: { id: INSPECTION_ID, tenantId: TENANT_ID },
           data: expect.objectContaining({ status: InspectionStatus.PENDING_REVIEW }),
         }),
       );

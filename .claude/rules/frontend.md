@@ -1,5 +1,5 @@
 ---
-paths:
+globs:
   - "frontend/**/*.ts"
   - "frontend/**/*.tsx"
 ---
@@ -8,27 +8,25 @@ paths:
 ## Patterns
 - App Router (app/ directory), no pages/ router
 - Server Components by default, `"use client"` only when needed
-- Data fetching: tRPC + @tanstack/react-query
-- Forms: react-hook-form + zod schemas
-- State: zustand for global state
-- Styling: TailwindCSS + Radix UI primitives
+- Data fetching: SWR per client-side, fetch per server-side
+- Forms: react-hook-form + Zod schemas
+- Styling: TailwindCSS + Radix UI primitives (shadcn)
+- Toast: Sonner
+- Dialogs: Radix AlertDialog
+
+## API Routes
+- SOLO proxy al backend NestJS: `proxyToNestJS({ backendPath: 'v1/[resource]' })`
+- MAI mock data, demo data, fake data
+- Backend non risponde → errore 502
 
 ## Components
 - UI primitives in `components/ui/` (shadcn pattern)
 - Feature components in `components/<feature>/`
 - Custom hooks in `hooks/`
-- Types in `types/` or `lib/types/`
 
-## Testing
-- Jest for unit tests: `cd frontend && npm run test`
-- Playwright for E2E: `cd frontend && npm run test:e2e`
-
-## i18n
-- Use i18next for all user-facing strings
-- Translation files in `frontend/i18n/`
-- Never hardcode Italian/English strings in components
-
-## Accessibility
-- WCAG 2.1 AA compliance required
-- Use semantic HTML + Radix UI for a11y
-- All interactive elements need keyboard support
+## UI
+- Tutta in italiano
+- Dark mode + responsive su ogni pagina
+- Touch target minimo 44px
+- Loading/error/empty states obbligatori
+- Breadcrumb su pagine di dettaglio

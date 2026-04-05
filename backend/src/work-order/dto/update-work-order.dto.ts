@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsOptional, IsNumber, IsString, IsArray, IsObject } from 'class-validator';
+import { IsOptional, IsNumber, IsString, IsArray } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateWorkOrderDto } from './create-work-order.dto';
 
@@ -58,12 +58,4 @@ export class UpdateWorkOrderDto extends PartialType(CreateWorkOrderDto) {
   @IsOptional()
   @IsString()
   assignedBayId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Data stimata di completamento',
-    example: '2026-03-17T16:00:00Z',
-  })
-  @IsOptional()
-  @IsObject()
-  estimatedCompletion?: Date;
 }

@@ -167,17 +167,17 @@ export function CookieConsent(): React.ReactNode {
           role="dialog"
           aria-label="Consenso cookie"
         >
-          <div className="mx-auto max-w-lg rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+          <div className="mx-auto max-w-lg rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
             {!showDetails ? (
               /* ---- Main banner ---- */
               <div className="flex flex-col gap-4">
-                <p className="text-[15px] leading-relaxed text-[#b4b4b4]">
+                <p className="text-[15px] leading-relaxed text-[var(--text-secondary)]">
                   Utilizziamo cookie tecnici necessari per il funzionamento del servizio
                   e cookie analitici per migliorare la tua esperienza. Per maggiori
                   informazioni consulta la nostra{' '}
                   <Link
                     href="/privacy"
-                    className="font-medium text-white underline decoration-[#888] underline-offset-2 hover:decoration-white"
+                    className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
                   >
                     Informativa Privacy
                   </Link>
@@ -187,19 +187,19 @@ export function CookieConsent(): React.ReactNode {
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <button
                     onClick={() => setShowDetails(true)}
-                    className="text-[13px] font-medium text-[#888] transition-colors hover:text-white sm:mr-auto"
+                    className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white sm:mr-auto"
                   >
                     Personalizza
                   </button>
                   <button
                     onClick={handleNecessaryOnly}
-                    className="h-[44px] rounded-full border border-[#4e4e4e] bg-transparent px-5 text-[15px] font-medium text-white transition-colors hover:bg-white/5"
+                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-white transition-colors hover:bg-white/5"
                   >
                     Solo necessari
                   </button>
                   <button
                     onClick={handleAcceptAll}
-                    className="h-[44px] rounded-full bg-white px-5 text-[15px] font-medium text-[#0d0d0d] transition-colors hover:bg-[#e5e5e5]"
+                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--surface-active)]"
                   >
                     Accetta tutti
                   </button>
@@ -214,7 +214,7 @@ export function CookieConsent(): React.ReactNode {
                   </h3>
                   <button
                     onClick={() => setShowDetails(false)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-[#888] transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-white/10 hover:text-white"
                     aria-label="Chiudi dettagli"
                   >
                     <span className="text-lg pointer-events-none" aria-hidden="true">✕</span>
@@ -225,12 +225,12 @@ export function CookieConsent(): React.ReactNode {
                 <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
                   <div>
                     <p className="text-[14px] font-medium text-white">Cookie tecnici</p>
-                    <p className="text-[12px] text-[#888]">
+                    <p className="text-[12px] text-[var(--text-tertiary)]">
                       Necessari per il funzionamento. Non disattivabili.
                     </p>
                   </div>
                   <div className="ml-4 flex h-6 w-11 items-center rounded-full bg-white px-0.5">
-                    <div className="h-5 w-5 translate-x-5 rounded-full bg-[#0d0d0d] shadow-sm" />
+                    <div className="h-5 w-5 translate-x-5 rounded-full bg-[var(--text-primary)] shadow-sm" />
                   </div>
                 </div>
 
@@ -238,14 +238,14 @@ export function CookieConsent(): React.ReactNode {
                 <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
                   <div>
                     <p className="text-[14px] font-medium text-white">Cookie analitici</p>
-                    <p className="text-[12px] text-[#888]">
+                    <p className="text-[12px] text-[var(--text-tertiary)]">
                       Ci aiutano a capire come viene utilizzato il sito.
                     </p>
                   </div>
                   <button
                     onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
                     className={`ml-4 flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${
-                      analyticsEnabled ? 'bg-white' : 'bg-[#555]'
+                      analyticsEnabled ? 'bg-white' : 'bg-[var(--text-tertiary)]'
                     }`}
                     role="switch"
                     aria-checked={analyticsEnabled}
@@ -254,8 +254,8 @@ export function CookieConsent(): React.ReactNode {
                     <div
                       className={`h-5 w-5 rounded-full shadow-sm transition-transform ${
                         analyticsEnabled
-                          ? 'translate-x-5 bg-[#0d0d0d]'
-                          : 'translate-x-0 bg-[#888]'
+                          ? 'translate-x-5 bg-[var(--text-primary)]'
+                          : 'translate-x-0 bg-[var(--text-tertiary)]'
                       }`}
                     />
                   </button>
@@ -265,13 +265,13 @@ export function CookieConsent(): React.ReactNode {
                 <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
                   <button
                     onClick={handleNecessaryOnly}
-                    className="h-[44px] rounded-full border border-[#4e4e4e] bg-transparent px-5 text-[15px] font-medium text-white transition-colors hover:bg-white/5"
+                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-white transition-colors hover:bg-white/5"
                   >
                     Solo necessari
                   </button>
                   <button
                     onClick={handleSavePreferences}
-                    className="h-[44px] rounded-full bg-white px-5 text-[15px] font-medium text-[#0d0d0d] transition-colors hover:bg-[#e5e5e5]"
+                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--surface-active)]"
                   >
                     Salva preferenze
                   </button>

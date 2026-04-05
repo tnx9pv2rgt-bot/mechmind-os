@@ -130,4 +130,105 @@ describe('NotificationsController', () => {
       expect(result).toEqual({ success: true, message: 'Notifica inviata' });
     });
   });
+
+  // ============== Additional branch coverage ==============
+
+  describe('getNotifications — page/limit clamping', () => {
+    it('should clamp page to 1 when page < 1', async () => {
+      const result = await controller.getNotifications(TENANT_ID, '0', '20', 'false');
+      expect(result.pagination.page).toBe(1);
+    });
+
+    it('should clamp page to 1 when page is NaN', async () => {
+      const result = await controller.getNotifications(TENANT_ID, 'abc', '20', 'false');
+      expect(result.pagination.page).toBe(1);
+    });
+
+    it('should default limit to 20 when limit is 0 (falsy)', async () => {
+      const result = await controller.getNotifications(TENANT_ID, '1', '0', 'false');
+      // parseInt('0') === 0, which is falsy, so fallback to 20
+      expect(result.pagination.limit).toBe(20);
+    });
+
+    it('should clamp limit to 100 when limit > 100', async () => {
+      const result = await controller.getNotifications(TENANT_ID, '1', '500', 'false');
+      expect(result.pagination.limit).toBe(100);
+    });
+
+    it('should default limit to 20 when NaN', async () => {
+      const result = await controller.getNotifications(TENANT_ID, '1', 'xyz', 'false');
+      expect(result.pagination.limit).toBe(20);
+    });
+  });
+
+  describe('getNotifications — unreadOnly filter', () => {
+    it('should add status filter when unreadOnly is true', async () => {
+      await controller.getNotifications(TENANT_ID, '1', '20', 'true');
+
+      expect(prisma.notification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: TENANT_ID,
+            status: { not: 'DELIVERED' },
+          }),
+        }),
+      );
+    });
+
+    it('should NOT add status filter when unreadOnly is false', async () => {
+      await controller.getNotifications(TENANT_ID, '1', '20', 'false');
+
+      const callArg = prisma.notification.findMany.mock.calls[0][0];
+      expect(callArg.where.status).toBeUndefined();
+    });
+  });
+
+  describe('getNotifications — isRead mapping', () => {
+    it('should map DELIVERED status to isRead=true', async () => {
+      prisma.notification.findMany.mockResolvedValue([
+        {
+          id: 'n-1',
+          type: 'booking_created',
+          message: 'test',
+          status: 'DELIVERED',
+          createdAt: new Date(),
+        },
+      ]);
+      prisma.notification.count.mockResolvedValue(1);
+
+      const result = await controller.getNotifications(TENANT_ID, '1', '20', 'false');
+
+      expect(result.notifications[0].isRead).toBe(true);
+    });
+
+    it('should map non-DELIVERED status to isRead=false', async () => {
+      prisma.notification.findMany.mockResolvedValue([
+        {
+          id: 'n-2',
+          type: 'booking_created',
+          message: 'test',
+          status: 'PENDING',
+          createdAt: new Date(),
+        },
+      ]);
+      prisma.notification.count.mockResolvedValue(1);
+
+      const result = await controller.getNotifications(TENANT_ID, '1', '20', 'false');
+
+      expect(result.notifications[0].isRead).toBe(false);
+    });
+  });
+
+  describe('getNotifications — pagination skip calculation', () => {
+    it('should skip correct number of items for page 2', async () => {
+      await controller.getNotifications(TENANT_ID, '2', '10', 'false');
+
+      expect(prisma.notification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        }),
+      );
+    });
+  });
 });

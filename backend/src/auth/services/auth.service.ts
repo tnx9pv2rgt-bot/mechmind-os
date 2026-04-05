@@ -7,6 +7,7 @@ import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
+import { MetricsService } from '@common/metrics/metrics.service';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { PasswordPolicyService } from './password-policy.service';
 import { JwksService } from './jwks.service';
@@ -85,6 +86,7 @@ export class AuthService {
     private readonly tokenBlacklist: TokenBlacklistService,
     private readonly passwordPolicy: PasswordPolicyService,
     private readonly jwksService: JwksService,
+    private readonly metrics: MetricsService,
   ) {}
 
   /**
@@ -186,6 +188,7 @@ export class AuthService {
     });
 
     if (!tenant || !tenant.isActive) {
+      this.metrics.authFailuresTotal.inc({ reason: 'invalid_tenant' });
       throw new UnauthorizedException('Invalid tenant or tenant is inactive');
     }
 
@@ -204,6 +207,7 @@ export class AuthService {
     });
 
     if (!user || !user.isActive) {
+      this.metrics.authFailuresTotal.inc({ reason: 'invalid_credentials' });
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -214,6 +218,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
+      this.metrics.authFailuresTotal.inc({ reason: 'invalid_password' });
       throw new UnauthorizedException('Invalid credentials');
     }
 

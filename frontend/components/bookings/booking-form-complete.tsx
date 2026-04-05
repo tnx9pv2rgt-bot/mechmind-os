@@ -43,6 +43,12 @@ import {
   Zap,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { AppleButton } from '@/components/ui/apple-button';
+import {
+  AppleCard,
+  AppleCardContent,
+  AppleCardHeader,
+} from '@/components/ui/apple-card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -57,6 +63,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import {
   useSearchCustomers,
   useAvailableSlots,
@@ -433,184 +440,153 @@ export function BookingFormComplete() {
   }
 
   return (
-    <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'>
-      {/* Main Container - 900x900px - Perfectly Centered */}
-      <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
-        {/* Background Icon/Illustration - Scaled proportionally */}
-        <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-[#353535]/40 via-[#353535]/30 to-[#353535]/40 blur-3xl' />
-          <motion.div
-            className='absolute'
-            animate={{
-              scale: [1, 1.05, 1],
-              rotate: [0, 5, -5, 0],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Calendar
-              className='w-[45%] h-[45%] text-[#424242]/30'
-              strokeWidth={0.5}
-            />
-          </motion.div>
-        </div>
-
-        {/* Glass Card Container */}
-        <motion.div
-          className='relative z-10 w-full h-full bg-[#2f2f2f] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden'
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className='px-10 pt-8 pb-4'>
-            <div className='flex items-center justify-between mb-6'>
-              <div>
-                <h1 className='text-3xl font-semibold text-white tracking-tight'>
-                  Nuova Prenotazione
-                </h1>
-                <p className='text-[#888] mt-1 flex items-center gap-2'>
-                  Crea un nuovo appuntamento per il cliente
-                  {hasDraft && (
-                    <span className='text-xs text-green-500 flex items-center gap-1'>
-                      <Check className='h-3 w-3' />
-                      Bozza salvata
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-[#888]'>Step</span>
-                <span className='text-2xl font-bold text-white'>
-                  {currentStep}
-                </span>
-                <span className='text-[#888]'>/</span>
-                <span className='text-[#888]'>{totalSteps}</span>
-              </div>
+    <div>
+      {/* Header */}
+      <header>
+        <div className='px-8 py-5'>
+          <Breadcrumb items={[{ label: 'Prenotazioni', href: '/dashboard/bookings' }, { label: 'Nuova Prenotazione' }]} />
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                Nuova Prenotazione
+              </h1>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1 flex items-center gap-2'>
+                Crea un nuovo appuntamento per il cliente
+                {hasDraft && (
+                  <span className='text-xs text-apple-green flex items-center gap-1'>
+                    <Check className='h-3 w-3' />
+                    Bozza salvata
+                  </span>
+                )}
+              </p>
             </div>
+            <div className='flex items-center gap-2'>
+              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Step</span>
+              <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                {currentStep}
+              </span>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>/</span>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>{totalSteps}</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Progress Bar */}
-            <div className='h-2 bg-[#3a3a3a] rounded-full overflow-hidden'>
+      <div className='p-8 max-w-4xl mx-auto space-y-6'>
+        {/* Progress Bar */}
+        <AppleCard hover={false}>
+          <AppleCardContent>
+            <div className='h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-white'
+                className='h-full bg-apple-blue'
                 initial={{ width: 0 }}
                 animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
                 transition={{ duration: 0.5 }}
               />
             </div>
-          </div>
+          </AppleCardContent>
+        </AppleCard>
 
-          {/* Form Content */}
-          <div className='px-10 pb-32 h-[calc(100%-140px)] overflow-y-auto'>
-            <AnimatePresence mode='wait'>
-              {currentStep === 1 && (
-                <Step1CustomerVehicle
-                  key='step1'
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                  customerSearch={customerSearch}
-                  setCustomerSearch={setCustomerSearch}
-                  filteredCustomers={filteredCustomers}
-                  showCustomerDropdown={showCustomerDropdown}
-                  setShowCustomerDropdown={setShowCustomerDropdown}
-                  isDecodingPlate={isDecodingPlate}
-                  decodeLicensePlate={decodeLicensePlate}
-                />
-              )}
-              {currentStep === 2 && (
-                <Step2AppointmentDetails
-                  key='step2'
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                  serviceSubtypeOptions={getServiceSubtypeOptions()}
-                  isRecording={isRecording}
-                  recordingTime={recordingTime}
-                  toggleRecording={toggleRecording}
-                  technicians={(tenantSettings?.team || []).map(m => ({
-                    id: m.id,
-                    name: m.name,
-                    specialty: m.role,
-                  }))}
-                />
-              )}
-              {currentStep === 3 && (
-                <Step3Notifications
-                  key='step3'
-                  control={control}
-                  watch={watch}
-                  setValue={setValue}
-                />
-              )}
-              {currentStep === 4 && (
-                <Step4Capacity
-                  key='step4'
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                  filteredSlots={getFilteredSlots()}
-                  showWaitlistModal={showWaitlistModal}
-                  setShowWaitlistModal={setShowWaitlistModal}
-                />
-              )}
-              {currentStep === 5 && (
-                <Step5AIFeatures
-                  key='step5'
-                  control={control}
-                  watch={watch}
-                  setValue={setValue}
-                  totalEstimatedCost={totalEstimatedCost}
-                  baseLaborCost={baseLaborCost}
-                  preventiveCost={preventiveCost}
-                />
-              )}
-            </AnimatePresence>
-          </div>
+        {/* Form Content */}
+        <AnimatePresence mode='wait'>
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {currentStep === 1 && (
+              <Step1CustomerVehicle
+                control={control}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                customerSearch={customerSearch}
+                setCustomerSearch={setCustomerSearch}
+                filteredCustomers={filteredCustomers}
+                showCustomerDropdown={showCustomerDropdown}
+                setShowCustomerDropdown={setShowCustomerDropdown}
+                isDecodingPlate={isDecodingPlate}
+                decodeLicensePlate={decodeLicensePlate}
+              />
+            )}
+            {currentStep === 2 && (
+              <Step2AppointmentDetails
+                control={control}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                serviceSubtypeOptions={getServiceSubtypeOptions()}
+                isRecording={isRecording}
+                recordingTime={recordingTime}
+                toggleRecording={toggleRecording}
+                technicians={(tenantSettings?.team || []).map(m => ({
+                  id: m.id,
+                  name: m.name,
+                  specialty: m.role,
+                }))}
+              />
+            )}
+            {currentStep === 3 && (
+              <Step3Notifications
+                control={control}
+                watch={watch}
+                setValue={setValue}
+              />
+            )}
+            {currentStep === 4 && (
+              <Step4Capacity
+                control={control}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                filteredSlots={getFilteredSlots()}
+                showWaitlistModal={showWaitlistModal}
+                setShowWaitlistModal={setShowWaitlistModal}
+              />
+            )}
+            {currentStep === 5 && (
+              <Step5AIFeatures
+                control={control}
+                watch={watch}
+                setValue={setValue}
+                totalEstimatedCost={totalEstimatedCost}
+                baseLaborCost={baseLaborCost}
+                preventiveCost={preventiveCost}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
 
-          {/* Navigation Buttons */}
-          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e]'>
-            <div className='flex items-center justify-between'>
-              <Button
-                onClick={prevStep}
-                className='rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
-              >
-                <ChevronLeft className='w-5 h-5 mr-2' />
-                Indietro
-              </Button>
+        {/* Footer Navigation */}
+        <div className='flex items-center justify-between pt-2'>
+          <AppleButton
+            variant='ghost'
+            onClick={prevStep}
+            icon={<ChevronLeft className='w-4 h-4' />}
+          >
+            Indietro
+          </AppleButton>
 
-              {currentStep < totalSteps ? (
-                <Button
-                  onClick={nextStep}
-                  className='rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
-                >
-                  Avanti
-                  <ChevronRight className='w-5 h-5 ml-2' />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit(onSubmit)}
-                  disabled={isSubmitting}
-                  className='rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                      Creazione...
-                    </>
-                  ) : (
-                    <>
-                      <Check className='w-5 h-5 mr-2' />
-                      Conferma Prenotazione
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        </motion.div>
+          {currentStep < totalSteps ? (
+            <AppleButton
+              onClick={nextStep}
+              icon={<ChevronRight className='w-4 h-4' />}
+              iconPosition='right'
+            >
+              Avanti
+            </AppleButton>
+          ) : (
+            <AppleButton
+              onClick={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              icon={!isSubmitting ? <Check className='w-4 h-4' /> : undefined}
+            >
+              {isSubmitting ? 'Creazione...' : 'Conferma Prenotazione'}
+            </AppleButton>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -663,18 +639,18 @@ function Step1CustomerVehicle({
         <h2 className='text-xl font-semibold text-white'>
           Informazioni Cliente e Veicolo
         </h2>
-        <p className='text-[#888] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Cerca un cliente esistente o inserisci i dati manualmente
         </p>
       </div>
 
       {/* Customer Search */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <Label className='text-sm font-medium text-white mb-3 block'>
           Cerca Cliente
         </Label>
         <div className='relative'>
-          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
           <Input
             value={customerSearch}
             onChange={e => {
@@ -684,7 +660,7 @@ function Step1CustomerVehicle({
             onFocus={() => setShowCustomerDropdown(true)}
             placeholder='Cerca per nome, telefono o email...'
             aria-label='Cerca cliente per nome, telefono o email'
-            className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] focus:border-[#ececec] outline-none'
+            className='pl-12 h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
           />
 
           {/* Dropdown */}
@@ -694,15 +670,15 @@ function Step1CustomerVehicle({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className='absolute z-50 top-full left-0 right-0 mt-2 bg-[#2f2f2f] rounded-2xl shadow-xl border border-[#4e4e4e] overflow-hidden'
+                className='absolute z-50 top-full left-0 right-0 mt-2 bg-[var(--surface-elevated)] rounded-2xl shadow-xl border border-[var(--border-strong)] overflow-hidden'
               >
                 {filteredCustomers.map((customer: Customer) => (
                   <button
                     key={customer.id}
                     onClick={() => selectCustomer(customer)}
-                    className='w-full px-4 py-3 flex items-center gap-3 hover:bg-[#383838] transition-colors text-left'
+                    className='w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--surface-active)] transition-colors text-left'
                   >
-                    <div className='w-10 h-10 rounded-full bg-[#a78bfa] flex items-center justify-center text-white font-semibold'>
+                    <div className='w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center text-white font-semibold'>
                       {customer.name
                         .split(' ')
                         .map(n => n[0])
@@ -712,7 +688,7 @@ function Step1CustomerVehicle({
                       <p className='font-medium text-white'>
                         {customer.name}
                       </p>
-                      <p className='text-sm text-[#888]'>
+                      <p className='text-sm text-[var(--text-tertiary)]'>
                         {customer.phone} • {customer.email}
                       </p>
                     </div>
@@ -728,7 +704,7 @@ function Step1CustomerVehicle({
           </AnimatePresence>
         </div>
 
-        <div className='mt-4 flex items-center gap-2 text-sm text-[#888]'>
+        <div className='mt-4 flex items-center gap-2 text-sm text-[var(--text-tertiary)]'>
           <Plus className='w-4 h-4' />
           <span>
             Oppure{' '}
@@ -756,7 +732,7 @@ function Step1CustomerVehicle({
                 Nome e Cognome *
               </Label>
               <div className='relative'>
-                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
+                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='customerName'
@@ -796,7 +772,7 @@ function Step1CustomerVehicle({
                 Telefono *
               </Label>
               <div className='relative'>
-                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
+                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='customerPhone'
@@ -836,7 +812,7 @@ function Step1CustomerVehicle({
                 Email *
               </Label>
               <div className='relative'>
-                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='customerEmail'
@@ -867,10 +843,10 @@ function Step1CustomerVehicle({
       </div>
 
       {/* Vehicle Section */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='mb-6'>
           <h3 className='font-semibold text-white'>Dati Veicolo</h3>
-          <p className='text-sm text-[#888]'>
+          <p className='text-sm text-[var(--text-tertiary)]'>
             Inserisci la targa per decodifica automatica
           </p>
         </div>
@@ -905,7 +881,7 @@ function Step1CustomerVehicle({
             type='button'
             onClick={decodeLicensePlate}
             disabled={isDecodingPlate || !watch('licensePlate') || watch('licensePlate').length < 5}
-            className='h-[52px] mt-7 rounded-full bg-white hover:bg-[#e5e5e5] text-[#0d0d0d]'
+            className='h-[52px] mt-7 rounded-full bg-white hover:bg-[var(--surface-active)] text-[var(--text-primary)]'
           >
             {isDecodingPlate ? (
               <Loader2 className='w-5 h-5 animate-spin' />
@@ -923,7 +899,7 @@ function Step1CustomerVehicle({
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className='bg-[#383838] rounded-2xl p-5 mb-6'
+            className='bg-[var(--surface-active)] rounded-2xl p-5 mb-6'
           >
             <h4 className='font-semibold text-white mb-3 flex items-center gap-2'>
               <Check className='w-5 h-5 text-green-500' />
@@ -931,23 +907,23 @@ function Step1CustomerVehicle({
             </h4>
             <div className='grid grid-cols-2 gap-4 text-sm'>
               <div>
-                <span className='text-[#888]'>Marca:</span>
+                <span className='text-[var(--text-tertiary)]'>Marca:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleMake')}</span>
               </div>
               <div>
-                <span className='text-[#888]'>Modello:</span>
+                <span className='text-[var(--text-tertiary)]'>Modello:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleModel')}</span>
               </div>
               <div>
-                <span className='text-[#888]'>Anno:</span>
+                <span className='text-[var(--text-tertiary)]'>Anno:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleYear')}</span>
               </div>
               <div>
-                <span className='text-[#888]'>Colore:</span>
+                <span className='text-[var(--text-tertiary)]'>Colore:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleColor')}</span>
               </div>
               <div className='col-span-2'>
-                <span className='text-[#888]'>VIN:</span>
+                <span className='text-[var(--text-tertiary)]'>VIN:</span>
                 <span className='ml-2 font-mono text-xs'>{watch('vehicleVin')}</span>
               </div>
             </div>
@@ -982,7 +958,7 @@ function Step1CustomerVehicle({
                   field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)
                 }
               />
-              <p id='vehicleKm-hint' className='text-xs text-[#888] mt-1'>
+              <p id='vehicleKm-hint' className='text-xs text-[var(--text-tertiary)] mt-1'>
                 Aggiornare i km aiuta a pianificare i prossimi tagliandi
               </p>
             </div>
@@ -1068,13 +1044,13 @@ function Step2AppointmentDetails({
         <h2 className='text-xl font-semibold text-white'>
           Dettagli Appuntamento
         </h2>
-        <p className='text-[#888] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Configura il tipo di intervento e la data
         </p>
       </div>
 
       {/* Service Type */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <Label
           htmlFor='serviceType'
           className='text-sm font-medium text-white mb-4 block'
@@ -1089,7 +1065,7 @@ function Step2AppointmentDetails({
               <SelectTrigger
                 id='serviceType'
                 aria-required='true'
-                className='h-[52px] rounded-full bg-[#2f2f2f] border-[#4e4e4e]'
+                className='h-[52px] rounded-full bg-[var(--surface-elevated)] border-[var(--border-strong)]'
               >
                 <SelectValue placeholder='Seleziona tipo intervento' />
               </SelectTrigger>
@@ -1124,7 +1100,7 @@ function Step2AppointmentDetails({
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <SelectTrigger
                     id='serviceSubtype'
-                    className='h-[52px] rounded-full bg-[#2f2f2f] border-[#4e4e4e]'
+                    className='h-[52px] rounded-full bg-[var(--surface-elevated)] border-[var(--border-strong)]'
                   >
                     <SelectValue placeholder='Seleziona sotto-categoria' />
                   </SelectTrigger>
@@ -1154,13 +1130,13 @@ function Step2AppointmentDetails({
               onClick={() => setValue('urgency', option.value)}
               className={`p-4 rounded-2xl border transition-all text-left ${
                 watch('urgency') === option.value
-                  ? 'border-[#ececec] bg-[#383838]'
-                  : 'border-[#4e4e4e] hover:border-[#636366]'
+                  ? 'border-[var(--text-primary)] bg-[var(--surface-active)]'
+                  : 'border-[var(--border-strong)] hover:border-[var(--border-default)]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full ${option.color} mb-2`} />
               <div className='font-medium text-white'>{option.label}</div>
-              <div className='text-xs text-[#888] mt-1'>{option.desc}</div>
+              <div className='text-xs text-[var(--text-tertiary)] mt-1'>{option.desc}</div>
             </button>
           ))}
         </div>
@@ -1179,7 +1155,7 @@ function Step2AppointmentDetails({
       </div>
 
       {/* Description with Voice */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-3'>
           <Label
             htmlFor='description'
@@ -1191,8 +1167,8 @@ function Step2AppointmentDetails({
             onClick={toggleRecording}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${
               isRecording
-                ? 'bg-[#ececec]/10 text-white animate-pulse'
-                : 'bg-[#383838] text-[#888] hover:bg-[#4e4e4e]'
+                ? 'bg-[var(--text-primary)]/10 text-white animate-pulse'
+                : 'bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-[var(--surface-active)]'
             }`}
           >
             {isRecording ? (
@@ -1222,7 +1198,7 @@ function Step2AppointmentDetails({
                 aria-required='true'
                 aria-invalid={!!errors.description}
                 aria-describedby={errors.description ? 'description-error' : undefined}
-                className='min-h-[120px] rounded-2xl resize-none bg-[#2f2f2f] border border-[#4e4e4e] text-white placeholder-[#888] px-5 py-3 outline-none'
+                className='min-h-[120px] rounded-2xl resize-none bg-[var(--surface-elevated)] border border-[var(--border-strong)] text-white placeholder-[var(--text-tertiary)] px-5 py-3 outline-none'
                 placeholder='Descrivi il problema o la richiesta del cliente...'
               />
               <div className='flex justify-between mt-2'>
@@ -1238,7 +1214,7 @@ function Step2AppointmentDetails({
                     </p>
                   )}
                 </div>
-                <span className='text-xs text-[#666666] ml-auto'>
+                <span className='text-xs text-[var(--text-tertiary)] ml-auto'>
                   {field.value?.length || 0}/500
                 </span>
               </div>
@@ -1250,7 +1226,7 @@ function Step2AppointmentDetails({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className='mt-4 p-4 bg-[#383838] rounded-xl'
+            className='mt-4 p-4 bg-[var(--surface-active)] rounded-xl'
           >
             <div className='flex items-center gap-2 mb-2'>
               <Volume2 className='w-4 h-4 text-white' />
@@ -1258,7 +1234,7 @@ function Step2AppointmentDetails({
                 Nota vocale trascritta
               </span>
             </div>
-            <p className='text-sm text-[#888]'>{watch('voiceNote')}</p>
+            <p className='text-sm text-[var(--text-tertiary)]'>{watch('voiceNote')}</p>
           </motion.div>
         )}
       </div>
@@ -1277,7 +1253,7 @@ function Step2AppointmentDetails({
                 Data *
               </Label>
               <div className='relative'>
-                <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
+                <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='date'
@@ -1317,7 +1293,7 @@ function Step2AppointmentDetails({
                 Ora *
               </Label>
               <div className='relative'>
-                <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]' />
+                <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='time'
@@ -1370,7 +1346,7 @@ function Step2AppointmentDetails({
             />
           )}
         />
-        <div className='flex justify-between text-xs text-[#666666] mt-2'>
+        <div className='flex justify-between text-xs text-[var(--text-tertiary)] mt-2'>
           <span>30 min</span>
           <span>4 ore</span>
         </div>
@@ -1392,7 +1368,7 @@ function Step2AppointmentDetails({
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='technicianId'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] focus:border-[#ececec] outline-none'
+                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
                 >
                   <SelectValue placeholder='Seleziona tecnico' />
                 </SelectTrigger>
@@ -1401,7 +1377,7 @@ function Step2AppointmentDetails({
                     technicians.map(tech => (
                       <SelectItem key={tech.id} value={tech.id}>
                         <div className='flex items-center gap-2'>
-                          <span className='w-6 h-6 rounded-full bg-[#a78bfa] text-white text-xs flex items-center justify-center'>
+                          <span className='w-6 h-6 rounded-full bg-purple-400 text-white text-xs flex items-center justify-center'>
                             {tech.name
                               .split(' ')
                               .map(n => n[0])
@@ -1441,7 +1417,7 @@ function Step2AppointmentDetails({
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='liftPosition'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] focus:border-[#ececec] outline-none'
+                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
                 >
                   <SelectValue placeholder='Seleziona posto' />
                 </SelectTrigger>
@@ -1481,17 +1457,17 @@ function Step3Notifications({
         <h2 className='text-xl font-semibold text-white'>
           Promemoria e Notifiche
         </h2>
-        <p className='text-[#888] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Configura come e quando contattare il cliente
         </p>
       </div>
 
       {/* Email */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h3 className='font-semibold text-white'>Email</h3>
-            <p className='text-sm text-[#888]'>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Invia promemoria via email
             </p>
           </div>
@@ -1506,7 +1482,7 @@ function Step3Notifications({
 
         {watch('emailReminder') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-[#888] mb-2 block'>
+            <Label className='text-sm text-[var(--text-tertiary)] mb-2 block'>
               Invia prima di:
             </Label>
             <Controller
@@ -1520,8 +1496,8 @@ function Step3Notifications({
                       onClick={() => field.onChange(hours)}
                       className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-[#ececec] bg-[#383838] text-white'
-                          : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                          : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
                       {hours}h
@@ -1535,11 +1511,11 @@ function Step3Notifications({
       </div>
 
       {/* SMS */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h3 className='font-semibold text-white'>SMS</h3>
-            <p className='text-sm text-[#888]'>Invia promemoria via SMS</p>
+            <p className='text-sm text-[var(--text-tertiary)]'>Invia promemoria via SMS</p>
           </div>
           <Controller
             name='smsReminder'
@@ -1552,7 +1528,7 @@ function Step3Notifications({
 
         {watch('smsReminder') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-[#888] mb-2 block'>
+            <Label className='text-sm text-[var(--text-tertiary)] mb-2 block'>
               Invia prima di:
             </Label>
             <Controller
@@ -1566,8 +1542,8 @@ function Step3Notifications({
                       onClick={() => field.onChange(hours)}
                       className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-[#ececec] bg-[#383838] text-white'
-                          : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                          : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
                       {hours === 2 ? '2h' : `${hours}h`}
@@ -1581,11 +1557,11 @@ function Step3Notifications({
       </div>
 
       {/* WhatsApp */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h3 className='font-semibold text-white'>WhatsApp</h3>
-            <p className='text-sm text-[#888]'>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Invia promemoria via WhatsApp
             </p>
           </div>
@@ -1604,11 +1580,11 @@ function Step3Notifications({
       </div>
 
       {/* 2-Way Confirmation */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h3 className='font-semibold text-white'>Richiedi Conferma</h3>
-            <p className='text-sm text-[#888]'>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Doppio opt-in per confermare l&apos;appuntamento
             </p>
           </div>
@@ -1629,7 +1605,7 @@ function Step3Notifications({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
             <Label
               htmlFor='confirmationChannel'
-              className='text-sm text-[#888] mb-2 block'
+              className='text-sm text-[var(--text-tertiary)] mb-2 block'
             >
               Canale di conferma:
             </Label>
@@ -1644,8 +1620,8 @@ function Step3Notifications({
                       onClick={() => field.onChange(channel)}
                       className={`px-4 py-2 rounded-xl border capitalize transition-colors ${
                         field.value === channel
-                          ? 'border-[#ececec] bg-[#383838] text-white'
-                          : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                          : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
                       {channel}
@@ -1692,7 +1668,7 @@ function Step4Capacity({
         <h2 className='text-xl font-semibold text-white'>
           Gestione Capacità Produttiva
         </h2>
-        <p className='text-[#888] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Verifica disponibilità e seleziona lo slot ottimale
         </p>
       </div>
@@ -1714,7 +1690,7 @@ function Step4Capacity({
             <Button
               onClick={() => setShowWaitlistModal(true)}
               variant='outline'
-              className='mt-3 rounded-full border border-[#4e4e4e] text-white hover:bg-white/5'
+              className='mt-3 rounded-full border border-[var(--border-strong)] text-white hover:bg-white/5'
             >
               <Plus className='w-4 h-4 mr-2' />
               Aggiungi a Lista d'Attesa
@@ -1731,7 +1707,7 @@ function Step4Capacity({
           </Label>
           <Badge
             variant='outline'
-            className='text-xs border-[#4e4e4e] text-white'
+            className='text-xs border-[var(--border-strong)] text-white'
           >
             {filteredSlots.length} opzioni
           </Badge>
@@ -1744,8 +1720,8 @@ function Step4Capacity({
               onClick={() => setValue('selectedSlotId', slot.id)}
               className={`w-full p-4 rounded-2xl border transition-all text-left ${
                 selectedSlotId === slot.id
-                  ? 'border-[#ececec] bg-[#383838]'
-                  : 'border-[#4e4e4e] hover:border-[#555] bg-[#2f2f2f]'
+                  ? 'border-[var(--text-primary)] bg-[var(--surface-active)]'
+                  : 'border-[var(--border-strong)] hover:border-[var(--border-default)] bg-[var(--surface-elevated)]'
               }`}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -1767,7 +1743,7 @@ function Step4Capacity({
                         </Badge>
                       )}
                     </div>
-                    <p className='text-sm text-[#888]'>
+                    <p className='text-sm text-[var(--text-tertiary)]'>
                       {slot.technicianName} • {slot.liftAvailable}
                     </p>
                   </div>
@@ -1799,10 +1775,10 @@ function Step4Capacity({
       </div>
 
       {/* Buffer Time */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='mb-4'>
           <h3 className='font-semibold text-white'>Buffer Time</h3>
-          <p className='text-sm text-[#888]'>
+          <p className='text-sm text-[var(--text-tertiary)]'>
             Tempo di pulizia/setup dopo l&apos;appuntamento
           </p>
         </div>
@@ -1818,8 +1794,8 @@ function Step4Capacity({
                   onClick={() => field.onChange(minutes)}
                   className={`flex-1 py-3 rounded-full border transition-colors ${
                     field.value === minutes
-                      ? 'border-[#ececec] bg-[#383838] text-white'
-                      : 'border-[#4e4e4e] text-[#888] hover:border-[#636366]'
+                      ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                      : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                   }`}
                 >
                   <div className='text-lg font-semibold'>{minutes}</div>
@@ -1830,7 +1806,7 @@ function Step4Capacity({
           )}
         />
 
-        <p className='text-sm text-[#888] mt-4'>
+        <p className='text-sm text-[var(--text-tertiary)] mt-4'>
           Impatto: Lo slot successivo verrà mostrato disponibile {bufferTime} min dopo la fine di
           questo appuntamento.
         </p>
@@ -1880,19 +1856,19 @@ function Step5AIFeatures({
         <h2 className='text-xl font-semibold text-white'>
           Funzionalità AI e Smart
         </h2>
-        <p className='text-[#888] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Suggerimenti intelligenti basati sullo storico
         </p>
       </div>
 
       {/* Preventive Services */}
-      <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-active)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center gap-2 mb-4'>
           <Shield className='w-5 h-5 text-white' />
           <h3 className='font-semibold text-white'>
             Servizi Preventivi Suggeriti
           </h3>
-          <Badge className='bg-[#383838] text-white border border-[#4e4e4e]'>
+          <Badge className='bg-[var(--surface-active)] text-white border border-[var(--border-strong)]'>
             AI Powered
           </Badge>
         </div>
@@ -1904,8 +1880,8 @@ function Step5AIFeatures({
               onClick={() => toggleService(service.id)}
               className={`w-full p-4 rounded-2xl border transition-all text-left ${
                 selectedServices.includes(service.id)
-                  ? 'border-[#ececec] bg-[#2f2f2f]'
-                  : 'border-transparent bg-[#2f2f2f]/60 hover:bg-[#353535]'
+                  ? 'border-[var(--text-primary)] bg-[var(--surface-elevated)]'
+                  : 'border-transparent bg-[var(--surface-elevated)]/60 hover:bg-[var(--surface-hover)]'
               }`}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -1915,8 +1891,8 @@ function Step5AIFeatures({
                   <div
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5 ${
                       selectedServices.includes(service.id)
-                        ? 'border-[#ececec] bg-[#ececec]'
-                        : 'border-[#4e4e4e]'
+                        ? 'border-[var(--text-primary)] bg-[var(--text-primary)]'
+                        : 'border-[var(--border-strong)]'
                     }`}
                   >
                     {selectedServices.includes(service.id) && (
@@ -1931,10 +1907,10 @@ function Step5AIFeatures({
                       <Badge
                         className={`text-xs ${
                           service.priority === 'high'
-                            ? 'bg-[#ececec]/10 text-white border border-[#4e4e4e]'
+                            ? 'bg-[var(--text-primary)]/10 text-white border border-[var(--border-strong)]'
                             : service.priority === 'medium'
-                              ? 'bg-[#ececec]/5 text-white border border-[#4e4e4e]'
-                              : 'bg-[#383838] text-white border border-[#4e4e4e]'
+                              ? 'bg-[var(--text-primary)]/5 text-white border border-[var(--border-strong)]'
+                              : 'bg-[var(--surface-active)] text-white border border-[var(--border-strong)]'
                         }`}
                       >
                         {service.priority}
@@ -1962,7 +1938,7 @@ function Step5AIFeatures({
       </div>
 
       {/* Cost Summary */}
-      <div className='bg-[#2f2f2f] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <h3 className='font-semibold text-white mb-4 flex items-center gap-2'>
           <Zap className='w-5 h-5 text-white' />
           Stima Costi
@@ -1970,7 +1946,7 @@ function Step5AIFeatures({
 
         <div className='space-y-3'>
           <div className='flex items-center justify-between text-sm'>
-            <span className='text-[#888]'>
+            <span className='text-[var(--text-tertiary)]'>
               Mano d&apos;opera ({watch('duration')} min @ €85/h)
             </span>
             <span className='font-medium text-white'>
@@ -1980,7 +1956,7 @@ function Step5AIFeatures({
 
           {preventiveCost > 0 && (
             <div className='flex items-center justify-between text-sm'>
-              <span className='text-[#888]'>
+              <span className='text-[var(--text-tertiary)]'>
                 Servizi preventivi ({selectedServices.length})
               </span>
               <span className='font-medium text-white'>
@@ -1989,7 +1965,7 @@ function Step5AIFeatures({
             </div>
           )}
 
-          <div className='border-t border-[#4e4e4e] pt-3'>
+          <div className='border-t border-[var(--border-strong)] pt-3'>
             <div className='flex items-center justify-between'>
               <span className='font-semibold text-white'>
                 Totale Stimato
@@ -1998,7 +1974,7 @@ function Step5AIFeatures({
                 €{totalEstimatedCost.toFixed(2)}
               </span>
             </div>
-            <p className='text-xs text-[#888] mt-2'>
+            <p className='text-xs text-[var(--text-tertiary)] mt-2'>
               * Il costo finale può variare in base alle condizioni del veicolo.
             </p>
           </div>
@@ -2006,7 +1982,7 @@ function Step5AIFeatures({
       </div>
 
       {/* AI Summary */}
-      <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+      <div className='bg-[var(--surface-active)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <h3 className='font-semibold text-white mb-4 flex items-center gap-2'>
           <Sparkles className='w-5 h-5 text-white' />
           Riepilogo AI
@@ -2043,7 +2019,7 @@ function Step5AIFeatures({
         </div>
       </div>
 
-      <p className='text-xs text-[#888] mt-4'>
+      <p className='text-xs text-[var(--text-tertiary)] mt-4'>
         I dati inseriti saranno trattati ai sensi del GDPR 2016/679.{' '}
         <a href='/privacy-policy' className='underline' target='_blank' rel='noopener noreferrer'>
           Informativa privacy
@@ -2062,9 +2038,9 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'
+      className='fixed inset-0 bg-[var(--surface-tertiary)] flex items-center justify-center p-4 overflow-hidden'
     >
-      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-[#2f2f2f]/90 backdrop-blur-xl rounded-[40px] shadow-2xl border border-[#4e4e4e] flex flex-col items-center justify-center p-10 text-center'>
+      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-[var(--surface-elevated)]/90 backdrop-blur-xl rounded-[40px] shadow-2xl border border-[var(--border-strong)] flex flex-col items-center justify-center p-10 text-center'>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -2077,13 +2053,13 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
         <h2 className='text-3xl font-bold text-white mb-4'>
           Prenotazione Creata!
         </h2>
-        <p className='text-[#888] mb-8 max-w-md'>
+        <p className='text-[var(--text-tertiary)] mb-8 max-w-md'>
           L&apos;appuntamento è stato registrato con successo. Il cliente riceverà le notifiche
           configurate.
         </p>
 
-        <div className='bg-[#383838] rounded-2xl p-6 mb-8'>
-          <p className='text-sm text-[#888] mb-2'>Numero Prenotazione</p>
+        <div className='bg-[var(--surface-active)] rounded-2xl p-6 mb-8'>
+          <p className='text-sm text-[var(--text-tertiary)] mb-2'>Numero Prenotazione</p>
           <p className='text-3xl font-mono font-bold text-white'>
             {bookingNumber}
           </p>
@@ -2091,7 +2067,7 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
 
         <Button
           onClick={onClose}
-          className='rounded-full px-8 h-[52px] bg-white hover:bg-[#e5e5e5] text-[#0d0d0d]'
+          className='rounded-full px-8 h-[52px] bg-white hover:bg-[var(--surface-active)] text-[var(--text-primary)]'
         >
           Crea Nuova Prenotazione
         </Button>

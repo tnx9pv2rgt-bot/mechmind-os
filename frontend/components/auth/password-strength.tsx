@@ -8,10 +8,10 @@ interface ZxcvbnResult {
 }
 
 const SCORE_CONFIG: Record<number, { label: string; color: string; bgColor: string }> = {
-  0: { label: 'Molto debole', color: 'text-[#888]', bgColor: 'bg-[#888]' },
-  1: { label: 'Debole', color: 'text-[#888]', bgColor: 'bg-[#888]' },
-  2: { label: 'Discreta', color: 'text-[#b4b4b4]', bgColor: 'bg-[#b4b4b4]' },
-  3: { label: 'Buona', color: 'text-[#ececec]', bgColor: 'bg-[#ececec]' },
+  0: { label: 'Molto debole', color: 'text-[var(--text-tertiary)]', bgColor: 'bg-[var(--text-tertiary)]' },
+  1: { label: 'Debole', color: 'text-[var(--text-tertiary)]', bgColor: 'bg-[var(--text-tertiary)]' },
+  2: { label: 'Discreta', color: 'text-[var(--text-secondary)]', bgColor: 'bg-[var(--text-secondary)]' },
+  3: { label: 'Buona', color: 'text-[var(--text-primary)]', bgColor: 'bg-[var(--text-primary)]' },
   4: { label: 'Forte', color: 'text-white', bgColor: 'bg-white' },
 };
 
@@ -79,7 +79,7 @@ export function PasswordStrength({ password }: { password: string }): React.Reac
           <motion.div
             key={i}
             className={`h-1.5 flex-1 rounded-full ${
-              i < filledSegments ? config.bgColor : 'bg-[#4e4e4e]'
+              i < filledSegments ? config.bgColor : 'bg-[var(--border-strong)]'
             }`}
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}

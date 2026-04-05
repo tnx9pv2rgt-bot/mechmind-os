@@ -213,15 +213,15 @@ export default function NewBookingPage() {
         >
           <Link
             href='/portal/bookings'
-            className='inline-flex items-center gap-2 text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors mb-4'
+            className='inline-flex items-center gap-2 text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors mb-4'
           >
             <ArrowLeft className='h-4 w-4' />
             Torna alle prenotazioni
           </Link>
-          <h1 className='text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             Nuova Prenotazione
           </h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Prenota un appuntamento in officina
           </p>
         </motion.div>
@@ -236,7 +236,7 @@ export default function NewBookingPage() {
                 ${
                   step >= s
                     ? 'bg-apple-blue text-white'
-                    : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
+                    : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-500 dark:text-[var(--text-secondary)]'
                 }
               `}
               >
@@ -244,7 +244,7 @@ export default function NewBookingPage() {
               </div>
               {s < 4 && (
                 <div
-                  className={`w-12 h-0.5 mx-1 ${step > s ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[#424242]'}`}
+                  className={`w-12 h-0.5 mx-1 ${step > s ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[var(--border-default)]'}`}
                 />
               )}
             </div>
@@ -261,7 +261,7 @@ export default function NewBookingPage() {
           {step === 1 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
                   <Car className='h-5 w-5 text-apple-blue' />
                   Seleziona il veicolo
                 </h2>
@@ -276,19 +276,19 @@ export default function NewBookingPage() {
                         ${
                           formData.vehicleId === vehicle.id
                             ? 'border-apple-blue bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-[#424242] hover:border-apple-blue/50'
+                            : 'border-gray-200 dark:border-[var(--border-default)] hover:border-apple-blue/50'
                         }
                       `}
                     >
                       <div className='flex items-center gap-4'>
-                        <div className='w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#353535] flex items-center justify-center'>
+                        <div className='w-12 h-12 rounded-xl bg-gray-100 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
                           <Car className='h-6 w-6 text-apple-gray' />
                         </div>
                         <div className='flex-1'>
-                          <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                          <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                             {vehicle.make} {vehicle.model}
                           </p>
-                          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                             {vehicle.licensePlate} • {vehicle.year}
                           </p>
                         </div>
@@ -300,8 +300,8 @@ export default function NewBookingPage() {
                   ))}
                 </div>
 
-                <div className='mt-4 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl text-center'>
-                  <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                <div className='mt-4 p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-center'>
+                  <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                     Vuoi aggiungere un nuovo veicolo?{' '}
                     <Link href='/portal/settings' className='text-apple-blue hover:underline'>
                       Vai alle impostazioni
@@ -315,7 +315,7 @@ export default function NewBookingPage() {
           {step === 2 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
                   <FileText className='h-5 w-5 text-apple-blue' />
                   Tipo di servizio
                 </h2>
@@ -330,13 +330,13 @@ export default function NewBookingPage() {
                         ${
                           formData.type === service.type
                             ? 'border-apple-blue bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-[#424242] hover:border-apple-blue/50'
+                            : 'border-gray-200 dark:border-[var(--border-default)] hover:border-apple-blue/50'
                         }
                       `}
                     >
                       <div className='flex items-start justify-between'>
                         <div>
-                          <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                          <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                             {service.label}
                           </p>
                           <p className='text-sm text-apple-gray mt-1'>{service.description}</p>
@@ -358,7 +358,7 @@ export default function NewBookingPage() {
           {step === 3 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
                   <Calendar className='h-5 w-5 text-apple-blue' />
                   Data e ora
                 </h2>
@@ -366,7 +366,7 @@ export default function NewBookingPage() {
                 <div className='space-y-6'>
                   {/* Date Picker */}
                   <div>
-                    <Label className='text-apple-dark dark:text-[#ececec] mb-2 block'>Data</Label>
+                    <Label className='text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Data</Label>
                     <Input
                       type='date'
                       value={formData.date}
@@ -379,7 +379,7 @@ export default function NewBookingPage() {
                   {/* Time Slots */}
                   {formData.date && (
                     <div>
-                      <Label className='text-apple-dark dark:text-[#ececec] mb-3 block'>
+                      <Label className='text-apple-dark dark:text-[var(--text-primary)] mb-3 block'>
                         Orario
                       </Label>
                       <div className='grid grid-cols-3 sm:grid-cols-6 gap-2'>
@@ -392,7 +392,7 @@ export default function NewBookingPage() {
                               ${
                                 formData.time === time
                                   ? 'bg-apple-blue text-white'
-                                  : 'bg-apple-light-gray dark:bg-[#353535] text-apple-dark dark:text-[#ececec] hover:bg-gray-200 dark:hover:bg-[#424242]'
+                                  : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)] hover:bg-gray-200 dark:hover:bg-[var(--surface-active)]'
                               }
                             `}
                           >
@@ -410,14 +410,14 @@ export default function NewBookingPage() {
           {step === 4 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
                   <FileText className='h-5 w-5 text-apple-blue' />
                   Note aggiuntive
                 </h2>
 
                 <div className='space-y-6'>
                   <div>
-                    <Label className='text-apple-dark dark:text-[#ececec] mb-2 block'>
+                    <Label className='text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>
                       Descrivi il problema o le esigenze (opzionale)
                     </Label>
                     <Textarea
@@ -430,23 +430,23 @@ export default function NewBookingPage() {
                   </div>
 
                   {/* Summary */}
-                  <div className='p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl space-y-2'>
-                    <h3 className='font-medium text-apple-dark dark:text-[#ececec]'>Riepilogo</h3>
-                    <div className='text-sm text-apple-gray dark:text-[#636366] space-y-1'>
+                  <div className='p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl space-y-2'>
+                    <h3 className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>Riepilogo</h3>
+                    <div className='text-sm text-apple-gray dark:text-[var(--text-secondary)] space-y-1'>
                       <p>
-                        <span className='text-apple-dark dark:text-[#ececec]'>Veicolo:</span>{' '}
+                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Veicolo:</span>{' '}
                         {selectedVehicle?.make} {selectedVehicle?.model}
                       </p>
                       <p>
-                        <span className='text-apple-dark dark:text-[#ececec]'>Servizio:</span>{' '}
+                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Servizio:</span>{' '}
                         {selectedService?.label}
                       </p>
                       <p>
-                        <span className='text-apple-dark dark:text-[#ececec]'>Data:</span>{' '}
+                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Data:</span>{' '}
                         {formData.date ? new Date(formData.date).toLocaleDateString('it-IT') : '-'}
                       </p>
                       <p>
-                        <span className='text-apple-dark dark:text-[#ececec]'>Ora:</span>{' '}
+                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Ora:</span>{' '}
                         {formData.time || '-'}
                       </p>
                     </div>
@@ -462,10 +462,10 @@ export default function NewBookingPage() {
                 <div className='w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mx-auto mb-6'>
                   <CheckCircle className='h-10 w-10 text-apple-green' />
                 </div>
-                <h2 className='text-2xl font-bold text-apple-dark dark:text-[#ececec] mb-2'>
+                <h2 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
                   Prenotazione Confermata!
                 </h2>
-                <p className='text-apple-gray dark:text-[#636366] mb-6'>
+                <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-6'>
                   Ti abbiamo inviato un&apos;email di conferma con tutti i dettagli.
                 </p>
                 <div className='flex flex-col sm:flex-row gap-3 justify-center'>

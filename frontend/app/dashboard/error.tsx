@@ -1,48 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { AppleButton } from '@/components/ui/apple-button';
 
-export default function DashboardError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    console.error('Dashboard error:', error);
-  }, [error]);
-
+export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <div className='flex min-h-[60vh] flex-col items-center justify-center p-4'>
-      <div className='mx-auto max-w-md text-center'>
-        <div className='mb-4 text-5xl'>&#9888;</div>
-        <h2 className='mb-4 text-xl font-bold text-gray-900 dark:text-white'>
-          Errore nel caricamento
-        </h2>
-        <p className='mb-6 text-gray-600 dark:text-gray-400'>
-          Si è verificato un errore nel caricamento della pagina. Riprova.
-        </p>
-        <div className='flex gap-4 justify-center'>
-          <button
-            onClick={reset}
-            className='rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          >
-            Riprova
-          </button>
-          <a
-            href='/dashboard'
-            className='rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'
-          >
-            Torna alla dashboard
-          </a>
-        </div>
-        {error.digest && (
-          <p className='mt-4 text-xs text-gray-500 dark:text-gray-400'>
-            Codice errore: {error.digest}
-          </p>
-        )}
-      </div>
+    <div className='flex flex-col items-center justify-center py-24 text-center'>
+      <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+      <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+        Si è verificato un errore
+      </h2>
+      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md'>
+        {error.message || 'Qualcosa è andato storto. Riprova.'}
+      </p>
+      <AppleButton variant='ghost' className='mt-6' onClick={reset}>
+        Riprova
+      </AppleButton>
     </div>
   );
 }

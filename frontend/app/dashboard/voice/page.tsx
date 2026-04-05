@@ -12,7 +12,7 @@ import {
   CheckCircle,
   ArrowRight,
   Loader2,
-  AlertTriangle,
+  AlertCircle,
   BarChart3,
   Settings,
   Power,
@@ -64,14 +64,41 @@ const callsFetcher = (url: string): Promise<VoiceCall[]> =>
     return Array.isArray(list) ? list : [];
   });
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
 export default function VoicePage() {
-  const { data: stats, isLoading: statsLoading, error: statsError } = useSWR<VoiceStats>(
+  const { data: stats, isLoading: statsLoading, error: statsError, mutate: mutateStats } = useSWR<VoiceStats>(
     '/api/dashboard/voice/stats',
     statsFetcher,
     { onError: () => toast.error('Errore caricamento statistiche voce') }
   );
 
-  const { data: calls, isLoading: callsLoading } = useSWR<VoiceCall[]>(
+  const { data: calls, isLoading: callsLoading, mutate: mutateCalls } = useSWR<VoiceCall[]>(
     '/api/dashboard/voice/calls',
     callsFetcher,
     { onError: () => toast.error('Errore caricamento chiamate') }
@@ -104,254 +131,231 @@ export default function VoicePage() {
     );
   };
 
-  // Loading
-  if (isLoading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
-      </div>
-    );
-  }
-
-  // Error
-  if (statsError) {
-    return (
-      <div className='min-h-screen flex items-center justify-center p-8'>
-        <AppleCard className='max-w-md w-full'>
-          <AppleCardContent className='text-center py-12'>
-            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
-              Errore di caricamento
-            </h3>
-            <p className='text-body text-apple-gray dark:text-[#636366]'>
-              Impossibile caricare i dati dell&apos;assistente vocale.
-            </p>
-          </AppleCardContent>
-        </AppleCard>
-      </div>
-    );
-  }
+  const statCards = [
+    {
+      label: 'Chiamate oggi',
+      value: String(stats?.callsToday ?? 0),
+      icon: PhoneCall,
+      color: 'bg-apple-blue',
+    },
+    {
+      label: 'Durata media',
+      value: stats ? formatDuration(stats.avgDuration) : '0:00',
+      icon: Clock,
+      color: 'bg-apple-purple',
+    },
+    {
+      label: 'Tasso risoluzione',
+      value: stats ? `${stats.resolutionRate.toFixed(0)}%` : '0%',
+      icon: BarChart3,
+      color: 'bg-apple-green',
+    },
+    {
+      label: 'Totale chiamate',
+      value: String(stats?.totalCalls ?? 0),
+      icon: Mic,
+      color: 'bg-apple-orange',
+    },
+  ];
 
   return (
-    <div className='min-h-screen'>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-4 sm:px-8 py-5'>
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-            <div>
-              <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Assistente Vocale AI</h1>
-              <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
-                Gestisci le chiamate automatiche della tua officina
-              </p>
-            </div>
-            <div className='flex items-center gap-3'>
-              <span className='text-body text-apple-gray dark:text-[#636366]'>
-                {enabled ? 'Attivo' : 'Disattivato'}
-              </span>
-              <Switch checked={enabled} onCheckedChange={setEnabled} />
-            </div>
+    <div>
+      {/* Header */}
+      <header className=''>
+        <div className='px-4 sm:px-8 py-5 flex items-center justify-between'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Assistente Vocale AI</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Gestisci le chiamate automatiche della tua officina
+            </p>
+          </div>
+          <div className='flex items-center gap-3'>
+            <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+              {enabled ? 'Attivo' : 'Disattivato'}
+            </span>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
         </div>
       </header>
 
-      <div className='p-4 sm:p-8 max-w-6xl mx-auto space-y-6'>
+      <motion.div
+        className='p-4 sm:p-8 max-w-6xl mx-auto space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
         {/* Stats */}
-        {stats && (
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <AppleCard>
+        <motion.div
+          className='grid grid-cols-2 lg:grid-cols-4 gap-bento'
+          variants={containerVariants}
+        >
+          {statCards.map(stat => (
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
                 <AppleCardContent>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center'>
-                      <PhoneCall className='w-5 h-5 text-blue-600' />
-                    </div>
-                    <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Chiamate oggi</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
-                        {stats.callsToday}
-                      </p>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div
+                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                    >
+                      <stat.icon className='h-5 w-5 text-white' />
                     </div>
                   </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {isLoading ? '...' : stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-              <AppleCard>
-                <AppleCardContent>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center'>
-                      <Clock className='w-5 h-5 text-purple-600' />
-                    </div>
-                    <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Durata media</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
-                        {formatDuration(stats.avgDuration)}
-                      </p>
-                    </div>
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <AppleCard>
-                <AppleCardContent>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center'>
-                      <BarChart3 className='w-5 h-5 text-green-600' />
-                    </div>
-                    <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Tasso risoluzione</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
-                        {stats.resolutionRate.toFixed(0)}%
-                      </p>
-                    </div>
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <AppleCard>
-                <AppleCardContent>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center'>
-                      <Mic className='w-5 h-5 text-orange-600' />
-                    </div>
-                    <div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>Totale chiamate</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
-                        {stats.totalCalls}
-                      </p>
-                    </div>
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-          </div>
-        )}
+          ))}
+        </motion.div>
 
         {/* Recent Calls */}
-        <AppleCard>
-          <AppleCardHeader>
-            <div className='flex items-center gap-3'>
-              <Phone className='h-5 w-5 text-apple-blue' />
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Chiamate Recenti
               </h2>
-            </div>
-          </AppleCardHeader>
-          <AppleCardContent>
-            {calls && calls.length > 0 ? (
-              <div className='space-y-3'>
-                {calls.map((call, index) => (
-                  <motion.div
-                    key={call.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-apple-light-gray/50 dark:hover:bg-[#3a3a3a] transition-colors'
+            </AppleCardHeader>
+            <AppleCardContent>
+              {statsError ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare i dati dell&apos;assistente vocale
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => {
+                      mutateStats();
+                      mutateCalls();
+                    }}
                   >
-                    <div className='flex items-center gap-4'>
-                      <div className='w-10 h-10 bg-apple-blue/10 rounded-xl flex items-center justify-center flex-shrink-0'>
-                        <PhoneCall className='w-5 h-5 text-apple-blue' />
-                      </div>
-                      <div>
-                        <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
-                          {call.callerNumber}
-                        </p>
-                        <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                          {new Date(call.timestamp).toLocaleString('it-IT')} - {formatDuration(call.duration)}
-                        </p>
-                        {call.transcriptSummary && (
-                          <p className='text-footnote text-apple-gray dark:text-[#636366] mt-1 line-clamp-1'>
-                            {call.transcriptSummary}
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : isLoading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                </div>
+              ) : calls && calls.length > 0 ? (
+                <motion.div
+                  className='space-y-3'
+                  variants={containerVariants}
+                  initial='hidden'
+                  animate='visible'
+                >
+                  {calls.map((call, index) => (
+                    <motion.div
+                      key={call.id}
+                      className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                      variants={listItemVariants}
+                      custom={index}
+                      whileHover={{ scale: 1.005, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className='flex items-center gap-4'>
+                        <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center flex-shrink-0'>
+                          <PhoneCall className='h-6 w-6 text-apple-blue' />
+                        </div>
+                        <div>
+                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            {call.callerNumber}
                           </p>
-                        )}
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            {new Date(call.timestamp).toLocaleString('it-IT')} - {formatDuration(call.duration)}
+                          </p>
+                          {call.transcriptSummary && (
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1 line-clamp-1'>
+                              {call.transcriptSummary}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    {getOutcomeBadge(call.outcome)}
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className='text-center py-12'>
-                <Phone className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                <h3 className='text-body font-medium text-apple-dark dark:text-[#ececec] mb-1'>
-                  Nessuna chiamata recente
-                </h3>
-                <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                  Le chiamate gestite dall&apos;assistente vocale appariranno qui.
-                </p>
-              </div>
-            )}
-          </AppleCardContent>
-        </AppleCard>
+                      {getOutcomeBadge(call.outcome)}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Nessuna chiamata recente
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                    Le chiamate gestite dall&apos;assistente vocale appariranno qui.
+                  </p>
+                </div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
         {/* Settings */}
-        <AppleCard>
-          <AppleCardHeader>
-            <div className='flex items-center gap-3'>
-              <Settings className='h-5 w-5 text-apple-blue' />
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Configurazione
               </h2>
-            </div>
-          </AppleCardHeader>
-          <AppleCardContent>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between p-4 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'>
-                <div className='flex items-center gap-3'>
-                  <Power className='w-5 h-5 text-apple-gray' />
-                  <div>
-                    <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
-                      Assistente vocale
-                    </p>
-                    <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                      Attiva o disattiva l&apos;assistente per le chiamate in entrata
-                    </p>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='space-y-3'>
+                <div className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                  <div className='flex items-center gap-3'>
+                    <Power className='w-5 h-5 text-apple-gray' />
+                    <div>
+                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        Assistente vocale
+                      </p>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                        Attiva o disattiva l&apos;assistente per le chiamate in entrata
+                      </p>
+                    </div>
                   </div>
+                  <Switch checked={enabled} onCheckedChange={setEnabled} />
                 </div>
-                <Switch checked={enabled} onCheckedChange={setEnabled} />
-              </div>
 
-              <div className='flex items-center justify-between p-4 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'>
-                <div className='flex items-center gap-3'>
-                  <Mic className='w-5 h-5 text-apple-gray' />
-                  <div>
-                    <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
-                      Messaggio di benvenuto
-                    </p>
-                    <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                      Personalizza il messaggio iniziale dell&apos;assistente
-                    </p>
+                <div className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                  <div className='flex items-center gap-3'>
+                    <Mic className='w-5 h-5 text-apple-gray' />
+                    <div>
+                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        Messaggio di benvenuto
+                      </p>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                        Personalizza il messaggio iniziale dell&apos;assistente
+                      </p>
+                    </div>
                   </div>
+                  <AppleButton variant='secondary' size='sm'>
+                    Modifica
+                  </AppleButton>
                 </div>
-                <AppleButton variant='secondary' size='sm'>
-                  Modifica
-                </AppleButton>
-              </div>
 
-              <div className='flex items-center justify-between p-4 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'>
-                <div className='flex items-center gap-3'>
-                  <Clock className='w-5 h-5 text-apple-gray' />
-                  <div>
-                    <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
-                      Orari di attivit&agrave;
-                    </p>
-                    <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                      Configura quando l&apos;assistente &egrave; attivo
-                    </p>
+                <div className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                  <div className='flex items-center gap-3'>
+                    <Clock className='w-5 h-5 text-apple-gray' />
+                    <div>
+                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        Orari di attivit&agrave;
+                      </p>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                        Configura quando l&apos;assistente &egrave; attivo
+                      </p>
+                    </div>
                   </div>
+                  <AppleButton variant='secondary' size='sm'>
+                    Configura
+                  </AppleButton>
                 </div>
-                <AppleButton variant='secondary' size='sm'>
-                  Configura
-                </AppleButton>
               </div>
-            </div>
-          </AppleCardContent>
-        </AppleCard>
-      </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

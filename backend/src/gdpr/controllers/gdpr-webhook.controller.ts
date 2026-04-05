@@ -9,21 +9,14 @@ import {
   UnauthorizedException,
   Req,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
 import { LoggerService } from '@common/services/logger.service';
 
-/**
- * GDPR Webhook Controller
- *
- * Handles incoming webhooks for GDPR-related events:
- * - Data subject requests from external forms
- * - Third-party consent updates
- * - Sub-processor notifications
- * - Automated deletion confirmations
- */
+@ApiTags('GDPR Webhooks')
 @Controller('webhooks/gdpr')
 export class GdprWebhookController {
   constructor(
@@ -40,6 +33,10 @@ export class GdprWebhookController {
    */
   @Post('requests')
   @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Ricevi richiesta data subject da form esterno' })
+  @ApiResponse({ status: 202, description: 'Richiesta accettata e in coda' })
+  @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
+  @ApiResponse({ status: 401, description: 'Firma webhook non valida' })
   async handleDataSubjectRequest(
     @Body()
     body: {
@@ -95,6 +92,9 @@ export class GdprWebhookController {
    */
   @Post('consent')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Ricevi aggiornamento consenso da fonte esterna' })
+  @ApiResponse({ status: 200, description: 'Consenso aggiornato' })
+  @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
   async handleConsentUpdate(
     @Body()
     body: {
@@ -128,6 +128,9 @@ export class GdprWebhookController {
    */
   @Post('deletion-confirmation')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Conferma cancellazione dati da sub-processor' })
+  @ApiResponse({ status: 200, description: 'Conferma registrata' })
+  @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
   async handleDeletionConfirmation(
     @Body()
     body: {

@@ -99,42 +99,42 @@ export default function PortalInspectionsPage() {
     >
       {/* Stats */}
       <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6'>
-        <div className='p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple'>
+        <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
           <div className='flex items-center gap-3'>
             <div className='w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center'>
               <FileText className='h-6 w-6 text-apple-blue' />
             </div>
             <div>
-              <p className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+              <p className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                 {inspections.length}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[#636366]'>Ispezioni totali</p>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Ispezioni totali</p>
             </div>
           </div>
         </div>
-        <div className='p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple'>
+        <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
           <div className='flex items-center gap-3'>
             <div className='w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center'>
               <TrendingUp className='h-6 w-6 text-apple-green' />
             </div>
             <div>
-              <p className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+              <p className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                 {averageScore.toFixed(1)}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[#636366]'>Punteggio medio</p>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Punteggio medio</p>
             </div>
           </div>
         </div>
-        <div className='p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple'>
+        <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
           <div className='flex items-center gap-3'>
             <div className='w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center'>
               <Filter className='h-6 w-6 text-apple-purple' />
             </div>
             <div>
-              <p className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+              <p className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                 {inspections.filter(i => i.status === 'approved').length}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[#636366]'>Approvate</p>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Approvate</p>
             </div>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function PortalInspectionsPage() {
 
       {/* Filters */}
       <div className='flex items-center gap-3 mb-6'>
-        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[#2f2f2f] rounded-xl shadow-apple'>
+        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple'>
           {(['all', 'completed', 'approved'] as const).map(f => (
             <button
               key={f}
@@ -152,7 +152,7 @@ export default function PortalInspectionsPage() {
                 ${
                   filter === f
                     ? 'bg-apple-blue text-white shadow-sm'
-                    : 'text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec]'
+                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
                 }
               `}
             >

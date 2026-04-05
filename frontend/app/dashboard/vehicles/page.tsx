@@ -6,6 +6,9 @@ import { motion } from 'framer-motion';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
 import { toast } from 'sonner';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import {
   Car,
@@ -16,7 +19,8 @@ import {
   Trash2,
   Fuel,
   AlertCircle,
-  ArrowLeft,
+  Filter,
+  Loader2,
 } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -50,26 +54,6 @@ interface VehiclesResponse {
   limit: number;
 }
 
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
 const FUEL_TYPES: { value: string; label: string }[] = [
   { value: '', label: 'Tutti i carburanti' },
   { value: 'Benzina', label: 'Benzina' },
@@ -82,12 +66,19 @@ const FUEL_TYPES: { value: string; label: string }[] = [
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function VehiclesPage(): React.ReactElement {
@@ -165,266 +156,218 @@ export default function VehiclesPage(): React.ReactElement {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur-xl border-b"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="p-2 rounded-xl transition-colors hover:bg-white/5"
-              aria-label="Torna alla dashboard"
-            >
-              <ArrowLeft className="h-5 w-5" style={{ color: colors.textSecondary }} />
-            </Link>
-            <div>
-              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
-                Veicoli
-              </h1>
-              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
-                Gestisci il parco veicoli dei tuoi clienti
-              </p>
-            </div>
+      <header>
+        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Veicoli</h1>
+            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+              Gestisci il parco veicoli dei tuoi clienti
+            </p>
           </div>
-          <Link href="/dashboard/vehicles/new">
-            <button
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium transition-colors min-h-[44px]"
-              style={{ backgroundColor: colors.accent, color: colors.bg }}
-            >
-              <Plus className="h-4 w-4" />
-              Nuovo Veicolo
-            </button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/vehicles/new">
+              <AppleButton variant="primary" icon={<Plus className="h-4 w-4" />}>
+                Nuovo Veicolo
+              </AppleButton>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="p-4 sm:p-8 space-y-6">
+      <motion.div
+        className="p-4 sm:p-8 space-y-6"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         {/* Search + Filters */}
-        <motion.div variants={itemVariants} initial="hidden" animate="visible">
-          <div
-            className="rounded-2xl border p-4"
-            style={{
-              backgroundColor: colors.surface,
-              borderColor: colors.borderSubtle,
-            }}
-          >
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.textMuted }} />
-                <input
-                  type="text"
-                  placeholder="Cerca per targa, marca, modello..."
-                  aria-label="Cerca veicoli"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-12 pl-11 pr-4 rounded-xl border text-sm focus:outline-none focus:border-white/30 transition-colors"
-                  style={{
-                    backgroundColor: colors.glowStrong,
-                    borderColor: colors.borderSubtle,
-                    color: colors.textPrimary,
-                  }}
-                />
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                  <Input
+                    type="text"
+                    placeholder="Cerca per targa, marca, modello..."
+                    aria-label="Cerca veicoli"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none" />
+                  <select
+                    value={fuelFilter}
+                    onChange={(e) => { setFuelFilter(e.target.value); setPage(1); }}
+                    aria-label="Filtra per carburante"
+                    className="h-10 pl-10 pr-4 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer min-w-[180px]"
+                  >
+                    {FUEL_TYPES.map((ft) => (
+                      <option key={ft.value} value={ft.value}>{ft.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="relative">
-                <Fuel className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: colors.textMuted }} />
-                <select
-                  value={fuelFilter}
-                  onChange={(e) => { setFuelFilter(e.target.value); setPage(1); }}
-                  aria-label="Filtra per carburante"
-                  className="h-12 pl-10 pr-8 rounded-xl border text-sm focus:outline-none appearance-none cursor-pointer min-w-[180px] focus:border-white/30 transition-colors"
-                  style={{
-                    backgroundColor: colors.glowStrong,
-                    borderColor: colors.borderSubtle,
-                    color: colors.textPrimary,
-                  }}
-                >
-                  {FUEL_TYPES.map((ft) => (
-                    <option key={ft.value} value={ft.value}>{ft.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-            <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
-              Impossibile caricare i veicoli
-            </p>
-            <p className="text-sm mb-4" style={{ color: colors.textTertiary }}>
-              Si è verificato un errore durante il caricamento. Riprova.
-            </p>
-            <button
-              onClick={() => mutate()}
-              className="h-10 px-4 rounded-full text-sm font-medium border transition-colors hover:bg-white/5"
-              style={{ borderColor: colors.border, color: colors.textPrimary }}
-            >
-              Riprova
-            </button>
-          </div>
-        ) : vehicles.length === 0 && !debouncedSearch && !fuelFilter ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Car className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-            <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
-              Nessun veicolo registrato
-            </p>
-            <p className="text-sm mb-4" style={{ color: colors.textTertiary }}>
-              Aggiungi il primo veicolo per iniziare a gestire il parco auto dei tuoi clienti.
-            </p>
-            <Link href="/dashboard/vehicles/new">
-              <button
-                className="h-10 px-4 rounded-full text-sm font-medium transition-colors"
-                style={{ backgroundColor: colors.accent, color: colors.bg }}
-              >
-                + Nuovo Veicolo
-              </button>
-            </Link>
-          </div>
-        ) : vehicles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Search className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-            <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
-              Nessun risultato
-            </p>
-            <p className="text-sm mb-4" style={{ color: colors.textTertiary }}>
-              Nessun veicolo trovato per &quot;{debouncedSearch || fuelFilter}&quot;
-            </p>
-            <button
-              onClick={() => { setSearchQuery(''); setFuelFilter(''); }}
-              className="h-10 px-4 rounded-full text-sm font-medium border transition-colors hover:bg-white/5"
-              style={{ borderColor: colors.border, color: colors.textPrimary }}
-            >
-              Cancella filtri
-            </button>
-          </div>
-        ) : (
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
-            {/* Table */}
-            <motion.div variants={itemVariants}>
-              <div
-                className="rounded-2xl border overflow-hidden"
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: colors.borderSubtle,
-                }}
-              >
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b" style={{ borderColor: colors.borderSubtle }}>
-                        <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>Targa</th>
-                        <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider hidden sm:table-cell" style={{ color: colors.textTertiary }}>Marca / Modello</th>
-                        <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider hidden md:table-cell" style={{ color: colors.textTertiary }}>Anno</th>
-                        <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider hidden lg:table-cell" style={{ color: colors.textTertiary }}>Carburante</th>
-                        <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider hidden md:table-cell" style={{ color: colors.textTertiary }}>Proprietario</th>
-                        <th className="text-right px-4 py-3 font-medium text-xs uppercase tracking-wider hidden lg:table-cell" style={{ color: colors.textTertiary }}>Km</th>
-                        <th className="text-right px-4 py-3 font-medium text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>Azioni</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vehicles.map((vehicle) => (
-                        <tr
-                          key={vehicle.id}
-                          className="border-b last:border-b-0 transition-colors"
-                          style={{ borderColor: colors.borderSubtle }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.surfaceHover; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                        >
-                          <td className="px-4 py-3">
-                            <span
-                              className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider"
-                              style={{
-                                backgroundColor: colors.glowStrong,
-                                color: colors.textPrimary,
-                              }}
-                            >
-                              {formatPlate(vehicle.licensePlate)}
-                            </span>
-                            <span className="block sm:hidden text-xs mt-1" style={{ color: colors.textSecondary }}>
-                              {vehicle.make} {vehicle.model}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 hidden sm:table-cell" style={{ color: colors.textPrimary }}>
-                            {vehicle.make} {vehicle.model}
-                          </td>
-                          <td className="px-4 py-3 hidden md:table-cell" style={{ color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
-                            {vehicle.year || '\u2014'}
-                          </td>
-                          <td className="px-4 py-3 hidden lg:table-cell" style={{ color: colors.textSecondary }}>
-                            {vehicle.fuelType || '\u2014'}
-                          </td>
-                          <td className="px-4 py-3 hidden md:table-cell">
-                            {vehicle.customer ? (
-                              <Link
-                                href={`/dashboard/customers/${vehicle.customer.id}`}
-                                className="hover:underline"
-                                style={{ color: colors.info }}
-                              >
-                                {getOwnerName(vehicle)}
-                              </Link>
-                            ) : (
-                              <span style={{ color: colors.textMuted }}>\u2014</span>
-                            )}
-                          </td>
-                          <td
-                            className="px-4 py-3 text-right hidden lg:table-cell"
-                            style={{ color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}
-                          >
-                            {vehicle.mileage ? formatNumber(vehicle.mileage) : '\u2014'}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}`)}
-                                className="p-2 rounded-lg transition-colors hover:bg-white/5 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                                aria-label={`Visualizza ${vehicle.licensePlate}`}
-                                title="Visualizza"
-                              >
-                                <Eye className="h-4 w-4" style={{ color: colors.textMuted }} />
-                              </button>
-                              <button
-                                onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}?tab=dettagli&edit=true`)}
-                                className="p-2 rounded-lg transition-colors hover:bg-white/5 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                                aria-label={`Modifica ${vehicle.licensePlate}`}
-                                title="Modifica"
-                              >
-                                <Pencil className="h-4 w-4" style={{ color: colors.textMuted }} />
-                              </button>
-                              <button
-                                onClick={() => setDeleteTarget(vehicle)}
-                                className="p-2 rounded-lg transition-colors hover:bg-white/5 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                                aria-label={`Elimina ${vehicle.licensePlate}`}
-                                title="Elimina"
-                              >
-                                <Trash2 className="h-4 w-4" style={{ color: colors.textMuted }} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                Elenco Veicoli
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
                 </div>
-              </div>
-            </motion.div>
-
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-          </motion.div>
-        )}
-      </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    Impossibile caricare i veicoli
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => mutate()}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : vehicles.length === 0 && !debouncedSearch && !fuelFilter ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Car className="h-12 w-12 text-apple-gray/40 mb-4" />
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    Nessun veicolo registrato. Aggiungi il primo veicolo per iniziare.
+                  </p>
+                  <Link href="/dashboard/vehicles/new">
+                    <AppleButton variant="ghost" className="mt-4">
+                      Nuovo Veicolo
+                    </AppleButton>
+                  </Link>
+                </div>
+              ) : vehicles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-12 w-12 text-apple-gray/40 mb-4" />
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    Nessun veicolo trovato per &quot;{debouncedSearch || fuelFilter}&quot;
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => { setSearchQuery(''); setFuelFilter(''); }}
+                  >
+                    Cancella filtri
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className="space-y-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]">
+                          <th className="text-left px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Targa</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden sm:table-cell text-apple-dark dark:text-[var(--text-primary)]">Marca / Modello</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-apple-dark dark:text-[var(--text-primary)]">Anno</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden lg:table-cell text-apple-dark dark:text-[var(--text-primary)]">Carburante</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-apple-dark dark:text-[var(--text-primary)]">Proprietario</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium hidden lg:table-cell text-apple-dark dark:text-[var(--text-primary)]">Km</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vehicles.map((vehicle) => (
+                          <motion.tr
+                            key={vehicle.id}
+                            variants={listItemVariants}
+                            className="border-b border-apple-border/10 dark:border-[var(--border-default)] last:border-b-0 transition-colors hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-active)]"
+                          >
+                            <td className="px-4 py-3">
+                              <span className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)]">
+                                {formatPlate(vehicle.licensePlate)}
+                              </span>
+                              <span className="block sm:hidden text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                                {vehicle.make} {vehicle.model}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 hidden sm:table-cell text-body text-apple-dark dark:text-[var(--text-primary)]">
+                              {vehicle.make} {vehicle.model}
+                            </td>
+                            <td className="px-4 py-3 hidden md:table-cell text-body text-apple-gray dark:text-[var(--text-secondary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                              {vehicle.year || '\u2014'}
+                            </td>
+                            <td className="px-4 py-3 hidden lg:table-cell text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                              {vehicle.fuelType || '\u2014'}
+                            </td>
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              {vehicle.customer ? (
+                                <Link
+                                  href={`/dashboard/customers/${vehicle.customer.id}`}
+                                  className="text-body text-apple-blue hover:underline"
+                                >
+                                  {getOwnerName(vehicle)}
+                                </Link>
+                              ) : (
+                                <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">{'\u2014'}</span>
+                              )}
+                            </td>
+                            <td
+                              className="px-4 py-3 text-right hidden lg:table-cell text-body text-apple-gray dark:text-[var(--text-secondary)]"
+                              style={{ fontVariantNumeric: 'tabular-nums' }}
+                            >
+                              {vehicle.mileage ? formatNumber(vehicle.mileage) : '\u2014'}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <AppleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}`)}
+                                  aria-label={`Visualizza ${vehicle.licensePlate}`}
+                                  icon={<Eye className="h-3.5 w-3.5" />}
+                                />
+                                <AppleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}?tab=dettagli&edit=true`)}
+                                  aria-label={`Modifica ${vehicle.licensePlate}`}
+                                  icon={<Pencil className="h-3.5 w-3.5" />}
+                                />
+                                <AppleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteTarget(vehicle)}
+                                  aria-label={`Elimina ${vehicle.licensePlate}`}
+                                  icon={<Trash2 className="h-3.5 w-3.5" />}
+                                />
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                </motion.div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
+      </motion.div>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

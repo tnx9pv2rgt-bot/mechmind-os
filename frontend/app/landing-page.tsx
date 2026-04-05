@@ -1,69 +1,47 @@
 'use client';
 
-import {
-  Navbar,
-  Hero,
-  TrustBar,
-  FeaturePillars,
-  HowItWorks,
-  ProductDemo,
-  RoiCalculator,
-  ComparisonTable,
-  Testimonials,
-  PricingPreview,
-  Faq,
-  CtaSection,
-  Footer,
-  ChatWidget,
-  ExitIntent,
-  MobileBanner,
-} from '@/components/marketing';
+import dynamic from 'next/dynamic';
+import Navbar from '@/components/marketing/navbar';
+import { Hero } from '@/components/marketing/hero';
+import { TrustBar } from '@/components/marketing/trust-bar';
+
+// Above-the-fold: caricati subito (Navbar + Hero + TrustBar)
+// Below-the-fold: lazy-loaded quando l'utente scrolla
+const FeaturePillars = dynamic(() => import('@/components/marketing/feature-pillars').then((m) => m.FeaturePillars));
+const HowItWorks = dynamic(() => import('@/components/marketing/how-it-works').then((m) => m.HowItWorks));
+const ProductDemo = dynamic(() => import('@/components/marketing/product-demo').then((m) => m.ProductDemo));
+const RoiCalculator = dynamic(() => import('@/components/marketing/roi-calculator').then((m) => m.RoiCalculator));
+const ComparisonTable = dynamic(() => import('@/components/marketing/comparison-table').then((m) => m.ComparisonTable));
+const Testimonials = dynamic(() => import('@/components/marketing/testimonials').then((m) => m.default));
+const PricingPreview = dynamic(() => import('@/components/marketing/pricing-preview').then((m) => m.PricingPreview));
+const Faq = dynamic(() => import('@/components/marketing/faq').then((m) => m.Faq));
+const CtaSection = dynamic(() => import('@/components/marketing/cta-section').then((m) => m.CtaSection));
+const Footer = dynamic(() => import('@/components/marketing/footer').then((m) => m.Footer));
+const ChatWidget = dynamic(() => import('@/components/marketing/chat-widget').then((m) => m.ChatWidget), { ssr: false });
+const MobileBanner = dynamic(() => import('@/components/marketing/mobile-banner').then((m) => m.MobileBanner), { ssr: false });
 
 export function LandingPage(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
-      {/* Sezione 1: Navbar */}
+    <div className="min-h-screen bg-white dark:bg-[var(--surface-tertiary)]">
+      {/* Above the fold — caricati immediatamente */}
       <Navbar />
-
-      {/* Sezione 2: Hero */}
       <Hero />
-
-      {/* Sezione 3: Trust Bar */}
       <TrustBar />
 
-      {/* Sezione 4: 3 Feature Pillar */}
+      {/* Below the fold — lazy-loaded */}
       <FeaturePillars />
-
-      {/* Sezione 4b: Come Funziona */}
       <HowItWorks />
-
-      {/* Sezione 5: Demo Interattiva */}
       <ProductDemo />
-
-      {/* Sezione 5b: ROI Calculator */}
       <RoiCalculator />
-
-      {/* Sezione 5c: Confronto Prima vs Dopo */}
       <ComparisonTable />
-
-      {/* Sezione 6: Testimonial / Perché MechMind */}
       <Testimonials />
-
-      {/* Sezione 7: Pricing Preview */}
       <PricingPreview />
-
-      {/* Sezione 8: FAQ */}
       <Faq />
-
-      {/* Sezione 9: CTA Finale + Footer */}
       <CtaSection />
       <Footer />
 
-      {/* Sezione 10: Live Chat Widget */}
+      {/* Client-only widgets */}
       <ChatWidget />
-
-      {/* Sezione 11: Exit Intent (desktop) + Mobile Banner */}
-      <ExitIntent />
       <MobileBanner />
     </div>
   );

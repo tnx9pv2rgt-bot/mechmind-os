@@ -131,7 +131,7 @@ export function KpiBulletChart(): React.ReactElement {
           tooltip={({ v0, v1, color }) => (
             <div
               style={{
-                background: '#2f2f2f',
+                background: 'var(--surface-elevated)',
                 color: '#ffffff',
                 padding: '8px 12px',
                 borderRadius: '8px',
@@ -167,14 +167,14 @@ export function KpiBulletChart(): React.ReactElement {
             className="inline-block h-3 w-6 rounded-sm"
             style={{ backgroundColor: MECHMIND_PALETTE.accent.blue }}
           />
-          <span className="text-xs text-[#b4b4b4]">Attuale</span>
+          <span className="text-xs text-[var(--text-secondary)]">Attuale</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span
             className="inline-block h-4 w-0.5 rounded-full"
             style={{ backgroundColor: MECHMIND_PALETTE.accent.amber }}
           />
-          <span className="text-xs text-[#b4b4b4]">Obiettivo</span>
+          <span className="text-xs text-[var(--text-secondary)]">Obiettivo</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span
@@ -183,7 +183,7 @@ export function KpiBulletChart(): React.ReactElement {
               background: 'linear-gradient(to right, #3a3a3a, #5a5a5a, #6a6a6a)',
             }}
           />
-          <span className="text-xs text-[#b4b4b4]">Range</span>
+          <span className="text-xs text-[var(--text-secondary)]">Range</span>
         </div>
       </div>
     </GlassCard>

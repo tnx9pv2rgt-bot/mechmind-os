@@ -19,9 +19,13 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import {
+  AppleCard,
+  AppleCardContent,
+  AppleCardHeader,
+} from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
@@ -113,38 +117,37 @@ export default function NewInspectionPage() {
   const progress = (step / totalSteps) * 100;
 
   return (
-    <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'>
-      <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
-        <motion.div
-          className='relative z-10 w-full h-full bg-[#2f2f2f] rounded-[40px] shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden flex flex-col'
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className='px-10 pt-8 pb-4'>
-            <Breadcrumb items={[{ label: 'Ispezioni', href: '/dashboard/inspections' }, { label: 'Nuova Ispezione' }]} />
-            <div className='flex items-center justify-between mb-6'>
-              <div>
-                <h1 className='text-3xl font-semibold text-white tracking-tight'>
-                  Nuova Ispezione
-                </h1>
-                <p className='text-[#888] mt-1'>
-                  Wizard 7 step - AI + Blockchain
-                </p>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-[#888]'>Step</span>
-                <span className='text-2xl font-bold text-white'>{step}</span>
-                <span className='text-[#888]'>/</span>
-                <span className='text-[#888]'>{totalSteps}</span>
-              </div>
+    <div>
+      {/* Header */}
+      <header>
+        <div className='px-8 py-5'>
+          <Breadcrumb items={[{ label: 'Ispezioni', href: '/dashboard/inspections' }, { label: 'Nuova Ispezione' }]} />
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                Nuova Ispezione
+              </h1>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                Wizard 7 step - AI + Blockchain
+              </p>
             </div>
+            <div className='flex items-center gap-2'>
+              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Step</span>
+              <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>{step}</span>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>/</span>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>{totalSteps}</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Progress Bar */}
-            <div className='h-2 bg-[#4e4e4e] rounded-full overflow-hidden'>
+      <div className='p-8 max-w-4xl mx-auto space-y-6'>
+        {/* Progress Bar */}
+        <AppleCard hover={false}>
+          <AppleCardContent>
+            <div className='h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-white'
+                className='h-full bg-apple-blue'
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
@@ -154,109 +157,111 @@ export default function NewInspectionPage() {
             {/* Step Indicators */}
             <div className='flex items-center justify-between mt-4'>
               {steps.map(s => (
-                <div
+                <button
                   key={s.num}
+                  onClick={() => s.num < step && setStep(s.num)}
                   className={`flex items-center gap-2 transition-all ${
                     s.num === step
-                      ? 'text-white cursor-default'
+                      ? 'text-apple-dark dark:text-[var(--text-primary)] cursor-default'
                       : s.num < step
-                        ? 'text-white hover:opacity-70 cursor-pointer hover:scale-105'
-                        : 'text-[#888] cursor-not-allowed'
+                        ? 'text-apple-blue hover:opacity-70 cursor-pointer hover:scale-105'
+                        : 'text-apple-gray dark:text-[var(--text-secondary)] cursor-not-allowed'
                   }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                      s.num <= step
-                        ? 'bg-white text-[#1a1a1a]'
-                        : 'bg-[#4e4e4e] text-[#888]'
+                      s.num === step
+                        ? 'bg-apple-blue text-white'
+                        : s.num < step
+                          ? 'bg-apple-green text-white'
+                          : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'
                     }`}
                   >
-                    {s.num < step ? '✓' : s.num}
+                    {s.num < step ? <CheckCircle className='h-4 w-4' /> : s.num}
                   </div>
-                  <span className='hidden sm:inline text-sm font-medium'>{s.label}</span>
-                </div>
+                  <span className='hidden sm:inline text-footnote font-medium'>{s.label}</span>
+                </button>
               ))}
             </div>
-          </div>
+          </AppleCardContent>
+        </AppleCard>
 
-          {/* Content */}
-          <div className='flex-1 px-10 pb-24 overflow-y-auto'>
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className='space-y-6'
-            >
-              {/* Step 1: Vehicle */}
-              {step === 1 && (
-                <div className='space-y-6'>
-                  <div className='flex items-center gap-3 mb-6'>
-                    <div className='w-12 h-12 rounded-2xl bg-[#4e4e4e] flex items-center justify-center'>
-                      <Car className='w-6 h-6 text-white' />
-                    </div>
-                    <div>
-                      <h2 className='text-xl font-semibold text-white'>
-                        Dati Veicolo
-                      </h2>
-                      <p className='text-[#888] text-sm'>
-                        Inserisci i dati del veicolo da ispezionare
-                      </p>
-                    </div>
+        {/* Content */}
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Step 1: Vehicle */}
+          {step === 1 && (
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <div className='flex items-center gap-3'>
+                  <div className='w-12 h-12 rounded-2xl bg-apple-blue/10 flex items-center justify-center'>
+                    <Car className='w-6 h-6 text-apple-blue' />
                   </div>
-
+                  <div>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      Dati Veicolo
+                    </h2>
+                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      Inserisci i dati del veicolo da ispezionare
+                    </p>
+                  </div>
+                </div>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <div className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='space-y-2'>
-                      <Label
+                      <label
                         htmlFor='plate'
-                        className='text-sm font-medium text-white'
+                        className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'
                       >
                         Targa
-                      </Label>
+                      </label>
                       <Input
                         id='plate'
                         placeholder='AB123CD'
-                        className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#1a1a1a] text-white placeholder-[#888] outline-none px-4'
                         {...register('plate')}
                       />
-                      {errors.plate && <p className='text-xs text-red-500 mt-1'>{errors.plate.message}</p>}
+                      {errors.plate && <p className='text-footnote text-apple-red mt-1'>{errors.plate.message}</p>}
                     </div>
                     <div className='space-y-2'>
-                      <Label
+                      <label
                         htmlFor='vehicle'
-                        className='text-sm font-medium text-white'
+                        className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'
                       >
                         Veicolo
-                      </Label>
+                      </label>
                       <Input
                         id='vehicle'
                         placeholder='BMW X5'
-                        className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#1a1a1a] text-white placeholder-[#888] outline-none px-4'
                         {...register('vehicle')}
                       />
                       {errors.vehicle && (
-                        <p className='text-xs text-red-500 mt-1'>{errors.vehicle.message}</p>
+                        <p className='text-footnote text-apple-red mt-1'>{errors.vehicle.message}</p>
                       )}
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='customer' className='text-sm font-medium text-white'>
+                    <label htmlFor='customer' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       Cliente
-                    </Label>
+                    </label>
                     <Input
                       id='customer'
                       placeholder='Nome cliente'
-                      className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#1a1a1a] text-white placeholder-[#888] outline-none px-4'
                       {...register('customer')}
                     />
                     {errors.customer && (
-                      <p className='text-xs text-red-500 mt-1'>{errors.customer.message}</p>
+                      <p className='text-footnote text-apple-red mt-1'>{errors.customer.message}</p>
                     )}
                   </div>
 
                   <div className='space-y-2'>
-                    <Label className='text-sm font-medium text-white'>Tipo Ispezione</Label>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Tipo Ispezione</label>
                     <div className='flex flex-wrap gap-2'>
                       {['PRE_PURCHASE', 'PERIODIC', 'PRE_SALE', 'WARRANTY', 'ACCIDENT'].map(
                         type => (
@@ -265,8 +270,8 @@ export default function NewInspectionPage() {
                             variant={formData.type === type ? 'default' : 'outline'}
                             className={`cursor-pointer px-4 py-2 text-sm rounded-full ${
                               formData.type === type
-                                ? 'border-[#ececec] bg-[#383838] text-white'
-                                : 'text-[#888] bg-transparent border-[#4e4e4e] hover:bg-white/5'
+                                ? 'bg-apple-blue text-white border-apple-blue'
+                                : 'text-apple-gray dark:text-[var(--text-secondary)] bg-transparent border-apple-border/20 dark:border-[var(--border-default)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
                             }`}
                             role='button'
                             tabIndex={0}
@@ -289,21 +294,25 @@ export default function NewInspectionPage() {
                     </div>
                   </div>
                 </div>
-              )}
+              </AppleCardContent>
+            </AppleCard>
+          )}
 
-              {/* Steps 2-7: Placeholder */}
-              {step > 1 && (
+          {/* Steps 2-7: Placeholder */}
+          {step > 1 && (
+            <AppleCard hover={false}>
+              <AppleCardContent>
                 <div className='text-center py-12'>
-                  <div className='w-16 h-16 rounded-2xl bg-[#4e4e4e] flex items-center justify-center mx-auto mb-4'>
+                  <div className='w-16 h-16 rounded-2xl bg-apple-blue/10 flex items-center justify-center mx-auto mb-4'>
                     {(() => {
                       const Icon = steps[step - 1].icon;
-                      return <Icon className='w-8 h-8 text-gray-400' />;
+                      return <Icon className='w-8 h-8 text-apple-blue' />;
                     })()}
                   </div>
-                  <h3 className='text-xl font-semibold text-white mb-2'>
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
                     {steps[step - 1].label}
                   </h3>
-                  <p className='text-[#888] max-w-md mx-auto'>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md mx-auto'>
                     Questa sezione include {steps[step - 1].label.toLowerCase()} inspection con AI
                     detection, foto e annotazioni.
                   </p>
@@ -311,72 +320,61 @@ export default function NewInspectionPage() {
                   <div className='flex justify-center gap-2 mt-6'>
                     {step === 2 && (
                       <>
-                        <Badge variant='outline'>📸 Foto AI</Badge>
-                        <Badge variant='outline'>🎥 Video 360°</Badge>
+                        <Badge variant='outline'>Foto AI</Badge>
+                        <Badge variant='outline'>Video 360</Badge>
                       </>
                     )}
                     {step === 4 && (
                       <>
-                        <Badge variant='outline'>💧 Umidità</Badge>
-                        <Badge variant='outline'>👃 Odori</Badge>
-                        <Badge variant='outline'>🦠 Muffa</Badge>
+                        <Badge variant='outline'>Umidita</Badge>
+                        <Badge variant='outline'>Odori</Badge>
+                        <Badge variant='outline'>Muffa</Badge>
                       </>
                     )}
                     {step === 7 && (
                       <>
-                        <Badge variant='outline'>🔌 OBD-II</Badge>
-                        <Badge variant='outline'>⚡ Elettronica</Badge>
+                        <Badge variant='outline'>OBD-II</Badge>
+                        <Badge variant='outline'>Elettronica</Badge>
                       </>
                     )}
                   </div>
                 </div>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Footer */}
-          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e]'>
-            <div className='flex items-center justify-between'>
-              <Button
-                onClick={handleBack}
-                disabled={isSubmitting}
-                className='rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5 transition-all'
-              >
-                <ChevronLeft className='w-5 h-5 mr-2' />
-                Indietro
-              </Button>
-
-              {step < totalSteps ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={isSubmitting}
-                  className='rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5] transition-all'
-                >
-                  Avanti
-                  <ChevronRight className='w-5 h-5 ml-2' />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className='rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5] transition-all'
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                      Salvataggio...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className='w-5 h-5 mr-2' />
-                      Completa Ispezione
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
+              </AppleCardContent>
+            </AppleCard>
+          )}
         </motion.div>
+
+        {/* Footer Navigation */}
+        <div className='flex items-center justify-between pt-2'>
+          <AppleButton
+            variant='ghost'
+            onClick={handleBack}
+            disabled={isSubmitting}
+            icon={<ChevronLeft className='w-4 h-4' />}
+          >
+            Indietro
+          </AppleButton>
+
+          {step < totalSteps ? (
+            <AppleButton
+              onClick={handleNext}
+              disabled={isSubmitting}
+              icon={<ChevronRight className='w-4 h-4' />}
+              iconPosition='right'
+            >
+              Avanti
+            </AppleButton>
+          ) : (
+            <AppleButton
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              icon={!isSubmitting ? <CheckCircle className='w-4 h-4' /> : undefined}
+            >
+              {isSubmitting ? 'Salvataggio...' : 'Completa Ispezione'}
+            </AppleButton>
+          )}
+        </div>
       </div>
     </div>
   );

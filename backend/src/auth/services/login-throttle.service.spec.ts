@@ -100,4 +100,63 @@ describe('LoginThrottleService', () => {
       expect(headers['X-RateLimit-Remaining']).toBe('0');
     });
   });
+
+  // ============== Additional branches ==============
+
+  describe('getDelay — edge cases', () => {
+    it('should return 0 delay when Redis returns null (no prior attempts)', async () => {
+      redis.get.mockResolvedValue(null);
+      const result = await service.getDelay('user@test.com', '1.2.3.4');
+      expect(result.delay).toBe(0);
+      expect(result.attempts).toBe(0);
+    });
+
+    it('should return 1s delay for exactly 5 attempts', async () => {
+      redis.get.mockResolvedValue('5');
+      const result = await service.getDelay('user@test.com', '1.2.3.4');
+      expect(result.delay).toBe(1000);
+      expect(result.attempts).toBe(5);
+    });
+
+    it('should return 5s delay for exactly 7 attempts', async () => {
+      redis.get.mockResolvedValue('7');
+      const result = await service.getDelay('user@test.com', '1.2.3.4');
+      expect(result.delay).toBe(5000);
+    });
+
+    it('should return 30s delay for exactly 10 attempts', async () => {
+      redis.get.mockResolvedValue('10');
+      const result = await service.getDelay('user@test.com', '1.2.3.4');
+      expect(result.delay).toBe(30000);
+      expect(result.attempts).toBe(10);
+    });
+
+    it('should normalize email with spaces in getDelay', async () => {
+      redis.get.mockResolvedValue('3');
+      await service.getDelay('  User@Test.COM  ', '1.2.3.4');
+      expect(redis.get).toHaveBeenCalledWith('login-throttle:user@test.com:1.2.3.4');
+    });
+  });
+
+  describe('recordFailure — Redis unavailable', () => {
+    it('should return 0 when Redis is unavailable', async () => {
+      Object.defineProperty(redis, 'isAvailable', { value: false });
+      const count = await service.recordFailure('user@test.com', '1.2.3.4');
+      expect(count).toBe(0);
+      expect(redis.get).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetOnSuccess — Redis unavailable', () => {
+    it('should return immediately when Redis is unavailable', async () => {
+      Object.defineProperty(redis, 'isAvailable', { value: false });
+      await service.resetOnSuccess('user@test.com', '1.2.3.4');
+      expect(redis.del).not.toHaveBeenCalled();
+    });
+
+    it('should normalize email in resetOnSuccess', async () => {
+      await service.resetOnSuccess('  USER@Test.COM  ', '1.2.3.4');
+      expect(redis.del).toHaveBeenCalledWith('login-throttle:user@test.com:1.2.3.4');
+    });
+  });
 });

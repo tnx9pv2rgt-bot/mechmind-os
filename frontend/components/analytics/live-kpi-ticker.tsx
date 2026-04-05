@@ -175,11 +175,11 @@ export function LiveKpiTicker(): React.ReactElement {
 
   if (!kpis) {
     return (
-      <div className="flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[#2f2f2f]/80 backdrop-blur-xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+      <div className="flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-10 w-36 animate-pulse rounded-xl bg-[#383838]"
+            className="h-10 w-36 animate-pulse rounded-xl bg-[var(--surface-active)]"
           />
         ))}
       </div>
@@ -187,8 +187,8 @@ export function LiveKpiTicker(): React.ReactElement {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#2f2f2f]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
-      <div className="pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full bg-[#60a5fa]/5 blur-3xl" aria-hidden="true" />
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+      <div className="pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full bg-[var(--brand)]/5 blur-3xl" aria-hidden="true" />
       <div
         ref={scrollRef}
         className="relative flex flex-nowrap items-center gap-1 overflow-x-auto px-2 py-2.5 sm:flex-wrap sm:gap-2 sm:overflow-x-visible sm:px-4 sm:py-3 scrollbar-hide"
@@ -202,16 +202,16 @@ export function LiveKpiTicker(): React.ReactElement {
           return (
             <motion.div
               key={metric.key}
-              className="flex flex-shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 transition-colors hover:bg-[#383838]/60 min-w-[140px] sm:min-w-0"
+              className="flex flex-shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 transition-colors hover:bg-[var(--surface-active)]/60 min-w-[140px] sm:min-w-0"
               initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5">
-                <Icon className="h-4 w-4 text-[#b4b4b4]" />
+                <Icon className="h-4 w-4 text-[var(--text-secondary)]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-[#666666]">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
                   {metric.label}
                 </span>
                 <div className="flex items-center gap-1.5">

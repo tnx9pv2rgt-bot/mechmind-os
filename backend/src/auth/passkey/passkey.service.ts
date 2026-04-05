@@ -241,19 +241,15 @@ export class PasskeyService {
   }
 
   async deletePasskey(userId: string, passkeyId: string): Promise<void> {
-    const passkey = await this.prisma.passkey.findUnique({
-      where: { id: passkeyId },
+    const passkey = await this.prisma.passkey.findFirst({
+      where: { id: passkeyId, userId },
     });
 
     if (!passkey) {
       throw new NotFoundException('Passkey not found');
     }
 
-    if (passkey.userId !== userId) {
-      throw new ForbiddenException('Not authorized to delete this passkey');
-    }
-
-    await this.prisma.passkey.delete({ where: { id: passkeyId } });
+    await this.prisma.passkey.delete({ where: { id: passkey.id } });
 
     this.logger.log(`Passkey ${passkeyId} deleted by user ${userId}`);
   }

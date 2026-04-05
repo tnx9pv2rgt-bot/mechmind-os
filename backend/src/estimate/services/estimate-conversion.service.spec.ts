@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstimateService } from './estimate.service';
 import { PrismaService } from '../../common/services/prisma.service';
 import { LoggerService } from '../../common/services/logger.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
 
 describe('EstimateService — convertToWorkOrder', () => {
   let service: EstimateService;
@@ -60,6 +62,19 @@ describe('EstimateService — convertToWorkOrder', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: LoggerService, useValue: { log: jest.fn(), error: jest.fn() } },
+        {
+          provide: PublicTokenService,
+          useValue: {
+            generateToken: jest.fn(),
+            validateToken: jest.fn(),
+            consumeToken: jest.fn(),
+            revokeTokensForEntity: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('https://app.mechmind.io') },
+        },
       ],
     }).compile();
 

@@ -142,8 +142,8 @@ export function AnomalyAlerts(): React.ReactElement {
     return (
       <GlassCard title="Anomalie e Avvisi" subtitle="Nessun avviso attivo">
         <div className="flex flex-col items-center justify-center py-8">
-          <Info className="h-8 w-8 text-[#666666] mb-2" />
-          <p className="text-sm text-[#888888]">Nessuna anomalia rilevata</p>
+          <Info className="h-8 w-8 text-[var(--text-secondary)] mb-2" />
+          <p className="text-sm text-[var(--text-tertiary)]">Nessuna anomalia rilevata</p>
         </div>
       </GlassCard>
     );
@@ -178,11 +178,11 @@ export function AnomalyAlerts(): React.ReactElement {
                     <h4 className="text-sm font-semibold text-white truncate">
                       {alert.title}
                     </h4>
-                    <span className="flex-shrink-0 text-[10px] text-[#666666]">
+                    <span className="flex-shrink-0 text-[10px] text-[var(--text-secondary)]">
                       {formatRelativeTime(alert.timestamp)}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs text-[#b4b4b4] leading-relaxed">
+                  <p className="mt-0.5 text-xs text-[var(--text-secondary)] leading-relaxed">
                     {alert.description}
                   </p>
                 </div>
@@ -191,7 +191,7 @@ export function AnomalyAlerts(): React.ReactElement {
                   className="flex-shrink-0 rounded-full p-1.5 transition-colors hover:bg-white/10 min-w-[36px] min-h-[36px] flex items-center justify-center"
                   aria-label={`Chiudi avviso: ${alert.title}`}
                 >
-                  <X className="h-3.5 w-3.5 text-[#666666]" />
+                  <X className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                 </button>
               </motion.div>
             );

@@ -152,4 +152,104 @@ describe('KpiService', () => {
 
     expect(result.customerRetentionRate).toBe(25);
   });
+
+  it('should calculate revenuePerBay when bays > 0', async () => {
+    mockPrisma.invoice.aggregate.mockResolvedValue({
+      _sum: { total: 10000 },
+      _count: 5,
+    });
+    mockPrisma.serviceBay.count.mockResolvedValue(4);
+
+    const result = await service.getDashboardKpi(tenantId, dateFrom, dateTo);
+
+    expect(result.revenuePerBay).toBe(2500);
+  });
+
+  it('should calculate revenuePerTechnician when techs > 0', async () => {
+    mockPrisma.invoice.aggregate.mockResolvedValue({
+      _sum: { total: 9000 },
+      _count: 3,
+    });
+    mockPrisma.technician.count.mockResolvedValue(3);
+
+    const result = await service.getDashboardKpi(tenantId, dateFrom, dateTo);
+
+    expect(result.revenuePerTechnician).toBe(3000);
+  });
+
+  it('should map topServices with null revenue/count', async () => {
+    mockPrisma.$queryRaw.mockReset();
+    mockPrisma.$queryRaw
+      .mockResolvedValueOnce([{ cnt: BigInt(0) }]) // retention
+      .mockResolvedValueOnce([
+        { name: 'Oil Change', revenue: null, count: null },
+        { name: 'Brake Service', revenue: BigInt(5000), count: BigInt(10) },
+      ]) // topServices
+      .mockResolvedValueOnce([]) // topCustomers
+      .mockResolvedValueOnce([]); // revenueByMonth
+
+    const result = await service.getDashboardKpi(tenantId, dateFrom, dateTo);
+
+    expect(result.topServices).toEqual([
+      { name: 'Oil Change', revenue: 0, count: 0 },
+      { name: 'Brake Service', revenue: 5000, count: 10 },
+    ]);
+  });
+
+  it('should map topCustomers with null name falling back to Unknown', async () => {
+    mockPrisma.$queryRaw.mockReset();
+    mockPrisma.$queryRaw
+      .mockResolvedValueOnce([{ cnt: BigInt(0) }]) // retention
+      .mockResolvedValueOnce([]) // topServices
+      .mockResolvedValueOnce([
+        { name: null, revenue: BigInt(3000), visits: BigInt(5) },
+        { name: 'Mario', revenue: null, visits: null },
+      ]) // topCustomers
+      .mockResolvedValueOnce([]); // revenueByMonth
+
+    const result = await service.getDashboardKpi(tenantId, dateFrom, dateTo);
+
+    expect(result.topCustomers).toEqual([
+      { name: 'Unknown', revenue: 3000, visits: 5 },
+      { name: 'Mario', revenue: 0, visits: 0 },
+    ]);
+  });
+
+  it('should map revenueByMonth with BigInt revenue', async () => {
+    mockPrisma.$queryRaw.mockReset();
+    mockPrisma.$queryRaw
+      .mockResolvedValueOnce([{ cnt: BigInt(0) }]) // retention
+      .mockResolvedValueOnce([]) // topServices
+      .mockResolvedValueOnce([]) // topCustomers
+      .mockResolvedValueOnce([
+        { month: '2026-01', revenue: BigInt(10000) },
+        { month: '2026-02', revenue: null },
+      ]); // revenueByMonth
+
+    const result = await service.getDashboardKpi(tenantId, dateFrom, dateTo);
+
+    expect(result.revenueByMonth).toEqual([
+      { month: '2026-01', revenue: 10000 },
+      { month: '2026-02', revenue: 0 },
+    ]);
+  });
+
+  it('should calculate average cycle time from multiple work orders', async () => {
+    const start1 = new Date('2026-01-10T08:00:00Z');
+    const end1 = new Date('2026-01-10T12:00:00Z'); // 4 hours
+    const start2 = new Date('2026-01-11T09:00:00Z');
+    const end2 = new Date('2026-01-11T17:00:00Z'); // 8 hours
+
+    mockPrisma.workOrder.findMany
+      .mockResolvedValueOnce([]) // carCount
+      .mockResolvedValueOnce([
+        { actualStartTime: start1, actualCompletionTime: end1 },
+        { actualStartTime: start2, actualCompletionTime: end2 },
+      ]);
+
+    const result = await service.getDashboardKpi(tenantId, dateFrom, dateTo);
+
+    // average = (4 + 8) / 2 = 6
+    expect(result.averageCycleTime).toBe(6);
+  });
 });

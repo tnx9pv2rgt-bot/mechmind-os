@@ -131,20 +131,20 @@ export function MFASetupPageClient(): React.ReactElement {
               <h1 className="text-[28px] font-normal text-white tracking-tight">
                 Configura 2FA
               </h1>
-              <p className="mt-2 text-[15px] text-[#b4b4b4] leading-relaxed">
+              <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
                 Aggiungi un livello di sicurezza al tuo account
               </p>
             </div>
 
-            <div className="flex items-center gap-4 p-4 rounded-2xl border border-[#4e4e4e]">
+            <div className="flex items-center gap-4 p-4 rounded-2xl border border-[var(--border-strong)]">
               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
-                <span className="text-xl text-[#b4b4b4]">📱</span>
+                <span className="text-xl text-[var(--text-secondary)]">📱</span>
               </div>
               <div>
                 <p className="font-medium text-white text-[15px]">
                   App Authenticator
                 </p>
-                <p className="text-[13px] text-[#888]">
+                <p className="text-[13px] text-[var(--text-tertiary)]">
                   Google Authenticator, Authy o 1Password
                 </p>
               </div>
@@ -163,7 +163,7 @@ export function MFASetupPageClient(): React.ReactElement {
                 role="alert"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center text-[13px] text-[#b4b4b4]"
+                className="text-center text-[13px] text-[var(--text-secondary)]"
               >
                 {error}
               </motion.p>
@@ -185,7 +185,7 @@ export function MFASetupPageClient(): React.ReactElement {
               <h1 className="text-[28px] font-normal text-white tracking-tight">
                 Scansiona il QR Code
               </h1>
-              <p className="mt-2 text-[15px] text-[#b4b4b4] leading-relaxed">
+              <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
                 Usa la tua app authenticator per scansionare
               </p>
             </div>
@@ -206,13 +206,13 @@ export function MFASetupPageClient(): React.ReactElement {
             )}
 
             {/* Manual key */}
-            <div className="flex items-center gap-2 p-3 rounded-2xl border border-[#4e4e4e]">
+            <div className="flex items-center gap-2 p-3 rounded-2xl border border-[var(--border-strong)]">
               <code className="text-[13px] flex-1 font-mono text-white break-all">
                 {secret}
               </code>
               <button
                 onClick={copySecret}
-                className="p-2 rounded-lg hover:bg-white/5 transition-colors shrink-0 text-[13px] text-[#b4b4b4]"
+                className="p-2 rounded-lg hover:bg-white/5 transition-colors shrink-0 text-[13px] text-[var(--text-secondary)]"
                 aria-label="Copia codice segreto"
               >
                 {copied ? '✓' : 'Copia'}
@@ -220,7 +220,7 @@ export function MFASetupPageClient(): React.ReactElement {
             </div>
 
             <div className="space-y-3">
-              <p className="text-[13px] text-[#888] text-center">
+              <p className="text-[13px] text-[var(--text-tertiary)] text-center">
                 Inserisci il codice a 6 cifre per verificare
               </p>
               <OTPInput
@@ -236,7 +236,7 @@ export function MFASetupPageClient(): React.ReactElement {
                 role="alert"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center text-[13px] text-[#b4b4b4]"
+                className="text-center text-[13px] text-[var(--text-secondary)]"
               >
                 {error}
               </motion.p>
@@ -269,18 +269,18 @@ export function MFASetupPageClient(): React.ReactElement {
               <h1 className="text-[28px] font-normal text-white tracking-tight">
                 2FA attivato!
               </h1>
-              <p className="mt-2 text-[15px] text-[#b4b4b4] leading-relaxed">
+              <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
                 Il tuo account è ora protetto
               </p>
             </div>
 
             {/* Backup codes */}
-            <div className="p-5 rounded-2xl border border-[#4e4e4e]">
+            <div className="p-5 rounded-2xl border border-[var(--border-strong)]">
               <div className="flex items-center gap-2 text-white mb-3">
                 <span className="text-lg">⚠</span>
                 <span className="font-semibold text-[15px]">Codici di backup</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-4 leading-relaxed">
+              <p className="text-[13px] text-[var(--text-tertiary)] mb-4 leading-relaxed">
                 Salva questi codici in un posto sicuro. Ogni codice può essere usato una sola
                 volta se perdi l&apos;accesso all&apos;app authenticator.
               </p>
@@ -296,7 +296,7 @@ export function MFASetupPageClient(): React.ReactElement {
               </div>
               <button
                 onClick={downloadBackupCodes}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#4e4e4e] text-white h-[44px] text-[14px] font-medium hover:bg-white/5 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-strong)] text-white h-[44px] text-[14px] font-medium hover:bg-white/5 transition-colors"
               >
                 Scarica codici di backup
               </button>

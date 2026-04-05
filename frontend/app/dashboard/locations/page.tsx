@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Pagination } from '@/components/ui/pagination';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import {
   Building2,
   MapPin,
@@ -42,34 +44,28 @@ interface LocationData {
   technicians: number;
 }
 
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function LocationsPage() {
@@ -137,61 +133,38 @@ export default function LocationsPage() {
   ];
 
   return (
-    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className='sticky top-0 z-30 backdrop-blur-xl border-b'
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Link href='/dashboard'>
-              <button
-                className='w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5'
-                style={{ color: colors.textSecondary }}
-              >
-                <ArrowLeft className='h-5 w-5' />
-              </button>
-            </Link>
-            <div>
-              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
-                Sedi
-              </h1>
-              <p className='text-[13px]' style={{ color: colors.textTertiary }}>
-                Gestisci le tue sedi
-              </p>
-            </div>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Sedi</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>Gestisci le tue sedi</p>
           </div>
-          <button
-            onClick={() => openDialog()}
-            className='h-10 px-4 rounded-full flex items-center gap-2 text-sm font-medium'
-            style={{ backgroundColor: colors.accent, color: colors.bg }}
-          >
-            <Plus className='h-4 w-4' />
-            Nuova Sede
-          </button>
+          <div className='flex items-center gap-3'>
+            <AppleButton variant='primary' icon={<Plus className='h-4 w-4' />} onClick={() => openDialog()}>
+              Nuova Sede
+            </AppleButton>
+          </div>
         </div>
       </header>
 
-      <motion.div className='p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
+      <motion.div className='p-4 sm:p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
         {/* Stats Overview */}
-        <motion.div className='grid grid-cols-1 sm:grid-cols-4 gap-4' variants={containerVariants}>
+        <motion.div className='grid grid-cols-2 lg:grid-cols-4 gap-bento' variants={containerVariants}>
           {[
-            { label: 'Sedi Totali', value: String(locations.length), icon: Building2, color: colors.info },
+            { label: 'Sedi Totali', value: String(locations.length), icon: Building2, color: 'bg-apple-blue' },
             {
               label: 'Fatturato Totale',
-              value: `${(locations.reduce((s, l) => s + l.revenue.month, 0) / 1000).toFixed(1)}k`,
+              value: `\u20AC${(locations.reduce((s, l) => s + l.revenue.month, 0) / 1000).toFixed(1)}k`,
               icon: Euro,
-              color: colors.success,
+              color: 'bg-apple-green',
             },
             {
               label: 'Tecnici',
               value: String(locations.reduce((s, l) => s + l.technicians, 0)),
               icon: Users,
-              color: colors.purple,
+              color: 'bg-apple-purple',
             },
             {
               label: 'Veicoli/gg',
@@ -202,110 +175,95 @@ export default function LocationsPage() {
                 )
               ),
               icon: Car,
-              color: colors.warning,
+              color: 'bg-apple-orange',
             },
           ].map(stat => (
-            <motion.div key={stat.label} variants={itemVariants}>
-              <div
-                className='rounded-2xl border h-[120px] flex flex-col justify-center px-6'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='flex items-center gap-3 mb-2'>
-                  <stat.icon className='h-5 w-5' style={{ color: stat.color }} />
-                  <span className='text-[13px]' style={{ color: colors.textTertiary }}>
-                    {stat.label}
-                  </span>
-                </div>
-                <p
-                  className='text-[32px] font-light'
-                  style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {stat.label === 'Fatturato Totale' ? `\u20AC${stat.value}` : stat.value}
-                </p>
-              </div>
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                      <stat.icon className='h-5 w-5 text-white' />
+                    </div>
+                  </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           ))}
         </motion.div>
 
         {/* Tabs */}
-        <motion.div variants={itemVariants}>
-          <div className='flex justify-center flex-wrap gap-2'>
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className='h-10 px-4 rounded-full text-sm font-medium transition-colors'
-                style={
-                  activeTab === tab.key
-                    ? { backgroundColor: colors.accent, color: colors.bg }
-                    : { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, color: colors.textPrimary }
-                }
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <motion.div variants={listItemVariants} className='flex justify-center flex-wrap gap-2'>
+          {tabs.map(tab => (
+            <AppleButton
+              key={tab.key}
+              variant={activeTab === tab.key ? 'primary' : 'ghost'}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </AppleButton>
+          ))}
         </motion.div>
 
         {/* Tab: Locations */}
         {activeTab === 'locations' && (
           <>
             {/* Search */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border p-4'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='relative'>
-                  <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5' style={{ color: colors.textMuted }} />
-                  <input
-                    placeholder='Cerca sede per nome o citta...'
-                    aria-label='Cerca sedi'
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className='w-full pl-12 h-12 rounded-xl border text-[14px] outline-none transition-colors focus:border-white/30'
-                    style={{
-                      backgroundColor: colors.glowStrong,
-                      borderColor: colors.borderSubtle,
-                      color: colors.textPrimary,
-                    }}
-                  />
-                </div>
-              </div>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='relative'>
+                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                    <input
+                      placeholder='Cerca sede per nome o citta...'
+                      aria-label='Cerca sedi'
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className='w-full pl-10 pr-4 h-10 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+                    />
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             {/* Locations Grid */}
             {isLoading ? (
               <div className='flex items-center justify-center py-12'>
-                <Loader2 className='h-8 w-8 animate-spin' style={{ color: colors.textTertiary }} />
+                <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
               </div>
             ) : loadError ? (
-              <div
-                className='rounded-2xl border flex flex-col items-center justify-center py-12 text-center'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <AlertCircle className='h-12 w-12 mb-4' style={{ color: colors.textMuted }} />
-                <p className='text-[14px]' style={{ color: colors.textTertiary }}>
-                  Impossibile caricare le sedi
-                </p>
-                <button
-                  className='mt-4 h-10 px-4 rounded-full text-sm transition-colors hover:bg-white/5'
-                  style={{ color: colors.textPrimary }}
-                  onClick={() => fetchLocations()}
-                >
-                  Riprova
-                </button>
-              </div>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      Impossibile caricare le sedi
+                    </p>
+                    <AppleButton
+                      variant='ghost'
+                      className='mt-4'
+                      onClick={() => fetchLocations()}
+                    >
+                      Riprova
+                    </AppleButton>
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
             ) : filteredLocations.length === 0 ? (
-              <div
-                className='rounded-2xl border flex flex-col items-center justify-center py-12 text-center'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <Building2 className='h-12 w-12 mb-4' style={{ color: colors.textMuted }} />
-                <p className='text-[14px]' style={{ color: colors.textTertiary }}>
-                  Nessuna sede trovata. Aggiungi la prima sede per iniziare.
-                </p>
-              </div>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <Building2 className='h-12 w-12 text-apple-gray/40 mb-4' />
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      Nessuna sede trovata. Aggiungi la prima sede per iniziare.
+                    </p>
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
             ) : (
               <motion.div
                 className='grid grid-cols-1 lg:grid-cols-3 gap-4'
@@ -313,105 +271,102 @@ export default function LocationsPage() {
                 initial='hidden'
                 animate='visible'
               >
-                {filteredLocations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(location => (
-                  <motion.div key={location.id} variants={itemVariants}>
-                    <div
-                      className='rounded-2xl border p-5 transition-colors cursor-pointer'
-                      style={{
-                        backgroundColor: colors.surface,
-                        borderColor: selectedLocation?.id === location.id ? colors.accent : colors.borderSubtle,
-                      }}
-                      onClick={() => setSelectedLocation(location)}
-                    >
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='flex items-center gap-3'>
-                          <div
-                            className='w-12 h-12 rounded-2xl flex items-center justify-center'
-                            style={{ backgroundColor: `${colors.info}15` }}
-                          >
-                            <Building2 className='h-6 w-6' style={{ color: colors.info }} />
-                          </div>
-                          <div>
-                            <h3 className='text-[15px] font-medium' style={{ color: colors.textPrimary }}>
-                              {location.name}
-                            </h3>
-                            <p className='text-[12px] flex items-center gap-1' style={{ color: colors.textTertiary }}>
-                              <MapPin className='h-3 w-3' />
-                              {location.city}
-                            </p>
-                          </div>
-                        </div>
+                {filteredLocations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((location, index) => (
+                  <motion.div
+                    key={location.id}
+                    variants={listItemVariants}
+                    custom={index}
+                    whileHover={{ scale: 1.005, x: 4 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <AppleCard hover={false}>
+                      <AppleCardContent>
                         <div
-                          className='w-2 h-2 rounded-full'
-                          style={{ backgroundColor: location.isActive ? colors.success : colors.textMuted }}
-                        />
-                      </div>
-
-                      {/* Revenue Mini Stats */}
-                      <div className='grid grid-cols-3 gap-2 mb-4'>
-                        {[
-                          { label: 'Oggi', value: `\u20AC${location.revenue.today.toLocaleString()}` },
-                          { label: 'Sett.', value: `\u20AC${(location.revenue.week / 1000).toFixed(1)}k` },
-                          { label: 'Mese', value: `\u20AC${(location.revenue.month / 1000).toFixed(1)}k` },
-                        ].map(rev => (
-                          <div
-                            key={rev.label}
-                            className='text-center p-2 rounded-xl'
-                            style={{ backgroundColor: colors.glowStrong }}
-                          >
-                            <p className='text-[10px]' style={{ color: colors.textTertiary }}>{rev.label}</p>
-                            <p
-                              className='text-[14px] font-medium'
-                              style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                            >
-                              {rev.value}
-                            </p>
+                          className='cursor-pointer'
+                          onClick={() => setSelectedLocation(location)}
+                        >
+                          <div className='flex items-start justify-between mb-4'>
+                            <div className='flex items-center gap-3'>
+                              <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                                <Building2 className='h-6 w-6 text-apple-blue' />
+                              </div>
+                              <div>
+                                <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                  {location.name}
+                                </h3>
+                                <p className='text-footnote flex items-center gap-1 text-apple-gray dark:text-[var(--text-secondary)]'>
+                                  <MapPin className='h-3 w-3' />
+                                  {location.city}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              className={`w-2 h-2 rounded-full ${location.isActive ? 'bg-apple-green' : 'bg-apple-gray'}`}
+                            />
                           </div>
-                        ))}
-                      </div>
 
-                      {/* Car Count */}
-                      <div className='flex items-center gap-4 mb-4'>
-                        <div className='flex items-center gap-2'>
-                          <Car className='h-4 w-4' style={{ color: colors.info }} />
-                          <span className='text-[12px]' style={{ color: colors.textSecondary }}>
-                            {location.carCount.inService} in servizio
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-2'>
-                          <Star className='h-4 w-4' style={{ color: colors.warning }} />
-                          <span
-                            className='text-[12px]'
-                            style={{ color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}
-                          >
-                            {location.satisfaction} &#9733;
-                          </span>
-                        </div>
-                      </div>
+                          {/* Revenue Mini Stats */}
+                          <div className='grid grid-cols-3 gap-2 mb-4'>
+                            {[
+                              { label: 'Oggi', value: `\u20AC${location.revenue.today.toLocaleString()}` },
+                              { label: 'Sett.', value: `\u20AC${(location.revenue.week / 1000).toFixed(1)}k` },
+                              { label: 'Mese', value: `\u20AC${(location.revenue.month / 1000).toFixed(1)}k` },
+                            ].map(rev => (
+                              <div
+                                key={rev.label}
+                                className='text-center p-2 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                              >
+                                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{rev.label}</p>
+                                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                  {rev.value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
 
-                      <div className='pt-4 border-t flex gap-2' style={{ borderColor: colors.borderSubtle }}>
-                        <button
-                          className='flex-1 h-9 rounded-full border text-[13px] transition-colors hover:bg-white/5'
-                          style={{ borderColor: colors.border, color: colors.textPrimary }}
-                          onClick={e => {
-                            e.stopPropagation();
-                            router.push(`/dashboard/locations/${location.id}`);
-                          }}
-                        >
-                          Vedi
-                        </button>
-                        <button
-                          className='flex-1 h-9 rounded-full text-[13px] transition-colors hover:bg-white/5'
-                          style={{ color: colors.textSecondary }}
-                          onClick={e => {
-                            e.stopPropagation();
-                            setSelectedLocation(location);
-                          }}
-                        >
-                          Seleziona
-                        </button>
-                      </div>
-                    </div>
+                          {/* Car Count */}
+                          <div className='flex items-center gap-4 mb-4'>
+                            <div className='flex items-center gap-2'>
+                              <Car className='h-4 w-4 text-apple-blue' />
+                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                {location.carCount.inService} in servizio
+                              </span>
+                            </div>
+                            <div className='flex items-center gap-2'>
+                              <Star className='h-4 w-4 text-apple-orange' />
+                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                {location.satisfaction} &#9733;
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className='pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]/50 flex gap-2'>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              className='flex-1'
+                              onClick={e => {
+                                e.stopPropagation();
+                                router.push(`/dashboard/locations/${location.id}`);
+                              }}
+                            >
+                              Vedi
+                            </AppleButton>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              className='flex-1'
+                              onClick={e => {
+                                e.stopPropagation();
+                                setSelectedLocation(location);
+                              }}
+                            >
+                              Seleziona
+                            </AppleButton>
+                          </div>
+                        </div>
+                      </AppleCardContent>
+                    </AppleCard>
                   </motion.div>
                 ))}
               </motion.div>
@@ -425,60 +380,49 @@ export default function LocationsPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <div
-                  className='rounded-2xl border p-6'
-                  style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-                >
-                  <div className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6'>
-                    <div className='flex items-center gap-4'>
-                      <div
-                        className='w-16 h-16 rounded-2xl flex items-center justify-center'
-                        style={{ backgroundColor: `${colors.info}15` }}
-                      >
-                        <Building2 className='h-8 w-8' style={{ color: colors.info }} />
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <div className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6'>
+                      <div className='flex items-center gap-4'>
+                        <div className='w-16 h-16 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                          <Building2 className='h-8 w-8 text-apple-blue' />
+                        </div>
+                        <div>
+                          <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            {selectedLocation.name}
+                          </h2>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            {selectedLocation.address}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className='text-[20px] font-medium' style={{ color: colors.textPrimary }}>
-                          {selectedLocation.name}
-                        </h2>
-                        <p className='text-[13px]' style={{ color: colors.textTertiary }}>
-                          {selectedLocation.address}
-                        </p>
-                      </div>
+                      <AppleButton variant='primary'>
+                        Modifica Sede
+                      </AppleButton>
                     </div>
-                    <button
-                      className='h-10 px-4 rounded-full flex items-center gap-2 text-sm font-medium'
-                      style={{ backgroundColor: colors.accent, color: colors.bg }}
-                    >
-                      Modifica Sede
-                    </button>
-                  </div>
 
-                  <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                    {[
-                      { label: 'ARO Medio', value: `\u20AC${selectedLocation.aro}` },
-                      { label: 'Soddisfazione', value: `${selectedLocation.satisfaction} \u2605` },
-                      { label: 'Tecnici', value: selectedLocation.technicians.toString() },
-                      { label: 'Pronti', value: selectedLocation.carCount.ready.toString() },
-                    ].map(item => (
-                      <div
-                        key={item.label}
-                        className='p-4 rounded-2xl text-center'
-                        style={{ backgroundColor: colors.glowStrong }}
-                      >
-                        <p className='text-[11px] mb-1' style={{ color: colors.textTertiary }}>
-                          {item.label}
-                        </p>
-                        <p
-                          className='text-[20px] font-medium'
-                          style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                      {[
+                        { label: 'ARO Medio', value: `\u20AC${selectedLocation.aro}` },
+                        { label: 'Soddisfazione', value: `${selectedLocation.satisfaction} \u2605` },
+                        { label: 'Tecnici', value: selectedLocation.technicians.toString() },
+                        { label: 'Pronti', value: selectedLocation.carCount.ready.toString() },
+                      ].map(item => (
+                        <div
+                          key={item.label}
+                          className='p-4 rounded-2xl text-center bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                         >
-                          {item.value}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                            {item.label}
+                          </p>
+                          <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </AppleCardContent>
+                </AppleCard>
               </motion.div>
             )}
           </>
@@ -486,96 +430,78 @@ export default function LocationsPage() {
 
         {/* Tab: Comparison */}
         {activeTab === 'comparison' && (
-          <motion.div variants={itemVariants}>
-            <div
-              className='rounded-2xl border'
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className='px-6 py-4 border-b' style={{ borderColor: colors.borderSubtle }}>
-                <h2 className='text-[17px] font-medium' style={{ color: colors.textPrimary }}>
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Confronto Performance
                 </h2>
-              </div>
-              <div className='p-6 space-y-4'>
-                {locations.map(location => (
-                  <div
-                    key={location.id}
-                    className='p-4 rounded-2xl'
-                    style={{ backgroundColor: colors.glowStrong }}
-                  >
-                    <div className='flex items-center justify-between mb-3'>
-                      <h3 className='text-[15px] font-medium' style={{ color: colors.textPrimary }}>
-                        {location.name}
-                      </h3>
-                      <span
-                        className='text-[15px] font-medium'
-                        style={{ color: colors.info, fontVariantNumeric: 'tabular-nums' }}
-                      >
-                        {'\u20AC'}{location.revenue.month.toLocaleString()}/mese
-                      </span>
-                    </div>
-                    <div className='grid grid-cols-4 gap-4 text-center'>
-                      {[
-                        { label: 'ARO', value: `\u20AC${location.aro}` },
-                        { label: 'Soddisfazione', value: location.satisfaction.toString() },
-                        { label: 'Veicoli', value: location.carCount.inService.toString() },
-                        { label: 'Tecnici', value: location.technicians.toString() },
-                      ].map(stat => (
-                        <div key={stat.label}>
-                          <p className='text-[11px]' style={{ color: colors.textTertiary }}>
-                            {stat.label}
-                          </p>
-                          <p
-                            className='text-[14px] font-medium'
-                            style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                          >
-                            {stat.value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <motion.div className='space-y-3' variants={containerVariants} initial='hidden' animate='visible'>
+                  {locations.map((location, index) => (
+                    <motion.div
+                      key={location.id}
+                      className='p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                      variants={listItemVariants}
+                      custom={index}
+                      whileHover={{ scale: 1.005, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className='flex items-center justify-between mb-3'>
+                        <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                          {location.name}
+                        </h3>
+                        <span className='text-body font-semibold text-apple-blue'>
+                          {'\u20AC'}{location.revenue.month.toLocaleString()}/mese
+                        </span>
+                      </div>
+                      <div className='grid grid-cols-4 gap-4 text-center'>
+                        {[
+                          { label: 'ARO', value: `\u20AC${location.aro}` },
+                          { label: 'Soddisfazione', value: location.satisfaction.toString() },
+                          { label: 'Veicoli', value: location.carCount.inService.toString() },
+                          { label: 'Tecnici', value: location.technicians.toString() },
+                        ].map(stat => (
+                          <div key={stat.label}>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              {stat.label}
+                            </p>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              {stat.value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         )}
 
         {/* Tab: Inventory */}
         {activeTab === 'inventory' && (
-          <motion.div variants={itemVariants}>
-            <div
-              className='rounded-2xl border'
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className='px-6 py-4 border-b' style={{ borderColor: colors.borderSubtle }}>
-                <h2 className='text-[17px] font-medium' style={{ color: colors.textPrimary }}>
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Magazzino Condiviso
                 </h2>
-              </div>
-              <div className='p-6'>
-                <div className='text-center py-12'>
-                  <div
-                    className='w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4'
-                    style={{ backgroundColor: colors.glowStrong }}
-                  >
-                    <Wrench className='h-10 w-10' style={{ color: colors.textTertiary }} />
-                  </div>
-                  <h3 className='text-[17px] font-medium mb-2' style={{ color: colors.textPrimary }}>
-                    Gestione Magazzino
-                  </h3>
-                  <p className='text-[13px] max-w-md mx-auto' style={{ color: colors.textTertiary }}>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <Wrench className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md'>
                     Visualizza e trasferisci ricambi tra le tue sedi in tempo reale.
                   </p>
-                  <button
-                    className='mt-6 h-10 px-4 rounded-full text-sm font-medium'
-                    style={{ backgroundColor: colors.accent, color: colors.bg }}
-                  >
+                  <AppleButton variant='ghost' className='mt-4'>
                     Visualizza Magazzino
-                  </button>
+                  </AppleButton>
                 </div>
-              </div>
-            </div>
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         )}
       </motion.div>

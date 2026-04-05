@@ -58,7 +58,7 @@ function ButtonSpinner(): React.ReactElement {
 
 const btnSecondary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'border border-[#4e4e4e] bg-transparent',
+  'border border-[var(--border-strong)] bg-transparent',
   'text-base font-normal text-white',
   'transition-all hover:bg-white/5',
   'disabled:cursor-not-allowed disabled:opacity-50',
@@ -108,7 +108,7 @@ export function SocialButtons({
             <span className="absolute"><AppleIcon /></span>
           </span>
           Continua con Apple
-          <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[#888]">Presto</span>
+          <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">Presto</span>
         </div>
       </button>
 

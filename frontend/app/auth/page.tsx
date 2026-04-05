@@ -152,13 +152,13 @@ function PasskeyAuthStep({
             {email.charAt(0).toUpperCase()}
           </span>
         </div>
-        <p className="text-sm text-[#b4b4b4]">{email}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{email}</p>
       </div>
 
       <h2 className="text-center text-3xl font-normal text-white">
         Conferma la tua identità
       </h2>
-      <p className="mb-2 px-4 text-center text-base text-[#b4b4b4]">
+      <p className="mb-2 px-4 text-center text-base text-[var(--text-secondary)]">
         Usa la biometria del tuo dispositivo per accedere in modo sicuro.
       </p>
 
@@ -169,7 +169,7 @@ function PasskeyAuthStep({
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/10" />
             <span className="relative text-4xl">🔐</span>
           </div>
-          <p className="text-sm text-[#888]">In attesa della biometria...</p>
+          <p className="text-sm text-[var(--text-tertiary)]">In attesa della biometria...</p>
         </div>
       )}
 
@@ -179,7 +179,7 @@ function PasskeyAuthStep({
           role="alert"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-[13px] text-[#b4b4b4]"
+          className="text-center text-[13px] text-[var(--text-secondary)]"
         >
           {error}
         </motion.p>
@@ -197,9 +197,9 @@ function PasskeyAuthStep({
 
       {/* Divider */}
       <div className="my-1 grid grid-cols-[1fr_max-content_1fr] items-center">
-        <div className="h-px bg-[#4e4e4e]" />
-        <div className="mx-6 text-[13px] font-medium uppercase text-[#888]">Oppure</div>
-        <div className="h-px bg-[#4e4e4e]" />
+        <div className="h-px bg-[var(--border-strong)]" />
+        <div className="mx-6 text-[13px] font-medium uppercase text-[var(--text-tertiary)]">Oppure</div>
+        <div className="h-px bg-[var(--border-strong)]" />
       </div>
 
       {/* Fallback to password */}
@@ -705,7 +705,7 @@ export default function AuthPage(): React.ReactElement {
               </h2>
 
               {/* Subtitle */}
-              <p className="mb-4 px-4 text-center text-base text-[#b4b4b4]">
+              <p className="mb-4 px-4 text-center text-base text-[var(--text-secondary)]">
                 Gestisci officina, fatture e prenotazioni da un unico pannello.
               </p>
 
@@ -741,11 +741,11 @@ export default function AuthPage(): React.ReactElement {
 
                 {/* Divider */}
                 <div className="my-2 grid grid-cols-[1fr_max-content_1fr] items-center">
-                  <div className="h-px bg-[#4e4e4e]" />
-                  <div className="mx-6 text-[13px] font-medium uppercase text-[#888]">
+                  <div className="h-px bg-[var(--border-strong)]" />
+                  <div className="mx-6 text-[13px] font-medium uppercase text-[var(--text-tertiary)]">
                     Oppure
                   </div>
-                  <div className="h-px bg-[#4e4e4e]" />
+                  <div className="h-px bg-[var(--border-strong)]" />
                 </div>
 
                 {/* Email input */}
@@ -761,7 +761,7 @@ export default function AuthPage(): React.ReactElement {
                     name="email"
                     autoComplete="username webauthn"
                     aria-describedby={error ? 'login-error' : undefined}
-                    className={`${inputStyle} ${error ? 'border-[#888]' : ''}`}
+                    className={`${inputStyle} ${error ? 'border-[var(--text-tertiary)]' : ''}`}
                   />
                 </div>
 
@@ -782,25 +782,25 @@ export default function AuthPage(): React.ReactElement {
                   role="alert"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center text-[13px] text-[#b4b4b4]"
+                  className="text-center text-[13px] text-[var(--text-secondary)]"
                 >
                   {error}
                 </motion.p>
               )}
 
               {coldStartHint && (
-                <p className="text-center text-[12px] text-[#888]">
+                <p className="text-center text-[12px] text-[var(--text-tertiary)]">
                   Il server si sta avviando...
                 </p>
               )}
 
               {/* Register + Demo — compact */}
               <div className="flex flex-col items-center gap-0">
-                <p className="text-center text-[13px] text-[#888]">
+                <p className="text-center text-[13px] text-[var(--text-tertiary)]">
                   Non hai un account?{' '}
                   <Link
                     href="/auth/register"
-                    className="min-h-[44px] inline-flex items-center font-medium text-white underline decoration-[#888] underline-offset-2 hover:decoration-white"
+                    className="min-h-[44px] inline-flex items-center font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
                   >
                     Registrati
                   </Link>
@@ -809,7 +809,7 @@ export default function AuthPage(): React.ReactElement {
                   type="button"
                   onClick={handleDemo}
                   disabled={isDemoLoading}
-                  className="text-[13px] font-medium text-[#888] transition-colors hover:text-white min-h-[44px]"
+                  className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px]"
                 >
                   {isDemoLoading ? 'Caricamento demo...' : 'Prova la demo gratuita'}
                 </button>
@@ -852,7 +852,7 @@ export default function AuthPage(): React.ReactElement {
               <h2 className="text-center text-3xl font-normal text-white">
                 Inserisci la password
               </h2>
-              <p className="mb-4 px-4 text-center text-base text-[#b4b4b4]">
+              <p className="mb-4 px-4 text-center text-base text-[var(--text-secondary)]">
                 Per <span className="font-medium text-white">{email}</span>
               </p>
 
@@ -882,12 +882,12 @@ export default function AuthPage(): React.ReactElement {
                     name="password"
                     autoComplete="current-password"
                     aria-describedby={error ? 'password-error' : undefined}
-                    className={`${inputStyle} pr-20 ${error ? 'border-[#888]' : ''}`}
+                    className={`${inputStyle} pr-20 ${error ? 'border-[var(--text-tertiary)]' : ''}`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[13px] text-[#888] hover:text-white transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[13px] text-[var(--text-tertiary)] hover:text-white transition-colors"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                   >
@@ -896,12 +896,12 @@ export default function AuthPage(): React.ReactElement {
                 </div>
 
                 {/* Remember me */}
-                <label className="flex items-center gap-2 text-sm text-[#b4b4b4] cursor-pointer min-h-[44px]">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer min-h-[44px]">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={e => setRememberMe(e.target.checked)}
-                    className="rounded border-[#4e4e4e] w-4 h-4 accent-white"
+                    className="rounded border-[var(--border-strong)] w-4 h-4 accent-white"
                     aria-label="Ricordami su questo dispositivo"
                   />
                   <span>Ricordami su questo dispositivo</span>
@@ -918,9 +918,9 @@ export default function AuthPage(): React.ReactElement {
 
                 {/* Divider */}
                 <div className="my-2 grid grid-cols-[1fr_max-content_1fr] items-center">
-                  <div className="h-px bg-[#4e4e4e]" />
-                  <div className="mx-6 text-[13px] font-medium uppercase text-[#888]">Oppure</div>
-                  <div className="h-px bg-[#4e4e4e]" />
+                  <div className="h-px bg-[var(--border-strong)]" />
+                  <div className="mx-6 text-[13px] font-medium uppercase text-[var(--text-tertiary)]">Oppure</div>
+                  <div className="h-px bg-[var(--border-strong)]" />
                 </div>
 
                 {/* Magic link */}
@@ -937,7 +937,7 @@ export default function AuthPage(): React.ReactElement {
                 <div className="text-center">
                   <Link
                     href="/auth/forgot-password"
-                    className="text-[14px] font-medium text-[#888] transition-colors hover:text-white min-h-[44px] inline-flex items-center"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px] inline-flex items-center"
                   >
                     Password dimenticata?
                   </Link>
@@ -951,14 +951,14 @@ export default function AuthPage(): React.ReactElement {
                   role="alert"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center text-[13px] text-[#b4b4b4]"
+                  className="text-center text-[13px] text-[var(--text-secondary)]"
                 >
                   {error}
                 </motion.p>
               )}
 
               {coldStartHint && (
-                <p className="text-center text-[12px] text-[#888]">
+                <p className="text-center text-[12px] text-[var(--text-tertiary)]">
                   Il server si sta avviando...
                 </p>
               )}
@@ -1015,7 +1015,7 @@ export default function AuthPage(): React.ReactElement {
                   </span>
                 </div>
               )}
-              <p className="mb-4 px-4 text-center text-base text-[#b4b4b4]">
+              <p className="mb-4 px-4 text-center text-base text-[var(--text-secondary)]">
                 {useSmsOtp
                   ? 'Inserisci il codice a 6 cifre ricevuto via SMS.'
                   : useBackupCode
@@ -1080,20 +1080,20 @@ export default function AuthPage(): React.ReactElement {
                   role="alert"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center text-[13px] text-[#b4b4b4]"
+                  className="text-center text-[13px] text-[var(--text-secondary)]"
                 >
                   {error}
                 </motion.p>
               )}
 
               {remainingAttempts !== null && remainingAttempts > 0 && (
-                <p className="text-center text-[12px] text-[#888]">
+                <p className="text-center text-[12px] text-[var(--text-tertiary)]">
                   Tentativi rimasti: {remainingAttempts}
                 </p>
               )}
 
               {remainingAttempts === 0 && (
-                <p className="text-center text-[13px] text-[#b4b4b4]">
+                <p className="text-center text-[13px] text-[var(--text-secondary)]">
                   Troppi tentativi.{' '}
                   <Link href="/auth/locked" className="underline">
                     Account bloccato
@@ -1102,12 +1102,12 @@ export default function AuthPage(): React.ReactElement {
               )}
 
               {/* Trust device checkbox */}
-              <label className="flex items-center gap-2 text-sm text-[#b4b4b4] cursor-pointer min-h-[44px]">
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer min-h-[44px]">
                 <input
                   type="checkbox"
                   checked={trustDevice}
                   onChange={e => setTrustDevice(e.target.checked)}
-                  className="rounded border-[#4e4e4e] w-4 h-4 accent-white"
+                  className="rounded border-[var(--border-strong)] w-4 h-4 accent-white"
                   aria-label="Fidati di questo dispositivo per 30 giorni"
                 />
                 <span>Fidati di questo dispositivo per 30 giorni</span>
@@ -1140,7 +1140,7 @@ export default function AuthPage(): React.ReactElement {
                       setMfaCode('');
                       setBackupCode('');
                     }}
-                    className="text-[14px] font-medium text-[#888] transition-colors hover:text-white min-h-[44px]"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px]"
                   >
                     {useBackupCode ? 'Usa codice authenticator' : 'Usa codice di recupero'}
                   </button>
@@ -1154,7 +1154,7 @@ export default function AuthPage(): React.ReactElement {
                       setSmsOtpCode('');
                       setError('');
                     }}
-                    className="text-[14px] font-medium text-[#888] transition-colors hover:text-white min-h-[44px]"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px]"
                   >
                     Usa codice authenticator
                   </button>
@@ -1163,10 +1163,10 @@ export default function AuthPage(): React.ReactElement {
                     type="button"
                     onClick={handleSendSmsOtp}
                     disabled={isSendingSms}
-                    className="text-[14px] font-medium text-[#888] transition-colors hover:text-white min-h-[44px] flex items-center gap-1.5"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px] flex items-center gap-1.5"
                   >
                     {isSendingSms ? (
-                      <span className="inline-block h-3 w-3 animate-spin rounded-full border border-[#888] border-t-transparent" />
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border border-[var(--text-tertiary)] border-t-transparent" />
                     ) : null}
                     {smsSent ? 'Rinvia codice via SMS' : 'Ricevi codice via SMS'}
                   </button>

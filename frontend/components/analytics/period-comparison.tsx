@@ -113,7 +113,7 @@ function MetricBar({
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
               isNeutral
-                ? 'bg-[#383838] text-[#888888]'
+                ? 'bg-[var(--surface-active)] text-[var(--text-tertiary)]'
                 : isPositive
                   ? 'bg-[#34d399]/15 text-[#34d399]'
                   : 'bg-[#f87171]/15 text-[#f87171]'
@@ -137,8 +137,8 @@ function MetricBar({
       <div className="relative space-y-1">
         {/* Previous period bar (translucent) */}
         <div className="flex items-center gap-2">
-          <span className="w-16 text-right text-[10px] text-[#666666]">{previousPeriodLabel}</span>
-          <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-[#1a1a1a]">
+          <span className="w-16 text-right text-[10px] text-[var(--text-secondary)]">{previousPeriodLabel}</span>
+          <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-[var(--surface-tertiary)]">
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full"
               style={{ backgroundColor: metric.color, opacity: 0.25 }}
@@ -150,7 +150,7 @@ function MetricBar({
                   : { duration: 0.8, delay: index * 0.1, ease: 'easeOut' }
               }
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#666666]">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--text-secondary)]">
               {formatValue(metric.previousValue, metric.format)}
             </span>
           </div>
@@ -158,8 +158,8 @@ function MetricBar({
 
         {/* Current period bar (solid) */}
         <div className="flex items-center gap-2">
-          <span className="w-16 text-right text-[10px] text-[#b4b4b4]">{currentPeriodLabel}</span>
-          <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-[#1a1a1a]">
+          <span className="w-16 text-right text-[10px] text-[var(--text-secondary)]">{currentPeriodLabel}</span>
+          <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-[var(--surface-tertiary)]">
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full"
               style={{ backgroundColor: metric.color }}
@@ -209,14 +209,14 @@ export function PeriodComparison({
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-6 border-t border-[#3a3a3a] pt-4">
+      <div className="mt-4 flex items-center justify-center gap-6 border-t border-[var(--border-strong)] pt-4">
         <div className="flex items-center gap-2">
-          <div className="h-2.5 w-5 rounded-full bg-[#60a5fa]" />
-          <span className="text-xs text-[#b4b4b4]">{currentPeriodLabel}</span>
+          <div className="h-2.5 w-5 rounded-full bg-[var(--brand)]" />
+          <span className="text-xs text-[var(--text-secondary)]">{currentPeriodLabel}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-2.5 w-5 rounded-full bg-[#60a5fa]/25" />
-          <span className="text-xs text-[#b4b4b4]">{previousPeriodLabel}</span>
+          <div className="h-2.5 w-5 rounded-full bg-[var(--brand)]/25" />
+          <span className="text-xs text-[var(--text-secondary)]">{previousPeriodLabel}</span>
         </div>
       </div>
     </GlassCard>

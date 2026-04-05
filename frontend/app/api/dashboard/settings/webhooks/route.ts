@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 /** GET /api/dashboard/settings/webhooks → GET /v1/webhooks */
 export async function GET(request: NextRequest) {
   return proxyToNestJS({
-    backendPath: 'v1/webhooks',
+    backendPath: 'v1/webhooks/config',
     params: getQueryParams(request),
   });
 }
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body: unknown = await request.json();
   return proxyToNestJS({
-    backendPath: 'v1/webhooks',
+    backendPath: 'v1/webhooks/config',
     method: 'POST',
     body,
   });

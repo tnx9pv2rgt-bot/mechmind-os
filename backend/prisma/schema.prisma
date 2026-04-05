@@ -212,6 +212,9 @@ model Customer {
   encryptedFirstName String?   @map("encrypted_first_name")
   encryptedLastName  String?   @map("encrypted_last_name")
   phoneHash          String    @map("phone_hash") // For lookup without decryption
+  emailHash          String?   @map("email_hash") // For login lookup without decryption
+  passwordHash       String?   @map("password_hash") // Portal self-service login
+  searchName         String?   @map("search_name") // Normalized lowercase name for server-side search
   gdprConsent        Boolean   @default(false) @map("gdpr_consent")
   gdprConsentAt      DateTime? @map("gdpr_consent_at")
   gdprPrivacyVersion String?   @default("2.0") @map("gdpr_privacy_version")
@@ -258,10 +261,14 @@ model Customer {
   Notification                   Notification[]
   CustomerNotificationPreference CustomerNotificationPreference[]
   smsThreads                     SmsThread[]
+  declinedServices               DeclinedService[]
+  memberships                    CustomerMembership[]
 
   @@index([phoneHash])
+  @@index([emailHash])
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, searchName])
   @@index([locationId])
   @@map("customers")
 }
@@ -750,6 +757,7 @@ model CallRecording {
 enum BookingStatus {
   PENDING
   CONFIRMED
+  CHECKED_IN
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -2502,6 +2510,28 @@ model WorkOrder {
 
   reviewRequestSentAt DateTime? @map("review_request_sent_at")
 
+  // --- New DMS fields ---
+  priority          String?     @default("NORMAL") @db.VarChar(20)
+  woType            String?     @default("CUSTOMER_PAY") @map("wo_type") @db.VarChar(30)
+  serviceAdvisorId  String?     @map("service_advisor_id")
+  dropOffType       String?     @map("drop_off_type") @db.VarChar(30)
+  courtesyCarRequested Boolean? @default(false) @map("courtesy_car_requested")
+  courtesyCarPlate  String?     @map("courtesy_car_plate") @db.VarChar(20)
+  internalNotes     String?     @map("internal_notes") @db.Text
+  customerVisibleNotes String?  @map("customer_visible_notes") @db.Text
+  preExistingDamage String?     @map("pre_existing_damage") @db.Text
+  testDriveBefore   Boolean?    @default(false) @map("test_drive_before")
+  testDriveAfter    Boolean?    @default(false) @map("test_drive_after")
+  marketingSource   String?     @map("marketing_source") @db.VarChar(100)
+  preAuthAmount     Decimal?    @map("pre_auth_amount") @db.Decimal(10, 2)
+  taxExempt         Boolean?    @default(false) @map("tax_exempt")
+  taxExemptCert     String?     @map("tax_exempt_cert") @db.VarChar(50)
+  recallCheckDone   Boolean?    @default(false) @map("recall_check_done")
+  parkingSpot       String?     @map("parking_spot") @db.VarChar(20)
+  keyTag            String?     @map("key_tag") @db.VarChar(50)
+  preferredContact  String?     @map("preferred_contact") @db.VarChar(20)
+  estimatedPickup   DateTime?   @map("estimated_pickup")
+
   // Optimistic locking
   version Int @default(0)
 
@@ -2569,6 +2599,22 @@ model WorkOrderService {
   technicianId     String? @map("technician_id")
   relatedComponentId String? @map("related_component_id")
 
+  // --- 3C Fields ---
+  customerConcern   String?     @map("customer_concern") @db.Text
+  cause             String?     @db.Text
+  correction        String?     @db.Text
+  authorized        Boolean?    @default(true)
+  declined          Boolean?    @default(false)
+  declinedReason    String?     @map("declined_reason") @db.VarChar(255)
+  laborRate         Decimal?    @map("labor_rate") @db.Decimal(10, 2)
+  laborType         String?     @map("labor_type") @db.VarChar(20)
+  opCode            String?     @map("op_code") @db.VarChar(30)
+  isSublet          Boolean?    @default(false) @map("is_sublet")
+  subletVendor      String?     @map("sublet_vendor") @db.VarChar(100)
+  warrantyType      String?     @map("warranty_type") @db.VarChar(30)
+  description       String?     @db.Text
+  estimatedCost     Decimal?    @map("estimated_cost") @db.Decimal(10, 2)
+
   @@unique([workOrderId, serviceId])
   @@index([workOrderId])
   @@index([serviceId])
@@ -2604,8 +2650,17 @@ model Technician {
 
   isActive Boolean @default(true) @map("is_active")
 
+  // Skills for AI scheduling
+  skills    String[] @default([])
+  specializations String[] @default([])
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  payConfig  TechnicianPayConfig[]
+  goals      TechnicianGoal[]
+  payrollRecords PayrollRecord[]
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
@@ -2917,7 +2972,16 @@ model Estimate {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Good/Better/Best presentation
+  presentationMode EstimatePresentationMode @default(SINGLE) @map("presentation_mode")
+
+  // Digital approval
+  approvalToken   String?   @map("approval_token")
+  approvalSentAt  DateTime? @map("approval_sent_at")
+  approvalMethod  String?   @map("approval_method") // SMS, WHATSAPP, EMAIL
+
   lines EstimateLine[]
+  declinedServices DeclinedService[]
 
   @@unique([tenantId, estimateNumber])
   @@index([tenantId])
@@ -2944,6 +3008,15 @@ model EstimateLine {
 
   position Int @default(0)
 
+  // Good/Better/Best tier
+  tier EstimateTier @default(STANDARD)
+
+  // Customer approval per line
+  customerApproved Boolean?  @map("customer_approved")
+  approvedAt       DateTime? @map("approved_at")
+  rejectedAt       DateTime? @map("line_rejected_at")
+  rejectedReason   String?   @map("rejected_reason")
+
   @@index([estimateId])
   @@map("estimate_lines")
 }
@@ -2951,10 +3024,22 @@ model EstimateLine {
 enum EstimateStatus {
   DRAFT
   SENT
+  PARTIALLY_APPROVED
   ACCEPTED
   REJECTED
   EXPIRED
   CONVERTED
+}
+
+enum EstimateTier {
+  ECONOMY
+  STANDARD
+  PREMIUM
+}
+
+enum EstimatePresentationMode {
+  SINGLE
+  TIERED
 }
 
 enum EstimateLineType {
@@ -3100,6 +3185,7 @@ enum CustomerSource {
   SOCIAL
   VOLANTINO
   WALK_IN
+  PORTAL
   ALTRO
 }
 
@@ -3594,4 +3680,385 @@ model AiDecisionLog {
   @@index([tenantId, createdAt])
   @@index([entityType, entityId])
   @@map("ai_decision_logs")
+}
+
+// ============================================================================
+// PUBLIC TOKEN — Secure expiring tokens for customer-facing links
+// ============================================================================
+
+enum PublicTokenType {
+  ESTIMATE_APPROVAL
+  PAYMENT
+  DVI_REPORT
+  REVIEW_REQUEST
+  CHECKIN
+  MEMBERSHIP_INVITE
+}
+
+model PublicToken {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  token      String   @unique
+  type       PublicTokenType
+  entityId   String   @map("entity_id")
+  entityType String   @map("entity_type")
+  expiresAt  DateTime @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([token])
+  @@index([tenantId])
+  @@index([tenantId, entityType, entityId])
+  @@map("public_tokens")
+}
+
+// ============================================================================
+// WHATSAPP — Template management for WhatsApp Business API
+// ============================================================================
+
+model WhatsAppTemplate {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  twilioTemplateSid String   @map("twilio_template_sid")
+  name              String
+  category          String   // UTILITY, MARKETING, AUTHENTICATION
+  language          String   @default("it")
+  bodyTemplate      String   @db.Text @map("body_template")
+  variables         String[] @default([])
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedAt        DateTime? @map("approved_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("whatsapp_templates")
+}
+
+// ============================================================================
+// DECLINED SERVICE — Track declined estimate lines for follow-up campaigns
+// ============================================================================
+
+model DeclinedService {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  customerId        String   @map("customer_id")
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vehicleId         String?  @map("vehicle_id")
+  estimateId        String   @map("estimate_id")
+  estimate          Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  estimateLineId    String   @map("estimate_line_id")
+  serviceDescription String  @map("service_description")
+  estimatedCostCents Decimal @map("estimated_cost_cents") @db.Decimal(10, 2)
+  severity          String?  // CRITICAL, WARNING, INFO (from inspection if linked)
+  declinedAt        DateTime @map("declined_at")
+
+  // Follow-up tracking
+  followUpSentAt    DateTime? @map("follow_up_sent_at")
+  followUpCount     Int       @default(0) @map("follow_up_count")
+  followUpCampaignId String?  @map("follow_up_campaign_id")
+
+  // Conversion tracking
+  convertedAt       DateTime? @map("converted_at")
+  convertedBookingId String?  @map("converted_booking_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([tenantId, customerId])
+  @@index([tenantId, declinedAt])
+  @@index([tenantId, severity])
+  @@map("declined_services")
+}
+
+// ============================================================================
+// MEMBERSHIP — Recurring membership programs (ServiceTitan model)
+// ============================================================================
+
+enum MembershipStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+model MembershipProgram {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  name            String
+  description     String?  @db.Text
+  priceMonthly    Decimal  @map("price_monthly") @db.Decimal(10, 2)
+  priceYearly     Decimal? @map("price_yearly") @db.Decimal(10, 2)
+  stripePriceMonthlyId String? @map("stripe_price_monthly_id")
+  stripePriceYearlyId  String? @map("stripe_price_yearly_id")
+
+  // Benefits configuration
+  benefits        Json     // Array of { type, description, maxPerMonth, discountPercent }
+  maxRedemptionsPerMonth Int @default(2) @map("max_redemptions_per_month")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships CustomerMembership[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("membership_programs")
+}
+
+model CustomerMembership {
+  id                  String   @id @default(uuid())
+  tenantId            String   @map("tenant_id")
+  customerId          String   @map("customer_id")
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  programId           String   @map("program_id")
+  program             MembershipProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+
+  status    MembershipStatus @default(ACTIVE)
+  startDate DateTime @map("start_date")
+  endDate   DateTime? @map("end_date")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  redemptions MembershipRedemption[]
+
+  @@index([tenantId])
+  @@index([tenantId, customerId])
+  @@index([tenantId, status])
+  @@map("customer_memberships")
+}
+
+model MembershipRedemption {
+  id           String   @id @default(uuid())
+  membershipId String   @map("membership_id")
+  membership   CustomerMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  benefitType  String   @map("benefit_type")
+  bookingId    String?  @map("booking_id")
+  workOrderId  String?  @map("work_order_id")
+  redeemedAt   DateTime @map("redeemed_at")
+  valueCents   Decimal  @map("value_cents") @db.Decimal(10, 2)
+
+  @@index([membershipId])
+  @@map("membership_redemptions")
+}
+
+// ============================================================================
+// TECHNICIAN GOALS & PAYROLL
+// ============================================================================
+
+enum PayType {
+  HOURLY
+  FLAT_RATE
+  MIXED
+}
+
+enum GoalType {
+  EFFICIENCY
+  REVENUE
+  JOBS_PER_DAY
+  HOURS_BILLED
+}
+
+enum GoalPeriod {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum PayrollStatus {
+  DRAFT
+  APPROVED
+  PAID
+}
+
+model TechnicianGoal {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  technicianId String   @map("technician_id")
+  technician   Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  goalType     GoalType @map("goal_type")
+  targetValue  Decimal  @map("target_value") @db.Decimal(10, 2)
+  currentValue Decimal  @default(0) @map("current_value") @db.Decimal(10, 2)
+  period       GoalPeriod
+  startDate    DateTime @map("start_date")
+  endDate      DateTime @map("end_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, technicianId])
+  @@map("technician_goals")
+}
+
+model TechnicianPayConfig {
+  id                   String   @id @default(uuid())
+  tenantId             String   @map("tenant_id")
+  technicianId         String   @map("technician_id")
+  technician           Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  payType              PayType  @map("pay_type")
+  hourlyRateCents      Decimal? @map("hourly_rate_cents") @db.Decimal(10, 2)
+  flatRatePerJobCents  Decimal? @map("flat_rate_per_job_cents") @db.Decimal(10, 2)
+  overtimeMultiplier   Decimal  @default(1.5) @map("overtime_multiplier") @db.Decimal(3, 2)
+  overtimeThresholdHours Decimal @default(40) @map("overtime_threshold_hours") @db.Decimal(5, 2)
+  bonusRules           Json?    @map("bonus_rules")
+  effectiveFrom        DateTime @map("effective_from")
+  effectiveTo          DateTime? @map("effective_to")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, technicianId])
+  @@map("technician_pay_configs")
+}
+
+model PayrollRecord {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  technicianId   String   @map("technician_id")
+  technician     Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  period         String   // "2026-03" format
+  regularHours   Decimal  @map("regular_hours") @db.Decimal(6, 2)
+  overtimeHours  Decimal  @default(0) @map("overtime_hours") @db.Decimal(6, 2)
+  regularPayCents  Decimal @map("regular_pay_cents") @db.Decimal(10, 2)
+  overtimePayCents Decimal @default(0) @map("overtime_pay_cents") @db.Decimal(10, 2)
+  bonusPayCents    Decimal @default(0) @map("bonus_pay_cents") @db.Decimal(10, 2)
+  totalPayCents    Decimal @map("total_pay_cents") @db.Decimal(10, 2)
+  status         PayrollStatus @default(DRAFT)
+  approvedBy     String?  @map("approved_by")
+  approvedAt     DateTime? @map("approved_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, technicianId, period])
+  @@index([tenantId])
+  @@index([tenantId, period])
+  @@map("payroll_records")
+}
+
+// ============================================================================
+// BENCHMARKING — Industry comparison metrics
+// ============================================================================
+
+model BenchmarkMetric {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  period      String   // "2026-03"
+  metricType  String   @map("metric_type") // ARO, CAR_COUNT, LABOR_RATE, PARTS_MARGIN, TECH_EFFICIENCY
+  value       Decimal  @db.Decimal(10, 2)
+  percentile  Int?     // 0-100, shop's ranking
+  industryAvg Decimal? @map("industry_avg") @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([tenantId, period, metricType])
+  @@index([tenantId])
+  @@map("benchmark_metrics")
+}
+
+model IndustryBenchmark {
+  id          String   @id @default(uuid())
+  region      String   // "IT", "EU", "US"
+  shopSize    String   @map("shop_size") // SMALL, MEDIUM, LARGE
+  period      String   // "2026-03"
+  metricType  String   @map("metric_type")
+  avgValue    Decimal  @map("avg_value") @db.Decimal(10, 2)
+  medianValue Decimal  @map("median_value") @db.Decimal(10, 2)
+  p25         Decimal  @db.Decimal(10, 2)
+  p75         Decimal  @db.Decimal(10, 2)
+  sampleSize  Int      @map("sample_size")
+  calculatedAt DateTime @map("calculated_at")
+
+  @@unique([region, shopSize, period, metricType])
+  @@map("industry_benchmarks")
+}
+
+// ============================================================================
+// PREDICTIVE MAINTENANCE
+// ============================================================================
+
+model MaintenanceScheduleTemplate {
+  id            String   @id @default(uuid())
+  make          String
+  model         String
+  yearFrom      Int      @map("year_from")
+  yearTo        Int      @map("year_to")
+  serviceType   String   @map("service_type") // OIL_CHANGE, BRAKE_PADS, TIMING_BELT, etc.
+  intervalKm    Int?     @map("interval_km")
+  intervalMonths Int?    @map("interval_months")
+  description   String
+  estimatedCostCents Decimal? @map("estimated_cost_cents") @db.Decimal(10, 2)
+
+  @@index([make, model])
+  @@map("maintenance_schedule_templates")
+}
+
+model PredictedMaintenance {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  vehicleId        String   @map("vehicle_id")
+  customerId       String   @map("customer_id")
+  serviceType      String   @map("service_type")
+  predictedDate    DateTime @map("predicted_date")
+  predictedMileage Int?     @map("predicted_mileage")
+  confidence       Decimal  @db.Decimal(3, 2) @default(0.70)
+  notificationSentAt DateTime? @map("notification_sent_at")
+  bookedAt         DateTime? @map("booked_at")
+  bookingId        String?   @map("booking_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([tenantId, vehicleId])
+  @@index([tenantId, predictedDate])
+  @@map("predicted_maintenance")
+}
+
+// ============================================================================
+// PARTS CATALOG — Multi-vendor federated search
+// ============================================================================
+
+model SupplierApiConfig {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  supplierName String   @map("supplier_name") // AUTODOC, TECDOC, LOCAL
+  apiEndpoint  String?  @map("api_endpoint")
+  apiKey       String?  @map("api_key") // Encrypted
+  isActive     Boolean  @default(true) @map("is_active")
+  lastSyncAt   DateTime? @map("last_sync_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, supplierName])
+  @@index([tenantId])
+  @@map("supplier_api_configs")
+}
+
+// ============================================================================
+// VEHICLE HISTORY — External service records
+// ============================================================================
+
+enum VehicleHistorySource {
+  LOCAL
+  MOTORNET
+  CARFAX
+  MANUAL
+}
+
+model VehicleHistoryRecord {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  vehicleId  String   @map("vehicle_id")
+  vin        String?
+  source     VehicleHistorySource @default(LOCAL)
+  eventType  String   @map("event_type") // SERVICE, REPAIR, INSPECTION, ACCIDENT, SALE
+  eventDate  DateTime @map("event_date")
+  description String  @db.Text
+  mileage    Int?
+  shopName   String?  @map("shop_name")
+  costCents  Decimal? @map("cost_cents") @db.Decimal(10, 2)
+  metadata   Json?
+  importedAt DateTime? @map("imported_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, vehicleId])
+  @@index([vin])
+  @@map("vehicle_history_records")
 }

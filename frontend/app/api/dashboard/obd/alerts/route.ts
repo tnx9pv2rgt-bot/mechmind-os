@@ -3,10 +3,5 @@ import { proxyToNestJS, getQueryParams } from '@/lib/auth/api-proxy';
 
 export async function GET(req: NextRequest) {
   const params = getQueryParams(req);
-  return proxyToNestJS({ backendPath: 'v1/obd/alerts', params });
-}
-
-export async function POST(req: NextRequest) {
-  const body: unknown = await req.json();
-  return proxyToNestJS({ backendPath: 'v1/obd/alerts', method: 'POST', body });
+  return proxyToNestJS({ backendPath: 'v1/obd/trouble-codes', params });
 }

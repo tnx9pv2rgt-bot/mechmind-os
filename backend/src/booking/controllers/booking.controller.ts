@@ -34,6 +34,15 @@ import {
   ConflictResponseDto,
   CalendarQueryDto,
 } from '../dto/create-booking.dto';
+import { IsArray, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
+class BulkConfirmDto {
+  @ApiProperty({ type: [String], description: 'Array di ID prenotazioni da confermare' })
+  @IsArray()
+  @IsString({ each: true })
+  ids: string[];
+}
 import { RescheduleBookingDto } from '../dto/reschedule-booking.dto';
 import { FindAvailableSlotsDto, CreateSlotDto } from '../dto/booking-slot.dto';
 import { BookingStatus } from '@prisma/client';
@@ -175,6 +184,16 @@ export class BookingController {
         to,
       },
     };
+  }
+
+  @Post('bulk-confirm')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Conferma multipla prenotazioni (PENDING → CONFIRMED)' })
+  @ApiResponse({ status: 200, description: 'Risultato conferma bulk' })
+  async bulkConfirm(@CurrentTenant() tenantId: string, @Body() dto: BulkConfirmDto) {
+    const result = await this.bookingService.bulkConfirm(tenantId, dto.ids);
+    return { success: true, data: result };
   }
 
   @Get()

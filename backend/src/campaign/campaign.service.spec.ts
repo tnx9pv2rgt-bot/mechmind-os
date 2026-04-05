@@ -39,7 +39,9 @@ describe('CampaignService', () => {
       findFirst: jest.Mock;
       count: jest.Mock;
       update: jest.Mock;
+      updateMany: jest.Mock;
       delete: jest.Mock;
+      deleteMany: jest.Mock;
     };
     customer: {
       count: jest.Mock;
@@ -55,7 +57,9 @@ describe('CampaignService', () => {
         findFirst: jest.fn(),
         count: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
         delete: jest.fn(),
+        deleteMany: jest.fn(),
       },
       customer: {
         count: jest.fn(),
@@ -139,13 +143,15 @@ describe('CampaignService', () => {
 
   describe('update', () => {
     it('should update a DRAFT campaign', async () => {
-      prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign());
-      prisma.campaign.update.mockResolvedValue(makeMockCampaign({ name: 'Updated' }));
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign())
+        .mockResolvedValueOnce(makeMockCampaign({ name: 'Updated' }));
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.update(CAMPAIGN_ID, TENANT_ID, { name: 'Updated' });
 
       expect(result).toBeDefined();
-      expect(prisma.campaign.update).toHaveBeenCalled();
+      expect(prisma.campaign.updateMany).toHaveBeenCalled();
     });
 
     it('should reject update on non-DRAFT campaign', async () => {
@@ -160,12 +166,12 @@ describe('CampaignService', () => {
   describe('remove', () => {
     it('should delete a DRAFT campaign', async () => {
       prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign());
-      prisma.campaign.delete.mockResolvedValue({});
+      prisma.campaign.deleteMany.mockResolvedValue({ count: 1 });
 
       await service.remove(CAMPAIGN_ID, TENANT_ID);
 
-      expect(prisma.campaign.delete).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: CAMPAIGN_ID } }),
+      expect(prisma.campaign.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: CAMPAIGN_ID, tenantId: TENANT_ID } }),
       );
     });
 
@@ -178,16 +184,18 @@ describe('CampaignService', () => {
 
   describe('schedule', () => {
     it('should schedule a DRAFT campaign', async () => {
-      prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign());
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign())
+        .mockResolvedValueOnce(
+          makeMockCampaign({ status: 'SCHEDULED', scheduledAt: new Date('2027-01-01T10:00:00Z') }),
+        );
       const futureDate = new Date('2027-01-01T10:00:00Z');
-      prisma.campaign.update.mockResolvedValue(
-        makeMockCampaign({ status: 'SCHEDULED', scheduledAt: futureDate }),
-      );
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.schedule(CAMPAIGN_ID, TENANT_ID, futureDate);
 
       expect(result).toBeDefined();
-      expect(prisma.campaign.update).toHaveBeenCalledWith(
+      expect(prisma.campaign.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'SCHEDULED' }),
         }),
@@ -206,14 +214,16 @@ describe('CampaignService', () => {
 
   describe('send', () => {
     it('should send a DRAFT campaign', async () => {
-      prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign());
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign())
+        .mockResolvedValueOnce(makeMockCampaign({ status: 'SENDING' }));
       prisma.customer.count.mockResolvedValue(50);
-      prisma.campaign.update.mockResolvedValue(makeMockCampaign({ status: 'SENDING' }));
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.send(CAMPAIGN_ID, TENANT_ID);
 
       expect(result).toBeDefined();
-      expect(prisma.campaign.update).toHaveBeenCalledTimes(2); // SENDING then SENT
+      expect(prisma.campaign.updateMany).toHaveBeenCalledTimes(2); // SENDING then SENT
     });
 
     it('should reject sending already-SENT campaign', async () => {
@@ -271,6 +281,212 @@ describe('CampaignService', () => {
 
       expect(stats.openRate).toBe(0);
       expect(stats.clickRate).toBe(0);
+    });
+  });
+
+  describe('create — additional branches', () => {
+    it('should serialize segmentFilters as JSON', async () => {
+      const dto = {
+        name: 'Segment Campaign',
+        type: 'SMS' as const,
+        template: 'Ciao {{nomeCliente}}',
+        segmentFilters: { minAge: 30, city: 'Roma' },
+      };
+      prisma.campaign.create.mockResolvedValue(makeMockCampaign(dto));
+
+      await service.create(TENANT_ID, dto);
+
+      expect(prisma.campaign.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            segmentFilters: { minAge: 30, city: 'Roma' },
+          }),
+        }),
+      );
+    });
+
+    it('should parse scheduledAt as Date', async () => {
+      const dto = {
+        name: 'Scheduled',
+        type: 'EMAIL' as const,
+        template: 'Test',
+        scheduledAt: '2027-06-01T10:00:00Z',
+      };
+      prisma.campaign.create.mockResolvedValue(makeMockCampaign(dto));
+
+      await service.create(TENANT_ID, dto);
+
+      expect(prisma.campaign.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            scheduledAt: new Date('2027-06-01T10:00:00Z'),
+          }),
+        }),
+      );
+    });
+
+    it('should set subject to null when not provided', async () => {
+      const dto = {
+        name: 'No Subject',
+        type: 'SMS' as const,
+        template: 'Test',
+      };
+      prisma.campaign.create.mockResolvedValue(makeMockCampaign(dto));
+
+      await service.create(TENANT_ID, dto);
+
+      expect(prisma.campaign.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subject: null,
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('update — additional branches', () => {
+    it('should set subject to null when passed explicitly', async () => {
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign())
+        .mockResolvedValueOnce(makeMockCampaign({ subject: null }));
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.update(CAMPAIGN_ID, TENANT_ID, { subject: null as unknown as string });
+
+      expect(prisma.campaign.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ subject: null }),
+        }),
+      );
+    });
+
+    it('should set segmentFilters to undefined when null', async () => {
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign())
+        .mockResolvedValueOnce(makeMockCampaign());
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.update(CAMPAIGN_ID, TENANT_ID, {
+        segmentFilters: null as unknown as undefined,
+      });
+
+      expect(prisma.campaign.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ segmentFilters: undefined }),
+        }),
+      );
+    });
+
+    it('should set segmentType to null when explicitly provided as null', async () => {
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign())
+        .mockResolvedValueOnce(makeMockCampaign());
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.update(CAMPAIGN_ID, TENANT_ID, { segmentType: null as unknown as string });
+
+      expect(prisma.campaign.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ segmentType: null }),
+        }),
+      );
+    });
+  });
+
+  describe('schedule — additional branches', () => {
+    it('should reject schedule from SENT status (invalid transition)', async () => {
+      prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign({ status: 'SENT' }));
+
+      const futureDate = new Date('2027-06-01T10:00:00Z');
+      await expect(service.schedule(CAMPAIGN_ID, TENANT_ID, futureDate)).rejects.toThrow();
+    });
+
+    it('should reject schedule from CANCELLED status', async () => {
+      prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign({ status: 'CANCELLED' }));
+
+      const futureDate = new Date('2027-06-01T10:00:00Z');
+      await expect(service.schedule(CAMPAIGN_ID, TENANT_ID, futureDate)).rejects.toThrow();
+    });
+  });
+
+  describe('send — additional branches', () => {
+    it('should resolve recipient count with INACTIVE_6M segment', async () => {
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign({ segmentType: 'INACTIVE_6M' }))
+        .mockResolvedValueOnce(makeMockCampaign({ status: 'SENDING' }));
+      prisma.customer.count.mockResolvedValue(25);
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.send(CAMPAIGN_ID, TENANT_ID);
+
+      expect(result).toBeDefined();
+      expect(prisma.customer.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            marketingConsent: true,
+            updatedAt: expect.any(Object),
+          }),
+        }),
+      );
+    });
+
+    it('should resolve recipient count without segment (all consented)', async () => {
+      prisma.campaign.findFirst
+        .mockResolvedValueOnce(makeMockCampaign({ segmentType: null }))
+        .mockResolvedValueOnce(makeMockCampaign({ status: 'SENDING' }));
+      prisma.customer.count.mockResolvedValue(100);
+      prisma.campaign.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.send(CAMPAIGN_ID, TENANT_ID);
+
+      expect(result).toBeDefined();
+      expect(prisma.customer.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, marketingConsent: true },
+        }),
+      );
+    });
+
+    it('should reject send from CANCELLED status', async () => {
+      prisma.campaign.findFirst.mockResolvedValue(makeMockCampaign({ status: 'CANCELLED' }));
+
+      await expect(service.send(CAMPAIGN_ID, TENANT_ID)).rejects.toThrow();
+    });
+  });
+
+  describe('findAll — additional branches', () => {
+    it('should paginate with custom page and limit', async () => {
+      prisma.campaign.findMany.mockResolvedValue([]);
+      prisma.campaign.count.mockResolvedValue(50);
+
+      const result = await service.findAll(TENANT_ID, undefined, 3, 10);
+
+      expect(result.meta.page).toBe(3);
+      expect(result.meta.limit).toBe(10);
+      expect(result.meta.pages).toBe(5);
+      expect(prisma.campaign.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20,
+          take: 10,
+        }),
+      );
+    });
+  });
+
+  describe('previewRecipients — additional branches', () => {
+    it('should return all consented customers when no segment', async () => {
+      prisma.customer.count.mockResolvedValue(200);
+      prisma.customer.findMany.mockResolvedValue([]);
+
+      const result = await service.previewRecipients(TENANT_ID);
+
+      expect(result.count).toBe(200);
+      expect(prisma.customer.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, marketingConsent: true },
+        }),
+      );
     });
   });
 

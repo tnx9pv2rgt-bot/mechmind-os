@@ -26,11 +26,11 @@ export function SecuritySummaryCard({
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="animate-pulse rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-4"
+            className="animate-pulse rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-4"
           >
-            <div className="h-8 w-8 rounded-full bg-[#4e4e4e]" />
-            <div className="mt-2 h-6 w-12 rounded bg-[#4e4e4e]" />
-            <div className="mt-1 h-3 w-20 rounded bg-[#4e4e4e]" />
+            <div className="h-8 w-8 rounded-full bg-[var(--border-strong)]" />
+            <div className="mt-2 h-6 w-12 rounded bg-[var(--border-strong)]" />
+            <div className="mt-1 h-3 w-20 rounded bg-[var(--border-strong)]" />
           </div>
         ))}
       </div>
@@ -39,7 +39,7 @@ export function SecuritySummaryCard({
 
   if (!summary) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-6 text-[#888]">
+      <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-6 text-[var(--text-tertiary)]">
         <Shield className="h-5 w-5" />
         <p className="text-sm">Nessun riepilogo disponibile</p>
       </div>
@@ -59,7 +59,7 @@ export function SecuritySummaryCard({
       label: 'Tentativi falliti',
       colorClass: summary.failedAttempts > 0
         ? 'text-red-400 bg-red-500/10'
-        : 'text-[#888] bg-[#4e4e4e]/50',
+        : 'text-[var(--text-tertiary)] bg-[var(--border-strong)]/50',
     },
     {
       icon: <Monitor className="h-4 w-4" />,
@@ -71,7 +71,7 @@ export function SecuritySummaryCard({
 
   return (
     <div>
-      <p className="mb-3 text-xs text-[#888]">
+      <p className="mb-3 text-xs text-[var(--text-tertiary)]">
         Riepilogo ultimi {summary.periodDays} giorni
       </p>
       <div className="grid grid-cols-3 gap-3">
@@ -81,13 +81,13 @@ export function SecuritySummaryCard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-4"
+            className="rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-4"
           >
             <div className={`flex h-8 w-8 items-center justify-center rounded-full ${stat.colorClass}`}>
               {stat.icon}
             </div>
             <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
-            <p className="text-xs text-[#888]">{stat.label}</p>
+            <p className="text-xs text-[var(--text-tertiary)]">{stat.label}</p>
           </motion.div>
         ))}
       </div>

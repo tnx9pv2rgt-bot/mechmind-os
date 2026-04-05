@@ -14,8 +14,8 @@ export default function Error({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
         </svg>
       </div>
-      <h2 className="text-[17px] font-semibold text-[#1d1d1f] dark:text-white">Qualcosa è andato storto</h2>
-      <p className="text-[15px] text-[#636366] dark:text-[#a1a1aa]">Si è verificato un errore imprevisto.</p>
+      <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-white">Qualcosa è andato storto</h2>
+      <p className="text-[15px] text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Si è verificato un errore imprevisto.</p>
       <button
         onClick={reset}
         className="px-4 py-2 bg-apple-blue text-white rounded-lg text-[15px] font-medium hover:bg-blue-600 transition-colors"

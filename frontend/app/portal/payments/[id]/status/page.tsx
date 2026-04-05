@@ -93,7 +93,7 @@ const statusConfig: Record<
     title: 'Pagamento annullato',
     description: 'Il pagamento è stato annullato.',
     color: 'text-gray-700 dark:text-gray-300',
-    bg: 'bg-gray-100 dark:bg-[#353535]',
+    bg: 'bg-gray-100 dark:bg-[var(--surface-hover)]',
     iconColor: 'text-gray-500',
   },
 };
@@ -153,11 +153,11 @@ export default function PaymentStatusPage(): React.ReactElement {
           ]}
         />
         <div className='flex flex-col items-center justify-center py-16 text-center'>
-          <AlertCircle className='h-12 w-12 text-gray-400 dark:text-[#636366] mb-4' />
-          <h2 className='text-lg font-semibold text-gray-900 dark:text-[#ececec] mb-2'>
+          <AlertCircle className='h-12 w-12 text-gray-400 dark:text-[var(--text-secondary)] mb-4' />
+          <h2 className='text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-2'>
             Pagamento non trovato
           </h2>
-          <p className='text-gray-600 dark:text-[#8e8e93] mb-6'>
+          <p className='text-gray-600 dark:text-[var(--text-tertiary)] mb-6'>
             {error || 'Non è stato possibile recuperare le informazioni sul pagamento.'}
           </p>
           <Link
@@ -220,16 +220,16 @@ export default function PaymentStatusPage(): React.ReactElement {
       </motion.div>
 
       {/* Payment Details */}
-      <div className='bg-white dark:bg-[#2f2f2f] rounded-2xl p-6 shadow-sm space-y-4'>
-        <h2 className='text-lg font-semibold text-gray-900 dark:text-[#ececec]'>
+      <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm space-y-4'>
+        <h2 className='text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)]'>
           Dettagli pagamento
         </h2>
 
-        <div className='divide-y divide-gray-100 dark:divide-[#3a3a3c]'>
+        <div className='divide-y divide-gray-100 dark:divide-[var(--border-default)]'>
           {/* Amount */}
           <div className='flex justify-between items-center py-3'>
-            <span className='text-sm text-gray-500 dark:text-[#636366]'>Importo</span>
-            <span className='text-lg font-bold text-gray-900 dark:text-[#ececec]'>
+            <span className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>Importo</span>
+            <span className='text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]'>
               {formatCurrency(payment.amount, payment.currency)}
             </span>
           </div>
@@ -237,8 +237,8 @@ export default function PaymentStatusPage(): React.ReactElement {
           {/* Invoice Reference */}
           {payment.invoiceNumber && (
             <div className='flex justify-between items-center py-3'>
-              <span className='text-sm text-gray-500 dark:text-[#636366]'>Fattura</span>
-              <span className='text-sm font-medium text-gray-900 dark:text-[#ececec]'>
+              <span className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>Fattura</span>
+              <span className='text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]'>
                 {payment.invoiceNumber}
               </span>
             </div>
@@ -247,8 +247,8 @@ export default function PaymentStatusPage(): React.ReactElement {
           {/* Payment Method */}
           {payment.method && (
             <div className='flex justify-between items-center py-3'>
-              <span className='text-sm text-gray-500 dark:text-[#636366]'>Metodo</span>
-              <span className='text-sm font-medium text-gray-900 dark:text-[#ececec]'>
+              <span className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>Metodo</span>
+              <span className='text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]'>
                 {payment.method}
               </span>
             </div>
@@ -256,8 +256,8 @@ export default function PaymentStatusPage(): React.ReactElement {
 
           {/* Date */}
           <div className='flex justify-between items-center py-3'>
-            <span className='text-sm text-gray-500 dark:text-[#636366]'>Data</span>
-            <span className='text-sm text-gray-900 dark:text-[#ececec]'>
+            <span className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>Data</span>
+            <span className='text-sm text-gray-900 dark:text-[var(--text-primary)]'>
               {formatDate(payment.createdAt)}
             </span>
           </div>
@@ -265,7 +265,7 @@ export default function PaymentStatusPage(): React.ReactElement {
           {/* Failure Reason */}
           {isFailed && payment.failureReason && (
             <div className='py-3'>
-              <span className='text-sm text-gray-500 dark:text-[#636366] block mb-1'>
+              <span className='text-sm text-gray-500 dark:text-[var(--text-secondary)] block mb-1'>
                 Motivo del fallimento
               </span>
               <p className='text-sm text-red-600 dark:text-red-400'>{payment.failureReason}</p>
@@ -313,7 +313,7 @@ export default function PaymentStatusPage(): React.ReactElement {
         {payment.invoiceId && (
           <Link
             href={`/portal/invoices/${payment.invoiceId}`}
-            className='flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 bg-gray-200 hover:bg-gray-300 dark:bg-[#3a3a3c] dark:hover:bg-[#48484a] text-gray-700 dark:text-[#a1a1a6] font-semibold rounded-2xl transition-colors min-h-[44px]'
+            className='flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 bg-gray-200 hover:bg-gray-300 dark:bg-[var(--border-default)] dark:hover:bg-[var(--surface-active)] text-gray-700 dark:text-[var(--text-secondary)] font-semibold rounded-2xl transition-colors min-h-[44px]'
           >
             <FileText className='h-5 w-5' />
             Vedi fattura
@@ -323,7 +323,7 @@ export default function PaymentStatusPage(): React.ReactElement {
         {/* Back to invoices */}
         <Link
           href='/portal/invoices'
-          className='flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 border border-gray-200 dark:border-[#3a3a3c] text-gray-700 dark:text-[#a1a1a6] font-medium rounded-2xl transition-colors hover:bg-gray-50 dark:hover:bg-[#2c2c2e] min-h-[44px]'
+          className='flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 border border-gray-200 dark:border-[var(--border-default)] text-gray-700 dark:text-[var(--text-secondary)] font-medium rounded-2xl transition-colors hover:bg-gray-50 dark:hover:bg-[var(--surface-elevated)] min-h-[44px]'
         >
           <Home className='h-5 w-5' />
           Torna alle fatture
@@ -332,7 +332,7 @@ export default function PaymentStatusPage(): React.ReactElement {
 
       {/* Pending auto-refresh indicator */}
       {isPending && (
-        <p className='text-center text-xs text-gray-400 dark:text-[#636366]'>
+        <p className='text-center text-xs text-gray-400 dark:text-[var(--text-secondary)]'>
           Aggiornamento automatico ogni 5 secondi
         </p>
       )}

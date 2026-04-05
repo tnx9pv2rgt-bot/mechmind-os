@@ -1,5 +1,4 @@
 {
-  "alwaysThinkingEnabled": true,
   "permissions": {
     "deny": [
       "Bash(rm -rf *)",
@@ -24,7 +23,13 @@
       "Edit(backend/.env*)",
       "Edit(**/.env)",
       "Edit(~/.bashrc)",
-      "Edit(~/.zshrc)"
+      "Edit(~/.zshrc)",
+      "Bash(TRUNCATE *)",
+      "Bash(npx prisma migrate reset --force*)",
+      "Bash(curl * | bash*)",
+      "Bash(wget * | bash*)",
+      "Bash(curl * | sh*)",
+      "Bash(wget * | sh*)"
     ],
     "allow": [
       "Bash(npm run *)",
@@ -60,10 +65,35 @@
       "Bash(mkdir *)",
       "Bash(cp *)",
       "Bash(mv *)",
-      "Bash(jq *)"
+      "Bash(jq *)",
+      "Bash(npx prisma format*)",
+      "Bash(npx prisma validate*)",
+      "Bash(echo *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(xargs *)",
+      "Bash(date *)",
+      "Bash(realpath *)",
+      "Bash(dirname *)",
+      "Bash(basename *)"
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh",
+            "timeout": 15
+          }
+        ],
+        "description": "Inietta contesto sessione (branch, porte, Docker status, demo tenant)"
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -91,7 +121,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\n\n# Block push to main/master\nif echo \"$COMMAND\" | grep -qE 'git\\s+push.*\\s+(main|master)'; then\n  echo \"BLOCCATO: push diretto a main/master vietato. Usa un feature branch.\" >&2\n  exit 2\nfi\n\nexit 0"
+            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\n\n# Block push to main/master\nif echo \"$COMMAND\" | grep -qE 'git\\s+push.*\\s+(main|master)'; then\n  echo \"BLOCCATO: push diretto a main/master vietato. Usa un feature branch.\" >&2\n  exit 2\nfi\n\n# Block .env reads via cat/less/more/head/tail\nif echo \"$COMMAND\" | grep -qE '(cat|less|more|head|tail|vi|vim|nano|bat|code)\\s+.*\\.env'; then\n  echo \"BLOCCATO: lettura .env vietata via CLI. Usa process.env nel codice.\" >&2\n  exit 2\nfi\n\n# Block pipe-to-shell patterns\nif echo \"$COMMAND\" | grep -qE '(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh)'; then\n  echo \"BLOCCATO: download-and-execute vietato.\" >&2\n  exit 2\nfi\n\nexit 0"
           }
         ],
         "description": "BLOCCA push diretto a main/master"

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../services/auth.service';
 import { MfaService } from '../mfa/mfa.service';
@@ -47,6 +47,7 @@ describe('AuthController', () => {
             getUserWithTwoFactorStatus: jest.fn(),
             updateLastLogin: jest.fn(),
             recordFailedLogin: jest.fn(),
+            logout: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -103,6 +104,10 @@ describe('AuthController', () => {
             generateFingerprint: jest.fn().mockReturnValue('fingerprint-hash'),
             isDeviceTrusted: jest.fn().mockResolvedValue(false),
             trustDevice: jest.fn().mockResolvedValue(undefined),
+            listDevices: jest.fn().mockResolvedValue([]),
+            untrustDevice: jest.fn().mockResolvedValue(undefined),
+            untrustAllDevices: jest.fn().mockResolvedValue(0),
+            markCompromised: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -301,6 +306,983 @@ describe('AuthController', () => {
       const result = await controller.refreshToken({ refreshToken: 'old-refresh' } as never);
 
       expect(authService.refreshTokens).toHaveBeenCalledWith('old-refresh');
+      expect(result).toEqual(mockTokens);
+    });
+  });
+
+  // =========================================================================
+  // getMe()
+  // =========================================================================
+  describe('getMe', () => {
+    it('should return user profile when found and tenantId matches', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const dbUser = {
+        id: 'user-001',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'ADMIN',
+        isActive: true,
+        tenantId: 'tenant-001',
+        createdAt: new Date(),
+        avatar: null,
+        tenant: { id: 'tenant-001', name: 'Shop', slug: 'shop' },
+      };
+
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findUnique: jest.Mock };
+      };
+      prismaService.user.findUnique.mockResolvedValue(dbUser);
+
+      const result = await controller.getMe(user as never);
+
+      expect(result).toEqual(dbUser);
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findUnique: jest.Mock };
+      };
+      prismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(controller.getMe(user as never)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when tenantId does not match', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findUnique: jest.Mock };
+      };
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        tenantId: 'different-tenant',
+      });
+
+      await expect(controller.getMe(user as never)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // =========================================================================
+  // logout()
+  // =========================================================================
+  describe('logout', () => {
+    it('should call authService.logout and return success', async () => {
+      (authService as unknown as { logout: jest.Mock }).logout = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      const result = await controller.logout('Bearer some-jwt-token', {
+        refreshToken: 'refresh-123',
+      });
+
+      expect((authService as unknown as { logout: jest.Mock }).logout).toHaveBeenCalledWith(
+        'some-jwt-token',
+        'refresh-123',
+      );
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should handle missing authorization header', async () => {
+      (authService as unknown as { logout: jest.Mock }).logout = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      const result = await controller.logout(undefined as unknown as string, {});
+
+      expect((authService as unknown as { logout: jest.Mock }).logout).toHaveBeenCalledWith(
+        '',
+        undefined,
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  // =========================================================================
+  // listSessions()
+  // =========================================================================
+  describe('listSessions', () => {
+    it('should delegate to sessionService.listSessions with stripped bearer token', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const sessionService = (controller as unknown as Record<string, unknown>)[
+        'sessionService'
+      ] as { listSessions: jest.Mock };
+
+      sessionService.listSessions.mockResolvedValue([]);
+
+      const result = await controller.listSessions(user as never, 'Bearer current-jwt');
+
+      expect(result).toEqual([]);
+      expect(sessionService.listSessions).toHaveBeenCalledWith('user-001', 'current-jwt');
+    });
+  });
+
+  // =========================================================================
+  // revokeSession()
+  // =========================================================================
+  describe('revokeSession', () => {
+    it('should delegate to sessionService.revokeSession', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const _sessionService = (controller as unknown as Record<string, unknown>)[
+        'sessionService'
+      ] as {
+        revokeSession: jest.Mock;
+      };
+
+      const result = await controller.revokeSession(user as never, { sessionId: 's1' });
+
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  // =========================================================================
+  // revokeOtherSessions()
+  // =========================================================================
+  describe('revokeOtherSessions', () => {
+    it('should delegate to sessionService.revokeAllOtherSessions', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+
+      const result = await controller.revokeOtherSessions(user as never, {
+        currentSessionId: 'current-session',
+      });
+
+      expect(result).toEqual({ success: true, count: 0 });
+    });
+  });
+
+  // =========================================================================
+  // createDemoSession()
+  // =========================================================================
+  describe('createDemoSession', () => {
+    let prismaService: {
+      user: { findUnique: jest.Mock };
+      tenant: { findFirst: jest.Mock };
+    };
+
+    beforeEach(() => {
+      prismaService = (controller as unknown as Record<string, unknown>)[
+        'prisma'
+      ] as typeof prismaService;
+    });
+
+    it('should return tokens and user info for demo tenant', async () => {
+      const demoTenant = {
+        id: 'demo-tenant-id',
+        name: 'Demo Officina',
+        slug: 'demo',
+        isActive: true,
+        users: [{ id: 'demo-user-id', email: 'demo@test.com', name: 'Demo User', role: 'ADMIN' }],
+      };
+      prismaService.tenant.findFirst.mockResolvedValue(demoTenant);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+
+      const result = await controller.createDemoSession();
+
+      expect(result).toEqual({
+        ...mockTokens,
+        user: {
+          id: 'demo-user-id',
+          email: 'demo@test.com',
+          name: 'Demo User',
+          role: 'ADMIN',
+        },
+        tenant: {
+          id: 'demo-tenant-id',
+          name: 'Demo Officina',
+          slug: 'demo',
+        },
+      });
+    });
+
+    it('should throw NotFoundException when demo tenant does not exist', async () => {
+      prismaService.tenant.findFirst.mockResolvedValue(null);
+
+      await expect(controller.createDemoSession()).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when demo tenant has no users', async () => {
+      prismaService.tenant.findFirst.mockResolvedValue({
+        id: 'demo-tenant-id',
+        name: 'Demo',
+        slug: 'demo',
+        isActive: true,
+        users: [],
+      });
+
+      await expect(controller.createDemoSession()).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // =========================================================================
+  // login — edge cases
+  // =========================================================================
+  describe('login — risk assessment', () => {
+    const loginDto = {
+      email: 'test@example.com',
+      password: 'pass123',
+      tenantSlug: 'garage-roma',
+    };
+
+    let riskAssessment: jest.Mocked<RiskAssessmentService>;
+
+    beforeEach(() => {
+      riskAssessment = (controller as unknown as Record<string, unknown>)[
+        'riskAssessment'
+      ] as jest.Mocked<RiskAssessmentService>;
+    });
+
+    it('should apply progressive delay when throttle returns delay > 0', async () => {
+      const loginThrottle = (controller as unknown as Record<string, unknown>)[
+        'loginThrottle'
+      ] as jest.Mocked<LoginThrottleService>;
+      loginThrottle.getDelay.mockResolvedValue({ delay: 1, attempts: 3 } as never);
+
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should skip MFA when device is trusted', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: true } as never);
+
+      const trustedDeviceService = (controller as unknown as Record<string, unknown>)[
+        'trustedDeviceService'
+      ] as { isDeviceTrusted: jest.Mock };
+      trustedDeviceService.isDeviceTrusted.mockResolvedValue(true);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(mockTokens);
+      expect(mfaService.verify).not.toHaveBeenCalled();
+    });
+
+    it('should not trust device when risk level is high', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+
+      riskAssessment.assessLoginRisk.mockResolvedValue({
+        score: 80,
+        level: 'critical',
+        signals: [],
+        requiresMfa: false,
+        requiresDeviceApproval: false,
+        blockLogin: false,
+      } as never);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(mockTokens);
+      // trustDevice should NOT be called for critical risk level
+      expect(riskAssessment.trustDevice).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty user-agent header', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', '');
+
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should throw UnauthorizedException when risk blocks login', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+
+      riskAssessment.assessLoginRisk.mockResolvedValue({
+        score: 100,
+        level: 'critical',
+        signals: ['impossible_travel'],
+        requiresMfa: true,
+        requiresDeviceApproval: false,
+        blockLogin: true,
+      } as never);
+
+      await expect(controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should record failure on login throttle when validateUser throws', async () => {
+      const loginThrottle = (controller as unknown as Record<string, unknown>)[
+        'loginThrottle'
+      ] as jest.Mocked<LoginThrottleService>;
+
+      authService.validateUser.mockRejectedValue(new UnauthorizedException('Invalid credentials'));
+
+      await expect(controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(loginThrottle.recordFailure).toHaveBeenCalledWith('test@example.com', '127.0.0.1');
+    });
+
+    it('should allow login with high risk but no MFA configured (logs warning)', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+
+      riskAssessment.assessLoginRisk.mockResolvedValue({
+        score: 80,
+        level: 'high',
+        signals: ['new_device'],
+        requiresMfa: true,
+        requiresDeviceApproval: false,
+        blockLogin: false,
+      } as never);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should include sms in MFA methods when smsOtpEnabled and phone verified', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: true } as never);
+      authService.generateTwoFactorTempToken.mockResolvedValue('temp-token' as never);
+
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findUnique: jest.Mock };
+      };
+      prismaService.user.findUnique.mockResolvedValue({
+        smsOtpEnabled: true,
+        recoveryPhoneVerified: true,
+      });
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          tempToken: 'temp-token',
+          requiresMfa: true,
+          methods: expect.arrayContaining(['sms']),
+        }),
+      );
+    });
+
+    it('should handle session creation failure gracefully', async () => {
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+
+      const sessionService = (controller as unknown as Record<string, unknown>)[
+        'sessionService'
+      ] as { createSession: jest.Mock };
+      sessionService.createSession.mockRejectedValue(new Error('Redis down'));
+
+      // Login should still succeed even when session creation fails
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should pass rememberMe=true to trust device for 90 days', async () => {
+      const loginDtoWithRemember = { ...loginDto, rememberMe: true };
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+
+      const result = await controller.login(
+        loginDtoWithRemember as never,
+        '127.0.0.1',
+        'Mozilla/5.0 Chrome/120',
+      );
+
+      expect(result).toEqual(mockTokens);
+      expect(riskAssessment.trustDevice).toHaveBeenCalledWith('user-001', expect.any(String), 90);
+    });
+  });
+
+  // =========================================================================
+  // verifyTwoFactor — additional edge cases
+  // =========================================================================
+  describe('verifyTwoFactor — session creation failure', () => {
+    it('should return tokens even when session creation fails', async () => {
+      authService.verifyTwoFactorTempToken.mockResolvedValue('user-001' as never);
+      mfaService.verify.mockResolvedValue({ valid: true } as never);
+      authService.getUserWithTwoFactorStatus.mockResolvedValue(mockUser as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+
+      const sessionService = (controller as unknown as Record<string, unknown>)[
+        'sessionService'
+      ] as { createSession: jest.Mock };
+      sessionService.createSession.mockRejectedValue(new Error('Session error'));
+
+      const dto = { tempToken: 'temp-123', totpCode: '123456' };
+      const result = await controller.verifyTwoFactor(dto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toEqual(mockTokens);
+    });
+  });
+
+  // =========================================================================
+  // listDevices()
+  // =========================================================================
+  describe('listDevices', () => {
+    it('should delegate to trustedDeviceService.listDevices', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const trustedDeviceService = (controller as unknown as Record<string, unknown>)[
+        'trustedDeviceService'
+      ] as { listDevices: jest.Mock };
+
+      trustedDeviceService.listDevices.mockResolvedValue([]);
+
+      const result = await controller.listDevices(user as never);
+
+      expect(result).toEqual([]);
+      expect(trustedDeviceService.listDevices).toHaveBeenCalledWith('user-001');
+    });
+  });
+
+  // =========================================================================
+  // trustDevice()
+  // =========================================================================
+  describe('trustDevice', () => {
+    it('should delegate to trustedDeviceService and log security event', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const trustedDeviceService = (controller as unknown as Record<string, unknown>)[
+        'trustedDeviceService'
+      ] as { trustDevice: jest.Mock };
+
+      const expectedDate = new Date();
+      trustedDeviceService.trustDevice.mockResolvedValue({
+        id: 'dev-1',
+        trustedUntil: expectedDate,
+      });
+
+      const result = await controller.trustDevice('dev-1', user as never, { days: 60 } as never);
+
+      expect(result).toEqual({ id: 'dev-1', trustedUntil: expectedDate });
+      expect(trustedDeviceService.trustDevice).toHaveBeenCalledWith('dev-1', 'user-001', 60);
+    });
+  });
+
+  // =========================================================================
+  // untrustDevice()
+  // =========================================================================
+  describe('untrustDevice', () => {
+    it('should delegate to trustedDeviceService.untrustDevice', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const trustedDeviceService = (controller as unknown as Record<string, unknown>)[
+        'trustedDeviceService'
+      ] as { untrustDevice: jest.Mock };
+
+      trustedDeviceService.untrustDevice = jest.fn().mockResolvedValue(undefined);
+
+      const result = await controller.untrustDevice('dev-1', user as never);
+
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  // =========================================================================
+  // untrustAllDevices()
+  // =========================================================================
+  describe('untrustAllDevices', () => {
+    it('should delegate to trustedDeviceService.untrustAllDevices', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const trustedDeviceService = (controller as unknown as Record<string, unknown>)[
+        'trustedDeviceService'
+      ] as { untrustAllDevices: jest.Mock };
+
+      trustedDeviceService.untrustAllDevices = jest.fn().mockResolvedValue(5);
+
+      const result = await controller.untrustAllDevices(user as never);
+
+      expect(result).toEqual({ success: true, count: 5 });
+    });
+  });
+
+  // =========================================================================
+  // markDeviceCompromised()
+  // =========================================================================
+  describe('markDeviceCompromised', () => {
+    it('should delegate to trustedDeviceService.markCompromised', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const trustedDeviceService = (controller as unknown as Record<string, unknown>)[
+        'trustedDeviceService'
+      ] as { markCompromised: jest.Mock };
+
+      trustedDeviceService.markCompromised = jest.fn().mockResolvedValue(undefined);
+
+      const result = await controller.markDeviceCompromised('dev-1', user as never);
+
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  // =========================================================================
+  // getSecurityActivity()
+  // =========================================================================
+  describe('getSecurityActivity', () => {
+    it('should delegate to securityActivity.getActivity with parsed params', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const securityActivity = (controller as unknown as Record<string, unknown>)[
+        'securityActivity'
+      ] as { getActivity: jest.Mock };
+
+      securityActivity.getActivity = jest.fn().mockResolvedValue({
+        events: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      });
+
+      const result = await controller.getSecurityActivity(
+        user as never,
+        '2',
+        '20',
+        'LOGIN_SUCCESS,LOGIN_FAILED',
+      );
+
+      expect(securityActivity.getActivity).toHaveBeenCalledWith({
+        tenantId: 'tenant-001',
+        userId: 'user-001',
+        page: 2,
+        limit: 20,
+        eventTypes: ['LOGIN_SUCCESS', 'LOGIN_FAILED'],
+      });
+      expect(result).toEqual({ events: [], total: 0, page: 1, totalPages: 0 });
+    });
+
+    it('should handle undefined query params', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const securityActivity = (controller as unknown as Record<string, unknown>)[
+        'securityActivity'
+      ] as { getActivity: jest.Mock };
+
+      securityActivity.getActivity = jest.fn().mockResolvedValue({
+        events: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      });
+
+      await controller.getSecurityActivity(user as never);
+
+      expect(securityActivity.getActivity).toHaveBeenCalledWith({
+        tenantId: 'tenant-001',
+        userId: 'user-001',
+        page: undefined,
+        limit: undefined,
+        eventTypes: undefined,
+      });
+    });
+  });
+
+  // =========================================================================
+  // getSecuritySummary()
+  // =========================================================================
+  describe('getSecuritySummary', () => {
+    it('should delegate to securityActivity.getActivitySummary', async () => {
+      const user = {
+        userId: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+        role: 'ADMIN',
+      };
+      const securityActivity = (controller as unknown as Record<string, unknown>)[
+        'securityActivity'
+      ] as { getActivitySummary: jest.Mock };
+
+      securityActivity.getActivitySummary = jest.fn().mockResolvedValue({
+        totalLogins: 10,
+        failedAttempts: 2,
+        devicesUsed: 3,
+        locationsUsed: ['Roma'],
+        lastLogin: new Date(),
+        suspiciousEvents: 0,
+      });
+
+      const result = await controller.getSecuritySummary(user as never);
+
+      expect(result.totalLogins).toBe(10);
+      expect(securityActivity.getActivitySummary).toHaveBeenCalledWith('tenant-001', 'user-001');
+    });
+  });
+
+  // =========================================================================
+  // setRecoveryPhone()
+  // =========================================================================
+  describe('setRecoveryPhone', () => {
+    it('should encrypt phone, update user, and send OTP', async () => {
+      const user = {
+        userId: 'user-001',
+        tenantId: 'tenant-001',
+        email: 'test@test.com',
+        role: 'ADMIN',
+      };
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { update: jest.Mock };
+      };
+      prismaService.user.update = jest.fn().mockResolvedValue({});
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        sendOtp: jest.Mock;
+      };
+      smsOtp.sendOtp.mockResolvedValue({ success: true, expiresIn: 300 });
+
+      const result = await controller.setRecoveryPhone(
+        user as never,
+        { phone: '+393331234567' } as never,
+      );
+
+      expect(result).toEqual({ success: true, expiresIn: 300 });
+    });
+  });
+
+  // =========================================================================
+  // verifyRecoveryPhone()
+  // =========================================================================
+  describe('verifyRecoveryPhone', () => {
+    it('should verify OTP and mark phone as verified', async () => {
+      const user = {
+        userId: 'user-001',
+        tenantId: 'tenant-001',
+        email: 'test@test.com',
+        role: 'ADMIN',
+      };
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: true });
+
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { update: jest.Mock };
+      };
+      prismaService.user.update = jest.fn().mockResolvedValue({});
+
+      const result = await controller.verifyRecoveryPhone(
+        user as never,
+        { code: '123456' } as never,
+      );
+
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should throw BadRequestException when OTP is invalid', async () => {
+      const user = {
+        userId: 'user-001',
+        tenantId: 'tenant-001',
+        email: 'test@test.com',
+        role: 'ADMIN',
+      };
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: false, remainingAttempts: 2 });
+
+      await expect(
+        controller.verifyRecoveryPhone(user as never, { code: '000000' } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // =========================================================================
+  // removeRecoveryPhone()
+  // =========================================================================
+  describe('removeRecoveryPhone', () => {
+    it('should remove recovery phone from user', async () => {
+      const user = {
+        userId: 'user-001',
+        tenantId: 'tenant-001',
+        email: 'test@test.com',
+        role: 'ADMIN',
+      };
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { update: jest.Mock };
+      };
+      prismaService.user.update = jest.fn().mockResolvedValue({});
+
+      const result = await controller.removeRecoveryPhone(user as never);
+
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  // =========================================================================
+  // sendRecoveryOtp()
+  // =========================================================================
+  describe('sendRecoveryOtp', () => {
+    it('should return success even when user not found (prevent enumeration)', async () => {
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findFirst: jest.Mock };
+      };
+      prismaService.user.findFirst = jest.fn().mockResolvedValue(null);
+
+      const result = await controller.sendRecoveryOtp({ email: 'unknown@test.com' } as never);
+
+      expect(result).toEqual({ success: true, expiresIn: 300 });
+    });
+
+    it('should send OTP when user has verified recovery phone', async () => {
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findFirst: jest.Mock };
+      };
+      prismaService.user.findFirst = jest.fn().mockResolvedValue({
+        id: 'u1',
+        tenantId: 't1',
+        recoveryPhone: 'encrypted-phone',
+        recoveryPhoneVerified: true,
+      });
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        sendOtp: jest.Mock;
+      };
+      smsOtp.sendOtp.mockResolvedValue({ success: true, expiresIn: 300 });
+
+      const result = await controller.sendRecoveryOtp({ email: 'test@test.com' } as never);
+
+      expect(result).toEqual({ success: true, expiresIn: 300 });
+    });
+  });
+
+  // =========================================================================
+  // verifyRecoveryOtp()
+  // =========================================================================
+  describe('verifyRecoveryOtp', () => {
+    it('should throw BadRequestException when user not found', async () => {
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findFirst: jest.Mock };
+      };
+      prismaService.user.findFirst = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        controller.verifyRecoveryOtp({ email: 'unknown@test.com', code: '123456' } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when OTP is invalid', async () => {
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findFirst: jest.Mock };
+      };
+      prismaService.user.findFirst = jest.fn().mockResolvedValue({ id: 'u1' });
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: false, remainingAttempts: 1 });
+
+      await expect(
+        controller.verifyRecoveryOtp({ email: 'test@test.com', code: '000000' } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return tempToken when OTP is valid', async () => {
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findFirst: jest.Mock };
+      };
+      prismaService.user.findFirst = jest.fn().mockResolvedValue({ id: 'u1' });
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: true });
+
+      authService.generateTwoFactorTempToken.mockResolvedValue('temp-recovery-token' as never);
+
+      const result = await controller.verifyRecoveryOtp({
+        email: 'test@test.com',
+        code: '123456',
+      } as never);
+
+      expect(result).toEqual({ tempToken: 'temp-recovery-token' });
+    });
+  });
+
+  // =========================================================================
+  // sendLoginSmsOtp()
+  // =========================================================================
+  describe('sendLoginSmsOtp', () => {
+    it('should throw BadRequestException when user has no recovery phone', async () => {
+      const user = {
+        userId: 'user-001',
+        tenantId: 'tenant-001',
+        email: 'test@test.com',
+        role: 'ADMIN',
+      };
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findUnique: jest.Mock };
+      };
+      prismaService.user.findUnique.mockResolvedValue({
+        recoveryPhone: null,
+        recoveryPhoneVerified: false,
+      });
+
+      await expect(controller.sendLoginSmsOtp(user as never)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should send OTP when phone is configured and verified', async () => {
+      const user = {
+        userId: 'user-001',
+        tenantId: 'tenant-001',
+        email: 'test@test.com',
+        role: 'ADMIN',
+      };
+      const prismaService = (controller as unknown as Record<string, unknown>)['prisma'] as {
+        user: { findUnique: jest.Mock };
+      };
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        tenantId: 'tenant-001',
+        recoveryPhone: 'encrypted',
+        recoveryPhoneVerified: true,
+      });
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        sendOtp: jest.Mock;
+      };
+      smsOtp.sendOtp.mockResolvedValue({ success: true, expiresIn: 300 });
+
+      const result = await controller.sendLoginSmsOtp(user as never);
+
+      expect(result).toEqual({ success: true, expiresIn: 300 });
+    });
+  });
+
+  // =========================================================================
+  // verifyLoginSmsOtp()
+  // =========================================================================
+  describe('verifyLoginSmsOtp', () => {
+    it('should throw BadRequestException when OTP is invalid', async () => {
+      authService.verifyTwoFactorTempToken.mockResolvedValue('user-001' as never);
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: false, remainingAttempts: 2 });
+
+      await expect(
+        controller.verifyLoginSmsOtp(
+          { tempToken: 'temp-123', code: '000000' } as never,
+          '127.0.0.1',
+          'Mozilla/5.0',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return tokens on valid SMS OTP', async () => {
+      authService.verifyTwoFactorTempToken.mockResolvedValue('user-001' as never);
+      authService.getUserWithTwoFactorStatus.mockResolvedValue(mockUser as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: true });
+
+      const result = await controller.verifyLoginSmsOtp(
+        { tempToken: 'temp-123', code: '123456' } as never,
+        '127.0.0.1',
+        'Mozilla/5.0 Chrome/120',
+      );
+
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should return tokens even when session creation fails in verifyLoginSmsOtp', async () => {
+      authService.verifyTwoFactorTempToken.mockResolvedValue('user-001' as never);
+      authService.getUserWithTwoFactorStatus.mockResolvedValue(mockUser as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+
+      const smsOtp = (controller as unknown as Record<string, unknown>)['smsOtpService'] as {
+        verifyOtp: jest.Mock;
+      };
+      smsOtp.verifyOtp.mockResolvedValue({ valid: true });
+
+      const sessionService = (controller as unknown as Record<string, unknown>)[
+        'sessionService'
+      ] as { createSession: jest.Mock };
+      sessionService.createSession.mockRejectedValue(new Error('Session fail'));
+
+      const result = await controller.verifyLoginSmsOtp(
+        { tempToken: 'temp-123', code: '123456' } as never,
+        '127.0.0.1',
+        'Mozilla/5.0',
+      );
+
       expect(result).toEqual(mockTokens);
     });
   });

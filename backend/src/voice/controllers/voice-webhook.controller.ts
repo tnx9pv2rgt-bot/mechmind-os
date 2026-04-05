@@ -5,6 +5,7 @@ import {
   Headers,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
 import { VapiWebhookService } from '../services/vapi-webhook.service';
@@ -19,6 +20,8 @@ import {
 @ApiTags('Voice Webhooks')
 @Controller('webhooks/vapi')
 export class VoiceWebhookController {
+  private readonly logger = new Logger(VoiceWebhookController.name);
+
   constructor(
     private readonly vapiWebhookService: VapiWebhookService,
     private readonly configService: ConfigService,
@@ -119,7 +122,7 @@ export class VoiceWebhookController {
     const secret = this.configService.get<string>('VAPI_WEBHOOK_SECRET');
 
     if (!secret) {
-      console.error('VAPI_WEBHOOK_SECRET not configured - rejecting all webhooks');
+      this.logger.error('VAPI_WEBHOOK_SECRET not configured - rejecting all webhooks');
       return false;
     }
 

@@ -26,42 +26,42 @@ export interface PlanPricing {
 export const PLAN_PRICING: Record<SubscriptionPlan, PlanPricing> = {
   [SubscriptionPlan.SMALL]: {
     id: SubscriptionPlan.SMALL,
-    name: 'Small',
-    nameIt: 'Piccole',
-    description: 'Perfect for small auto repair shops (1-3 employees)',
-    monthlyPrice: 100.0,
-    yearlyPrice: 1020.0, // €100 * 12 * 0.85 (15% discount)
+    name: 'Starter',
+    nameIt: 'Starter',
+    description: 'Per officine con 1-3 dipendenti, 1 sede',
+    monthlyPrice: 39.0,
+    yearlyPrice: 399.0, // €39 * 12 * 0.85 (15% discount)
     yearlyDiscountPercent: 15,
     stripePriceId: process.env.STRIPE_PRICE_SMALL,
     isCustomPricing: false,
   },
   [SubscriptionPlan.MEDIUM]: {
     id: SubscriptionPlan.MEDIUM,
-    name: 'Medium',
-    nameIt: 'Medie',
-    description: 'For growing businesses (4-10 employees, 1-2 locations)',
-    monthlyPrice: 390.9,
-    yearlyPrice: 3990.0, // €390.90 * 12 * 0.85 (15% discount)
-    yearlyDiscountPercent: 15,
+    name: 'Pro',
+    nameIt: 'Pro',
+    description: 'Per officine in crescita (4-10 dipendenti, fino a 3 sedi)',
+    monthlyPrice: 89.0,
+    yearlyPrice: 899.0, // €89 * 12 * 0.84 (16% discount)
+    yearlyDiscountPercent: 16,
     stripePriceId: process.env.STRIPE_PRICE_MEDIUM,
     isCustomPricing: false,
   },
   [SubscriptionPlan.ENTERPRISE]: {
     id: SubscriptionPlan.ENTERPRISE,
     name: 'Enterprise',
-    nameIt: 'Grandi',
-    description: 'For large operations (10+ employees, 3+ locations)',
-    monthlyPrice: 0, // Custom pricing
-    yearlyPrice: 0,
-    yearlyDiscountPercent: 0,
-    stripePriceId: undefined,
-    isCustomPricing: true,
+    nameIt: 'Enterprise',
+    description: 'Per grandi operazioni (10+ dipendenti, sedi illimitate)',
+    monthlyPrice: 249.0,
+    yearlyPrice: 2499.0, // €249 * 12 * 0.84 (16% discount)
+    yearlyDiscountPercent: 16,
+    stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE,
+    isCustomPricing: false,
   },
   [SubscriptionPlan.TRIAL]: {
     id: SubscriptionPlan.TRIAL,
     name: 'Trial',
     nameIt: 'Prova',
-    description: '14-day free trial with full access',
+    description: '14 giorni di prova gratuita con accesso completo',
     monthlyPrice: 0,
     yearlyPrice: 0,
     yearlyDiscountPercent: 0,
@@ -75,13 +75,36 @@ export const PLAN_PRICING: Record<SubscriptionPlan, PlanPricing> = {
 // ==========================================
 
 export const AI_ADDON = {
-  name: 'AI Assistant',
-  nameIt: 'Assistente AI',
-  description: 'AI-powered vehicle inspections and customer insights',
-  monthlyPrice: 200.0,
-  yearlyPrice: 2040.0, // €200 * 12 * 0.85
+  name: 'AI Inspections',
+  nameIt: 'Ispezioni AI',
+  description: 'Ispezioni veicoli potenziate da AI con rilevamento danni automatico',
+  monthlyPrice: 29.0,
+  yearlyPrice: 295.0, // €29 * 12 * 0.85
   stripePriceId: process.env.STRIPE_PRICE_AI_ADDON,
 };
+
+// ==========================================
+// VOICE AI ADD-ON (ElevenLabs + Vapi)
+// ==========================================
+
+export let VOICE_ADDON = {
+  name: 'Voice AI Assistant',
+  nameIt: 'Assistente Vocale AI',
+  description:
+    'Assistente vocale AI per rispondere alle chiamate e prenotare appuntamenti (ElevenLabs + Vapi)',
+  monthlyPrice: 49.0, // 100 minuti inclusi
+  yearlyPrice: 499.0, // €49 * 12 * 0.85
+  includedMinutes: 100,
+  extraMinutePrice: 0.4, // €0.40/min oltre i 100 inclusi
+  costPerMinute: 0.14, // Costo reale medio Vapi+ElevenLabs+Deepgram+Groq (aggiornato Q1 2026)
+  stripePriceId: process.env.STRIPE_PRICE_VOICE_ADDON,
+  enterpriseIncludedMinutes: 100,
+};
+
+/** Aggiorna VOICE_ADDON con pricing ricalcolato dal VoicePricingService */
+export function updateVoiceAddonPricing(updated: Partial<typeof VOICE_ADDON>): void {
+  VOICE_ADDON = { ...VOICE_ADDON, ...updated };
+}
 
 // ==========================================
 // PLAN LIMITS
@@ -106,19 +129,19 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     maxInspectionsPerMonth: 50,
   },
   [SubscriptionPlan.SMALL]: {
-    maxUsers: 3,
+    maxUsers: 5,
     maxLocations: 1,
-    maxApiCallsPerMonth: 5000,
+    maxApiCallsPerMonth: 10000,
     maxStorageBytes: 10 * 1024 * 1024 * 1024, // 10GB
     maxCustomers: 500,
     maxInspectionsPerMonth: 200,
   },
   [SubscriptionPlan.MEDIUM]: {
-    maxUsers: 10,
-    maxLocations: 2,
-    maxApiCallsPerMonth: 25000,
+    maxUsers: 15,
+    maxLocations: 3,
+    maxApiCallsPerMonth: 50000,
     maxStorageBytes: 50 * 1024 * 1024 * 1024, // 50GB
-    maxCustomers: 2500,
+    maxCustomers: 5000,
     maxInspectionsPerMonth: 1000,
   },
   [SubscriptionPlan.ENTERPRISE]: {
@@ -162,20 +185,21 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, FeatureFlag[]> = {
     FeatureFlag.PRIORITY_SUPPORT,
     FeatureFlag.WHITE_LABEL,
     FeatureFlag.BLOCKCHAIN_VERIFICATION,
-    FeatureFlag.VOICE_ASSISTANT,
     FeatureFlag.OBD_INTEGRATION,
     FeatureFlag.INVENTORY_MANAGEMENT,
     FeatureFlag.CUSTOM_INTEGRATIONS,
     FeatureFlag.DEDICATED_MANAGER,
     FeatureFlag.SLA_GUARANTEE,
+    // VOICE_ASSISTANT NOT included — requires Voice AI add-on (€39/mese)
+    // Enterprise gets 100 min included when Voice add-on is active
   ],
 };
 
 // Features that require AI add-on (in addition to base plan)
-export const AI_ADDON_FEATURES: FeatureFlag[] = [
-  FeatureFlag.AI_INSPECTIONS,
-  FeatureFlag.VOICE_ASSISTANT,
-];
+export const AI_ADDON_FEATURES: FeatureFlag[] = [FeatureFlag.AI_INSPECTIONS];
+
+// Features that require Voice add-on (separate from AI add-on)
+export const VOICE_ADDON_FEATURES: FeatureFlag[] = [FeatureFlag.VOICE_ASSISTANT];
 
 // ==========================================
 // FEATURE DETAILS
@@ -331,11 +355,19 @@ export function calculateProratedAmount(
   return Math.round((newValue - remainingValue) * 100) / 100;
 }
 
-export function getFeaturesForPlan(plan: SubscriptionPlan, hasAiAddon: boolean): FeatureFlag[] {
+export function getFeaturesForPlan(
+  plan: SubscriptionPlan,
+  hasAiAddon: boolean,
+  hasVoiceAddon: boolean = false,
+): FeatureFlag[] {
   const baseFeatures = [...PLAN_FEATURES[plan]];
 
   if (hasAiAddon) {
     baseFeatures.push(...AI_ADDON_FEATURES);
+  }
+
+  if (hasVoiceAddon) {
+    baseFeatures.push(...VOICE_ADDON_FEATURES);
   }
 
   return [...new Set(baseFeatures)];

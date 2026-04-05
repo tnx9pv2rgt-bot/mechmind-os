@@ -112,8 +112,8 @@ export default function FinancialDashboardPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-        <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
-        <p className="text-body text-apple-gray dark:text-[#636366] mb-4">
+        <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
+        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4">
           Impossibile caricare i dati finanziari
         </p>
         <AppleButton variant="ghost" onClick={() => mutate()}>
@@ -133,14 +133,14 @@ export default function FinancialDashboardPage() {
   const kpiCards = [
     { label: 'Fatturato', value: kpi.fatturato, icon: Euro, color: 'bg-apple-blue' },
     { label: 'Da Incassare', value: kpi.daIncassare, icon: Clock, color: 'bg-apple-orange' },
-    { label: 'Scaduto', value: kpi.scaduto, icon: AlertTriangle, color: 'bg-red-500' },
+    { label: 'Scaduto', value: kpi.scaduto, icon: AlertTriangle, color: 'bg-apple-red' },
     { label: 'Incassato', value: kpi.incassato, icon: CheckCircle, color: 'bg-apple-green' },
   ];
 
   return (
     <div>
       {/* Header */}
-      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
+      <header>
         <div className="px-4 sm:px-8 py-5">
           <Breadcrumb
             items={[
@@ -151,27 +151,29 @@ export default function FinancialDashboardPage() {
           />
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[#ececec]">
+              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
                 Report Finanziario
               </h1>
-              <p className="text-apple-gray dark:text-[#636366] text-body mt-1">
+              <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
                 Panoramica delle entrate e dei pagamenti
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex bg-gray-100 dark:bg-[#353535] rounded-xl p-1">
+              <div className="flex bg-[var(--surface-hover)] rounded-xl p-1">
                 {PERIOD_OPTIONS.map(opt => (
-                  <button
+                  <AppleButton
                     key={opt.value}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setPeriod(opt.value)}
-                    className={`px-4 py-2 text-sm rounded-lg transition-all ${
+                    className={`rounded-lg transition-all ${
                       period === opt.value
-                        ? 'bg-white dark:bg-[#2f2f2f] shadow-sm font-medium text-apple-dark dark:text-[#ececec]'
-                        : 'text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec]'
+                        ? 'bg-white dark:bg-[var(--surface-elevated)] shadow-sm font-medium text-apple-dark dark:text-[var(--text-primary)]'
+                        : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {opt.label}
-                  </button>
+                  </AppleButton>
                 ))}
               </div>
               <AppleButton
@@ -206,10 +208,10 @@ export default function FinancialDashboardPage() {
                       <card.icon className="h-5 w-5 text-white" />
                     </div>
                   </div>
-                  <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">
+                  <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
                     {formatCurrency(card.value)}
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[#636366]">{card.label}</p>
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{card.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -223,7 +225,7 @@ export default function FinancialDashboardPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Andamento Fatturato
                   </h2>
                 </div>
@@ -231,7 +233,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {revenueTrend.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[#636366] text-sm">
+                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -255,7 +257,7 @@ export default function FinancialDashboardPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Scadenziario (Aging Report)
                   </h2>
                 </div>
@@ -263,7 +265,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {agingReport.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[#636366] text-sm">
+                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -290,7 +292,7 @@ export default function FinancialDashboardPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
                   <Euro className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Distribuzione Metodi di Pagamento
                   </h2>
                 </div>
@@ -298,7 +300,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {paymentMethodDistribution.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[#636366] text-sm">
+                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -333,7 +335,7 @@ export default function FinancialDashboardPage() {
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Cash Flow
                   </h2>
                 </div>
@@ -341,7 +343,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {cashFlow.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[#636366] text-sm">
+                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -367,7 +369,7 @@ export default function FinancialDashboardPage() {
         <motion.div variants={itemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">
+              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                 Migliori Clienti per Fatturato
               </h2>
             </AppleCardHeader>
@@ -375,22 +377,22 @@ export default function FinancialDashboardPage() {
               {topCustomers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Euro className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[#636366]">
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
                     Nessun dato disponibile
                   </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full">
                     <thead>
-                      <tr className="border-b border-apple-border/30 dark:border-[#424242]">
-                        <th className="text-left py-3 px-4 text-xs font-medium uppercase text-apple-gray dark:text-[#636366]">
+                      <tr className="border-b border-apple-border/30 dark:border-[var(--border-default)]">
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
                           Cliente
                         </th>
-                        <th className="text-right py-3 px-4 text-xs font-medium uppercase text-apple-gray dark:text-[#636366]">
+                        <th className="text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
                           Fatture
                         </th>
-                        <th className="text-right py-3 px-4 text-xs font-medium uppercase text-apple-gray dark:text-[#636366]">
+                        <th className="text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
                           Fatturato
                         </th>
                       </tr>
@@ -399,15 +401,15 @@ export default function FinancialDashboardPage() {
                       {topCustomers.map((customer, i) => (
                         <tr
                           key={i}
-                          className="border-b border-apple-border/10 dark:border-[#424242]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[#353535] transition-colors"
+                          className="border-b border-apple-border/10 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
                         >
-                          <td className="py-3 px-4 font-medium text-apple-dark dark:text-[#ececec]">
+                          <td className="py-3 px-4 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
                             {customer.name}
                           </td>
-                          <td className="py-3 px-4 text-right text-apple-gray dark:text-[#636366]">
+                          <td className="py-3 px-4 text-body text-right text-apple-gray dark:text-[var(--text-secondary)]">
                             {customer.invoiceCount}
                           </td>
-                          <td className="py-3 px-4 text-right font-semibold text-apple-dark dark:text-[#ececec]">
+                          <td className="py-3 px-4 text-body text-right font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                             {formatCurrency(customer.revenue)}
                           </td>
                         </tr>

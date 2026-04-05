@@ -33,15 +33,15 @@ const stepVariants = {
 
 const btnPrimary = [
   'flex h-[44px] items-center justify-center gap-1 rounded-full',
-  'bg-white px-6 text-[14px] font-medium text-[#1d1d1f]',
-  'transition-colors hover:bg-[#e5e5e5]',
+  'bg-white px-6 text-[14px] font-medium text-[var(--text-primary)]',
+  'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:cursor-not-allowed disabled:opacity-50',
 ].join(' ');
 
 const btnSecondary = [
   'flex h-[44px] items-center justify-center gap-1 rounded-full',
-  'border border-[#555] px-5 text-[14px] font-medium text-[#b4b4b4]',
-  'transition-colors hover:border-[#888] hover:text-white',
+  'border border-[var(--text-tertiary)] px-5 text-[14px] font-medium text-[var(--text-secondary)]',
+  'transition-colors hover:border-[var(--text-tertiary)] hover:text-white',
 ].join(' ');
 
 export default function OnboardingPage(): React.ReactElement {
@@ -100,16 +100,16 @@ export default function OnboardingPage(): React.ReactElement {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex min-h-screen w-full items-center justify-center bg-[#1a1a1a]">
+      <div className="flex min-h-screen w-full items-center justify-center bg-[var(--surface-tertiary)]">
         <div className="flex w-full items-center justify-center p-4">
-          <div className="relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-2xl bg-[#2f2f2f] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:max-w-[520px]">
+          <div className="relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-2xl bg-[var(--surface-elevated)] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:max-w-[520px]">
             {/* Header */}
             <header className="flex min-h-[52px] select-none justify-between p-2.5 pb-0 ps-4">
               <div className="flex max-w-full items-center" />
               <div className="flex items-center">
                 <button
                   onClick={handleSkip}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#b4b4b4] transition-colors hover:bg-white/10 min-h-[44px] min-w-[44px]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-white/10 min-h-[44px] min-w-[44px]"
                   aria-label="Salta"
                   type="button"
                 >
@@ -126,7 +126,7 @@ export default function OnboardingPage(): React.ReactElement {
                   <h1 className="text-2xl font-normal text-white">
                     Raccontaci della tua officina
                   </h1>
-                  <p className="mt-1 text-[14px] text-[#b4b4b4]">
+                  <p className="mt-1 text-[14px] text-[var(--text-secondary)]">
                     4 domande per personalizzare MechMind per te
                   </p>
                 </motion.div>

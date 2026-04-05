@@ -13,6 +13,7 @@ import { SecurityActivityService } from './services/security-activity.service';
 import { JwksService } from './services/jwks.service';
 import { JwksController } from './controllers/jwks.controller';
 import { AuthController } from './controllers/auth.controller';
+import { PortalAuthController } from './controllers/portal-auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -48,6 +49,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
   ],
   controllers: [
     AuthController,
+    PortalAuthController,
     MfaController,
     PasskeyController,
     MagicLinkController,

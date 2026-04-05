@@ -68,16 +68,16 @@ export default function ForgotPasswordPage(): React.ReactElement {
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Controlla la tua email
           </h1>
-          <p className="text-[15px] text-[#b4b4b4] leading-relaxed max-w-[320px] mx-auto">
+          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto">
             Se esiste un account con l&apos;email{' '}
             <strong className="text-white">{email}</strong>, riceverai un link di reset.
           </p>
-          <p className="text-[13px] text-[#888]">
+          <p className="text-[13px] text-[var(--text-tertiary)]">
             Se non trovi l&apos;email, controlla anche nella cartella spam.
           </p>
           <Link
             href="/auth"
-            className="inline-block text-[14px] font-medium text-[#888] hover:text-white transition-colors min-h-[44px] leading-[44px]"
+            className="inline-block text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[44px] leading-[44px]"
           >
             Torna al login
           </Link>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Password dimenticata?
           </h1>
-          <p className="mt-2 text-[15px] text-[#b4b4b4] leading-relaxed">
+          <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
             Inserisci la tua email e ti invieremo un link per reimpostare la password.
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
               autoFocus
               placeholder="Email aziendale"
               aria-describedby={error ? 'forgot-error' : undefined}
-              className={`${inputStyle} ${error ? 'border-[#888]' : ''}`}
+              className={`${inputStyle} ${error ? 'border-[var(--text-tertiary)]' : ''}`}
             />
             {error && (
               <motion.p
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
                 role="alert"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-2 pl-5 text-[13px] text-[#b4b4b4]"
+                className="mt-2 pl-5 text-[13px] text-[var(--text-secondary)]"
               >
                 {error}
               </motion.p>
@@ -141,11 +141,11 @@ export default function ForgotPasswordPage(): React.ReactElement {
         </form>
 
         <div className="text-center">
-          <p className="text-[13px] text-[#888]">
+          <p className="text-[13px] text-[var(--text-tertiary)]">
             Ricordi la password?{' '}
             <Link
               href="/auth"
-              className="font-medium text-white underline decoration-[#888] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+              className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               Accedi
             </Link>

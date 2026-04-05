@@ -167,16 +167,16 @@ export function ClaimForm({
 
         {/* Deductible Info */}
         {deductible > 0 && estimatedCost > 0 && (
-          <div className='bg-[#383838] border border-[#4e4e4e] rounded-2xl p-4 space-y-2'>
+          <div className='bg-[var(--surface-active)] border border-[var(--border-strong)] rounded-2xl p-4 space-y-2'>
             <div className='flex items-center justify-between text-sm'>
-              <span className='text-[#888]'>Costo Stimato:</span>
+              <span className='text-[var(--text-tertiary)]'>Costo Stimato:</span>
               <span className='font-medium text-white'>€{estimatedCost.toFixed(2)}</span>
             </div>
             <div className='flex items-center justify-between text-sm'>
-              <span className='text-[#888]'>Franchigia:</span>
+              <span className='text-[var(--text-tertiary)]'>Franchigia:</span>
               <span className='font-medium text-amber-400'>-€{deductible.toFixed(2)}</span>
             </div>
-            <div className='border-t border-[#4e4e4e] pt-2 flex items-center justify-between'>
+            <div className='border-t border-[var(--border-strong)] pt-2 flex items-center justify-between'>
               <span className='font-medium text-white'>Importo Netto:</span>
               <span className='font-semibold text-green-400'>€{netAmount.toFixed(2)}</span>
             </div>
@@ -193,12 +193,12 @@ export function ClaimForm({
               <FormControl>
                 <div className='space-y-4'>
                   {/* Upload Area */}
-                  <div className='border-2 border-dashed border-[#4e4e4e] rounded-2xl p-6 text-center hover:border-[#888] transition-colors'>
-                    <Upload className='mx-auto h-8 w-8 text-[#888] mb-2' />
-                    <p className='text-sm text-[#888] mb-2'>
+                  <div className='border-2 border-dashed border-[var(--border-strong)] rounded-2xl p-6 text-center hover:border-[var(--text-tertiary)] transition-colors'>
+                    <Upload className='mx-auto h-8 w-8 text-[var(--text-tertiary)] mb-2' />
+                    <p className='text-sm text-[var(--text-tertiary)] mb-2'>
                       Carica foto del danno o del problema
                     </p>
-                    <p className='text-xs text-[#888] mb-3'>Formati supportati: JPG, PNG, HEIC</p>
+                    <p className='text-xs text-[var(--text-tertiary)] mb-3'>Formati supportati: JPG, PNG, HEIC</p>
                     <Input
                       type='file'
                       accept='image/*'
@@ -214,7 +214,7 @@ export function ClaimForm({
                       size='sm'
                       disabled={isUploading}
                       onClick={() => document.getElementById('evidence-upload')?.click()}
-                      className='rounded-full border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
+                      className='rounded-full border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'
                     >
                       {isUploading ? 'Caricamento...' : 'Seleziona File'}
                     </Button>
@@ -230,7 +230,7 @@ export function ClaimForm({
                         {uploadedFiles.map((url, index) => (
                           <div
                             key={index}
-                            className='relative group aspect-video rounded-2xl overflow-hidden bg-[#383838]'
+                            className='relative group aspect-video rounded-2xl overflow-hidden bg-[var(--surface-active)]'
                           >
                             <img
                               src={url}
@@ -260,13 +260,13 @@ export function ClaimForm({
         />
 
         {/* Actions */}
-        <div className='flex items-center justify-end gap-3 pt-4 border-t border-[#4e4e4e]'>
+        <div className='flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-strong)]'>
           {onCancel && (
-            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'>
+            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'>
               Annulla
             </Button>
           )}
-          <Button type='submit' disabled={isLoading || isUploading} className='rounded-full h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'>
+          <Button type='submit' disabled={isLoading || isUploading} className='rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'>
             <Send className='h-4 w-4 mr-2' />
             {isLoading ? 'Invio...' : 'Invia Reclamo'}
           </Button>

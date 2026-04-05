@@ -1,10 +1,9 @@
+import { Loader2 } from 'lucide-react';
+
 export default function Loading() {
   return (
-    <div className='flex items-center justify-center min-h-[60vh]'>
-      <div className='flex flex-col items-center gap-4'>
-        <div className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full animate-spin' />
-        <p className='text-[15px] text-[#636366] dark:text-[#a1a1aa]'>Caricamento preventivo...</p>
-      </div>
+    <div className='flex items-center justify-center py-24'>
+      <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
     </div>
   );
 }

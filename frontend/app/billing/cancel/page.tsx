@@ -10,7 +10,7 @@ export default function BillingCancelPage() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-apple-light-gray dark:bg-[#212121] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-apple-light-gray dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -27,10 +27,10 @@ export default function BillingCancelPage() {
             >
               <XCircle className="w-8 h-8 text-orange-600" />
             </motion.div>
-            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">
+            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
               Pagamento Annullato
             </h1>
-            <p className="text-body text-apple-gray dark:text-[#636366] mt-2">
+            <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-2">
               Il processo di pagamento è stato annullato. Nessun addebito è stato effettuato.
             </p>
           </AppleCardHeader>
@@ -40,12 +40,12 @@ export default function BillingCancelPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="p-4 bg-apple-light-gray/50 dark:bg-[#353535]/50 rounded-xl"
+              className="p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]/50 rounded-xl"
             >
-              <h3 className="text-footnote font-semibold text-apple-gray dark:text-[#636366] uppercase mb-2">
+              <h3 className="text-footnote font-semibold text-apple-gray dark:text-[var(--text-secondary)] uppercase mb-2">
                 Possibili motivi
               </h3>
-              <ul className="space-y-2 text-body text-apple-dark dark:text-[#ececec]">
+              <ul className="space-y-2 text-body text-apple-dark dark:text-[var(--text-primary)]">
                 <li className="flex items-start gap-2">
                   <span className="text-orange-500 mt-0.5">•</span>
                   Hai annullato il pagamento

@@ -13,8 +13,8 @@ const COOLDOWN_SECONDS = 60;
 
 const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'bg-white text-base font-normal text-[#0d0d0d]',
-  'transition-colors hover:bg-[#e5e5e5]',
+  'bg-white text-base font-normal text-[var(--text-primary)]',
+  'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:opacity-30',
 ].join(' ');
 
@@ -78,7 +78,7 @@ export function MagicLinkSent({
         <h2 className="text-xl font-normal text-white">
           Controlla la tua email
         </h2>
-        <p className="text-sm text-[#888]">
+        <p className="text-sm text-[var(--text-tertiary)]">
           Abbiamo inviato un link di accesso a:
         </p>
         <p className="text-sm font-normal text-white">
@@ -87,7 +87,7 @@ export function MagicLinkSent({
       </div>
 
       {/* Description */}
-      <p className="text-sm text-[#888]">
+      <p className="text-sm text-[var(--text-tertiary)]">
         Clicca il link nell&apos;email per accedere. Nessuna password necessaria.
       </p>
 
@@ -112,8 +112,8 @@ export function MagicLinkSent({
           className={[
             'min-h-[44px] text-sm font-normal transition-colors',
             cooldown > 0 || isResending
-              ? 'cursor-not-allowed text-[#555]'
-              : 'text-[#b4b4b4] hover:text-white',
+              ? 'cursor-not-allowed text-[var(--text-tertiary)]'
+              : 'text-[var(--text-secondary)] hover:text-white',
           ].join(' ')}
         >
           {isResending
@@ -123,7 +123,7 @@ export function MagicLinkSent({
               : 'Reinvia link'}
         </button>
 
-        <p className="text-xs text-[#888]">
+        <p className="text-xs text-[var(--text-tertiary)]">
           Non trovi l&apos;email? Controlla lo spam
         </p>
       </div>
@@ -132,7 +132,7 @@ export function MagicLinkSent({
       <button
         type="button"
         onClick={onBackToPassword}
-        className="min-h-[44px] text-sm text-[#888] transition-colors hover:text-white"
+        className="min-h-[44px] text-sm text-[var(--text-tertiary)] transition-colors hover:text-white"
       >
         Preferisci usare la password? Accedi con password &rarr;
       </button>

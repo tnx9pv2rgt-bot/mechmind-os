@@ -39,7 +39,7 @@ export function BottomNav(): React.ReactElement {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700"
+      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[var(--surface-primary)] border-t border-[var(--border-default)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       aria-label="Navigazione mobile"
     >
@@ -56,8 +56,8 @@ export function BottomNav(): React.ReactElement {
                 className="flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-2 py-1"
                 aria-label="Apri menu completo"
               >
-                <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                <Icon className="h-5 w-5 text-[var(--text-secondary)]" />
+                <span className="text-[10px] font-medium text-[var(--text-secondary)]">
                   {item.name}
                 </span>
               </button>
@@ -71,8 +71,8 @@ export function BottomNav(): React.ReactElement {
               className={cn(
                 'flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-2 py-1 transition-colors',
                 active
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400'
+                  ? 'text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)]'
               )}
               aria-current={active ? 'page' : undefined}
             >

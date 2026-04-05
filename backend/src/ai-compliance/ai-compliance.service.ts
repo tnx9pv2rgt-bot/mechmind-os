@@ -154,9 +154,7 @@ export class AiComplianceService {
       ]);
 
     const overrideRate = totalDecisions > 0 ? overriddenCount / totalDecisions : 0;
-    const avgConfidence = avgResult._avg.confidence
-      ? Number(avgResult._avg.confidence)
-      : 0;
+    const avgConfidence = avgResult._avg.confidence ? Number(avgResult._avg.confidence) : 0;
 
     const byFeature: Record<string, number> = {};
     for (const row of byFeatureRaw) {

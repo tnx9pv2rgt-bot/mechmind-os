@@ -120,7 +120,7 @@ export function CallerIdSearch() {
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className='absolute top-full mt-2 right-0 w-72 bg-white dark:bg-[#2f2f2f] rounded-xl shadow-2xl border border-gray-200 dark:border-[#424242] max-h-80 overflow-y-auto z-[9999]'>
+        <div className='absolute top-full mt-2 right-0 w-72 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-2xl border border-gray-200 dark:border-[var(--border-default)] max-h-80 overflow-y-auto z-[9999]'>
           {results.map(customer => (
             <Link
               key={customer.id}
@@ -129,20 +129,20 @@ export function CallerIdSearch() {
                 setIsOpen(false);
                 setQuery('');
               }}
-              className='flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#353535] transition-colors border-b border-gray-100 dark:border-[#424242] last:border-0'
+              className='flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[var(--surface-hover)] transition-colors border-b border-gray-100 dark:border-[var(--border-default)] last:border-0'
             >
               <div className='w-8 h-8 rounded-full bg-apple-blue/10 flex items-center justify-center flex-shrink-0 mt-0.5'>
                 <User className='h-4 w-4 text-apple-blue' />
               </div>
               <div className='min-w-0'>
-                <p className='text-sm font-medium text-gray-900 dark:text-[#ececec] truncate'>
+                <p className='text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] truncate'>
                   {customer.firstName} {customer.lastName}
                 </p>
                 {customer.phone && (
-                  <p className='text-xs text-gray-500 dark:text-[#636366]'>{customer.phone}</p>
+                  <p className='text-xs text-gray-500 dark:text-[var(--text-secondary)]'>{customer.phone}</p>
                 )}
                 {customer.vehicles && customer.vehicles.length > 0 && (
-                  <p className='text-xs text-gray-400 dark:text-[#535353] mt-0.5'>
+                  <p className='text-xs text-gray-400 dark:text-[var(--text-tertiary)] mt-0.5'>
                     {customer.vehicles[0].licensePlate} - {customer.vehicles[0].make}{' '}
                     {customer.vehicles[0].model}
                   </p>
@@ -154,8 +154,8 @@ export function CallerIdSearch() {
       )}
 
       {isOpen && query.length >= 4 && !isLoading && results.length === 0 && (
-        <div className='absolute top-full mt-2 right-0 w-72 bg-white dark:bg-[#2f2f2f] rounded-xl shadow-2xl border border-gray-200 dark:border-[#424242] p-4 z-[9999]'>
-          <p className='text-sm text-gray-500 dark:text-[#636366] text-center'>
+        <div className='absolute top-full mt-2 right-0 w-72 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-2xl border border-gray-200 dark:border-[var(--border-default)] p-4 z-[9999]'>
+          <p className='text-sm text-gray-500 dark:text-[var(--text-secondary)] text-center'>
             Nessun cliente trovato
           </p>
         </div>

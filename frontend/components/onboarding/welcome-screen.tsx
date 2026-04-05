@@ -12,8 +12,8 @@ interface WelcomeScreenProps {
 
 const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center gap-2 rounded-full',
-  'bg-white text-base font-medium text-[#1d1d1f]',
-  'transition-colors hover:bg-[#e5e5e5]',
+  'bg-white text-base font-medium text-[var(--text-primary)]',
+  'transition-colors hover:bg-[var(--surface-active)]',
 ].join(' ');
 
 export function WelcomeScreen({
@@ -24,9 +24,9 @@ export function WelcomeScreen({
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex min-h-screen w-full items-center justify-center bg-[#1a1a1a]">
+      <div className="flex min-h-screen w-full items-center justify-center bg-[var(--surface-tertiary)]">
         <div className="flex w-full items-center justify-center p-4">
-          <div className="relative flex w-full max-w-[400px] flex-col overflow-hidden rounded-2xl bg-[#2f2f2f] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:max-w-[420px]">
+          <div className="relative flex w-full max-w-[400px] flex-col overflow-hidden rounded-2xl bg-[var(--surface-elevated)] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:max-w-[420px]">
             <div className="flex flex-col items-stretch gap-6 px-6 py-8">
               {/* Icon */}
               <motion.div
@@ -50,7 +50,7 @@ export function WelcomeScreen({
                 <h1 className="text-2xl font-normal text-white">
                   Tutto pronto{userName ? `, ${displayName}` : ''}!
                 </h1>
-                <p className="mt-2 text-[14px] text-[#b4b4b4]">
+                <p className="mt-2 text-[14px] text-[var(--text-secondary)]">
                   La tua officina è stata creata. Ora puoi iniziare a usare MechMind.
                 </p>
               </motion.div>
@@ -62,7 +62,7 @@ export function WelcomeScreen({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <p className="text-[13px] font-medium text-[#888]">Prossimi passi:</p>
+                <p className="text-[13px] font-medium text-[var(--text-tertiary)]">Prossimi passi:</p>
                 {[
                   'Aggiungi il primo cliente',
                   'Configura i dati di fatturazione',
@@ -70,12 +70,12 @@ export function WelcomeScreen({
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 rounded-lg border border-[#444] bg-[#3a3a3a] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-lg border border-[var(--border-default)] bg-[var(--surface-active)] px-3 py-2.5"
                   >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#555] text-[11px] text-[#888]">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] text-[11px] text-[var(--text-tertiary)]">
                       {i + 1}
                     </span>
-                    <span className="text-[13px] text-[#ccc]">{item}</span>
+                    <span className="text-[13px] text-[var(--text-primary)]">{item}</span>
                   </div>
                 ))}
               </motion.div>

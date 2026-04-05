@@ -9,6 +9,7 @@ import { BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import { CreateBookingDto, ReserveSlotDto, UpdateBookingDto } from '../dto/create-booking.dto';
 import { RescheduleBookingDto } from '../dto/reschedule-booking.dto';
 import { validateTransition, TransitionMap } from '@common/utils/state-machine';
@@ -16,7 +17,7 @@ import { validateTransition, TransitionMap } from '@common/utils/state-machine';
 const BOOKING_TRANSITIONS: TransitionMap = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['CHECKED_IN', 'CANCELLED', 'NO_SHOW'],
-  CHECKED_IN: ['IN_PROGRESS'],
+  CHECKED_IN: ['IN_PROGRESS', 'CANCELLED'],
   IN_PROGRESS: ['COMPLETED'],
   COMPLETED: [],
   CANCELLED: [],
@@ -74,7 +75,42 @@ export class BookingService {
     private readonly eventEmitter: EventEmitter2,
     private readonly queueService: QueueService,
     private readonly logger: LoggerService,
+    private readonly encryption: EncryptionService,
   ) {}
+
+  /**
+   * Decrypt customer PII fields embedded in booking relations.
+   * Only decrypts if encrypted fields are present (e.g. encryptedFirstName).
+   */
+  private decryptCustomerInBooking<T extends { customer?: Record<string, unknown> | null }>(
+    booking: T,
+  ): T {
+    if (!booking.customer) return booking;
+    const c = booking.customer as Record<string, unknown>;
+
+    // Only apply decryption if encrypted fields exist on the customer object
+    const hasEncryptedFields = 'encryptedFirstName' in c || 'encryptedEmail' in c;
+    if (!hasEncryptedFields) return booking;
+
+    const safeDecrypt = (val: unknown): string | null => {
+      if (!val || typeof val !== 'string') return null;
+      try {
+        return this.encryption.decrypt(val);
+      } catch {
+        return '[encrypted]';
+      }
+    };
+    return {
+      ...booking,
+      customer: {
+        ...c,
+        firstName: safeDecrypt(c.encryptedFirstName),
+        lastName: safeDecrypt(c.encryptedLastName),
+        email: safeDecrypt(c.encryptedEmail),
+        phone: safeDecrypt(c.encryptedPhone),
+      },
+    };
+  }
 
   /**
    * Reserve a booking slot with advisory lock and serializable transaction
@@ -359,7 +395,7 @@ export class BookingService {
         ),
       );
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
   }
 
@@ -392,7 +428,7 @@ export class BookingService {
         throw new NotFoundException(`Booking ${bookingId} not found`);
       }
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
   }
 
@@ -444,7 +480,7 @@ export class BookingService {
         prisma.booking.count({ where }),
       ]);
 
-      return { bookings, total };
+      return { bookings: bookings.map(b => this.decryptCustomerInBooking(b)), total };
     });
   }
 
@@ -504,8 +540,62 @@ export class BookingService {
         changes: dto,
       });
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
+  }
+
+  /**
+   * Bulk confirm bookings (PENDING → CONFIRMED)
+   */
+  async bulkConfirm(
+    tenantId: string,
+    ids: string[],
+  ): Promise<{ confirmed: number; failed: { id: string; reason: string }[] }> {
+    const confirmed: string[] = [];
+    const failed: { id: string; reason: string }[] = [];
+
+    for (const id of ids) {
+      try {
+        const booking = await this.prisma.booking.findFirst({
+          where: { id, tenantId },
+        });
+
+        if (!booking) {
+          failed.push({ id, reason: 'Prenotazione non trovata' });
+          continue;
+        }
+
+        if (booking.status !== 'PENDING') {
+          failed.push({ id, reason: `Stato ${booking.status} non confermabile` });
+          continue;
+        }
+
+        await this.prisma.booking.update({
+          where: { id },
+          data: { status: 'CONFIRMED' },
+        });
+
+        await this.prisma.bookingEvent.create({
+          data: {
+            eventType: 'booking_confirmed',
+            payload: { bulkAction: true } as unknown as Prisma.InputJsonValue,
+            booking: { connect: { id } },
+          },
+        });
+
+        this.eventEmitter.emit('booking.updated', {
+          bookingId: id,
+          tenantId,
+          changes: { status: 'CONFIRMED' },
+        });
+
+        confirmed.push(id);
+      } catch {
+        failed.push({ id, reason: 'Errore interno' });
+      }
+    }
+
+    return { confirmed: confirmed.length, failed };
   }
 
   /**
@@ -561,7 +651,7 @@ export class BookingService {
         reason,
       });
 
-      return updated;
+      return this.decryptCustomerInBooking(updated);
     });
   }
 
@@ -723,7 +813,7 @@ export class BookingService {
         `Booking ${bookingId} rescheduled from ${existing.scheduledDate.toISOString()} to ${newDate}`,
       );
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
   }
 }

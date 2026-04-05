@@ -35,7 +35,7 @@ import { FeatureAccessService } from '../services/feature-access.service';
 // FeatureGuard and RequireFeature available for route-level feature gating
 import { CheckLimit, LimitGuard } from '../guards/limit.guard';
 import { PLAN_PRICING, AI_ADDON, PLAN_FEATURES, getFormattedPrice } from '../config/pricing.config';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 // DTOs
 class UpgradeSubscriptionDto {
@@ -83,16 +83,25 @@ export class SubscriptionController {
   // ==========================================
 
   @Get('current')
+  @ApiOperation({ summary: 'Ottieni abbonamento corrente del tenant' })
+  @ApiResponse({ status: 200, description: 'Dati abbonamento' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async getCurrentSubscription(@Request() req: RequestWithTenant) {
     return this.subscriptionService.getSubscription(req.tenantId);
   }
 
   @Get('usage')
+  @ApiOperation({ summary: 'Statistiche utilizzo risorse del piano' })
+  @ApiResponse({ status: 200, description: 'Usage stats per risorsa' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async getUsageStats(@Request() req: RequestWithTenant) {
     return this.featureAccessService.getUsageStats(req.tenantId);
   }
 
   @Get('limits')
+  @ApiOperation({ summary: 'Verifica tutti i limiti del piano corrente' })
+  @ApiResponse({ status: 200, description: 'Stato limiti per risorsa' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async checkAllLimits(@Request() req: RequestWithTenant) {
     return this.featureAccessService.checkAllLimits(req.tenantId);
   }
@@ -102,6 +111,9 @@ export class SubscriptionController {
   // ==========================================
 
   @Get('features/:feature')
+  @ApiOperation({ summary: 'Verifica accesso a feature specifica' })
+  @ApiResponse({ status: 200, description: 'Stato accesso feature' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async checkFeatureAccess(
     @Request() req: RequestWithTenant,
     @Param('feature') feature: FeatureFlag,
@@ -110,6 +122,9 @@ export class SubscriptionController {
   }
 
   @Post('features/check')
+  @ApiOperation({ summary: 'Verifica accesso a multiple feature' })
+  @ApiResponse({ status: 200, description: 'Stato accesso per ogni feature' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async checkMultipleFeatures(@Request() req: RequestWithTenant, @Body() features: FeatureFlag[]) {
     return this.featureAccessService.canAccessFeatures(req.tenantId, features);
   }
@@ -119,6 +134,10 @@ export class SubscriptionController {
   // ==========================================
 
   @Post('upgrade')
+  @ApiOperation({ summary: 'Upgrade piano abbonamento' })
+  @ApiResponse({ status: 200, description: 'Piano aggiornato' })
+  @ApiResponse({ status: 400, description: 'Piano non valido' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   @CheckLimit('apiCall')
   @UseGuards(LimitGuard)
   async upgradeSubscription(
@@ -135,6 +154,10 @@ export class SubscriptionController {
   }
 
   @Post('downgrade')
+  @ApiOperation({ summary: 'Downgrade piano abbonamento' })
+  @ApiResponse({ status: 200, description: 'Piano declassato' })
+  @ApiResponse({ status: 400, description: 'Piano non valido o inferiore' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async downgradeSubscription(
     @Request() req: RequestWithTenant,
     @Body('newPlan') newPlan: SubscriptionPlan,
@@ -147,6 +170,9 @@ export class SubscriptionController {
   // ==========================================
 
   @Post('ai-addon')
+  @ApiOperation({ summary: 'Attiva/disattiva add-on AI' })
+  @ApiResponse({ status: 200, description: 'Add-on AI aggiornato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async toggleAiAddon(@Request() req: RequestWithTenant, @Body('enabled') enabled: boolean) {
     return this.subscriptionService.toggleAiAddon(req.tenantId, enabled);
   }
@@ -156,11 +182,17 @@ export class SubscriptionController {
   // ==========================================
 
   @Post('cancel')
+  @ApiOperation({ summary: 'Cancella abbonamento' })
+  @ApiResponse({ status: 200, description: 'Abbonamento cancellato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async cancelSubscription(@Request() req: RequestWithTenant, @Body() dto: CancelSubscriptionDto) {
     return this.subscriptionService.cancelSubscription(req.tenantId, dto.immediate);
   }
 
   @Post('reactivate')
+  @ApiOperation({ summary: 'Riattiva abbonamento cancellato' })
+  @ApiResponse({ status: 200, description: 'Abbonamento riattivato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async reactivateSubscription(@Request() req: RequestWithTenant) {
     return this.subscriptionService.reactivateSubscription(req.tenantId);
   }
@@ -170,6 +202,10 @@ export class SubscriptionController {
   // ==========================================
 
   @Post('checkout-session')
+  @ApiOperation({ summary: 'Crea sessione checkout Stripe' })
+  @ApiResponse({ status: 200, description: 'URL sessione checkout' })
+  @ApiResponse({ status: 400, description: 'Parametri non validi' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
   async createCheckoutSession(
     @Request() req: RequestWithTenant,
     @Body() dto: CreateCheckoutSessionDto,
@@ -189,6 +225,8 @@ export class SubscriptionController {
   // ==========================================
 
   @Get('pricing')
+  @ApiOperation({ summary: 'Listino prezzi piani disponibili' })
+  @ApiResponse({ status: 200, description: 'Piani con prezzi formattati' })
   async getPricingInfo() {
     return {
       plans: Object.values(SubscriptionPlan)
@@ -214,6 +252,8 @@ export class SubscriptionController {
   }
 
   @Get('pricing/:plan/features')
+  @ApiOperation({ summary: 'Feature incluse in un piano specifico' })
+  @ApiResponse({ status: 200, description: 'Lista feature del piano' })
   async getPlanFeatures(@Param('plan') plan: SubscriptionPlan) {
     return {
       plan,
@@ -222,6 +262,8 @@ export class SubscriptionController {
   }
 
   @Get('pricing/compare')
+  @ApiOperation({ summary: 'Confronto tra tutti i piani' })
+  @ApiResponse({ status: 200, description: 'Tabella comparativa piani' })
   async comparePlans() {
     const plans = [SubscriptionPlan.SMALL, SubscriptionPlan.MEDIUM, SubscriptionPlan.ENTERPRISE];
 
@@ -244,6 +286,8 @@ export class SubscriptionController {
 // ADMIN CONTROLLER
 // ==========================================
 
+@ApiTags('Admin Subscriptions')
+@ApiBearerAuth()
 @Controller('admin/subscriptions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
@@ -254,6 +298,10 @@ export class AdminSubscriptionController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Lista tutti gli abbonamenti (admin)' })
+  @ApiResponse({ status: 200, description: 'Lista abbonamenti con filtri' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Solo admin' })
   async getAllSubscriptions(
     @Query('status') status?: SubscriptionStatus,
     @Query('plan') plan?: SubscriptionPlan,
@@ -262,16 +310,28 @@ export class AdminSubscriptionController {
   }
 
   @Get('analytics')
+  @ApiOperation({ summary: 'Analytics abbonamenti (MRR, churn, conversioni)' })
+  @ApiResponse({ status: 200, description: 'Metriche analytics' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Solo admin' })
   async getAnalytics() {
     return this.subscriptionService.getSubscriptionAnalytics();
   }
 
   @Get(':tenantId')
+  @ApiOperation({ summary: 'Dettaglio abbonamento di un tenant (admin)' })
+  @ApiResponse({ status: 200, description: 'Dati abbonamento tenant' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Solo admin' })
   async getSubscriptionByTenant(@Param('tenantId') tenantId: string) {
     return this.subscriptionService.getSubscription(tenantId);
   }
 
   @Put(':tenantId')
+  @ApiOperation({ summary: 'Aggiorna abbonamento di un tenant (admin)' })
+  @ApiResponse({ status: 200, description: 'Abbonamento aggiornato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Solo admin' })
   async updateSubscription(
     @Param('tenantId') tenantId: string,
     @Body() dto: AdminUpdateSubscriptionDto,
@@ -280,11 +340,19 @@ export class AdminSubscriptionController {
   }
 
   @Get(':tenantId/usage')
+  @ApiOperation({ summary: 'Statistiche utilizzo di un tenant (admin)' })
+  @ApiResponse({ status: 200, description: 'Usage stats del tenant' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Solo admin' })
   async getTenantUsage(@Param('tenantId') tenantId: string) {
     return this.featureAccessService.getUsageStats(tenantId);
   }
 
   @Post(':tenantId/sync-features')
+  @ApiOperation({ summary: 'Sincronizza feature di un tenant (admin)' })
+  @ApiResponse({ status: 200, description: 'Feature sincronizzate' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Solo admin' })
   async syncFeatures(@Param('tenantId') tenantId: string) {
     const subscription = await this.subscriptionService.getSubscription(tenantId);
     // This would trigger a feature sync
@@ -296,6 +364,7 @@ export class AdminSubscriptionController {
 // WEBHOOK CONTROLLER
 // ==========================================
 
+@ApiTags('Stripe Webhooks')
 @Controller('webhooks/stripe')
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
@@ -307,6 +376,9 @@ export class StripeWebhookController {
 
   @Post()
   @HttpCode(200)
+  @ApiOperation({ summary: 'Gestisci evento webhook Stripe' })
+  @ApiResponse({ status: 200, description: 'Evento ricevuto e processato' })
+  @ApiResponse({ status: 400, description: 'Firma non valida o body mancante' })
   async handleWebhook(
     @Req() req: RawBodyRequest<ExpressRequest>,
     @Headers('stripe-signature') signature: string,

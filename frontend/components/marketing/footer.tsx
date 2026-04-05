@@ -56,14 +56,14 @@ const linkGroups: FooterLinkGroup[] = [
 
 export function Footer(): React.ReactElement {
   return (
-    <footer className="bg-[#0d0d0d] text-[#8e8ea0]">
+    <footer className="bg-[#0d0d0d] text-[var(--text-secondary)]">
       <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
         {/* Logo + description */}
         <div className="mb-12">
           <Link href="/" className="min-h-[44px] inline-flex items-center gap-2.5">
             <span className="text-xl font-bold text-white">MechMind OS</span>
           </Link>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#6e6e80]">
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-[var(--text-tertiary)]">
             Il gestionale cloud per officine meccaniche. Made in Italy.
           </p>
         </div>
@@ -72,7 +72,7 @@ export function Footer(): React.ReactElement {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
           {linkGroups.map((group) => (
             <div key={group.title}>
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#ececec]">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--text-primary)]">
                 {group.title}
               </h3>
               <ul className="space-y-3">
@@ -82,14 +82,14 @@ export function Footer(): React.ReactElement {
                       <button
                         type="button"
                         onClick={link.onClick}
-                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[#8e8ea0] transition-colors duration-200 hover:text-white"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[var(--text-secondary)] transition-colors duration-200 hover:text-white"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <Link
                         href={link.href}
-                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[#8e8ea0] transition-colors duration-200 hover:text-white"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[var(--text-secondary)] transition-colors duration-200 hover:text-white"
                       >
                         {link.label}
                       </Link>
@@ -102,14 +102,14 @@ export function Footer(): React.ReactElement {
         </div>
 
         {/* Divider */}
-        <div className="mt-16 border-t border-[#2f2f2f]" />
+        <div className="mt-16 border-t border-[var(--surface-elevated)]" />
 
         {/* Bottom */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-sm text-[#6e6e80]">
+          <p className="text-sm text-[var(--text-tertiary)]">
             &copy; 2026 MechMind OS. Tutti i diritti riservati.
           </p>
-          <p className="text-sm text-[#444654]">
+          <p className="text-sm text-[var(--border-default)]">
             Made with &hearts; in Italy
           </p>
         </div>

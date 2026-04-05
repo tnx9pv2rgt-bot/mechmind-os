@@ -18,7 +18,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps): React.React
   const isDev = process.env.NODE_ENV === 'development';
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f4f4f4] px-6 dark:bg-[#212121]">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--surface-tertiary)] px-6 dark:bg-[var(--surface-primary)]">
       <div className="mx-auto max-w-md text-center">
         {/* Icon */}
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/40">
@@ -59,7 +59,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps): React.React
           </button>
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 text-subhead font-medium text-gray-700 transition-all hover:bg-gray-50 active:scale-[0.98] dark:border-gray-600 dark:bg-[#2f2f2f] dark:text-gray-300 dark:hover:bg-[#353535]"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 text-subhead font-medium text-gray-700 transition-all hover:bg-gray-50 active:scale-[0.98] dark:border-gray-600 dark:bg-[var(--surface-elevated)] dark:text-gray-300 dark:hover:bg-[var(--surface-hover)]"
           >
             <Home className="h-4 w-4" />
             Torna alla Dashboard

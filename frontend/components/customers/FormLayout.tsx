@@ -41,11 +41,11 @@ export function FormLayout({
   const pathname = usePathname();
 
   return (
-    <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden'>
+    <div className='fixed inset-0 bg-[var(--surface-tertiary)] flex items-center justify-center p-4 overflow-hidden'>
       <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
         {/* Glass Card Container */}
         <motion.div
-          className='relative z-10 w-full h-full bg-[#2f2f2f] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden flex flex-col'
+          className='relative z-10 w-full h-full bg-[var(--surface-elevated)] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[var(--border-strong)] overflow-hidden flex flex-col'
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -57,18 +57,18 @@ export function FormLayout({
                 <h1 className='text-3xl font-semibold text-white tracking-tight'>
                   {title}
                 </h1>
-                <p className='text-[#888] mt-1'>{subtitle}</p>
+                <p className='text-[var(--text-tertiary)] mt-1'>{subtitle}</p>
               </div>
               <div className='flex items-center gap-2'>
-                <span className='text-sm text-[#888]'>Step</span>
+                <span className='text-sm text-[var(--text-tertiary)]'>Step</span>
                 <span className='text-2xl font-bold text-white'>{step}</span>
-                <span className='text-[#888]'>/</span>
-                <span className='text-[#888]'>{totalSteps}</span>
+                <span className='text-[var(--text-tertiary)]'>/</span>
+                <span className='text-[var(--text-tertiary)]'>{totalSteps}</span>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className='h-2 bg-[#4e4e4e] rounded-full overflow-hidden'>
+            <div className='h-2 bg-[var(--border-strong)] rounded-full overflow-hidden'>
               <motion.div
                 className='h-full bg-white'
                 initial={{ width: 0 }}
@@ -88,15 +88,15 @@ export function FormLayout({
                       ? 'text-white cursor-default'
                       : s.num < step
                         ? 'text-white hover:opacity-70 cursor-pointer hover:scale-105'
-                        : 'text-[#888] cursor-not-allowed'
+                        : 'text-[var(--text-tertiary)] cursor-not-allowed'
                   }`}
                   onClick={e => s.num > step && e.preventDefault()}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                       s.num <= step
-                        ? 'bg-white text-[#0d0d0d]'
-                        : 'bg-[#4e4e4e] text-[#888]'
+                        ? 'bg-white text-[var(--text-primary)]'
+                        : 'bg-[var(--border-strong)] text-[var(--text-tertiary)]'
                     }`}
                   >
                     {s.num < step ? '✓' : s.num}
@@ -112,14 +112,14 @@ export function FormLayout({
 
           {/* Navigation Buttons - Fixed Footer */}
           {(onBack || onNext) && (
-            <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e] z-50 pointer-events-auto'>
+            <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[var(--surface-elevated)] border-t border-[var(--border-strong)] z-50 pointer-events-auto'>
               <div className='flex items-center justify-between'>
                 {onBack ? (
                   <Button
                     type='button'
                     onClick={onBack}
                     disabled={isSubmitting}
-                    className='rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5 transition-all'
+                    className='rounded-full px-6 h-[52px] border border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5 transition-all'
                   >
                     <ChevronLeft className='w-5 h-5 mr-2' />
                     Indietro
@@ -139,8 +139,8 @@ export function FormLayout({
                     disabled={isSubmitting}
                     className={`rounded-full px-8 h-[52px] transition-all ${
                       isLastStep
-                        ? 'bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
-                        : 'bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'
+                        ? 'bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
+                        : 'bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
                     }`}
                   >
                     {isSubmitting ? (

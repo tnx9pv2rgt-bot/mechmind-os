@@ -428,7 +428,7 @@ export default function PortalSettingsPage() {
         <TabsContent value='profile'>
           <AppleCard>
             <AppleCardHeader>
-              <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
+              <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
                 <User className='h-5 w-5 text-apple-blue' />
                 Informazioni Personali
               </h2>
@@ -503,7 +503,7 @@ export default function PortalSettingsPage() {
         <TabsContent value='vehicles'>
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
-              <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 I tuoi veicoli
               </h2>
               <AppleButton
@@ -520,12 +520,12 @@ export default function PortalSettingsPage() {
               <AppleCard>
                 <AppleCardHeader>
                   <div className='flex items-center justify-between'>
-                    <h3 className='text-base font-semibold text-apple-dark dark:text-[#ececec]'>
+                    <h3 className='text-base font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Nuovo Veicolo
                     </h3>
                     <button
                       onClick={() => setShowAddVehicle(false)}
-                      className='p-1 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[#353535]'
+                      className='p-1 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)]'
                     >
                       <X className='h-4 w-4 text-apple-gray' />
                     </button>
@@ -609,7 +609,7 @@ export default function PortalSettingsPage() {
                             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                               vehicleForm.fuelType === ft
                                 ? 'bg-apple-blue text-white'
-                                : 'bg-apple-light-gray dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
+                                : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)]'
                             }`}
                           >
                             {fuelTypeLabels[ft]}
@@ -639,10 +639,10 @@ export default function PortalSettingsPage() {
               <AppleCard>
                 <AppleCardContent className='text-center py-12'>
                   <Car className='h-12 w-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-lg font-medium text-apple-dark dark:text-[#ececec] mb-2'>
+                  <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
                     Nessun veicolo registrato
                   </h3>
-                  <p className='text-apple-gray dark:text-[#636366] mb-4'>
+                  <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
                     Aggiungi i tuoi veicoli per gestire prenotazioni e manutenzione.
                   </p>
                   <AppleButton
@@ -664,10 +664,10 @@ export default function PortalSettingsPage() {
                             <Car className='h-6 w-6 text-apple-blue' />
                           </div>
                           <div>
-                            <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               {vehicle.make} {vehicle.model} ({vehicle.year})
                             </p>
-                            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                            <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                               {vehicle.licensePlate}
                               {vehicle.mileage ? ` — ${vehicle.mileage.toLocaleString('it-IT')} km` : ''}
                               {' — '}{fuelTypeLabels[vehicle.fuelType] || vehicle.fuelType}
@@ -708,7 +708,7 @@ export default function PortalSettingsPage() {
         <TabsContent value='password'>
           <AppleCard>
             <AppleCardHeader>
-              <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
+              <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
                 <Lock className='h-5 w-5 text-apple-blue' />
                 Cambia Password
               </h2>
@@ -776,7 +776,7 @@ export default function PortalSettingsPage() {
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
                   <Mail className='h-5 w-5 text-apple-blue' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Email
                   </h2>
                 </div>
@@ -784,10 +784,10 @@ export default function PortalSettingsPage() {
               <AppleCardContent className='p-6 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       Notifiche email
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                       Ricevi aggiornamenti via email
                     </p>
                   </div>
@@ -802,7 +802,7 @@ export default function PortalSettingsPage() {
                   />
                 </div>
                 {notifications.email.enabled && (
-                  <div className='pl-4 border-l-2 border-apple-border dark:border-[#424242] space-y-3'>
+                  <div className='pl-4 border-l-2 border-apple-border dark:border-[var(--border-default)] space-y-3'>
                     <label className='flex items-center gap-3'>
                       <input
                         type='checkbox'
@@ -815,7 +815,7 @@ export default function PortalSettingsPage() {
                         }
                         className='rounded border-apple-border'
                       />
-                      <span className='text-sm text-apple-dark dark:text-[#ececec]'>
+                      <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                         Promemoria prenotazioni
                       </span>
                     </label>
@@ -831,7 +831,7 @@ export default function PortalSettingsPage() {
                         }
                         className='rounded border-apple-border'
                       />
-                      <span className='text-sm text-apple-dark dark:text-[#ececec]'>
+                      <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                         Avvisi manutenzione
                       </span>
                     </label>
@@ -847,7 +847,7 @@ export default function PortalSettingsPage() {
                         }
                         className='rounded border-apple-border'
                       />
-                      <span className='text-sm text-apple-dark dark:text-[#ececec]'>
+                      <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                         Report ispezioni
                       </span>
                     </label>
@@ -861,14 +861,14 @@ export default function PortalSettingsPage() {
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
                   <Smartphone className='h-5 w-5 text-apple-green' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>SMS</h2>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>SMS</h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent className='p-6 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[#ececec]'>Notifiche SMS</p>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>Notifiche SMS</p>
+                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                       Ricevi messaggi urgenti
                     </p>
                   </div>
@@ -890,7 +890,7 @@ export default function PortalSettingsPage() {
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
                   <MessageCircle className='h-5 w-5 text-apple-green' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     WhatsApp
                   </h2>
                 </div>
@@ -898,10 +898,10 @@ export default function PortalSettingsPage() {
               <AppleCardContent className='p-6 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       Notifiche WhatsApp
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                       Ricevi aggiornamenti su WhatsApp
                     </p>
                   </div>
@@ -936,13 +936,13 @@ export default function PortalSettingsPage() {
             {/* Data Export */}
             <AppleCard>
               <AppleCardHeader>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
                   <Download className='h-5 w-5 text-apple-blue' />
                   Esportazione Dati (GDPR)
                 </h2>
               </AppleCardHeader>
               <AppleCardContent className='p-6'>
-                <p className='text-sm text-apple-gray dark:text-[#636366] mb-4'>
+                <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
                   Ai sensi del GDPR, puoi richiedere una copia completa di tutti i tuoi dati personali.
                   Riceverai un link per il download via email.
                 </p>
@@ -960,7 +960,7 @@ export default function PortalSettingsPage() {
             {/* 2FA */}
             <AppleCard>
               <AppleCardHeader>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
                   <Shield className='h-5 w-5 text-apple-blue' />
                   Autenticazione a Due Fattori
                 </h2>
@@ -968,10 +968,10 @@ export default function PortalSettingsPage() {
               <AppleCardContent className='p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       2FA non attivo
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                       Aggiungi un livello di sicurezza extra
                     </p>
                   </div>
@@ -994,7 +994,7 @@ export default function PortalSettingsPage() {
                 <div className='flex items-start gap-4'>
                   <AlertTriangle className='h-5 w-5 text-apple-red flex-shrink-0 mt-0.5' />
                   <div className='flex-1'>
-                    <p className='text-sm text-apple-dark dark:text-[#ececec] mb-4'>
+                    <p className='text-sm text-apple-dark dark:text-[var(--text-primary)] mb-4'>
                       L&apos;eliminazione dell&apos;account è irreversibile. Tutti i tuoi dati
                       verranno cancellati in conformità con il GDPR.
                     </p>

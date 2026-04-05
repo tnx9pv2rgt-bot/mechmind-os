@@ -11,6 +11,8 @@ import { InvoiceService } from '../invoice/invoice.service';
 import { WorkOrderService } from '../work-order/work-order.service';
 import { EstimateService } from '../estimate/services/estimate.service';
 import { CannedJobService } from '../canned-job/canned-job.service';
+import { PublicTokenService } from '../public-token/public-token.service';
+import { ConfigService } from '@nestjs/config';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -199,6 +201,10 @@ describe('Cross-Tenant Isolation', () => {
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
           { provide: QueueService, useValue: { addBookingJob: jest.fn() } },
           { provide: LoggerService, useValue: mockLogger() },
+          {
+            provide: EncryptionService,
+            useValue: { encrypt: jest.fn((v: string) => v), decrypt: jest.fn((v: string) => v) },
+          },
         ],
       }).compile();
 
@@ -452,6 +458,14 @@ describe('Cross-Tenant Isolation', () => {
           { provide: PrismaService, useValue: prisma },
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
           { provide: LoggerService, useValue: mockLogger() },
+          {
+            provide: PublicTokenService,
+            useValue: { generateToken: jest.fn(), validateToken: jest.fn() },
+          },
+          {
+            provide: ConfigService,
+            useValue: { get: jest.fn().mockReturnValue('http://localhost:3000') },
+          },
         ],
       }).compile();
 

@@ -106,7 +106,7 @@ export function OtpInput({
         <React.Fragment key={i}>
           {i === Math.floor(length / 2) && (
             <span
-              className="mx-1 text-xl font-normal text-[#888]"
+              className="mx-1 text-xl font-normal text-[var(--text-tertiary)]"
               aria-hidden="true"
             >
               &middot;
@@ -130,10 +130,10 @@ export function OtpInput({
             className={[
               'h-14 w-12 rounded-xl border text-center text-xl font-normal',
               'outline-none transition-all duration-150',
-              'bg-[#2f2f2f] text-white',
-              'border-[#4e4e4e]',
+              'bg-[var(--surface-elevated)] text-white',
+              'border-[var(--border-strong)]',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              'placeholder:text-[#555]',
+              'placeholder:text-[var(--text-tertiary)]',
             ].join(' ')}
           />
         </React.Fragment>

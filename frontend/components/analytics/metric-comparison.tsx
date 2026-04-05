@@ -59,7 +59,7 @@ export function MetricComparison({
   const formatProps = useMemo(() => getFormatProps(format, current), [format, current]);
 
   const deltaColor = delta.isNeutral
-    ? 'text-[#888888]'
+    ? 'text-[var(--text-tertiary)]'
     : delta.isPositive
       ? 'text-[#34d399]'
       : 'text-[#f87171]';
@@ -110,7 +110,7 @@ export function MetricComparison({
               </svg>
             )}
             <span>{delta.percentage.toFixed(1)}%</span>
-            <span className="text-[#888888]">vs periodo prec.</span>
+            <span className="text-[var(--text-tertiary)]">vs periodo prec.</span>
           </div>
         </div>
 

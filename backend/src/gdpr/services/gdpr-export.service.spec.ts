@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { GdprExportService } from './gdpr-export.service';
+import { GdprExportService, ExportFormat } from './gdpr-export.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -327,6 +327,104 @@ describe('GdprExportService', () => {
       const result = await service.generateExport(CUSTOMER_ID, TENANT_ID, 'JSON');
 
       expect(result.status).toBe('FAILED');
+    });
+  });
+
+  // =========================================================================
+  // generateExport — additional branches
+  // =========================================================================
+  describe('generateExport (additional branches)', () => {
+    it('should return FAILED for unsupported format', async () => {
+      const result = await service.generateExport(CUSTOMER_ID, TENANT_ID, 'XML' as ExportFormat);
+
+      expect(result.status).toBe('FAILED');
+      expect(result.error).toContain('Unsupported format');
+    });
+
+    it('should include expiresAt in completed export', async () => {
+      const result = await service.generateExport(CUSTOMER_ID, TENANT_ID, 'JSON');
+
+      expect(result.expiresAt).toBeInstanceOf(Date);
+      // Expires 7 days from now
+      const diff = result.expiresAt!.getTime() - Date.now();
+      expect(diff).toBeGreaterThan(6 * 24 * 60 * 60 * 1000);
+    });
+
+    it('should include checksum in completed export', async () => {
+      const result = await service.generateExport(CUSTOMER_ID, TENANT_ID, 'JSON');
+
+      expect(result.checksum).toBeDefined();
+      expect(result.checksum!.length).toBe(64); // SHA-256 hex
+    });
+  });
+
+  // =========================================================================
+  // exportCustomerData — format parameter
+  // =========================================================================
+  describe('exportCustomerData (format parameter)', () => {
+    it('should accept CSV format', async () => {
+      const result = await service.exportCustomerData(CUSTOMER_ID, TENANT_ID, 'CSV');
+
+      expect(result.format).toBe('CSV');
+    });
+
+    it('should handle customer with no vehicles or bookings', async () => {
+      (prisma.customerEncrypted.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        vehicles: [],
+        bookings: [],
+      });
+      prisma.consentAuditLog.findMany.mockResolvedValue([]);
+      prisma.callRecording.findMany.mockResolvedValue([]);
+
+      const result = await service.exportCustomerData(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.vehicles).toHaveLength(0);
+      expect(result.bookings).toHaveLength(0);
+      expect(result.invoices).toHaveLength(0);
+      expect(result.metadata.totalRecords).toBe(1); // just the customer
+    });
+
+    it('should handle bookings without invoices', async () => {
+      (prisma.customerEncrypted.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        bookings: [
+          {
+            id: 'booking-001',
+            createdAt: new Date(),
+            status: 'PENDING',
+            estimatedDurationMinutes: 30,
+            totalCostCents: null,
+            paymentStatus: 'PENDING',
+            Invoice: [],
+          },
+        ],
+      });
+
+      const result = await service.exportCustomerData(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.invoices).toHaveLength(0);
+      expect(result.bookings).toHaveLength(1);
+    });
+  });
+
+  // =========================================================================
+  // exportPortableData — edge cases
+  // =========================================================================
+  describe('exportPortableData (edge cases)', () => {
+    it('should handle missing encrypted fields', async () => {
+      (prisma.customerEncrypted.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        phoneEncrypted: null,
+        emailEncrypted: null,
+        nameEncrypted: null,
+      });
+
+      const result = await service.exportPortableData(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.customer.personalData.phone).toBeUndefined();
+      expect(result.customer.personalData.email).toBeUndefined();
+      expect(result.customer.personalData.name).toBeUndefined();
     });
   });
 

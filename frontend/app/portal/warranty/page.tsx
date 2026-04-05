@@ -90,14 +90,14 @@ export default function PortalWarrantyPage() {
         className='mb-6 p-5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50'
       >
         <div className='flex items-start gap-4'>
-          <div className='w-12 h-12 rounded-xl bg-white dark:bg-[#2f2f2f] flex items-center justify-center shadow-sm'>
+          <div className='w-12 h-12 rounded-xl bg-white dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
             <Shield className='h-6 w-6 text-apple-blue' />
           </div>
           <div className='flex-1'>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec] mb-1'>
+            <h3 className='font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-1'>
               Copertura Garanzia
             </h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
               Le garanzie coprono i difetti di fabbricazione e i guasti meccanici. Per i reclami,
               contattaci con il numero di polizza.
             </p>

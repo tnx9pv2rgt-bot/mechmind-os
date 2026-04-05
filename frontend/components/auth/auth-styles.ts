@@ -5,22 +5,22 @@
 
 export const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'bg-white text-base font-normal text-[#0d0d0d]',
-  'transition-colors hover:bg-[#e5e5e5]',
+  'bg-white text-base font-normal text-[var(--surface-tertiary)]',
+  'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:opacity-30',
 ].join(' ');
 
 export const btnSecondaryOutline = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'border border-[#4e4e4e] bg-transparent',
+  'border border-[var(--border-strong)] bg-transparent',
   'text-base font-normal text-white',
   'transition-colors hover:bg-white/5',
   'disabled:opacity-30',
 ].join(' ');
 
 export const inputStyle = [
-  'block h-[52px] w-full rounded-full border border-[#4e4e4e] bg-[#2f2f2f]',
-  'px-5 py-3 text-base text-white placeholder-[#888]',
+  'block h-[52px] w-full rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)]',
+  'px-5 py-3 text-base text-white placeholder-[var(--text-tertiary)]',
   'outline-none transition-colors',
 ].join(' ');
 
@@ -44,4 +44,4 @@ export const slideVariants = {
 
 /** Spinner element for loading states inside buttons */
 export const btnSpinner =
-  'inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#0d0d0d] border-t-transparent';
+  'inline-block h-5 w-5 animate-spin rounded-full border-2 border-[var(--surface-tertiary)] border-t-transparent';

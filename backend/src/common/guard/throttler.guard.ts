@@ -72,6 +72,11 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
    * Define rate limits per endpoint type
    */
   private getLimitsForPath(path: string, _method: string): { ttl: number; limit: number } {
+    // Load test mode: disable rate limiting
+    if (process.env.LOAD_TEST === 'true') {
+      return { ttl: 60, limit: 1000000 };
+    }
+
     // Authentication endpoints - stricter limits
     if (path.includes('/auth/login') || path.includes('/auth/verify-2fa')) {
       return { ttl: 60, limit: 5 }; // 5 attempts per minute

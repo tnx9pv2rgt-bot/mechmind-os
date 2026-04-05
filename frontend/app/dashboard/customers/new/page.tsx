@@ -2,17 +2,18 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 export default function NewCustomerRedirect() {
   const router = useRouter();
-  
+
   useEffect(() => {
     router.replace('/dashboard/customers/new/step1');
   }, [router]);
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-pulse text-gray-400 dark:text-[#6e6e6e]">Caricamento...</div>
+      <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
     </div>
   );
 }

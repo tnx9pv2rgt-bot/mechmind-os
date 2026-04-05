@@ -76,10 +76,7 @@ describe('FirService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FirService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [FirService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<FirService>(FirService);
@@ -204,11 +201,200 @@ describe('FirService', () => {
     });
 
     it('should throw if FIR is not in DRAFT status', async () => {
-      prisma.wasteFir.findFirst.mockResolvedValue({ ...mockFir, status: WasteFirStatus.IN_TRANSIT });
+      prisma.wasteFir.findFirst.mockResolvedValue({
+        ...mockFir,
+        status: WasteFirStatus.IN_TRANSIT,
+      });
 
-      await expect(
-        service.vidimateFir(TENANT_ID, FIR_ID, 'VF2026-ABC123'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.vidimateFir(TENANT_ID, FIR_ID, 'VF2026-ABC123')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw NotFoundException when FIR does not exist', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue(null);
+
+      await expect(service.vidimateFir(TENANT_ID, 'nonexistent', 'VF2026-ABC123')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  // =========================================================================
+  // findAllFirs
+  // =========================================================================
+  describe('findAllFirs', () => {
+    it('should return paginated FIR list', async () => {
+      prisma.wasteFir.findMany.mockResolvedValue([mockFir]);
+      prisma.wasteFir.count.mockResolvedValue(1);
+
+      const result = await service.findAllFirs(TENANT_ID, { page: 1, limit: 20 });
+
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.pages).toBe(1);
+    });
+
+    it('should apply status filter', async () => {
+      prisma.wasteFir.findMany.mockResolvedValue([]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      await service.findAllFirs(TENANT_ID, { status: 'DRAFT' });
+
+      expect(prisma.wasteFir.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'DRAFT' }),
+        }),
+      );
+    });
+
+    it('should use default page and limit', async () => {
+      prisma.wasteFir.findMany.mockResolvedValue([]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const result = await service.findAllFirs(TENANT_ID, {});
+
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+    });
+  });
+
+  // =========================================================================
+  // findOneFir
+  // =========================================================================
+  describe('findOneFir', () => {
+    it('should return FIR when found', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue(mockFir);
+
+      const result = await service.findOneFir(TENANT_ID, FIR_ID);
+
+      expect(result).toEqual(mockFir);
+    });
+
+    it('should throw NotFoundException when not found', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue(null);
+
+      await expect(service.findOneFir(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // =========================================================================
+  // updateStatus — additional transitions
+  // =========================================================================
+  describe('updateStatus (additional transitions)', () => {
+    it('should allow IN_TRANSIT -> DELIVERED and set deliveryDate', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue({
+        ...mockFir,
+        status: WasteFirStatus.IN_TRANSIT,
+      });
+      prisma.wasteFir.update.mockResolvedValue({ ...mockFir, status: WasteFirStatus.DELIVERED });
+
+      await service.updateStatus(TENANT_ID, FIR_ID, WasteFirStatus.DELIVERED);
+
+      expect(prisma.wasteFir.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: WasteFirStatus.DELIVERED,
+            deliveryDate: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('should allow DELIVERED -> CONFIRMED and set confirmationDate', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue({ ...mockFir, status: WasteFirStatus.DELIVERED });
+      prisma.wasteFir.update.mockResolvedValue({ ...mockFir, status: WasteFirStatus.CONFIRMED });
+
+      await service.updateStatus(TENANT_ID, FIR_ID, WasteFirStatus.CONFIRMED);
+
+      expect(prisma.wasteFir.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: WasteFirStatus.CONFIRMED,
+            confirmationDate: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('should allow DRAFT -> CANCELLED', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue({ ...mockFir, status: WasteFirStatus.DRAFT });
+      prisma.wasteFir.update.mockResolvedValue({ ...mockFir, status: WasteFirStatus.CANCELLED });
+
+      const result = await service.updateStatus(TENANT_ID, FIR_ID, WasteFirStatus.CANCELLED);
+
+      expect(result).toBeDefined();
+    });
+
+    it('should reject CANCELLED -> any status', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue({ ...mockFir, status: WasteFirStatus.CANCELLED });
+
+      await expect(service.updateStatus(TENANT_ID, FIR_ID, WasteFirStatus.DRAFT)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  // =========================================================================
+  // createFir — sequential numbering
+  // =========================================================================
+  describe('createFir (sequential numbering)', () => {
+    it('should increment FIR number from last existing', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue({
+        firNumber: `FIR-${new Date().getFullYear()}-0010`,
+      });
+      prisma.tenant.findUnique.mockResolvedValue({ id: TENANT_ID, name: 'Officina' });
+      prisma.wasteFir.create.mockResolvedValue(mockFir);
+
+      const dto: CreateFirDto = {
+        cerCode: '130205*',
+        cerDescription: 'Oli minerali per motori',
+        quantityKg: 50,
+        hazardClass: WasteHazardClass.PERICOLOSO,
+        physicalState: WastePhysicalState.LIQUIDO,
+        transporterId: 'transporter-001',
+        destinationId: 'destination-001',
+        scheduledDate: '2026-04-01',
+      };
+
+      await service.createFir(TENANT_ID, dto);
+
+      expect(prisma.wasteFir.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            firNumber: `FIR-${new Date().getFullYear()}-0011`,
+          }),
+        }),
+      );
+    });
+
+    it('should use empty producer fields when tenant not found', async () => {
+      prisma.wasteFir.findFirst.mockResolvedValue(null);
+      prisma.tenant.findUnique.mockResolvedValue(null);
+      prisma.wasteFir.create.mockResolvedValue(mockFir);
+
+      const dto: CreateFirDto = {
+        cerCode: '130205*',
+        cerDescription: 'test',
+        quantityKg: 10,
+        hazardClass: WasteHazardClass.PERICOLOSO,
+        physicalState: WastePhysicalState.LIQUIDO,
+        transporterId: 'transporter-001',
+        destinationId: 'destination-001',
+        scheduledDate: '2026-04-01',
+      };
+
+      await service.createFir(TENANT_ID, dto);
+
+      expect(prisma.wasteFir.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            producerName: '',
+          }),
+        }),
+      );
     });
   });
 });

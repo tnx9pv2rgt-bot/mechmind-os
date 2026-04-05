@@ -146,10 +146,10 @@ export default function PortalDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className='mb-6 sm:mb-8'
         >
-          <h1 className='text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             {welcomeMessage}
           </h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Ecco cosa c&apos;è di nuovo con i tuoi veicoli
           </p>
         </motion.div>
@@ -169,8 +169,8 @@ export default function PortalDashboardPage() {
                   <Calendar className='h-5 w-5 text-apple-blue' />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Prossimo appuntamento</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec] truncate'>
+                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Prossimo appuntamento</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)] truncate'>
                     {nextBookingDate || 'Nessuno'}
                   </p>
                 </div>
@@ -186,8 +186,8 @@ export default function PortalDashboardPage() {
                   <Wrench className='h-5 w-5 text-apple-orange' />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Riparazioni in corso</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec]'>
+                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Riparazioni in corso</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                     {activeRepairsCount}
                   </p>
                 </div>
@@ -209,8 +209,8 @@ export default function PortalDashboardPage() {
                   }`} />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Fatture da pagare</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec]'>
+                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Fatture da pagare</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                     {unpaidInvoicesCount > 0
                       ? `${unpaidInvoicesCount} (${unpaidInvoicesTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })})`
                       : 'Nessuna'}
@@ -234,8 +234,8 @@ export default function PortalDashboardPage() {
                   }`} />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[#636366] truncate'>Manutenzione scaduta</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[#ececec]'>
+                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Manutenzione scaduta</p>
+                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                     {overdueMaintenanceCount > 0 ? `${overdueMaintenanceCount} scadut${overdueMaintenanceCount === 1 ? 'a' : 'e'}` : 'Tutto ok'}
                   </p>
                 </div>
@@ -261,30 +261,30 @@ export default function PortalDashboardPage() {
           </Link>
 
           <Link href='/portal/documents'>
-            <div className='p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
+            <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
               <FileText className='h-6 w-6 mb-2 text-apple-blue' />
-              <p className='font-medium text-sm text-apple-dark dark:text-[#ececec]'>Documenti</p>
-              <p className='text-xs text-apple-gray dark:text-[#636366]'>Fatture e report</p>
+              <p className='font-medium text-sm text-apple-dark dark:text-[var(--text-primary)]'>Documenti</p>
+              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Fatture e report</p>
               <ArrowRight className='h-4 w-4 mt-2 text-apple-blue opacity-0 group-hover:opacity-100 transition-opacity' />
             </div>
           </Link>
 
           <Link href='/portal/maintenance'>
-            <div className='p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
+            <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
               <Wrench className='h-6 w-6 mb-2 text-apple-orange' />
-              <p className='font-medium text-sm text-apple-dark dark:text-[#ececec]'>
+              <p className='font-medium text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                 Manutenzione
               </p>
-              <p className='text-xs text-apple-gray dark:text-[#636366]'>Scadenze</p>
+              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Scadenze</p>
               <ArrowRight className='h-4 w-4 mt-2 text-apple-orange opacity-0 group-hover:opacity-100 transition-opacity' />
             </div>
           </Link>
 
           <a href='tel:+390212345678' className='block'>
-            <div className='p-4 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
+            <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
               <Phone className='h-6 w-6 mb-2 text-apple-green' />
-              <p className='font-medium text-sm text-apple-dark dark:text-[#ececec]'>Contatta</p>
-              <p className='text-xs text-apple-gray dark:text-[#636366]'>Assistenza</p>
+              <p className='font-medium text-sm text-apple-dark dark:text-[var(--text-primary)]'>Contatta</p>
+              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Assistenza</p>
               <ArrowRight className='h-4 w-4 mt-2 text-apple-green opacity-0 group-hover:opacity-100 transition-opacity' />
             </div>
           </a>
@@ -302,7 +302,7 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.2 }}
               >
                 <div className='flex items-center justify-between mb-3'>
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Prossima Prenotazione
                   </h2>
                   <Link
@@ -324,7 +324,7 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.3 }}
               >
                 <div className='flex items-center justify-between mb-3'>
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Manutenzione in Scadenza
                   </h2>
                   <Link
@@ -346,7 +346,7 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.4 }}
               >
                 <div className='flex items-center justify-between mb-3'>
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Ultima Ispezione
                   </h2>
                   <Link
@@ -377,10 +377,10 @@ export default function PortalDashboardPage() {
                         <Shield className='h-6 w-6 text-apple-green' />
                       </div>
                       <div>
-                        <h2 className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                        <h2 className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                           Garanzie Attive
                         </h2>
-                        <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                           {data.warrantyStatus.total} polizze totali
                         </p>
                       </div>
@@ -397,19 +397,19 @@ export default function PortalDashboardPage() {
                       <p className='text-2xl font-bold text-apple-green'>
                         {data.warrantyStatus.active}
                       </p>
-                      <p className='text-xs text-apple-gray dark:text-[#636366]'>Attive</p>
+                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Attive</p>
                     </div>
                     <div className='text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl'>
                       <p className='text-2xl font-bold text-apple-orange'>
                         {data.warrantyStatus.expiringSoon}
                       </p>
-                      <p className='text-xs text-apple-gray dark:text-[#636366]'>In scadenza</p>
+                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>In scadenza</p>
                     </div>
-                    <div className='text-center p-3 bg-gray-100 dark:bg-[#353535] rounded-xl'>
+                    <div className='text-center p-3 bg-gray-100 dark:bg-[var(--surface-hover)] rounded-xl'>
                       <p className='text-2xl font-bold text-apple-gray'>
                         {data.warrantyStatus.expired}
                       </p>
-                      <p className='text-xs text-apple-gray dark:text-[#636366]'>Scadute</p>
+                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Scadute</p>
                     </div>
                   </div>
                 </AppleCardContent>
@@ -430,10 +430,10 @@ export default function PortalDashboardPage() {
                         <Car className='h-6 w-6 text-apple-blue' />
                       </div>
                       <div>
-                        <h2 className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                        <h2 className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                           I tuoi veicoli
                         </h2>
-                        <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                           {(() => {
                             const vehicles = extractVehicles(data);
                             if (vehicles.length === 0) return 'Nessun veicolo registrato';
@@ -449,8 +449,8 @@ export default function PortalDashboardPage() {
                     if (vehicles.length === 0) {
                       return (
                         <div className='flex flex-col items-center justify-center py-8 text-center'>
-                          <Car className='h-10 w-10 text-apple-gray/40 dark:text-[#636366]/40 mb-3' />
-                          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                          <Car className='h-10 w-10 text-apple-gray/40 dark:text-[var(--text-secondary)]/40 mb-3' />
+                          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                             Nessun veicolo registrato
                           </p>
                         </div>
@@ -459,16 +459,16 @@ export default function PortalDashboardPage() {
                     return (
                       <div className='space-y-3'>
                         {vehicles.map((vehicle) => (
-                          <div key={vehicle.id} className='p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-2xl'>
+                          <div key={vehicle.id} className='p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-2xl'>
                             <div className='flex items-center gap-4'>
-                              <div className='w-14 h-14 rounded-xl bg-white dark:bg-[#2f2f2f] flex items-center justify-center shadow-sm'>
+                              <div className='w-14 h-14 rounded-xl bg-white dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
                                 <Car className='h-7 w-7 text-apple-gray' />
                               </div>
                               <div className='flex-1'>
-                                <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                                <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                                   {vehicle.make} {vehicle.model}
                                 </p>
-                                <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                                <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                                   {vehicle.licensePlate} {vehicle.mileage ? `\u2022 ${vehicle.mileage.toLocaleString('it-IT')} km` : ''}
                                 </p>
                               </div>

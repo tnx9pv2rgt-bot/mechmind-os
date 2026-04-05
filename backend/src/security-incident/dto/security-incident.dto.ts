@@ -41,11 +41,14 @@ export type IncidentType = (typeof INCIDENT_TYPES)[number];
 // ─── Create DTO ───
 
 export class CreateSecurityIncidentDto {
-  @ApiProperty({ description: 'Titolo dell\'incidente', example: 'Accesso non autorizzato al database' })
+  @ApiProperty({
+    description: "Titolo dell'incidente",
+    example: 'Accesso non autorizzato al database',
+  })
   @IsString()
   title: string;
 
-  @ApiProperty({ description: 'Descrizione dettagliata dell\'incidente' })
+  @ApiProperty({ description: "Descrizione dettagliata dell'incidente" })
   @IsString()
   description: string;
 
@@ -53,7 +56,10 @@ export class CreateSecurityIncidentDto {
   @IsEnum(INCIDENT_SEVERITIES)
   severity: IncidentSeverity;
 
-  @ApiProperty({ description: 'Data/ora di rilevamento (ISO 8601)', example: '2026-03-24T10:30:00Z' })
+  @ApiProperty({
+    description: 'Data/ora di rilevamento (ISO 8601)',
+    example: '2026-03-24T10:30:00Z',
+  })
   @IsDateString()
   detectedAt: string;
 
@@ -95,7 +101,7 @@ export class CreateSecurityIncidentDto {
 // ─── Update DTO ───
 
 export class UpdateSecurityIncidentDto {
-  @ApiPropertyOptional({ description: 'Titolo dell\'incidente' })
+  @ApiPropertyOptional({ description: "Titolo dell'incidente" })
   @IsOptional()
   @IsString()
   title?: string;

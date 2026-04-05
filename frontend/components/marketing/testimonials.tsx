@@ -3,18 +3,21 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 
-const reasons = [
+const steps = [
   {
-    title: 'Setup in 2 minuti',
-    description: 'Niente installazione. Apri il browser e inizia.',
+    step: '1',
+    title: 'Registra il cliente e il veicolo',
+    description: 'Inserisci targa, dati cliente e storico. Il sistema cripta automaticamente i dati sensibili (GDPR).',
   },
   {
-    title: '100% Italia',
-    description: 'SDI, PEC, CF, P.IVA. Non un gestionale USA tradotto male. Pensato per te.',
+    step: '2',
+    title: 'Crea l\'ordine di lavoro',
+    description: 'Diagnosi, ricambi, manodopera: tutto tracciato. Assegna il tecnico e monitora in tempo reale.',
   },
   {
-    title: 'I tuoi dati sono tuoi',
-    description: 'GDPR nativo. Crittografia AES-256. Nessun vendor lock-in.',
+    step: '3',
+    title: 'Fattura e incassa',
+    description: 'Fattura elettronica SDI con un click. Pagamento via Stripe, bonifico o contanti. Tutto registrato.',
   },
 ] as const;
 
@@ -37,7 +40,7 @@ export default function Testimonials(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="storie" className="bg-[#f7f7f8] py-20 dark:bg-[#171717] lg:py-28">
+    <section id="storie" className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-secondary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -47,9 +50,12 @@ export default function Testimonials(): React.ReactElement {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
-            Perché i meccanici scelgono MechMind
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-4xl">
+            Come funziona
           </h2>
+          <p className="mt-4 text-lg text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+            Dall&apos;accettazione alla fattura in 3 passaggi
+          </p>
         </motion.div>
 
         {/* Reason cards */}
@@ -60,17 +66,20 @@ export default function Testimonials(): React.ReactElement {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          {reasons.map((reason) => (
+          {steps.map((step) => (
               <motion.div
-                key={reason.title}
+                key={step.step}
                 variants={cardVariants}
-                className="rounded-2xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:bg-[#2f2f2f]"
+                className="rounded-2xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:bg-[var(--surface-elevated)]"
               >
-                <h3 className="mb-2 text-lg font-bold text-[#0d0d0d] dark:text-[#ececec]">
-                  {reason.title}
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-secondary)] text-lg font-bold text-[var(--text-primary)] dark:bg-[var(--surface-active)]">
+                  {step.step}
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                  {step.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-[#6e6e80] dark:text-[#8e8ea0]">
-                  {reason.description}
+                <p className="text-sm leading-relaxed text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                  {step.description}
                 </p>
               </motion.div>
             ))}

@@ -14,6 +14,7 @@ export default function DemoPage(): React.ReactElement {
         if (cancelled) return;
         if (res.ok) {
           localStorage.setItem('mechmind_demo', 'true');
+          localStorage.setItem('mechmind_demo_start', Date.now().toString());
           localStorage.setItem('mechmind_demo_clicks', '0');
           window.location.href = '/dashboard';
           return;
@@ -30,10 +31,10 @@ export default function DemoPage(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#212121]">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--surface-primary)]">
         <div className="text-center">
           <p className="text-lg text-white">Server non disponibile</p>
-          <p className="mt-2 text-sm text-[#888]">Riprova tra qualche istante.</p>
+          <p className="mt-2 text-sm text-[var(--text-tertiary)]">Riprova tra qualche istante.</p>
           <a href="/" className="mt-4 inline-block text-sm text-white underline">
             Torna alla home
           </a>
@@ -43,7 +44,7 @@ export default function DemoPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#212121]">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--surface-primary)]">
       <div className="flex flex-col items-center gap-3">
         <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-white/20 border-t-white" />
         <p className="text-base text-white">Avvio demo in corso...</p>

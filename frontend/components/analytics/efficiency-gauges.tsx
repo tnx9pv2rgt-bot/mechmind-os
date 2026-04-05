@@ -146,7 +146,7 @@ function RadialGauge({ metric, index, isInView }: RadialGaugeProps): React.React
         </motion.text>
       </svg>
 
-      <p className="mt-1 text-center text-xs font-medium text-[#b4b4b4] sm:text-sm">
+      <p className="mt-1 text-center text-xs font-medium text-[var(--text-secondary)] sm:text-sm">
         {label}
       </p>
     </div>

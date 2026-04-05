@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Pagination } from '@/components/ui/pagination';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import {
   MessageSquare,
   Send,
@@ -23,26 +25,6 @@ import {
   Eye,
   Filter,
 } from 'lucide-react';
-
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
 
 interface Conversation {
   id: string;
@@ -65,9 +47,9 @@ interface Message {
 }
 
 const CHANNEL_CONFIG: Record<string, { label: string; icon: typeof MessageSquare; color: string }> = {
-  SMS: { label: 'SMS', icon: MessageSquare, color: colors.info },
-  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: colors.success },
-  EMAIL: { label: 'Email', icon: Mail, color: colors.warning },
+  SMS: { label: 'SMS', icon: MessageSquare, color: '#60a5fa' },
+  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: '#34d399' },
+  EMAIL: { label: 'Email', icon: Mail, color: '#fbbf24' },
 };
 
 const STATUS_ICONS: Record<string, typeof Check> = {
@@ -78,12 +60,26 @@ const STATUS_ICONS: Record<string, typeof Check> = {
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function MessagingPage() {
@@ -176,93 +172,59 @@ export default function MessagingPage() {
   };
 
   return (
-    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
+    <div className='bg-[var(--surface-tertiary)]'>
       {/* Header */}
-      <header
-        className='sticky top-0 z-30 backdrop-blur-xl border-b'
-        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Link href='/dashboard'>
-              <button
-                className='w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5'
-                style={{ color: colors.textSecondary }}
-              >
-                <ArrowLeft className='h-5 w-5' />
-              </button>
-            </Link>
-            <div>
-              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
-                Messaggistica
-              </h1>
-              <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
-                Gestisci le conversazioni con i clienti
-              </p>
-            </div>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Messaggistica</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Gestisci le conversazioni con i clienti
+            </p>
           </div>
-          <button
-            className='h-10 px-5 rounded-full text-sm font-medium flex items-center gap-2 transition-colors hover:opacity-90'
-            style={{ backgroundColor: colors.accent, color: colors.bg }}
-          >
-            <Plus className='h-4 w-4' />
-            Nuovo Messaggio
-          </button>
+          <div className='flex items-center gap-3'>
+            <AppleButton variant='primary' icon={<Plus className='h-4 w-4' />}>
+              Nuovo Messaggio
+            </AppleButton>
+          </div>
         </div>
       </header>
 
-      <div className='p-8'>
-        <div
-          className='rounded-2xl border overflow-hidden'
-          style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-        >
+      <div className='p-4 sm:p-8'>
+        <AppleCard hover={false}>
           <div className='flex h-[calc(100vh-280px)] min-h-[500px]'>
             {/* Conversation List */}
-            <div className={`${selectedConvId ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 lg:w-96 border-r`} style={{ borderColor: colors.borderSubtle }}>
+            <div className={`${selectedConvId ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 lg:w-96 border-r border-[var(--border-default)]`}>
               {/* Search & Filters */}
-              <div className='p-4 border-b space-y-3' style={{ borderColor: colors.borderSubtle }}>
+              <div className='p-4 border-b border-[var(--border-default)] space-y-3'>
                 <div className='relative'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4' style={{ color: colors.textMuted }} />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <input
                     placeholder='Cerca conversazione...'
                     aria-label='Cerca conversazioni'
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className='w-full pl-10 pr-4 h-10 rounded-xl border text-sm outline-none transition-colors focus:border-white/30'
-                    style={{
-                      backgroundColor: colors.glowStrong,
-                      borderColor: colors.borderSubtle,
-                      color: colors.textPrimary,
-                    }}
+                    className='w-full pl-10 pr-4 h-10 rounded-xl border border-[var(--border-default)] bg-white/5 text-body text-[var(--text-primary)] outline-none transition-colors focus:border-white/30'
                   />
                 </div>
                 <div className='flex items-center gap-2'>
                   <select
                     value={channelFilter}
                     onChange={e => setChannelFilter(e.target.value)}
-                    className='text-xs h-8 px-3 rounded-full border outline-none'
-                    style={{
-                      backgroundColor: colors.glowStrong,
-                      borderColor: colors.borderSubtle,
-                      color: colors.textPrimary,
-                    }}
+                    className='text-footnote h-8 px-3 rounded-full border border-[var(--border-default)] bg-white/5 text-[var(--text-primary)] outline-none'
                   >
                     <option value=''>Tutti i canali</option>
                     <option value='SMS'>SMS</option>
                     <option value='WHATSAPP'>WhatsApp</option>
                     <option value='EMAIL'>Email</option>
                   </select>
-                  <button
+                  <AppleButton
+                    variant={unreadOnly ? 'primary' : 'ghost'}
+                    size='sm'
                     onClick={() => setUnreadOnly(!unreadOnly)}
-                    className='text-xs h-8 px-3 rounded-full border transition-colors'
-                    style={{
-                      borderColor: unreadOnly ? colors.accent : colors.borderSubtle,
-                      backgroundColor: unreadOnly ? colors.accent : 'transparent',
-                      color: unreadOnly ? colors.bg : colors.textTertiary,
-                    }}
                   >
                     Solo non letti
-                  </button>
+                  </AppleButton>
                 </div>
               </div>
 
@@ -270,24 +232,24 @@ export default function MessagingPage() {
               <div className='flex-1 overflow-y-auto'>
                 {convsError ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center px-4'>
-                    <AlertCircle className='h-10 w-10 mb-3' style={{ color: colors.borderSubtle }} />
-                    <p className='text-sm' style={{ color: colors.textTertiary }}>Impossibile caricare le conversazioni</p>
-                    <button
-                      className='mt-3 text-sm px-4 py-2 rounded-full transition-colors hover:bg-white/5'
-                      style={{ color: colors.textSecondary }}
+                    <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Impossibile caricare le conversazioni</p>
+                    <AppleButton
+                      variant='ghost'
+                      className='mt-4'
                       onClick={() => mutateConvs()}
                     >
                       Riprova
-                    </button>
+                    </AppleButton>
                   </div>
                 ) : convsLoading ? (
                   <div className='flex items-center justify-center py-12'>
-                    <Loader2 className='h-6 w-6 animate-spin' style={{ color: colors.textMuted }} />
+                    <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
                   </div>
                 ) : filteredConvs.length === 0 ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center px-4'>
-                    <MessageSquare className='h-10 w-10 mb-3' style={{ color: colors.borderSubtle }} />
-                    <p className='text-sm' style={{ color: colors.textTertiary }}>
+                    <MessageSquare className='h-12 w-12 text-apple-gray/40 mb-4' />
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                       Nessuna conversazione. I messaggi appariranno qui.
                     </p>
                   </div>
@@ -300,43 +262,35 @@ export default function MessagingPage() {
                       return (
                         <motion.div
                           key={conv.id}
-                          variants={itemVariants}
+                          variants={listItemVariants}
                           onClick={() => setSelectedConvId(conv.id)}
-                          className='flex items-center gap-3 p-4 cursor-pointer transition-colors border-b'
-                          style={{
-                            borderColor: colors.borderSubtle,
-                            backgroundColor: isSelected ? colors.surfaceHover : 'transparent',
-                          }}
-                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.backgroundColor = colors.surfaceHover; }}
-                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                          whileHover={{ scale: 1.005, x: 4 }}
+                          transition={{ duration: 0.2 }}
+                          className={`flex items-center gap-3 p-4 cursor-pointer transition-all duration-300 rounded-2xl mx-2 my-1 ${
+                            isSelected ? 'bg-apple-light-gray/50 dark:bg-[var(--surface-active)]' : 'bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple'
+                          }`}
                         >
-                          <div
-                            className='w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0'
-                            style={{ backgroundColor: `${colors.info}15` }}
-                          >
-                            <User className='h-5 w-5' style={{ color: colors.info }} />
+                          <div className='w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-400/10'>
+                            <User className='h-5 w-5 text-blue-400' />
                           </div>
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-center justify-between'>
-                              <p className='text-sm font-medium truncate' style={{ color: colors.textPrimary }}>
+                              <p className='text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]'>
                                 {conv.customerName}
                               </p>
                               <div className='flex items-center gap-1.5'>
                                 <ChannelIcon className='h-3 w-3' style={{ color: channelCfg.color }} />
                                 {conv.unreadCount > 0 && (
-                                  <span
-                                    className='px-2 py-0.5 rounded-full text-[10px] font-bold'
-                                    style={{ backgroundColor: colors.accent, color: colors.bg }}
-                                  >
+                                  <span className='px-2 py-0.5 rounded-full text-footnote font-bold bg-[var(--text-primary)] text-[var(--surface-tertiary)]'>
                                     {conv.unreadCount}
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <p className='text-[13px] truncate' style={{ color: colors.textTertiary }}>
+                            <p className='text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]'>
                               {conv.lastMessage}
                             </p>
-                            <p className='text-[10px] mt-0.5' style={{ color: colors.textMuted }}>
+                            <p className='text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)] opacity-70'>
                               {new Date(conv.lastMessageAt).toLocaleDateString('it-IT', {
                                 day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
                               })}
@@ -354,36 +308,35 @@ export default function MessagingPage() {
             </div>
 
             {/* Chat Panel */}
-            <div className={`${selectedConvId ? 'flex' : 'hidden md:flex'} flex-col flex-1`} style={{ backgroundColor: colors.bg }}>
+            <div className={`${selectedConvId ? 'flex' : 'hidden md:flex'} flex-col flex-1 bg-[var(--surface-tertiary)]`}>
               {selectedConvId && selectedConv ? (
                 <>
                   {/* Thread Header */}
-                  <div className='flex items-center gap-3 p-4 border-b' style={{ borderColor: colors.borderSubtle }}>
-                    <button
-                      className='md:hidden w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5'
+                  <div className='flex items-center gap-3 p-4 border-b border-[var(--border-default)]'>
+                    <AppleButton
+                      variant='ghost'
+                      size='sm'
+                      className='md:hidden'
                       onClick={() => setSelectedConvId(null)}
-                      aria-label='Indietro'
+                      icon={<ArrowLeft className='h-4 w-4' />}
                     >
-                      <ArrowLeft className='h-5 w-5' style={{ color: colors.textPrimary }} />
-                    </button>
-                    <div
-                      className='w-10 h-10 rounded-full flex items-center justify-center'
-                      style={{ backgroundColor: `${colors.info}15` }}
-                    >
-                      <User className='h-5 w-5' style={{ color: colors.info }} />
+                      {''}
+                    </AppleButton>
+                    <div className='w-10 h-10 rounded-full flex items-center justify-center bg-blue-400/10'>
+                      <User className='h-5 w-5 text-blue-400' />
                     </div>
                     <div className='flex-1'>
-                      <p className='text-sm font-medium' style={{ color: colors.textPrimary }}>
+                      <p className='text-body font-medium text-[var(--text-primary)]'>
                         {selectedConv.customerName}
                       </p>
-                      <p className='text-[13px] flex items-center gap-2' style={{ color: colors.textTertiary }}>
+                      <p className='text-footnote flex items-center gap-2 text-[var(--text-tertiary)]'>
                         <Phone className='h-3 w-3' />
                         {selectedConv.customerPhone}
                         <span
-                          className='text-[10px] px-1.5 py-0.5 rounded-full font-medium'
+                          className='text-footnote px-1.5 py-0.5 rounded-full font-medium'
                           style={{
-                            backgroundColor: `${CHANNEL_CONFIG[selectedConv.channel]?.color || colors.info}18`,
-                            color: CHANNEL_CONFIG[selectedConv.channel]?.color || colors.info,
+                            backgroundColor: `${CHANNEL_CONFIG[selectedConv.channel]?.color || '#60a5fa'}18`,
+                            color: CHANNEL_CONFIG[selectedConv.channel]?.color || '#60a5fa',
                           }}
                         >
                           {selectedConv.channel}
@@ -396,11 +349,11 @@ export default function MessagingPage() {
                   <div className='flex-1 overflow-y-auto p-4 space-y-3'>
                     {msgsLoading ? (
                       <div className='flex items-center justify-center py-12'>
-                        <Loader2 className='h-6 w-6 animate-spin' style={{ color: colors.textMuted }} />
+                        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
                       </div>
                     ) : messages.length === 0 ? (
                       <div className='flex items-center justify-center py-12'>
-                        <p className='text-sm' style={{ color: colors.textTertiary }}>
+                        <p className='text-body text-[var(--text-tertiary)]'>
                           Nessun messaggio in questa conversazione.
                         </p>
                       </div>
@@ -415,21 +368,19 @@ export default function MessagingPage() {
                             className={`flex ${msg.direction === 'OUTBOUND' ? 'justify-end' : 'justify-start'}`}
                           >
                             <div
-                              className='max-w-[75%] px-4 py-2.5 rounded-2xl'
-                              style={msg.direction === 'OUTBOUND'
-                                ? { backgroundColor: colors.accent, color: colors.bg, borderBottomRightRadius: '6px' }
-                                : { backgroundColor: colors.surface, color: colors.textPrimary, borderBottomLeftRadius: '6px' }
-                              }
+                              className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
+                                msg.direction === 'OUTBOUND'
+                                  ? 'bg-[var(--text-primary)] text-[var(--surface-tertiary)] rounded-br-md'
+                                  : 'bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded-bl-md'
+                              }`}
                             >
-                              <p className='text-sm'>{msg.body}</p>
+                              <p className='text-body'>{msg.body}</p>
                               <div className={`flex items-center gap-1 mt-1 ${msg.direction === 'OUTBOUND' ? 'justify-end' : ''}`}>
-                                <p className='text-[10px]' style={{
-                                  color: msg.direction === 'OUTBOUND' ? colors.textMuted : colors.textMuted,
-                                }}>
+                                <p className='text-footnote opacity-60'>
                                   {new Date(msg.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 {msg.direction === 'OUTBOUND' && StatusIcon && (
-                                  <StatusIcon className='h-3 w-3' style={{ color: colors.textMuted }} />
+                                  <StatusIcon className='h-3 w-3 opacity-60' />
                                 )}
                               </div>
                             </div>
@@ -441,50 +392,41 @@ export default function MessagingPage() {
                   </div>
 
                   {/* Message Input */}
-                  <div className='p-4 border-t' style={{ borderColor: colors.borderSubtle }}>
+                  <div className='p-4 border-t border-[var(--border-default)]'>
                     <div className='flex items-center gap-3'>
                       <input
                         placeholder='Scrivi un messaggio...'
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className='flex-1 h-10 px-4 rounded-xl border text-sm outline-none transition-colors focus:border-white/30'
-                        style={{
-                          backgroundColor: colors.glowStrong,
-                          borderColor: colors.borderSubtle,
-                          color: colors.textPrimary,
-                        }}
+                        className='flex-1 h-10 px-4 rounded-xl border border-[var(--border-default)] bg-white/5 text-body text-[var(--text-primary)] outline-none transition-colors focus:border-white/30'
                       />
-                      <button
-                        className='h-10 px-5 rounded-full text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40'
-                        style={{ backgroundColor: colors.accent, color: colors.bg }}
+                      <AppleButton
+                        variant='primary'
+                        icon={sending ? <Loader2 className='h-4 w-4 animate-spin' /> : <Send className='h-4 w-4' />}
                         onClick={handleSend}
                         disabled={!newMessage.trim() || sending}
+                        loading={false}
                       >
-                        {sending ? (
-                          <Loader2 className='h-4 w-4 animate-spin' />
-                        ) : (
-                          <Send className='h-4 w-4' />
-                        )}
                         Invia
-                      </button>
+                      </AppleButton>
                     </div>
                   </div>
                 </>
               ) : (
                 <div className='flex-1 flex flex-col items-center justify-center text-center'>
-                  <MessageSquare className='h-16 w-16 mb-4' style={{ color: colors.borderSubtle }} />
-                  <p className='text-base font-medium' style={{ color: colors.textPrimary }}>
+                  <MessageSquare className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Seleziona una conversazione
                   </p>
-                  <p className='text-sm mt-1' style={{ color: colors.textTertiary }}>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                     Scegli una conversazione dalla lista per visualizzare i messaggi
                   </p>
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </AppleCard>
       </div>
     </div>
   );

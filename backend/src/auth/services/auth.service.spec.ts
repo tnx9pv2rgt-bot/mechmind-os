@@ -10,6 +10,7 @@ import { PasswordPolicyService } from './password-policy.service';
 import { JwksService } from './jwks.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
+import { MetricsService } from '@common/metrics/metrics.service';
 
 jest.mock('bcrypt');
 jest.mock('argon2');
@@ -69,6 +70,7 @@ describe('AuthService', () => {
           useValue: {
             signAsync: jest.fn(),
             verifyAsync: jest.fn(),
+            decode: jest.fn(),
           },
         },
         {
@@ -84,6 +86,9 @@ describe('AuthService', () => {
             },
             authAuditLog: {
               create: jest.fn(),
+            },
+            session: {
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
             },
             setTenantContext: jest.fn().mockResolvedValue(undefined),
             clearTenantContext: jest.fn().mockResolvedValue(undefined),
@@ -148,6 +153,14 @@ describe('AuthService', () => {
             warn: jest.fn(),
             debug: jest.fn(),
             verbose: jest.fn(),
+          },
+        },
+        {
+          provide: MetricsService,
+          useValue: {
+            authFailuresTotal: { inc: jest.fn() },
+            httpRequestsTotal: { inc: jest.fn() },
+            httpRequestDuration: { observe: jest.fn() },
           },
         },
       ],
@@ -1167,6 +1180,336 @@ describe('AuthService', () => {
       const result = await service.findUserByEmailAndTenant('mario@test.com', 'tenant-uuid-1');
 
       expect(result).toBeNull();
+    });
+  });
+
+  // =========================================================================
+  // logout()
+  // =========================================================================
+  describe('logout', () => {
+    let tokenBlacklist: TokenBlacklistService;
+
+    beforeEach(() => {
+      tokenBlacklist = module.get(TokenBlacklistService);
+    });
+
+    it('should blacklist access token jti with correct TTL', async () => {
+      const futureExp = Math.floor(Date.now() / 1000) + 600; // 10 min from now
+      const payload = { sub: 'u1:t1', jti: 'access-jti', exp: futureExp };
+      (jwtService.decode as jest.Mock) = jest.fn().mockReturnValue(payload);
+
+      await service.logout('access-token');
+
+      expect(tokenBlacklist.blacklistToken).toHaveBeenCalledWith('access-jti', expect.any(Number));
+    });
+
+    it('should also invalidate refresh token family when refreshToken is provided', async () => {
+      const futureExp = Math.floor(Date.now() / 1000) + 600;
+      const accessPayload = { sub: 'u1:t1', jti: 'access-jti', exp: futureExp };
+      const refreshPayload = {
+        sub: 'u1:t1',
+        jti: 'refresh-jti',
+        exp: futureExp,
+        familyId: 'family-1',
+      };
+
+      (jwtService.decode as jest.Mock) = jest
+        .fn()
+        .mockReturnValueOnce(accessPayload) // first call for access token
+        .mockReturnValueOnce(refreshPayload); // second call for refresh token
+
+      (prisma.session.updateMany as jest.Mock) = jest.fn().mockResolvedValue({ count: 1 });
+
+      await service.logout('access-token', 'refresh-token');
+
+      expect(tokenBlacklist.invalidateRefreshFamily).toHaveBeenCalledWith('family-1');
+      expect(tokenBlacklist.blacklistToken).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not blacklist when token has no jti', async () => {
+      (jwtService.decode as jest.Mock) = jest.fn().mockReturnValue({ sub: 'u1:t1' });
+
+      await service.logout('no-jti-token');
+
+      expect(tokenBlacklist.blacklistToken).not.toHaveBeenCalled();
+    });
+
+    it('should not blacklist when TTL is zero or negative (expired token)', async () => {
+      const pastExp = Math.floor(Date.now() / 1000) - 100;
+      (jwtService.decode as jest.Mock) = jest.fn().mockReturnValue({
+        sub: 'u1:t1',
+        jti: 'expired-jti',
+        exp: pastExp,
+      });
+
+      await service.logout('expired-token');
+
+      expect(tokenBlacklist.blacklistToken).not.toHaveBeenCalled();
+    });
+
+    it('should deactivate session in DB when payload has sub', async () => {
+      const futureExp = Math.floor(Date.now() / 1000) + 600;
+      (jwtService.decode as jest.Mock) = jest.fn().mockReturnValue({
+        sub: 'u1:t1',
+        jti: 'jti-1',
+        exp: futureExp,
+      });
+      (prisma.session.updateMany as jest.Mock) = jest.fn().mockResolvedValue({ count: 1 });
+
+      await service.logout('access-token');
+
+      expect(prisma.session.updateMany).toHaveBeenCalledWith({
+        where: { jwtToken: 'access-token', userId: 'u1', isActive: true },
+        data: {
+          isActive: false,
+          revokedAt: expect.any(Date),
+          revokedReason: 'logout',
+        },
+      });
+    });
+
+    it('should not throw when decode throws (token already invalid)', async () => {
+      (jwtService.decode as jest.Mock) = jest.fn().mockImplementation(() => {
+        throw new Error('Invalid token');
+      });
+
+      await expect(service.logout('garbage-token')).resolves.toBeUndefined();
+    });
+
+    it('should continue when refresh token parsing fails', async () => {
+      const futureExp = Math.floor(Date.now() / 1000) + 600;
+      (jwtService.decode as jest.Mock) = jest
+        .fn()
+        .mockReturnValueOnce({ sub: 'u1:t1', jti: 'access-jti', exp: futureExp })
+        .mockImplementationOnce(() => {
+          throw new Error('Bad refresh');
+        });
+
+      (prisma.session.updateMany as jest.Mock) = jest.fn().mockResolvedValue({ count: 1 });
+
+      // Should not throw
+      await expect(service.logout('access-token', 'bad-refresh')).resolves.toBeUndefined();
+
+      // Access token should still be blacklisted
+      expect(tokenBlacklist.blacklistToken).toHaveBeenCalledWith('access-jti', expect.any(Number));
+    });
+  });
+
+  // =========================================================================
+  // invalidateAllSessions()
+  // =========================================================================
+  describe('invalidateAllSessions', () => {
+    it('should delegate to tokenBlacklist.invalidateAllUserSessions', async () => {
+      const tokenBlacklist = module.get(TokenBlacklistService);
+
+      await service.invalidateAllSessions('user-uuid-1');
+
+      expect(tokenBlacklist.invalidateAllUserSessions).toHaveBeenCalledWith('user-uuid-1');
+    });
+  });
+
+  // =========================================================================
+  // isTokenValid()
+  // =========================================================================
+  describe('isTokenValid', () => {
+    let tokenBlacklist: TokenBlacklistService;
+
+    beforeEach(() => {
+      tokenBlacklist = module.get(TokenBlacklistService);
+    });
+
+    it('should return false when token JTI is blacklisted', async () => {
+      (tokenBlacklist.isBlacklisted as jest.Mock).mockResolvedValue(true);
+
+      const result = await service.isTokenValid({
+        sub: 'u1:t1',
+        email: 'a@b.com',
+        role: 'ADMIN',
+        tenantId: 't1',
+        jti: 'blacklisted-jti',
+        iat: 1000,
+      });
+
+      expect(result).toBe(false);
+    });
+
+    it('should return true when token is not blacklisted and session is valid', async () => {
+      (tokenBlacklist.isBlacklisted as jest.Mock).mockResolvedValue(false);
+      (tokenBlacklist.isSessionValid as jest.Mock).mockResolvedValue(true);
+
+      const result = await service.isTokenValid({
+        sub: 'u1:t1',
+        email: 'a@b.com',
+        role: 'ADMIN',
+        tenantId: 't1',
+        jti: 'valid-jti',
+        iat: 1000,
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when session is invalidated', async () => {
+      (tokenBlacklist.isBlacklisted as jest.Mock).mockResolvedValue(false);
+      (tokenBlacklist.isSessionValid as jest.Mock).mockResolvedValue(false);
+
+      const result = await service.isTokenValid({
+        sub: 'u1:t1',
+        email: 'a@b.com',
+        role: 'ADMIN',
+        tenantId: 't1',
+        jti: 'valid-jti',
+        iat: 1000,
+      });
+
+      expect(result).toBe(false);
+    });
+
+    it('should check session validity even when jti is undefined', async () => {
+      (tokenBlacklist.isSessionValid as jest.Mock).mockResolvedValue(true);
+
+      const result = await service.isTokenValid({
+        sub: 'u1:t1',
+        email: 'a@b.com',
+        role: 'ADMIN',
+        tenantId: 't1',
+        iat: 1000,
+      });
+
+      expect(result).toBe(true);
+      expect(tokenBlacklist.isBlacklisted).not.toHaveBeenCalled();
+    });
+
+    it('should default iat to 0 when not provided', async () => {
+      (tokenBlacklist.isSessionValid as jest.Mock).mockResolvedValue(true);
+
+      await service.isTokenValid({
+        sub: 'u1:t1',
+        email: 'a@b.com',
+        role: 'ADMIN',
+        tenantId: 't1',
+      });
+
+      expect(tokenBlacklist.isSessionValid).toHaveBeenCalledWith('u1', 0);
+    });
+  });
+
+  // =========================================================================
+  // registerTenant()
+  // =========================================================================
+  describe('registerTenant', () => {
+    it('should throw ConflictException when slug is already taken', async () => {
+      const _passwordPolicy = module.get(PasswordPolicyService);
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({ id: 'existing' });
+
+      await expect(
+        service.registerTenant({
+          shopName: 'Test',
+          slug: 'taken-slug',
+          name: 'Mario',
+          email: 'mario@test.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('Questo slug è già in uso');
+    });
+
+    it('should create tenant and user in transaction and return tokens', async () => {
+      const _passwordPolicy = module.get(PasswordPolicyService);
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(null);
+
+      (argon2.hash as jest.Mock).mockResolvedValue('$argon2id$hash');
+
+      // Mock $transaction
+      (prisma as unknown as Record<string, jest.Mock>).$transaction = jest.fn().mockResolvedValue({
+        tenant: { id: 't1', name: 'Test Shop', slug: 'test-shop' },
+        user: {
+          id: 'u1',
+          email: 'mario@test.com',
+          name: 'Mario',
+          role: 'ADMIN',
+        },
+      });
+
+      (jwtService.signAsync as jest.Mock)
+        .mockResolvedValueOnce('mock-access')
+        .mockResolvedValueOnce('mock-refresh');
+
+      (prisma.authAuditLog.create as jest.Mock).mockResolvedValue({});
+
+      const result = await service.registerTenant({
+        shopName: 'Test Shop',
+        slug: 'test-shop',
+        name: 'Mario',
+        email: 'mario@test.com',
+        password: 'password123',
+      });
+
+      expect(result.tokens.accessToken).toBe('mock-access');
+      expect(result.tenant.slug).toBe('test-shop');
+      expect(result.user.email).toBe('mario@test.com');
+    });
+  });
+
+  // =========================================================================
+  // refreshTokens — additional edge cases
+  // =========================================================================
+  describe('refreshTokens — additional edge cases', () => {
+    it('should handle payload without familyId (no reuse detection)', async () => {
+      const payloadNoFamily: JwtPayload = {
+        sub: 'user-uuid-1:tenant-uuid-1',
+        email: 'mario@test.com',
+        role: 'ADMIN',
+        tenantId: 'tenant-uuid-1',
+        jti: 'refresh-jti-1',
+        // no familyId
+      };
+
+      (jwtService.verifyAsync as jest.Mock).mockResolvedValue(payloadNoFamily);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
+      (jwtService.signAsync as jest.Mock)
+        .mockResolvedValueOnce('new-access')
+        .mockResolvedValueOnce('new-refresh');
+
+      const result = await service.refreshTokens('no-family-token');
+
+      expect(result.accessToken).toBe('new-access');
+    });
+
+    it('should handle payload without jti (no reuse marking)', async () => {
+      const payloadNoJti: JwtPayload = {
+        sub: 'user-uuid-1:tenant-uuid-1',
+        email: 'mario@test.com',
+        role: 'ADMIN',
+        tenantId: 'tenant-uuid-1',
+        familyId: 'family-1',
+        // no jti
+      };
+
+      (jwtService.verifyAsync as jest.Mock).mockResolvedValue(payloadNoJti);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
+      (jwtService.signAsync as jest.Mock)
+        .mockResolvedValueOnce('new-access')
+        .mockResolvedValueOnce('new-refresh');
+
+      const result = await service.refreshTokens('no-jti-token');
+
+      expect(result.accessToken).toBe('new-access');
+    });
+  });
+
+  // =========================================================================
+  // verifyAndMigratePassword — $2a$ prefix
+  // =========================================================================
+  describe('verifyAndMigratePassword — $2a$ prefix', () => {
+    it('should handle $2a$ bcrypt prefix (legacy)', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (argon2.hash as jest.Mock).mockResolvedValue('$argon2id$migrated');
+
+      const result = await service.verifyAndMigratePassword('password', '$2a$12$legacyhash');
+
+      expect(result.valid).toBe(true);
+      expect(result.newHash).toBe('$argon2id$migrated');
+      expect(bcrypt.compare).toHaveBeenCalledWith('password', '$2a$12$legacyhash');
     });
   });
 });

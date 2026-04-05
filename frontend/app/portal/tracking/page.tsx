@@ -99,7 +99,7 @@ export default function PortalTrackingPage() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#1a1a1a]'>
+      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)]'>
         <Loader2 className='h-8 w-8 animate-spin text-blue-500' />
       </div>
     );
@@ -107,9 +107,9 @@ export default function PortalTrackingPage() {
 
   if (error || !data) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[#1a1a1a] p-8 text-center'>
-        <AlertCircle className='h-12 w-12 text-gray-400 dark:text-[#636366] mb-4' />
-        <p className='text-gray-600 dark:text-[#8e8e93]'>{error || 'Ordine non trovato'}</p>
+      <div className='flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)] p-8 text-center'>
+        <AlertCircle className='h-12 w-12 text-gray-400 dark:text-[var(--text-secondary)] mb-4' />
+        <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>{error || 'Ordine non trovato'}</p>
       </div>
     );
   }
@@ -117,19 +117,19 @@ export default function PortalTrackingPage() {
   const activeStep = getActiveStepIndex(data.status);
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-[#1a1a1a]'>
+    <div className='min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)]'>
       {/* Header */}
-      <header className='bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-[#3a3a3c]'>
+      <header className='bg-white dark:bg-[var(--surface-secondary)] border-b border-gray-200 dark:border-[var(--border-default)]'>
         <div className='max-w-2xl mx-auto px-6 py-6'>
           <div className='flex items-center gap-4'>
             <div className='w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
               <Car className='h-6 w-6 text-blue-500' />
             </div>
             <div>
-              <h1 className='text-lg font-bold text-gray-900 dark:text-[#ececec]'>
+              <h1 className='text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]'>
                 {data.vehicleMake} {data.vehicleModel}
               </h1>
-              <p className='text-sm text-gray-500 dark:text-[#636366]'>
+              <p className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>
                 Targa {data.vehiclePlate} — Ordine {data.woNumber}
               </p>
             </div>
@@ -139,8 +139,8 @@ export default function PortalTrackingPage() {
 
       <main className='max-w-2xl mx-auto px-6 py-8'>
         {/* Timeline */}
-        <div className='bg-white dark:bg-[#2f2f2f] rounded-2xl p-6 shadow-sm'>
-          <h2 className='text-lg font-semibold text-gray-900 dark:text-[#ececec] mb-6'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+          <h2 className='text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-6'>
             Stato del veicolo
           </h2>
 
@@ -179,7 +179,7 @@ export default function PortalTrackingPage() {
                   {index < steps.length - 1 && (
                     <div
                       className={`absolute left-5 top-10 w-0.5 h-full ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-[#3a3a3c]'
+                        isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-[var(--border-default)]'
                       }`}
                     />
                   )}
@@ -191,7 +191,7 @@ export default function PortalTrackingPage() {
                         ? 'bg-green-500 text-white'
                         : isCurrent
                           ? 'bg-blue-500 text-white animate-pulse'
-                          : 'bg-gray-200 dark:bg-[#3a3a3c] text-gray-400 dark:text-[#636366]'
+                          : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-400 dark:text-[var(--text-secondary)]'
                     }`}
                   >
                     {isCompleted ? (
@@ -206,14 +206,14 @@ export default function PortalTrackingPage() {
                     <p
                       className={`font-medium ${
                         isFuture
-                          ? 'text-gray-400 dark:text-[#636366]'
-                          : 'text-gray-900 dark:text-[#ececec]'
+                          ? 'text-gray-400 dark:text-[var(--text-secondary)]'
+                          : 'text-gray-900 dark:text-[var(--text-primary)]'
                       }`}
                     >
                       {step.label}
                     </p>
                     {historyEntry && (
-                      <p className='text-xs text-gray-500 dark:text-[#636366] mt-0.5'>
+                      <p className='text-xs text-gray-500 dark:text-[var(--text-secondary)] mt-0.5'>
                         {new Date(historyEntry.timestamp).toLocaleDateString('it-IT', {
                           day: '2-digit',
                           month: 'long',
@@ -274,8 +274,8 @@ export default function PortalTrackingPage() {
 
         {/* Check-in photos */}
         {(data.checkInPhotos || []).length > 0 && (
-          <div className='mt-6 bg-white dark:bg-[#2f2f2f] rounded-2xl p-6 shadow-sm'>
-            <h3 className='font-semibold text-gray-900 dark:text-[#ececec] mb-4'>Foto check-in</h3>
+          <div className='mt-6 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+            <h3 className='font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-4'>Foto check-in</h3>
             <div className='grid grid-cols-2 gap-2'>
               {data.checkInPhotos.slice(0, 4).map((url, i) => (
                 <img
@@ -290,7 +290,7 @@ export default function PortalTrackingPage() {
         )}
 
         {/* Auto-refresh notice */}
-        <p className='text-center text-xs text-gray-400 dark:text-[#636366] mt-6'>
+        <p className='text-center text-xs text-gray-400 dark:text-[var(--text-secondary)] mt-6'>
           Questa pagina si aggiorna automaticamente ogni 30 secondi
         </p>
       </main>

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import {
   Euro,
   Users,
@@ -17,7 +16,6 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   Wrench,
-  ArrowLeft,
 } from 'lucide-react';
 import {
   BarChart,
@@ -50,6 +48,8 @@ import { ExportMenu } from '@/components/analytics/export-menu';
 import { DashboardCustomizer, useDashboardPrefs } from '@/components/analytics/dashboard-customizer';
 import { PeriodComparison } from '@/components/analytics/period-comparison';
 import { useAnalyticsKeyboard, KeyboardShortcutsOverlay } from '@/components/analytics/keyboard-nav';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardHeader, AppleCardContent } from '@/components/ui/apple-card';
 
 interface AnalyticsKPIs {
   revenue: number;
@@ -100,24 +100,15 @@ interface AnalyticsResponse {
   revenueByTechnician: TechnicianRevenue[];
 }
 
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
+const CHART_COLORS = {
+  border: 'var(--border-default)',
+  surface: 'var(--surface-elevated)',
   textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
   success: '#34d399',
   warning: '#fbbf24',
   error: '#f87171',
   info: '#60a5fa',
   purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
 };
 
 const PERIOD_OPTIONS = [
@@ -128,7 +119,7 @@ const PERIOD_OPTIONS = [
   { value: 'year', label: 'Anno' },
 ];
 
-const PIE_COLORS = [colors.info, colors.success, colors.warning, colors.purple, colors.error, '#5ac8fa', '#ffcc00'];
+const PIE_COLORS = [CHART_COLORS.info, CHART_COLORS.success, CHART_COLORS.warning, CHART_COLORS.purple, CHART_COLORS.error, '#5ac8fa', '#ffcc00'];
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza',
@@ -146,23 +137,29 @@ function formatCurrency(amount: number): string {
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 const SECTION_IDS = ['kpi', 'charts', 'gauges', 'heatmap', 'funnel', 'sankey', 'treemap', 'bullet', 'control-center'] as const;
-
-const kpiIconColors: Record<string, string> = {
-  Fatturato: colors.success,
-  'OdL Completati': colors.info,
-  'Clienti Nuovi': colors.purple,
-  'Ticket Medio': colors.warning,
-  'Tasso Conversione': colors.error,
-};
 
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState('month');
@@ -195,41 +192,25 @@ export default function AnalyticsPage() {
   const revenueByTechnician = analytics?.revenueByTechnician || [];
 
   const kpiCards = [
-    { label: 'Fatturato', value: formatCurrency(kpis.revenue), icon: Euro },
-    { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList },
-    { label: 'Clienti Nuovi', value: String(kpis.newCustomers), icon: Users },
-    { label: 'Ticket Medio', value: formatCurrency(kpis.avgTicket), icon: TrendingUp },
-    { label: 'Tasso Conversione', value: `${kpis.conversionRate.toFixed(1)}%`, icon: Percent },
+    { label: 'Fatturato', value: formatCurrency(kpis.revenue), icon: Euro, color: 'bg-apple-green' },
+    { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList, color: 'bg-apple-blue' },
+    { label: 'Clienti Nuovi', value: String(kpis.newCustomers), icon: Users, color: 'bg-apple-purple' },
+    { label: 'Ticket Medio', value: formatCurrency(kpis.avgTicket), icon: TrendingUp, color: 'bg-apple-orange' },
+    { label: 'Tasso Conversione', value: `${kpis.conversionRate.toFixed(1)}%`, icon: Percent, color: 'bg-apple-red' },
   ];
 
   return (
-    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className='sticky top-0 z-30 backdrop-blur-xl border-b'
-        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-6 lg:px-8 py-5 flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Link
-              href='/dashboard'
-              className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors'
-              style={{ color: colors.textSecondary }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-            >
-              <ArrowLeft className='h-5 w-5' />
-            </Link>
-            <div>
-              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
-                Analytics
-              </h1>
-              <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
-                Analisi complete dell&apos;attivita della tua officina
-              </p>
-            </div>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Analytics</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Analisi complete dell&apos;attivita della tua officina
+            </p>
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-3'>
             <ExportMenu />
             <DashboardCustomizer />
           </div>
@@ -238,124 +219,101 @@ export default function AnalyticsPage() {
 
       <motion.div className='p-6 lg:p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
         {/* Live KPI Ticker */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={listItemVariants}>
           <LiveKpiTicker />
         </motion.div>
 
         {/* Period Selector */}
-        <motion.div variants={itemVariants}>
-          <div className='flex flex-wrap items-center justify-center gap-2'>
-            <Calendar className='h-4 w-4' style={{ color: colors.textTertiary }} />
-            {PERIOD_OPTIONS.map(p => (
-              <button
-                key={p.value}
-                onClick={() => { setPeriod(p.value); setShowCustomRange(false); }}
-                className='h-10 px-4 rounded-full text-sm font-medium transition-all'
-                style={
-                  period === p.value && !showCustomRange
-                    ? { backgroundColor: colors.textPrimary, color: colors.bg }
-                    : { backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.borderSubtle}` }
-                }
-              >
-                {p.label}
-              </button>
-            ))}
-            <button
-              onClick={() => setShowCustomRange(!showCustomRange)}
-              className='h-10 px-4 rounded-full text-sm font-medium transition-all'
-              style={
-                showCustomRange
-                  ? { backgroundColor: colors.textPrimary, color: colors.bg }
-                  : { backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.borderSubtle}` }
-              }
-            >
-              Personalizzato
-            </button>
-            {showCustomRange && (
-              <div className='flex items-center gap-2'>
-                <input
-                  type='date'
-                  value={customFrom}
-                  onChange={e => setCustomFrom(e.target.value)}
-                  className='text-sm px-3 py-2 rounded-xl border focus:outline-none focus:border-white/30'
-                  style={{
-                    backgroundColor: colors.glowStrong,
-                    borderColor: colors.borderSubtle,
-                    color: colors.textPrimary,
-                  }}
-                />
-                <span style={{ color: colors.textTertiary }}>-</span>
-                <input
-                  type='date'
-                  value={customTo}
-                  onChange={e => setCustomTo(e.target.value)}
-                  className='text-sm px-3 py-2 rounded-xl border focus:outline-none focus:border-white/30'
-                  style={{
-                    backgroundColor: colors.glowStrong,
-                    borderColor: colors.borderSubtle,
-                    color: colors.textPrimary,
-                  }}
-                />
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex flex-wrap items-center justify-center gap-2'>
+                <Calendar className='h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]' />
+                {PERIOD_OPTIONS.map(p => (
+                  <AppleButton
+                    key={p.value}
+                    variant={period === p.value && !showCustomRange ? 'primary' : 'ghost'}
+                    size='sm'
+                    onClick={() => { setPeriod(p.value); setShowCustomRange(false); }}
+                  >
+                    {p.label}
+                  </AppleButton>
+                ))}
+                <AppleButton
+                  variant={showCustomRange ? 'primary' : 'ghost'}
+                  size='sm'
+                  onClick={() => setShowCustomRange(!showCustomRange)}
+                >
+                  Personalizzato
+                </AppleButton>
+                {showCustomRange && (
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='date'
+                      value={customFrom}
+                      onChange={e => setCustomFrom(e.target.value)}
+                      className='h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]'
+                    />
+                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>-</span>
+                    <input
+                      type='date'
+                      value={customTo}
+                      onChange={e => setCustomTo(e.target.value)}
+                      className='h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]'
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Error */}
         {error && (
-          <motion.div variants={itemVariants}>
-            <div
-              className='rounded-2xl border p-4 flex items-center justify-between'
-              style={{ backgroundColor: colors.surface, borderColor: colors.error + '33' }}
-            >
-              <div className='flex items-center gap-3'>
-                <AlertCircle className='h-5 w-5' style={{ color: colors.error }} />
-                <p className='text-[13px]' style={{ color: colors.textSecondary }}>
-                  Impossibile caricare i dati analytics. Verifica la connessione e riprova.
-                </p>
-              </div>
-              <button
-                onClick={() => mutate()}
-                className='px-4 py-2 rounded-xl text-sm font-medium transition-colors'
-                style={{ border: `1px solid ${colors.borderSubtle}`, color: colors.textSecondary }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-              >
-                Riprova
-              </button>
-            </div>
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardContent>
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare i dati analytics. Verifica la connessione e riprova.
+                  </p>
+                  <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>
+                    Riprova
+                  </AppleButton>
+                </div>
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         )}
 
         {/* Loading */}
         {isLoading && (
           <div className='flex items-center justify-center py-12'>
-            <Loader2 className='h-8 w-8 animate-spin' style={{ color: colors.textTertiary }} />
+            <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
           </div>
         )}
 
         {/* KPI Row */}
         {!isLoading && (
-          <motion.div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4' variants={containerVariants}>
+          <motion.div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-bento' variants={containerVariants}>
             {kpiCards.map(kpi => (
-              <motion.div
-                key={kpi.label}
-                variants={itemVariants}
-                className='rounded-2xl border h-[120px] flex flex-col justify-center px-5'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='flex items-center gap-2 mb-2'>
-                  <kpi.icon className='h-4 w-4' style={{ color: kpiIconColors[kpi.label] || colors.textTertiary }} />
-                  <p className='text-[12px] font-medium uppercase tracking-wider' style={{ color: colors.textTertiary }}>
-                    {kpi.label}
-                  </p>
-                </div>
-                <p
-                  className='text-[22px] font-semibold'
-                  style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {kpi.value}
-                </p>
+              <motion.div key={kpi.label} variants={statsCardVariants}>
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <div className='flex items-center justify-between mb-3'>
+                      <div
+                        className={`w-10 h-10 rounded-xl ${kpi.color} flex items-center justify-center`}
+                      >
+                        <kpi.icon className='h-5 w-5 text-white' />
+                      </div>
+                    </div>
+                    <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      {kpi.value}
+                    </p>
+                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{kpi.label}</p>
+                  </AppleCardContent>
+                </AppleCard>
               </motion.div>
             ))}
           </motion.div>
@@ -365,57 +323,51 @@ export default function AnalyticsPage() {
         {!isLoading && (
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {/* Revenue Bar Chart */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                  <BarChart3 className='h-5 w-5' style={{ color: colors.success }} />
-                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Fatturato</h3>
-                </div>
-                <div className='p-5'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader className='flex items-center gap-2'>
+                  <BarChart3 className='h-5 w-5 text-apple-green' />
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Fatturato</h3>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {revenueChart.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <BarChart3 className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <BarChart3 className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
                       <ResponsiveContainer width='100%' height='100%'>
                         <BarChart data={revenueChart}>
-                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
-                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
-                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                          <CartesianGrid strokeDasharray='3 3' stroke={CHART_COLORS.border} />
+                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} />
+                          <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
                           <Tooltip
                             formatter={(value: number) => [formatCurrency(value), 'Fatturato']}
-                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
-                            labelStyle={{ color: colors.textSecondary }}
+                            contentStyle={{ backgroundColor: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}`, borderRadius: 12, color: '#ffffff' }}
+                            labelStyle={{ color: '#b4b4b4' }}
                           />
-                          <Bar dataKey='revenue' fill={colors.success} radius={[4, 4, 0, 0]} />
+                          <Bar dataKey='revenue' fill={CHART_COLORS.success} radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             {/* Work Orders by Status - Pie Chart */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                  <PieChartIcon className='h-5 w-5' style={{ color: colors.info }} />
-                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>OdL per Stato</h3>
-                </div>
-                <div className='p-5'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader className='flex items-center gap-2'>
+                  <PieChartIcon className='h-5 w-5 text-apple-blue' />
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>OdL per Stato</h3>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {workOrdersByStatus.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <PieChartIcon className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <PieChartIcon className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -437,158 +389,146 @@ export default function AnalyticsPage() {
                             ))}
                           </Pie>
                           <Tooltip
-                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                            contentStyle={{ backgroundColor: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}`, borderRadius: 12, color: '#ffffff' }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             {/* Top Services - Horizontal Bar */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                  <Wrench className='h-5 w-5' style={{ color: colors.warning }} />
-                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Top Servizi</h3>
-                </div>
-                <div className='p-5'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader className='flex items-center gap-2'>
+                  <Wrench className='h-5 w-5 text-apple-orange' />
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Top Servizi</h3>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {topServices.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <Wrench className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <Wrench className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
                       <ResponsiveContainer width='100%' height='100%'>
                         <BarChart data={topServices} layout='vertical'>
-                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
-                          <XAxis type='number' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
-                          <YAxis dataKey='name' type='category' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} width={120} />
+                          <CartesianGrid strokeDasharray='3 3' stroke={CHART_COLORS.border} />
+                          <XAxis type='number' tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} />
+                          <YAxis dataKey='name' type='category' tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} width={120} />
                           <Tooltip
-                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                            contentStyle={{ backgroundColor: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}`, borderRadius: 12, color: '#ffffff' }}
                           />
-                          <Bar dataKey='count' fill={colors.warning} radius={[0, 4, 4, 0]} />
+                          <Bar dataKey='count' fill={CHART_COLORS.warning} radius={[0, 4, 4, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             {/* Customer Trends - Line Chart */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                  <Users className='h-5 w-5' style={{ color: colors.purple }} />
-                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Andamento Clienti</h3>
-                </div>
-                <div className='p-5'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader className='flex items-center gap-2'>
+                  <Users className='h-5 w-5 text-apple-purple' />
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Andamento Clienti</h3>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {customerTrends.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <Users className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <Users className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
                       <ResponsiveContainer width='100%' height='100%'>
                         <LineChart data={customerTrends}>
-                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
-                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
-                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
+                          <CartesianGrid strokeDasharray='3 3' stroke={CHART_COLORS.border} />
+                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} />
+                          <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} />
                           <Tooltip
-                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                            contentStyle={{ backgroundColor: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}`, borderRadius: 12, color: '#ffffff' }}
                           />
-                          <Legend wrapperStyle={{ color: colors.textSecondary }} />
-                          <Line type='monotone' dataKey='newCustomers' name='Nuovi' stroke={colors.purple} strokeWidth={2} dot={false} />
-                          <Line type='monotone' dataKey='returningCustomers' name='Ritorno' stroke={colors.info} strokeWidth={2} dot={false} />
+                          <Legend wrapperStyle={{ color: '#b4b4b4' }} />
+                          <Line type='monotone' dataKey='newCustomers' name='Nuovi' stroke={CHART_COLORS.purple} strokeWidth={2} dot={false} />
+                          <Line type='monotone' dataKey='returningCustomers' name='Ritorno' stroke={CHART_COLORS.info} strokeWidth={2} dot={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             {/* Capacity Utilization - Area Chart */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                  <TrendingUp className='h-5 w-5' style={{ color: colors.success }} />
-                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Tasso Occupazione</h3>
-                </div>
-                <div className='p-5'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader className='flex items-center gap-2'>
+                  <TrendingUp className='h-5 w-5 text-apple-green' />
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Tasso Occupazione</h3>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {capacityUtilization.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <TrendingUp className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <TrendingUp className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
                       <ResponsiveContainer width='100%' height='100%'>
                         <AreaChart data={capacityUtilization}>
-                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
-                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
-                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} unit='%' domain={[0, 100]} />
+                          <CartesianGrid strokeDasharray='3 3' stroke={CHART_COLORS.border} />
+                          <XAxis dataKey='period' tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} />
+                          <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} unit='%' domain={[0, 100]} />
                           <Tooltip
                             formatter={(value: number) => [`${value}%`, 'Occupazione']}
-                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                            contentStyle={{ backgroundColor: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}`, borderRadius: 12, color: '#ffffff' }}
                           />
-                          <Area type='monotone' dataKey='utilization' stroke={colors.success} fill={colors.success} fillOpacity={0.2} strokeWidth={2} />
+                          <Area type='monotone' dataKey='utilization' stroke={CHART_COLORS.success} fill={CHART_COLORS.success} fillOpacity={0.2} strokeWidth={2} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             {/* Revenue per Technician - Bar Chart */}
-            <motion.div variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-5 py-4 border-b flex items-center gap-2' style={{ borderColor: colors.borderSubtle }}>
-                  <Wrench className='h-5 w-5' style={{ color: colors.info }} />
-                  <h3 className='text-[15px] font-semibold' style={{ color: colors.textPrimary }}>Fatturato per Tecnico</h3>
-                </div>
-                <div className='p-5'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader className='flex items-center gap-2'>
+                  <Wrench className='h-5 w-5 text-apple-blue' />
+                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Fatturato per Tecnico</h3>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {revenueByTechnician.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <Wrench className='h-8 w-8 mx-auto mb-3' style={{ color: colors.borderSubtle }} />
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>Nessun dato disponibile</p>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <Wrench className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
                       <ResponsiveContainer width='100%' height='100%'>
                         <BarChart data={revenueByTechnician}>
-                          <CartesianGrid strokeDasharray='3 3' stroke={colors.borderSubtle} />
-                          <XAxis dataKey='name' tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} />
-                          <YAxis tick={{ fontSize: 11, fill: colors.textTertiary }} stroke={colors.borderSubtle} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                          <CartesianGrid strokeDasharray='3 3' stroke={CHART_COLORS.border} />
+                          <XAxis dataKey='name' tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} />
+                          <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.textTertiary }} stroke={CHART_COLORS.border} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
                           <Tooltip
                             formatter={(value: number) => [formatCurrency(value), 'Fatturato']}
-                            contentStyle={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textPrimary }}
+                            contentStyle={{ backgroundColor: CHART_COLORS.surface, border: `1px solid ${CHART_COLORS.border}`, borderRadius: 12, color: '#ffffff' }}
                           />
-                          <Bar dataKey='revenue' fill={colors.info} radius={[4, 4, 0, 0]} />
+                          <Bar dataKey='revenue' fill={CHART_COLORS.info} radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           </div>
         )}
@@ -612,16 +552,16 @@ export default function AnalyticsPage() {
         {/* Centro Controllo */}
         {!isLoading && (
           <div className='mt-8 space-y-6'>
-            <motion.div variants={itemVariants}>
-              <h2 className='text-xl font-semibold flex items-center gap-2' style={{ color: colors.textPrimary }}>
-                <span className='inline-block h-2 w-2 rounded-full animate-pulse' style={{ backgroundColor: colors.success }} />
+            <motion.div variants={listItemVariants}>
+              <h2 className='text-title-2 font-semibold flex items-center gap-2 text-apple-dark dark:text-[var(--text-primary)]'>
+                <span className='inline-block h-2 w-2 rounded-full animate-pulse bg-apple-green' />
                 Centro Controllo
               </h2>
             </motion.div>
-            <motion.div variants={itemVariants}>
+            <motion.div variants={listItemVariants}>
               <AnomalyAlerts />
             </motion.div>
-            <motion.div variants={itemVariants}>
+            <motion.div variants={listItemVariants}>
               <RealtimeActivityFeed />
             </motion.div>
           </div>
@@ -629,7 +569,7 @@ export default function AnalyticsPage() {
 
         {/* Confronto Periodi */}
         {!isLoading && (
-          <motion.div variants={itemVariants} className='mt-8'>
+          <motion.div variants={listItemVariants} className='mt-8'>
             <PeriodComparison />
           </motion.div>
         )}

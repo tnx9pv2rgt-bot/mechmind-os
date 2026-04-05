@@ -1,0 +1,30 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../src",
+  "testRegex": ".*\\.e2e-spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", {
+      "tsconfig": {
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strictNullChecks": true,
+        "noImplicitAny": true,
+        "skipLibCheck": true
+      },
+      "isolatedModules": true
+    }]
+  },
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/$1",
+    "^@auth/(.*)$": "<rootDir>/auth/$1",
+    "^@booking/(.*)$": "<rootDir>/booking/$1",
+    "^@voice/(.*)$": "<rootDir>/voice/$1",
+    "^@customer/(.*)$": "<rootDir>/customer/$1",
+    "^@common/(.*)$": "<rootDir>/common/$1",
+    "^@gdpr/(.*)$": "<rootDir>/gdpr/$1"
+  },
+  "testEnvironment": "node",
+  "maxWorkers": 1
+}

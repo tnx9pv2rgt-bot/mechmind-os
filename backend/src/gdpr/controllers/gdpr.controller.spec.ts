@@ -291,4 +291,266 @@ describe('GdprController', () => {
       expect(result).toEqual({ queued: true });
     });
   });
+
+  // ==================== ADDITIONAL BRANCH COVERAGE ====================
+
+  describe('getPendingRequests', () => {
+    it('should delegate to requestService.getPendingRequests', async () => {
+      const pending = { overdue: [], urgent: [], normal: [] };
+      requestService.getPendingRequests.mockResolvedValue(pending as never);
+
+      const result = await controller.getPendingRequests(TENANT_ID);
+
+      expect(requestService.getPendingRequests).toHaveBeenCalledWith(TENANT_ID);
+      expect(result).toEqual(pending);
+    });
+  });
+
+  describe('getRequest', () => {
+    it('should delegate to requestService.getRequest with requestId and tenantId', async () => {
+      const req = { id: 'req-001', status: 'PENDING' };
+      requestService.getRequest.mockResolvedValue(req as never);
+
+      const result = await controller.getRequest('req-001', TENANT_ID);
+
+      expect(requestService.getRequest).toHaveBeenCalledWith('req-001', TENANT_ID);
+      expect(result).toEqual(req);
+    });
+  });
+
+  describe('updateRequestStatus', () => {
+    it('should delegate to requestService.updateStatus', async () => {
+      const updated = { id: 'req-001', status: 'IN_PROGRESS' };
+      requestService.updateStatus.mockResolvedValue(updated as never);
+
+      const dto = { status: 'IN_PROGRESS', notes: 'Working on it' };
+      const result = await controller.updateRequestStatus('req-001', TENANT_ID, dto as never);
+
+      expect(requestService.updateStatus).toHaveBeenCalledWith(
+        'req-001',
+        TENANT_ID,
+        'IN_PROGRESS',
+        'Working on it',
+      );
+      expect(result).toEqual(updated);
+    });
+
+    it('should pass undefined notes when not provided', async () => {
+      requestService.updateStatus.mockResolvedValue({} as never);
+
+      await controller.updateRequestStatus('req-001', TENANT_ID, { status: 'COMPLETED' } as never);
+
+      expect(requestService.updateStatus).toHaveBeenCalledWith(
+        'req-001',
+        TENANT_ID,
+        'COMPLETED',
+        undefined,
+      );
+    });
+  });
+
+  describe('verifyIdentity', () => {
+    it('should delegate to requestService.verifyIdentity', async () => {
+      const verified = { verified: true };
+      requestService.verifyIdentity.mockResolvedValue(verified as never);
+
+      const dto = { method: 'ID_CARD', documentId: 'doc-001' };
+      const result = await controller.verifyIdentity('req-001', TENANT_ID, dto as never);
+
+      expect(requestService.verifyIdentity).toHaveBeenCalledWith('req-001', TENANT_ID, dto);
+      expect(result).toEqual(verified);
+    });
+  });
+
+  describe('assignRequest', () => {
+    it('should delegate to requestService.assignRequest', async () => {
+      requestService.assignRequest.mockResolvedValue({ assigned: true } as never);
+
+      const result = await controller.assignRequest('req-001', TENANT_ID, 'user-001');
+
+      expect(requestService.assignRequest).toHaveBeenCalledWith('req-001', TENANT_ID, 'user-001');
+      expect(result).toEqual({ assigned: true });
+    });
+  });
+
+  describe('rejectRequest', () => {
+    it('should delegate to requestService.rejectRequest with reason and legalBasis', async () => {
+      requestService.rejectRequest.mockResolvedValue({ rejected: true } as never);
+
+      const body = { reason: 'Not applicable', legalBasis: 'Art. 17(3)' };
+      const result = await controller.rejectRequest('req-001', TENANT_ID, body);
+
+      expect(requestService.rejectRequest).toHaveBeenCalledWith(
+        'req-001',
+        TENANT_ID,
+        'Not applicable',
+        'Art. 17(3)',
+      );
+      expect(result).toEqual({ rejected: true });
+    });
+
+    it('should pass undefined legalBasis when not provided', async () => {
+      requestService.rejectRequest.mockResolvedValue({} as never);
+
+      await controller.rejectRequest('req-001', TENANT_ID, { reason: 'Denied' });
+
+      expect(requestService.rejectRequest).toHaveBeenCalledWith(
+        'req-001',
+        TENANT_ID,
+        'Denied',
+        undefined,
+      );
+    });
+  });
+
+  describe('getRequestStats', () => {
+    it('should delegate to requestService.getStatistics', async () => {
+      const stats = { total: 10, pending: 3 };
+      requestService.getStatistics.mockResolvedValue(stats as never);
+
+      const result = await controller.getRequestStats(TENANT_ID);
+
+      expect(requestService.getStatistics).toHaveBeenCalledWith(TENANT_ID);
+      expect(result).toEqual(stats);
+    });
+  });
+
+  describe('getDeletionQueueStats', () => {
+    it('should delegate to deletionService.getQueueStats', async () => {
+      const stats = { waiting: 5, active: 1, completed: 20 };
+      deletionService.getQueueStats.mockResolvedValue(stats as never);
+
+      const result = await controller.getDeletionQueueStats();
+
+      expect(deletionService.getQueueStats).toHaveBeenCalled();
+      expect(result).toEqual(stats);
+    });
+  });
+
+  describe('revokeConsent', () => {
+    it('should delegate to consentService.revokeConsent with reason', async () => {
+      consentService.revokeConsent.mockResolvedValue({ revoked: true } as never);
+
+      const body = { reason: 'Customer request', revokedBy: 'admin-001' };
+      const result = await controller.revokeConsent(CUSTOMER_ID, TENANT_ID, 'MARKETING', body);
+
+      expect(consentService.revokeConsent).toHaveBeenCalledWith(
+        CUSTOMER_ID,
+        TENANT_ID,
+        'MARKETING',
+        'Customer request',
+        'admin-001',
+      );
+      expect(result).toEqual({ revoked: true });
+    });
+
+    it('should pass undefined reason and revokedBy when not provided', async () => {
+      consentService.revokeConsent.mockResolvedValue({} as never);
+
+      await controller.revokeConsent(CUSTOMER_ID, TENANT_ID, 'ANALYTICS', {});
+
+      expect(consentService.revokeConsent).toHaveBeenCalledWith(
+        CUSTOMER_ID,
+        TENANT_ID,
+        'ANALYTICS',
+        undefined,
+        undefined,
+      );
+    });
+  });
+
+  describe('generateExport', () => {
+    it('should delegate to exportService.generateExport', async () => {
+      exportService.generateExport.mockResolvedValue({ jobId: 'job-exp-001' } as never);
+
+      const result = await controller.generateExport(CUSTOMER_ID, TENANT_ID, 'CSV' as never);
+
+      expect(exportService.generateExport).toHaveBeenCalledWith(CUSTOMER_ID, TENANT_ID, 'CSV');
+      expect(result).toEqual({ jobId: 'job-exp-001' });
+    });
+
+    it('should default format to JSON', async () => {
+      exportService.generateExport.mockResolvedValue({} as never);
+
+      await controller.generateExport(CUSTOMER_ID, TENANT_ID);
+
+      expect(exportService.generateExport).toHaveBeenCalledWith(CUSTOMER_ID, TENANT_ID, 'JSON');
+    });
+  });
+
+  describe('updateRetentionPolicy', () => {
+    it('should delegate to retentionService.updateTenantRetentionPolicy', async () => {
+      retentionService.updateTenantRetentionPolicy.mockResolvedValue({ updated: true } as never);
+
+      const result = await controller.updateRetentionPolicy(TENANT_ID, 180);
+
+      expect(retentionService.updateTenantRetentionPolicy).toHaveBeenCalledWith(TENANT_ID, 180);
+      expect(result).toEqual({ updated: true });
+    });
+  });
+
+  describe('exportCustomerData — with requestId', () => {
+    it('should pass requestId to exportService', async () => {
+      exportService.exportCustomerData.mockResolvedValue({} as never);
+
+      await controller.exportCustomerData(CUSTOMER_ID, TENANT_ID, 'CSV' as never, 'req-export-001');
+
+      expect(exportService.exportCustomerData).toHaveBeenCalledWith(
+        CUSTOMER_ID,
+        TENANT_ID,
+        'CSV',
+        'req-export-001',
+      );
+    });
+  });
+
+  describe('recordConsent — without headers', () => {
+    it('should pass undefined ipAddress and userAgent when headers not provided', async () => {
+      consentService.recordConsent.mockResolvedValue({} as never);
+
+      const dto = { consentType: 'DATA_PROCESSING', granted: false };
+      await controller.recordConsent(CUSTOMER_ID, TENANT_ID, dto as never);
+
+      expect(consentService.recordConsent).toHaveBeenCalledWith(
+        CUSTOMER_ID,
+        TENANT_ID,
+        'DATA_PROCESSING',
+        false,
+        expect.objectContaining({
+          ipAddress: undefined,
+          userAgent: undefined,
+        }),
+      );
+    });
+  });
+
+  describe('listRequests — without filters', () => {
+    it('should pass undefined status and type when not provided', async () => {
+      requestService.listRequests.mockResolvedValue([] as never);
+
+      await controller.listRequests(TENANT_ID);
+
+      expect(requestService.listRequests).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        type: undefined,
+      });
+    });
+  });
+
+  describe('queueDeletion — with verificationMethod', () => {
+    it('should pass verificationMethod to deletionService', async () => {
+      deletionService.queueDeletion.mockResolvedValue({} as never);
+
+      const body = { requestId: 'req-002', reason: 'Erasure', verificationMethod: 'ID_CARD' };
+      await controller.queueDeletion(CUSTOMER_ID, TENANT_ID, body as never);
+
+      expect(deletionService.queueDeletion).toHaveBeenCalledWith(
+        CUSTOMER_ID,
+        TENANT_ID,
+        'req-002',
+        'Erasure',
+        { identityVerificationMethod: 'ID_CARD' },
+      );
+    });
+  });
 });

@@ -88,7 +88,7 @@ export function ChatWidget(): React.ReactElement {
       <AnimatePresence>
         {showBubble && !isOpen && (
           <motion.div
-            className="fixed bottom-20 right-6 z-50 max-w-[200px] rounded-xl bg-white p-3 text-sm text-[#0d0d0d] shadow-xl dark:bg-[#2f2f2f] dark:text-[#ececec]"
+            className="fixed bottom-20 right-6 z-50 max-w-[200px] rounded-xl bg-white p-3 text-sm text-[var(--text-primary)] shadow-xl dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)]"
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -97,13 +97,13 @@ export function ChatWidget(): React.ReactElement {
             <button
               type="button"
               onClick={() => setShowBubble(false)}
-              className="absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-full bg-[#e5e5e5] text-[#6e6e80] dark:bg-[#444654] dark:text-[#8e8ea0]"
+              className="absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--border-default)] text-[var(--text-tertiary)] dark:bg-[var(--border-default)] dark:text-[var(--text-secondary)]"
               aria-label="Chiudi"
             >
               <span className="text-xs leading-none pointer-events-none" aria-hidden="true">&#10005;</span>
             </button>
             Hai domande? Chiedimi!
-            <div className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 bg-white dark:bg-[#2f2f2f]" />
+            <div className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 bg-white dark:bg-[var(--surface-elevated)]" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -115,7 +115,7 @@ export function ChatWidget(): React.ReactElement {
           setIsOpen(!isOpen);
           setShowBubble(false);
         }}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#0d0d0d] text-white shadow-lg transition-all hover:bg-[#2f2f2f] hover:shadow-xl active:scale-95"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#0d0d0d] text-white shadow-lg transition-all hover:bg-white hover:text-[#0d0d0d] hover:shadow-xl active:scale-95"
         aria-label={isOpen ? 'Chiudi chat' : 'Apri chat'}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -135,14 +135,14 @@ export function ChatWidget(): React.ReactElement {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-24 right-6 z-50 w-[340px] overflow-hidden rounded-2xl border border-[#e5e5e5] bg-white shadow-2xl dark:border-[#444654] dark:bg-[#2f2f2f] sm:w-[380px]"
+            className="fixed bottom-24 right-6 z-50 w-[340px] overflow-hidden rounded-2xl border border-[var(--border-default)] bg-white shadow-2xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] sm:w-[380px]"
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3 }}
           >
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-[#e5e5e5] bg-[#0d0d0d] px-4 py-3 dark:border-[#444654]">
+            <div className="flex items-center gap-3 border-b border-[var(--border-default)] bg-[#0d0d0d] px-4 py-3 dark:border-[var(--border-default)]">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-white">MechMind</p>
                 <p className="text-xs text-white/70">Rispondiamo subito</p>
@@ -168,7 +168,7 @@ export function ChatWidget(): React.ReactElement {
                     className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                       msg.sender === 'user'
                         ? 'bg-[#0d0d0d] text-white'
-                        : 'bg-[#f7f7f8] text-[#0d0d0d] dark:bg-[#212121] dark:text-[#ececec]'
+                        : 'bg-[var(--surface-secondary)] text-[var(--text-primary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)]'
                     }`}
                   >
                     {msg.text}
@@ -184,7 +184,7 @@ export function ChatWidget(): React.ReactElement {
                       key={qr.keyword}
                       type="button"
                       onClick={() => sendMessage(qr.label)}
-                      className="min-h-[44px] rounded-xl border border-[#0d0d0d]/20 dark:border-white/20 bg-[#0d0d0d]/5 dark:bg-white/10 px-4 py-2.5 text-left text-sm font-medium text-[#0d0d0d] dark:text-white transition-colors hover:bg-[#0d0d0d]/10 dark:hover:bg-white/15"
+                      className="min-h-[44px] rounded-xl border border-[#0d0d0d]/20 dark:border-white/20 bg-[#0d0d0d]/5 dark:bg-white/10 px-4 py-2.5 text-left text-sm font-medium text-[var(--text-primary)] dark:text-white transition-colors hover:bg-[#0d0d0d]/10 dark:hover:bg-white/15"
                     >
                       {qr.label}
                     </button>
@@ -196,19 +196,19 @@ export function ChatWidget(): React.ReactElement {
             {/* Input */}
             <form
               onSubmit={handleSubmit}
-              className="flex items-center gap-2 border-t border-[#e5e5e5] px-4 py-3 dark:border-[#444654]"
+              className="flex items-center gap-2 border-t border-[var(--border-default)] px-4 py-3 dark:border-[var(--border-default)]"
             >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Scrivi..."
-                className="min-h-[44px] flex-1 rounded-xl border border-[#e5e5e5] bg-[#f7f7f8] px-4 py-2.5 text-sm text-[#0d0d0d] outline-none transition-colors placeholder:text-[#8e8ea0] focus:border-[#0d0d0d] dark:focus:border-white focus:ring-2 focus:ring-[#0d0d0d]/20 dark:focus:ring-white/20 dark:border-[#444654] dark:bg-[#212121] dark:text-[#ececec]"
+                className="min-h-[44px] flex-1 rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-secondary)] focus:border-[#0d0d0d] dark:focus:border-white focus:ring-2 focus:ring-[#0d0d0d]/20 dark:focus:ring-white/20 dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)]"
               />
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d0d0d] text-white transition-colors hover:bg-[#2f2f2f] disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d0d0d] text-white transition-colors hover:bg-white hover:text-[#0d0d0d] disabled:opacity-40"
                 aria-label="Invia messaggio"
               >
                 <span>&#8599;</span>

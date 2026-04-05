@@ -5,13 +5,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
+import {
+  AppleCard,
+  AppleCardContent,
+  AppleCardHeader,
+} from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import {
-  ChevronLeft,
+  ArrowLeft,
   Loader2,
   AlertCircle,
   ReceiptText,
@@ -45,6 +49,16 @@ const REASONS = [
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
+};
 
 export default function CreditNotePage() {
   const router = useRouter();
@@ -130,82 +144,88 @@ export default function CreditNotePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-[#1a1a1a]">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
       </div>
     );
   }
 
   if (fetchError || !invoice) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-[#1a1a1a] text-center p-8">
-        <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
-        <p className="text-[#888] mb-4">
+      <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
+        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
           {!invoiceId ? 'Nessuna fattura di riferimento specificata' : 'Fattura non trovata'}
         </p>
-        <Button variant="outline" onClick={() => router.push('/dashboard/invoices')}>
-          <ChevronLeft className="w-4 h-4 mr-2" />
+        <AppleButton
+          variant='ghost'
+          icon={<ArrowLeft className='w-4 h-4' />}
+          onClick={() => router.push('/dashboard/invoices')}
+        >
           Torna alle Fatture
-        </Button>
+        </AppleButton>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden">
-      <div className="relative w-[min(800px,95vw)] h-[min(850px,95vh)]">
-        <motion.div
-          className="relative z-10 w-full h-full bg-[#2f2f2f] rounded-[40px] shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden flex flex-col"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className="px-6 sm:px-10 pt-6 sm:pt-8 pb-4">
-            <Breadcrumb
-              items={[
-                { label: 'Fatture', href: '/dashboard/invoices' },
-                { label: invoice.number, href: `/dashboard/invoices/${invoiceId}` },
-                { label: 'Nota di Credito' },
-              ]}
-            />
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
-                  Nota di Credito
-                </h1>
-                <p className="text-[#888] mt-1">
-                  Rif. Fattura {invoice.number} - {invoice.customerName}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center">
-                <ReceiptText className="w-6 h-6 text-white" />
-              </div>
+    <div>
+      {/* Header */}
+      <header>
+        <div className='px-8 py-5'>
+          <Breadcrumb
+            items={[
+              { label: 'Fatture', href: '/dashboard/invoices' },
+              { label: invoice.number, href: `/dashboard/invoices/${invoiceId}` },
+              { label: 'Nota di Credito' },
+            ]}
+          />
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                Nota di Credito
+              </h1>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                Rif. Fattura {invoice.number} - {invoice.customerName}
+              </p>
+            </div>
+            <div className='w-12 h-12 rounded-2xl bg-apple-red/10 flex items-center justify-center'>
+              <ReceiptText className='w-6 h-6 text-apple-red' />
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Content */}
-          <div className="flex-1 px-6 sm:px-10 pb-28 overflow-y-auto space-y-6">
-            {error && (
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-900/20 border border-red-800">
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-300">{error}</p>
-              </div>
-            )}
+      <motion.div
+        className='p-8 max-w-4xl mx-auto space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        {error && (
+          <div className='flex items-center gap-3 p-4 rounded-2xl bg-apple-red/5 dark:bg-apple-red/10 border border-apple-red/20'>
+            <AlertCircle className='h-5 w-5 text-apple-red flex-shrink-0' />
+            <p className='text-body text-apple-red'>{error}</p>
+          </div>
+        )}
 
-            {/* Items selection */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <h3 className="text-lg font-semibold text-white mb-4">
+        {/* Items selection */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Voci da Accreditare
-              </h3>
-              <div className="space-y-3">
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='space-y-3'>
                 {invoice.items.map(item => (
                   <div
                     key={item.id}
                     className={`flex items-center gap-4 p-4 rounded-2xl transition-colors cursor-pointer ${
                       selectedItems.has(item.id)
-                        ? 'border-[#ececec] bg-[#383838] border'
-                        : 'bg-[#383838] border border-transparent'
+                        ? 'bg-apple-blue/5 dark:bg-[var(--surface-active)] border border-apple-blue/20 dark:border-[var(--border-default)]'
+                        : 'bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] border border-transparent'
                     }`}
                     onClick={() => toggleItem(item.id)}
                   >
@@ -213,37 +233,43 @@ export default function CreditNotePage() {
                       checked={selectedItems.has(item.id)}
                       onCheckedChange={() => toggleItem(item.id)}
                     />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">
+                    <div className='flex-1'>
+                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                         {item.description}
                       </p>
-                      <p className="text-xs text-[#888]">
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         {item.quantity} x {formatCurrency(item.unitPrice)} — IVA{' '}
                         {item.vatRate ?? 22}%
                       </p>
                     </div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       {formatCurrency(item.total || item.quantity * item.unitPrice)}
                     </p>
                   </div>
                 ))}
               </div>
-            </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
-            {/* Reason */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <h3 className="text-lg font-semibold text-white mb-4">
+        {/* Reason */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Motivo
-              </h3>
-              <div className="space-y-4">
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='space-y-4'>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Causale
-                  </Label>
+                  </label>
                   <select
                     value={reason}
                     onChange={e => setReason(e.target.value)}
-                    className="h-[52px] w-full rounded-full border border-[#4e4e4e] bg-[#2f2f2f] px-4 text-sm text-white outline-none"
+                    className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {REASONS.map(r => (
                       <option key={r.value} value={r.value}>
@@ -253,64 +279,64 @@ export default function CreditNotePage() {
                   </select>
                 </div>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Dettaglio
-                  </Label>
+                  </label>
                   <textarea
                     value={reasonDetail}
                     onChange={e => setReasonDetail(e.target.value)}
                     rows={3}
-                    placeholder="Descrivi il motivo della nota di credito..."
-                    className="w-full rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] px-5 py-3 text-sm text-white placeholder-[#888] outline-none"
+                    placeholder='Descrivi il motivo della nota di credito...'
+                    className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
                   />
                 </div>
               </div>
-            </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
-            {/* Summary */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <div className="flex justify-between items-center">
+        {/* Summary */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex justify-between items-center'>
                 <div>
-                  <p className="text-sm text-[#888]">
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                     {selectedItems.size} voci selezionate su {invoice.items.length}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-[#888]">
+                <div className='text-right'>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                     Importo Nota di Credito
                   </p>
-                  <p className="text-2xl font-bold text-red-400">
+                  <p className='text-title-1 font-bold text-apple-red'>
                     -{formatCurrency(creditAmount)}
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e] z-50">
-            <div className="flex items-center justify-between">
-              <Button
-                type="button"
-                onClick={() => router.back()}
-                className="rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5 transition-all"
-              >
-                <ChevronLeft className="w-5 h-5 mr-2" />
-                Annulla
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting || selectedItems.size === 0}
-                className="rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5] transition-all border-0"
-              >
-                {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
-                Emetti Nota di Credito
-              </Button>
-            </div>
-          </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
-      </div>
+
+        {/* Actions */}
+        <div className='flex items-center justify-between'>
+          <AppleButton
+            variant='ghost'
+            icon={<ArrowLeft className='h-4 w-4' />}
+            onClick={() => router.back()}
+          >
+            Annulla
+          </AppleButton>
+          <AppleButton
+            onClick={handleSubmit}
+            loading={submitting}
+            disabled={submitting || selectedItems.size === 0}
+            icon={<ReceiptText className='h-4 w-4' />}
+          >
+            Emetti Nota di Credito
+          </AppleButton>
+        </div>
+      </motion.div>
     </div>
   );
 }

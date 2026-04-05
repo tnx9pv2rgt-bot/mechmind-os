@@ -10,8 +10,8 @@ interface PasskeyPromptProps {
 
 const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'bg-white text-base font-normal text-[#0d0d0d]',
-  'transition-colors hover:bg-[#e5e5e5]',
+  'bg-white text-base font-normal text-[var(--text-primary)]',
+  'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:opacity-30',
 ].join(' ');
 
@@ -94,7 +94,7 @@ export function PasskeyPrompt({
         <h2 className="text-xl font-normal text-white">
           Accesso più veloce
         </h2>
-        <p className="text-sm text-[#888]">
+        <p className="text-sm text-[var(--text-tertiary)]">
           {platformInfo.description}
         </p>
       </div>
@@ -107,7 +107,7 @@ export function PasskeyPrompt({
         className={btnPrimary}
       >
         {isRegistering ? (
-          <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#0d0d0d] border-t-transparent" />
+          <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[var(--text-primary)] border-t-transparent" />
         ) : (
           platformInfo.label
         )}
@@ -117,18 +117,18 @@ export function PasskeyPrompt({
       <button
         type="button"
         onClick={handleSkip}
-        className="min-h-[44px] text-sm text-[#888] transition-colors hover:text-white"
+        className="min-h-[44px] text-sm text-[var(--text-tertiary)] transition-colors hover:text-white"
       >
         Non ora, grazie &rarr;
       </button>
 
       {/* Don't show again checkbox */}
-      <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-[#888]">
+      <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-[var(--text-tertiary)]">
         <input
           type="checkbox"
           checked={dontShowAgain}
           onChange={(e) => setDontShowAgain(e.target.checked)}
-          className="h-4 w-4 rounded border-[#4e4e4e] bg-[#2f2f2f] accent-white"
+          className="h-4 w-4 rounded border-[var(--border-strong)] bg-[var(--surface-elevated)] accent-white"
         />
         Non mostrare pi&ugrave;
       </label>

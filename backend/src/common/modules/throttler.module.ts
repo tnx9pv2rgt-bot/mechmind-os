@@ -15,22 +15,23 @@ import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (_config: ConfigService): ThrottlerModuleOptions => {
+        const loadTest = process.env.LOAD_TEST === 'true';
         return {
           throttlers: [
             {
               name: 'default',
               ttl: 60000, // 1 minute
-              limit: 60, // 60 requests per minute
+              limit: loadTest ? 100000 : process.env.NODE_ENV === 'production' ? 60 : 600,
             },
             {
               name: 'strict',
               ttl: 60000,
-              limit: 10, // 10 requests per minute (for sensitive endpoints)
+              limit: loadTest ? 100000 : 10,
             },
             {
               name: 'lenient',
               ttl: 60000,
-              limit: 300, // 300 requests per minute (for high-traffic endpoints)
+              limit: loadTest ? 100000 : process.env.NODE_ENV === 'production' ? 300 : 3000,
             },
           ],
           errorMessage: 'Rate limit exceeded. Please try again later.',

@@ -11,49 +11,74 @@ const config: Config = {
     extend: {
       // 🍎 APPLE DESIGN SYSTEM
       colors: {
-        // Apple Core Colors
+        // Legacy Apple tokens (used in globals.css utility classes)
         apple: {
-          blue: '#0071e3',
-          'blue-hover': '#0077ed',
-          dark: '#1d1d1f',
-          gray: '#6e6e73',
-          'light-gray': '#f5f5f7',
-          border: '#d2d2d7',
-          green: '#34c759',
-          red: '#ff3b30',
-          orange: '#ff9500',
-          purple: '#af52de',
+          blue: '#2e95ff',
+          'blue-hover': '#2680e0',
+          dark: '#0d0d0d',
+          gray: '#6e6e6e',
+          'light-gray': '#f9f9f9',
+          border: '#e5e5e5',
+          green: '#10a37f',
+          red: '#ef4444',
+          orange: '#f97316',
+          purple: '#a855f7',
         },
-        // Semantic Colors
-        background: '#f5f5f7',
-        foreground: '#1d1d1f',
+        // ChatGPT Design System
+        gpt: {
+          // Dark mode surfaces
+          sidebar: '#171717',
+          main: '#212121',
+          elevated: '#303030',
+          hover: '#2f2f2f',
+          'hover-light': '#353535',
+          border: 'hsla(0, 0%, 100%, 0.1)',
+          // Dark mode text
+          'text-primary': '#ececec',
+          'text-secondary': '#b4b4b4',
+          'text-tertiary': '#8e8e8e',
+          // Light mode surfaces
+          'sidebar-light': '#f9f9f9',
+          'main-light': '#ffffff',
+          'hover-light-mode': '#ececec',
+          'border-light': '#e5e5e5',
+          // Light mode text
+          'text-primary-light': '#0d0d0d',
+          'text-secondary-light': '#6e6e6e',
+          // Accent
+          accent: '#7ab7ff',
+          green: '#10a37f',
+        },
+        // Semantic Colors (mapped to ChatGPT tokens)
+        background: '#ffffff',
+        foreground: '#0d0d0d',
         card: {
           DEFAULT: '#ffffff',
-          foreground: '#1d1d1f',
+          foreground: '#0d0d0d',
         },
         primary: {
-          DEFAULT: '#0071e3',
+          DEFAULT: '#2e95ff',
           foreground: '#ffffff',
         },
         secondary: {
-          DEFAULT: '#f5f5f7',
-          foreground: '#1d1d1f',
+          DEFAULT: '#f9f9f9',
+          foreground: '#0d0d0d',
         },
         muted: {
-          DEFAULT: '#f5f5f7',
-          foreground: '#6e6e73',
+          DEFAULT: '#f9f9f9',
+          foreground: '#6e6e6e',
         },
         accent: {
-          DEFAULT: '#0071e3',
+          DEFAULT: '#2e95ff',
           foreground: '#ffffff',
         },
         destructive: {
-          DEFAULT: '#ff3b30',
+          DEFAULT: '#ef4444',
           foreground: '#ffffff',
         },
-        border: '#d2d2d7',
-        input: '#d2d2d7',
-        ring: '#0071e3',
+        border: '#e5e5e5',
+        input: '#e5e5e5',
+        ring: '#2e95ff',
       },
       fontFamily: {
         sans: [

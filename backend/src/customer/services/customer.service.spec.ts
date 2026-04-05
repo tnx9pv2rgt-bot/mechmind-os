@@ -725,6 +725,7 @@ describe('CustomerService', () => {
           encryptedEmail: 'enc_new@email.it',
           encryptedFirstName: 'enc_Luigi',
           encryptedLastName: 'enc_Verdi',
+          searchName: 'luigi verdi',
           notes: 'Updated notes',
         },
       });
@@ -877,6 +878,56 @@ describe('CustomerService', () => {
       const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
       expect(updateCall.data.codiceFiscale).toBeNull();
       expect(updateCall.data.pecEmail).toBeNull();
+    });
+
+    it('should update all fiscal and address fields', async () => {
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        partitaIva: '12345678901',
+        sdiCode: 'ABCDEFG',
+        customerType: 'BUSINESS',
+        address: 'Via Roma 1',
+        city: 'Milano',
+        postalCode: '20100',
+        province: 'MI',
+        preferredChannel: 'EMAIL',
+        source: 'REFERRAL',
+      } as never);
+
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.partitaIva).toBe('12345678901');
+      expect(updateCall.data.sdiCode).toBe('ABCDEFG');
+      expect(updateCall.data.customerType).toBe('BUSINESS');
+      expect(updateCall.data.address).toBe('Via Roma 1');
+      expect(updateCall.data.city).toBe('Milano');
+      expect(updateCall.data.postalCode).toBe('20100');
+      expect(updateCall.data.province).toBe('MI');
+      expect(updateCall.data.preferredChannel).toBe('EMAIL');
+      expect(updateCall.data.source).toBe('REFERRAL');
+    });
+
+    it('should set address and fiscal fields to null when empty string', async () => {
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        partitaIva: '',
+        sdiCode: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        province: '',
+      } as never);
+
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.partitaIva).toBeNull();
+      expect(updateCall.data.sdiCode).toBeNull();
+      expect(updateCall.data.address).toBeNull();
+      expect(updateCall.data.city).toBeNull();
+      expect(updateCall.data.postalCode).toBeNull();
+      expect(updateCall.data.province).toBeNull();
     });
   });
 

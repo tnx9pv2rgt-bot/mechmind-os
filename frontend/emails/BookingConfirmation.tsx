@@ -171,7 +171,7 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
 
               <Section className="text-center mb-6">
                 <Button
-                  href={`https://mechmind.io/booking/${bookingCode}`}
+                  href={`https://mechmind.it/booking/${bookingCode}`}
                   className="bg-brand text-white font-semibold py-3 px-8 rounded-lg text-base no-underline inline-block"
                 >
                   Gestisci Prenotazione

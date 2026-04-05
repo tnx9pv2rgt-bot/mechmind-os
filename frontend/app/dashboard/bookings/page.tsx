@@ -17,7 +17,6 @@ import {
   Phone,
   MessageCircle,
   CheckCircle2,
-  ArrowLeft,
   X,
   BarChart3,
   TrendingUp,
@@ -42,32 +41,13 @@ import { KanbanBoard } from '@/components/bookings/kanban/kanban-board';
 import type { KanbanColumnData } from '@/components/bookings/kanban/kanban-column';
 import type { BookingCardData } from '@/components/bookings/kanban/kanban-card';
 import { toast } from 'sonner';
-// Dialog import kept for potential future use
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { Input } from '@/components/ui/input';
 
 // =============================================================================
-// Design Tokens
+// Design Tokens (removed — now using Tailwind + CSS custom properties)
 // =============================================================================
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  emerald: '#10b981',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
 
 // =============================================================================
 // Animations
@@ -76,16 +56,26 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.04, delayChildren: 0.08 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] },
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
   },
 };
 
@@ -97,16 +87,16 @@ function normalizeStatus(status: string): string {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending: { label: 'In attesa', color: colors.warning, icon: Clock },
-  confirmed: { label: 'Confermato', color: colors.info, icon: CheckCircle2 },
-  in_progress: { label: 'In corso', color: colors.emerald, icon: PlayCircle },
-  completed: { label: 'Completato', color: colors.purple, icon: CheckCircle2 },
-  cancelled: { label: 'Annullato', color: colors.error, icon: X },
-  no_show: { label: 'Non presentato', color: colors.textMuted, icon: UserX },
+  pending: { label: 'In attesa', color: '#fbbf24', icon: Clock },
+  confirmed: { label: 'Confermato', color: '#60a5fa', icon: CheckCircle2 },
+  in_progress: { label: 'In corso', color: '#10b981', icon: PlayCircle },
+  completed: { label: 'Completato', color: '#a78bfa', icon: CheckCircle2 },
+  cancelled: { label: 'Annullato', color: '#f87171', icon: X },
+  no_show: { label: 'Non presentato', color: '#666666', icon: UserX },
 };
 
 function getStatusConfig(status: string): { label: string; color: string; icon: React.ComponentType<{ className?: string }> } {
-  return statusConfig[normalizeStatus(status)] ?? { label: status, color: colors.textMuted, icon: Clock };
+  return statusConfig[normalizeStatus(status)] ?? { label: status, color: '#666666', icon: Clock };
 }
 
 function formatCurrency(value: number | undefined | null): string {
@@ -232,8 +222,18 @@ const Sparkline = memo(function Sparkline({ data, color, height = 24 }: { data: 
 });
 
 // =============================================================================
-// KPI Card
+// KPI Card (Apple-style)
 // =============================================================================
+const KPI_COLOR_MAP: Record<string, string> = {
+  '#60a5fa': 'bg-apple-blue',
+  '#34d399': 'bg-apple-green',
+  '#fbbf24': 'bg-apple-orange',
+  '#a78bfa': 'bg-apple-purple',
+  '#f87171': 'bg-apple-red',
+  '#10b981': 'bg-apple-green',
+  '#b4b4b4': 'bg-apple-gray',
+};
+
 const KpiCard = memo(function KpiCard({
   label, value, suffix, icon: Icon, color, trend, sparkData,
 }: {
@@ -245,36 +245,31 @@ const KpiCard = memo(function KpiCard({
   trend?: number;
   sparkData?: number[];
 }): React.JSX.Element {
+  const bgClass = KPI_COLOR_MAP[color] || 'bg-apple-blue';
   return (
-    <div
-      className="rounded-2xl border p-4 flex flex-col justify-between min-h-[110px]"
-      style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-    >
-      <div className="flex items-center justify-between">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${color}15` }}
-        >
-          <span style={{ color }}><Icon className="h-4 w-4" /></span>
-        </div>
-        {sparkData && <Sparkline data={sparkData} color={color} />}
-        {trend !== undefined && !sparkData && (
-          <div className="flex items-center gap-1" style={{ color: trend >= 0 ? colors.success : colors.error }}>
-            {trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            <span className="text-[11px] font-medium">{trend > 0 ? '+' : ''}{trend}%</span>
+    <AppleCard hover={false}>
+      <AppleCardContent>
+        <div className="flex items-center justify-between mb-3">
+          <div className={`w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center`}>
+            <Icon className="h-5 w-5 text-white" />
           </div>
-        )}
-      </div>
-      <div className="mt-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: colors.textTertiary }}>{label}</p>
+          {sparkData && <Sparkline data={sparkData} color={color} />}
+          {trend !== undefined && !sparkData && (
+            <div className="flex items-center gap-1" style={{ color: trend >= 0 ? '#34d399' : '#f87171' }}>
+              {trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              <span className="text-[15px] font-medium">{trend > 0 ? '+' : ''}{trend}%</span>
+            </div>
+          )}
+        </div>
         <div className="flex items-baseline gap-1">
-          <p className="text-[24px] font-light tracking-tight" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+          <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
             {value}
           </p>
-          {suffix && <span className="text-[12px]" style={{ color: colors.textTertiary }}>{suffix}</span>}
+          {suffix && <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{suffix}</span>}
         </div>
-      </div>
-    </div>
+        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{label}</p>
+      </AppleCardContent>
+    </AppleCard>
   );
 });
 
@@ -325,41 +320,39 @@ function BookingDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 overflow-y-auto border-l"
-            style={{ backgroundColor: colors.bg, borderColor: colors.borderSubtle }}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 overflow-y-auto border-l bg-[var(--surface-tertiary)] border-[var(--border-default)]"
             onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 border-b backdrop-blur-xl p-4 flex items-center justify-between"
-              style={{ backgroundColor: `${colors.bg}ee`, borderColor: colors.borderSubtle }}>
+            <div className="sticky top-0 z-10 border-b border-[var(--border-default)] backdrop-blur-xl bg-[var(--surface-tertiary)]/[0.93] p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full"
+                <span className="text-footnote font-bold px-2.5 py-1 rounded-full"
                   style={{ backgroundColor: `${sc.color}20`, color: sc.color }}>
                   <StatusIcon className="h-3 w-3 inline mr-1" />
                   {sc.label}
                 </span>
-                <span className="text-[12px]" style={{ color: colors.textTertiary }}>
+                <span className="text-[16px] text-[var(--text-tertiary)]">
                   #{booking.id.slice(0, 8)}
                 </span>
               </div>
-              <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+              <AppleButton variant="ghost" size="sm" onClick={onClose}
+                className="w-8 h-8 rounded-lg"
                 aria-label="Chiudi">
-                <X className="h-4 w-4" style={{ color: colors.textTertiary }} />
-              </button>
+                <X className="h-4 w-4 text-[var(--text-tertiary)]" />
+              </AppleButton>
             </div>
 
             <div className="p-4 space-y-5">
               {/* Customer */}
-              <div className="rounded-xl border p-4" style={{ borderColor: colors.borderSubtle }}>
+              <div className="rounded-xl border border-[var(--border-default)] p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold"
-                    style={{ backgroundColor: `${colors.info}20`, color: colors.info }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-[18px] font-semibold bg-[#60a5fa20] text-[#60a5fa]">
                     {booking.customerName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>{booking.customerName}</p>
+                    <p className="text-[15px] font-medium text-[var(--text-primary)]">{booking.customerName}</p>
                     {booking.customerPhone && (
-                      <a href={`tel:${booking.customerPhone}`} className="text-[12px] hover:underline" style={{ color: colors.info }}>
+                      <a href={`tel:${booking.customerPhone}`} className="text-[16px] hover:underline text-[#60a5fa]">
                         {booking.customerPhone}
                       </a>
                     )}
@@ -368,13 +361,11 @@ function BookingDrawer({
                 {booking.customerPhone && (
                   <div className="flex gap-2">
                     <a href={`tel:${booking.customerPhone}`}
-                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[12px] font-medium border transition-colors hover:bg-white/5"
-                      style={{ borderColor: colors.borderSubtle, color: colors.info }}>
+                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[16px] font-medium border border-[var(--border-default)] text-[#60a5fa] transition-colors hover:bg-white/5">
                       <Phone className="h-3.5 w-3.5" /> Chiama
                     </a>
                     <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[12px] font-medium border transition-colors hover:bg-white/5"
-                      style={{ borderColor: colors.borderSubtle, color: colors.success }}>
+                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[16px] font-medium border border-[var(--border-default)] text-[#34d399] transition-colors hover:bg-white/5">
                       <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                     </a>
                   </div>
@@ -382,15 +373,15 @@ function BookingDrawer({
               </div>
 
               {/* Vehicle */}
-              <div className="rounded-xl border p-4" style={{ borderColor: colors.borderSubtle }}>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: colors.textTertiary }}>Veicolo</h3>
+              <div className="rounded-xl border border-[var(--border-default)] p-4">
+                <h3 className="text-footnote font-semibold mb-3 text-[var(--text-tertiary)]">Veicolo</h3>
                 <div className="flex items-center gap-3">
-                  <Car className="h-5 w-5" style={{ color: colors.textMuted }} />
+                  <Car className="h-5 w-5 text-[#666666]" />
                   <div>
-                    <p className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
+                    <p className="text-[18px] font-medium text-[var(--text-primary)]">
                       {booking.vehiclePlate}
                     </p>
-                    <p className="text-[12px]" style={{ color: colors.textTertiary }}>
+                    <p className="text-[16px] text-[var(--text-tertiary)]">
                       {booking.vehicleBrand} {booking.vehicleModel}
                     </p>
                   </div>
@@ -398,23 +389,23 @@ function BookingDrawer({
               </div>
 
               {/* Service details */}
-              <div className="rounded-xl border p-4" style={{ borderColor: colors.borderSubtle }}>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: colors.textTertiary }}>Servizio</h3>
+              <div className="rounded-xl border border-[var(--border-default)] p-4">
+                <h3 className="text-footnote font-semibold mb-3 text-[var(--text-tertiary)]">Servizio</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Wrench className="h-4 w-4" style={{ color: colors.textMuted }} />
-                      <span className="text-[14px]" style={{ color: colors.textPrimary }}>
+                      <Wrench className="h-4 w-4 text-[#666666]" />
+                      <span className="text-[18px] text-[var(--text-primary)]">
                         {booking.serviceName || booking.serviceCategory}
                       </span>
                     </div>
                     {booking.estimatedCost !== undefined && (
-                      <span className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
+                      <span className="text-[18px] font-medium text-[var(--text-primary)]">
                         {formatCurrency(booking.estimatedCost)}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-[12px]" style={{ color: colors.textTertiary }}>
+                  <div className="flex items-center gap-4 text-[16px] text-[var(--text-tertiary)]">
                     <span className="flex items-center gap-1">
                       <CalendarDays className="h-3.5 w-3.5" />
                       {formatDate(booking.scheduledAt)}
@@ -431,7 +422,7 @@ function BookingDrawer({
                     )}
                   </div>
                   {booking.technicianName && (
-                    <div className="flex items-center gap-2 text-[12px]" style={{ color: colors.textTertiary }}>
+                    <div className="flex items-center gap-2 text-[16px] text-[var(--text-tertiary)]">
                       <Users className="h-3.5 w-3.5" />
                       {booking.technicianName}
                     </div>
@@ -440,8 +431,8 @@ function BookingDrawer({
               </div>
 
               {/* Status timeline */}
-              <div className="rounded-xl border p-4" style={{ borderColor: colors.borderSubtle }}>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-4" style={{ color: colors.textTertiary }}>Stato</h3>
+              <div className="rounded-xl border border-[var(--border-default)] p-4">
+                <h3 className="text-footnote font-semibold mb-4 text-[var(--text-tertiary)]">Stato</h3>
                 <div className="flex items-center gap-1">
                   {statusSteps.map((step, i) => {
                     const isActive = stepOrder.indexOf(step.key) <= currentIdx;
@@ -450,12 +441,10 @@ function BookingDrawer({
                       <div key={step.key} className="flex-1 flex flex-col items-center gap-1.5">
                         <div className="w-full h-1.5 rounded-full" style={{
                           backgroundColor: isActive
-                            ? (normalized === 'cancelled' || normalized === 'no_show' ? colors.error : colors.success)
-                            : colors.borderSubtle,
+                            ? (normalized === 'cancelled' || normalized === 'no_show' ? '#f87171' : '#34d399')
+                            : 'var(--border-default)',
                         }} />
-                        <span className="text-[9px] font-medium text-center" style={{
-                          color: isCurrent ? colors.textPrimary : colors.textMuted,
-                        }}>
+                        <span className={`text-[9px] font-medium text-center ${isCurrent ? 'text-[var(--text-primary)]' : 'text-[#666666]'}`}>
                           {step.label}
                         </span>
                       </div>
@@ -466,57 +455,60 @@ function BookingDrawer({
 
               {/* Notes */}
               {booking.notes && (
-                <div className="rounded-xl border p-4" style={{ borderColor: colors.borderSubtle }}>
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textTertiary }}>Note</h3>
-                  <p className="text-[13px]" style={{ color: colors.textSecondary }}>{booking.notes}</p>
+                <div className="rounded-xl border border-[var(--border-default)] p-4">
+                  <h3 className="text-footnote font-semibold mb-2 text-[var(--text-tertiary)]">Note</h3>
+                  <p className="text-[17px] text-[var(--text-secondary)]">{booking.notes}</p>
                 </div>
               )}
 
               {/* Action buttons */}
               <div className="space-y-2">
                 {normalized === 'pending' && (
-                  <button onClick={() => onStatusChange(booking.id, 'confirmed')}
-                    className="w-full h-11 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 transition-colors hover:opacity-90"
-                    style={{ backgroundColor: colors.success, color: '#000' }}>
-                    <CheckCircle2 className="h-4 w-4" /> Conferma Prenotazione
-                  </button>
+                  <AppleButton onClick={() => onStatusChange(booking.id, 'confirmed')}
+                    fullWidth
+                    icon={<CheckCircle2 className="h-4 w-4" />}
+                    className="h-11 rounded-xl text-[17px] bg-[#34d399] text-black hover:opacity-90">
+                    Conferma Prenotazione
+                  </AppleButton>
                 )}
                 {normalized === 'confirmed' && (
-                  <button onClick={() => onStatusChange(booking.id, 'in_progress')}
-                    className="w-full h-11 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 transition-colors hover:opacity-90"
-                    style={{ backgroundColor: colors.info, color: '#fff' }}>
-                    <PlayCircle className="h-4 w-4" /> Inizia Lavoro
-                  </button>
+                  <AppleButton onClick={() => onStatusChange(booking.id, 'in_progress')}
+                    fullWidth
+                    icon={<PlayCircle className="h-4 w-4" />}
+                    className="h-11 rounded-xl text-[17px] bg-[#60a5fa] text-white hover:opacity-90">
+                    Inizia Lavoro
+                  </AppleButton>
                 )}
                 {normalized === 'in_progress' && (
-                  <button onClick={() => onStatusChange(booking.id, 'completed')}
-                    className="w-full h-11 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 transition-colors hover:opacity-90"
-                    style={{ backgroundColor: colors.purple, color: '#fff' }}>
-                    <CheckCircle2 className="h-4 w-4" /> Completa
-                  </button>
+                  <AppleButton onClick={() => onStatusChange(booking.id, 'completed')}
+                    fullWidth
+                    icon={<CheckCircle2 className="h-4 w-4" />}
+                    className="h-11 rounded-xl text-[17px] bg-[#a78bfa] text-white hover:opacity-90">
+                    Completa
+                  </AppleButton>
                 )}
                 {(normalized === 'pending' || normalized === 'confirmed') && (
                   <>
-                    <button onClick={() => onStatusChange(booking.id, 'no_show')}
-                      className="w-full h-10 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 border transition-colors hover:bg-white/5"
-                      style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}>
-                      <UserX className="h-4 w-4" /> No-Show
-                    </button>
-                    <button onClick={() => onStatusChange(booking.id, 'cancelled')}
-                      className="w-full h-10 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 border transition-colors hover:bg-white/5"
-                      style={{ borderColor: colors.error, color: colors.error }}>
-                      <X className="h-4 w-4" /> Annulla
-                    </button>
+                    <AppleButton variant="ghost" onClick={() => onStatusChange(booking.id, 'no_show')}
+                      fullWidth
+                      icon={<UserX className="h-4 w-4" />}
+                      className="h-10 rounded-xl text-[17px]">
+                      No-Show
+                    </AppleButton>
+                    <AppleButton variant="ghost" onClick={() => onStatusChange(booking.id, 'cancelled')}
+                      fullWidth
+                      icon={<X className="h-4 w-4" />}
+                      className="h-10 rounded-xl text-[17px] border-[#f87171] text-[#f87171]">
+                      Annulla
+                    </AppleButton>
                   </>
                 )}
                 <Link href={`/dashboard/work-orders/new?bookingId=${booking.id}`}
-                  className="w-full h-11 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 transition-colors hover:bg-white/10"
-                  style={{ backgroundColor: colors.accent, color: colors.bg }}>
+                  className="w-full h-11 rounded-xl text-[17px] font-medium flex items-center justify-center gap-2 transition-colors hover:bg-white/10 bg-[var(--text-primary)] text-[var(--surface-tertiary)]">
                   <ClipboardList className="h-4 w-4" /> Crea Ordine di Lavoro
                 </Link>
                 <Link href={`/dashboard/bookings/${booking.id}`}
-                  className="w-full h-10 rounded-xl text-[13px] font-medium flex items-center justify-center gap-2 border transition-colors hover:bg-white/5"
-                  style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}>
+                  className="w-full h-10 rounded-xl text-[17px] font-medium flex items-center justify-center gap-2 border border-[var(--border-default)] text-[var(--text-secondary)] transition-colors hover:bg-white/5">
                   <Eye className="h-4 w-4" /> Vedi Dettaglio Completo
                 </Link>
               </div>
@@ -609,11 +601,11 @@ function TimelineView({
   function getBookingColor(status: string): { bg: string; border: string; text: string } {
     const n = normalizeStatus(status);
     switch (n) {
-      case 'pending': return { bg: 'rgba(251,191,36,0.15)', border: colors.warning, text: colors.warning };
-      case 'confirmed': return { bg: 'rgba(96,165,250,0.15)', border: colors.info, text: colors.info };
-      case 'in_progress': return { bg: 'rgba(16,185,129,0.15)', border: colors.emerald, text: colors.emerald };
-      case 'completed': return { bg: 'rgba(167,139,250,0.15)', border: colors.purple, text: colors.purple };
-      default: return { bg: 'rgba(136,136,136,0.15)', border: colors.textMuted, text: colors.textMuted };
+      case 'pending': return { bg: 'rgba(251,191,36,0.15)', border: '#fbbf24', text: '#fbbf24' };
+      case 'confirmed': return { bg: 'rgba(96,165,250,0.15)', border: '#60a5fa', text: '#60a5fa' };
+      case 'in_progress': return { bg: 'rgba(16,185,129,0.15)', border: '#10b981', text: '#10b981' };
+      case 'completed': return { bg: 'rgba(167,139,250,0.15)', border: '#a78bfa', text: '#a78bfa' };
+      default: return { bg: 'rgba(136,136,136,0.15)', border: '#666666', text: '#666666' };
     }
   }
 
@@ -623,12 +615,12 @@ function TimelineView({
   }, []);
 
   return (
-    <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
+    <div className="rounded-2xl border overflow-hidden bg-[var(--surface-elevated)] border-[var(--border-default)]">
       {/* Timeline header */}
-      <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: colors.borderSubtle }}>
+      <div className="px-4 py-3 border-b border-[var(--border-default)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4" style={{ color: colors.textTertiary }} />
-          <h3 className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
+          <CalendarClock className="h-4 w-4 text-[var(--text-tertiary)]" />
+          <h3 className="text-[18px] font-medium text-[var(--text-primary)]">
             {formatFullDate(new Date().toISOString()).replace(/^\w/, c => c.toUpperCase())}
           </h3>
         </div>
@@ -638,7 +630,7 @@ function TimelineView({
             return (
               <div key={key} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: c.border }} />
-                <span className="text-[10px]" style={{ color: colors.textTertiary }}>{label}</span>
+                <span className="text-[18px] text-[var(--text-tertiary)]">{label}</span>
               </div>
             );
           })}
@@ -649,15 +641,15 @@ function TimelineView({
       <div ref={timelineRef} className="overflow-x-auto overflow-y-hidden" style={{ scrollBehavior: 'smooth' }}>
         <div style={{ minWidth: totalHours * slotWidth + 140, position: 'relative' }}>
           {/* Hour headers */}
-          <div className="flex sticky top-0 z-10" style={{ backgroundColor: colors.surface }}>
-            <div className="shrink-0 w-[120px] border-r border-b px-3 flex items-center"
-              style={{ borderColor: colors.borderSubtle, height: headerHeight }}>
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>Risorsa</span>
+          <div className="flex sticky top-0 z-10 bg-[var(--surface-elevated)]">
+            <div className="shrink-0 w-[120px] border-r border-b border-[var(--border-default)] px-3 flex items-center"
+              style={{ height: headerHeight }}>
+              <span className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]">Risorsa</span>
             </div>
             {hours.map(h => (
-              <div key={h} className="border-r border-b flex items-end pb-1 px-2"
-                style={{ width: slotWidth, borderColor: colors.borderSubtle, height: headerHeight }}>
-                <span className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+              <div key={h} className="border-r border-b border-[var(--border-default)] flex items-end pb-1 px-2"
+                style={{ width: slotWidth, height: headerHeight }}>
+                <span className="text-[18px] font-medium text-[#666666]">
                   {String(h).padStart(2, '0')}:00
                 </span>
               </div>
@@ -667,20 +659,19 @@ function TimelineView({
           {/* Bay rows */}
           {TIMELINE_BAYS.map(bay => (
             <div key={bay} className="flex relative" style={{ height: rowHeight }}>
-              <div className="shrink-0 w-[120px] border-r border-b px-3 flex items-center"
-                style={{ borderColor: colors.borderSubtle }}>
-                <span className="text-[12px] font-medium" style={{ color: colors.textSecondary }}>{bay}</span>
+              <div className="shrink-0 w-[120px] border-r border-b border-[var(--border-default)] px-3 flex items-center">
+                <span className="text-[16px] font-medium text-[var(--text-secondary)]">{bay}</span>
               </div>
-              <div className="relative flex-1 border-b" style={{ borderColor: colors.borderSubtle }}>
+              <div className="relative flex-1 border-b border-[var(--border-default)]">
                 {/* Hour grid lines */}
                 {hours.map(h => (
-                  <div key={h} className="absolute top-0 bottom-0 border-r"
-                    style={{ left: (h - BUSINESS_HOURS.start) * slotWidth, borderColor: colors.borderSubtle, opacity: 0.5 }} />
+                  <div key={h} className="absolute top-0 bottom-0 border-r border-[var(--border-default)] opacity-50"
+                    style={{ left: (h - BUSINESS_HOURS.start) * slotWidth }} />
                 ))}
                 {/* Half-hour grid lines */}
                 {hours.slice(0, -1).map(h => (
-                  <div key={`${h}-30`} className="absolute top-0 bottom-0 border-r border-dashed"
-                    style={{ left: (h - BUSINESS_HOURS.start) * slotWidth + slotWidth / 2, borderColor: colors.borderSubtle, opacity: 0.25 }} />
+                  <div key={`${h}-30`} className="absolute top-0 bottom-0 border-r border-dashed border-[var(--border-default)] opacity-25"
+                    style={{ left: (h - BUSINESS_HOURS.start) * slotWidth + slotWidth / 2 }} />
                 ))}
 
                 {/* Booking blocks */}
@@ -689,12 +680,13 @@ function TimelineView({
                   const bColor = getBookingColor(booking.status);
                   const isCancelled = normalizeStatus(booking.status) === 'cancelled';
                   return (
-                    <button
+                    <AppleButton
                       key={booking.id}
+                      variant="ghost"
                       onClick={() => onBookingClick(booking)}
                       onMouseMove={(e) => handleMouseMove(e, booking)}
                       onMouseLeave={() => setHoveredBooking(null)}
-                      className="absolute top-2 bottom-2 rounded-lg border-l-[3px] px-2 flex items-center gap-2 overflow-hidden cursor-pointer transition-all hover:ring-1 hover:ring-white/20 hover:scale-[1.01] active:scale-[0.99]"
+                      className="absolute top-2 bottom-2 rounded-lg border-l-[3px] px-2 flex items-center gap-2 overflow-hidden cursor-pointer transition-all hover:ring-1 hover:ring-white/20 hover:scale-[1.01] active:scale-[0.99] border-0 min-h-0 p-0"
                       style={{
                         left: pos.left,
                         width: pos.width,
@@ -704,23 +696,23 @@ function TimelineView({
                       }}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-medium truncate" style={{ color: bColor.text }}>
+                        <p className="text-[15px] font-medium truncate" style={{ color: bColor.text }}>
                           {booking.serviceName || booking.serviceCategory}
                         </p>
-                        <p className="text-[9px] truncate" style={{ color: colors.textTertiary }}>
+                        <p className="text-[9px] truncate text-[var(--text-tertiary)]">
                           {booking.customerName}
                         </p>
                       </div>
-                    </button>
+                    </AppleButton>
                   );
                 })}
               </div>
 
               {/* Current time marker */}
               {currentTimePosition > 0 && (
-                <div className="absolute top-0 bottom-0 w-[2px] z-20 pointer-events-none"
-                  style={{ left: currentTimePosition + 120, backgroundColor: colors.error }}>
-                  <div className="w-2 h-2 rounded-full -ml-[3px] -mt-1" style={{ backgroundColor: colors.error }} />
+                <div className="absolute top-0 bottom-0 w-[2px] z-20 pointer-events-none bg-[#f87171]"
+                  style={{ left: currentTimePosition + 120 }}>
+                  <div className="w-2 h-2 rounded-full -ml-[3px] -mt-1 bg-[#f87171]" />
                 </div>
               )}
             </div>
@@ -731,23 +723,21 @@ function TimelineView({
       {/* Tooltip */}
       {hoveredBooking && (
         <div
-          className="fixed z-50 pointer-events-none rounded-xl border p-3 shadow-xl"
+          className="fixed z-50 pointer-events-none rounded-xl border border-[var(--border-default)] bg-[var(--surface-tertiary)] p-3 shadow-xl"
           style={{
             left: tooltipPos.x + 12,
             top: tooltipPos.y - 80,
-            backgroundColor: colors.bg,
-            borderColor: colors.borderSubtle,
             maxWidth: 260,
           }}
         >
-          <p className="text-[13px] font-medium mb-1" style={{ color: colors.textPrimary }}>{hoveredBooking.customerName}</p>
-          <p className="text-[11px] mb-1" style={{ color: colors.textTertiary }}>
+          <p className="text-[17px] font-medium mb-1 text-[var(--text-primary)]">{hoveredBooking.customerName}</p>
+          <p className="text-[15px] mb-1 text-[var(--text-tertiary)]">
             {hoveredBooking.vehiclePlate} {hoveredBooking.vehicleBrand} {hoveredBooking.vehicleModel}
           </p>
-          <p className="text-[11px] mb-1" style={{ color: colors.textSecondary }}>
+          <p className="text-[15px] mb-1 text-[var(--text-secondary)]">
             {hoveredBooking.serviceName || hoveredBooking.serviceCategory}
           </p>
-          <div className="flex items-center gap-3 text-[10px]" style={{ color: colors.textTertiary }}>
+          <div className="flex items-center gap-3 text-[18px] text-[var(--text-tertiary)]">
             <span>{formatTime(hoveredBooking.scheduledAt)}</span>
             {hoveredBooking.estimatedDuration && <span>{hoveredBooking.estimatedDuration} min</span>}
             <span>{formatCurrency(hoveredBooking.estimatedCost)}</span>
@@ -758,9 +748,9 @@ function TimelineView({
       {/* Empty state */}
       {Object.values(bayBookings).every(arr => arr.length === 0) && (
         <div className="flex flex-col items-center justify-center py-12">
-          <CalendarClock className="h-12 w-12 mb-3" style={{ color: colors.borderSubtle }} />
-          <p className="text-[14px] font-medium mb-1" style={{ color: colors.textPrimary }}>Nessuna prenotazione oggi</p>
-          <p className="text-[12px]" style={{ color: colors.textTertiary }}>La timeline si popolerà automaticamente</p>
+          <CalendarClock className="h-12 w-12 mb-3 text-[var(--border-default)]" />
+          <p className="text-[18px] font-medium mb-1 text-[var(--text-primary)]">Nessuna prenotazione oggi</p>
+          <p className="text-[16px] text-[var(--text-tertiary)]">La timeline si popolerà automaticamente</p>
         </div>
       )}
     </div>
@@ -801,8 +791,7 @@ function AgendaView({
 
     return (
       <div
-        className="rounded-xl border p-3 cursor-pointer transition-all hover:ring-1 hover:ring-white/10 active:scale-[0.99]"
-        style={{ borderColor: colors.borderSubtle }}
+        className="rounded-xl border border-[var(--border-default)] p-3 cursor-pointer transition-all hover:ring-1 hover:ring-white/10 active:scale-[0.99]"
         onClick={() => onBookingClick(booking)}
         role="button"
         tabIndex={0}
@@ -811,11 +800,11 @@ function AgendaView({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="text-center shrink-0 w-12">
-              <p className="text-[18px] font-light" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+              <p className="text-[18px] font-light text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {formatTime(booking.scheduledAt)}
               </p>
               {showCountdown && (
-                <p className="text-[9px] font-medium" style={{ color: colors.info }}>
+                <p className="text-[9px] font-medium text-[#60a5fa]">
                   {formatRelativeTime(booking.scheduledAt)}
                 </p>
               )}
@@ -823,13 +812,13 @@ function AgendaView({
             <div className="w-px h-10 shrink-0" style={{ backgroundColor: sc.color }} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5">
-                <p className="text-[14px] font-medium truncate" style={{ color: colors.textPrimary }}>{booking.customerName}</p>
+                <p className="text-[18px] font-medium truncate text-[var(--text-primary)]">{booking.customerName}</p>
                 <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0"
                   style={{ backgroundColor: `${sc.color}20`, color: sc.color }}>
                   {sc.label}
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-[11px]" style={{ color: colors.textTertiary }}>
+              <div className="flex items-center gap-3 text-[15px] text-[var(--text-tertiary)]">
                 <span className="flex items-center gap-1">
                   <Car className="h-3 w-3" /> {booking.vehiclePlate}
                   {booking.vehicleBrand && ` ${booking.vehicleBrand}`}
@@ -842,31 +831,31 @@ function AgendaView({
           </div>
           <div className="flex items-center gap-1 shrink-0">
             {normalizeStatus(booking.status) === 'pending' && (
-              <button onClick={(e) => { e.stopPropagation(); onStatusChange(booking.id, 'confirmed'); }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+              <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onStatusChange(booking.id, 'confirmed'); }}
+                className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                 title="Conferma" aria-label="Conferma prenotazione">
-                <CheckCircle2 className="h-4 w-4" style={{ color: colors.success }} />
-              </button>
+                <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
+              </AppleButton>
             )}
             {normalizeStatus(booking.status) === 'confirmed' && (
-              <button onClick={(e) => { e.stopPropagation(); onStatusChange(booking.id, 'in_progress'); }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+              <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onStatusChange(booking.id, 'in_progress'); }}
+                className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                 title="Check-in" aria-label="Check-in">
-                <PlayCircle className="h-4 w-4" style={{ color: colors.info }} />
-              </button>
+                <PlayCircle className="h-4 w-4 text-[#60a5fa]" />
+              </AppleButton>
             )}
             {booking.customerPhone && (
               <>
                 <a href={`tel:${booking.customerPhone}`} onClick={e => e.stopPropagation()}
                   className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
                   title="Chiama" aria-label="Chiama cliente">
-                  <Phone className="h-3.5 w-3.5" style={{ color: colors.info }} />
+                  <Phone className="h-3.5 w-3.5 text-[#60a5fa]" />
                 </a>
                 <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`}
                   target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                   className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
                   title="WhatsApp" aria-label="WhatsApp">
-                  <MessageCircle className="h-3.5 w-3.5" style={{ color: colors.success }} />
+                  <MessageCircle className="h-3.5 w-3.5 text-[#34d399]" />
                 </a>
               </>
             )}
@@ -876,10 +865,9 @@ function AgendaView({
         {/* Progress bar for in_progress */}
         {normalizeStatus(booking.status) === 'in_progress' && booking.estimatedDuration && (
           <div className="mt-2 ml-[72px]">
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: colors.borderSubtle }}>
+            <div className="h-1.5 rounded-full overflow-hidden bg-[var(--border-default)]">
               <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: colors.emerald }}
+                className="h-full rounded-full bg-[#10b981]"
                 initial={{ width: '0%' }}
                 animate={{ width: `${Math.min(100, ((now.getTime() - new Date(booking.updatedAt).getTime()) / (booking.estimatedDuration * 60000)) * 100)}%` }}
                 transition={{ duration: 1 }}
@@ -894,21 +882,21 @@ function AgendaView({
   return (
     <div className="space-y-4">
       {/* Current time */}
-      <div className="rounded-2xl border p-4 text-center" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
-        <p className="text-[36px] font-light tracking-tight" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 text-center">
+        <p className="text-[36px] font-light tracking-tight text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
         </p>
-        <p className="text-[13px]" style={{ color: colors.textTertiary }}>
+        <p className="text-[17px] text-[var(--text-tertiary)]">
           {formatFullDate(now.toISOString()).replace(/^\w/, c => c.toUpperCase())}
         </p>
       </div>
 
       {/* In corso */}
       {inProgress.length > 0 && (
-        <div className="rounded-2xl border p-4 space-y-3" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: colors.emerald }} />
-            <h3 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: colors.emerald }}>
+            <div className="w-2 h-2 rounded-full animate-pulse bg-[#10b981]" />
+            <h3 className="text-footnote font-semibold text-apple-green">
               In corso adesso ({inProgress.length})
             </h3>
           </div>
@@ -917,29 +905,29 @@ function AgendaView({
       )}
 
       {/* Upcoming */}
-      <div className="rounded-2xl border p-4 space-y-3" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
-        <h3 className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: colors.info }}>
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 space-y-3">
+        <h3 className="text-footnote font-semibold text-apple-blue">
           Prossimi ({upcoming.length})
         </h3>
         {upcoming.length > 0 ? (
           upcoming.map(b => <AgendaCard key={b.id} booking={b} showCountdown />)
         ) : (
-          <p className="text-[13px] py-4 text-center" style={{ color: colors.textTertiary }}>
+          <p className="text-[17px] py-4 text-center text-[var(--text-tertiary)]">
             Nessuna prenotazione in arrivo per oggi
           </p>
         )}
       </div>
 
       {/* Completed */}
-      <div className="rounded-2xl border p-4" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
-        <button
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4">
+        <AppleButton
+          variant="ghost"
           onClick={() => setShowCompleted(!showCompleted)}
-          className="w-full flex items-center justify-between text-[13px] font-semibold uppercase tracking-wider transition-colors"
-          style={{ color: colors.textTertiary }}
+          className="w-full flex items-center justify-between text-footnote font-semibold border-0 min-h-0 p-0 rounded-none"
         >
           <span>Completati oggi ({completedToday.length})</span>
           {showCompleted ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
+        </AppleButton>
         <AnimatePresence>
           {showCompleted && (
             <motion.div
@@ -951,7 +939,7 @@ function AgendaView({
               {completedToday.length > 0 ? (
                 completedToday.map(b => <AgendaCard key={b.id} booking={b} />)
               ) : (
-                <p className="text-[13px] py-2 text-center" style={{ color: colors.textTertiary }}>
+                <p className="text-[17px] py-2 text-center text-[var(--text-tertiary)]">
                   Nessun lavoro completato oggi
                 </p>
               )}
@@ -969,32 +957,35 @@ function AgendaView({
 function EmptyState({ hasFilters }: { hasFilters: boolean }): React.JSX.Element {
   if (hasFilters) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <Search className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-        <p className="text-[15px] font-medium mb-1" style={{ color: colors.textPrimary }}>Nessun risultato</p>
-        <p className="text-[13px]" style={{ color: colors.textTertiary }}>Prova a modificare i filtri di ricerca</p>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Search className="h-12 w-12 text-apple-gray/40 mb-4" />
+        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+          Nessun risultato. Prova a modificare i filtri di ricerca.
+        </p>
+        <AppleButton
+          variant="ghost"
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          Resetta filtri
+        </AppleButton>
       </div>
     );
   }
   return (
-    <div className="flex flex-col items-center justify-center py-20">
-      <div className="relative mb-6">
-        <Calendar className="h-16 w-16" style={{ color: colors.borderSubtle }} />
-        <Sparkles className="h-6 w-6 absolute -top-1 -right-1" style={{ color: colors.warning }} />
-      </div>
-      <p className="text-[18px] font-medium mb-2" style={{ color: colors.textPrimary }}>
-        Nessuna prenotazione per oggi
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Calendar className="h-12 w-12 text-apple-gray/40 mb-4" />
+      <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+        Nessuna prenotazione. Crea la prima prenotazione.
       </p>
-      <p className="text-[13px] max-w-sm text-center mb-6" style={{ color: colors.textTertiary }}>
-        Il calendario è libero. Crea la prima prenotazione o condividi il link di prenotazione con i tuoi clienti.
-      </p>
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard/bookings/new"
-          className="flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium transition-all hover:opacity-90"
-          style={{ backgroundColor: colors.accent, color: colors.bg }}>
-          <Plus className="h-4 w-4" /> Nuova Prenotazione
-        </Link>
-      </div>
+      <Link href="/dashboard/bookings/new">
+        <AppleButton
+          variant="ghost"
+          className="mt-4"
+        >
+          Crea la prima prenotazione
+        </AppleButton>
+      </Link>
     </div>
   );
 }
@@ -1004,15 +995,15 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }): React.JSX.Element 
 // =============================================================================
 function ListSkeleton(): React.JSX.Element {
   return (
-    <div className="divide-y" style={{ borderColor: colors.borderSubtle }}>
+    <div className="divide-y divide-[var(--border-default)]">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 p-5 animate-pulse">
-          <div className="w-1 h-12 rounded-full" style={{ backgroundColor: colors.borderSubtle }} />
+          <div className="w-1 h-12 rounded-full bg-[var(--border-default)]" />
           <div className="flex-1 space-y-2">
-            <div className="w-40 h-4 rounded" style={{ backgroundColor: colors.borderSubtle }} />
-            <div className="w-56 h-3 rounded" style={{ backgroundColor: colors.glowStrong }} />
+            <div className="w-40 h-4 rounded bg-[var(--border-default)]" />
+            <div className="w-56 h-3 rounded bg-white/[0.06]" />
           </div>
-          <div className="w-16 h-4 rounded" style={{ backgroundColor: colors.borderSubtle }} />
+          <div className="w-16 h-4 rounded bg-[var(--border-default)]" />
         </div>
       ))}
     </div>
@@ -1021,12 +1012,12 @@ function ListSkeleton(): React.JSX.Element {
 
 function TimelineSkeleton(): React.JSX.Element {
   return (
-    <div className="rounded-2xl border p-4 animate-pulse" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
-      <div className="h-6 w-48 rounded mb-4" style={{ backgroundColor: colors.borderSubtle }} />
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 animate-pulse">
+      <div className="h-6 w-48 rounded mb-4 bg-[var(--border-default)]" />
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 mb-3">
-          <div className="w-20 h-4 rounded" style={{ backgroundColor: colors.borderSubtle }} />
-          <div className="flex-1 h-10 rounded-lg" style={{ backgroundColor: colors.glowStrong }} />
+          <div className="w-20 h-4 rounded bg-[var(--border-default)]" />
+          <div className="flex-1 h-10 rounded-lg bg-white/[0.06]" />
         </div>
       ))}
     </div>
@@ -1037,11 +1028,11 @@ function KanbanSkeleton(): React.JSX.Element {
   return (
     <div className="flex gap-4 overflow-x-auto">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="w-72 shrink-0 rounded-2xl p-4 animate-pulse" style={{ backgroundColor: colors.glowStrong }}>
-          <div className="h-4 w-24 rounded mb-4" style={{ backgroundColor: colors.borderSubtle }} />
+        <div key={i} className="w-72 shrink-0 rounded-2xl p-4 animate-pulse bg-white/[0.06]">
+          <div className="h-4 w-24 rounded mb-4 bg-[var(--border-default)]" />
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, j) => (
-              <div key={j} className="h-28 rounded-xl" style={{ backgroundColor: colors.surface }} />
+              <div key={j} className="h-28 rounded-xl bg-[var(--surface-elevated)]" />
             ))}
           </div>
         </div>
@@ -1053,14 +1044,14 @@ function KanbanSkeleton(): React.JSX.Element {
 function AgendaSkeleton(): React.JSX.Element {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="rounded-2xl border p-4 h-24" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
-        <div className="h-10 w-24 rounded mx-auto mb-2" style={{ backgroundColor: colors.borderSubtle }} />
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 h-24">
+        <div className="h-10 w-24 rounded mx-auto mb-2 bg-[var(--border-default)]" />
       </div>
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="rounded-2xl border p-4" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
-          <div className="h-4 w-32 rounded mb-3" style={{ backgroundColor: colors.borderSubtle }} />
+        <div key={i} className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4">
+          <div className="h-4 w-32 rounded mb-3 bg-[var(--border-default)]" />
           {Array.from({ length: 2 }).map((_, j) => (
-            <div key={j} className="h-16 rounded-xl mb-2" style={{ backgroundColor: colors.glowStrong }} />
+            <div key={j} className="h-16 rounded-xl mb-2 bg-white/[0.06]" />
           ))}
         </div>
       ))}
@@ -1283,97 +1274,73 @@ export default function BookingsPage(): React.JSX.Element {
 
   // KPI cards data
   const kpiCards = [
-    { label: 'Oggi', value: todayCount, icon: Calendar, color: colors.info, trend: undefined },
-    { label: 'Tasso Conferma', value: `${confirmRate}`, suffix: '%', icon: CheckCircle2, color: colors.success, sparkData: [60, 65, 72, 68, 75, 80, confirmRate] },
-    { label: 'In Attesa', value: pendingCount, icon: Clock, color: colors.warning, trend: undefined },
-    { label: 'Revenue Oggi', value: formatCurrency(todayRevenue), icon: BarChart3, color: colors.purple, trend: undefined },
-    { label: 'No-Show', value: `${noShowRate}`, suffix: '%', icon: UserX, color: colors.error, trend: noShowRate > 5 ? noShowRate : -noShowRate },
-    { label: 'In Corso', value: inProgressCount, icon: PlayCircle, color: colors.emerald, trend: undefined },
-    { label: 'Completate', value: completedCount, icon: CheckCircle2, color: colors.purple, trend: undefined },
-    { label: 'Totale', value: totalCount, icon: CalendarDays, color: colors.textSecondary, sparkData: [totalCount * 0.6, totalCount * 0.7, totalCount * 0.8, totalCount * 0.85, totalCount * 0.9, totalCount * 0.95, totalCount] },
+    { label: 'Oggi', value: todayCount, icon: Calendar, color: '#60a5fa', trend: undefined },
+    { label: 'Tasso Conferma', value: `${confirmRate}`, suffix: '%', icon: CheckCircle2, color: '#34d399', sparkData: [60, 65, 72, 68, 75, 80, confirmRate] },
+    { label: 'In Attesa', value: pendingCount, icon: Clock, color: '#fbbf24', trend: undefined },
+    { label: 'Revenue Oggi', value: formatCurrency(todayRevenue), icon: BarChart3, color: '#a78bfa', trend: undefined },
+    { label: 'No-Show', value: `${noShowRate}`, suffix: '%', icon: UserX, color: '#f87171', trend: noShowRate > 5 ? noShowRate : -noShowRate },
+    { label: 'In Corso', value: inProgressCount, icon: PlayCircle, color: '#10b981', trend: undefined },
+    { label: 'Completate', value: completedCount, icon: CheckCircle2, color: '#a78bfa', trend: undefined },
+    { label: 'Totale', value: totalCount, icon: CalendarDays, color: '#b4b4b4', sparkData: [totalCount * 0.6, totalCount * 0.7, totalCount * 0.8, totalCount * 0.85, totalCount * 0.9, totalCount * 0.95, totalCount] },
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* ================================================================= */}
       {/* Header */}
       {/* ================================================================= */}
-      <header
-        className="border-b backdrop-blur-xl sticky top-0 z-30"
-        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
-      >
-        <div className="px-4 sm:px-8 py-4 space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Link href="/dashboard">
-                <button type="button"
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5"
-                  style={{ color: colors.textTertiary }} aria-label="Torna alla dashboard">
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-              </Link>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-[28px] font-light tracking-tight" style={{ color: colors.textPrimary }}>
-                    Prenotazioni
-                  </h1>
-                  <span className="text-[12px] px-2 py-0.5 rounded-full" style={{ backgroundColor: colors.glowStrong, color: colors.textTertiary }}>
-                    {new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                </div>
-                <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
-                  Oggi: {todaySummary}
-                </p>
-              </div>
+      <header>
+        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Prenotazioni</h1>
+            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+              Oggi: {todaySummary}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* View Toggle */}
+            <div className="inline-flex rounded-xl p-1 bg-white/[0.06]">
+              {viewModes.map(({ mode, icon: ModeIcon, label }) => (
+                <AppleButton
+                  key={mode}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode(mode)}
+                  className={`px-3 py-1.5 rounded-lg text-[16px] min-h-[36px] border-0 ${viewMode === mode ? 'bg-[var(--surface-elevated)] text-[var(--text-primary)]' : 'bg-transparent text-[#666666]'}`}
+                  aria-label={`Vista ${label}`}
+                  icon={<ModeIcon className="h-3.5 w-3.5" />}
+                >
+                  <span className="hidden sm:inline">{label}</span>
+                </AppleButton>
+              ))}
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* View Toggle */}
-              <div className="inline-flex rounded-xl p-1" style={{ backgroundColor: colors.glowStrong }}>
-                {viewModes.map(({ mode, icon: ModeIcon, label }) => (
-                  <button
-                    key={mode}
-                    onClick={() => setViewMode(mode)}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all flex items-center gap-1.5 min-h-[36px]"
-                    style={{
-                      backgroundColor: viewMode === mode ? colors.surface : 'transparent',
-                      color: viewMode === mode ? colors.textPrimary : colors.textMuted,
-                    }}
-                    aria-label={`Vista ${label}`}
-                  >
-                    <ModeIcon className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{label}</span>
-                  </button>
-                ))}
-              </div>
-              <Link href="/dashboard/calendar">
-                <button type="button"
-                  className="flex items-center gap-2 h-9 px-3 rounded-full border text-[12px] font-medium transition-all hover:bg-white/5"
-                  style={{ borderColor: colors.border, color: colors.textSecondary }}>
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Calendario</span>
-                </button>
-              </Link>
-              <Link href="/dashboard/bookings/new">
-                <button type="button"
-                  className="flex items-center gap-2 h-9 px-4 rounded-full text-[12px] font-medium transition-all hover:opacity-90"
-                  style={{ backgroundColor: colors.accent, color: colors.bg }}>
-                  <Plus className="h-3.5 w-3.5" />
-                  Nuova Prenotazione
-                </button>
-              </Link>
-            </div>
+            <Link href="/dashboard/calendar">
+              <AppleButton variant="ghost" icon={<CalendarDays className="h-4 w-4" />}>
+                <span className="hidden sm:inline">Calendario</span>
+              </AppleButton>
+            </Link>
+            <Link href="/dashboard/bookings/new">
+              <AppleButton icon={<Plus className="h-4 w-4" />}>
+                Nuova Prenotazione
+              </AppleButton>
+            </Link>
           </div>
         </div>
       </header>
 
-      <div className="p-4 sm:p-6 space-y-5">
+      <motion.div
+        className="p-8 space-y-6"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         {/* ================================================================= */}
         {/* KPI Cards (2 rows of 4) */}
         {/* ================================================================= */}
         <motion.div variants={containerVariants} initial="hidden" animate="visible"
-          className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          className="grid grid-cols-2 lg:grid-cols-4 gap-bento">
           {kpiCards.map((kpi) => (
-            <motion.div key={kpi.label} variants={itemVariants}>
+            <motion.div key={kpi.label} variants={statsCardVariants}>
               <KpiCard
                 label={kpi.label}
                 value={isLoading ? '\u2014' : kpi.value}
@@ -1390,8 +1357,9 @@ export default function BookingsPage(): React.JSX.Element {
         {/* ================================================================= */}
         {/* Quick Filters + Search */}
         {/* ================================================================= */}
-        <motion.div variants={itemVariants} initial="hidden" animate="visible">
-          <div className="rounded-2xl border p-4" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
+        <motion.div variants={listItemVariants} initial="hidden" animate="visible">
+          <AppleCard hover={false}>
+            <AppleCardContent>
             {/* Quick filters */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1401,51 +1369,46 @@ export default function BookingsPage(): React.JSX.Element {
                   { key: 'week' as const, label: 'Settimana' },
                   { key: 'pending' as const, label: 'In attesa' },
                 ]).map(tab => (
-                  <button
+                  <AppleButton
                     key={tab.key}
+                    variant={quickFilter === tab.key ? 'primary' : 'ghost'}
+                    size="sm"
                     onClick={() => handleQuickFilter(tab.key)}
-                    className="h-8 px-3 rounded-lg text-[12px] font-medium transition-all"
-                    style={{
-                      backgroundColor: quickFilter === tab.key ? colors.accent : 'transparent',
-                      color: quickFilter === tab.key ? colors.bg : colors.textSecondary,
-                      border: quickFilter === tab.key ? 'none' : `1px solid ${colors.borderSubtle}`,
-                    }}
+                    className={`h-8 px-3 rounded-lg text-[16px] min-h-0 ${quickFilter === tab.key ? 'bg-[var(--text-primary)] text-[var(--surface-tertiary)]' : ''}`}
                   >
                     {tab.label}
-                  </button>
+                  </AppleButton>
                 ))}
               </div>
               <div className="flex items-center gap-2">
                 {activeFilterCount > 0 && (
-                  <button onClick={() => { setSearchQuery(''); setSelectedDate(''); setSelectedStatus(''); }}
-                    className="text-[11px] px-2 py-1 rounded-lg flex items-center gap-1 transition-colors hover:bg-white/5"
-                    style={{ color: colors.error }}>
-                    <X className="h-3 w-3" /> Cancella filtri ({activeFilterCount})
-                  </button>
+                  <AppleButton variant="ghost" size="sm" onClick={() => { setSearchQuery(''); setSelectedDate(''); setSelectedStatus(''); }}
+                    className="text-[15px] px-2 py-1 rounded-lg min-h-0 border-0 text-[#f87171]"
+                    icon={<X className="h-3 w-3" />}>
+                    Cancella filtri ({activeFilterCount})
+                  </AppleButton>
                 )}
                 {viewMode === 'list' && (
-                  <button onClick={() => setDensity(d => d === 'compact' ? 'comfortable' : 'compact')}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+                  <AppleButton variant="ghost" size="sm" onClick={() => setDensity(d => d === 'compact' ? 'comfortable' : 'compact')}
+                    className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                     title={density === 'compact' ? 'Espandi righe' : 'Compatta righe'}
                     aria-label="Cambia densità">
-                    {density === 'compact' ? <Eye className="h-3.5 w-3.5" style={{ color: colors.textMuted }} /> : <EyeOff className="h-3.5 w-3.5" style={{ color: colors.textMuted }} />}
-                  </button>
+                    {density === 'compact' ? <Eye className="h-3.5 w-3.5 text-[#666666]" /> : <EyeOff className="h-3.5 w-3.5 text-[#666666]" />}
+                  </AppleButton>
                 )}
               </div>
             </div>
 
             {/* Search + filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.textMuted }} />
-                <input
-                  type="text"
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                <Input
                   placeholder="Cerca per cliente, veicolo o servizio..."
                   aria-label="Cerca prenotazioni"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full h-10 pl-10 pr-4 rounded-xl border text-[13px] outline-none transition-colors focus:border-white/30"
-                  style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary }}
+                  className="pl-10"
                 />
               </div>
               <div className="flex gap-2">
@@ -1454,15 +1417,13 @@ export default function BookingsPage(): React.JSX.Element {
                   value={selectedDate}
                   onChange={e => { setSelectedDate(e.target.value); if (e.target.value) setQuickFilter('all'); }}
                   aria-label="Filtra per data"
-                  className="h-10 px-3 rounded-xl border text-[13px] outline-none transition-colors focus:border-white/30"
-                  style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary, colorScheme: 'dark' }}
+                  className="h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                 />
                 <select
                   value={selectedStatus}
                   onChange={e => { setSelectedStatus(e.target.value); if (e.target.value) setQuickFilter('all'); }}
                   aria-label="Filtra per stato"
-                  className="h-10 px-3 rounded-xl border text-[13px] outline-none transition-colors focus:border-white/30"
-                  style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary }}
+                  className="h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer"
                 >
                   <option value="">Tutti gli stati</option>
                   <option value="pending">In attesa</option>
@@ -1478,11 +1439,11 @@ export default function BookingsPage(): React.JSX.Element {
             {/* Bulk actions */}
             {selectedIds.size > 0 && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                className="mt-3 pt-3 border-t flex items-center gap-3" style={{ borderColor: colors.borderSubtle }}>
-                <span className="text-[12px]" style={{ color: colors.textTertiary }}>
+                className="mt-3 pt-3 border-t border-[var(--border-default)] flex items-center gap-3">
+                <span className="text-[16px] text-[var(--text-tertiary)]">
                   {selectedIds.size} selezionat{selectedIds.size === 1 ? 'o' : 'i'}
                 </span>
-                <button onClick={async () => {
+                <AppleButton variant="ghost" size="sm" onClick={async () => {
                   for (const id of selectedIds) {
                     await updateBooking.mutateAsync({ id, status: 'confirmed' }).catch(() => null);
                   }
@@ -1490,24 +1451,23 @@ export default function BookingsPage(): React.JSX.Element {
                   setSelectedIds(new Set());
                   refetch();
                 }}
-                  className="h-7 px-3 rounded-lg text-[11px] font-medium"
-                  style={{ backgroundColor: `${colors.success}20`, color: colors.success }}>
+                  className="h-7 px-3 rounded-lg text-[15px] min-h-0 bg-[#34d39920] text-[#34d399] border-0">
                   Conferma tutti
-                </button>
-                <button onClick={() => setSelectedIds(new Set())}
-                  className="h-7 px-3 rounded-lg text-[11px] font-medium"
-                  style={{ color: colors.textMuted }}>
+                </AppleButton>
+                <AppleButton variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}
+                  className="h-7 px-3 rounded-lg text-[15px] min-h-0 text-[#666666] border-0">
                   Deseleziona
-                </button>
+                </AppleButton>
               </motion.div>
             )}
-          </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* ================================================================= */}
         {/* Content */}
         {/* ================================================================= */}
-        <motion.div variants={itemVariants} initial="hidden" animate="visible">
+        <motion.div variants={listItemVariants} initial="hidden" animate="visible">
           <AnimatePresence mode="wait">
             <motion.div
               key={viewMode}
@@ -1518,41 +1478,73 @@ export default function BookingsPage(): React.JSX.Element {
             >
               {/* ---- KANBAN ---- */}
               {viewMode === 'kanban' && (
-                isLoading ? <KanbanSkeleton /> : error ? (
-                  <ErrorState onRetry={refetch} />
-                ) : (
-                  <KanbanBoard columns={kanbanColumns} onStatusChange={handleStatusChange} />
-                )
+                <AppleCard hover={false}>
+                  <AppleCardHeader>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Kanban Prenotazioni
+                    </h2>
+                  </AppleCardHeader>
+                  <AppleCardContent>
+                    {isLoading ? <KanbanSkeleton /> : error ? (
+                      <ErrorState onRetry={refetch} />
+                    ) : (
+                      <KanbanBoard columns={kanbanColumns} onStatusChange={handleStatusChange} />
+                    )}
+                  </AppleCardContent>
+                </AppleCard>
               )}
 
               {/* ---- TIMELINE ---- */}
               {viewMode === 'timeline' && (
-                isLoading ? <TimelineSkeleton /> : error ? (
-                  <ErrorState onRetry={refetch} />
-                ) : (
-                  <TimelineView bookings={bookings} onBookingClick={openDrawer} />
-                )
+                <AppleCard hover={false}>
+                  <AppleCardHeader>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Timeline Giornaliera
+                    </h2>
+                  </AppleCardHeader>
+                  <AppleCardContent>
+                    {isLoading ? <TimelineSkeleton /> : error ? (
+                      <ErrorState onRetry={refetch} />
+                    ) : (
+                      <TimelineView bookings={bookings} onBookingClick={openDrawer} />
+                    )}
+                  </AppleCardContent>
+                </AppleCard>
               )}
 
               {/* ---- AGENDA ---- */}
               {viewMode === 'agenda' && (
-                isLoading ? <AgendaSkeleton /> : error ? (
-                  <ErrorState onRetry={refetch} />
-                ) : (
-                  <AgendaView
-                    bookings={bookings}
-                    onBookingClick={openDrawer}
-                    onStatusChange={handleSingleStatusChange}
-                  />
-                )
+                <AppleCard hover={false}>
+                  <AppleCardHeader>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Agenda Reception
+                    </h2>
+                  </AppleCardHeader>
+                  <AppleCardContent>
+                    {isLoading ? <AgendaSkeleton /> : error ? (
+                      <ErrorState onRetry={refetch} />
+                    ) : (
+                      <AgendaView
+                        bookings={bookings}
+                        onBookingClick={openDrawer}
+                        onStatusChange={handleSingleStatusChange}
+                      />
+                    )}
+                  </AppleCardContent>
+                </AppleCard>
               )}
 
               {/* ---- LIST ---- */}
               {viewMode === 'list' && (
-                <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}>
+                <AppleCard hover={false}>
+                  <AppleCardHeader>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Elenco Prenotazioni
+                    </h2>
+                  </AppleCardHeader>
+                  <AppleCardContent>
                   {/* Table header */}
-                  <div className="hidden lg:grid grid-cols-12 gap-2 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider border-b"
-                    style={{ color: colors.textMuted, borderColor: colors.borderSubtle }}>
+                  <div className="hidden lg:grid grid-cols-12 gap-2 px-4 py-2.5 text-xs font-medium border-b border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]">
                     <div className="col-span-1 flex items-center gap-2">
                       <input type="checkbox" checked={selectedIds.size === bookings.length && bookings.length > 0}
                         onChange={toggleSelectAll}
@@ -1577,7 +1569,7 @@ export default function BookingsPage(): React.JSX.Element {
                     <div className="col-span-2 text-right">Azioni</div>
                   </div>
 
-                  <div className="divide-y" style={{ borderColor: colors.borderSubtle }}>
+                  <div className="divide-y divide-[var(--border-default)]">
                     {isLoading ? (
                       <ListSkeleton />
                     ) : error ? (
@@ -1585,17 +1577,24 @@ export default function BookingsPage(): React.JSX.Element {
                     ) : bookings.length === 0 ? (
                       <EmptyState hasFilters={!!hasActiveFilters || quickFilter !== 'all'} />
                     ) : (
-                      sortedBookings.map(booking => {
+                      <motion.div
+                        className="space-y-3 p-2"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                      >
+                      {sortedBookings.map((booking, index) => {
                         const sc = getStatusConfig(booking.status);
                         const isSelected = selectedIds.has(booking.id);
                         const padY = density === 'compact' ? 'py-2' : 'py-3.5';
                         return (
-                          <div
+                          <motion.div
                             key={booking.id}
-                            className={`group flex items-center gap-3 px-4 ${padY} transition-colors cursor-pointer`}
-                            style={{ backgroundColor: isSelected ? colors.glowStrong : 'transparent' }}
-                            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = isSelected ? colors.glowStrong : colors.surfaceHover; }}
-                            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = isSelected ? colors.glowStrong : 'transparent'; }}
+                            className={`group flex items-center gap-3 px-4 ${padY} rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer ${isSelected ? 'ring-1 ring-apple-blue' : ''}`}
+                            variants={listItemVariants}
+                            custom={index}
+                            whileHover={{ scale: 1.005, x: 4 }}
+                            transition={{ duration: 0.2 }}
                             onClick={() => openDrawer(booking)}
                           >
                             {/* Checkbox */}
@@ -1612,43 +1611,43 @@ export default function BookingsPage(): React.JSX.Element {
                             <div className="flex-1 min-w-0 lg:grid lg:grid-cols-12 lg:gap-2 lg:items-center">
                               {/* Time */}
                               <div className="col-span-1 hidden lg:block">
-                                <p className="text-[13px] font-medium" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+                                <p className="text-[17px] font-medium text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                                   {formatTime(booking.scheduledAt)}
                                 </p>
-                                <p className="text-[10px]" style={{ color: colors.textTertiary }}>{formatDate(booking.scheduledAt)}</p>
+                                <p className="text-[18px] text-[var(--text-tertiary)]">{formatDate(booking.scheduledAt)}</p>
                               </div>
 
                               {/* Customer */}
                               <div className="col-span-2">
-                                <p className="text-[13px] font-medium truncate" style={{ color: colors.textPrimary }}>
+                                <p className="text-[17px] font-medium truncate text-[var(--text-primary)]">
                                   {booking.customerName}
                                 </p>
                                 {booking.customerPhone && (
-                                  <p className="text-[10px] truncate" style={{ color: colors.textTertiary }}>{booking.customerPhone}</p>
+                                  <p className="text-[18px] truncate text-[var(--text-tertiary)]">{booking.customerPhone}</p>
                                 )}
                               </div>
 
                               {/* Vehicle */}
                               <div className="col-span-2 hidden lg:block">
-                                <p className="text-[12px] font-mono" style={{ color: colors.textPrimary }}>{booking.vehiclePlate}</p>
-                                <p className="text-[10px] truncate" style={{ color: colors.textTertiary }}>
+                                <p className="text-[16px] font-mono text-[var(--text-primary)]">{booking.vehiclePlate}</p>
+                                <p className="text-[18px] truncate text-[var(--text-tertiary)]">
                                   {booking.vehicleBrand} {booking.vehicleModel}
                                 </p>
                               </div>
 
                               {/* Service */}
                               <div className="col-span-2 hidden lg:block">
-                                <p className="text-[12px] truncate" style={{ color: colors.textSecondary }}>
+                                <p className="text-[16px] truncate text-[var(--text-secondary)]">
                                   {booking.serviceName || booking.serviceCategory}
                                 </p>
                                 {booking.estimatedDuration && (
-                                  <p className="text-[10px]" style={{ color: colors.textTertiary }}>{booking.estimatedDuration} min</p>
+                                  <p className="text-[18px] text-[var(--text-tertiary)]">{booking.estimatedDuration} min</p>
                                 )}
                               </div>
 
                               {/* Technician */}
                               <div className="col-span-1 hidden lg:block">
-                                <p className="text-[11px] truncate" style={{ color: colors.textTertiary }}>
+                                <p className="text-[15px] truncate text-[var(--text-tertiary)]">
                                   {booking.technicianName || '\u2014'}
                                 </p>
                               </div>
@@ -1663,13 +1662,13 @@ export default function BookingsPage(): React.JSX.Element {
 
                               {/* Cost */}
                               <div className="col-span-1 hidden lg:block">
-                                <p className="text-[13px] font-medium" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+                                <p className="text-[17px] font-medium text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                                   {formatCurrency(booking.estimatedCost)}
                                 </p>
                               </div>
 
                               {/* Mobile meta */}
-                              <div className="flex items-center gap-3 text-[11px] mt-0.5 lg:hidden" style={{ color: colors.textTertiary }}>
+                              <div className="flex items-center gap-3 text-[15px] mt-0.5 lg:hidden text-[var(--text-tertiary)]">
                                 <span>{formatTime(booking.scheduledAt)}</span>
                                 <span>{booking.vehiclePlate}</span>
                                 <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"
@@ -1680,62 +1679,63 @@ export default function BookingsPage(): React.JSX.Element {
                             {/* Actions */}
                             <div className="hidden lg:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity col-span-2 justify-end shrink-0">
                               {normalizeStatus(booking.status) === 'pending' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleSingleStatusChange(booking.id, 'confirmed'); }}
-                                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+                                <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSingleStatusChange(booking.id, 'confirmed'); }}
+                                  className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                                   title="Conferma" aria-label="Conferma">
-                                  <CheckCircle2 className="h-4 w-4" style={{ color: colors.success }} />
-                                </button>
+                                  <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
+                                </AppleButton>
                               )}
                               {normalizeStatus(booking.status) === 'confirmed' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleSingleStatusChange(booking.id, 'in_progress'); }}
-                                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+                                <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSingleStatusChange(booking.id, 'in_progress'); }}
+                                  className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                                   title="Check-in" aria-label="Check-in">
-                                  <PlayCircle className="h-4 w-4" style={{ color: colors.info }} />
-                                </button>
+                                  <PlayCircle className="h-4 w-4 text-[#60a5fa]" />
+                                </AppleButton>
                               )}
                               {booking.customerPhone && (
                                 <>
                                   <a href={`tel:${booking.customerPhone}`} onClick={e => e.stopPropagation()}
                                     className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
                                     title="Chiama" aria-label="Chiama">
-                                    <Phone className="h-3.5 w-3.5" style={{ color: colors.info }} />
+                                    <Phone className="h-3.5 w-3.5 text-[#60a5fa]" />
                                   </a>
                                   <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`}
                                     target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                                     className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
                                     title="WhatsApp" aria-label="WhatsApp">
-                                    <MessageCircle className="h-3.5 w-3.5" style={{ color: colors.success }} />
+                                    <MessageCircle className="h-3.5 w-3.5 text-[#34d399]" />
                                   </a>
                                 </>
                               )}
                               <Link href={`/dashboard/work-orders/new?bookingId=${booking.id}`} onClick={e => e.stopPropagation()}>
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
                                   title="Crea OdL" aria-label="Crea Ordine di Lavoro">
-                                  <ClipboardList className="h-3.5 w-3.5" style={{ color: colors.purple }} />
+                                  <ClipboardList className="h-3.5 w-3.5 text-[#a78bfa]" />
                                 </div>
                               </Link>
                             </div>
 
-                            <ChevronRight className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5"
-                              style={{ color: colors.textTertiary }} />
-                          </div>
+                            <ChevronRight className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 text-[var(--text-tertiary)]" />
+                          </motion.div>
                         );
-                      })
+                      })}
+                      </motion.div>
                     )}
                   </div>
 
                   {/* Pagination */}
                   {total > PAGE_SIZE && (
-                    <div className="px-4 py-3 border-t" style={{ borderColor: colors.borderSubtle }}>
+                    <div className="px-4 py-3 border-t border-[var(--border-default)]">
                       <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />
                     </div>
                   )}
-                </div>
+                  </AppleCardContent>
+                </AppleCard>
               )}
             </motion.div>
           </AnimatePresence>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Booking Drawer */}
       <BookingDrawer
@@ -1762,13 +1762,15 @@ function SortHeader({
 }): React.JSX.Element {
   const isActive = current === column;
   return (
-    <button
+    <AppleButton
+      variant="ghost"
+      size="sm"
       onClick={() => onSort(column)}
-      className="flex items-center gap-0.5 hover:text-white/80 transition-colors"
+      className="flex items-center gap-0.5 min-h-0 p-0 border-0 rounded-none !text-apple-dark dark:!text-[var(--text-primary)] hover:opacity-70"
     >
       {label}
       {isActive && (dir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
-    </button>
+    </AppleButton>
   );
 }
 
@@ -1777,19 +1779,18 @@ function SortHeader({
 // =============================================================================
 function ErrorState({ onRetry }: { onRetry: () => void }): React.JSX.Element {
   return (
-    <div className="flex flex-col items-center justify-center py-16">
-      <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.error }} />
-      <p className="text-[15px] font-medium mb-2" style={{ color: colors.textPrimary }}>
-        Si è verificato un errore
-      </p>
-      <p className="text-[13px] mb-4" style={{ color: colors.textTertiary }}>
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
+      <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
         Impossibile caricare le prenotazioni
       </p>
-      <button onClick={onRetry}
-        className="h-10 px-5 rounded-full text-[13px] font-medium flex items-center gap-2"
-        style={{ backgroundColor: colors.accent, color: colors.bg }}>
-        <RefreshCw className="h-4 w-4" /> Riprova
-      </button>
+      <AppleButton
+        variant="ghost"
+        className="mt-4"
+        onClick={onRetry}
+      >
+        Riprova
+      </AppleButton>
     </div>
   );
 }

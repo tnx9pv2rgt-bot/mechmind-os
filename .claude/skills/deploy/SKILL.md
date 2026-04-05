@@ -1,6 +1,7 @@
 ---
 name: deploy
 description: Build, test, e deploy MechMind OS. Usa quando chiesto di deployare, rilasciare, o mettere in produzione.
+disable-model-invocation: true
 allowed-tools: [Read, Grep, "Bash(git *)", "Bash(npx tsc *)", "Bash(npm run *)", "Bash(npx jest *)", "Bash(npx prisma migrate deploy*)", "Bash(docker *)", "Bash(curl *)", "Bash(render *)"]
 ---
 

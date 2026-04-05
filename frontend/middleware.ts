@@ -147,7 +147,8 @@ export function middleware(request: NextRequest): NextResponse {
       // API routes without tenant → 400
       if (
         pathname.startsWith('/api/') &&
-        !pathname.startsWith('/api/auth')
+        !pathname.startsWith('/api/auth') &&
+        !pathname.startsWith('/api/portal/')
       ) {
         return NextResponse.json(
           {
@@ -188,7 +189,7 @@ export function middleware(request: NextRequest): NextResponse {
 
   // Validate CSRF on mutating API requests (POST/PUT/PATCH/DELETE)
   const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
-  const CSRF_SKIP_PATHS = ['/api/auth', '/api/webhooks', '/api/stripe/webhook', '/api/csrf'];
+  const CSRF_SKIP_PATHS = ['/api/auth', '/api/portal/auth', '/api/webhooks', '/api/stripe/webhook', '/api/csrf'];
   if (
     pathname.startsWith('/api/') &&
     MUTATING_METHODS.includes(request.method) &&

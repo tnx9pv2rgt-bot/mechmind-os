@@ -4,11 +4,13 @@ import { NestFactory } from '@nestjs/core';
 import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { setupGracefulShutdown } from 'nestjs-graceful-shutdown';
 import helmet from 'helmet';
 import compression from 'compression';
 import { json } from 'express';
 import { AppModule } from './app.module';
 import { LoggerService } from './common/services/logger.service';
+import { ShutdownService } from './common/services/shutdown.service';
 
 async function bootstrap() {
   // Validate required secrets before starting
@@ -106,10 +108,17 @@ async function bootstrap() {
   // Enable graceful shutdown hooks (Prisma disconnect, BullMQ cleanup, etc.)
   app.enableShutdownHooks();
 
+  // Setup graceful shutdown — drains in-flight HTTP requests before closing
+  setupGracefulShutdown({ app });
+
   // Start server
   const port = configService.get<number>('PORT', 3000);
 
   await app.listen(port);
+
+  // Register HTTP server with ShutdownService for readiness probe
+  const shutdownService = app.get(ShutdownService);
+  shutdownService.setApp(app);
 
   logger.log(`🚀 MechMind OS v10 API running on port ${port}`);
   logger.log(`📚 Swagger documentation available at /api/docs`);

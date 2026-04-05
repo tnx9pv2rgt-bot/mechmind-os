@@ -8,11 +8,13 @@
  * - Customer approval workflow
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../common/services/prisma.service';
 import { S3Service } from '../../common/services/s3.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
 import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
 import {
   CreateInspectionDto,
@@ -27,9 +29,12 @@ import {
   InspectionStatus,
   InspectionItemStatus,
   FindingStatus,
+  PublicTokenType,
   InspectionFinding,
   Prisma,
 } from '@prisma/client';
+
+type NotificationChannel = 'SMS' | 'WHATSAPP' | 'EMAIL';
 
 const INSPECTION_TRANSITIONS: TransitionMap = {
   IN_PROGRESS: ['PENDING_REVIEW', 'READY_FOR_CUSTOMER'],
@@ -63,6 +68,8 @@ export class InspectionService {
     private readonly config: ConfigService,
     private readonly s3: S3Service,
     private readonly notifications: NotificationsService,
+    private readonly publicTokenService: PublicTokenService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.photoBucket = this.config.get<string>(
       'S3_INSPECTION_PHOTOS_BUCKET',
@@ -240,7 +247,7 @@ export class InspectionService {
 
     // Update inspection
     const updated = await this.prisma.inspection.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         status: dto.status,
         mileage: dto.mileage,
@@ -527,6 +534,155 @@ export class InspectionService {
     });
   }
 
+  // ============== PUBLIC TOKEN METHODS ==============
+
+  /**
+   * Send inspection report to customer via public token link
+   */
+  async sendToCustomer(
+    tenantId: string,
+    inspectionId: string,
+    channel: NotificationChannel,
+  ): Promise<{ reportUrl: string }> {
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId, tenantId },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Ispezione non trovata');
+    }
+
+    // Revoke previous tokens
+    await this.publicTokenService.revokeTokensForEntity(tenantId, 'Inspection', inspectionId);
+
+    // Generate public token (72h expiry)
+    const publicToken = await this.publicTokenService.generateToken(
+      tenantId,
+      PublicTokenType.DVI_REPORT,
+      inspectionId,
+      'Inspection',
+      72,
+      { channel },
+    );
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'https://app.mechmind.io');
+    const reportUrl = `${frontendUrl}/public/inspections/${publicToken.token}`;
+
+    this.eventEmitter.emit('inspection.sentToCustomer', {
+      inspectionId,
+      tenantId,
+      customerId: inspection.customerId,
+      channel,
+      reportUrl,
+    });
+
+    return { reportUrl };
+  }
+
+  /**
+   * Retrieve inspection by public token (no auth)
+   */
+  async getByPublicToken(token: string): Promise<InspectionResponseDto> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: tokenRecord.entityId },
+      include: {
+        vehicle: true,
+        customer: true,
+        mechanic: { select: { id: true, name: true } },
+        items: { include: { templateItem: true, photos: true } },
+        findings: true,
+        photos: true,
+      },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Ispezione non trovata');
+    }
+
+    // Mark as customer viewed
+    if (!inspection.customerViewed) {
+      await this.prisma.inspection.update({
+        where: { id: inspection.id },
+        data: { customerViewed: true },
+      });
+    }
+
+    return this.mapToResponseDto(inspection);
+  }
+
+  /**
+   * Approve/decline repairs via public token
+   */
+  async approveRepairsViaToken(
+    token: string,
+    approvedFindingIds: string[],
+    declinedFindingIds: string[],
+  ): Promise<void> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+    const inspectionId = tokenRecord.entityId;
+    const tenantId = tokenRecord.tenantId;
+
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId },
+      include: { findings: true },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Ispezione non trovata');
+    }
+
+    // Validate that all finding IDs belong to this inspection
+    const validFindingIds = new Set(inspection.findings.map(f => f.id));
+    for (const fid of [...approvedFindingIds, ...declinedFindingIds]) {
+      if (!validFindingIds.has(fid)) {
+        throw new BadRequestException(`Riscontro ${fid} non appartiene a questa ispezione`);
+      }
+    }
+
+    const now = new Date();
+
+    // Update approved findings
+    if (approvedFindingIds.length > 0) {
+      await this.prisma.inspectionFinding.updateMany({
+        where: { id: { in: approvedFindingIds } },
+        data: {
+          status: FindingStatus.APPROVED,
+          approvedByCustomer: true,
+          approvedAt: now,
+        },
+      });
+    }
+
+    // Update declined findings
+    if (declinedFindingIds.length > 0) {
+      await this.prisma.inspectionFinding.updateMany({
+        where: { id: { in: declinedFindingIds } },
+        data: { status: FindingStatus.DECLINED },
+      });
+    }
+
+    // Update inspection status
+    await this.prisma.inspection.update({
+      where: { id: inspectionId },
+      data: {
+        status: InspectionStatus.APPROVED,
+        approvedAt: now,
+      },
+    });
+
+    // Consume token
+    await this.publicTokenService.consumeToken(token);
+
+    this.eventEmitter.emit('inspection.repairsApproved', {
+      inspectionId,
+      tenantId,
+      approvedFindingIds,
+      declinedFindingIds,
+    });
+  }
+
   // ============== CONVERSIONS ==============
 
   /**
@@ -650,7 +806,7 @@ export class InspectionService {
 
     // Update notification status
     await this.prisma.inspection.update({
-      where: { id: inspection.id },
+      where: { id: inspection.id, tenantId: inspection.tenantId },
       data: { customerNotified: true },
     });
   }

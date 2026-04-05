@@ -33,9 +33,8 @@ export function ComparisonTable(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="confronto" className="bg-white py-20 dark:bg-[#212121] lg:py-28">
+    <section id="confronto" className="py-20 lg:py-28" style={{ background: '#2a2a2a' }}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Header */}
         <motion.div
           className="mx-auto max-w-2xl text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -43,28 +42,28 @@ export function ComparisonTable(): React.ReactElement {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: '#ffffff' }}>
             Come cambia la tua giornata
           </h2>
         </motion.div>
 
-        {/* Table */}
         <motion.div
           ref={ref}
-          className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-2xl border border-[#e5e5e5] shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:border-[#444654]"
+          className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-2xl shadow-lg"
+          style={{ border: '1px solid #404040' }}
           variants={containerVariants}
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
           {/* Header row */}
           <div className="grid grid-cols-2">
-            <div className="bg-red-50 px-6 py-4 dark:bg-red-950/20">
-              <span className="text-sm font-bold uppercase tracking-wider text-red-500">
+            <div className="px-6 py-4" style={{ background: '#3a2020' }}>
+              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#ef4444' }}>
                 Senza
               </span>
             </div>
-            <div className="bg-[#0d0d0d]/5 px-6 py-4 dark:bg-white/10">
-              <span className="text-sm font-bold uppercase tracking-wider text-[#0d0d0d] dark:text-white">
+            <div className="px-6 py-4" style={{ background: '#1a3a1a' }}>
+              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#4ade80' }}>
                 Con MechMind
               </span>
             </div>
@@ -75,19 +74,24 @@ export function ComparisonTable(): React.ReactElement {
             <motion.div
               key={i}
               variants={rowVariants}
-              className={`grid grid-cols-1 sm:grid-cols-2 ${
-                i < rows.length - 1 ? 'border-b border-[#e5e5e5]/80 dark:border-[#444654]/50' : ''
-              }`}
+              className="grid grid-cols-1 sm:grid-cols-2"
+              style={{ borderTop: '1px solid #404040' }}
             >
               {/* Without */}
-              <div className="flex items-start gap-3 border-b border-[#e5e5e5]/80 bg-white px-6 py-4 dark:border-[#444654]/50 dark:bg-[#2f2f2f] sm:border-b-0 sm:border-r">
-                <span className="mt-0.5 shrink-0 text-red-400">✗</span>
-                <span className="text-sm text-[#6e6e80] dark:text-[#8e8ea0]">{row.without}</span>
+              <div
+                className="flex items-start gap-3 border-b px-6 py-4 sm:border-b-0 sm:border-r"
+                style={{ background: '#333333', borderColor: '#404040' }}
+              >
+                <span className="mt-0.5 shrink-0" style={{ color: '#ef4444' }}>✗</span>
+                <span className="text-sm" style={{ color: '#a1a1a6' }}>{row.without}</span>
               </div>
               {/* With MechMind */}
-              <div className="flex items-start gap-3 bg-white px-6 py-4 dark:bg-[#2f2f2f]/50">
-                <span className="mt-0.5 shrink-0 text-[#0d0d0d] dark:text-white">✓</span>
-                <span className="text-sm font-medium text-[#0d0d0d] dark:text-[#ececec]">{row.withMM}</span>
+              <div
+                className="flex items-start gap-3 px-6 py-4"
+                style={{ background: '#333333' }}
+              >
+                <span className="mt-0.5 shrink-0" style={{ color: '#4ade80' }}>✓</span>
+                <span className="text-sm font-medium" style={{ color: '#4ade80' }}>{row.withMM}</span>
               </div>
             </motion.div>
           ))}

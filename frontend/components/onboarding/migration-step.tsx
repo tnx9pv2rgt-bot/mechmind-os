@@ -36,7 +36,7 @@ export function MigrationStep({ selected, onSelect }: MigrationStepProps): React
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
         <h2 className="text-xl font-normal text-white">Da dove parti?</h2>
-        <p className="mt-1 text-[13px] text-[#b4b4b4]">Ti aiuteremo a iniziare nel modo giusto</p>
+        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Ti aiuteremo a iniziare nel modo giusto</p>
       </div>
 
       <motion.div
@@ -59,7 +59,7 @@ export function MigrationStep({ selected, onSelect }: MigrationStepProps): React
                 'relative flex min-h-[64px] items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
                 isSelected
                   ? 'border-white/60 bg-white/10'
-                  : 'border-[#444] bg-[#3a3a3a] hover:border-[#666] hover:bg-[#404040]',
+                  : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
@@ -75,12 +75,12 @@ export function MigrationStep({ selected, onSelect }: MigrationStepProps): React
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[#999]'}>{option.icon}</span>
+              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{option.icon}</span>
               <div>
-                <span className={['text-[14px] font-medium', isSelected ? 'text-white' : 'text-[#ccc]'].join(' ')}>
+                <span className={['text-[14px] font-medium', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
                   {option.name}
                 </span>
-                <p className="text-[12px] text-[#888]">{option.description}</p>
+                <p className="text-[12px] text-[var(--text-tertiary)]">{option.description}</p>
               </div>
             </motion.button>
           );

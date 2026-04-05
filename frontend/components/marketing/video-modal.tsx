@@ -64,7 +64,7 @@ export function VideoModal({ isOpen, onClose }: VideoModalProps): React.ReactEle
             </button>
 
             {/* Video placeholder */}
-            <div className="relative aspect-video w-full bg-[#171717]">
+            <div className="relative aspect-video w-full bg-[var(--surface-secondary)]">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/60">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/30">
                   <span className="ml-1 text-3xl text-white">▶</span>
@@ -83,7 +83,7 @@ export function VideoModal({ isOpen, onClose }: VideoModalProps): React.ReactEle
               </p>
               <a
                 href="/auth/register"
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0d0d0d] transition-colors hover:bg-[#e5e5e5]"
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-active)]"
               >
                 Inizia gratis &rarr;
               </a>
