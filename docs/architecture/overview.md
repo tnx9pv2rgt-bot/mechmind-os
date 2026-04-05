@@ -1,230 +1,34 @@
-# MechMind OS Architecture Overview
+# MechMind OS — Architecture Overview
 
-MechMind OS is a multi-tenant SaaS platform for automotive repair shops, featuring AI-powered voice booking capabilities.
+**Ultimo aggiornamento:** 2026-04-04
+**Generato da:** audit automatico codebase
 
-## System Architecture
+MechMind OS e' un SaaS multi-tenant per officine meccaniche italiane.
 
-```mermaid
-flowchart TB
-    subgraph "Client Layer"
-        WEB[Web App]
-        MOBILE[Mobile App]
-        PHONE[Phone Calls]
-    end
+## Numeri Reali del Codebase
 
-    subgraph "API Gateway Layer"
-        LB[Load Balancer]
-        GW[API Gateway]
-        AUTH[Auth Service]
-    end
-
-    subgraph "Application Layer"
-        API[API Services]
-        VOICE[Voice Service]
-        WEBHOOK[Webhook Handler]
-    end
-
-    subgraph "Data Layer"
-        DB[(PostgreSQL)]
-        CACHE[(Redis)]
-        QUEUE[(Message Queue)]
-    end
-
-    subgraph "External Services"
-        VAPI[Vapi AI]
-        SENDGRID[SendGrid]
-        TWILIO[Twilio]
-        STRIPE[Stripe]
-    end
-
-    WEB --> LB
-    MOBILE --> LB
-    PHONE --> VAPI
-    
-    LB --> GW
-    GW --> AUTH
-    GW --> API
-    
-    VAPI --> WEBHOOK
-    WEBHOOK --> API
-    
-    API --> DB
-    API --> CACHE
-    API --> QUEUE
-    
-    API --> SENDGRID
-    API --> TWILIO
-    API --> STRIPE
-    VOICE --> VAPI
-```
-
-## Component Overview
-
-### Client Layer
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Web App | React, TypeScript | Shop management interface |
-| Mobile App | React Native | On-the-go access |
-| Phone | PSTN/SIP | Voice booking channel |
-
-### API Gateway Layer
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Load Balancer | AWS ALB | Traffic distribution |
-| API Gateway | Kong | Rate limiting, routing |
-| Auth Service | Node.js, JWT | Authentication & authorization |
-
-### Application Layer
-
-| Service | Language | Responsibility |
-|---------|----------|----------------|
-| API Services | Go | Core business logic |
-| Voice Service | Python | Vapi integration |
-| Webhook Handler | Python | Async event processing |
-| Worker | Go | Background jobs |
-
-### Data Layer
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Primary Database | PostgreSQL 15 | Transactional data |
-| Read Replica | PostgreSQL 15 | Read scaling |
-| Cache | Redis 7 | Session & query caching |
-| Queue | Redis/RabbitMQ | Async job processing |
-
-## Multi-Tenant Architecture
-
-MechMind OS uses a **single database, schema-per-tenant** approach with Row-Level Security (RLS).
-
-```mermaid
-flowchart LR
-    subgraph "Single Database"
-        subgraph "Tenant A Schema"
-            A_BOOKINGS[bookings]
-            A_CUSTOMERS[customers]
-            A_MECHANICS[mechanics]
-        end
-        
-        subgraph "Tenant B Schema"
-            B_BOOKINGS[bookings]
-            B_CUSTOMERS[customers]
-            B_MECHANICS[mechanics]
-        end
-        
-        subgraph "Shared Schema"
-            TENANTS[tenants]
-            USERS[users]
-            AUDIT[audit_log]
-        end
-    end
-    
-    API --> TENANTS
-    API --> A_BOOKINGS
-    API --> B_BOOKINGS
-```
-
-### Tenant Isolation
-
-```sql
--- Row-Level Security Policy Example
-CREATE POLICY tenant_isolation ON bookings
-    USING (shop_id = current_setting('app.current_tenant')::UUID);
-
--- Set tenant context
-SET app.current_tenant = '550e8400-e29b-41d4-a716-446655440000';
-```
-
-## Scalability Design
-
-### Horizontal Scaling
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                      Load Balancer                       │
-└─────────────────────────────────────────────────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-   ┌────▼────┐        ┌────▼────┐        ┌────▼────┐
-   │ API-1   │        │ API-2   │        │ API-3   │
-   │ (Pod)   │        │ (Pod)   │        │ (Pod)   │
-   └────┬────┘        └────┬────┘        └────┬────┘
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │  PostgreSQL  │
-                    │   Primary    │
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │   Replica    │
-                    └─────────────┘
-```
-
-### Auto-Scaling Configuration
-
-```yaml
-# HPA Configuration
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: api-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api
-  minReplicas: 3
-  maxReplicas: 50
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 80
-```
-
-## Data Flow
-
-### Booking Creation Flow
-
-```mermaid
-sequenceDiagram
-    participant C as Customer
-    participant API as API Gateway
-    participant S as Booking Service
-    participant DB as PostgreSQL
-    participant Cache as Redis
-    participant V as Vapi
-    participant W as Webhook
-
-    C->>API: POST /v1/bookings/reserve
-    API->>S: Reserve slot
-    S->>DB: Acquire advisory lock
-    DB-->>S: Lock acquired
-    S->>Cache: Cache reservation
-    S-->>API: Reservation confirmed
-    API-->>C: Return reservation
-
-    C->>V: Confirm via voice
-    V->>W: booking-intent webhook
-    W->>API: POST /webhooks/vapi/booking-intent
-    API->>S: Confirm booking
-    S->>DB: Create booking record
-    S->>Cache: Invalidate slot cache
-    S->>V: Send confirmation
-    V-->>C: Booking confirmed
-```
+| Area | Conteggio |
+|------|-----------|
+| Modelli Prisma | 110 |
+| Indici Prisma (@@index/@@unique/@unique) | 373 |
+| Schema lines | 4062 |
+| Moduli NestJS | 46 |
+| Controller | 73 |
+| Service | 102 |
+| DTO | 69 |
+| Endpoint (decorator count) | 519 |
+| Guards | 8 |
+| Interceptors | 4 |
+| Middleware | 3 |
+| Listeners | 2 |
+| Gateways (WebSocket) | 3 |
+| File di test | 235 |
+| Test cases | 4797 |
+| Pagine frontend | 137 |
+| Componenti React | 270 |
+| Route API proxy | 303 |
+| Skills Claude | 18 |
+| Docs (.md) | 55 |
 
 ## Technology Stack
 
@@ -232,124 +36,218 @@ sequenceDiagram
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| API Framework | Go + Gin | 1.21 |
-| Voice Service | Python + FastAPI | 3.11 |
+| Framework | NestJS | 10 |
+| ORM | Prisma | 5.22 |
 | Database | PostgreSQL | 15 |
-| Cache | Redis | 7.0 |
-| Queue | RabbitMQ | 3.12 |
+| Cache / Queue | Redis + BullMQ | 7 |
+| Auth | JWT (RS256) + Passport | - |
+| Validation | class-validator + class-transformer | - |
+| API docs | Swagger (@nestjs/swagger) | - |
 
 ### Frontend
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| Web | React | 18 |
-| Mobile | React Native | 0.72 |
-| UI Library | Material-UI | 5 |
+| Framework | Next.js (App Router) | 14 |
+| UI | TailwindCSS + Radix UI (shadcn) | - |
+| Forms | react-hook-form + Zod | - |
+| Data fetching | SWR | - |
+| Toast | Sonner | - |
+| Charts | Recharts | - |
 
 ### Infrastructure
 
 | Layer | Technology |
 |-------|------------|
-| Cloud | AWS |
-| Orchestration | Kubernetes (EKS) |
+| Containerization | Docker Compose (dev) |
+| Services | PostgreSQL 15, Redis 7 |
 | CI/CD | GitHub Actions |
-| Monitoring | Datadog |
-| Logging | Datadog |
 
-## Security Architecture
+## System Architecture
 
-See [security.md](security.md) for detailed security documentation.
-
-```mermaid
-flowchart TB
-    subgraph "Security Layers"
-        WAF[AWS WAF]
-        AUTH[OAuth 2.0 / JWT]
-        TLS[TLS 1.3]
-        RLS[Row-Level Security]
-        ENC[Encryption at Rest]
-    end
-    
-    Client --> WAF
-    WAF --> TLS
-    TLS --> AUTH
-    AUTH --> RLS
-    RLS --> ENC
+```
+Browser/Mobile
+    |
+    v
+Next.js 14 (porta 3000)
+    |
+    | app/api/*/route.ts (303 route proxy)
+    | proxyToNestJS()
+    v
+NestJS 10 (porta 3002)
+    |
+    |--- 73 controller → 519 endpoint
+    |--- 102 service (business logic)
+    |--- 8 guard (auth, roles, throttle, MFA)
+    |--- 4 interceptor (idempotency, logger, transform, timeout)
+    |--- 3 middleware (auth, tenant-context, subscription)
+    |--- 3 gateway (WebSocket: OBD, shop-floor, voice)
+    |
+    v
+Prisma 5.22 (ORM, RLS via tenantId)
+    |
+    v
+PostgreSQL 15 (110 modelli, 373 indici)
+    |
+Redis 7 (BullMQ, cache, pub-sub, rate limiting)
 ```
 
-## Deployment Architecture
+## Multi-Tenant Architecture
 
-```mermaid
-flowchart LR
-    subgraph "Development"
-        DEV[Local Docker]
-    end
-    
-    subgraph "CI/CD"
-        CI[GitHub Actions]
-    end
-    
-    subgraph "Environments"
-        SANDBOX[Sandbox]
-        STAGING[Staging]
-        PROD[Production]
-    end
-    
-    DEV --> CI
-    CI --> SANDBOX
-    CI --> STAGING
-    STAGING --> PROD
+Approccio: **single database, tenantId su ogni riga** con Row-Level Security.
+
 ```
+Request → JwtAuthGuard → @TenantId() decorator → tenantId nel where Prisma
+                                                    ↓
+                                          PrismaService.setTenantContext(tenantId)
+                                                    ↓
+                                          OGNI query: where: { tenantId, ... }
+```
+
+- 110 modelli Prisma, quasi tutti con `tenantId String`
+- TenantContextMiddleware setta il contesto per ogni request
+- PII criptati con EncryptionService (AES-256-CBC)
+
+## Backend Module Map (53 moduli)
+
+```
+backend/src/
+├── accounting/          — Contabilita', nota credito
+├── admin/               — Admin panel, gestione tenant
+├── ai-compliance/       — EU AI Act compliance
+├── ai-diagnostic/       — Diagnostica AI veicoli
+├── ai-scheduling/       — Scheduling intelligente
+├── ai_act/              — Registri AI Act
+├── analytics/           — KPI, reporting, ML integration
+├── auth/                — JWT, MFA, passkey, OAuth, sessions
+├── benchmarking/        — Benchmark officine
+├── booking/             — Prenotazioni (advisory lock)
+├── campaign/            — Campagne marketing
+├── canned-job/          — Lavori predefiniti
+├── common/              — PrismaService, EncryptionService, guards, interceptors
+├── config/              — Configurazione env
+├── customer/            — Gestione clienti, PII encrypt
+├── declined-service/    — Servizi rifiutati
+├── distributors/        — Fornitori ricambi
+├── dpp/                 — Digital Product Passport
+├── dvi/                 — Ispezioni digitali veicoli
+├── estimate/            — Preventivi
+├── fleet/               — Gestione flotte
+├── gdpr/                — GDPR export/deletion
+├── i18n/                — Internazionalizzazione
+├── invoice/             — Fatturazione elettronica SDI
+├── iot/                 — IoT (OBD, shop-floor)
+├── kiosk/               — Chiosco accettazione
+├── labor-guide/         — Tempari manodopera
+├── lib/                 — Librerie condivise
+├── location/            — Sedi multiple
+├── membership/          — Programmi fedelta'
+├── middleware/           — Auth, rate limiter
+├── notifications/       — Email, SMS, push, webhook
+├── obd/                 — Diagnostica OBD-II
+├── parts/               — Ricambi, magazzino
+├── payment-link/        — Link di pagamento
+├── payroll/             — Gestione buste paga
+├── portal/              — Portale clienti (20+ endpoint)
+├── predictive-maintenance/ — Manutenzione predittiva
+├── production-board/    — Lavagna produzione
+├── public-token/        — Token pubblici (preventivi, ispezioni)
+├── rentri/              — RENTRI gestione rifiuti
+├── reviews/             — Recensioni clienti
+├── security-incident/   — Incidenti sicurezza NIS2
+├── services/            — Servizi esterni (VIES, P.IVA)
+├── sms/                 — SMS thread
+├── subscription/        — Abbonamenti Stripe
+├── test/                — Utilities di test
+├── tire/                — Gestione pneumatici
+├── types/               — Tipi condivisi
+├── vehicle-history/     — Storico veicoli
+├── voice/               — Voice AI (Vapi)
+├── webhooks/            — Webhook handler
+└── work-order/          — Ordini di lavoro (state machine)
+```
+
+## Frontend Architecture
+
+### Routing Tree (App Router)
+
+```
+frontend/app/
+├── (landing)            — Landing page marketing
+├── auth/                — Login, register, MFA, magic-link, forgot-password
+├── dashboard/           — Area protetta titolare/tecnico
+│   ├── analytics/       — KPI, benchmarking, tecnici
+│   ├── bookings/        — Calendario prenotazioni
+│   ├── customers/       — Gestione clienti (import, wizard 4 step)
+│   ├── work-orders/     — Ordini di lavoro
+│   ├── invoices/        — Fatturazione (credit note, quotes, financial)
+│   ├── estimates/       — Preventivi
+│   ├── inspections/     — Ispezioni DVI
+│   ├── parts/           — Ricambi e magazzino
+│   ├── vehicles/        — Veicoli e manutenzione
+│   ├── obd/             — Diagnostica OBD
+│   ├── marketing/       — Campagne e follow-up
+│   ├── messaging/       — Messaggistica
+│   ├── rentri/          — Gestione rifiuti RENTRI
+│   ├── warranty/        — Garanzie e claims
+│   ├── settings/        — Team, ruoli, sicurezza, audit, webhook
+│   ├── production-board/— Lavagna produzione
+│   ├── payroll/         — Buste paga
+│   └── voice/           — Voice AI config
+├── portal/              — Customer portal (21 pagine)
+│   ├── bookings/        — Prenotazione appuntamenti
+│   ├── estimates/       — Preventivi (accetta/rifiuta)
+│   ├── invoices/        — Fatture
+│   ├── tracking/        — Stato lavorazione
+│   ├── maintenance/     — Manutenzioni
+│   ├── warranty/        — Garanzie
+│   ├── messages/        — Messaggi con officina
+│   └── settings/        — Profilo cliente
+├── public/              — Pagine pubbliche (preventivi, ispezioni, pagamenti)
+├── kiosk/               — Chiosco accettazione
+├── demo/                — Demo senza registrazione
+├── tv/                  — Display TV officina
+└── api/                 — 303 route proxy → backend NestJS
+```
+
+### Data Flow
+
+```
+Page → SWR hook → /app/api/[resource]/route.ts → proxyToNestJS() → Backend NestJS → Prisma+RLS → PostgreSQL
+```
+
+## Booking Flow (Advisory Lock)
+
+```
+1. Client richiede slot
+2. BookingService acquisisce advisory lock (pg_advisory_xact_lock)
+3. Verifica disponibilita' in transazione SERIALIZABLE
+4. Crea booking + aggiorna slot
+5. Rilascio lock automatico al commit
+6. Notifica via BullMQ (email/SMS)
+```
+
+## Security Layers
+
+```
+Request → Rate Limiter (Redis) → JWT Auth → RBAC (RolesGuard) → Tenant Isolation (tenantId) → RLS → DB
+                                    ↓
+                              MFA Guard (TOTP/SMS)
+                                    ↓
+                              Audit Log (domain events)
+```
+
+- PII: AES-256-CBC via EncryptionService
+- Password: bcrypt (12 rounds)
+- JWT: RS256 con jti per revocabilita'
+- GDPR: soft delete, export, consent management
 
 ## Performance Targets
 
-| Metric | Target | Alert Threshold |
-|--------|--------|-----------------|
-| API Response Time (p95) | < 200ms | > 500ms |
-| API Response Time (p99) | < 500ms | > 1s |
-| Database Query Time | < 50ms | > 100ms |
-| Voice Webhook Latency | < 2s | > 5s |
-| Availability | 99.9% | < 99.5% |
-
-## Capacity Planning
-
-### Current Capacity
-
-| Resource | Current | Max |
-|----------|---------|-----|
-| API Pods | 5 | 50 |
-| DB Connections | 100 | 500 |
-| Cache Memory | 4GB | 32GB |
-| Storage | 500GB | 5TB |
-
-### Growth Projections
-
-| Metric | Current | 6 Months | 12 Months |
-|--------|---------|----------|-----------|
-| Shops | 100 | 250 | 500 |
-| Daily Bookings | 1,000 | 3,000 | 8,000 |
-| API Requests/day | 100K | 300K | 800K |
-
-## Disaster Recovery
-
-### RPO/RTO
-
-| Scenario | RPO | RTO |
-|----------|-----|-----|
-| Database failure | 5 min | 15 min |
-| Region failure | 1 hour | 4 hours |
-| Complete disaster | 24 hours | 24 hours |
-
-### Backup Strategy
-
-- **Full backups**: Daily at 02:00 UTC
-- **WAL archiving**: Continuous
-- **Cross-region replication**: Enabled
-- **Retention**: 30 days (production), 7 days (staging)
-
-## Documentation Index
-
-- [Database Architecture](database.md)
-- [Voice Flow](voice-flow.md)
-- [Security Model](security.md)
-- [Compliance](compliance.md)
+| Metrica | Target | Alert |
+|---------|--------|-------|
+| API p95 | < 200ms | > 500ms |
+| API p99 | < 500ms | > 1s |
+| DB query | < 50ms | > 100ms |
+| Webhook latency | < 2s | > 5s |
+| Uptime | 99.9% | < 99.5% |

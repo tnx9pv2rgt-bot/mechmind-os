@@ -92,7 +92,7 @@ export function AnalyticsEmptyState({
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           {icon ?? (
             <BarChart3
-              className="h-10 w-10 text-[#666666]"
+              className="h-10 w-10 text-[var(--text-secondary)]"
               aria-hidden="true"
             />
           )}
@@ -100,7 +100,7 @@ export function AnalyticsEmptyState({
       </div>
 
       <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
-      <p className="mb-6 max-w-sm text-sm leading-relaxed text-[#888888]">
+      <p className="mb-6 max-w-sm text-sm leading-relaxed text-[var(--text-tertiary)]">
         {description}
       </p>
 
@@ -108,7 +108,7 @@ export function AnalyticsEmptyState({
         <button
           type="button"
           onClick={action.onClick}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-medium text-[#0d0d0d] transition-colors duration-200 hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-medium text-[var(--text-primary)] transition-colors duration-200 hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
           style={{ minHeight: 44 }}
         >
           {action.label}

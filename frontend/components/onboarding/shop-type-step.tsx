@@ -39,7 +39,7 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
         <h2 className="text-xl font-normal text-white">Che tipo di officina hai?</h2>
-        <p className="mt-1 text-[13px] text-[#b4b4b4]">Personalizzeremo l&apos;esperienza per te</p>
+        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Personalizzeremo l&apos;esperienza per te</p>
       </div>
 
       <motion.div
@@ -62,7 +62,7 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
                 'relative flex min-h-[90px] flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all duration-200',
                 isSelected
                   ? 'border-white/60 bg-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]'
-                  : 'border-[#444] bg-[#3a3a3a] hover:border-[#666] hover:bg-[#404040]',
+                  : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
@@ -78,11 +78,11 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[#999]'}>{type.icon}</span>
-              <span className={['text-[13px] font-medium', isSelected ? 'text-white' : 'text-[#ccc]'].join(' ')}>
+              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{type.icon}</span>
+              <span className={['text-[13px] font-medium', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
                 {type.name}
               </span>
-              <span className="text-[11px] text-[#888]">{type.description}</span>
+              <span className="text-[11px] text-[var(--text-tertiary)]">{type.description}</span>
             </motion.button>
           );
         })}

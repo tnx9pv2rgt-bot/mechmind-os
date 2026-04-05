@@ -37,15 +37,17 @@ interface FaqItem {
 
 const PLANS: PricingPlan[] = [
   {
-    id: 'start',
-    name: 'Start',
+    id: 'starter',
+    name: 'Starter',
     tagline: 'Per chi inizia',
-    monthlyPrice: 99,
-    annualPrice: 79,
+    monthlyPrice: 39,
+    annualPrice: 33,
     features: [
-      { label: 'Ordini di lavoro' },
-      { label: 'Fatturazione base' },
-      { label: 'CRM clienti' },
+      { label: 'Fino a 5 utenti' },
+      { label: 'Ordini di lavoro illimitati' },
+      { label: 'Fatturazione elettronica' },
+      { label: 'CRM clienti (500)' },
+      { label: 'Prenotazioni online' },
       { label: '1 sede' },
       { label: 'Supporto email' },
     ],
@@ -53,54 +55,41 @@ const PLANS: PricingPlan[] = [
     highlighted: false,
   },
   {
-    id: 'grow',
-    name: 'Grow',
+    id: 'pro',
+    name: 'Pro',
     tagline: 'Per officine in crescita',
-    monthlyPrice: 199,
-    annualPrice: 159,
+    monthlyPrice: 89,
+    annualPrice: 75,
     features: [
-      { label: 'Tutto di Start +' },
+      { label: 'Tutto di Starter +' },
+      { label: 'Fino a 15 utenti' },
       { label: 'Ispezioni digitali (DVI)' },
       { label: 'Gestione ricambi' },
-      { label: 'Preventivi' },
-      { label: 'Marketing base' },
+      { label: 'Preventivi e conversione' },
+      { label: 'Multi-sede (fino a 3)' },
+      { label: 'Analytics avanzati' },
       { label: 'Supporto prioritario' },
     ],
     cta: 'Inizia gratis',
     highlighted: true,
   },
   {
-    id: 'scale',
-    name: 'Scale',
-    tagline: 'Per multi-sede',
-    monthlyPrice: 349,
-    annualPrice: 279,
-    features: [
-      { label: 'Tutto di Grow +' },
-      { label: 'Multi-sede' },
-      { label: 'Analytics avanzati' },
-      { label: 'Portale clienti' },
-      { label: 'API access' },
-      { label: 'Account manager dedicato' },
-    ],
-    cta: 'Inizia gratis',
-    highlighted: false,
-  },
-  {
     id: 'enterprise',
     name: 'Enterprise',
-    tagline: 'Soluzioni su misura',
-    monthlyPrice: null,
-    annualPrice: null,
+    tagline: 'Per grandi operazioni',
+    monthlyPrice: 249,
+    annualPrice: 208,
     features: [
-      { label: 'Tutto di Scale +' },
+      { label: 'Tutto di Pro +' },
+      { label: 'Utenti illimitati' },
       { label: 'Sedi illimitate' },
-      { label: 'SLA garantito' },
+      { label: 'API access completo' },
+      { label: 'White label' },
+      { label: 'Account manager dedicato' },
+      { label: 'SLA 99.95% garantito' },
       { label: 'Integrazioni custom' },
-      { label: 'Formazione on-site' },
-      { label: 'Supporto 24/7' },
     ],
-    cta: 'Contattaci',
+    cta: 'Inizia gratis',
     highlighted: false,
   },
 ];
@@ -129,9 +118,14 @@ const FAQ_ITEMS: FaqItem[] = [
       'La fatturazione avviene tramite Stripe. Puoi pagare con carta di credito, debito o SEPA. Ricevi fattura elettronica conforme alla normativa italiana (FatturaPA) direttamente via SDI.',
   },
   {
+    question: 'Come funziona l\'assistente vocale AI?',
+    answer:
+      'L\'assistente vocale AI e un add-on opzionale a \u20AC49/mese che include 100 minuti di conversazione. Risponde alle chiamate in italiano, prenota appuntamenti, verifica disponibilita e invia conferme SMS. Ogni minuto extra costa \u20AC0,40. Powered by ElevenLabs per una voce naturale.',
+  },
+  {
     question: 'Offrite sconti per piu sedi?',
     answer:
-      'Il piano Scale include fino a 5 sedi. Per piu sedi, il piano Enterprise offre prezzi personalizzati con sconti volume. Contattaci per un preventivo su misura.',
+      'Il piano Pro include fino a 3 sedi. Il piano Enterprise offre sedi illimitate a \u20AC249/mese. Con fatturazione annuale risparmi fino al 16%.',
   },
   {
     question: 'Cosa succede se cancello l\'abbonamento?',
@@ -230,7 +224,7 @@ function BillingToggle({
           period === 'annual' ? 'opacity-100' : 'opacity-0'
         )}
       >
-        Risparmi il 20%
+        Risparmi il 16%
       </span>
     </div>
   );
@@ -420,11 +414,70 @@ export function Pricing(): ReactNode {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
           variants={containerVariants}
-          className="mx-auto mt-16 grid max-w-apple-wide grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+          className="mx-auto mt-16 grid max-w-apple-wide grid-cols-1 gap-6 md:grid-cols-3"
         >
           {PLANS.map((plan) => (
             <PlanCard key={plan.id} plan={plan} period={billingPeriod} />
           ))}
+        </motion.div>
+
+        {/* ---- Voice AI Add-on ---- */}
+        <motion.div
+          initial="hidden"
+          animate={isInView ? 'visible' : 'hidden'}
+          variants={fadeInUp}
+          className="mx-auto mt-12 max-w-apple"
+        >
+          <div className="rounded-2xl border border-apple-blue/20 bg-gradient-to-r from-apple-blue/5 to-purple-500/5 p-8 dark:from-apple-blue/10 dark:to-purple-500/10">
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
+              <div className="text-center sm:text-left">
+                <div className="flex items-center justify-center gap-2 sm:justify-start">
+                  <span className="text-title-2 font-bold text-apple-dark dark:text-white">
+                    Assistente Vocale AI
+                  </span>
+                  <span className="rounded-full bg-apple-blue/10 px-3 py-1 text-footnote font-semibold text-apple-blue">
+                    Add-on
+                  </span>
+                </div>
+                <p className="mt-2 max-w-lg text-callout text-apple-gray">
+                  Rispondi alle chiamate con un assistente AI che parla italiano.
+                  Prenota appuntamenti, verifica disponibilita, invia conferme SMS — tutto automatico.
+                  Powered by ElevenLabs.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-footnote text-apple-gray">
+                  <span className="flex items-center gap-1">
+                    <Check className="h-4 w-4 text-apple-green" strokeWidth={2.5} />
+                    100 minuti inclusi
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="h-4 w-4 text-apple-green" strokeWidth={2.5} />
+                    Voce italiana naturale
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="h-4 w-4 text-apple-green" strokeWidth={2.5} />
+                    Prenotazione automatica
+                  </span>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[36px] font-bold leading-none tracking-tight text-apple-dark dark:text-white">
+                    {'\u20AC'}49
+                  </span>
+                  <span className="text-callout text-apple-gray">/mese</span>
+                </div>
+                <p className="mt-1 text-footnote text-apple-gray">
+                  poi {'\u20AC'}0,40/min extra
+                </p>
+                <a
+                  href="#prova-gratuita"
+                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-apple-blue px-6 py-3 text-callout font-semibold text-white transition-all duration-apple ease-apple hover:bg-apple-blue-hover hover:shadow-apple min-h-[44px]"
+                >
+                  Aggiungi al piano
+                </a>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* ---- Included Perks ---- */}

@@ -47,14 +47,14 @@ function FaqItem({
   onToggle: () => void;
 }): React.ReactElement {
   return (
-    <div className="border-b border-[#e5e5e5] last:border-0 dark:border-[#444654]">
+    <div className="border-b border-[var(--border-default)] last:border-0 dark:border-[var(--border-default)]">
       <button
         type="button"
         onClick={onToggle}
-        className="flex min-h-[44px] w-full items-center justify-between py-5 text-left transition-colors hover:text-[#0d0d0d] dark:hover:text-white"
+        className="flex min-h-[44px] w-full items-center justify-between py-5 text-left transition-colors hover:text-[var(--text-primary)] dark:hover:text-white"
         aria-expanded={isOpen}
       >
-        <span className="pr-4 text-base font-medium text-[#0d0d0d] dark:text-[#ececec]">
+        <span className="pr-4 text-base font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {item.question}
         </span>
         <motion.span
@@ -62,7 +62,7 @@ function FaqItem({
           transition={{ duration: 0.25 }}
           className="shrink-0"
         >
-          <span className="h-5 w-5 text-[#8e8ea0] inline-flex items-center justify-center text-base">▾</span>
+          <span className="h-5 w-5 text-[var(--text-secondary)] inline-flex items-center justify-center text-base">▾</span>
         </motion.span>
       </button>
       <AnimatePresence initial={false}>
@@ -75,7 +75,7 @@ function FaqItem({
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-sm leading-relaxed text-[#6e6e80] dark:text-[#8e8ea0]">
+            <p className="pb-5 text-sm leading-relaxed text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
               {item.answer}
             </p>
           </motion.div>
@@ -91,7 +91,7 @@ export function Faq(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="faq" ref={ref} className="bg-[#f7f7f8] py-20 dark:bg-[#171717] lg:py-28">
+    <section id="faq" ref={ref} className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-secondary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -100,14 +100,14 @@ export function Faq(): React.ReactElement {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-4xl">
             Domande frequenti
           </h2>
         </motion.div>
 
         {/* Accordion */}
         <motion.div
-          className="mx-auto mt-12 max-w-3xl rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:bg-[#2f2f2f] sm:p-8"
+          className="mx-auto mt-12 max-w-3xl rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:bg-[var(--surface-elevated)] sm:p-8"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}

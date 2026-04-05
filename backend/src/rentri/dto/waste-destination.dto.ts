@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsEmail } from 'class-validator';
 
 export class CreateDestinationDto {
-  @ApiProperty({ description: 'Ragione sociale dell\'impianto di destinazione' })
+  @ApiProperty({ description: "Ragione sociale dell'impianto di destinazione" })
   @IsString()
   @IsNotEmpty()
   name!: string;
@@ -22,7 +22,7 @@ export class CreateDestinationDto {
   @IsString()
   operationType?: string;
 
-  @ApiProperty({ description: 'Indirizzo dell\'impianto' })
+  @ApiProperty({ description: "Indirizzo dell'impianto" })
   @IsString()
   @IsNotEmpty()
   address!: string;

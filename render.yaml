@@ -9,7 +9,7 @@ services:
     rootDir: backend
     buildCommand: npm install --legacy-peer-deps && npx prisma migrate deploy && npm run build
     startCommand: npm run start:prod
-    healthCheckPath: /liveness
+    healthCheckPath: /readiness
     envVars:
       # App config
       - key: NODE_ENV
@@ -79,9 +79,7 @@ services:
         sync: false
       - key: PORTAL_JWT_SECRET
         sync: false
-      # Database (for Prisma direct access in API routes)
-      - key: DATABASE_URL
-        sync: false
+      # DATABASE_URL removed — frontend no longer accesses the database directly
       # Stripe (configure in Render dashboard if billing enabled)
       - key: STRIPE_SECRET_KEY
         sync: false
@@ -95,6 +93,77 @@ services:
 
   - type: redis
     name: nexo-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    region: frankfurt
+    ipAllowList: []
+
+  # ========== STAGING ==========
+  - type: web
+    name: mechmind-backend-staging
+    runtime: node
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    branch: staging
+    rootDir: backend
+    buildCommand: npm install --legacy-peer-deps && npx prisma migrate deploy && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /readiness
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: https://mechmind-frontend-staging.onrender.com
+      - key: CORS_ORIGIN
+        value: https://mechmind-frontend-staging.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: nexo-redis-staging
+          type: redis
+          property: internalConnectionString
+
+  - type: web
+    name: mechmind-frontend-staging
+    runtime: node
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    branch: staging
+    rootDir: frontend
+    buildCommand: npm install --legacy-peer-deps && npm run build && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static
+    startCommand: node .next/standalone/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://mechmind-frontend-staging.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        value: https://mechmind-backend-staging.onrender.com
+      - key: NEXT_PUBLIC_BACKEND_URL
+        value: https://mechmind-backend-staging.onrender.com
+      - key: BACKEND_URL
+        value: https://mechmind-backend-staging.onrender.com/v1
+      - key: JWT_SECRET
+        sync: false
+      - key: REFRESH_SECRET
+        sync: false
+
+  - type: redis
+    name: nexo-redis-staging
     plan: free
     maxmemoryPolicy: allkeys-lru
     region: frankfurt

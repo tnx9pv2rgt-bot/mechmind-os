@@ -8,19 +8,19 @@ const steps = [
     number: '1',
     title: 'Registrati',
     description: 'Email, nome, password. 30 secondi.',
-    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[#0d0d0d] dark:text-white',
+    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white',
   },
   {
     number: '2',
     title: 'Rispondi a 4 domande',
     description: 'Tipo, team, provenienza, priorità. 60 secondi.',
-    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[#0d0d0d] dark:text-white',
+    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white',
   },
   {
     number: '3',
     title: 'Gestisci l\'officina',
     description: 'Dashboard pronta, configurata per te.',
-    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[#0d0d0d] dark:text-white',
+    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white',
   },
 ] as const;
 
@@ -43,7 +43,7 @@ export function HowItWorks(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="come-funziona" className="bg-[#f7f7f8] py-20 dark:bg-[#171717] lg:py-28">
+    <section id="come-funziona" className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-secondary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -53,7 +53,7 @@ export function HowItWorks(): React.ReactElement {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-4xl">
             Inizia in 3 passi. Sul serio.
           </h2>
         </motion.div>
@@ -80,12 +80,12 @@ export function HowItWorks(): React.ReactElement {
               </div>
 
               {/* Title */}
-              <h3 className="mt-5 text-lg font-bold text-[#0d0d0d] dark:text-[#ececec]">
+              <h3 className="mt-5 text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 {step.title}
               </h3>
 
               {/* Description */}
-              <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#6e6e80] dark:text-[#8e8ea0]">
+              <p className="mt-2 max-w-xs text-sm leading-relaxed text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                 {step.description}
               </p>
             </motion.div>
@@ -100,10 +100,10 @@ export function HowItWorks(): React.ReactElement {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <p className="text-base font-medium text-[#0d0d0d] dark:text-[#ececec]">
+          <p className="text-base font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Tempo totale: meno di 2 minuti.
           </p>
-          <p className="mt-1 text-sm text-[#8e8ea0]">
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Nessuna installazione. Nessuna carta di credito.
           </p>
         </motion.div>

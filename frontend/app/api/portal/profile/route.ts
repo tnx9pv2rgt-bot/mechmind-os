@@ -1,128 +1,106 @@
 /**
  * Portal Profile API Route
- * GET: Get customer profile
- * PUT: Update customer profile
+ * Proxies to backend for real customer profile data
  */
 
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
+import { BACKEND_BASE } from '@/lib/config';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.PORTAL_JWT_SECRET || process.env.JWT_SECRET || 'portal-secret-key-change-in-production')
-
-async function verifyAuth(request: NextRequest): Promise<string | null> {
-  try {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
-
-    const token = authHeader.substring(7)
-    const { payload } = await jwtVerify(token, JWT_SECRET)
-    return payload.customerId as string
-  } catch {
-    return null
+function getToken(request: NextRequest): string | undefined {
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
   }
+  const cookieStore = cookies();
+  return cookieStore.get('portal_token')?.value || cookieStore.get('auth_token')?.value;
 }
 
-const mockCustomers = new Map([
-  ['1', {
-    id: '1',
-    email: 'demo@mechmind.com',
-    firstName: 'Mario',
-    lastName: 'Rossi',
-    phone: '+39 333 1234567',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    emailVerified: true,
-    phoneVerified: true,
-    marketingConsent: true,
-    gdprConsent: true,
-    avatarUrl: null,
-  }],
-])
-
 // GET - Get profile
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const customerId = await verifyAuth(request)
-    
-    if (!customerId) {
+    const token = getToken(request);
+
+    if (!token) {
       return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      )
+        { error: { code: 'UNAUTHORIZED', message: 'Autenticazione richiesta' } },
+        { status: 401 },
+      );
     }
 
-    const customer = mockCustomers.get(customerId)
-    
-    if (!customer) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Customer not found' } },
-        { status: 404 }
-      )
+    const res = await fetch(`${BACKEND_BASE}/v1/portal/profile`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const data: unknown = await res.json().catch(() => ({ error: 'Errore backend' }));
+      return NextResponse.json(data, { status: res.status });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: customer,
-    })
-
+    const json = await res.json();
+    return NextResponse.json(json);
   } catch (error) {
-    console.error('Profile API error:', error)
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return NextResponse.json(
+        { error: { code: 'BACKEND_COLD_START', message: 'Server in avvio, riprova...' } },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
-      { error: { code: 'SERVER_ERROR', message: 'Failed to load profile' } },
-      { status: 500 }
-    )
+      { error: { code: 'BACKEND_UNAVAILABLE', message: 'Backend non raggiungibile' } },
+      { status: 502 },
+    );
   }
 }
 
 // PUT - Update profile
-export async function PUT(request: NextRequest) {
+export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
-    const customerId = await verifyAuth(request)
-    
-    if (!customerId) {
+    const token = getToken(request);
+
+    if (!token) {
       return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      )
+        { error: { code: 'UNAUTHORIZED', message: 'Autenticazione richiesta' } },
+        { status: 401 },
+      );
     }
 
-    const body = await request.json()
-    const { firstName, lastName, phone, avatarUrl } = body
+    const body = await request.json();
 
-    const customer = mockCustomers.get(customerId)
-    
-    if (!customer) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Customer not found' } },
-        { status: 404 }
-      )
+    const res = await fetch(`${BACKEND_BASE}/v1/portal/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const data: unknown = await res.json().catch(() => ({ error: 'Errore backend' }));
+      return NextResponse.json(data, { status: res.status });
     }
 
-    // Update fields
-    const updatedCustomer = {
-      ...customer,
-      firstName: firstName ?? customer.firstName,
-      lastName: lastName ?? customer.lastName,
-      phone: phone ?? customer.phone,
-      avatarUrl: avatarUrl ?? customer.avatarUrl,
-      updatedAt: new Date().toISOString(),
-    }
-
-    mockCustomers.set(customerId, updatedCustomer)
-
-    return NextResponse.json({
-      success: true,
-      data: updatedCustomer,
-    })
-
+    const json = await res.json();
+    return NextResponse.json(json);
   } catch (error) {
-    console.error('Update profile error:', error)
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return NextResponse.json(
+        { error: { code: 'BACKEND_COLD_START', message: 'Server in avvio, riprova...' } },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
-      { error: { code: 'SERVER_ERROR', message: 'Failed to update profile' } },
-      { status: 500 }
-    )
+      { error: { code: 'BACKEND_UNAVAILABLE', message: 'Backend non raggiungibile' } },
+      { status: 502 },
+    );
   }
 }

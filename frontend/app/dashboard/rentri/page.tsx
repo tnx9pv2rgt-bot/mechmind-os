@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -17,10 +16,11 @@ import {
   AlertCircle,
   ClipboardList,
   Truck,
-  Calendar,
   ArrowRight,
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 
 // =============================================================================
 // Types
@@ -56,84 +56,46 @@ interface RentriAlert {
 }
 
 // =============================================================================
-// Design Tokens (matching existing codebase pattern)
-// =============================================================================
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  amber: '#f59e0b',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
-// =============================================================================
 // Animation Variants
 // =============================================================================
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.05 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
-// =============================================================================
-// Skeleton Components
-// =============================================================================
-function KpiSkeleton() {
-  return (
-    <div
-      className="rounded-2xl border h-[120px] flex flex-col justify-center px-5 animate-pulse"
-      style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-    >
-      <div className="h-4 w-24 rounded mb-3" style={{ backgroundColor: colors.surfaceHover }} />
-      <div className="h-8 w-16 rounded" style={{ backgroundColor: colors.surfaceHover }} />
-    </div>
-  );
-}
-
-function RowSkeleton() {
-  return (
-    <div
-      className="flex items-center gap-4 p-5 animate-pulse"
-      style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}
-    >
-      <div className="w-10 h-10 rounded-xl" style={{ backgroundColor: colors.surfaceHover }} />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 w-48 rounded" style={{ backgroundColor: colors.surfaceHover }} />
-        <div className="h-3 w-32 rounded" style={{ backgroundColor: colors.surfaceHover }} />
-      </div>
-      <div className="h-6 w-16 rounded" style={{ backgroundColor: colors.surfaceHover }} />
-    </div>
-  );
-}
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
 
 // =============================================================================
 // Alert Severity Config
 // =============================================================================
-function getAlertConfig(severity: string): { color: string; bg: string } {
+function getAlertConfig(severity: string): { colorClass: string; bgClass: string } {
   switch (severity) {
     case 'error':
-      return { color: colors.error, bg: `${colors.error}20` };
+      return { colorClass: 'text-red-400', bgClass: 'bg-red-400/10' };
     case 'warning':
-      return { color: colors.warning, bg: `${colors.warning}20` };
+      return { colorClass: 'text-yellow-400', bgClass: 'bg-yellow-400/10' };
     default:
-      return { color: colors.info, bg: `${colors.info}20` };
+      return { colorClass: 'text-blue-400', bgClass: 'bg-blue-400/10' };
   }
 }
 
@@ -165,58 +127,68 @@ export default function RentriDashboardPage() {
   const isLoading = dashboardLoading || alertsLoading;
   const hasError = dashboardError || alertsError;
 
+  const statCards = [
+    {
+      label: 'Totale Rifiuti Stoccati',
+      value: dashboard?.totalStoredKg != null ? `${dashboard.totalStoredKg.toLocaleString('it-IT')} kg` : '...',
+      icon: Package,
+      color: 'bg-apple-blue',
+    },
+    {
+      label: 'Registrazioni Mese',
+      value: dashboard?.monthlyEntries != null ? dashboard.monthlyEntries.toString() : '...',
+      icon: ClipboardList,
+      color: 'bg-apple-green',
+    },
+    {
+      label: 'FIR Attivi',
+      value: dashboard?.activeFir != null ? dashboard.activeFir.toString() : '...',
+      icon: Truck,
+      color: 'bg-apple-orange',
+    },
+    {
+      label: 'Alert Attivi',
+      value: dashboard?.activeAlerts != null ? dashboard.activeAlerts.toString() : '...',
+      icon: AlertTriangle,
+      color: dashboard?.activeAlerts && dashboard.activeAlerts > 0 ? 'bg-apple-red' : 'bg-apple-green',
+    },
+  ];
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur-xl border-b"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5">
-          <Breadcrumb
-            items={[
-              { label: 'Dashboard', href: '/dashboard' },
-              { label: 'Rifiuti (RENTRI)' },
-            ]}
-          />
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: colors.glowStrong }}
-              >
-                <Recycle className="h-5 w-5" style={{ color: colors.success }} />
-              </div>
-              <div>
-                <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
-                  Gestione Rifiuti (RENTRI)
-                </h1>
-                <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
-                  Registro carico/scarico, FIR e dichiarazione MUD
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => router.push('/dashboard/rentri/fir')}
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-full transition-colors min-h-[44px] border hover:bg-white/5"
-                style={{ borderColor: colors.border, color: colors.textSecondary }}
-              >
-                <FileText className="h-4 w-4" />
-                Nuovo FIR
-              </button>
-              <button
-                onClick={() => router.push('/dashboard/rentri/entries/new')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-colors min-h-[44px]"
-                style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
-              >
-                <Plus className="h-4 w-4" />
-                Nuovo Carico
-              </button>
-            </div>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div>
+            <Breadcrumb
+              items={[
+                { label: 'Dashboard', href: '/dashboard' },
+                { label: 'Rifiuti (RENTRI)' },
+              ]}
+            />
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              Gestione Rifiuti (RENTRI)
+            </h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Registro carico/scarico, FIR e dichiarazione MUD
+            </p>
+          </div>
+          <div className='flex items-center gap-3'>
+            <AppleButton
+              variant="ghost"
+              onClick={() => router.push('/dashboard/rentri/fir')}
+              icon={<FileText className="h-4 w-4" />}
+              className="hidden sm:inline-flex"
+            >
+              Nuovo FIR
+            </AppleButton>
+            <AppleButton
+              variant="primary"
+              onClick={() => router.push('/dashboard/rentri/entries/new')}
+              icon={<Plus className="h-4 w-4" />}
+            >
+              Nuovo Carico
+            </AppleButton>
           </div>
         </div>
       </header>
@@ -228,298 +200,246 @@ export default function RentriDashboardPage() {
         variants={containerVariants}
       >
         {/* KPI Cards */}
-        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" variants={containerVariants}>
-          {dashboardLoading ? (
-            <>
-              <KpiSkeleton />
-              <KpiSkeleton />
-              <KpiSkeleton />
-              <KpiSkeleton />
-            </>
-          ) : (
-            [
-              {
-                label: 'Totale Rifiuti Stoccati',
-                value: dashboard ? `${dashboard.totalStoredKg.toLocaleString('it-IT')} kg` : '—',
-                icon: Package,
-                iconColor: colors.info,
-              },
-              {
-                label: 'Registrazioni Mese',
-                value: dashboard ? dashboard.monthlyEntries.toString() : '—',
-                icon: ClipboardList,
-                iconColor: colors.success,
-              },
-              {
-                label: 'FIR Attivi',
-                value: dashboard ? dashboard.activeFir.toString() : '—',
-                icon: Truck,
-                iconColor: colors.amber,
-              },
-              {
-                label: 'Alert Attivi',
-                value: dashboard ? dashboard.activeAlerts.toString() : '—',
-                icon: AlertTriangle,
-                iconColor: dashboard && dashboard.activeAlerts > 0 ? colors.warning : colors.success,
-              },
-            ].map((stat) => (
-              <motion.div
-                key={stat.label}
-                className="rounded-2xl border h-[120px] flex flex-col justify-center px-5"
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: colors.borderSubtle,
-                }}
-                variants={itemVariants}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <stat.icon className="h-4 w-4" style={{ color: stat.iconColor }} />
-                  <span className="text-[13px]" style={{ color: colors.textTertiary }}>
-                    {stat.label}
-                  </span>
-                </div>
-                <span
-                  className="text-[32px] font-light"
-                  style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {stat.value}
-                </span>
-              </motion.div>
-            ))
-          )}
+        <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-bento" variants={containerVariants}>
+          {statCards.map(stat => (
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div
+                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                    >
+                      <stat.icon className='h-5 w-5 text-white' />
+                    </div>
+                  </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {isLoading ? '...' : stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* Alerts Section */}
         {alerts.length > 0 && (
-          <motion.div variants={itemVariants}>
-            <h2 className="text-[18px] font-light mb-3" style={{ color: colors.textPrimary }}>
-              Avvisi di conformita
-            </h2>
-            <div className="space-y-3">
-              {alerts.map((alert) => {
-                const config = getAlertConfig(alert.severity);
-                return (
-                  <div
-                    key={alert.id}
-                    className="rounded-2xl border px-5 py-4 flex items-start gap-3"
-                    style={{
-                      backgroundColor: config.bg,
-                      borderColor: `${config.color}40`,
-                    }}
-                  >
-                    <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: config.color }} />
-                    <div className="flex-1">
-                      <p className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
-                        {alert.message}
-                      </p>
-                      <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
-                        {new Date(alert.createdAt).toLocaleDateString('it-IT', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  Avvisi di conformita
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <div className="space-y-3">
+                  {alerts.map((alert) => {
+                    const config = getAlertConfig(alert.severity);
+                    return (
+                      <div
+                        key={alert.id}
+                        className={`rounded-2xl border px-5 py-4 flex items-start gap-3 ${config.bgClass} border-apple-border/20 dark:border-[var(--border-default)]`}
+                      >
+                        <AlertTriangle className={`h-5 w-5 mt-0.5 flex-shrink-0 ${config.colorClass}`} />
+                        <div className="flex-1">
+                          <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                            {alert.message}
+                          </p>
+                          <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                            {new Date(alert.createdAt).toLocaleDateString('it-IT', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         )}
 
         {/* Quick Actions */}
-        <motion.div variants={itemVariants}>
-          <h2 className="text-[18px] font-light mb-3" style={{ color: colors.textPrimary }}>
-            Azioni rapide
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              {
-                label: 'Nuovo Carico',
-                description: 'Registra un nuovo carico rifiuti',
-                href: '/dashboard/rentri/entries/new',
-                icon: Plus,
-                iconColor: colors.success,
-              },
-              {
-                label: 'Nuovo FIR',
-                description: 'Crea un formulario di trasporto',
-                href: '/dashboard/rentri/fir',
-                icon: FileText,
-                iconColor: colors.info,
-              },
-              {
-                label: 'Registro Completo',
-                description: 'Visualizza tutte le registrazioni',
-                href: '/dashboard/rentri/entries',
-                icon: ClipboardList,
-                iconColor: colors.amber,
-              },
-            ].map((action) => (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="rounded-2xl border px-5 py-4 flex items-center gap-4 transition-colors group cursor-pointer"
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: colors.borderSubtle,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = colors.surface;
-                }}
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: colors.glowStrong }}
-                >
-                  <action.icon className="h-5 w-5" style={{ color: action.iconColor }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
-                    {action.label}
-                  </p>
-                  <p className="text-[12px]" style={{ color: colors.textTertiary }}>
-                    {action.description}
-                  </p>
-                </div>
-                <ArrowRight
-                  className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ color: colors.textMuted }}
-                />
-              </Link>
-            ))}
-          </div>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                Azioni rapide
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    label: 'Nuovo Carico',
+                    description: 'Registra un nuovo carico rifiuti',
+                    href: '/dashboard/rentri/entries/new',
+                    icon: Plus,
+                    color: 'bg-apple-green',
+                  },
+                  {
+                    label: 'Nuovo FIR',
+                    description: 'Crea un formulario di trasporto',
+                    href: '/dashboard/rentri/fir',
+                    icon: FileText,
+                    color: 'bg-apple-blue',
+                  },
+                  {
+                    label: 'Registro Completo',
+                    description: 'Visualizza tutte le registrazioni',
+                    href: '/dashboard/rentri/entries',
+                    icon: ClipboardList,
+                    color: 'bg-apple-orange',
+                  },
+                ].map((action) => (
+                  <Link
+                    key={action.label}
+                    href={action.href}
+                    className="rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple px-5 py-4 flex items-center gap-4 transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center flex-shrink-0`}>
+                      <action.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                        {action.label}
+                      </p>
+                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                        {action.description}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-apple-gray dark:text-[var(--text-secondary)]" />
+                  </Link>
+                ))}
+              </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Recent Entries Table */}
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[18px] font-light" style={{ color: colors.textPrimary }}>
-              Ultime registrazioni
-            </h2>
-            <Link
-              href="/dashboard/rentri/entries"
-              className="text-[13px] flex items-center gap-1 transition-colors hover:opacity-80"
-              style={{ color: colors.textTertiary }}
-            >
-              Vedi tutto
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          {hasError ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-[15px] mb-4" style={{ color: colors.textTertiary }}>
-                Impossibile caricare i dati
-              </p>
-            </div>
-          ) : isLoading ? (
-            <div
-              className="rounded-2xl border overflow-hidden"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              {[1, 2, 3, 4, 5].map((i) => (
-                <RowSkeleton key={i} />
-              ))}
-            </div>
-          ) : recentEntries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Recycle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-[15px] mb-1" style={{ color: colors.textPrimary }}>
-                Nessuna registrazione trovata
-              </p>
-              <p className="text-[13px]" style={{ color: colors.textTertiary }}>
-                Inizia registrando il primo carico rifiuti
-              </p>
-            </div>
-          ) : (
-            <div
-              className="rounded-2xl border overflow-hidden"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              {/* Table Header */}
-              <div
-                className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 text-[12px] uppercase font-semibold tracking-wider"
-                style={{ color: colors.textMuted, borderBottom: `1px solid ${colors.borderSubtle}` }}
-              >
-                <div className="col-span-1">N.</div>
-                <div className="col-span-2">Data</div>
-                <div className="col-span-1">Tipo</div>
-                <div className="col-span-2">CER</div>
-                <div className="col-span-3">Descrizione</div>
-                <div className="col-span-2">Quantita</div>
-                <div className="col-span-1" />
-              </div>
-
-              {recentEntries.map((entry, idx) => (
-                <div
-                  key={entry.id}
-                  className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-4 cursor-pointer transition-colors items-center"
-                  style={{
-                    borderBottom: idx < recentEntries.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                  }}
-                  onClick={() => router.push(`/dashboard/rentri/entries/${entry.id}`)}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') router.push(`/dashboard/rentri/entries/${entry.id}`);
-                  }}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <div className="flex items-center justify-between">
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  Ultime registrazioni
+                </h2>
+                <Link
+                  href="/dashboard/rentri/entries"
+                  className="text-footnote flex items-center gap-1 transition-colors hover:opacity-80 text-apple-gray dark:text-[var(--text-secondary)]"
                 >
-                  <div className="sm:col-span-1 text-[13px] font-mono" style={{ color: colors.textTertiary }}>
-                    {entry.entryNumber}
+                  Vedi tutto
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {hasError ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    Impossibile caricare i dati
+                  </p>
+                  <AppleButton variant="ghost" className="mt-4" onClick={() => window.location.reload()}>
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                </div>
+              ) : recentEntries.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Recycle className="h-12 w-12 text-apple-gray/40 mb-4" />
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    Nessuna registrazione trovata
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => router.push('/dashboard/rentri/entries/new')}
+                  >
+                    Registra il primo carico
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className="space-y-3"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {/* Table Header */}
+                  <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                    <div className="col-span-1">N.</div>
+                    <div className="col-span-2">Data</div>
+                    <div className="col-span-1">Tipo</div>
+                    <div className="col-span-2">CER</div>
+                    <div className="col-span-3">Descrizione</div>
+                    <div className="col-span-2">Quantita</div>
+                    <div className="col-span-1" />
                   </div>
-                  <div className="sm:col-span-2 text-[13px]" style={{ color: colors.textSecondary }}>
-                    {new Date(entry.date).toLocaleDateString('it-IT')}
-                  </div>
-                  <div className="sm:col-span-1">
-                    <span
-                      className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-                      style={{
-                        backgroundColor: entry.type === 'CARICO' ? `${colors.success}20` : `${colors.error}20`,
-                        color: entry.type === 'CARICO' ? colors.success : colors.error,
+
+                  {recentEntries.map((entry, index) => (
+                    <motion.div
+                      key={entry.id}
+                      className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer"
+                      variants={listItemVariants}
+                      custom={index}
+                      whileHover={{ scale: 1.005, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                      onClick={() => router.push(`/dashboard/rentri/entries/${entry.id}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') router.push(`/dashboard/rentri/entries/${entry.id}`);
                       }}
                     >
-                      {entry.type}
-                    </span>
-                  </div>
-                  <div className="sm:col-span-2 flex items-center gap-1">
-                    <span className="text-[13px] font-mono" style={{ color: colors.textPrimary }}>
-                      {entry.cerCode}
-                    </span>
-                    {entry.hazardous && (
-                      <AlertTriangle className="h-3.5 w-3.5" style={{ color: colors.warning }} />
-                    )}
-                  </div>
-                  <div
-                    className="sm:col-span-3 text-[13px] truncate"
-                    style={{ color: colors.textSecondary }}
-                    title={entry.cerDescription}
-                  >
-                    {entry.cerDescription}
-                  </div>
-                  <div
-                    className="sm:col-span-2 text-[13px] font-medium"
-                    style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-                  >
-                    {entry.quantity.toLocaleString('it-IT')} {entry.unit || 'kg'}
-                  </div>
-                  <div className="sm:col-span-1 flex justify-end">
-                    <ChevronRight className="h-4 w-4" style={{ color: colors.textMuted }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl ${entry.type === 'CARICO' ? 'bg-apple-green/10' : 'bg-apple-red/10'} flex items-center justify-center`}>
+                          <Recycle className={`h-6 w-6 ${entry.type === 'CARICO' ? 'text-apple-green' : 'text-apple-red'}`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                              {entry.cerCode}
+                            </p>
+                            <span
+                              className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
+                                entry.type === 'CARICO'
+                                  ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                                  : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+                              }`}
+                            >
+                              {entry.type}
+                            </span>
+                            {entry.hazardous && (
+                              <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
+                            )}
+                          </div>
+                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                            {entry.cerDescription}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[80px] text-right tabular-nums">
+                          {entry.quantity.toLocaleString('it-IT')} {entry.unit || 'kg'}
+                        </p>
+                        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right">
+                          {new Date(entry.date).toLocaleDateString('it-IT')}
+                        </p>
+                        <ChevronRight className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
       </motion.div>
     </div>

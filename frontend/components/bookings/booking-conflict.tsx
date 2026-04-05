@@ -34,10 +34,10 @@ export function BookingConflict({
           <AlertTriangle className='h-5 w-5 text-amber-600 dark:text-amber-400' />
         </div>
         <div>
-          <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+          <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
             Slot già prenotato
           </h3>
-          <p className='text-sm text-apple-gray dark:text-[#636366] mt-1'>
+          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             {conflicts.length === 1
               ? 'Esiste già una prenotazione in questo orario.'
               : `Esistono ${conflicts.length} prenotazioni in questo orario.`}
@@ -51,11 +51,11 @@ export function BookingConflict({
           <AppleCard key={conflict.id} hover={false}>
             <AppleCardContent className='!p-3'>
               <div className='flex items-center gap-3 flex-wrap'>
-                <div className='flex items-center gap-2 text-sm text-apple-dark dark:text-[#ececec]'>
-                  <User className='h-4 w-4 text-apple-gray dark:text-[#636366]' />
+                <div className='flex items-center gap-2 text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                  <User className='h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]' />
                   <span className='font-medium'>{conflict.customerName}</span>
                 </div>
-                <div className='flex items-center gap-2 text-sm text-apple-gray dark:text-[#636366]'>
+                <div className='flex items-center gap-2 text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                   <Calendar className='h-3.5 w-3.5' />
                   <span>
                     {new Date(conflict.scheduledAt).toLocaleDateString('it-IT', {
@@ -64,7 +64,7 @@ export function BookingConflict({
                     })}
                   </span>
                 </div>
-                <div className='flex items-center gap-2 text-sm text-apple-gray dark:text-[#636366]'>
+                <div className='flex items-center gap-2 text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                   <Clock className='h-3.5 w-3.5' />
                   <span>
                     {new Date(conflict.scheduledAt).toLocaleTimeString('it-IT', {
@@ -74,12 +74,12 @@ export function BookingConflict({
                   </span>
                 </div>
                 {conflict.serviceName && (
-                  <span className='text-xs bg-gray-100 dark:bg-[#424242] text-apple-gray dark:text-[#ececec] px-2 py-0.5 rounded-full'>
+                  <span className='text-xs bg-gray-100 dark:bg-[var(--surface-active)] text-apple-gray dark:text-[var(--text-primary)] px-2 py-0.5 rounded-full'>
                     {conflict.serviceName}
                   </span>
                 )}
                 {conflict.vehiclePlate && (
-                  <span className='text-xs font-mono text-apple-gray dark:text-[#636366]'>
+                  <span className='text-xs font-mono text-apple-gray dark:text-[var(--text-secondary)]'>
                     {conflict.vehiclePlate}
                   </span>
                 )}

@@ -226,6 +226,125 @@ describe('MlIntegrationService', () => {
     });
   });
 
+  describe('estimateLabor without year parameter', () => {
+    it('should call ML API without year in payload', async () => {
+      const mockResponse = {
+        estimated_minutes: 90,
+        confidence: 0.85,
+        based_on: 'HISTORICAL',
+      };
+
+      jest.spyOn(service as never, 'callMlApi').mockResolvedValue(mockResponse as never);
+
+      const result = await service.estimateLabor('t1', 'OIL_CHANGE', 'Fiat', 'Punto');
+
+      expect(result.operationCode).toBe('OIL_CHANGE');
+      expect(result.make).toBe('Fiat');
+      expect(result.model).toBe('Punto');
+      expect(result.estimatedMinutes).toBe(90);
+    });
+  });
+
+  describe('circuit breaker behavior', () => {
+    it('should throw ServiceUnavailableException when circuit is open', async () => {
+      // Directly set internal state to simulate open circuit
+      (service as unknown as Record<string, unknown>)['consecutiveFailures'] = 5;
+      (service as unknown as Record<string, unknown>)['circuitOpenedAt'] = Date.now();
+
+      await expect(service.estimateLabor('t1', 'OIL', 'Fiat', 'Punto')).rejects.toThrow(
+        'Circuit breaker is open',
+      );
+    });
+
+    it('should allow request in half-open state (reset timeout elapsed)', async () => {
+      // Set circuit as open but with old openedAt
+      (service as unknown as Record<string, unknown>)['consecutiveFailures'] = 5;
+      (service as unknown as Record<string, unknown>)['circuitOpenedAt'] = Date.now() - 120_000;
+
+      const mockResponse = {
+        estimated_minutes: 60,
+        confidence: 0.8,
+        based_on: 'MODEL',
+      };
+      jest.spyOn(service as never, 'callMlApiOnce').mockResolvedValue(mockResponse as never);
+
+      const result = await service.estimateLabor('t1', 'OIL', 'Fiat', 'Punto');
+
+      expect(result.estimatedMinutes).toBe(60);
+      // consecutiveFailures should be reset to 0
+      expect((service as unknown as Record<string, number>)['consecutiveFailures']).toBe(0);
+    });
+
+    it('should increment failure count and open circuit at threshold', () => {
+      // Access private recordFailure
+      const recordFailure = (service as unknown as Record<string, () => void>)[
+        'recordFailure'
+      ].bind(service);
+
+      for (let i = 0; i < 4; i++) {
+        recordFailure();
+      }
+      expect((service as unknown as Record<string, unknown>)['circuitOpenedAt']).toBeNull();
+
+      // 5th failure should open circuit
+      recordFailure();
+      expect((service as unknown as Record<string, unknown>)['circuitOpenedAt']).not.toBeNull();
+    });
+
+    it('should reset failures and openedAt on success', () => {
+      (service as unknown as Record<string, unknown>)['consecutiveFailures'] = 3;
+      (service as unknown as Record<string, unknown>)['circuitOpenedAt'] = Date.now();
+
+      const recordSuccess = (service as unknown as Record<string, () => void>)[
+        'recordSuccess'
+      ].bind(service);
+      recordSuccess();
+
+      expect((service as unknown as Record<string, number>)['consecutiveFailures']).toBe(0);
+      expect((service as unknown as Record<string, unknown>)['circuitOpenedAt']).toBeNull();
+    });
+  });
+
+  describe('retry with exponential backoff', () => {
+    let fetchSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      fetchSpy = jest.spyOn(global, 'fetch');
+      jest.useFakeTimers({ advanceTimers: true });
+    });
+
+    afterEach(() => {
+      fetchSpy.mockRestore();
+      jest.useRealTimers();
+    });
+
+    it('should succeed on third attempt after two failures', async () => {
+      fetchSpy
+        .mockRejectedValueOnce(new Error('timeout'))
+        .mockRejectedValueOnce(new Error('timeout'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: jest.fn().mockResolvedValue({
+            estimated_minutes: 45,
+            confidence: 0.7,
+            based_on: 'GUIDE',
+          }),
+          text: jest.fn(),
+        } as unknown as Response);
+
+      const resultPromise = service.estimateLabor('t1', 'OIL', 'Fiat', 'Punto');
+
+      // Advance timers for retry delays
+      await jest.advanceTimersByTimeAsync(1000); // 1st retry delay
+      await jest.advanceTimersByTimeAsync(2000); // 2nd retry delay
+
+      const result = await resultPromise;
+
+      expect(result.estimatedMinutes).toBe(45);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+    });
+  });
+
   describe('callMlApi with API key configured', () => {
     let serviceWithKey: MlIntegrationService;
     let fetchSpy: jest.SpyInstance;

@@ -128,14 +128,14 @@ export default function PortalInvitePage(): React.ReactElement {
   // Loading state
   if (loading) {
     return (
-      <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+      <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className='text-center'
         >
           <Loader2 className='h-10 w-10 text-apple-blue animate-spin mx-auto mb-4' />
-          <p className='text-apple-gray dark:text-[#636366]'>Caricamento invito...</p>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Caricamento invito...</p>
         </motion.div>
       </div>
     );
@@ -144,7 +144,7 @@ export default function PortalInvitePage(): React.ReactElement {
   // Error state (invalid/expired token)
   if (!invitation && error) {
     return (
-      <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+      <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
         <div className='w-full max-w-md'>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -154,10 +154,10 @@ export default function PortalInvitePage(): React.ReactElement {
             <div className='w-20 h-20 rounded-3xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4'>
               <AlertCircle className='h-10 w-10 text-apple-red' />
             </div>
-            <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+            <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
               Invito non valido
             </h1>
-            <p className='text-apple-gray dark:text-[#636366] mt-2'>{error}</p>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-2'>{error}</p>
           </motion.div>
           <div className='text-center'>
             <AppleButton variant='secondary' onClick={() => router.push('/portal/login')}>
@@ -172,24 +172,24 @@ export default function PortalInvitePage(): React.ReactElement {
   // Success state
   if (success) {
     return (
-      <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+      <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className='text-center'
         >
           <CheckCircle className='h-16 w-16 text-green-500 mx-auto mb-4' />
-          <h2 className='text-xl font-bold text-apple-dark dark:text-[#ececec] mb-2'>
+          <h2 className='text-xl font-bold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
             Benvenuto nel team!
           </h2>
-          <p className='text-apple-gray dark:text-[#636366]'>Reindirizzamento in corso...</p>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Reindirizzamento in corso...</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
       <div className='w-full max-w-md'>
         {/* Logo */}
         <motion.div
@@ -200,16 +200,16 @@ export default function PortalInvitePage(): React.ReactElement {
           <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
             <UserPlus className='h-10 w-10 text-white' />
           </div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             Sei stato invitato!
           </h1>
           {invitation && (
-            <p className='text-apple-gray dark:text-[#636366] mt-2'>
-              <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-2'>
+              <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                 {invitation.inviterName}
               </span>{' '}
               ti ha invitato a unirti a{' '}
-              <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+              <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                 {invitation.shopName}
               </span>
             </p>
@@ -228,7 +228,7 @@ export default function PortalInvitePage(): React.ReactElement {
               <div className='px-3 py-1.5 rounded-full bg-apple-blue/10 text-apple-blue font-medium'>
                 {invitation.role}
               </div>
-              <span className='text-apple-gray dark:text-[#636366]'>{invitation.email}</span>
+              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>{invitation.email}</span>
             </div>
           </motion.div>
         )}
@@ -241,10 +241,10 @@ export default function PortalInvitePage(): React.ReactElement {
         >
           <AppleCard>
             <AppleCardContent className='p-6 sm:p-8'>
-              <h2 className='text-base font-semibold text-apple-dark dark:text-[#ececec] mb-1'>
+              <h2 className='text-base font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-1'>
                 Imposta la tua password
               </h2>
-              <p className='text-sm text-apple-gray dark:text-[#636366] mb-5'>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mb-5'>
                 Scegli una password sicura per il tuo account
               </p>
 
@@ -262,7 +262,7 @@ export default function PortalInvitePage(): React.ReactElement {
               <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
                 {/* Password */}
                 <div className='space-y-2'>
-                  <Label htmlFor='password' className='text-apple-dark dark:text-[#ececec]'>
+                  <Label htmlFor='password' className='text-apple-dark dark:text-[var(--text-primary)]'>
                     Password
                   </Label>
                   <div className='relative'>
@@ -272,7 +272,7 @@ export default function PortalInvitePage(): React.ReactElement {
                       type={showPassword ? 'text' : 'password'}
                       placeholder='Minimo 8 caratteri'
                       autoComplete='new-password'
-                      className='pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                      className='pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                       {...register('password')}
                     />
                     <button
@@ -291,7 +291,7 @@ export default function PortalInvitePage(): React.ReactElement {
 
                 {/* Confirm Password */}
                 <div className='space-y-2'>
-                  <Label htmlFor='confirmPassword' className='text-apple-dark dark:text-[#ececec]'>
+                  <Label htmlFor='confirmPassword' className='text-apple-dark dark:text-[var(--text-primary)]'>
                     Conferma Password
                   </Label>
                   <div className='relative'>
@@ -301,7 +301,7 @@ export default function PortalInvitePage(): React.ReactElement {
                       type={showPassword ? 'text' : 'password'}
                       placeholder='Ripeti la password'
                       autoComplete='new-password'
-                      className='pl-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                      className='pl-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                       {...register('confirmPassword')}
                     />
                   </div>

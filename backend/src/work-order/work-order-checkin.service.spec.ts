@@ -217,13 +217,14 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
         { durationMinutes: 30 },
         { durationMinutes: 60 },
       ]);
-      prisma.workOrder.update.mockResolvedValue({});
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.stopTimer(TENANT_ID, WO_ID, TECH_ID);
 
       expect(result).toEqual(expect.objectContaining({ durationMinutes: 30 }));
-      expect(prisma.workOrder.update).toHaveBeenCalledWith(
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: { id: WO_ID, tenantId: TENANT_ID },
           data: { laborHours: 1.5 },
         }),
       );

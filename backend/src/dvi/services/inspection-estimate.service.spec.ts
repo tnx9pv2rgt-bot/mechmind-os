@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InspectionService } from './inspection.service';
 import { PrismaService } from '../../common/services/prisma.service';
 import { S3Service } from '../../common/services/s3.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
 
 describe('InspectionService — createEstimateFromFindings', () => {
   let service: InspectionService;
@@ -45,6 +47,16 @@ describe('InspectionService — createEstimateFromFindings', () => {
           provide: NotificationsService,
           useValue: { sendNotification: jest.fn() },
         },
+        {
+          provide: PublicTokenService,
+          useValue: {
+            generateToken: jest.fn().mockResolvedValue({ token: 'test-token' }),
+            validateToken: jest.fn(),
+            consumeToken: jest.fn(),
+            revokeTokensForEntity: jest.fn(),
+          },
+        },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

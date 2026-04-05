@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Store,
@@ -23,6 +25,7 @@ import {
   AlertTriangle,
   Trash2,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,25 +38,6 @@ import {
   useChangePassword,
 } from '@/hooks/useApi';
 
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
 
 const settingsSchema = z.object({
   name: z
@@ -76,32 +60,29 @@ type SettingsErrors = Partial<Record<keyof z.infer<typeof settingsSchema>, strin
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
-};
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: colors.glowStrong,
-  borderColor: colors.borderSubtle,
-  color: colors.textPrimary,
-};
-
-const labelStyle: React.CSSProperties = {
-  color: colors.textTertiary,
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function SettingsPage() {
@@ -171,38 +152,33 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className='sticky top-0 z-30 backdrop-blur-xl border-b'
-        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-6 lg:px-8 py-5 flex items-center gap-4'>
-          <Link
-            href='/dashboard'
-            className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors'
-            style={{ color: colors.textSecondary }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-          >
-            <ArrowLeft className='h-5 w-5' />
-          </Link>
-          <div>
-            <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
-              Impostazioni
-            </h1>
-            <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
-              Gestisci le preferenze della tua officina
-            </p>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div className='flex items-center gap-4'>
+            <Link
+              href='/dashboard'
+              className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5'
+            >
+              <ArrowLeft className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
+            </Link>
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                Impostazioni
+              </h1>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+                Gestisci le preferenze della tua officina
+              </p>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className='p-6 lg:p-8 max-w-4xl'>
+      <motion.div className='p-6 lg:p-8 max-w-4xl space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
         <Tabs defaultValue='general' className='w-full'>
           <TabsList
-            className='grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-8 p-1 rounded-2xl border'
-            style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
+            className='grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-8 p-1 rounded-2xl border bg-[var(--surface-elevated)] border-[var(--border-default)]'
           >
             {[
               { value: 'general', label: 'Generali' },
@@ -214,8 +190,7 @@ export default function SettingsPage() {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className='rounded-xl text-sm data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-sm'
-                style={{ color: colors.textSecondary }}
+                className='rounded-xl text-sm text-[var(--text-secondary)] data-[state=active]:bg-white data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm'
               >
                 {tab.label}
               </TabsTrigger>
@@ -224,228 +199,197 @@ export default function SettingsPage() {
 
           {/* General */}
           <TabsContent value='general' className='mt-0'>
-            <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-                  <Store className='h-5 w-5' style={{ color: colors.info }} />
-                  <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-                    Informazioni Officina
-                  </h2>
-                </div>
-                <div className='p-6 space-y-4'>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    <div className='space-y-2'>
-                      <label htmlFor='settingsName' className='text-[12px] font-medium uppercase tracking-wider' style={labelStyle}>
-                        Nome Officina
-                      </label>
-                      <Input
-                        id='settingsName'
-                        value={formData.name ?? settings?.name ?? ''}
-                        onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                        placeholder={settingsLoading ? 'Caricamento...' : 'Nome officina'}
-                        className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-                        style={inputStyle}
-                      />
-                      {settingsErrors.name && (
-                        <p className='text-xs' style={{ color: colors.error }}>{settingsErrors.name}</p>
-                      )}
-                    </div>
-                    <div className='space-y-2'>
-                      <label htmlFor='settingsEmail' className='text-[12px] font-medium uppercase tracking-wider' style={labelStyle}>
-                        Email
-                      </label>
-                      <Input
-                        id='settingsEmail'
-                        value={formData.email ?? settings?.email ?? ''}
-                        onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                        type='email'
-                        className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-                        style={inputStyle}
-                      />
-                      {settingsErrors.email && (
-                        <p className='text-xs' style={{ color: colors.error }}>{settingsErrors.email}</p>
-                      )}
-                    </div>
-                    <div className='space-y-2'>
-                      <label htmlFor='settingsPhone' className='text-[12px] font-medium uppercase tracking-wider' style={labelStyle}>
-                        Telefono
-                      </label>
-                      <Input
-                        id='settingsPhone'
-                        value={formData.phone ?? settings?.phone ?? ''}
-                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
-                        className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-                        style={inputStyle}
-                      />
-                      {settingsErrors.phone && (
-                        <p className='text-xs' style={{ color: colors.error }}>{settingsErrors.phone}</p>
-                      )}
-                    </div>
-                    <div className='space-y-2'>
-                      <label htmlFor='settingsVatNumber' className='text-[12px] font-medium uppercase tracking-wider' style={labelStyle}>
-                        Partita IVA
-                      </label>
-                      <Input
-                        id='settingsVatNumber'
-                        value={formData.vatNumber ?? settings?.vatNumber ?? ''}
-                        onChange={e => setFormData(p => ({ ...p, vatNumber: e.target.value }))}
-                        className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-                        style={inputStyle}
-                      />
-                    </div>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <div className='flex items-center gap-3'>
+                    <Store className='h-5 w-5 text-apple-blue' />
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      Informazioni Officina
+                    </h2>
                   </div>
-                  <div className='space-y-2'>
-                    <label htmlFor='settingsAddress' className='text-[12px] font-medium uppercase tracking-wider' style={labelStyle}>
-                      Indirizzo
-                    </label>
-                    <Input
-                      id='settingsAddress'
-                      value={formData.address ?? settings?.address ?? ''}
-                      onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
-                      className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-                      style={inputStyle}
-                    />
+                </AppleCardHeader>
+                <AppleCardContent>
+                  <div className='space-y-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <label htmlFor='settingsName' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                          Nome Officina
+                        </label>
+                        <Input
+                          id='settingsName'
+                          value={formData.name ?? settings?.name ?? ''}
+                          onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                          placeholder={settingsLoading ? 'Caricamento...' : 'Nome officina'}
+                          className='h-12 rounded-xl'
+                        />
+                        {settingsErrors.name && (
+                          <p className='text-footnote text-apple-red'>{settingsErrors.name}</p>
+                        )}
+                      </div>
+                      <div className='space-y-2'>
+                        <label htmlFor='settingsEmail' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                          Email
+                        </label>
+                        <Input
+                          id='settingsEmail'
+                          value={formData.email ?? settings?.email ?? ''}
+                          onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                          type='email'
+                          className='h-12 rounded-xl'
+                        />
+                        {settingsErrors.email && (
+                          <p className='text-footnote text-apple-red'>{settingsErrors.email}</p>
+                        )}
+                      </div>
+                      <div className='space-y-2'>
+                        <label htmlFor='settingsPhone' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                          Telefono
+                        </label>
+                        <Input
+                          id='settingsPhone'
+                          value={formData.phone ?? settings?.phone ?? ''}
+                          onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                          className='h-12 rounded-xl'
+                        />
+                        {settingsErrors.phone && (
+                          <p className='text-footnote text-apple-red'>{settingsErrors.phone}</p>
+                        )}
+                      </div>
+                      <div className='space-y-2'>
+                        <label htmlFor='settingsVatNumber' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                          Partita IVA
+                        </label>
+                        <Input
+                          id='settingsVatNumber'
+                          value={formData.vatNumber ?? settings?.vatNumber ?? ''}
+                          onChange={e => setFormData(p => ({ ...p, vatNumber: e.target.value }))}
+                          className='h-12 rounded-xl'
+                        />
+                      </div>
+                    </div>
+                    <div className='space-y-2'>
+                      <label htmlFor='settingsAddress' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                        Indirizzo
+                      </label>
+                      <Input
+                        id='settingsAddress'
+                        value={formData.address ?? settings?.address ?? ''}
+                        onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
+                        className='h-12 rounded-xl'
+                      />
+                    </div>
+                    <AppleButton
+                      onClick={handleSave}
+                      loading={saveSettings.isPending}
+                      icon={saved ? <CheckCircle className='h-4 w-4' /> : <Save className='h-4 w-4' />}
+                    >
+                      {saved
+                        ? 'Salvato!'
+                        : saveSettings.isPending
+                          ? 'Salvataggio...'
+                          : 'Salva Modifiche'}
+                    </AppleButton>
                   </div>
-                  <button
-                    onClick={handleSave}
-                    disabled={saveSettings.isPending}
-                    className='mt-4 inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50'
-                    style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
-                  >
-                    {saved ? (
-                      <CheckCircle className='h-4 w-4 mr-2' />
-                    ) : saveSettings.isPending ? (
-                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                    ) : (
-                      <Save className='h-4 w-4 mr-2' />
-                    )}
-                    {saved
-                      ? 'Salvato!'
-                      : saveSettings.isPending
-                        ? 'Salvataggio...'
-                        : 'Salva Modifiche'}
-                  </button>
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           </TabsContent>
 
           {/* Team */}
           <TabsContent value='team' className='mt-0'>
-            <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-                  <Users className='h-5 w-5' style={{ color: colors.info }} />
-                  <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-                    Membri Team
-                  </h2>
-                </div>
-                <div className='p-6'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <div className='flex items-center gap-3'>
+                    <Users className='h-5 w-5 text-apple-blue' />
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      Membri Team
+                    </h2>
+                  </div>
+                </AppleCardHeader>
+                <AppleCardContent>
                   {settingsLoading ? (
-                    <div className='space-y-3'>
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className='flex items-center gap-4 p-4 rounded-2xl animate-pulse'
-                          style={{ backgroundColor: colors.glowStrong }}
-                        >
-                          <div className='w-10 h-10 rounded-full' style={{ backgroundColor: colors.borderSubtle }} />
-                          <div className='flex-1'>
-                            <div className='w-32 h-4 rounded mb-2' style={{ backgroundColor: colors.borderSubtle }} />
-                            <div className='w-40 h-3 rounded' style={{ backgroundColor: colors.borderSubtle }} />
-                          </div>
-                        </div>
-                      ))}
+                    <div className='flex items-center justify-center py-12'>
+                      <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
                     </div>
                   ) : (
                     <motion.div
                       className='space-y-3'
-                      variants={staggerContainer}
+                      variants={containerVariants}
                       initial='hidden'
                       animate='visible'
                     >
-                      {(settings?.team || []).map(member => (
+                      {(settings?.team || []).map((member, index) => (
                         <motion.div
                           key={member.id}
-                          className='flex items-center justify-between p-4 rounded-2xl transition-colors'
-                          style={{ backgroundColor: colors.glowStrong }}
-                          variants={staggerItem}
-                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.surfaceHover)}
-                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = colors.glowStrong)}
+                          className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                          variants={listItemVariants}
+                          custom={index}
+                          whileHover={{ scale: 1.005, x: 4 }}
+                          transition={{ duration: 0.2 }}
                         >
                           <div className='flex items-center gap-4'>
-                            <div
-                              className='w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium'
-                              style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
-                            >
+                            <div className='w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-apple-blue text-white'>
                               {member.name
                                 .split(' ')
                                 .map(n => n[0])
                                 .join('')}
                             </div>
                             <div>
-                              <p className='text-[14px] font-semibold' style={{ color: colors.textPrimary }}>
+                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                                 {member.name}
                               </p>
-                              <p className='text-[13px]' style={{ color: colors.textTertiary }}>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                                 {member.email}
                               </p>
                             </div>
                           </div>
-                          <span
-                            className='text-xs font-bold uppercase px-3 py-1 rounded-full border'
-                            style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
-                          >
+                          <span className='text-footnote font-medium px-2.5 py-1 rounded-full bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'>
                             {member.role}
                           </span>
                         </motion.div>
                       ))}
                       {(!settings?.team || settings.team.length === 0) && (
-                        <p className='text-center py-8 text-[13px]' style={{ color: colors.textTertiary }}>
-                          Nessun membro del team configurato
-                        </p>
+                        <div className='flex flex-col items-center justify-center py-12 text-center'>
+                          <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
+                          <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                            Nessun membro del team configurato
+                          </p>
+                        </div>
                       )}
                     </motion.div>
                   )}
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           </TabsContent>
 
           {/* Notifications */}
           <TabsContent value='notifications' className='mt-0'>
-            <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-                  <Bell className='h-5 w-5' style={{ color: colors.info }} />
-                  <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-                    Notifiche
-                  </h2>
-                </div>
-                <div className='p-6'>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <div className='flex items-center gap-3'>
+                    <Bell className='h-5 w-5 text-apple-blue' />
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      Notifiche
+                    </h2>
+                  </div>
+                </AppleCardHeader>
+                <AppleCardContent>
                   <motion.div
                     className='space-y-3'
-                    variants={staggerContainer}
+                    variants={containerVariants}
                     initial='hidden'
                     animate='visible'
                   >
-                    {notifItems.map(item => (
+                    {notifItems.map((item, index) => (
                       <motion.label
                         key={item.key}
-                        className='flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors'
-                        style={{ backgroundColor: colors.glowStrong }}
-                        variants={staggerItem}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.surfaceHover)}
-                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = colors.glowStrong)}
+                        className='flex items-center gap-4 p-4 rounded-2xl cursor-pointer bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        variants={listItemVariants}
+                        custom={index}
                       >
                         <input
                           type='checkbox'
@@ -453,31 +397,25 @@ export default function SettingsPage() {
                           onChange={e =>
                             setNotifPrefs(prev => ({ ...prev, [item.key]: e.target.checked }))
                           }
-                          className='w-5 h-5 rounded-lg accent-white'
+                          className='w-5 h-5 rounded-lg accent-blue-500'
                         />
-                        <span className='text-[14px]' style={{ color: colors.textPrimary }}>
+                        <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
                           {item.label}
                         </span>
                       </motion.label>
                     ))}
                   </motion.div>
                   <div className='mt-6'>
-                    <button
+                    <AppleButton
                       onClick={handleSaveNotifications}
-                      disabled={isSavingNotifs}
-                      className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50'
-                      style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+                      loading={isSavingNotifs}
+                      icon={<Save className='h-4 w-4' />}
                     >
-                      {isSavingNotifs ? (
-                        <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                      ) : (
-                        <Save className='h-4 w-4 mr-2' />
-                      )}
                       {isSavingNotifs ? 'Salvataggio...' : 'Salva Preferenze Notifiche'}
-                    </button>
+                    </AppleButton>
                   </div>
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           </TabsContent>
 
@@ -493,39 +431,37 @@ export default function SettingsPage() {
             <PasskeySection />
 
             {/* Link to advanced security settings */}
-            <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-              <div
-                className='rounded-2xl border overflow-hidden'
-                style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              >
-                <div className='flex items-center justify-between p-6'>
-                  <div className='flex items-center gap-3'>
-                    <Shield className='h-5 w-5' style={{ color: colors.info }} />
-                    <div>
-                      <p className='text-[14px] font-semibold' style={{ color: colors.textPrimary }}>
-                        Sicurezza avanzata
-                      </p>
-                      <p className='text-[13px]' style={{ color: colors.textTertiary }}>
-                        Dispositivi fidati, telefono di recupero, verifica SMS e log attivita
-                      </p>
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <div className='w-10 h-10 rounded-xl bg-apple-blue flex items-center justify-center'>
+                        <Shield className='h-5 w-5 text-white' />
+                      </div>
+                      <div>
+                        <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                          Sicurezza avanzata
+                        </p>
+                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          Dispositivi fidati, telefono di recupero, verifica SMS e log attivita
+                        </p>
+                      </div>
                     </div>
+                    <Link href='/dashboard/settings/security'>
+                      <AppleButton icon={<ArrowRight className='h-4 w-4' />}>
+                        Gestisci
+                      </AppleButton>
+                    </Link>
                   </div>
-                  <a
-                    href='/dashboard/settings/security'
-                    className='inline-flex min-h-[44px] items-center gap-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors'
-                    style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
-                  >
-                    Gestisci
-                    <ArrowRight className='h-4 w-4' />
-                  </a>
-                </div>
-              </div>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
 
             <DangerZone />
           </TabsContent>
         </Tabs>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -564,80 +500,74 @@ function PasswordSection() {
   };
 
   return (
-    <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-      <div
-        className='rounded-2xl border overflow-hidden'
-        style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-          <Shield className='h-5 w-5' style={{ color: colors.info }} />
-          <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-            Cambia Password
-          </h2>
-        </div>
-        <div className='p-6 space-y-4'>
-          <div className='space-y-2'>
-            <label className='text-[12px] font-medium uppercase tracking-wider' style={{ color: colors.textTertiary }}>
-              Password attuale
-            </label>
-            <Input
-              type='password'
-              value={currentPassword}
-              onChange={e => setCurrentPassword(e.target.value)}
-              placeholder='--------'
-              className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-              style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary }}
-            />
+    <motion.div variants={listItemVariants}>
+      <AppleCard hover={false}>
+        <AppleCardHeader>
+          <div className='flex items-center gap-3'>
+            <Shield className='h-5 w-5 text-apple-blue' />
+            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              Cambia Password
+            </h2>
           </div>
-          <div className='space-y-2'>
-            <label className='text-[12px] font-medium uppercase tracking-wider' style={{ color: colors.textTertiary }}>
-              Nuova password
-            </label>
-            <Input
-              type='password'
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder='--------'
-              className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-              style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary }}
-            />
-          </div>
-          <div className='space-y-2'>
-            <label className='text-[12px] font-medium uppercase tracking-wider' style={{ color: colors.textTertiary }}>
-              Conferma password
-            </label>
-            <Input
-              type='password'
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder='--------'
-              className='h-12 rounded-xl border focus:border-white/30 focus:outline-none'
-              style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary }}
-            />
-          </div>
-          {message && (
-            <div
-              className='p-3 rounded-xl text-sm'
-              style={{
-                backgroundColor: message.type === 'success' ? `${colors.success}15` : `${colors.error}15`,
-                color: message.type === 'success' ? colors.success : colors.error,
-                border: `1px solid ${message.type === 'success' ? colors.success + '33' : colors.error + '33'}`,
-              }}
-            >
-              {message.text}
+        </AppleCardHeader>
+        <AppleCardContent>
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                Password attuale
+              </label>
+              <Input
+                type='password'
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                placeholder='--------'
+                className='h-12 rounded-xl'
+              />
             </div>
-          )}
-          <button
-            onClick={handleChangePassword}
-            disabled={changePassword.isPending}
-            className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50'
-            style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
-          >
-            {changePassword.isPending ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : null}
-            Cambia Password
-          </button>
-        </div>
-      </div>
+            <div className='space-y-2'>
+              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                Nuova password
+              </label>
+              <Input
+                type='password'
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder='--------'
+                className='h-12 rounded-xl'
+              />
+            </div>
+            <div className='space-y-2'>
+              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                Conferma password
+              </label>
+              <Input
+                type='password'
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder='--------'
+                className='h-12 rounded-xl'
+              />
+            </div>
+            {message && (
+              <div
+                className={`p-3 rounded-xl text-sm ${
+                  message.type === 'success'
+                    ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                    : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+            <AppleButton
+              onClick={handleChangePassword}
+              loading={changePassword.isPending}
+            >
+              Cambia Password
+            </AppleButton>
+          </div>
+        </AppleCardContent>
+      </AppleCard>
     </motion.div>
   );
 }
@@ -675,48 +605,41 @@ function MfaSection() {
   };
 
   return (
-    <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-      <div
-        className='rounded-2xl border overflow-hidden'
-        style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-          <Smartphone className='h-5 w-5' style={{ color: colors.purple }} />
-          <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-            Autenticazione a due fattori (2FA)
-          </h2>
-        </div>
-        <div className='p-6'>
+    <motion.div variants={listItemVariants}>
+      <AppleCard hover={false}>
+        <AppleCardHeader>
+          <div className='flex items-center gap-3'>
+            <Smartphone className='h-5 w-5 text-apple-purple' />
+            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              Autenticazione a due fattori (2FA)
+            </h2>
+          </div>
+        </AppleCardHeader>
+        <AppleCardContent>
           {isLoading ? (
-            <div className='h-20 flex items-center justify-center'>
-              <Loader2 className='h-6 w-6 animate-spin' style={{ color: colors.textTertiary }} />
+            <div className='flex items-center justify-center py-12'>
+              <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
             </div>
           ) : mfaStatus?.enabled ? (
-            <div
-              className='flex items-center gap-3 p-4 rounded-xl'
-              style={{ backgroundColor: `${colors.success}15`, border: `1px solid ${colors.success}33` }}
-            >
-              <CheckCircle className='h-5 w-5' style={{ color: colors.success }} />
+            <div className='flex items-center gap-3 p-4 rounded-xl bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800'>
+              <CheckCircle className='h-5 w-5 text-green-600 dark:text-green-400' />
               <div>
-                <p className='text-[14px] font-medium' style={{ color: colors.success }}>
+                <p className='text-body font-medium text-green-700 dark:text-green-300'>
                   2FA Attivo
                 </p>
-                <p className='text-[13px]' style={{ color: `${colors.success}cc` }}>
+                <p className='text-footnote text-green-600 dark:text-green-400'>
                   Il tuo account e protetto con autenticazione a due fattori.
                 </p>
               </div>
             </div>
           ) : enrollData ? (
             <div className='space-y-4'>
-              <p className='text-[14px]' style={{ color: colors.textSecondary }}>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                 Scansiona il QR code con la tua app di autenticazione (Google Authenticator, Authy,
                 etc.):
               </p>
               {enrollData.qrCodeUrl && (
-                <div
-                  className='flex justify-center p-4 rounded-xl border'
-                  style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle }}
-                >
+                <div className='flex justify-center p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] border border-apple-border/20 dark:border-[var(--border-default)]'>
                   <Image
                     src={enrollData.qrCodeUrl}
                     alt='QR Code per configurazione autenticazione a due fattori'
@@ -727,19 +650,16 @@ function MfaSection() {
                   />
                 </div>
               )}
-              <div
-                className='p-3 rounded-xl'
-                style={{ backgroundColor: colors.glowStrong }}
-              >
-                <p className='text-[11px] uppercase tracking-wider mb-1' style={{ color: colors.textTertiary }}>
+              <div className='p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                <p className='text-footnote mb-1 text-apple-gray dark:text-[var(--text-secondary)]'>
                   Chiave manuale
                 </p>
-                <p className='text-[14px] font-mono select-all' style={{ color: colors.textPrimary }}>
+                <p className='text-body font-mono select-all text-apple-dark dark:text-[var(--text-primary)]'>
                   {enrollData.secret}
                 </p>
               </div>
               <div className='space-y-2'>
-                <label className='text-[12px] font-medium uppercase tracking-wider' style={{ color: colors.textTertiary }}>
+                <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
                   Codice di verifica (6 cifre)
                 </label>
                 <div className='flex gap-3'>
@@ -748,34 +668,25 @@ function MfaSection() {
                     onChange={e => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder='000000'
                     maxLength={6}
-                    className='h-12 rounded-xl border text-center text-lg tracking-[0.5em] font-mono focus:border-white/30 focus:outline-none'
-                    style={{ backgroundColor: colors.glowStrong, borderColor: colors.borderSubtle, color: colors.textPrimary }}
+                    className='h-12 rounded-xl text-center text-lg tracking-[0.5em] font-mono'
                   />
-                  <button
+                  <AppleButton
                     onClick={handleVerify}
-                    disabled={verifyCode.length !== 6 || mfaVerify.isPending}
-                    className='inline-flex items-center h-12 px-5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50'
-                    style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+                    disabled={verifyCode.length !== 6}
+                    loading={mfaVerify.isPending}
                   >
-                    {mfaVerify.isPending ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
-                    ) : (
-                      'Verifica'
-                    )}
-                  </button>
+                    Verifica
+                  </AppleButton>
                 </div>
               </div>
               {enrollData.backupCodes?.length > 0 && (
-                <div
-                  className='p-4 rounded-xl border'
-                  style={{ backgroundColor: `${colors.warning}10`, borderColor: `${colors.warning}33` }}
-                >
-                  <p className='text-sm font-medium mb-2' style={{ color: colors.warning }}>
+                <div className='p-4 rounded-xl bg-orange-100 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800'>
+                  <p className='text-body font-medium mb-2 text-orange-700 dark:text-orange-300'>
                     Codici di recupero (salva in un posto sicuro):
                   </p>
                   <div className='grid grid-cols-2 gap-1'>
                     {enrollData.backupCodes.map((code, i) => (
-                      <code key={i} className='text-sm font-mono' style={{ color: `${colors.warning}cc` }}>
+                      <code key={i} className='text-sm font-mono text-orange-600 dark:text-orange-400'>
                         {code}
                       </code>
                     ))}
@@ -785,27 +696,21 @@ function MfaSection() {
             </div>
           ) : (
             <div>
-              <p className='text-[14px] mb-4' style={{ color: colors.textSecondary }}>
+              <p className='text-body mb-4 text-apple-gray dark:text-[var(--text-secondary)]'>
                 Aggiungi un ulteriore livello di sicurezza al tuo account con l&apos;autenticazione
                 a due fattori.
               </p>
-              <button
+              <AppleButton
                 onClick={handleEnroll}
-                disabled={mfaEnroll.isPending}
-                className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50'
-                style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+                loading={mfaEnroll.isPending}
+                icon={<Smartphone className='h-4 w-4' />}
               >
-                {mfaEnroll.isPending ? (
-                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                ) : (
-                  <Smartphone className='h-4 w-4 mr-2' />
-                )}
                 Attiva 2FA
-              </button>
+              </AppleButton>
             </div>
           )}
-        </div>
-      </div>
+        </AppleCardContent>
+      </AppleCard>
     </motion.div>
   );
 }
@@ -813,33 +718,29 @@ function MfaSection() {
 // Passkey Section
 function PasskeySection() {
   return (
-    <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-      <div
-        className='rounded-2xl border overflow-hidden'
-        style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-          <Key className='h-5 w-5' style={{ color: colors.success }} />
-          <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-            Passkey (WebAuthn)
-          </h2>
-        </div>
-        <div className='p-6'>
-          <p className='text-[14px] mb-4' style={{ color: colors.textSecondary }}>
+    <motion.div variants={listItemVariants}>
+      <AppleCard hover={false}>
+        <AppleCardHeader>
+          <div className='flex items-center gap-3'>
+            <Key className='h-5 w-5 text-apple-green' />
+            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              Passkey (WebAuthn)
+            </h2>
+          </div>
+        </AppleCardHeader>
+        <AppleCardContent>
+          <p className='text-body mb-4 text-apple-gray dark:text-[var(--text-secondary)]'>
             Accedi in modo sicuro con Face ID, Touch ID o la chiave di sicurezza del tuo
             dispositivo.
           </p>
-          <button
-            className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors border'
-            style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          <AppleButton
+            variant='secondary'
+            icon={<Key className='h-4 w-4' />}
           >
-            <Key className='h-4 w-4 mr-2' />
             Registra Passkey
-          </button>
-        </div>
-      </div>
+          </AppleButton>
+        </AppleCardContent>
+      </AppleCard>
     </motion.div>
   );
 }
@@ -877,94 +778,77 @@ function DangerZone() {
   };
 
   return (
-    <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-      <div
-        className='rounded-2xl overflow-hidden'
-        style={{ backgroundColor: colors.surface, border: `2px solid ${colors.error}33` }}
-      >
-        <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: `${colors.error}22` }}>
-          <AlertTriangle className='h-5 w-5' style={{ color: colors.error }} />
-          <h2 className='text-[16px] font-semibold' style={{ color: colors.error }}>
-            Zona Pericolosa
-          </h2>
-        </div>
-        <div className='p-6'>
+    <motion.div variants={listItemVariants}>
+      <AppleCard hover={false} className='ring-2 ring-apple-red/30'>
+        <AppleCardHeader>
+          <div className='flex items-center gap-3'>
+            <AlertTriangle className='h-5 w-5 text-apple-red' />
+            <h2 className='text-title-2 font-semibold text-apple-red'>
+              Zona Pericolosa
+            </h2>
+          </div>
+        </AppleCardHeader>
+        <AppleCardContent>
           {!showConfirm ? (
             <div>
-              <p className='text-[14px] mb-4' style={{ color: colors.textSecondary }}>
+              <p className='text-body mb-4 text-apple-gray dark:text-[var(--text-secondary)]'>
                 L&apos;eliminazione dell&apos;account e permanente. Tutti i dati verranno cancellati
                 in conformita con il GDPR.
               </p>
-              <button
-                className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors'
-                style={{ color: colors.error }}
+              <AppleButton
+                variant='ghost'
+                className='text-apple-red'
+                icon={<Trash2 className='h-4 w-4' />}
                 onClick={() => setShowConfirm(true)}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${colors.error}15`)}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
-                <Trash2 className='h-4 w-4 mr-2' />
                 Elimina account
-              </button>
+              </AppleButton>
             </div>
           ) : (
             <div className='space-y-4'>
-              <div
-                className='p-4 rounded-xl border'
-                style={{ backgroundColor: `${colors.error}10`, borderColor: `${colors.error}33` }}
-              >
-                <p className='text-sm' style={{ color: colors.error }}>
+              <div className='p-4 rounded-xl bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800'>
+                <p className='text-body text-red-700 dark:text-red-300'>
                   Stai per eliminare permanentemente l&apos;account <strong>{user?.email}</strong> e
                   tutti i dati associati. Questa azione non puo essere annullata.
                 </p>
               </div>
               <div className='space-y-2'>
-                <label className='text-[11px] uppercase tracking-wider' style={{ color: colors.textTertiary }}>
+                <label className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                   Digita <strong>{expectedText}</strong> per confermare
                 </label>
                 <Input
                   value={confirmText}
                   onChange={e => setConfirmText(e.target.value)}
                   placeholder={expectedText}
-                  className='h-12 rounded-xl focus:outline-none'
-                  style={{
-                    backgroundColor: colors.glowStrong,
-                    color: colors.textPrimary,
-                    border: `2px solid ${colors.error}33`,
-                  }}
+                  className='h-12 rounded-xl ring-2 ring-apple-red/30'
                 />
               </div>
               <div className='flex gap-3'>
-                <button
+                <AppleButton
+                  variant='secondary'
                   onClick={() => {
                     setShowConfirm(false);
                     setConfirmText('');
                   }}
                   disabled={isDeleting}
-                  className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors border disabled:opacity-50'
-                  style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   Annulla
-                </button>
-                <button
-                  disabled={!canDelete || isDeleting}
+                </AppleButton>
+                <AppleButton
+                  variant='primary'
+                  className='bg-apple-red hover:bg-red-600'
+                  disabled={!canDelete}
+                  loading={isDeleting}
+                  icon={<Trash2 className='h-4 w-4' />}
                   onClick={handleDeleteAccount}
-                  className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50'
-                  style={{ backgroundColor: colors.error, color: colors.textPrimary }}
                 >
-                  {isDeleting ? (
-                    <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                  ) : (
-                    <Trash2 className='h-4 w-4 mr-2' />
-                  )}
                   {isDeleting ? 'Eliminazione in corso...' : 'Elimina definitivamente'}
-                </button>
+                </AppleButton>
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </AppleCardContent>
+      </AppleCard>
     </motion.div>
   );
 }
@@ -974,47 +858,37 @@ function BillingSettingsTab() {
   const router = useRouter();
 
   return (
-    <motion.div initial='hidden' animate='visible' variants={itemVariants}>
-      <div
-        className='rounded-2xl border overflow-hidden'
-        style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-      >
-        <div className='px-6 py-4 border-b flex items-center gap-3' style={{ borderColor: colors.borderSubtle }}>
-          <CreditCard className='h-5 w-5' style={{ color: colors.info }} />
-          <h2 className='text-[16px] font-semibold' style={{ color: colors.textPrimary }}>
-            Piano e Pagamenti
-          </h2>
-        </div>
-        <div className='p-6'>
-          <div
-            className='p-6 rounded-2xl mb-6'
-            style={{
-              background: `linear-gradient(135deg, ${colors.surface} 0%, ${colors.borderSubtle} 100%)`,
-              border: `1px solid ${colors.borderSubtle}`,
-            }}
-          >
-            <p className='text-[12px] uppercase tracking-wider mb-1' style={{ color: colors.textTertiary }}>
+    <motion.div variants={listItemVariants}>
+      <AppleCard hover={false}>
+        <AppleCardHeader>
+          <div className='flex items-center gap-3'>
+            <CreditCard className='h-5 w-5 text-apple-blue' />
+            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              Piano e Pagamenti
+            </h2>
+          </div>
+        </AppleCardHeader>
+        <AppleCardContent>
+          <div className='p-6 rounded-2xl mb-6 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+            <p className='text-footnote mb-1 text-apple-gray dark:text-[var(--text-secondary)]'>
               Gestione completa
             </p>
-            <h3 className='text-[20px] font-semibold mb-2' style={{ color: colors.textPrimary }}>
+            <h3 className='text-title-1 font-bold mb-2 text-apple-dark dark:text-[var(--text-primary)]'>
               Fatturazione e Abbonamento
             </h3>
-            <p className='text-[14px]' style={{ color: colors.textSecondary }}>
+            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
               Gestisci il tuo piano, metodi di pagamento e visualizza le fatture
             </p>
           </div>
-          <button
+          <AppleButton
+            variant='secondary'
+            icon={<ArrowRight className='h-4 w-4' />}
             onClick={() => router.push('/dashboard/billing')}
-            className='inline-flex items-center h-10 px-5 rounded-xl text-sm font-medium transition-colors border'
-            style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             Gestisci Abbonamento
-            <ArrowRight className='w-4 h-4 ml-2' />
-          </button>
-        </div>
-      </div>
+          </AppleButton>
+        </AppleCardContent>
+      </AppleCard>
     </motion.div>
   );
 }

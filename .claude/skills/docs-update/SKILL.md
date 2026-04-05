@@ -1,6 +1,7 @@
 ---
 name: docs-update
 description: Aggiorna documentazione dopo modifiche. Usa quando hai aggiunto modulo, modello, endpoint, decisione architetturale, o procedura.
+disable-model-invocation: true
 allowed-tools: [Read, Write, Edit, Grep]
 ---
 

@@ -11,7 +11,6 @@ import {
   AppleCard,
   AppleCardContent,
   AppleCardHeader,
-  AppleCardFooter,
 } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
@@ -24,9 +23,7 @@ import {
   Save,
   Search,
   AlertCircle,
-  GripVertical,
 } from 'lucide-react';
-import Link from 'next/link';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 const containerVariants = {
@@ -278,9 +275,9 @@ export default function NewEstimatePage() {
   };
 
   return (
-    <div className='bg-[#1a1a1a] min-h-screen'>
+    <div>
       {/* Header */}
-      <header className='bg-[#2f2f2f] border-b border-[#4e4e4e]'>
+      <header>
         <div className='px-8 py-5'>
           <Breadcrumb
             items={[
@@ -289,7 +286,21 @@ export default function NewEstimatePage() {
               { label: 'Nuovo Preventivo' },
             ]}
           />
-          <h1 className='text-headline text-white'>Nuovo Preventivo</h1>
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuovo Preventivo</h1>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                Crea un nuovo preventivo per il cliente
+              </p>
+            </div>
+            <AppleButton
+              variant='ghost'
+              icon={<ArrowLeft className='h-4 w-4' />}
+              onClick={() => router.push('/dashboard/estimates')}
+            >
+              Torna ai Preventivi
+            </AppleButton>
+          </div>
         </div>
       </header>
 
@@ -302,36 +313,36 @@ export default function NewEstimatePage() {
         {/* Customer & Vehicle */}
         <motion.div className='grid grid-cols-1 md:grid-cols-2 gap-6' variants={cardVariants}>
           {/* Customer */}
-          <AppleCard hover={false} className='bg-[#2f2f2f] border border-[#4e4e4e] shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
-            <AppleCardHeader className='border-b border-[#4e4e4e]'>
-              <h2 className='text-title-3 font-semibold text-white'>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Cliente
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               <div className='relative'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#888]' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
                 <Input
                   placeholder='Cerca per nome, targa o telefono...'
                   aria-label='Cerca cliente'
                   value={customerSearch}
                   onChange={e => searchCustomers(e.target.value)}
                   onFocus={() => customerResults.length > 0 && setShowCustomerDropdown(true)}
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none pl-10'
+                  className='pl-10'
                 />
                 {showCustomerDropdown && customerResults.length > 0 && (
-                  <div className='absolute z-10 top-full mt-1 w-full bg-[#2f2f2f] rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] max-h-60 overflow-y-auto'>
+                  <div className='absolute z-10 top-full mt-1 w-full bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple border border-apple-border/20 dark:border-[var(--border-default)] max-h-60 overflow-y-auto'>
                     {customerResults.map(c => (
                       <button
                         key={c.id}
-                        className='w-full text-left px-4 py-3 hover:bg-[#383838] transition-colors text-sm'
+                        className='w-full text-left px-4 py-3 hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)] transition-colors text-body'
                         onClick={() => selectCustomer(c)}
                       >
-                        <span className='font-medium text-white'>
+                        <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           {c.firstName} {c.lastName}
                         </span>
                         {c.phone && (
-                          <span className='ml-2 text-[#888]'>
+                          <span className='ml-2 text-apple-gray dark:text-[var(--text-secondary)]'>
                             {c.phone}
                           </span>
                         )}
@@ -341,20 +352,20 @@ export default function NewEstimatePage() {
                 )}
               </div>
               {selectedCustomer && (
-                <p className='mt-2 text-sm text-white font-medium'>
+                <p className='mt-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                   Selezionato: {selectedCustomer.firstName} {selectedCustomer.lastName}
                 </p>
               )}
               {formErrors.customerId && (
-                <p className='mt-1 text-xs text-red-500'>{formErrors.customerId.message}</p>
+                <p className='mt-1 text-footnote text-apple-red'>{formErrors.customerId.message}</p>
               )}
             </AppleCardContent>
           </AppleCard>
 
           {/* Vehicle */}
-          <AppleCard hover={false} className='bg-[#2f2f2f] border border-[#4e4e4e] shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
-            <AppleCardHeader className='border-b border-[#4e4e4e]'>
-              <h2 className='text-title-3 font-semibold text-white'>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Veicolo
               </h2>
             </AppleCardHeader>
@@ -362,7 +373,7 @@ export default function NewEstimatePage() {
               <select
                 value={vehicleId}
                 onChange={e => setValue('vehicleId', e.target.value, { shouldValidate: true })}
-                className='w-full h-[52px] px-3 rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none text-sm'
+                className='w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                 disabled={vehicles.length === 0}
               >
                 <option value=''>
@@ -376,13 +387,12 @@ export default function NewEstimatePage() {
               </select>
 
               <div className='mt-4'>
-                <label className='text-sm font-medium text-white mb-1 block'>
+                <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                   Validità
                 </label>
                 <Input
                   type='date'
                   {...register('validUntil')}
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none'
                 />
               </div>
             </AppleCardContent>
@@ -391,10 +401,10 @@ export default function NewEstimatePage() {
 
         {/* Lines */}
         <motion.div variants={cardVariants}>
-          <AppleCard hover={false} className='bg-[#2f2f2f] border border-[#4e4e4e] shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
-            <AppleCardHeader className='flex items-center justify-between border-b border-[#4e4e4e]'>
-              <h2 className='text-title-3 font-semibold text-white flex items-center gap-2'>
-                <FileText className='h-5 w-5 text-[#888]' />
+          <AppleCard hover={false}>
+            <AppleCardHeader className='flex items-center justify-between'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <FileText className='h-5 w-5 text-apple-gray' />
                 Righe Preventivo
               </h2>
               <AppleButton
@@ -402,49 +412,48 @@ export default function NewEstimatePage() {
                 size='sm'
                 icon={<Plus className='h-4 w-4' />}
                 onClick={addLine}
-                className='text-white hover:bg-white/5'
               >
                 Aggiungi riga
               </AppleButton>
             </AppleCardHeader>
             <AppleCardContent>
               {/* Table Header */}
-              <div className='hidden md:grid grid-cols-12 gap-2 pb-2 border-b border-[#4e4e4e] mb-3'>
-                <div className='col-span-1 text-xs font-medium uppercase text-[#888]'>Tipo</div>
-                <div className='col-span-4 text-xs font-medium uppercase text-[#888]'>
+              <div className='hidden md:grid grid-cols-12 gap-2 pb-2 border-b border-apple-border/20 dark:border-[var(--border-default)] mb-3'>
+                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Tipo</div>
+                <div className='col-span-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                   Descrizione
                 </div>
-                <div className='col-span-1 text-xs font-medium uppercase text-[#888] text-right'>
+                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
                   Qta
                 </div>
-                <div className='col-span-2 text-xs font-medium uppercase text-[#888] text-right'>
+                <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
                   Prezzo
                 </div>
-                <div className='col-span-1 text-xs font-medium uppercase text-[#888] text-right'>
+                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
                   IVA %
                 </div>
-                <div className='col-span-2 text-xs font-medium uppercase text-[#888] text-right'>
+                <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
                   Totale
                 </div>
                 <div className='col-span-1' />
               </div>
 
               {lines.length === 0 ? (
-                <p className='text-center py-6 text-[#888] text-sm'>
+                <p className='text-center py-6 text-apple-gray dark:text-[var(--text-secondary)] text-body'>
                   Nessuna riga. Aggiungi almeno una riga.
                 </p>
               ) : (
                 <div className='space-y-2'>
-                  {lines.map((line, index) => (
+                  {lines.map((line) => (
                     <div
                       key={line.localId}
-                      className='grid grid-cols-12 gap-2 items-center p-2 rounded-2xl bg-[#383838]'
+                      className='grid grid-cols-12 gap-2 items-center p-2 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                     >
                       <div className='col-span-12 md:col-span-1'>
                         <select
                           value={line.type}
                           onChange={e => updateLine(line.localId, 'type', e.target.value)}
-                          className='w-full h-[52px] px-2 rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none text-xs'
+                          className='w-full h-9 px-2 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-footnote text-apple-dark dark:text-[var(--text-primary)] focus:outline-none'
                         >
                           <option value='LABOR'>Lavoro</option>
                           <option value='PART'>Ricambio</option>
@@ -455,7 +464,7 @@ export default function NewEstimatePage() {
                           placeholder='Descrizione'
                           value={line.description}
                           onChange={e => updateLine(line.localId, 'description', e.target.value)}
-                          className='h-9 text-sm border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none rounded-full'
+                          className='h-9 text-body'
                         />
                       </div>
                       <div className='col-span-4 md:col-span-1'>
@@ -465,7 +474,7 @@ export default function NewEstimatePage() {
                           onChange={e =>
                             updateLine(line.localId, 'quantity', Number(e.target.value))
                           }
-                          className='h-9 text-sm text-right border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none rounded-full'
+                          className='h-9 text-body text-right'
                           min={1}
                         />
                       </div>
@@ -477,7 +486,7 @@ export default function NewEstimatePage() {
                           onChange={e =>
                             updateLine(line.localId, 'unitPrice', Number(e.target.value))
                           }
-                          className='h-9 text-sm text-right border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none rounded-full'
+                          className='h-9 text-body text-right'
                           min={0}
                           step={0.01}
                         />
@@ -489,24 +498,26 @@ export default function NewEstimatePage() {
                           onChange={e =>
                             updateLine(line.localId, 'taxRate', Number(e.target.value))
                           }
-                          className='h-9 text-sm text-right border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none rounded-full'
+                          className='h-9 text-body text-right'
                           min={0}
                           max={100}
                         />
                       </div>
                       <div className='col-span-6 md:col-span-2 flex items-center justify-end'>
-                        <span className='text-sm font-medium text-white'>
+                        <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           {formatCurrency(line.quantity * line.unitPrice)}
                         </span>
                       </div>
                       <div className='col-span-6 md:col-span-1 flex justify-end'>
-                        <button
+                        <AppleButton
+                          variant='ghost'
+                          size='sm'
                           onClick={() => removeLine(line.localId)}
-                          className='p-2 rounded-lg hover:bg-red-900/20 text-[#888] hover:text-red-500 transition-colors'
                           aria-label='Rimuovi riga'
+                          className='text-apple-red hover:opacity-80'
                         >
                           <Trash2 className='h-4 w-4' />
-                        </button>
+                        </AppleButton>
                       </div>
                     </div>
                   ))}
@@ -518,9 +529,9 @@ export default function NewEstimatePage() {
 
         {/* Discount & Notes */}
         <motion.div className='grid grid-cols-1 md:grid-cols-2 gap-6' variants={cardVariants}>
-          <AppleCard hover={false} className='bg-[#2f2f2f] border border-[#4e4e4e] shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
-            <AppleCardHeader className='border-b border-[#4e4e4e]'>
-              <h2 className='text-title-3 font-semibold text-white'>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Sconto
               </h2>
             </AppleCardHeader>
@@ -531,25 +542,25 @@ export default function NewEstimatePage() {
                   {...register('discount', { valueAsNumber: true })}
                   min={0}
                   step={0.01}
-                  className='flex-1 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none'
+                  className='flex-1'
                 />
                 <select
                   {...register('discountType')}
-                  className='h-[52px] px-3 rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white outline-none text-sm'
+                  className='h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none'
                 >
                   <option value='EUR'>EUR</option>
                   <option value='PERCENT'>%</option>
                 </select>
               </div>
               {formErrors.discount && (
-                <p className='text-xs text-red-500 mt-1'>{formErrors.discount.message}</p>
+                <p className='text-footnote text-apple-red mt-1'>{formErrors.discount.message}</p>
               )}
             </AppleCardContent>
           </AppleCard>
 
-          <AppleCard hover={false} className='bg-[#2f2f2f] border border-[#4e4e4e] shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
-            <AppleCardHeader className='border-b border-[#4e4e4e]'>
-              <h2 className='text-title-3 font-semibold text-white'>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Note
               </h2>
             </AppleCardHeader>
@@ -558,7 +569,7 @@ export default function NewEstimatePage() {
                 {...register('notes')}
                 rows={3}
                 placeholder='Note aggiuntive per il cliente...'
-                className='w-full rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] px-5 py-3 text-sm text-white placeholder-[#888] outline-none resize-none'
+                className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
               />
             </AppleCardContent>
           </AppleCard>
@@ -566,38 +577,38 @@ export default function NewEstimatePage() {
 
         {/* Summary */}
         <motion.div variants={cardVariants}>
-          <AppleCard hover={false} className='bg-[#2f2f2f] border border-[#4e4e4e] shadow-[0_0_60px_rgba(0,0,0,0.5)]'>
+          <AppleCard hover={false}>
             <AppleCardContent>
               <div className='flex justify-end'>
                 <div className='w-full max-w-xs space-y-2'>
-                  <div className='flex justify-between text-sm'>
-                    <span className='text-[#888]'>Subtotale</span>
-                    <span className='font-medium text-white'>
+                  <div className='flex justify-between text-body'>
+                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Subtotale</span>
+                    <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       {formatCurrency(subtotal)}
                     </span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className='flex justify-between text-sm'>
-                      <span className='text-[#888]'>Sconto</span>
-                      <span className='font-medium text-red-500'>
+                    <div className='flex justify-between text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Sconto</span>
+                      <span className='font-medium text-apple-red'>
                         -{formatCurrency(discountAmount)}
                       </span>
                     </div>
                   )}
                   {Object.entries(taxByRate).map(([rate, amount]) => (
-                    <div key={rate} className='flex justify-between text-sm'>
-                      <span className='text-[#888]'>IVA {rate}%</span>
-                      <span className='font-medium text-white'>
+                    <div key={rate} className='flex justify-between text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>IVA {rate}%</span>
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                         {formatCurrency(amount)}
                       </span>
                     </div>
                   ))}
-                  <div className='border-t border-[#4e4e4e] pt-2'>
+                  <div className='border-t border-apple-border/20 dark:border-[var(--border-default)] pt-2'>
                     <div className='flex justify-between'>
-                      <span className='text-base font-semibold text-white'>
+                      <span className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                         Totale
                       </span>
-                      <span className='text-base font-bold text-white'>
+                      <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         {formatCurrency(grandTotal)}
                       </span>
                     </div>
@@ -610,9 +621,9 @@ export default function NewEstimatePage() {
 
         {/* Error */}
         {submitError && (
-          <div className='flex items-center gap-2 p-3 rounded-2xl bg-red-900/20 border border-red-700/30'>
-            <AlertCircle className='h-4 w-4 text-red-500 flex-shrink-0' />
-            <p className='text-xs text-red-300'>{submitError}</p>
+          <div className='flex items-center gap-2 p-3 rounded-2xl bg-apple-red/5 dark:bg-apple-red/10 border border-apple-red/20'>
+            <AlertCircle className='h-4 w-4 text-apple-red flex-shrink-0' />
+            <p className='text-footnote text-apple-red'>{submitError}</p>
           </div>
         )}
 
@@ -624,7 +635,6 @@ export default function NewEstimatePage() {
             loading={isSubmitting}
             disabled={isSubmitting}
             onClick={() => handleSubmit(false)}
-            className='rounded-full h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'
           >
             Salva come bozza
           </AppleButton>
@@ -633,7 +643,6 @@ export default function NewEstimatePage() {
             loading={isSubmitting}
             disabled={isSubmitting}
             onClick={() => handleSubmit(true)}
-            className='rounded-full h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5] border-0'
           >
             Salva e invia al cliente
           </AppleButton>

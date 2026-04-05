@@ -67,7 +67,7 @@ export function ConversionFunnel(): React.ReactElement {
           const rate = stage.value > 0 ? ((next.value / stage.value) * 100).toFixed(0) : '0';
           return (
             <div key={stage.id} className="text-center">
-              <p className="text-[10px] text-[#888888] truncate">{stage.label.split(' ')[0]}</p>
+              <p className="text-[10px] text-[var(--text-tertiary)] truncate">{stage.label.split(' ')[0]}</p>
               <p className="text-sm font-semibold text-[#34d399]">{rate}%</p>
             </div>
           );

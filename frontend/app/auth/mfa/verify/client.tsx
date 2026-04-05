@@ -108,7 +108,7 @@ export function MFAVerifyPageClient(): React.ReactElement {
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Verifica a due fattori
           </h1>
-          <p className="mt-2 text-[15px] text-[#b4b4b4] leading-relaxed">
+          <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
             {useBackupCode
               ? 'Inserisci uno dei tuoi codici di backup'
               : 'Inserisci il codice a 6 cifre dalla tua app authenticator'}
@@ -152,20 +152,20 @@ export function MFAVerifyPageClient(): React.ReactElement {
             role="alert"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center text-[13px] text-[#b4b4b4]"
+            className="text-center text-[13px] text-[var(--text-secondary)]"
           >
             {error}
           </motion.p>
         )}
 
         {remainingAttempts !== null && remainingAttempts > 0 && (
-          <p className="text-center text-[12px] text-[#888]">
+          <p className="text-center text-[12px] text-[var(--text-tertiary)]">
             Tentativi rimanenti: {remainingAttempts}
           </p>
         )}
 
         {remainingAttempts === 0 && (
-          <p className="text-center text-[13px] text-[#b4b4b4]" role="alert">
+          <p className="text-center text-[13px] text-[var(--text-secondary)]" role="alert">
             Troppi tentativi.{' '}
             <Link href="/auth/locked" className="underline">
               Account bloccato
@@ -193,7 +193,7 @@ export function MFAVerifyPageClient(): React.ReactElement {
               setCode('');
               setBackupCode('');
             }}
-            className="text-[14px] font-medium text-[#888] hover:text-white transition-colors min-h-[44px]"
+            className="text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[44px]"
           >
             {useBackupCode ? 'Usa codice authenticator' : 'Usa codice di backup'}
           </button>

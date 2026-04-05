@@ -1,6 +1,7 @@
 ---
 name: security-review
 description: Esegui security review. Usa quando si modifica auth, webhook, encryption, tenantId, o quando chiesto audit sicurezza.
+disable-model-invocation: true
 allowed-tools: [Read, Grep, Glob, "Bash(grep *)", "Bash(find *)", "Bash(cat *)", "Bash(bash .claude/skills/security-review/scripts/*)"]
 ---
 

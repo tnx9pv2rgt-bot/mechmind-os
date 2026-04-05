@@ -32,6 +32,7 @@ import {
   Target,
   Banknote,
   Receipt,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -47,30 +48,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboardStats, useWorkOrders, useBookings } from '@/hooks/useApi';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { ErrorState } from '@/components/patterns/error-state';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 
-// =============================================================================
-// Design Tokens (Auth Palette)
-// =============================================================================
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  cyan: '#22d3ee',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
+// Design tokens removed — using Tailwind CSS custom properties + raw hex for JS-consumed colors
 
 // =============================================================================
 // Animation Variants
@@ -215,70 +196,67 @@ function KpiCard({ title, value, change, icon: Icon, sparkData, sparkColor, href
   return (
     <motion.div variants={itemVariants}>
       <Link href={href}>
-        <div
-          className="group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:border-white/20 hover:-translate-y-0.5 h-[140px]"
-          style={{
-            backgroundColor: colors.surface,
-            borderColor: colors.borderSubtle,
-          }}
-        >
+        <AppleCard className="group relative overflow-hidden h-[140px]">
           {/* Glow effect on hover */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
             style={{ background: `radial-gradient(circle at 50% 0%, ${sparkColor}15, transparent 70%)` }}
           />
 
-          <div className="relative p-5 h-full flex flex-col justify-center gap-3">
-            <div className="flex items-start justify-between">
+          <AppleCardContent className="relative h-full flex flex-col justify-between py-4">
+            {/* Top row: icon + title + chevron */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div
                   className="w-9 h-9 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: `${sparkColor}15` }}
                 >
-                  <span style={{ color: sparkColor }}><Icon className="h-4 w-4" /></span>
+                  <span style={{ color: sparkColor }}><Icon className="h-4.5 w-4.5" /></span>
                 </div>
-                <span className="text-[13px] font-medium" style={{ color: colors.textTertiary }}>
+                <span className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]">
                   {title}
                 </span>
               </div>
               <ChevronRight
-                className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5"
-                style={{ color: colors.textTertiary }}
+                className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 text-apple-gray dark:text-[var(--text-secondary)]"
               />
             </div>
 
-            <div className="flex items-end justify-between">
-              <div>
-                {isLoading ? (
-                  <div className="w-24 h-8 rounded-lg animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
-                ) : (
-                  <p className="text-[28px] font-light tracking-tight" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
-                    <AnimatedValue value={value} />
-                    {suffix && <span className="text-base ml-1" style={{ color: colors.textTertiary }}>{suffix}</span>}
-                  </p>
-                )}
-                {!isLoading && (
-                  <div className="flex items-center gap-1 mt-1">
-                    {isPositive ? (
-                      <span style={{ color: colors.success }}><ArrowUpRight className="h-3.5 w-3.5" /></span>
-                    ) : (
-                      <span style={{ color: colors.error }}><ArrowDownRight className="h-3.5 w-3.5" /></span>
-                    )}
-                    <span
-                      className="text-[12px] font-medium"
-                      style={{ color: isPositive ? colors.success : colors.error, fontVariantNumeric: 'tabular-nums' }}
-                    >
-                      {isPositive ? '+' : ''}{change}%
-                    </span>
-                    <span className="text-[11px]" style={{ color: colors.textMuted }}>vs mese prec.</span>
-                  </div>
-                )}
-              </div>
-              <div className="w-20 h-8 opacity-60 group-hover:opacity-100 transition-opacity">
-                <Sparkline data={sparkData} color={sparkColor} />
+            {/* Middle: big number */}
+            <div className="mt-3">
+              {isLoading ? (
+                <div className="w-24 h-8 rounded-lg animate-pulse bg-apple-light-gray dark:bg-[var(--border-default)]" />
+              ) : (
+                <p className="text-[28px] font-bold tracking-tight text-apple-dark dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
+                  <AnimatedValue value={value} />
+                  {suffix && <span className="text-[13px] font-medium ml-1.5 text-apple-gray dark:text-[var(--text-secondary)]">{suffix}</span>}
+                </p>
+              )}
+            </div>
+
+            {/* Bottom row: change % + sparkline */}
+            <div className="flex items-center justify-between mt-2">
+              {!isLoading ? (
+                <div className="flex items-center gap-1.5">
+                  {isPositive ? (
+                    <span className="text-green-600 dark:text-green-400"><ArrowUpRight className="h-3 w-3" /></span>
+                  ) : (
+                    <span className="text-red-600 dark:text-red-400"><ArrowDownRight className="h-3 w-3" /></span>
+                  )}
+                  <span
+                    className={`text-[11px] font-semibold ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {isPositive ? '+' : ''}{change}%
+                  </span>
+                  <span className="text-[11px] text-apple-gray dark:text-[var(--text-secondary)]">vs mese prec.</span>
+                </div>
+              ) : <div />}
+              <div className="w-16 h-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                <Sparkline data={sparkData} color={sparkColor} height={24} />
               </div>
             </div>
-          </div>
-        </div>
+          </AppleCardContent>
+        </AppleCard>
       </Link>
     </motion.div>
   );
@@ -306,7 +284,7 @@ function RevenueChart({ revenue, revenueChange, isLoading }: { revenue: number; 
 
   if (isLoading) {
     return (
-      <div className="h-[200px] rounded-2xl animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
+      <div className="h-[200px] rounded-2xl animate-pulse bg-[var(--border-default)]" />
     );
   }
 
@@ -316,28 +294,28 @@ function RevenueChart({ revenue, revenueChange, isLoading }: { revenue: number; 
         <AreaChart data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={colors.accent} stopOpacity={0.15} />
-              <stop offset="100%" stopColor={colors.accent} stopOpacity={0} />
+              <stop offset="0%" stopColor="#ffffff" stopOpacity={0.15} />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="prevGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={colors.textTertiary} stopOpacity={0.08} />
-              <stop offset="100%" stopColor={colors.textTertiary} stopOpacity={0} />
+              <stop offset="0%" stopColor="#888888" stopOpacity={0.08} />
+              <stop offset="100%" stopColor="#888888" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
             dataKey="day"
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 10, fill: colors.textMuted }}
+            tick={{ fontSize: 10, fill: '#666666' }}
             interval={4}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: colors.surface,
-              border: `1px solid ${colors.border}`,
+              backgroundColor: 'var(--surface-elevated)',
+              border: '1px solid var(--border-default)',
               borderRadius: '12px',
               fontSize: '12px',
-              color: colors.textPrimary,
+              color: 'var(--text-primary)',
               boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             }}
             formatter={(val: number, name: string) => [
@@ -349,7 +327,7 @@ function RevenueChart({ revenue, revenueChange, isLoading }: { revenue: number; 
           <Area
             type="monotone"
             dataKey="previous"
-            stroke={colors.textMuted}
+            stroke="#666666"
             strokeWidth={1}
             strokeDasharray="4 4"
             fill="url(#prevGrad)"
@@ -358,7 +336,7 @@ function RevenueChart({ revenue, revenueChange, isLoading }: { revenue: number; 
           <Area
             type="monotone"
             dataKey="current"
-            stroke={colors.accent}
+            stroke="#ffffff"
             strokeWidth={2}
             fill="url(#revenueGrad)"
             dot={false}
@@ -385,10 +363,10 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
       workOrders.filter((wo) => statuses.includes(wo.status?.toLowerCase())).length;
 
     return [
-      { label: 'In Attesa', count: statusCount(['pending', 'open']), color: colors.warning, icon: Clock },
-      { label: 'In Corso', count: statusCount(['in_progress', 'confirmed']), color: colors.info, icon: Wrench },
-      { label: 'Completati', count: statusCount(['completed']), color: colors.success, icon: CheckCircle2 },
-      { label: 'Annullati', count: statusCount(['cancelled']), color: colors.error, icon: AlertTriangle },
+      { label: 'In Attesa', count: statusCount(['pending', 'open']), color: '#fbbf24', icon: Clock },
+      { label: 'In Corso', count: statusCount(['in_progress', 'confirmed']), color: '#60a5fa', icon: Wrench },
+      { label: 'Completati', count: statusCount(['completed']), color: '#34d399', icon: CheckCircle2 },
+      { label: 'Annullati', count: statusCount(['cancelled']), color: '#f87171', icon: AlertTriangle },
     ];
   }, [workOrders]);
 
@@ -397,7 +375,7 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
   return (
     <div className="space-y-4">
       {/* Progress bar */}
-      <div className="flex h-2 rounded-full overflow-hidden" style={{ backgroundColor: colors.borderSubtle }}>
+      <div className="flex h-2 rounded-full overflow-hidden bg-[var(--border-default)]">
         {columns.map((col) => (
           <motion.div
             key={col.label}
@@ -415,11 +393,10 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
           return (
             <div
               key={col.label}
-              className="text-center p-3 rounded-xl border transition-colors hover:border-white/10"
-              style={{ backgroundColor: colors.glowStrong, borderColor: 'transparent' }}
+              className="text-center p-3 rounded-xl border border-transparent bg-white/[0.06] transition-colors hover:border-white/10"
             >
               {isLoading ? (
-                <div className="w-8 h-8 mx-auto rounded-lg animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
+                <div className="w-8 h-8 mx-auto rounded-lg animate-pulse bg-[var(--border-default)]" />
               ) : (
                 <>
                   <div
@@ -428,8 +405,8 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
                   >
                     <span style={{ color: col.color }}><ColIcon className="h-4 w-4" /></span>
                   </div>
-                  <p className="text-xl font-light" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>{col.count}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: colors.textTertiary }}>{col.label}</p>
+                  <p className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{col.count}</p>
+                  <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">{col.label}</p>
                 </>
               )}
             </div>
@@ -456,28 +433,28 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
       label: 'Fatture non pagate',
       value: formatCurrency(unpaidAmount),
       icon: Receipt,
-      color: colors.warning,
+      color: '#fbbf24',
       trend: 3,
     },
     {
       label: 'Scadute >30gg',
       value: formatCurrency(overdueAmount),
       icon: AlertTriangle,
-      color: colors.error,
+      color: '#f87171',
       trend: -2,
     },
     {
       label: 'Margine lordo',
       value: `${grossMargin}%`,
       icon: Target,
-      color: colors.success,
+      color: '#34d399',
       trend: 4,
     },
     {
       label: 'Cash flow 7gg',
       value: formatCurrency(cashFlow7d),
       icon: Banknote,
-      color: colors.cyan,
+      color: '#22d3ee',
       trend: 8,
     },
   ], [unpaidAmount, overdueAmount, grossMargin, cashFlow7d]);
@@ -489,13 +466,12 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
         return (
           <div
             key={m.label}
-            className="p-4 rounded-xl border transition-colors hover:border-white/10"
-            style={{ backgroundColor: colors.glowStrong, borderColor: 'transparent' }}
+            className="p-4 rounded-xl border border-transparent bg-white/[0.06] transition-colors hover:border-white/10"
           >
             {isLoading ? (
               <div className="space-y-2">
-                <div className="w-8 h-8 rounded-lg animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
-                <div className="w-16 h-5 rounded animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
+                <div className="w-8 h-8 rounded-lg animate-pulse bg-[var(--border-default)]" />
+                <div className="w-16 h-5 rounded animate-pulse bg-[var(--border-default)]" />
               </div>
             ) : (
               <>
@@ -507,14 +483,13 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
                     <span style={{ color: m.color }}><MIcon className="h-4 w-4" /></span>
                   </div>
                   <span
-                    className="text-[11px] font-medium"
-                    style={{ color: m.trend >= 0 ? colors.success : colors.error }}
+                    className={`text-[11px] font-medium ${m.trend >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`}
                   >
                     {m.trend >= 0 ? '+' : ''}{m.trend}%
                   </span>
                 </div>
-                <p className="text-lg font-light" style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: colors.textTertiary }}>{m.label}</p>
+                <p className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
+                <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">{m.label}</p>
               </>
             )}
           </div>
@@ -542,17 +517,17 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusDotColors: Record<string, string> = {
-  confirmed: colors.success,
-  in_progress: colors.info,
-  pending: colors.warning,
-  cancelled: colors.error,
-  completed: colors.success,
-  open: colors.info,
-  OPEN: colors.info,
-  IN_PROGRESS: colors.warning,
-  COMPLETED: colors.success,
-  CANCELLED: colors.error,
-  PENDING: colors.warning,
+  confirmed: '#34d399',
+  in_progress: '#60a5fa',
+  pending: '#fbbf24',
+  cancelled: '#f87171',
+  completed: '#34d399',
+  open: '#60a5fa',
+  OPEN: '#60a5fa',
+  IN_PROGRESS: '#fbbf24',
+  COMPLETED: '#34d399',
+  CANCELLED: '#f87171',
+  PENDING: '#fbbf24',
 };
 
 // =============================================================================
@@ -590,12 +565,12 @@ function LiveTimestamp({ updatedAt, isFetching }: { updatedAt: number; isFetchin
 // Quick Actions
 // =============================================================================
 const quickActions = [
-  { label: 'Nuovo OdL', href: '/dashboard/work-orders/new', icon: Wrench, color: colors.info },
-  { label: 'Nuova Fattura', href: '/dashboard/invoices/new', icon: FileText, color: colors.success },
-  { label: 'Nuovo Cliente', href: '/dashboard/customers/new/step1', icon: Users, color: colors.purple },
-  { label: 'Prenotazione', href: '/dashboard/bookings/new', icon: Calendar, color: colors.warning },
+  { label: 'Nuovo OdL', href: '/dashboard/work-orders/new', icon: Wrench, color: '#60a5fa' },
+  { label: 'Nuova Fattura', href: '/dashboard/invoices/new', icon: FileText, color: '#34d399' },
+  { label: 'Nuovo Cliente', href: '/dashboard/customers/new/step1', icon: Users, color: '#a78bfa' },
+  { label: 'Prenotazione', href: '/dashboard/bookings/new', icon: Calendar, color: '#fbbf24' },
   { label: 'Preventivo', href: '/dashboard/estimates/new', icon: ClipboardList, color: '#ec4899' },
-  { label: 'Ispezione', href: '/dashboard/inspections/new', icon: SearchIcon, color: colors.cyan },
+  { label: 'Ispezione', href: '/dashboard/inspections/new', icon: SearchIcon, color: '#22d3ee' },
 ];
 
 // =============================================================================
@@ -652,7 +627,7 @@ export default function DashboardPage(): React.ReactElement {
 
   if (statsError) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.bg }}>
+      <div className="min-h-screen flex items-center justify-center">
         <ErrorState
           variant="server-error"
           title="Impossibile caricare la dashboard"
@@ -664,20 +639,14 @@ export default function DashboardPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* ================================================================= */}
       {/* Header */}
       {/* ================================================================= */}
-      <header
-        className="border-b backdrop-blur-xl sticky top-0 z-10"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className="text-[28px] font-light tracking-tight" style={{ color: colors.textPrimary }}>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
               {greeting}, <span className="font-normal">{user?.name || 'Utente'}</span>
             </h1>
             <div className="flex items-center gap-2 mt-1">
@@ -685,9 +654,9 @@ export default function DashboardPage(): React.ReactElement {
                 variants={pulseVariants}
                 animate="pulse"
                 className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: colors.success }}
+                style={{ backgroundColor: '#34d399' }}
               />
-              <span className="text-[13px]" style={{ color: colors.textTertiary }}>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body'>
                 {tenantName} &middot;{' '}
                 <span suppressHydrationWarning>
                   {new Date().toLocaleDateString('it-IT', {
@@ -701,29 +670,19 @@ export default function DashboardPage(): React.ReactElement {
                     &middot; <LiveTimestamp updatedAt={dataUpdatedAt} isFetching={statsFetching} />
                   </span>
                 )}
-              </span>
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/dashboard/analytics">
-              <button
-                type="button"
-                className="flex items-center gap-2 h-10 px-4 rounded-full border text-[13px] font-medium transition-all hover:bg-white/5"
-                style={{ borderColor: colors.border, color: colors.textSecondary }}
-              >
-                <BarChart3 className="h-4 w-4" />
+              <AppleButton variant="ghost" icon={<BarChart3 className="h-4 w-4" />}>
                 Analytics
-              </button>
+              </AppleButton>
             </Link>
             <Link href="/dashboard/calendar">
-              <button
-                type="button"
-                className="flex items-center gap-2 h-10 px-4 rounded-full text-[13px] font-medium transition-all hover:bg-white/10"
-                style={{ backgroundColor: colors.accent, color: colors.bg }}
-              >
-                <Calendar className="h-4 w-4" />
+              <AppleButton variant="primary" icon={<Calendar className="h-4 w-4" />}>
                 Agenda
-              </button>
+              </AppleButton>
             </Link>
           </div>
         </div>
@@ -745,7 +704,7 @@ export default function DashboardPage(): React.ReactElement {
             change={vehiclesChange}
             icon={Wrench}
             sparkData={sparkGen(vehiclesInShop || 5, vehiclesChange)}
-            sparkColor={colors.info}
+            sparkColor="#60a5fa"
             href="/dashboard/work-orders?status=active"
             isLoading={statsLoading}
           />
@@ -755,7 +714,7 @@ export default function DashboardPage(): React.ReactElement {
             change={revenueChange}
             icon={TrendingUp}
             sparkData={sparkGen(revenue / 100 || 50, revenueChange)}
-            sparkColor={colors.success}
+            sparkColor="#34d399"
             href="/dashboard/invoices?period=month"
             isLoading={statsLoading}
           />
@@ -765,7 +724,7 @@ export default function DashboardPage(): React.ReactElement {
             change={bookingsChange}
             icon={Calendar}
             sparkData={sparkGen(bookingsToday || 3, bookingsChange)}
-            sparkColor={colors.warning}
+            sparkColor="#fbbf24"
             href="/dashboard/bookings?period=today"
             isLoading={statsLoading}
             suffix="oggi"
@@ -776,7 +735,7 @@ export default function DashboardPage(): React.ReactElement {
             change={avgTicketChange}
             icon={Gauge}
             sparkData={sparkGen(avgTicket / 10 || 20, avgTicketChange)}
-            sparkColor={colors.purple}
+            sparkColor="#a78bfa"
             href="/dashboard/analytics?metric=aro"
             isLoading={statsLoading}
           />
@@ -786,7 +745,7 @@ export default function DashboardPage(): React.ReactElement {
             change={efficiencyChange}
             icon={Activity}
             sparkData={sparkGen(efficiency || 85, efficiencyChange)}
-            sparkColor={colors.cyan}
+            sparkColor="#22d3ee"
             href="/dashboard/analytics?metric=efficiency"
             isLoading={statsLoading}
           />
@@ -811,15 +770,13 @@ export default function DashboardPage(): React.ReactElement {
               const AIcon = action.icon;
               return (
                 <Link key={action.href} href={action.href} className="flex-shrink-0">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full border whitespace-nowrap text-[13px] font-medium leading-none transition-all hover:bg-white/5 hover:border-white/20 group"
-                    style={{ borderColor: colors.border, color: colors.textSecondary }}
+                  <AppleButton
+                    variant="secondary"
+                    size="sm"
+                    icon={<AIcon className="h-3.5 w-3.5" style={{ color: action.color }} />}
                   >
-                    <span className="flex items-center" style={{ color: action.color }}><AIcon className="h-3.5 w-3.5" /></span>
-                    <span>{action.label}</span>
-                    <span className="flex items-center" style={{ color: colors.textTertiary }}><Plus className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" /></span>
-                  </button>
+                    {action.label}
+                  </AppleButton>
                 </Link>
               );
             })}
@@ -837,61 +794,55 @@ export default function DashboardPage(): React.ReactElement {
         >
           {/* Revenue Chart — 3 cols */}
           <motion.div variants={itemVariants} className="lg:col-span-3">
-            <div
-              className="rounded-2xl border p-6"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
-                    Andamento Fatturato
-                  </h2>
-                  <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
-                    Questo mese vs precedente
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-[2px] rounded-full" style={{ backgroundColor: colors.accent }} />
-                    <span className="text-[11px]" style={{ color: colors.textTertiary }}>Corrente</span>
+            <AppleCard hover={false}>
+              <AppleCardContent>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Andamento Fatturato
+                    </h2>
+                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                      Questo mese vs precedente
+                    </p>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-[2px] rounded-full opacity-40" style={{ backgroundColor: colors.textTertiary }} />
-                    <span className="text-[11px]" style={{ color: colors.textMuted }}>Precedente</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-[2px] rounded-full bg-apple-dark dark:bg-[var(--text-primary)]" />
+                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Corrente</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-[2px] rounded-full opacity-40 bg-gray-400" />
+                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Precedente</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <RevenueChart revenue={revenue} revenueChange={revenueChange} isLoading={statsLoading} />
-            </div>
+                <RevenueChart revenue={revenue} revenueChange={revenueChange} isLoading={statsLoading} />
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
 
           {/* Workflow Kanban — 2 cols */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
-            <div
-              className="rounded-2xl border p-6 h-full"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
-                    Pipeline Lavori
-                  </h2>
-                  <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
-                    Distribuzione ordini attivi
-                  </p>
+            <AppleCard hover={false} className="h-full">
+              <AppleCardContent>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Pipeline Lavori
+                    </h2>
+                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                      Distribuzione ordini attivi
+                    </p>
+                  </div>
+                  <Link href="/dashboard/work-orders">
+                    <AppleButton variant="ghost" size="sm">
+                      Tutti
+                    </AppleButton>
+                  </Link>
                 </div>
-                <Link href="/dashboard/work-orders">
-                  <button
-                    type="button"
-                    className="text-[12px] font-medium transition-colors hover:text-white"
-                    style={{ color: colors.textTertiary }}
-                  >
-                    Tutti →
-                  </button>
-                </Link>
-              </div>
-              <WorkflowKanban workOrders={recentWorkOrders} isLoading={woLoading} />
-            </div>
+                <WorkflowKanban workOrders={recentWorkOrders} isLoading={woLoading} />
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         </motion.div>
 
@@ -906,205 +857,175 @@ export default function DashboardPage(): React.ReactElement {
         >
           {/* Recent Work Orders — 5 cols */}
           <motion.div variants={itemVariants} className="lg:col-span-5">
-            <div
-              className="rounded-2xl border h-full"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className="flex items-center justify-between px-6 pt-5 pb-4">
-                <h2 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
-                  Ordini Recenti
-                </h2>
-                <Link href="/dashboard/work-orders">
-                  <button
-                    type="button"
-                    className="text-[12px] font-medium transition-colors hover:text-white"
-                    style={{ color: colors.textTertiary }}
-                  >
-                    Tutti →
-                  </button>
-                </Link>
-              </div>
-
-              {woLoading ? (
-                <div className="px-6 pb-5 space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-12 rounded-xl animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
-                  ))}
-                </div>
-              ) : recentWorkOrders.length === 0 ? (
-                <div className="text-center py-12 px-6">
-                  <span style={{ color: colors.textTertiary }}><Wrench className="h-8 w-8 mx-auto mb-3 opacity-30" /></span>
-                  <p className="text-[13px]" style={{ color: colors.textTertiary }}>Nessun ordine recente</p>
-                  <Link href="/dashboard/work-orders/new">
-                    <button
-                      type="button"
-                      className="mt-3 h-9 px-4 rounded-full border text-[12px] font-medium transition-all hover:bg-white/5"
-                      style={{ borderColor: colors.border, color: colors.textSecondary }}
-                    >
-                      <Plus className="h-3 w-3 inline mr-1" />
-                      Crea OdL
-                    </button>
+            <AppleCard hover={false} className="h-full">
+              <AppleCardHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    Ordini Recenti
+                  </h2>
+                  <Link href="/dashboard/work-orders">
+                    <AppleButton variant="ghost" size="sm">
+                      Tutti
+                    </AppleButton>
                   </Link>
                 </div>
-              ) : (
-                <div className="px-4 pb-4">
-                  {recentWorkOrders.slice(0, 6).map((wo, i) => (
-                    <Link href={`/dashboard/work-orders/${wo.id}`} key={wo.id}>
-                      <div
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all hover:bg-white/5 cursor-pointer group"
-                      >
-                        <div
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: statusDotColors[wo.status] || colors.textMuted }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium truncate" style={{ color: colors.textPrimary }}>
-                            {wo.customerName || 'N/D'}
-                          </p>
-                          <p className="text-[11px] truncate" style={{ color: colors.textTertiary }}>
-                            {wo.vehiclePlate && <><Car className="h-3 w-3 inline mr-1" />{wo.vehiclePlate}</>}
-                            {!wo.vehiclePlate && (wo.orderNumber || `#${wo.id.slice(0, 6)}`)}
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <span
-                            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                            style={{
-                              backgroundColor: `${statusDotColors[wo.status] || colors.textMuted}15`,
-                              color: statusDotColors[wo.status] || colors.textMuted,
-                            }}
-                          >
-                            {statusLabels[wo.status] || wo.status}
-                          </span>
-                        </div>
-                        <ChevronRight
-                          className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                          style={{ color: colors.textTertiary }}
-                        />
-                      </div>
+              </AppleCardHeader>
+              <AppleCardContent>
+                {woLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  </div>
+                ) : recentWorkOrders.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <AlertCircle className="h-12 w-12 text-apple-gray/40 mb-4" />
+                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessun ordine recente</p>
+                    <Link href="/dashboard/work-orders/new">
+                      <AppleButton variant="ghost" className="mt-4" icon={<Plus className="h-4 w-4" />}>
+                        Crea OdL
+                      </AppleButton>
                     </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {recentWorkOrders.slice(0, 6).map((wo) => (
+                      <Link href={`/dashboard/work-orders/${wo.id}`} key={wo.id}>
+                        <div
+                          className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple cursor-pointer group mb-2"
+                        >
+                          <div
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: statusDotColors[wo.status] || '#666666' }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]">
+                              {wo.customerName || 'N/D'}
+                            </p>
+                            <p className="text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]">
+                              {wo.vehiclePlate && <><Car className="h-3 w-3 inline mr-1" />{wo.vehiclePlate}</>}
+                              {!wo.vehiclePlate && (wo.orderNumber || `#${wo.id.slice(0, 6)}`)}
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span
+                              className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full"
+                              style={{
+                                backgroundColor: `${statusDotColors[wo.status] || '#666666'}15`,
+                                color: statusDotColors[wo.status] || '#666666',
+                              }}
+                            >
+                              {statusLabels[wo.status] || wo.status}
+                            </span>
+                          </div>
+                          <ChevronRight
+                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-apple-gray dark:text-[var(--text-secondary)]"
+                          />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
 
           {/* Today's Bookings — 4 cols */}
           <motion.div variants={itemVariants} className="lg:col-span-4">
-            <div
-              className="rounded-2xl border h-full"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className="flex items-center justify-between px-6 pt-5 pb-4">
-                <h2 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
-                  Oggi
-                </h2>
-                <Link href="/dashboard/calendar">
-                  <button
-                    type="button"
-                    className="text-[12px] font-medium transition-colors hover:text-white"
-                    style={{ color: colors.textTertiary }}
-                  >
-                    Calendario →
-                  </button>
-                </Link>
-              </div>
-
-              {bookingsLoading ? (
-                <div className="px-6 pb-5 space-y-2">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-14 rounded-xl animate-pulse" style={{ backgroundColor: colors.borderSubtle }} />
-                  ))}
-                </div>
-              ) : todayBookings.length === 0 ? (
-                <div className="text-center py-12 px-6">
-                  <span style={{ color: colors.textTertiary }}><Calendar className="h-8 w-8 mx-auto mb-3 opacity-30" /></span>
-                  <p className="text-[13px]" style={{ color: colors.textTertiary }}>Nessuna prenotazione oggi</p>
-                  <Link href="/dashboard/bookings/new">
-                    <button
-                      type="button"
-                      className="mt-3 h-9 px-4 rounded-full border text-[12px] font-medium transition-all hover:bg-white/5"
-                      style={{ borderColor: colors.border, color: colors.textSecondary }}
-                    >
-                      <Plus className="h-3 w-3 inline mr-1" />
-                      Nuova prenotazione
-                    </button>
+            <AppleCard hover={false} className="h-full">
+              <AppleCardHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    Oggi
+                  </h2>
+                  <Link href="/dashboard/calendar">
+                    <AppleButton variant="ghost" size="sm">
+                      Calendario
+                    </AppleButton>
                   </Link>
                 </div>
-              ) : (
-                <div className="px-4 pb-4 space-y-1">
-                  {todayBookings.slice(0, 5).map((booking) => (
-                    <Link href={`/dashboard/bookings/${booking.id}`} key={booking.id}>
-                      <motion.div
-                        whileHover={{ x: 3 }}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all hover:bg-white/5 cursor-pointer group"
-                      >
-                        {/* Time */}
-                        <div
-                          className="w-12 text-center flex-shrink-0 text-[13px] font-mono font-medium"
-                          style={{ color: colors.textPrimary }}
-                        >
-                          {new Date(booking.scheduledAt).toLocaleTimeString('it-IT', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                        {/* Divider */}
-                        <div
-                          className="w-px h-8 flex-shrink-0 rounded-full"
-                          style={{ backgroundColor: statusDotColors[booking.status] || colors.border }}
-                        />
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium truncate" style={{ color: colors.textPrimary }}>
-                            {booking.customerName}
-                          </p>
-                          <p className="text-[11px] truncate" style={{ color: colors.textTertiary }}>
-                            {booking.vehiclePlate}
-                            {booking.vehicleBrand ? ` · ${booking.vehicleBrand}` : ''}
-                            {' · '}
-                            {booking.serviceName || booking.serviceCategory}
-                          </p>
-                        </div>
-                        <ChevronRight
-                          className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                          style={{ color: colors.textTertiary }}
-                        />
-                      </motion.div>
+              </AppleCardHeader>
+              <AppleCardContent>
+                {bookingsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  </div>
+                ) : todayBookings.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <AlertCircle className="h-12 w-12 text-apple-gray/40 mb-4" />
+                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessuna prenotazione oggi</p>
+                    <Link href="/dashboard/bookings/new">
+                      <AppleButton variant="ghost" className="mt-4" icon={<Plus className="h-4 w-4" />}>
+                        Nuova prenotazione
+                      </AppleButton>
                     </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {todayBookings.slice(0, 5).map((booking) => (
+                      <Link href={`/dashboard/bookings/${booking.id}`} key={booking.id}>
+                        <motion.div
+                          whileHover={{ x: 3 }}
+                          className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple cursor-pointer group mb-2"
+                        >
+                          {/* Time */}
+                          <div
+                            className="w-12 text-center flex-shrink-0 text-body font-mono font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                          >
+                            {new Date(booking.scheduledAt).toLocaleTimeString('it-IT', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                          {/* Divider */}
+                          <div
+                            className="w-px h-8 flex-shrink-0 rounded-full"
+                            style={{ backgroundColor: statusDotColors[booking.status] || 'var(--border-default)' }}
+                          />
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]">
+                              {booking.customerName}
+                            </p>
+                            <p className="text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]">
+                              {booking.vehiclePlate}
+                              {booking.vehicleBrand ? ` · ${booking.vehicleBrand}` : ''}
+                              {' · '}
+                              {booking.serviceName || booking.serviceCategory}
+                            </p>
+                          </div>
+                          <ChevronRight
+                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-apple-gray dark:text-[var(--text-secondary)]"
+                          />
+                        </motion.div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
 
           {/* Financial Widget — 3 cols */}
           <motion.div variants={itemVariants} className="lg:col-span-3">
-            <div
-              className="rounded-2xl border p-6 h-full"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-[15px] font-medium" style={{ color: colors.textPrimary }}>
-                    Finanze
-                  </h2>
-                  <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
-                    Riepilogo finanziario
-                  </p>
+            <AppleCard hover={false} className="h-full">
+              <AppleCardContent>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      Finanze
+                    </h2>
+                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                      Riepilogo finanziario
+                    </p>
+                  </div>
+                  <Link href="/dashboard/invoices/financial">
+                    <AppleButton variant="ghost" size="sm">
+                      Dettagli
+                    </AppleButton>
+                  </Link>
                 </div>
-                <Link href="/dashboard/invoices/financial">
-                  <button
-                    type="button"
-                    className="text-[12px] font-medium transition-colors hover:text-white"
-                    style={{ color: colors.textTertiary }}
-                  >
-                    Dettagli →
-                  </button>
-                </Link>
-              </div>
-              <FinancialWidget revenue={revenue} unpaidAmount={unpaidAmount} overdueAmount={overdueAmount} grossMargin={grossMargin} cashFlow7d={cashFlow7d} isLoading={statsLoading} />
-            </div>
+                <FinancialWidget revenue={revenue} unpaidAmount={unpaidAmount} overdueAmount={overdueAmount} grossMargin={grossMargin} cashFlow7d={cashFlow7d} isLoading={statsLoading} />
+              </AppleCardContent>
+            </AppleCard>
           </motion.div>
         </motion.div>
 
@@ -1120,82 +1041,73 @@ export default function DashboardPage(): React.ReactElement {
           {(stats?.alerts ?? []).length > 0 ? (
             (stats?.alerts ?? []).slice(0, 4).map((alert) => {
               const alertColor =
-                alert.severity === 'error' ? colors.error :
-                alert.severity === 'warning' ? colors.warning :
-                colors.info;
+                alert.severity === 'error' ? '#f87171' :
+                alert.severity === 'warning' ? '#fbbf24' :
+                '#60a5fa';
               return (
                 <motion.div key={alert.id} variants={itemVariants}>
-                  <div
-                    className="rounded-2xl border-l-4 p-5 flex items-start gap-4"
-                    style={{
-                      backgroundColor: colors.surface,
-                      borderLeftColor: alertColor,
-                      borderTop: `1px solid ${colors.borderSubtle}`,
-                      borderRight: `1px solid ${colors.borderSubtle}`,
-                      borderBottom: `1px solid ${colors.borderSubtle}`,
-                    }}
-                  >
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${alertColor}15` }}
-                    >
-                      <span style={{ color: alertColor }}><AlertCircle className="h-4 w-4" /></span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium" style={{ color: colors.textPrimary }}>
-                        {alert.message}
-                      </p>
-                      <p className="text-[11px] mt-1" style={{ color: colors.textTertiary }}>
-                        {formatDate(alert.createdAt)}
-                      </p>
-                    </div>
-                  </div>
+                  <AppleCard hover={false}>
+                    <AppleCardContent>
+                      <div className="flex items-start gap-4">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: `${alertColor}15` }}
+                        >
+                          <span style={{ color: alertColor }}><AlertCircle className="h-5 w-5" /></span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                            {alert.message}
+                          </p>
+                          <p className="text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                            {formatDate(alert.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </AppleCardContent>
+                  </AppleCard>
                 </motion.div>
               );
             })
           ) : (
             <>
               <motion.div variants={itemVariants}>
-                <div
-                  className="rounded-2xl border p-5 flex items-start gap-4"
-                  style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${colors.success}15` }}
-                  >
-                    <span style={{ color: colors.success }}><CheckCircle2 className="h-4 w-4" /></span>
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium" style={{ color: colors.textPrimary }}>
-                      Tutto sotto controllo
-                    </p>
-                    <p className="text-[11px] mt-1" style={{ color: colors.textTertiary }}>
-                      Nessun avviso critico. La tua officina funziona alla perfezione.
-                    </p>
-                  </div>
-                </div>
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-apple-green flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                          Tutto sotto controllo
+                        </p>
+                        <p className="text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                          Nessun avviso critico. La tua officina funziona alla perfezione.
+                        </p>
+                      </div>
+                    </div>
+                  </AppleCardContent>
+                </AppleCard>
               </motion.div>
               <motion.div variants={itemVariants}>
-                <div
-                  className="rounded-2xl border p-5 flex items-start gap-4"
-                  style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${colors.info}15` }}
-                  >
-                    <span style={{ color: colors.info }}><Zap className="h-4 w-4" /></span>
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium" style={{ color: colors.textPrimary }}>
-                      {greeting}, {user?.name || 'Utente'}
-                    </p>
-                    <p className="text-[11px] mt-1" style={{ color: colors.textTertiary }}>
-                      Gestisci prenotazioni, clienti e veicoli dalla tua dashboard.
-                    </p>
-                  </div>
-                </div>
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-apple-blue flex items-center justify-center flex-shrink-0">
+                        <Zap className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                          {greeting}, {user?.name || 'Utente'}
+                        </p>
+                        <p className="text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                          Gestisci prenotazioni, clienti e veicoli dalla tua dashboard.
+                        </p>
+                      </div>
+                    </div>
+                  </AppleCardContent>
+                </AppleCard>
               </motion.div>
             </>
           )}

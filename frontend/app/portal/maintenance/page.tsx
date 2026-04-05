@@ -103,27 +103,27 @@ export default function PortalMaintenancePage() {
             <Clock className='h-5 w-5 text-apple-blue' />
             <span className='text-2xl font-bold text-apple-blue'>{stats.upcoming}</span>
           </div>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>In programma</p>
+          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>In programma</p>
         </div>
         <div className='p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl'>
           <div className='flex items-center gap-2 mb-1'>
             <AlertTriangle className='h-5 w-5 text-apple-red' />
             <span className='text-2xl font-bold text-apple-red'>{stats.overdue}</span>
           </div>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>In ritardo</p>
+          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>In ritardo</p>
         </div>
         <div className='p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl'>
           <div className='flex items-center gap-2 mb-1'>
             <CheckCircle className='h-5 w-5 text-apple-green' />
             <span className='text-2xl font-bold text-apple-green'>{stats.completed}</span>
           </div>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>Completate</p>
+          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Completate</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className='flex flex-wrap items-center gap-3 mb-6'>
-        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[#2f2f2f] rounded-xl shadow-apple'>
+        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple'>
           {(['upcoming', 'all', 'completed', 'overdue'] as const).map(f => (
             <button
               key={f}
@@ -133,7 +133,7 @@ export default function PortalMaintenancePage() {
                 ${
                   filter === f
                     ? 'bg-apple-blue text-white shadow-sm'
-                    : 'text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec]'
+                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
                 }
               `}
             >

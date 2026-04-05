@@ -1,6 +1,6 @@
 const DEMO_STORAGE_KEY = 'mechmind_demo';
-const DEMO_START_KEY = 'demo_start';
-const DEMO_DURATION_MS = 24 * 60 * 60 * 1000; // 24 ore
+const DEMO_START_KEY = 'mechmind_demo_start';
+const DEMO_DURATION_MS = 60 * 60 * 1000; // 1 ora (allineato con demo-context.tsx)
 
 interface DemoSessionResult {
   success: boolean;
@@ -23,7 +23,7 @@ export async function createDemoSession(): Promise<DemoSessionResult> {
     }
 
     localStorage.setItem(DEMO_STORAGE_KEY, 'true');
-    sessionStorage.setItem(DEMO_START_KEY, String(Date.now()));
+    localStorage.setItem(DEMO_START_KEY, String(Date.now()));
 
     return { success: true };
   } catch (err: unknown) {
@@ -43,13 +43,13 @@ export function isDemoSession(): boolean {
 export function clearDemoSession(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(DEMO_STORAGE_KEY);
-  sessionStorage.removeItem(DEMO_START_KEY);
+  localStorage.removeItem(DEMO_START_KEY);
 }
 
 export function getDemoTimeRemaining(): number {
   if (typeof window === 'undefined') return 0;
 
-  const startStr = sessionStorage.getItem(DEMO_START_KEY);
+  const startStr = localStorage.getItem(DEMO_START_KEY);
   if (!startStr) return 0;
 
   const start = Number(startStr);

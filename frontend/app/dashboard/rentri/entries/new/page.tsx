@@ -8,6 +8,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
+import { motion } from 'framer-motion';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import {
   ArrowLeft,
@@ -16,6 +19,7 @@ import {
   Search,
   AlertTriangle,
   X,
+  Save,
 } from 'lucide-react';
 
 // =============================================================================
@@ -50,25 +54,8 @@ const entrySchema = z.object({
 type EntryFormData = z.infer<typeof entrySchema>;
 
 // =============================================================================
-// Design Tokens
+// Constants
 // =============================================================================
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
 const PHYSICAL_STATES = [
   { value: 'SOLIDO', label: 'Solido' },
   { value: 'LIQUIDO', label: 'Liquido' },
@@ -83,6 +70,19 @@ const UNITS = [
   { value: 'fusti', label: 'Fusti' },
   { value: 'mc', label: 'Metri cubi (mc)' },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+};
+
+const inputClass = 'w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue';
+const selectClass = `${inputClass} appearance-none cursor-pointer`;
 
 // =============================================================================
 // CER Search Dropdown Component
@@ -138,25 +138,14 @@ function CerCodeSearch({
     return [];
   })();
 
-  const inputStyle = {
-    backgroundColor: colors.glowStrong,
-    borderWidth: 1,
-    borderStyle: 'solid' as const,
-    borderColor: error ? colors.error : colors.borderSubtle,
-    color: colors.textPrimary,
-  };
-
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
+      <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
         Codice CER *
       </label>
       {value ? (
-        <div
-          className="flex items-center gap-2 h-11 px-3 rounded-xl text-sm"
-          style={inputStyle}
-        >
-          <span className="font-mono font-medium" style={{ color: colors.textPrimary }}>
+        <div className={`flex items-center gap-2 h-10 px-3 rounded-md text-body border ${error ? 'border-red-400' : 'border-apple-border dark:border-[var(--border-default)]'} bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]`}>
+          <span className="font-mono font-medium">
             {value}
           </span>
           <button
@@ -166,18 +155,17 @@ function CerCodeSearch({
               setSearchTerm('');
               setDebouncedTerm('');
             }}
-            className="ml-auto p-1 rounded-lg hover:bg-white/10 transition-colors"
+            className="ml-auto p-1 rounded-lg hover:bg-apple-light-gray dark:hover:bg-white/10 transition-colors"
             aria-label="Rimuovi codice CER"
           >
-            <X className="h-4 w-4" style={{ color: colors.textTertiary }} />
+            <X className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
           </button>
         </div>
       ) : (
         <>
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
-              style={{ color: colors.textMuted }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray"
             />
             <input
               placeholder="Cerca codice CER o descrizione..."
@@ -187,59 +175,41 @@ function CerCodeSearch({
                 setIsOpen(true);
               }}
               onFocus={() => setIsOpen(true)}
-              className="w-full h-11 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-              style={inputStyle}
+              className={`${inputClass} pl-10 ${error ? 'border-red-400' : ''}`}
             />
             {cerLoading && (
               <Loader2
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin"
-                style={{ color: colors.textMuted }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-apple-blue"
               />
             )}
           </div>
 
           {isOpen && results.length > 0 && (
-            <div
-              className="absolute z-50 w-full mt-1 rounded-xl border shadow-xl max-h-60 overflow-y-auto"
-              style={{
-                backgroundColor: colors.surface,
-                borderColor: colors.borderSubtle,
-              }}
-            >
+            <div className="absolute z-50 w-full mt-1 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] shadow-apple dark:shadow-xl max-h-60 overflow-y-auto">
               {results.map((cer) => (
                 <button
                   key={cer.code}
                   type="button"
-                  className="w-full text-left px-4 py-3 transition-colors flex items-start gap-3"
-                  style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}
+                  className="w-full text-left px-4 py-3 transition-colors flex items-start gap-3 border-b border-apple-border/30 dark:border-[var(--border-default)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]"
                   onClick={() => {
                     onSelect(cer);
                     setIsOpen(false);
                     setSearchTerm('');
                   }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.surfaceHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                  }}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-mono font-medium" style={{ color: colors.textPrimary }}>
+                      <span className="text-footnote font-mono font-medium text-apple-dark dark:text-[var(--text-primary)]">
                         {cer.code}
                       </span>
                       {cer.hazardous && (
-                        <span
-                          className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                          style={{ backgroundColor: `${colors.warning}20`, color: colors.warning }}
-                        >
+                        <span className="text-footnote font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 bg-yellow-100 dark:bg-yellow-400/20 text-yellow-700 dark:text-yellow-400">
                           <AlertTriangle className="h-3 w-3" />
                           Pericoloso
                         </span>
                       )}
                     </div>
-                    <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
+                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
                       {cer.description}
                     </p>
                   </div>
@@ -250,7 +220,7 @@ function CerCodeSearch({
         </>
       )}
       {error && (
-        <p className="text-xs mt-1" style={{ color: colors.error }}>
+        <p className="text-footnote mt-1 text-apple-red">
           {error}
         </p>
       )}
@@ -325,47 +295,33 @@ export default function NewRentriEntryPage() {
     }
   };
 
-  const inputStyle = {
-    backgroundColor: colors.glowStrong,
-    borderWidth: 1,
-    borderStyle: 'solid' as const,
-    borderColor: colors.borderSubtle,
-    color: colors.textPrimary,
-  };
-
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur-xl border-b"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5">
-          <Breadcrumb
-            items={[
-              { label: 'Dashboard', href: '/dashboard' },
-              { label: 'Rifiuti (RENTRI)', href: '/dashboard/rentri' },
-              { label: 'Registro', href: '/dashboard/rentri/entries' },
-              { label: 'Nuova Registrazione' },
-            ]}
-          />
-          <div className="flex items-center gap-4 mt-2">
-            <button
+      <header className=''>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div className="flex items-center gap-4">
+            <AppleButton
+              variant="ghost"
+              size="sm"
               onClick={() => router.push('/dashboard/rentri/entries')}
-              className="p-2.5 rounded-xl transition-colors hover:bg-white/5 border min-h-[44px] min-w-[44px] flex items-center justify-center"
-              style={{ borderColor: colors.borderSubtle, color: colors.textSecondary }}
+              icon={<ArrowLeft className="h-4 w-4" />}
               aria-label="Torna al registro"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
+              className="min-w-[44px]"
+            />
             <div>
-              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
+              <Breadcrumb
+                items={[
+                  { label: 'Dashboard', href: '/dashboard' },
+                  { label: 'Rifiuti (RENTRI)', href: '/dashboard/rentri' },
+                  { label: 'Registro', href: '/dashboard/rentri/entries' },
+                  { label: 'Nuova Registrazione' },
+                ]}
+              />
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
                 Nuova Registrazione Rifiuto
               </h1>
-              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
                 Compila il modulo per registrare un nuovo carico o scarico
               </p>
             </div>
@@ -373,260 +329,234 @@ export default function NewRentriEntryPage() {
         </div>
       </header>
 
-      <div className="p-4 sm:p-8 max-w-3xl mx-auto">
+      <motion.div
+        className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6"
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Card: Tipo Registrazione */}
-          <div
-            className="rounded-2xl border p-6"
-            style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-          >
-            <div className="flex items-center gap-2 mb-5">
-              <Recycle className="h-5 w-5" style={{ color: colors.success }} />
-              <h2 className="text-[16px] font-medium" style={{ color: colors.textPrimary }}>
-                Tipo Registrazione
-              </h2>
-            </div>
-
-            <Controller
-              name="type"
-              control={control}
-              render={({ field }) => (
-                <div className="flex gap-3">
-                  {(['CARICO', 'SCARICO'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => field.onChange(t)}
-                      className="flex-1 h-14 rounded-xl text-sm font-medium transition-all border flex items-center justify-center gap-2"
-                      style={{
-                        backgroundColor:
-                          field.value === t
-                            ? t === 'CARICO'
-                              ? `${colors.success}20`
-                              : `${colors.error}20`
-                            : 'transparent',
-                        borderColor:
-                          field.value === t
-                            ? t === 'CARICO'
-                              ? colors.success
-                              : colors.error
-                            : colors.borderSubtle,
-                        color:
-                          field.value === t
-                            ? t === 'CARICO'
-                              ? colors.success
-                              : colors.error
-                            : colors.textSecondary,
-                      }}
-                    >
-                      {t === 'CARICO' ? 'Carico (ingresso)' : 'Scarico (uscita)'}
-                    </button>
-                  ))}
-                </div>
-              )}
-            />
-            {errors.type && (
-              <p className="text-xs mt-2" style={{ color: colors.error }}>
-                {errors.type.message}
-              </p>
-            )}
-          </div>
-
-          {/* Card: Dati Rifiuto */}
-          <div
-            className="rounded-2xl border p-6 space-y-5"
-            style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-          >
-            <h2 className="text-[16px] font-medium" style={{ color: colors.textPrimary }}>
-              Dati Rifiuto
-            </h2>
-
-            {/* CER Code Search */}
-            <CerCodeSearch
-              value={watchCerCode || ''}
-              onChange={(val) => setValue('cerCode', val)}
-              onSelect={handleCerSelect}
-              error={errors.cerCode?.message}
-            />
-
-            {/* Hazardous Warning */}
-            {watchHazardous && (
-              <div
-                className="rounded-xl px-4 py-3 flex items-center gap-3"
-                style={{ backgroundColor: `${colors.warning}15`, border: `1px solid ${colors.warning}40` }}
-              >
-                <AlertTriangle className="h-5 w-5 flex-shrink-0" style={{ color: colors.warning }} />
-                <div>
-                  <p className="text-[13px] font-medium" style={{ color: colors.warning }}>
-                    Rifiuto Pericoloso
-                  </p>
-                  <p className="text-[12px]" style={{ color: colors.textTertiary }}>
-                    Questo codice CER e classificato come rifiuto pericoloso. Rispettare le normative specifiche per lo stoccaggio e il trasporto.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Date */}
-            <div>
-              <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                Data *
-              </label>
-              <input
-                type="date"
-                {...register('date')}
-                className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                style={inputStyle}
-              />
-              {errors.date && (
-                <p className="text-xs mt-1" style={{ color: colors.error }}>
-                  {errors.date.message}
-                </p>
-              )}
-            </div>
-
-            {/* Quantity + Unit */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                  Quantita (kg) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  {...register('quantity')}
-                  className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                  style={inputStyle}
+          <motion.div variants={cardVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
+                  <Recycle className="h-5 w-5 text-apple-green" />
+                  Tipo Registrazione
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <Controller
+                  name="type"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex gap-3">
+                      {(['CARICO', 'SCARICO'] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => field.onChange(t)}
+                          className={`flex-1 h-14 rounded-xl text-body font-medium transition-all border flex items-center justify-center gap-2 ${
+                            field.value === t
+                              ? t === 'CARICO'
+                                ? 'bg-green-50 dark:bg-green-400/20 border-green-500 dark:border-green-400 text-green-700 dark:text-green-400'
+                                : 'bg-red-50 dark:bg-red-400/20 border-red-500 dark:border-red-400 text-red-700 dark:text-red-400'
+                              : 'bg-white dark:bg-transparent border-apple-border dark:border-[var(--border-default)] text-apple-gray dark:text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          {t === 'CARICO' ? 'Carico (ingresso)' : 'Scarico (uscita)'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 />
-                {errors.quantity && (
-                  <p className="text-xs mt-1" style={{ color: colors.error }}>
-                    {errors.quantity.message}
+                {errors.type && (
+                  <p className="text-footnote mt-2 text-apple-red">
+                    {errors.type.message}
                   </p>
                 )}
-              </div>
-              <div>
-                <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                  Unita
-                </label>
-                <select
-                  {...register('unit')}
-                  className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors appearance-none"
-                  style={inputStyle}
-                >
-                  {UNITS.map((u) => (
-                    <option key={u.value} value={u.value} style={{ backgroundColor: colors.surface }}>
-                      {u.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
 
-            {/* Physical State + Hazard Class */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                  Stato fisico
-                </label>
-                <select
-                  {...register('physicalState')}
-                  className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors appearance-none"
-                  style={inputStyle}
-                >
-                  <option value="" style={{ backgroundColor: colors.surface }}>
-                    Seleziona...
-                  </option>
-                  {PHYSICAL_STATES.map((ps) => (
-                    <option key={ps.value} value={ps.value} style={{ backgroundColor: colors.surface }}>
-                      {ps.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                  Classe pericolo
-                </label>
-                <input
-                  {...register('hazardClass')}
-                  placeholder="Es. HP4, HP7"
-                  className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                  style={inputStyle}
+          {/* Card: Dati Rifiuto */}
+          <motion.div variants={cardVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  Dati Rifiuto
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent className="space-y-5">
+                {/* CER Code Search */}
+                <CerCodeSearch
+                  value={watchCerCode || ''}
+                  onChange={(val) => setValue('cerCode', val)}
+                  onSelect={handleCerSelect}
+                  error={errors.cerCode?.message}
                 />
-              </div>
-            </div>
 
-            {/* Origin */}
-            <div>
-              <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                {watchType === 'CARICO' ? 'Origine' : 'Destinazione'}
-              </label>
-              <input
-                {...register('origin')}
-                placeholder={watchType === 'CARICO' ? 'Produzione propria' : 'Impianto di destinazione'}
-                className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                style={inputStyle}
-              />
-            </div>
+                {/* Hazardous Warning */}
+                {watchHazardous && (
+                  <div className="rounded-xl px-4 py-3 flex items-center gap-3 bg-yellow-50 dark:bg-yellow-400/10 border border-yellow-300 dark:border-yellow-400/25">
+                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    <div>
+                      <p className="text-footnote font-medium text-yellow-700 dark:text-yellow-400">
+                        Rifiuto Pericoloso
+                      </p>
+                      <p className="text-footnote text-apple-orange dark:text-[var(--text-tertiary)]">
+                        Questo codice CER e classificato come rifiuto pericoloso. Rispettare le normative specifiche per lo stoccaggio e il trasporto.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-            {/* Notes */}
-            <div>
-              <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                Note
-              </label>
-              <textarea
-                {...register('notes')}
-                placeholder="Note aggiuntive..."
-                rows={3}
-                className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors resize-none"
-                style={inputStyle}
-              />
-            </div>
+                {/* Date */}
+                <div>
+                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    Data *
+                  </label>
+                  <input
+                    type="date"
+                    {...register('date')}
+                    className={inputClass}
+                  />
+                  {errors.date && (
+                    <p className="text-footnote mt-1 text-apple-red">
+                      {errors.date.message}
+                    </p>
+                  )}
+                </div>
 
-            {/* Work Order Link (optional) */}
-            <div>
-              <label className="text-[13px] mb-1.5 block" style={{ color: colors.textTertiary }}>
-                Collegamento ordine di lavoro (opzionale)
-              </label>
-              <input
-                {...register('workOrderId')}
-                placeholder="ID ordine di lavoro..."
-                className="w-full h-11 px-3 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors"
-                style={inputStyle}
-              />
-            </div>
-          </div>
+                {/* Quantity + Unit */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                      Quantita (kg) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      {...register('quantity')}
+                      className={inputClass}
+                    />
+                    {errors.quantity && (
+                      <p className="text-footnote mt-1 text-apple-red">
+                        {errors.quantity.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                      Unita
+                    </label>
+                    <select
+                      {...register('unit')}
+                      className={selectClass}
+                    >
+                      {UNITS.map((u) => (
+                        <option key={u.value} value={u.value}>
+                          {u.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Physical State + Hazard Class */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                      Stato fisico
+                    </label>
+                    <select
+                      {...register('physicalState')}
+                      className={selectClass}
+                    >
+                      <option value="">
+                        Seleziona...
+                      </option>
+                      {PHYSICAL_STATES.map((ps) => (
+                        <option key={ps.value} value={ps.value}>
+                          {ps.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                      Classe pericolo
+                    </label>
+                    <input
+                      {...register('hazardClass')}
+                      placeholder="Es. HP4, HP7"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                {/* Origin */}
+                <div>
+                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    {watchType === 'CARICO' ? 'Origine' : 'Destinazione'}
+                  </label>
+                  <input
+                    {...register('origin')}
+                    placeholder={watchType === 'CARICO' ? 'Produzione propria' : 'Impianto di destinazione'}
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    Note
+                  </label>
+                  <textarea
+                    {...register('notes')}
+                    placeholder="Note aggiuntive..."
+                    rows={3}
+                    className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
+                  />
+                </div>
+
+                {/* Work Order Link (optional) */}
+                <div>
+                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    Collegamento ordine di lavoro (opzionale)
+                  </label>
+                  <input
+                    {...register('workOrderId')}
+                    placeholder="ID ordine di lavoro..."
+                    className={inputClass}
+                  />
+                </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
 
           {/* Submit */}
           <div className="flex gap-3">
-            <button
+            <AppleButton
               type="button"
+              variant="ghost"
               onClick={() => router.push('/dashboard/rentri/entries')}
-              className="flex-1 sm:flex-none px-6 py-3 rounded-full text-sm font-medium transition-colors border hover:bg-white/5 min-h-[44px]"
-              style={{ borderColor: colors.border, color: colors.textSecondary }}
             >
               Annulla
-            </button>
-            <button
+            </AppleButton>
+            <AppleButton
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 sm:flex-none px-8 py-3 rounded-full text-sm font-medium transition-colors min-h-[44px] disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ backgroundColor: colors.textPrimary, color: colors.bg }}
+              variant="primary"
+              loading={isSubmitting}
+              icon={<Save className="h-4 w-4" />}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Salvataggio...
-                </>
-              ) : (
-                'Salva Registrazione'
-              )}
-            </button>
+              Salva Registrazione
+            </AppleButton>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE, APP_INTERCEPTOR, APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { GracefulShutdownModule } from 'nestjs-graceful-shutdown';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { BookingModule } from './booking/booking.module';
@@ -32,9 +33,23 @@ import { LocationModule } from './location/location.module';
 import { RentriModule } from './rentri/rentri.module';
 import { SecurityIncidentModule } from './security-incident/security-incident.module';
 import { AiComplianceModule } from './ai-compliance/ai-compliance.module';
+import { AiDiagnosticModule } from './ai-diagnostic/ai-diagnostic.module';
+import { AiSchedulingModule } from './ai-scheduling/ai-scheduling.module';
+import { DeclinedServiceModule } from './declined-service/declined-service.module';
+import { PaymentLinkModule } from './payment-link/payment-link.module';
+import { PublicTokenModule } from './public-token/public-token.module';
+import { MembershipModule } from './membership/membership.module';
+import { ProductionBoardModule } from './production-board/production-board.module';
+import { PayrollModule } from './payroll/payroll.module';
+import { BenchmarkingModule } from './benchmarking/benchmarking.module';
+import { KioskModule } from './kiosk/kiosk.module';
+import { VehicleHistoryModule } from './vehicle-history/vehicle-history.module';
+import { PredictiveMaintenanceModule } from './predictive-maintenance/predictive-maintenance.module';
+import { PortalModule } from './portal/portal.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
+import { MetricsInterceptor } from './common/metrics/metrics.interceptor';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 @Module({
@@ -48,12 +63,20 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     // Rate limiting with in-memory storage (Upstash doesn't support Lua scripts)
     ThrottlerModule.forRoot({
       throttlers: [
-        { name: 'default', ttl: 60000, limit: 100 },
-        { name: 'strict', ttl: 60000, limit: 5 },
-        { name: 'api', ttl: 60000, limit: 200 },
-        { name: 'webhook', ttl: 60000, limit: 1000 },
+        { name: 'default', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 100 },
+        { name: 'strict', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 5 },
+        { name: 'api', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 200 },
+        { name: 'webhook', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 1000 },
       ],
       errorMessage: 'Rate limit exceeded. Please try again later.',
+    }),
+
+    // Graceful shutdown — drains in-flight HTTP requests on SIGTERM
+    GracefulShutdownModule.forRoot({
+      gracefulShutdownTimeout: 30_000,
+      cleanup: async (_app, signal) => {
+        console.log(`[GracefulShutdown] Received ${signal}, draining connections...`);
+      },
     }),
 
     // Feature modules
@@ -86,6 +109,19 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     RentriModule,
     SecurityIncidentModule,
     AiComplianceModule,
+    AiDiagnosticModule,
+    AiSchedulingModule,
+    DeclinedServiceModule,
+    PaymentLinkModule,
+    PublicTokenModule,
+    MembershipModule,
+    ProductionBoardModule,
+    PayrollModule,
+    BenchmarkingModule,
+    KioskModule,
+    VehicleHistoryModule,
+    PredictiveMaintenanceModule,
+    PortalModule,
   ],
   providers: [
     // Global exception filter
@@ -107,6 +143,10 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
         }),
     },
     // Global interceptors
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggerInterceptor,

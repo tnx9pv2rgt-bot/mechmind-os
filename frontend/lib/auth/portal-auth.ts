@@ -1,66 +1,58 @@
 /**
  * Portal Authentication with Multi-Tenant Support
- * 
- * Verifies customers belong to the correct tenant.
- * Ensures data isolation between different auto-repair shops.
- * 
+ *
+ * All authentication operations are delegated to the NestJS backend.
+ * No direct database access from the frontend.
+ *
  * @module lib/auth/portal-auth
- * @version 2.0.0
+ * @version 3.0.0
  */
 
-import { prisma } from '@/lib/prisma'
-import { SignJWT, jwtVerify } from 'jose'
+import { BACKEND_BASE } from '@/lib/config';
 
-// =============================================================================
-// Configuration
-// =============================================================================
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.PORTAL_JWT_SECRET || 'portal-secret-key-change-in-production'
-)
-
-const TOKEN_EXPIRY = '30d'
+const BACKEND_URL = BACKEND_BASE;
+const TIMEOUT_MS = 15_000;
 
 // =============================================================================
 // Types
 // =============================================================================
 
 export interface PortalUser {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  tenantId: string
-  tenantSlug: string
-  tenantName: string
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  tenantId: string;
+  tenantSlug: string;
+  tenantName: string;
 }
 
 export interface PortalTokenPayload {
-  customerId: string
-  email: string
-  tenantId: string
-  tenantSlug: string
-  type: 'portal'
-  iat: number
-  exp: number
+  customerId: string;
+  email: string;
+  tenantId: string;
+  tenantSlug: string;
+  type: 'portal';
+  iat: number;
+  exp: number;
 }
 
 export interface LoginCredentials {
-  email: string
-  password: string
-  tenantId?: string
-  tenantSlug?: string
+  email: string;
+  password: string;
+  tenantId?: string;
+  tenantSlug?: string;
 }
 
 export interface RegistrationData {
-  email: string
-  password: string
-  firstName: string
-  lastName: string
-  phone?: string
-  tenantId?: string
-  gdprConsent?: boolean
-  marketingConsent?: boolean
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  tenantId?: string;
+  gdprConsent?: boolean;
+  marketingConsent?: boolean;
 }
 
 // =============================================================================
@@ -73,32 +65,82 @@ export class PortalAuthError extends Error {
     public code: string,
     public statusCode: number = 401
   ) {
-    super(message)
-    this.name = 'PortalAuthError'
+    super(message);
+    this.name = 'PortalAuthError';
   }
 }
 
 export class CustomerNotFoundError extends PortalAuthError {
   constructor() {
-    super('Customer not found', 'CUSTOMER_NOT_FOUND', 404)
+    super('Customer not found', 'CUSTOMER_NOT_FOUND', 404);
   }
 }
 
 export class InvalidCredentialsError extends PortalAuthError {
   constructor() {
-    super('Invalid email or password', 'INVALID_CREDENTIALS', 401)
+    super('Invalid email or password', 'INVALID_CREDENTIALS', 401);
   }
 }
 
 export class TenantMismatchError extends PortalAuthError {
   constructor() {
-    super('Customer does not belong to this tenant', 'TENANT_MISMATCH', 403)
+    super('Customer does not belong to this tenant', 'TENANT_MISMATCH', 403);
   }
 }
 
 export class InactiveTenantError extends PortalAuthError {
   constructor() {
-    super('Tenant account is inactive or suspended', 'INACTIVE_TENANT', 403)
+    super('Tenant account is inactive or suspended', 'INACTIVE_TENANT', 403);
+  }
+}
+
+// =============================================================================
+// Backend HTTP Helper
+// =============================================================================
+
+async function backendFetch<T>(
+  path: string,
+  options?: RequestInit & { token?: string }
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  };
+
+  if (options?.token) {
+    headers['Authorization'] = `Bearer ${options.token}`;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    const body = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const errorCode = (body as { error?: { code?: string } })?.error?.code || 'BACKEND_ERROR';
+      const errorMsg =
+        (body as { error?: { message?: string } })?.error?.message ||
+        `Backend error: ${res.status}`;
+
+      if (res.status === 404) throw new CustomerNotFoundError();
+      if (res.status === 401) throw new InvalidCredentialsError();
+      if (res.status === 403) {
+        if (errorCode === 'TENANT_MISMATCH') throw new TenantMismatchError();
+        throw new InactiveTenantError();
+      }
+      throw new PortalAuthError(errorMsg, errorCode, res.status);
+    }
+
+    return ((body as { data?: T }).data ?? body) as T;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -106,29 +148,25 @@ export class InactiveTenantError extends PortalAuthError {
 // Token Management
 // =============================================================================
 
+/**
+ * Generate a portal token via the backend
+ */
 export async function generateToken(user: PortalUser): Promise<string> {
-  const token = await new SignJWT({
-    customerId: user.id,
-    email: user.email,
-    tenantId: user.tenantId,
-    tenantSlug: user.tenantSlug,
-    type: 'portal',
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(TOKEN_EXPIRY)
-    .sign(JWT_SECRET)
-  
-  return token
+  const result = await backendFetch<{ token: string }>('v1/portal/auth/token', {
+    method: 'POST',
+    body: JSON.stringify(user),
+  });
+  return result.token;
 }
 
+/**
+ * Verify a portal token via the backend
+ */
 export async function verifyToken(token: string): Promise<PortalTokenPayload> {
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET)
-    return payload as unknown as PortalTokenPayload
-  } catch {
-    throw new PortalAuthError('Invalid or expired token', 'INVALID_TOKEN', 401)
-  }
+  return backendFetch<PortalTokenPayload>('v1/portal/auth/verify', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
 }
 
 // =============================================================================
@@ -136,238 +174,41 @@ export async function verifyToken(token: string): Promise<PortalTokenPayload> {
 // =============================================================================
 
 /**
- * Authenticate a customer portal user
- * Verifies customer belongs to the specified tenant
+ * Authenticate a customer portal user via backend
  */
 export async function authenticateCustomer(
   credentials: LoginCredentials
 ): Promise<{ user: PortalUser; token: string }> {
-  const { email, password, tenantId, tenantSlug } = credentials
-  
-  // In production, hash and compare passwords with bcrypt
-  // For demo, we use a simple comparison
-  
-  // Find customer in database
-  const customer = await prisma.customer.findFirst({
-    where: {
-      email: email.toLowerCase(),
-    },
-    include: {
-      tenant: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          status: true,
-          subscriptionStatus: true,
-        },
-      },
-    },
-  })
-  
-  if (!customer) {
-    throw new CustomerNotFoundError()
-  }
-  
-  // Verify tenant match if specified
-  if (tenantId && customer.tenantId !== tenantId) {
-    throw new TenantMismatchError()
-  }
-  
-  if (tenantSlug && customer.tenant.slug !== tenantSlug) {
-    throw new TenantMismatchError()
-  }
-  
-  // Verify tenant is active
-  if (customer.tenant.status !== 'ACTIVE') {
-    throw new InactiveTenantError()
-  }
-  
-  // Verify subscription is valid
-  if (customer.tenant.subscriptionStatus === 'EXPIRED' ||
-      customer.tenant.subscriptionStatus === 'SUSPENDED') {
-    throw new InactiveTenantError()
-  }
-  
-  // In production: verify password hash
-  // const isValidPassword = await bcrypt.compare(password, customer.passwordHash)
-  // For demo purposes:
-  const isValidPassword = password === 'password123' // Demo only!
-  
-  if (!isValidPassword) {
-    throw new InvalidCredentialsError()
-  }
-  
-  // Create user object
-  const user: PortalUser = {
-    id: customer.id,
-    email: customer.email,
-    firstName: customer.firstName,
-    lastName: customer.lastName,
-    tenantId: customer.tenantId,
-    tenantSlug: customer.tenant.slug,
-    tenantName: customer.tenant.name,
-  }
-  
-  // Generate token
-  const token = await generateToken(user)
-  
-  // Update last login (if we had this field)
-  // await prisma.customer.update({
-  //   where: { id: customer.id },
-  //   data: { lastLoginAt: new Date() },
-  // })
-  
-  return { user, token }
+  return backendFetch<{ user: PortalUser; token: string }>('v1/portal/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
 }
 
 /**
- * Register a new customer portal user
+ * Register a new customer portal user via backend
  */
 export async function registerCustomer(
   data: RegistrationData
 ): Promise<{ user: PortalUser; token: string }> {
-  const { email, password, firstName, lastName, phone, tenantId: rawTenantId } = data
-
-  if (!rawTenantId) {
-    throw new PortalAuthError('Tenant ID is required', 'TENANT_NOT_FOUND', 400)
-  }
-
-  const tenantId: string = rawTenantId
-
-  // Verify tenant exists and is active
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      status: true,
-      maxCustomers: true,
-      subscriptionStatus: true,
-    },
-  })
-  
-  if (!tenant) {
-    throw new PortalAuthError('Tenant not found', 'TENANT_NOT_FOUND', 404)
-  }
-  
-  if (tenant.status !== 'ACTIVE') {
-    throw new InactiveTenantError()
-  }
-  
-  // Check if customer limit reached
-  const customerCount = await prisma.customer.count({
-    where: { tenantId },
-  })
-  
-  if (customerCount >= tenant.maxCustomers) {
-    throw new PortalAuthError(
-      'Customer limit reached for this tenant',
-      'CUSTOMER_LIMIT_REACHED',
-      403
-    )
-  }
-  
-  // Check if email already exists for this tenant
-  const existingCustomer = await prisma.customer.findFirst({
-    where: {
-      email: email.toLowerCase(),
-      tenantId,
-    },
-  })
-  
-  if (existingCustomer) {
-    throw new PortalAuthError(
-      'Email already registered for this shop',
-      'EMAIL_EXISTS',
-      409
-    )
-  }
-  
-  // Create customer
-  // In production: hash password with bcrypt
-  // const passwordHash = await bcrypt.hash(password, 10)
-  
-  const customer = await prisma.customer.create({
-    data: {
-      tenantId,
-      externalId: `portal_${Date.now()}`,
-      email: email.toLowerCase(),
-      firstName,
-      lastName,
-      phone,
-      gdprConsent: true,
-      gdprConsentAt: new Date(),
-    },
-  })
-  
-  // Create user object
-  const user: PortalUser = {
-    id: customer.id,
-    email: customer.email,
-    firstName: customer.firstName,
-    lastName: customer.lastName,
-    tenantId: tenant.id,
-    tenantSlug: tenant.slug,
-    tenantName: tenant.name,
-  }
-  
-  // Generate token
-  const token = await generateToken(user)
-  
-  return { user, token }
+  return backendFetch<{ user: PortalUser; token: string }>('v1/portal/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 /**
- * Get current customer from token
- * Verifies customer still belongs to tenant
+ * Get current customer from token via backend
  */
-export async function getCurrentCustomer(
-  token: string
-): Promise<PortalUser> {
-  const payload = await verifyToken(token)
-  
-  // Fetch customer and verify tenant membership
-  const customer = await prisma.customer.findFirst({
-    where: {
-      id: payload.customerId,
-      tenantId: payload.tenantId,
-    },
-    include: {
-      tenant: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          status: true,
-        },
-      },
-    },
-  })
-  
-  if (!customer) {
-    throw new CustomerNotFoundError()
-  }
-  
-  if (customer.tenant.status !== 'ACTIVE') {
-    throw new InactiveTenantError()
-  }
-  
-  return {
-    id: customer.id,
-    email: customer.email,
-    firstName: customer.firstName,
-    lastName: customer.lastName,
-    tenantId: customer.tenantId,
-    tenantSlug: customer.tenant.slug,
-    tenantName: customer.tenant.name,
-  }
+export async function getCurrentCustomer(token: string): Promise<PortalUser> {
+  return backendFetch<PortalUser>('v1/portal/auth/me', {
+    method: 'GET',
+    token,
+  });
 }
 
 /**
- * Verify customer has access to a specific resource
- * Checks that the resource belongs to the same tenant
+ * Verify customer has access to a specific resource via backend
  */
 export async function verifyResourceAccess(
   customerId: string,
@@ -375,131 +216,60 @@ export async function verifyResourceAccess(
   resourceType: 'vehicle' | 'inspection' | 'warranty' | 'booking',
   resourceId: string
 ): Promise<boolean> {
-  // Verify customer belongs to tenant
-  const customer = await prisma.customer.findFirst({
-    where: {
-      id: customerId,
-      tenantId,
-    },
-  })
-  
-  if (!customer) {
-    return false
-  }
-  
-  // Verify resource belongs to tenant
-  switch (resourceType) {
-    case 'vehicle': {
-      const vehicle = await prisma.vehicle.findFirst({
-        where: {
-          id: resourceId,
-          tenantId,
-        },
-      })
-      return !!vehicle
-    }
-    
-    case 'inspection': {
-      const inspection = await prisma.inspection.findFirst({
-        where: {
-          id: resourceId,
-          tenantId,
-        },
-      })
-      return !!inspection
-    }
-    
-    case 'warranty': {
-      const warranty = await prisma.warranty.findFirst({
-        where: {
-          id: resourceId,
-          tenantId,
-        },
-      })
-      return !!warranty
-    }
-    
-    case 'booking': {
-      const booking = await prisma.booking.findFirst({
-        where: {
-          id: resourceId,
-          tenantId,
-        },
-      })
-      return !!booking
-    }
-    
-    default:
-      return false
+  try {
+    const result = await backendFetch<{ hasAccess: boolean }>(
+      `v1/portal/auth/verify-access`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ customerId, tenantId, resourceType, resourceId }),
+      }
+    );
+    return result.hasAccess;
+  } catch {
+    return false;
   }
 }
 
 /**
- * Get customer vehicles scoped to tenant
+ * Get customer vehicles scoped to tenant via backend
  */
-export async function getCustomerVehicles(
-  customerId: string,
-  tenantId: string
-) {
-  // Verify customer belongs to tenant
-  const customer = await prisma.customer.findFirst({
-    where: {
-      id: customerId,
-      tenantId,
-    },
-  })
-  
-  if (!customer) {
-    throw new TenantMismatchError()
-  }
-  
-  // Get vehicles for customer in this tenant
-  return prisma.vehicle.findMany({
-    where: {
-      tenantId,
-      customerId,
-    },
-    select: {
-      id: true,
-      vin: true,
-      licensePlate: true,
-      make: true,
-      model: true,
-      year: true,
-      mileage: true,
-      color: true,
-    },
-  })
+export async function getCustomerVehicles(customerId: string, tenantId: string) {
+  return backendFetch<
+    Array<{
+      id: string;
+      vin: string;
+      licensePlate: string;
+      make: string;
+      model: string;
+      year: number;
+      mileage: number;
+      color: string;
+    }>
+  >(`v1/portal/customers/${customerId}/vehicles`, {
+    method: 'GET',
+    headers: { 'x-tenant-id': tenantId } as Record<string, string>,
+  });
 }
 
 /**
- * Get customer inspections scoped to tenant
+ * Get customer inspections scoped to tenant via backend
  */
-export async function getCustomerInspections(
-  customerId: string,
-  tenantId: string
-) {
-  // Get customer's vehicles first
-  const vehicles = await getCustomerVehicles(customerId, tenantId)
-  const vehicleIds = vehicles.map(v => v.id)
-  
-  // Get inspections for those vehicles
-  return prisma.inspection.findMany({
-    where: {
-      tenantId,
-      vehicleId: { in: vehicleIds },
-    },
-    include: {
+export async function getCustomerInspections(customerId: string, tenantId: string) {
+  return backendFetch<
+    Array<{
+      id: string;
+      vehicleId: string;
+      scheduledDate: string;
       vehicle: {
-        select: {
-          make: true,
-          model: true,
-          licensePlate: true,
-        },
-      },
-    },
-    orderBy: { scheduledDate: 'desc' },
-  })
+        make: string;
+        model: string;
+        licensePlate: string;
+      };
+    }>
+  >(`v1/portal/customers/${customerId}/inspections`, {
+    method: 'GET',
+    headers: { 'x-tenant-id': tenantId } as Record<string, string>,
+  });
 }
 
 // =============================================================================
@@ -515,76 +285,76 @@ export const portalAuth = {
   getCustomerInspections,
   generateToken,
   verifyToken,
-}
+};
 
 // =============================================================================
 // PortalAuthService Singleton Class (for compatibility)
 // =============================================================================
 
 export class PortalAuthService {
-  private static instance: PortalAuthService
-  private token: string | null = null
-  private user: PortalUser | null = null
+  private static instance: PortalAuthService;
+  private token: string | null = null;
+  private user: PortalUser | null = null;
 
   private constructor() {}
 
   static getInstance(): PortalAuthService {
     if (!PortalAuthService.instance) {
-      PortalAuthService.instance = new PortalAuthService()
+      PortalAuthService.instance = new PortalAuthService();
     }
-    return PortalAuthService.instance
+    return PortalAuthService.instance;
   }
 
   /**
    * Initialize auth state from storage
    */
   init(): boolean {
-    if (typeof window === 'undefined') return false
-    
-    const storedToken = localStorage.getItem('portal_token')
-    const storedUser = localStorage.getItem('portal_user')
-    
+    if (typeof window === 'undefined') return false;
+
+    const storedToken = localStorage.getItem('portal_token');
+    const storedUser = localStorage.getItem('portal_user');
+
     if (storedToken && storedUser) {
-      this.token = storedToken
+      this.token = storedToken;
       try {
-        this.user = JSON.parse(storedUser)
-        return true
+        this.user = JSON.parse(storedUser);
+        return true;
       } catch {
-        this.logout()
-        return false
+        this.logout();
+        return false;
       }
     }
-    
-    return false
+
+    return false;
   }
 
   /**
    * Login customer
    */
   async login(email: string, password: string, tenantSlug: string): Promise<PortalUser> {
-    const result = await authenticateCustomer({ email, password, tenantSlug })
-    
-    this.token = result.token
-    this.user = result.user
-    
+    const result = await authenticateCustomer({ email, password, tenantSlug });
+
+    this.token = result.token;
+    this.user = result.user;
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('portal_token', result.token)
-      localStorage.setItem('portal_user', JSON.stringify(result.user))
+      localStorage.setItem('portal_token', result.token);
+      localStorage.setItem('portal_user', JSON.stringify(result.user));
     }
-    
-    return result.user
+
+    return result.user;
   }
 
   /**
    * Logout customer
    */
   logout(): void {
-    this.token = null
-    this.user = null
-    
+    this.token = null;
+    this.user = null;
+
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('portal_token')
-      localStorage.removeItem('portal_user')
+      localStorage.removeItem('portal_token');
+      localStorage.removeItem('portal_user');
     }
   }
 
@@ -592,41 +362,41 @@ export class PortalAuthService {
    * Check if authenticated
    */
   isAuthenticated(): boolean {
-    return !!this.token && !!this.user
+    return !!this.token && !!this.user;
   }
 
   /**
    * Get current user
    */
   getUser(): PortalUser | null {
-    return this.user
+    return this.user;
   }
 
   /**
    * Get auth token
    */
   getToken(): string | null {
-    return this.token
+    return this.token;
   }
 
   /**
    * Refresh current user data
    */
   async refreshUser(): Promise<PortalUser | null> {
-    if (!this.token) return null
-    
+    if (!this.token) return null;
+
     try {
-      const user = await getCurrentCustomer(this.token)
-      this.user = user
-      
+      const user = await getCurrentCustomer(this.token);
+      this.user = user;
+
       if (typeof window !== 'undefined') {
-        localStorage.setItem('portal_user', JSON.stringify(user))
+        localStorage.setItem('portal_user', JSON.stringify(user));
       }
-      
-      return user
+
+      return user;
     } catch {
-      this.logout()
-      return null
+      this.logout();
+      return null;
     }
   }
 }

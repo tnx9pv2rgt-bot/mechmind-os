@@ -78,6 +78,19 @@ class RefreshTokenDto {
   refreshToken: string;
 }
 
+class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  currentPassword: string;
+
+  @IsString()
+  @MinLength(8, { message: 'La nuova password deve avere almeno 8 caratteri' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message: 'La password deve contenere almeno una maiuscola, una minuscola e un numero',
+  })
+  newPassword: string;
+}
+
 class Verify2FADto {
   @IsString()
   @IsNotEmpty()
@@ -504,6 +517,65 @@ export class AuthController {
   })
   async refreshToken(@Body() dto: RefreshTokenDto): Promise<AuthTokens> {
     return this.authService.refreshTokens(dto.refreshToken);
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Cambia password utente autenticato' })
+  @ApiResponse({ status: 200, description: 'Password aggiornata' })
+  @ApiResponse({ status: 401, description: 'Password corrente errata' })
+  @ApiResponse({ status: 400, description: 'Nuova password non valida' })
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ success: boolean; message: string }> {
+    // Get user with password hash
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { id: true, passwordHash: true, tenantId: true },
+    });
+
+    if (!dbUser || dbUser.tenantId !== user.tenantId) {
+      throw new NotFoundException('Utente non trovato');
+    }
+
+    // Verify current password
+    const isValid = await this.authService.verifyPassword(
+      dto.currentPassword,
+      dbUser.passwordHash ?? '',
+    );
+    if (!isValid) {
+      throw new UnauthorizedException('Password corrente errata');
+    }
+
+    // Prevent same password
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('La nuova password deve essere diversa dalla precedente');
+    }
+
+    // Hash and update
+    const newHash = await this.authService.hashPassword(dto.newPassword);
+    await this.prisma.user.update({
+      where: { id: user.userId },
+      data: { passwordHash: newHash },
+    });
+
+    // Log security event
+    this.securityActivity
+      .logEvent({
+        tenantId: user.tenantId,
+        userId: user.userId,
+        action: SecurityEventType.LOGIN_SUCCESS,
+        status: 'success',
+        details: { action: 'password_changed' },
+      })
+      .catch(() => {});
+
+    this.logger.log(`Password changed for user ${user.userId}`);
+
+    return { success: true, message: 'Password aggiornata con successo' };
   }
 
   @Post('logout')

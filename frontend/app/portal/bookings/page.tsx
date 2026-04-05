@@ -153,7 +153,7 @@ export default function PortalBookingsPage() {
     >
       {/* Filters */}
       <div className='flex flex-wrap items-center gap-3 mb-6'>
-        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[#2f2f2f] rounded-xl shadow-apple'>
+        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple'>
           {(['all', 'upcoming', 'past'] as const).map(f => (
             <button
               key={f}
@@ -163,7 +163,7 @@ export default function PortalBookingsPage() {
                 ${
                   filter === f
                     ? 'bg-apple-blue text-white shadow-sm'
-                    : 'text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec]'
+                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
                 }
               `}
             >
@@ -174,7 +174,7 @@ export default function PortalBookingsPage() {
           ))}
         </div>
 
-        <div className='flex items-center gap-2 text-sm text-apple-gray dark:text-[#636366]'>
+        <div className='flex items-center gap-2 text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
           <Calendar className='h-4 w-4' />
           <span>{filteredBookings.length} prenotazioni</span>
         </div>
@@ -198,10 +198,10 @@ export default function PortalBookingsPage() {
       ) : (
         <div className='text-center py-16'>
           <Calendar className='h-16 w-16 mx-auto text-apple-gray/30 mb-4' />
-          <h3 className='text-lg font-medium text-apple-dark dark:text-[#ececec] mb-2'>
+          <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
             Nessuna prenotazione trovata
           </h3>
-          <p className='text-apple-gray dark:text-[#636366] mb-6'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-6'>
             {filter === 'upcoming'
               ? 'Non hai prenotazioni in arrivo'
               : filter === 'past'

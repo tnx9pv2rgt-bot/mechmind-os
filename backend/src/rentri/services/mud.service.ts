@@ -47,12 +47,15 @@ export class MudService {
     });
 
     // Group by CER code
-    const cerMap = new Map<string, {
-      cerDescription: string;
-      totalKg: number;
-      operationCount: number;
-      destinations: Map<string, number>;
-    }>();
+    const cerMap = new Map<
+      string,
+      {
+        cerDescription: string;
+        totalKg: number;
+        operationCount: number;
+        destinations: Map<string, number>;
+      }
+    >();
 
     for (const entry of entries) {
       const existing = cerMap.get(entry.cerCode);
@@ -99,7 +102,10 @@ export class MudService {
     return {
       year,
       rows,
-      totalKg: entries.reduce((sum: number, e: { quantityKg: unknown }) => sum + Number(e.quantityKg), 0),
+      totalKg: entries.reduce(
+        (sum: number, e: { quantityKg: unknown }) => sum + Number(e.quantityKg),
+        0,
+      ),
       totalEntries: entries.length,
       totalFirs: firs,
     };
@@ -110,7 +116,7 @@ export class MudService {
 
     const header = 'CER,Descrizione,Quantita kg,Nr. Operazioni,Destinazione principale';
     const lines = preview.rows.map(
-      (row) =>
+      row =>
         `"${row.cerCode}","${row.cerDescription}",${row.totalKg.toFixed(3)},${row.operationCount},"${row.mainDestination || ''}"`,
     );
 

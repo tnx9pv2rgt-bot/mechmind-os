@@ -8,18 +8,24 @@ import { z } from 'zod';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
+import {
+  AppleCard,
+  AppleCardContent,
+  AppleCardHeader,
+} from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
-  ChevronLeft,
+  ArrowLeft,
   Plus,
   Trash2,
   Loader2,
   AlertCircle,
   FileText,
   Package,
+  Save,
+  Send,
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
@@ -87,6 +93,16 @@ const VAT_RATES = [
   { value: 4, label: '4%' },
   { value: 0, label: '0% (Esente)' },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
+};
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -302,122 +318,138 @@ export default function NewInvoicePage() {
   /* ------------------------------------------------------------------ */
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-hidden">
-      <div className="relative w-[min(960px,95vw)] h-[min(900px,95vh)]">
-        <motion.div
-          className="relative z-10 w-full h-full bg-[#2f2f2f] rounded-[40px] shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e] overflow-hidden flex flex-col"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className="px-6 sm:px-10 pt-6 sm:pt-8 pb-4">
-            <Breadcrumb
-              items={[
-                { label: 'Fatture', href: '/dashboard/invoices' },
-                { label: 'Nuova Fattura' },
-              ]}
-            />
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
-                  Nuova Fattura
-                </h1>
-                <p className="text-[#888] mt-1">
-                  Compila i dettagli della fattura
-                </p>
+    <div>
+      {/* Header */}
+      <header>
+        <div className='px-8 py-5'>
+          <Breadcrumb
+            items={[
+              { label: 'Fatture', href: '/dashboard/invoices' },
+              { label: 'Nuova Fattura' },
+            ]}
+          />
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                Nuova Fattura
+              </h1>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                Compila i dettagli della fattura
+              </p>
+            </div>
+            <div className='flex items-center gap-3'>
+              <div className='w-12 h-12 rounded-2xl bg-apple-blue/10 flex items-center justify-center'>
+                <FileText className='w-6 h-6 text-apple-blue' />
               </div>
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <FileText className="w-6 h-6 text-[#0d0d0d]" />
-              </div>
+              <AppleButton
+                variant='ghost'
+                icon={<ArrowLeft className='h-4 w-4' />}
+                onClick={() => router.push('/dashboard/invoices')}
+              >
+                Torna alle Fatture
+              </AppleButton>
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Content */}
-          <div className="flex-1 px-6 sm:px-10 pb-28 overflow-y-auto space-y-6">
-            {/* Error */}
-            {error && (
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-900/20 border border-red-800">
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-300">{error}</p>
-              </div>
-            )}
+      <motion.div
+        className='p-8 max-w-5xl mx-auto space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        {/* Error */}
+        {error && (
+          <div className='flex items-center gap-3 p-4 rounded-2xl bg-apple-red/5 dark:bg-apple-red/10 border border-apple-red/20'>
+            <AlertCircle className='h-5 w-5 text-apple-red flex-shrink-0' />
+            <p className='text-body text-apple-red'>{error}</p>
+          </div>
+        )}
 
-            {/* Dettagli Fattura */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <h3 className="text-lg font-semibold text-white mb-4">
+        {/* Dettagli Fattura */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Dettagli Fattura
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Numero Fattura
-                  </Label>
+                  </label>
                   <Input
                     {...register('invoiceNumber')}
-                    placeholder="Auto-generato"
-                    className="h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none"
+                    placeholder='Auto-generato'
                   />
                 </div>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Data Emissione
-                  </Label>
-                  <Input type="date" {...register('issueDate')} className="rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white" />
+                  </label>
+                  <Input type='date' {...register('issueDate')} />
                   {formErrors.issueDate && (
-                    <p className="text-xs text-red-500 mt-1">{formErrors.issueDate.message}</p>
+                    <p className='text-footnote text-apple-red mt-1'>{formErrors.issueDate.message}</p>
                   )}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Data Scadenza
-                  </Label>
-                  <Input type="date" {...register('dueDate')} className="rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white" />
+                  </label>
+                  <Input type='date' {...register('dueDate')} />
                 </div>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Metodo Pagamento
-                  </Label>
+                  </label>
                   <select
                     value={paymentMethod}
                     onChange={e => setValue('paymentMethod', e.target.value)}
-                    className="h-[52px] w-full rounded-full border border-[#4e4e4e] bg-[#2f2f2f] px-4 text-sm text-white outline-none"
+                    className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
-                    <option value="CASH">Contanti</option>
-                    <option value="BANK_TRANSFER">Bonifico</option>
-                    <option value="CARD">Carta</option>
-                    <option value="CHECK">Assegno</option>
-                    <option value="RIBA">RiBa</option>
-                    <option value="SCALAPAY">Scalapay</option>
+                    <option value='CASH'>Contanti</option>
+                    <option value='BANK_TRANSFER'>Bonifico</option>
+                    <option value='CARD'>Carta</option>
+                    <option value='CHECK'>Assegno</option>
+                    <option value='RIBA'>RiBa</option>
+                    <option value='SCALAPAY'>Scalapay</option>
                   </select>
                 </div>
               </div>
-            </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
-            {/* Cliente */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <h3 className="text-lg font-semibold text-white mb-4">
+        {/* Cliente */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Cliente
-              </h3>
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
               {loadingCustomers ? (
-                <div className="flex items-center gap-2 text-[#888]">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Caricamento clienti...</span>
+                <div className='flex items-center gap-2 text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                  <span className='text-body'>Caricamento clienti...</span>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Input
-                    placeholder="Cerca cliente per nome..."
+                    placeholder='Cerca cliente per nome...'
                     value={customerSearch}
                     onChange={e => setCustomerSearch(e.target.value)}
-                    className="h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none"
                   />
                   <select
                     value={customerId}
                     onChange={e => setValue('customerId', e.target.value, { shouldValidate: true })}
-                    className="h-[52px] w-full rounded-full border border-[#4e4e4e] bg-[#2f2f2f] px-4 text-sm text-white outline-none"
+                    className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
-                    <option value="">-- Seleziona un cliente --</option>
+                    <option value=''>-- Seleziona un cliente --</option>
                     {filteredCustomers.map(c => (
                       <option key={c.id} value={c.id}>
                         {c.companyName || `${c.firstName} ${c.lastName}`}
@@ -425,85 +457,86 @@ export default function NewInvoicePage() {
                     ))}
                   </select>
                   {fieldErrors.customerId && (
-                    <p className="text-xs text-red-500">{fieldErrors.customerId}</p>
+                    <p className='text-footnote text-apple-red'>{fieldErrors.customerId}</p>
                   )}
                 </div>
               )}
-            </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
-            {/* Righe Fattura */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">
-                  Righe Fattura
-                </h3>
-                <div className="flex items-center gap-2">
-                  {workOrderId && (
-                    <span className="text-xs text-[#888] flex items-center gap-1">
-                      <Package className="h-3 w-3" />
-                      Da OdL #{workOrderId.slice(0, 8)}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={addLineItem}
-                    className="flex items-center gap-1 text-sm font-medium text-white hover:opacity-70 transition-opacity min-h-[44px] px-3"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Aggiungi Riga
-                  </button>
-                </div>
+        {/* Righe Fattura */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader className='flex items-center justify-between'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                Righe Fattura
+              </h2>
+              <div className='flex items-center gap-2'>
+                {workOrderId && (
+                  <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'>
+                    <Package className='h-3 w-3' />
+                    Da OdL #{workOrderId.slice(0, 8)}
+                  </span>
+                )}
+                <AppleButton
+                  variant='ghost'
+                  size='sm'
+                  icon={<Plus className='h-4 w-4' />}
+                  onClick={addLineItem}
+                >
+                  Aggiungi Riga
+                </AppleButton>
               </div>
-              <div className="space-y-3">
-                {lineItems.map((item, idx) => (
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='space-y-3'>
+                {lineItems.map((item) => (
                   <div
                     key={item.id}
-                    className="grid grid-cols-12 gap-2 sm:gap-3 items-end p-3 sm:p-4 rounded-2xl bg-[#383838]"
+                    className='grid grid-cols-12 gap-2 sm:gap-3 items-end p-3 sm:p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                   >
-                    <div className="col-span-12 sm:col-span-4">
-                      <Label className="mb-1.5 block text-xs text-[#888]">
+                    <div className='col-span-12 sm:col-span-4'>
+                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         Descrizione
-                      </Label>
+                      </label>
                       <Input
-                        placeholder="es. Cambio olio motore"
+                        placeholder='es. Cambio olio motore'
                         value={item.description}
                         onChange={e => updateLineItem(item.id, 'description', e.target.value)}
-                        className="rounded-xl"
                       />
                     </div>
-                    <div className="col-span-3 sm:col-span-2">
-                      <Label className="mb-1.5 block text-xs text-[#888]">
+                    <div className='col-span-3 sm:col-span-2'>
+                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         Quantita
-                      </Label>
+                      </label>
                       <Input
-                        type="number"
+                        type='number'
                         min={1}
                         value={item.quantity}
                         onChange={e => updateLineItem(item.id, 'quantity', Number(e.target.value))}
-                        className="rounded-xl"
                       />
                     </div>
-                    <div className="col-span-3 sm:col-span-2">
-                      <Label className="mb-1.5 block text-xs text-[#888]">
+                    <div className='col-span-3 sm:col-span-2'>
+                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         Prezzo Unitario
-                      </Label>
+                      </label>
                       <Input
-                        type="number"
+                        type='number'
                         min={0}
                         step={0.01}
                         value={item.unitPrice}
                         onChange={e => updateLineItem(item.id, 'unitPrice', Number(e.target.value))}
-                        className="rounded-xl"
                       />
                     </div>
-                    <div className="col-span-3 sm:col-span-2">
-                      <Label className="mb-1.5 block text-xs text-[#888]">
+                    <div className='col-span-3 sm:col-span-2'>
+                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         IVA %
-                      </Label>
+                      </label>
                       <select
                         value={item.vatRate}
                         onChange={e => updateLineItem(item.id, 'vatRate', Number(e.target.value))}
-                        className="h-[52px] w-full rounded-full border border-[#4e4e4e] bg-[#2f2f2f] px-2 text-sm text-white outline-none"
+                        className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'
                       >
                         {VAT_RATES.map(r => (
                           <option key={r.value} value={r.value}>
@@ -512,78 +545,85 @@ export default function NewInvoicePage() {
                         ))}
                       </select>
                     </div>
-                    <div className="col-span-2 sm:col-span-1 text-right">
-                      <Label className="mb-1.5 block text-xs text-[#888]">
+                    <div className='col-span-2 sm:col-span-1 text-right'>
+                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         Totale
-                      </Label>
-                      <p className="h-10 flex items-center justify-end text-sm font-semibold text-white">
+                      </label>
+                      <p className='h-10 flex items-center justify-end text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                         {formatCurrency(item.quantity * item.unitPrice)}
                       </p>
                     </div>
-                    <div className="col-span-1 flex justify-center">
-                      <button
-                        type="button"
+                    <div className='col-span-1 flex justify-center'>
+                      <AppleButton
+                        variant='ghost'
+                        size='sm'
                         disabled={lineItems.length <= 1}
                         onClick={() => removeLineItem(item.id)}
-                        className="p-2 rounded-xl text-red-500 hover:bg-red-900/20 disabled:opacity-30 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        aria-label="Rimuovi riga fattura"
+                        aria-label='Rimuovi riga fattura'
+                        className='text-apple-red hover:opacity-80'
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                        <Trash2 className='h-4 w-4' />
+                      </AppleButton>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
-            {/* Totali + Note */}
-            <div className="bg-[#2f2f2f] rounded-2xl p-6 shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#4e4e4e]">
-              <h3 className="text-lg font-semibold text-white mb-4">
+        {/* Totali + Note */}
+        <motion.div variants={cardVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Riepilogo e Note
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
-                  <Label className="mb-1.5 block text-sm font-medium text-white">
+                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Note / Condizioni
-                  </Label>
+                  </label>
                   <textarea
                     {...register('notes')}
                     rows={4}
-                    placeholder="Note aggiuntive, condizioni di pagamento..."
-                    className="w-full rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] px-5 py-3 text-sm text-white placeholder-[#888] outline-none"
+                    placeholder='Note aggiuntive, condizioni di pagamento...'
+                    className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
                   />
                 </div>
 
-                <div className="flex flex-col justify-end">
-                  <div className="p-6 rounded-2xl bg-[#383838] space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#888]">Subtotale</span>
-                      <span className="font-medium text-white">
+                <div className='flex flex-col justify-end'>
+                  <div className='p-6 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-3'>
+                    <div className='flex justify-between text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Subtotale</span>
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                         {formatCurrency(subtotal)}
                       </span>
                     </div>
                     {Object.entries(ivaBreakdown).map(([rate, amount]) => (
-                      <div key={rate} className="flex justify-between text-sm">
-                        <span className="text-[#888]">IVA {rate}%</span>
-                        <span className="font-medium text-white">
+                      <div key={rate} className='flex justify-between text-body'>
+                        <span className='text-apple-gray dark:text-[var(--text-secondary)]'>IVA {rate}%</span>
+                        <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           {formatCurrency(amount)}
                         </span>
                       </div>
                     ))}
                     {bolloAmount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[#888]">Bollo</span>
-                        <span className="font-medium text-white">
+                      <div className='flex justify-between text-body'>
+                        <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Bollo</span>
+                        <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           {formatCurrency(bolloAmount)}
                         </span>
                       </div>
                     )}
-                    <div className="border-t border-[#4e4e4e] pt-3">
-                      <div className="flex justify-between">
-                        <span className="text-base font-semibold text-white">
+                    <div className='border-t border-apple-border/20 dark:border-[var(--border-default)] pt-3'>
+                      <div className='flex justify-between'>
+                        <span className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                           Totale
                         </span>
-                        <span className="text-base font-bold text-white">
+                        <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                           {formatCurrency(total)}
                         </span>
                       </div>
@@ -591,44 +631,40 @@ export default function NewInvoicePage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-10 py-6 bg-[#2f2f2f] border-t border-[#4e4e4e] z-50">
-            <div className="flex items-center justify-between gap-3">
-              <Button
-                type="button"
-                onClick={() => router.push('/dashboard/invoices')}
-                className="rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5 transition-all"
-              >
-                <ChevronLeft className="w-5 h-5 mr-2" />
-                Annulla
-              </Button>
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  onClick={() => handleSubmit(true)}
-                  disabled={submitting}
-                  className="rounded-full px-6 h-[52px] border border-[#4e4e4e] bg-transparent text-white hover:bg-white/5 transition-all"
-                >
-                  {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
-                  Salva come Bozza
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => handleSubmit(false)}
-                  disabled={submitting}
-                  className="rounded-full px-8 h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5] transition-all border-0"
-                >
-                  {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
-                  Salva e Invia
-                </Button>
-              </div>
-            </div>
-          </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
-      </div>
+
+        {/* Actions */}
+        <div className='flex items-center justify-between'>
+          <AppleButton
+            variant='ghost'
+            icon={<ArrowLeft className='h-4 w-4' />}
+            onClick={() => router.push('/dashboard/invoices')}
+          >
+            Annulla
+          </AppleButton>
+          <div className='flex gap-3'>
+            <AppleButton
+              variant='secondary'
+              icon={<Save className='h-4 w-4' />}
+              onClick={() => handleSubmit(true)}
+              loading={submitting}
+              disabled={submitting}
+            >
+              Salva come Bozza
+            </AppleButton>
+            <AppleButton
+              icon={<Send className='h-4 w-4' />}
+              onClick={() => handleSubmit(false)}
+              loading={submitting}
+              disabled={submitting}
+            >
+              Salva e Invia
+            </AppleButton>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -97,7 +97,7 @@ export default function PortalInvoicesPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Le Mie Fatture</h1>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Le Mie Fatture</h1>
         </div>
         <div className='flex items-center justify-center h-64'>
           <motion.div
@@ -114,11 +114,11 @@ export default function PortalInvoicesPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Le Mie Fatture</h1>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Le Mie Fatture</h1>
         </div>
         <div className='text-center py-16'>
           <AlertCircle className='h-12 w-12 text-apple-red/40 mx-auto mb-4' />
-          <p className='text-apple-gray dark:text-[#636366] mb-4'>Impossibile caricare le fatture</p>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>Impossibile caricare le fatture</p>
           <button onClick={() => mutate()} className='text-apple-blue hover:underline'>
             Riprova
           </button>
@@ -135,8 +135,8 @@ export default function PortalInvoicesPage(): React.ReactElement {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Le Mie Fatture</h1>
-        <p className='text-apple-gray dark:text-[#636366] mt-1'>
+        <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Le Mie Fatture</h1>
+        <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
           Visualizza e paga le tue fatture
         </p>
       </div>
@@ -149,10 +149,10 @@ export default function PortalInvoicesPage(): React.ReactElement {
               <Euro className='h-6 w-6 text-white' />
             </div>
             <div>
-              <p className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <p className='text-title-1 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 {totalPaid.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[#636366]'>Totale Pagato</p>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Totale Pagato</p>
             </div>
           </AppleCardContent>
         </AppleCard>
@@ -162,10 +162,10 @@ export default function PortalInvoicesPage(): React.ReactElement {
               <Clock className='h-6 w-6 text-white' />
             </div>
             <div>
-              <p className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <p className='text-title-1 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 {pendingCount}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[#636366]'>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                 Da pagare ({pendingTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })})
               </p>
             </div>
@@ -177,17 +177,17 @@ export default function PortalInvoicesPage(): React.ReactElement {
               <FileText className='h-6 w-6 text-white' />
             </div>
             <div>
-              <p className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <p className='text-title-1 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 {invoices.length}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[#636366]'>Totale Fatture</p>
+              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Totale Fatture</p>
             </div>
           </AppleCardContent>
         </AppleCard>
       </div>
 
       {/* Tabs */}
-      <div className='flex items-center gap-2 p-1 bg-white dark:bg-[#2f2f2f] rounded-xl shadow-apple w-fit'>
+      <div className='flex items-center gap-2 p-1 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple w-fit'>
         {([
           { key: 'unpaid', label: 'Da Pagare' },
           { key: 'paid', label: 'Pagate' },
@@ -204,7 +204,7 @@ export default function PortalInvoicesPage(): React.ReactElement {
               ${
                 activeTab === tab.key
                   ? 'bg-apple-blue text-white shadow-sm'
-                  : 'text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec]'
+                  : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
               }
             `}
           >
@@ -216,7 +216,7 @@ export default function PortalInvoicesPage(): React.ReactElement {
       {/* Invoice List */}
       <AppleCard>
         <AppleCardHeader>
-          <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+          <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
             {activeTab === 'unpaid' ? 'Fatture da pagare' : activeTab === 'paid' ? 'Fatture pagate' : 'Tutte le fatture'}
           </h2>
         </AppleCardHeader>
@@ -224,7 +224,7 @@ export default function PortalInvoicesPage(): React.ReactElement {
           {filteredInvoices.length === 0 ? (
             <div className='text-center py-12'>
               <FileText className='h-12 w-12 text-apple-gray mx-auto mb-4' />
-              <p className='text-apple-gray dark:text-[#636366]'>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)]'>
                 {activeTab === 'unpaid' ? 'Nessuna fattura da pagare' : 'Nessuna fattura disponibile'}
               </p>
             </div>
@@ -241,7 +241,7 @@ export default function PortalInvoicesPage(): React.ReactElement {
                     className={`flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer ${
                       isOverdue
                         ? 'bg-red-50/50 dark:bg-red-900/10 hover:bg-red-50 dark:hover:bg-red-900/20'
-                        : 'bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a]'
+                        : 'bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)]'
                     }`}
                     whileHover={{ scale: 1.01 }}
                     onClick={() => router.push(`/portal/invoices/${invoice.id}`)}
@@ -255,10 +255,10 @@ export default function PortalInvoicesPage(): React.ReactElement {
                         <FileText className={`h-5 w-5 ${isOverdue ? 'text-apple-red' : 'text-apple-blue'}`} />
                       </div>
                       <div>
-                        <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                        <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                           {invoice.invoiceNumber}
                         </p>
-                        <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                           {invoice.createdAt
                             ? new Date(invoice.createdAt).toLocaleDateString('it-IT')
                             : ''}
@@ -273,7 +273,7 @@ export default function PortalInvoicesPage(): React.ReactElement {
                     </div>
                     <div className='flex items-center gap-4'>
                       <Badge className={`${status.color} text-white text-xs`}>{status.label}</Badge>
-                      <p className='font-semibold text-apple-dark dark:text-[#ececec] min-w-[80px] text-right'>
+                      <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[80px] text-right'>
                         {invoice.total.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
                       </p>
                       {isUnpaid ? (

@@ -64,14 +64,14 @@ export default function LockedPage(): React.ReactElement {
       >
         {/* Lock icon */}
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
-          <span className="text-3xl text-[#b4b4b4]">⚠</span>
+          <span className="text-3xl text-[var(--text-secondary)]">⚠</span>
         </div>
 
         <div className="space-y-3">
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Account bloccato
           </h1>
-          <p className="text-[15px] text-[#b4b4b4] leading-relaxed max-w-[340px] mx-auto" role="alert">
+          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[340px] mx-auto" role="alert">
             Il tuo account è stato temporaneamente bloccato dopo troppi tentativi di accesso
             non riusciti.
           </p>
@@ -80,12 +80,12 @@ export default function LockedPage(): React.ReactElement {
         {/* Countdown */}
         {!isExpired && (
           <div className="space-y-2">
-            <p className="text-[13px] text-[#888]">Riprova tra</p>
+            <p className="text-[13px] text-[var(--text-tertiary)]">Riprova tra</p>
             <motion.div
               key={`${minutes}:${seconds}`}
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
-              className="inline-flex items-center justify-center rounded-2xl border border-[#4e4e4e] px-8 py-4"
+              className="inline-flex items-center justify-center rounded-2xl border border-[var(--border-strong)] px-8 py-4"
             >
               <span className="text-[32px] font-semibold font-mono text-white tabular-nums">
                 {formatTime(minutes, seconds)}
@@ -100,7 +100,7 @@ export default function LockedPage(): React.ReactElement {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
           >
-            <p className="text-[15px] text-[#b4b4b4] font-medium">
+            <p className="text-[15px] text-[var(--text-secondary)] font-medium">
               Il blocco è scaduto. Puoi riprovare ad accedere.
             </p>
             <Link href="/auth" className={btnPrimary}>
@@ -111,13 +111,13 @@ export default function LockedPage(): React.ReactElement {
 
         {!isExpired && (
           <div className="space-y-3 pt-2">
-            <p className="text-[13px] text-[#888] leading-relaxed">
+            <p className="text-[13px] text-[var(--text-tertiary)] leading-relaxed">
               Se pensi che si tratti di un errore, contatta il supporto tecnico o attendi che
               il blocco si esaurisca.
             </p>
             <Link
               href="/auth"
-              className="inline-flex items-center gap-1 min-h-[44px] text-[14px] font-medium text-[#888] hover:text-white transition-colors"
+              className="inline-flex items-center gap-1 min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors"
             >
               &larr; Torna al login
             </Link>

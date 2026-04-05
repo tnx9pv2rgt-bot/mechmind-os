@@ -30,7 +30,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { FormLayout } from '@/components/customers/FormLayout';
 import { useFormSession } from '@/hooks/useFormSession';
-import { Button } from '@/components/ui/button';
+import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -226,8 +226,8 @@ export default function Step1Page() {
 
   if (!isLoaded) {
     return (
-      <div className='fixed inset-0 bg-[#1a1a1a] flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-white' />
+      <div className='fixed inset-0 bg-apple-light-gray dark:bg-[var(--surface-tertiary)] flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
       </div>
     );
   }
@@ -247,25 +247,24 @@ export default function Step1Page() {
       >
         {/* Section Header with Icon */}
         <div className='flex items-center gap-3 mb-6'>
-          <div className='w-12 h-12 rounded-2xl bg-[#4e4e4e] flex items-center justify-center'>
-            <User className='w-6 h-6 text-white' />
+          <div className='w-12 h-12 rounded-2xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+            <User className='w-6 h-6 text-apple-blue' />
           </div>
           <div>
-            <h2 className='text-xl font-semibold text-white'>
+            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
               Informazioni Cliente
             </h2>
-
-            <p className='text-[#888] text-sm'>
+            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
               Dati principali e anagrafici
             </p>
           </div>
         </div>
 
         {/* Tipo Cliente Card */}
-        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'>
           <Label
             htmlFor='customerType'
-            className='text-sm font-medium text-white mb-3 block'
+            className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-3 block'
           >
             Tipo Cliente
           </Label>
@@ -275,7 +274,7 @@ export default function Step1Page() {
           >
             <SelectTrigger
               id='customerType'
-              className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+              className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
             >
               <SelectValue />
             </SelectTrigger>
@@ -301,21 +300,21 @@ export default function Step1Page() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'
+            className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'
           >
             <Label
               htmlFor='companyName'
-              className='text-sm font-medium text-white mb-2 block'
+              className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
             >
               Ragione Sociale
             </Label>
             <div className='relative'>
-              <Building2 className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
+              <Building2 className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray dark:text-[var(--text-secondary)]' />
               <Input
                 id='companyName'
                 {...register('companyName')}
                 autoComplete='organization'
-                className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                className='pl-12 h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                 placeholder='Rossi Srl'
               />
             </div>
@@ -323,12 +322,12 @@ export default function Step1Page() {
         )}
 
         {/* === SEZIONE: Dati Anagrafici Base === */}
-        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'>
           <div className='flex items-center gap-2 mb-4'>
-            <div className='w-8 h-8 rounded-xl bg-[#4e4e4e] flex items-center justify-center'>
-              <UserCircle className='w-4 h-4 text-white' />
+            <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+              <UserCircle className='w-4 h-4 text-apple-blue' />
             </div>
-            <h3 className='font-semibold text-white'>Dati Anagrafici</h3>
+            <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Dati Anagrafici</h3>
           </div>
 
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -336,7 +335,7 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='title'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Titolo
               </Label>
@@ -346,7 +345,7 @@ export default function Step1Page() {
               >
                 <SelectTrigger
                   id='title'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+                  className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   <SelectValue placeholder='Seleziona...' />
                 </SelectTrigger>
@@ -365,18 +364,18 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='dateOfBirth'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Data di Nascita
               </Label>
               <div className='relative'>
-                <Cake className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
+                <Cake className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray dark:text-[var(--text-secondary)]' />
                 <Input
                   id='dateOfBirth'
                   type='date'
                   {...register('dateOfBirth')}
                   autoComplete='bday'
-                  className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                  className='pl-12 h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                 />
               </div>
             </div>
@@ -385,17 +384,17 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='firstName'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Nome
               </Label>
               <div className='relative'>
-                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
+                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray dark:text-[var(--text-secondary)]' />
                 <Input
                   id='firstName'
                   {...register('firstName')}
                   autoComplete='given-name'
-                  className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                  className='pl-12 h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                   placeholder='Mario'
                 />
               </div>
@@ -405,7 +404,7 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='lastName'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Cognome
               </Label>
@@ -413,7 +412,7 @@ export default function Step1Page() {
                 id='lastName'
                 {...register('lastName')}
                 autoComplete='family-name'
-                className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                 placeholder='Rossi'
               />
             </div>
@@ -422,7 +421,7 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='gender'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Sesso
               </Label>
@@ -434,7 +433,7 @@ export default function Step1Page() {
               >
                 <SelectTrigger
                   id='gender'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+                  className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   <SelectValue placeholder='Seleziona...' />
                 </SelectTrigger>
@@ -453,7 +452,7 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='maritalStatus'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Stato Civile
               </Label>
@@ -468,7 +467,7 @@ export default function Step1Page() {
               >
                 <SelectTrigger
                   id='maritalStatus'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+                  className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   <SelectValue placeholder='Seleziona...' />
                 </SelectTrigger>
@@ -486,12 +485,12 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Contatti === */}
-        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'>
           <div className='flex items-center gap-2 mb-4'>
-            <div className='w-8 h-8 rounded-xl bg-[#4e4e4e] flex items-center justify-center'>
-              <Phone className='w-4 h-4 text-white' />
+            <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+              <Phone className='w-4 h-4 text-apple-blue' />
             </div>
-            <h3 className='font-semibold text-white'>Contatti</h3>
+            <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Contatti</h3>
           </div>
 
           <div className='space-y-4'>
@@ -499,17 +498,17 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='phone'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Telefono
               </Label>
               <div className='relative'>
-                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
+                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray dark:text-[var(--text-secondary)]' />
                 <Input
                   id='phone'
                   {...register('phone')}
                   autoComplete='tel'
-                  className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                  className='pl-12 h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                   placeholder='+39 333 1234567'
                   type='tel'
                 />
@@ -522,11 +521,11 @@ export default function Step1Page() {
                 <div className='flex items-center gap-2'>
                   <Label
                     htmlFor='email'
-                    className='text-sm font-medium text-white'
+                    className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'
                   >
                     Email
                   </Label>
-                  <span className='px-2 py-0.5 bg-[#383838] text-white text-xs font-medium rounded-full border border-[#4e4e4e]'>
+                  <span className='px-2 py-0.5 bg-apple-blue/10 dark:bg-apple-blue/20 text-apple-blue text-xs font-medium rounded-full'>
                     Consigliato
                   </span>
                 </div>
@@ -534,7 +533,7 @@ export default function Step1Page() {
                   <button
                     type='button'
                     onClick={() => setShowEmailTooltip(!showEmailTooltip)}
-                    className='w-6 h-6 rounded-full bg-[#4e4e4e] hover:bg-[#383838] text-white flex items-center justify-center transition-colors'
+                    className='w-6 h-6 rounded-full bg-apple-light-gray dark:bg-[var(--surface-hover)] hover:bg-apple-light-gray/80 dark:hover:bg-[var(--surface-active)] text-apple-gray dark:text-[var(--text-secondary)] flex items-center justify-center transition-colors'
                     aria-label='Informazioni sulla raccolta email'
                   >
                     <Info className='w-4 h-4' />
@@ -545,13 +544,13 @@ export default function Step1Page() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className='absolute bottom-full right-0 mb-2 z-50 w-72 bg-[#2f2f2f] border border-[#4e4e4e] text-white p-4 rounded-2xl shadow-xl'
+                      className='absolute bottom-full right-0 mb-2 z-50 w-72 bg-white dark:bg-[var(--surface-elevated)] border border-apple-border/20 dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)] p-4 rounded-2xl shadow-apple'
                     >
                       <div className='flex items-start gap-2'>
                         <Info className='w-5 h-5 flex-shrink-0 mt-0.5' />
                         <div>
-                          <p className='font-medium text-sm mb-1'>Perché è consigliato?</p>
-                          <p className='text-sm text-[#888] leading-relaxed'>
+                          <p className='text-body font-medium mb-1'>Perché è consigliato?</p>
+                          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] leading-relaxed'>
                             Inserendo l&apos;email potrai inviare preventivi, notifiche di scadenza
                             tagliando, conferme appuntamenti e fatture digitali direttamente al
                             cliente.
@@ -561,24 +560,24 @@ export default function Step1Page() {
                       <button
                         type='button'
                         onClick={() => setShowEmailTooltip(false)}
-                        className='absolute top-2 right-2 text-[#888] hover:text-white text-xl leading-none'
+                        className='absolute top-2 right-2 text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] text-xl leading-none'
                       >
                         ×
                       </button>
-                      <div className='absolute -bottom-1.5 right-2 w-3 h-3 bg-[#2f2f2f] rotate-45'></div>
+                      <div className='absolute -bottom-1.5 right-2 w-3 h-3 bg-white dark:bg-[var(--surface-elevated)] rotate-45'></div>
                     </motion.div>
                   )}
                 </div>
               </div>
 
               <div className='relative'>
-                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray dark:text-[var(--text-secondary)]' />
                 <Input
                   id='email'
                   type='email'
                   {...register('email')}
                   autoComplete='email'
-                  className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                  className='pl-12 h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                   placeholder='mario.rossi@email.it'
                 />
               </div>
@@ -587,12 +586,12 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Preferenze === */}
-        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'>
           <div className='flex items-center gap-2 mb-4'>
-            <div className='w-8 h-8 rounded-xl bg-[#4e4e4e] flex items-center justify-center'>
-              <Heart className='w-4 h-4 text-white' />
+            <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+              <Heart className='w-4 h-4 text-apple-blue' />
             </div>
-            <h3 className='font-semibold text-white'>Preferenze</h3>
+            <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Preferenze</h3>
           </div>
 
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -600,7 +599,7 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='preferredChannel'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Canale Preferito
               </Label>
@@ -615,7 +614,7 @@ export default function Step1Page() {
               >
                 <SelectTrigger
                   id='preferredChannel'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+                  className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   <SelectValue placeholder='Seleziona...' />
                 </SelectTrigger>
@@ -637,7 +636,7 @@ export default function Step1Page() {
             <div>
               <Label
                 htmlFor='language'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Lingua
               </Label>
@@ -647,7 +646,7 @@ export default function Step1Page() {
               >
                 <SelectTrigger
                   id='language'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+                  className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -665,7 +664,7 @@ export default function Step1Page() {
             <div className='col-span-2'>
               <Label
                 htmlFor='source'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Come ci hai conosciuto?
               </Label>
@@ -677,7 +676,7 @@ export default function Step1Page() {
               >
                 <SelectTrigger
                   id='source'
-                  className='h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white'
+                  className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   <SelectValue placeholder='Seleziona...' />
                 </SelectTrigger>
@@ -696,21 +695,21 @@ export default function Step1Page() {
             <div className='col-span-2'>
               <Label
                 htmlFor='tags'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
               >
                 Tag / Categorie
               </Label>
               <div className='relative'>
-                <Tag className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]' />
+                <Tag className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray dark:text-[var(--text-secondary)]' />
                 <Input
                   id='tags'
                   {...register('tags')}
                   autoComplete='off'
-                  className='pl-12 h-[52px] rounded-full border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none'
+                  className='pl-12 h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                   placeholder='VIP, Sconto 10%, Cliente storico, ecc.'
                 />
               </div>
-              <p className='text-xs text-[#888] mt-1'>
+              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                 Separare i tag con virgola
               </p>
             </div>
@@ -718,17 +717,17 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Privacy & Marketing === */}
-        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'>
           <div className='flex items-center gap-2 mb-4'>
-            <div className='w-8 h-8 rounded-xl bg-[#4e4e4e] flex items-center justify-center'>
-              <Bell className='w-4 h-4 text-white' />
+            <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+              <Bell className='w-4 h-4 text-apple-blue' />
             </div>
-            <h3 className='font-semibold text-white'>Privacy & Marketing</h3>
+            <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Privacy & Marketing</h3>
           </div>
 
           <div className='space-y-4'>
             {/* Marketing consent */}
-            <div className='flex items-start space-x-3 p-4 bg-[#383838] rounded-2xl border border-[#4e4e4e]'>
+            <div className='flex items-start space-x-3 p-4 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-2xl border border-apple-border/20 dark:border-[var(--border-default)]'>
               <Checkbox
                 id='marketingConsent'
                 checked={marketingConsent}
@@ -738,18 +737,18 @@ export default function Step1Page() {
               <div className='flex-1'>
                 <Label
                   htmlFor='marketingConsent'
-                  className='font-medium text-white cursor-pointer'
+                  className='font-medium text-apple-dark dark:text-[var(--text-primary)] cursor-pointer'
                 >
                   Consenso marketing
                 </Label>
-                <p className='text-sm text-[#888] mt-1'>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                   Acconsento a ricevere comunicazioni commerciali, offerte e promozioni
                 </p>
               </div>
             </div>
 
             {/* Do not call */}
-            <div className='flex items-start space-x-3 p-4 bg-[#383838] rounded-2xl border border-[#4e4e4e]'>
+            <div className='flex items-start space-x-3 p-4 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-2xl border border-apple-border/20 dark:border-[var(--border-default)]'>
               <Checkbox
                 id='doNotCall'
                 {...register('doNotCall')}
@@ -758,21 +757,21 @@ export default function Step1Page() {
               <div className='flex-1'>
                 <Label
                   htmlFor='doNotCall'
-                  className='font-medium text-white cursor-pointer'
+                  className='font-medium text-apple-dark dark:text-[var(--text-primary)] cursor-pointer'
                 >
                   <span className='flex items-center gap-2'>
                     <Phone className='w-4 h-4 text-red-500' />
                     Non chiamare
                   </span>
                 </Label>
-                <p className='text-sm text-[#888] mt-1'>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                   Il cliente non desidera essere contattato telefonicamente
                 </p>
               </div>
             </div>
 
             {/* Do not email */}
-            <div className='flex items-start space-x-3 p-4 bg-[#383838] rounded-2xl border border-[#4e4e4e]'>
+            <div className='flex items-start space-x-3 p-4 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-2xl border border-apple-border/20 dark:border-[var(--border-default)]'>
               <Checkbox
                 id='doNotEmail'
                 {...register('doNotEmail')}
@@ -781,14 +780,14 @@ export default function Step1Page() {
               <div className='flex-1'>
                 <Label
                   htmlFor='doNotEmail'
-                  className='font-medium text-white cursor-pointer'
+                  className='font-medium text-apple-dark dark:text-[var(--text-primary)] cursor-pointer'
                 >
                   <span className='flex items-center gap-2'>
                     <Mail className='w-4 h-4 text-orange-500' />
                     Non inviare email
                   </span>
                 </Label>
-                <p className='text-sm text-[#888] mt-1'>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                   Il cliente non desidera ricevere comunicazioni via email
                 </p>
               </div>
@@ -797,12 +796,12 @@ export default function Step1Page() {
         </div>
 
         {/* === SEZIONE: Note === */}
-        <div className='bg-[#383838] rounded-2xl p-6 border border-[#4e4e4e]'>
+        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)]'>
           <div className='flex items-center gap-2 mb-4'>
-            <div className='w-8 h-8 rounded-xl bg-[#4e4e4e] flex items-center justify-center'>
-              <Info className='w-4 h-4 text-white' />
+            <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+              <Info className='w-4 h-4 text-apple-blue' />
             </div>
-            <h3 className='font-semibold text-white'>Note</h3>
+            <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Note</h3>
           </div>
 
           <div>
@@ -813,7 +812,7 @@ export default function Step1Page() {
               id='notes'
               {...register('notes')}
               autoComplete='off'
-              className='w-full h-32 px-5 py-3 rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] outline-none resize-none'
+              className='w-full h-32 px-5 py-3 rounded-2xl border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none resize-none'
               placeholder='Inserisci qui eventuali note sul cliente: preferenze, richieste speciali, storico interazioni...'
             />
           </div>

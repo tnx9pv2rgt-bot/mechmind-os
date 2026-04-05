@@ -138,14 +138,14 @@ export function DeviceList({
         {Array.from({ length: 2 }).map((_, i) => (
           <div
             key={i}
-            className="animate-pulse rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] p-4"
+            className="animate-pulse rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-4"
           >
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#4e4e4e]" />
+              <div className="h-10 w-10 rounded-full bg-[var(--border-strong)]" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-40 rounded bg-[#4e4e4e]" />
-                <div className="h-3 w-60 rounded bg-[#4e4e4e]" />
-                <div className="h-3 w-32 rounded bg-[#4e4e4e]" />
+                <div className="h-4 w-40 rounded bg-[var(--border-strong)]" />
+                <div className="h-3 w-60 rounded bg-[var(--border-strong)]" />
+                <div className="h-3 w-32 rounded bg-[var(--border-strong)]" />
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@ export function DeviceList({
 
   if (devices.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 text-[#888]">
+      <div className="flex flex-col items-center gap-3 py-8 text-[var(--text-tertiary)]">
         <Monitor className="h-10 w-10" />
         <p className="text-sm">Nessun dispositivo registrato</p>
       </div>
@@ -175,13 +175,13 @@ export function DeviceList({
             transition={{ delay: index * 0.05 }}
             className={`rounded-2xl border p-4 transition-colors ${
               device.isCurrent
-                ? 'border-white/20 bg-[#2f2f2f]'
-                : 'border-[#4e4e4e] bg-[#2f2f2f]'
+                ? 'border-white/20 bg-[var(--surface-elevated)]'
+                : 'border-[var(--border-strong)] bg-[var(--surface-elevated)]'
             }`}
           >
             <div className="flex items-start gap-3">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                device.isTrusted ? 'bg-green-500/10 text-green-400' : 'bg-[#4e4e4e]/50 text-[#b4b4b4]'
+                device.isTrusted ? 'bg-green-500/10 text-green-400' : 'bg-[var(--border-strong)]/50 text-[var(--text-secondary)]'
               }`}>
                 {getDeviceIcon(device.deviceName)}
               </div>
@@ -190,7 +190,7 @@ export function DeviceList({
                   <p className="text-sm font-medium text-white">
                     {device.deviceName}
                   </p>
-                  <span className="text-xs text-[#888]">
+                  <span className="text-xs text-[var(--text-tertiary)]">
                     {device.browser}
                   </span>
                   {device.isCurrent && (
@@ -199,7 +199,7 @@ export function DeviceList({
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-[#888]">
+                <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                   {device.location} &middot; Ultimo accesso: {formatDate(device.lastActivity)}
                 </p>
                 {device.isTrusted && device.trustedUntil ? (
@@ -208,7 +208,7 @@ export function DeviceList({
                     Fidato fino al: {formatTrustedUntil(device.trustedUntil)}
                   </p>
                 ) : (
-                  <p className="mt-1 flex items-center gap-1 text-xs text-[#888]">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
                     <ShieldOff className="h-3 w-3" />
                     Non fidato
                   </p>
@@ -221,7 +221,7 @@ export function DeviceList({
                         type="button"
                         onClick={() => setConfirmUntrust(device.id)}
                         disabled={actionLoading === device.id}
-                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#4e4e4e] px-4 py-2 text-xs font-medium text-[#b4b4b4] transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
+                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
                       >
                         {actionLoading === device.id ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -245,7 +245,7 @@ export function DeviceList({
                       type="button"
                       onClick={() => handleTrust(device.id)}
                       disabled={actionLoading === device.id}
-                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#4e4e4e] px-4 py-2 text-xs font-medium text-[#b4b4b4] transition-colors hover:border-green-500/30 hover:text-green-400 disabled:opacity-50"
+                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-green-500/30 hover:text-green-400 disabled:opacity-50"
                     >
                       {actionLoading === device.id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />

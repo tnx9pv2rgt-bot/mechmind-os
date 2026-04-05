@@ -103,10 +103,14 @@ export class CannedJobService {
     // If lines are provided, delete old and create new in a transaction
     if (dto.lines) {
       return this.prisma.$transaction(async tx => {
+        // Verify the cannedJob belongs to the tenant before deleting lines
+        const job = await tx.cannedJob.findFirst({ where: { id, tenantId } });
+        if (!job) throw new NotFoundException(`CannedJob ${id} not found`);
+
         await tx.cannedJobLine.deleteMany({ where: { cannedJobId: id } });
 
         return tx.cannedJob.update({
-          where: { id },
+          where: { id: job.id },
           data: {
             name: dto.name,
             description: dto.description,
@@ -262,8 +266,8 @@ export class CannedJobService {
         partId: l.partId,
       }));
 
-    await this.prisma.workOrder.update({
-      where: { id: workOrderId },
+    await this.prisma.workOrder.updateMany({
+      where: { id: workOrderId, tenantId },
       data: {
         laborItems: JSON.parse(JSON.stringify([...existingLaborItems, ...newLaborItems])),
         partsUsed: JSON.parse(JSON.stringify([...existingPartsUsed, ...newPartsUsed])),

@@ -172,7 +172,7 @@ export function CommandPalette(): React.ReactElement {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[20%] z-50 w-full max-w-lg translate-x-[-50%] rounded-2xl border border-gray-200 bg-white shadow-apple-lg dark:border-gray-700 dark:bg-[#2f2f2f]"
+          className="fixed left-[50%] top-[20%] z-50 w-full max-w-lg translate-x-[-50%] rounded-2xl border border-gray-200 bg-white shadow-apple-lg dark:border-gray-700 dark:bg-[var(--surface-elevated)]"
           aria-label="Ricerca globale"
         >
           <DialogPrimitive.Title className="sr-only">Ricerca globale</DialogPrimitive.Title>

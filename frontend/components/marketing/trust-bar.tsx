@@ -16,7 +16,7 @@ export function TrustBar(): React.ReactElement {
   return (
     <section
       ref={ref}
-      className="border-y border-[#e5e5e5] bg-[#f7f7f8] py-6 dark:border-[#444654] dark:bg-[#171717]"
+      className="border-y border-[var(--border-default)] bg-[var(--surface-secondary)] py-6 dark:border-[var(--border-default)] dark:bg-[var(--surface-secondary)]"
     >
       <motion.div
         className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-6 px-6 sm:gap-10 lg:gap-14 lg:px-8"
@@ -27,7 +27,7 @@ export function TrustBar(): React.ReactElement {
         {badges.map((badge) => (
             <div
               key={badge.label}
-              className="flex items-center gap-2.5 text-[#6e6e80] dark:text-[#8e8ea0]"
+              className="flex items-center gap-2.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
             >
               <span className="text-sm font-medium">{badge.label}</span>
             </div>

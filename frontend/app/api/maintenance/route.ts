@@ -10,10 +10,10 @@ import { proxyToNestJS, getQueryParams } from '@/lib/auth/api-proxy';
 
 export async function GET(request: NextRequest) {
   const params = getQueryParams(request);
-  return proxyToNestJS({ backendPath: 'v1/fleets/maintenance', params });
+  return proxyToNestJS({ backendPath: 'v1/predictive-maintenance', params });
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  return proxyToNestJS({ backendPath: 'v1/fleets/maintenance', method: 'POST', body });
+  return proxyToNestJS({ backendPath: 'v1/predictive-maintenance', method: 'POST', body });
 }

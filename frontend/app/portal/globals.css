@@ -67,16 +67,16 @@
 
 /* Card hover effects */
 .portal-card-hover {
-  @apply transition-all duration-300 ease-apple;
+  @apply transition-all duration-300 ease-in-out;
 }
 
 .portal-card-hover:hover {
-  @apply shadow-apple-hover -translate-y-0.5;
+  @apply shadow-lg -translate-y-0.5;
 }
 
 /* Focus visible for accessibility */
 .portal-focus-visible:focus-visible {
-  @apply outline-none ring-2 ring-apple-blue ring-offset-2;
+  @apply outline-none ring-2 ring-[#60a5fa] ring-offset-2;
 }
 
 /* Print styles for documents */

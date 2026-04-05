@@ -15,7 +15,7 @@ export function DemoCTA({ onStartDemo, isLoading = false }: DemoCTAProps): React
       disabled={isLoading}
       className={[
         'flex h-[52px] w-full items-center justify-center gap-2 rounded-full',
-        'border border-[#4e4e4e] bg-transparent text-base font-normal text-white',
+        'border border-[var(--border-strong)] bg-transparent text-base font-normal text-white',
         'transition-colors hover:bg-white/5',
         'disabled:cursor-not-allowed disabled:opacity-50',
       ].join(' ')}

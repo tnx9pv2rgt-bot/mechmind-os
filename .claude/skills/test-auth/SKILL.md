@@ -1,6 +1,7 @@
 ---
 name: test-auth
 description: Testa il flusso completo di autenticazione (login, register, logout, me, demo, MFA, passkey)
+disable-model-invocation: true
 user_invocable: true
 ---
 

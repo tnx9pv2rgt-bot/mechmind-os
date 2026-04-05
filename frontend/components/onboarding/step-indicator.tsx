@@ -52,9 +52,9 @@ export function StepIndicator({
                 <motion.div
                   className={[
                     'relative z-10 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-300',
-                    isCompleted ? 'bg-white text-[#1d1d1f]' : '',
-                    isCurrent ? 'bg-white text-[#1d1d1f]' : '',
-                    isFuture ? 'bg-[#444] text-[#888]' : '',
+                    isCompleted ? 'bg-white text-[var(--text-primary)]' : '',
+                    isCurrent ? 'bg-white text-[var(--text-primary)]' : '',
+                    isFuture ? 'bg-[var(--border-default)] text-[var(--text-tertiary)]' : '',
                   ].join(' ')}
                   layout
                 >
@@ -82,7 +82,7 @@ export function StepIndicator({
 
               {/* Connecting line */}
               {index < steps.length - 1 && (
-                <div className="relative mx-1 h-0.5 w-8 overflow-hidden rounded-full bg-[#444] sm:w-12">
+                <div className="relative mx-1 h-0.5 w-8 overflow-hidden rounded-full bg-[var(--border-default)] sm:w-12">
                   <motion.div
                     className="absolute inset-y-0 left-0 bg-white"
                     initial={false}
@@ -99,14 +99,14 @@ export function StepIndicator({
       {/* Step label */}
       <motion.p
         key={currentStep}
-        className="text-sm font-medium text-[#888]"
+        className="text-sm font-medium text-[var(--text-tertiary)]"
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         Passo {currentStep} di {totalSteps}
         {STEP_LABELS[currentStep] && (
-          <span className="text-[#666]">
+          <span className="text-[var(--text-tertiary)]">
             {' '}&mdash; {STEP_LABELS[currentStep]}
           </span>
         )}

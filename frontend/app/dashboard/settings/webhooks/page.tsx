@@ -196,10 +196,10 @@ export default function WebhooksPage() {
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
             <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
+            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[#636366]'>
+            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
               Impossibile caricare i webhook.
             </p>
           </AppleCardContent>
@@ -210,12 +210,12 @@ export default function WebhooksPage() {
 
   return (
     <div className='min-h-screen'>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-4 sm:px-8 py-5'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Webhook</h1>
-              <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Webhook</h1>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
                 Configura i webhook per ricevere notifiche in tempo reale
               </p>
             </div>
@@ -232,7 +232,7 @@ export default function WebhooksPage() {
           <AppleCardHeader>
             <div className='flex items-center gap-3'>
               <Webhook className='h-5 w-5 text-apple-blue' />
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Webhook configurati ({webhooks?.length || 0})
               </h2>
             </div>
@@ -246,20 +246,20 @@ export default function WebhooksPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className='p-4 rounded-xl border border-apple-border/30 dark:border-[#424242] hover:border-apple-blue/30 transition-all'
+                    className='p-4 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] hover:border-apple-blue/30 transition-all'
                   >
                     <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-center gap-2 mb-1'>
                           {webhook.active ? (
-                            <ToggleRight className='w-4 h-4 text-green-500 flex-shrink-0' />
+                            <ToggleRight className='w-4 h-4 text-apple-green flex-shrink-0' />
                           ) : (
-                            <ToggleLeft className='w-4 h-4 text-gray-400 flex-shrink-0' />
+                            <ToggleLeft className='w-4 h-4 text-apple-gray flex-shrink-0' />
                           )}
-                          <p className='text-body font-medium text-apple-dark dark:text-[#ececec] truncate'>
+                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] truncate'>
                             {webhook.url}
                           </p>
-                          <Badge className={`border-0 ${webhook.active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}>
+                          <Badge className={`border-0 ${webhook.active ? 'bg-green-100 dark:bg-green-900/30 text-apple-green' : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'}`}>
                             {webhook.active ? 'Attivo' : 'Inattivo'}
                           </Badge>
                         </div>
@@ -275,7 +275,7 @@ export default function WebhooksPage() {
                             </Badge>
                           )}
                         </div>
-                        <div className='flex items-center gap-4 mt-2 text-footnote text-apple-gray dark:text-[#636366]'>
+                        <div className='flex items-center gap-4 mt-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                           {webhook.lastDeliveryAt && (
                             <span className='flex items-center gap-1'>
                               <Clock className='w-3 h-3' />
@@ -283,7 +283,7 @@ export default function WebhooksPage() {
                             </span>
                           )}
                           {webhook.failureCount > 0 && (
-                            <span className='flex items-center gap-1 text-red-500'>
+                            <span className='flex items-center gap-1 text-apple-red'>
                               <XCircle className='w-3 h-3' />
                               {webhook.failureCount} errori
                             </span>
@@ -302,7 +302,7 @@ export default function WebhooksPage() {
                         <AppleButton
                           variant='ghost'
                           size='sm'
-                          className='min-w-[44px] min-h-[44px] text-red-500'
+                          className='min-w-[44px] min-h-[44px] text-apple-red'
                           onClick={() => {
                             setSelectedWebhook(webhook);
                             setShowDeleteDialog(true);
@@ -318,10 +318,10 @@ export default function WebhooksPage() {
             ) : (
               <div className='text-center py-12'>
                 <Webhook className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                <h3 className='text-body font-medium text-apple-dark dark:text-[#ececec] mb-1'>
+                <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
                   Nessun webhook configurato
                 </h3>
-                <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                   Crea il primo webhook per ricevere notifiche in tempo reale.
                 </p>
               </div>
@@ -341,7 +341,7 @@ export default function WebhooksPage() {
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <label htmlFor='webhook-url' className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+              <label htmlFor='webhook-url' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                 URL Endpoint
               </label>
               <Input
@@ -352,12 +352,12 @@ export default function WebhooksPage() {
                 className='h-11 rounded-xl'
               />
               {form.formState.errors.url && (
-                <p className='text-xs text-red-500'>{form.formState.errors.url.message}</p>
+                <p className='text-footnote text-apple-red'>{form.formState.errors.url.message}</p>
               )}
             </div>
 
             <div className='space-y-2'>
-              <label htmlFor='webhook-secret' className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+              <label htmlFor='webhook-secret' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                 Secret (opzionale)
               </label>
               <Input
@@ -369,15 +369,15 @@ export default function WebhooksPage() {
             </div>
 
             <div className='space-y-2'>
-              <p className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>Eventi</p>
+              <p className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Eventi</p>
               {form.formState.errors.events && (
-                <p className='text-xs text-red-500'>{form.formState.errors.events.message}</p>
+                <p className='text-footnote text-apple-red'>{form.formState.errors.events.message}</p>
               )}
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto'>
                 {EVENTS.map((event) => (
                   <label
                     key={event.value}
-                    className='flex items-center gap-2 p-2 rounded-lg hover:bg-apple-light-gray/50 dark:hover:bg-[#353535] cursor-pointer min-h-[44px]'
+                    className='flex items-center gap-2 p-2 rounded-lg hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)] cursor-pointer min-h-[44px]'
                   >
                     <input
                       type='checkbox'
@@ -385,7 +385,7 @@ export default function WebhooksPage() {
                       onChange={() => toggleEvent(event.value)}
                       className='w-4 h-4 rounded border-apple-border text-apple-blue focus:ring-apple-blue'
                     />
-                    <span className='text-sm text-apple-dark dark:text-[#ececec]'>{event.label}</span>
+                    <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>{event.label}</span>
                   </label>
                 ))}
               </div>
@@ -413,22 +413,24 @@ export default function WebhooksPage() {
           {selectedWebhook && (
             <div className='space-y-4 py-4'>
               <div className='space-y-2'>
-                <p className='text-footnote text-apple-gray uppercase tracking-wider'>URL</p>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>URL</p>
                 <div className='flex items-center gap-2'>
-                  <p className='text-body text-apple-dark dark:text-[#ececec] font-mono text-sm break-all'>
+                  <p className='text-body text-apple-dark dark:text-[var(--text-primary)] font-mono text-sm break-all'>
                     {selectedWebhook.url}
                   </p>
-                  <button
+                  <AppleButton
+                    variant='ghost'
+                    size='sm'
+                    className='min-w-[44px] min-h-[44px]'
                     onClick={() => { navigator.clipboard.writeText(selectedWebhook.url); toast.success('URL copiato'); }}
-                    className='p-1 hover:bg-apple-light-gray rounded min-w-[44px] min-h-[44px] flex items-center justify-center'
                   >
                     <Copy className='w-3 h-3' />
-                  </button>
+                  </AppleButton>
                 </div>
               </div>
 
               <div className='space-y-2'>
-                <p className='text-footnote text-apple-gray uppercase tracking-wider'>Eventi</p>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Eventi</p>
                 <div className='flex flex-wrap gap-1'>
                   {selectedWebhook.events.map((e) => (
                     <Badge key={e} variant='outline' className='text-xs'>
@@ -440,28 +442,28 @@ export default function WebhooksPage() {
 
               {deliveryLog.length > 0 && (
                 <div className='space-y-2'>
-                  <p className='text-footnote text-apple-gray uppercase tracking-wider'>Ultimi invii</p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Ultimi invii</p>
                   <div className='space-y-2 max-h-60 overflow-y-auto'>
                     {deliveryLog.map((log) => (
                       <div
                         key={log.id}
-                        className='flex items-center justify-between p-3 bg-apple-light-gray/50 dark:bg-[#353535] rounded-lg'
+                        className='flex items-center justify-between p-3 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-lg'
                       >
                         <div className='flex items-center gap-2'>
                           {log.success ? (
-                            <CheckCircle className='w-4 h-4 text-green-500' />
+                            <CheckCircle className='w-4 h-4 text-apple-green' />
                           ) : (
-                            <XCircle className='w-4 h-4 text-red-500' />
+                            <XCircle className='w-4 h-4 text-apple-red' />
                           )}
                           <div>
-                            <p className='text-sm text-apple-dark dark:text-[#ececec]'>{log.event}</p>
+                            <p className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>{log.event}</p>
                             <p className='text-xs text-apple-gray'>
                               {new Date(log.timestamp).toLocaleString('it-IT')}
                             </p>
                           </div>
                         </div>
                         <div className='text-right'>
-                          <Badge variant='outline' className={`text-xs ${log.success ? 'text-green-600' : 'text-red-600'}`}>
+                          <Badge variant='outline' className={`text-footnote ${log.success ? 'text-apple-green' : 'text-apple-red'}`}>
                             {log.statusCode}
                           </Badge>
                           <p className='text-xs text-apple-gray mt-1'>{log.responseTime}ms</p>

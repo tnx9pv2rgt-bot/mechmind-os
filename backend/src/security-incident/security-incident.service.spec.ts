@@ -57,10 +57,7 @@ describe('SecurityIncidentService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SecurityIncidentService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [SecurityIncidentService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(SecurityIncidentService);
@@ -143,9 +140,7 @@ describe('SecurityIncidentService', () => {
     it('should throw NotFoundException if not found', async () => {
       prisma.securityIncident.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(TENANT_ID, 'nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException if wrong tenant', async () => {
@@ -153,9 +148,7 @@ describe('SecurityIncidentService', () => {
         mockIncident({ tenantId: 'other-tenant' }),
       );
 
-      await expect(service.findOne(TENANT_ID, 'inc-uuid-001')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(TENANT_ID, 'inc-uuid-001')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -321,8 +314,12 @@ describe('SecurityIncidentService', () => {
       prisma.user.findMany.mockResolvedValue([
         { id: 'u1', totpEnabled: true, smsOtpEnabled: false },
       ]);
-      prisma.securityIncident.count.mockResolvedValue(0);
-      prisma.securityIncident.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count
+        .mockResolvedValueOnce(0) // openIncidents
+        .mockResolvedValueOnce(1); // handledIncidents
+      prisma.securityIncident.findMany
+        .mockResolvedValueOnce([]) // resolvedIncidents
+        .mockResolvedValueOnce([]); // checkNis2Deadlines
 
       const result = await service.getComplianceOverview(TENANT_ID);
 
@@ -343,6 +340,252 @@ describe('SecurityIncidentService', () => {
 
       expect(result.mfaEnabledForAdmins).toBe(false);
       expect(result.complianceScore).toBeLessThan(100);
+    });
+
+    it('should report MFA enabled when admin has smsOtp', async () => {
+      prisma.user.findMany.mockResolvedValue([
+        { id: 'u1', totpEnabled: false, smsOtpEnabled: true },
+      ]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      expect(result.mfaEnabledForAdmins).toBe(true);
+    });
+
+    it('should report MFA not enabled when no admins exist', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      expect(result.mfaEnabledForAdmins).toBe(false);
+    });
+
+    it('should calculate avg resolution time when resolved incidents exist', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+      prisma.securityIncident.findMany
+        .mockResolvedValueOnce([
+          {
+            detectedAt: new Date('2026-03-24T08:00:00Z'),
+            resolvedAt: new Date('2026-03-24T20:00:00Z'),
+          },
+        ]) // resolvedIncidents
+        .mockResolvedValueOnce([]); // checkNis2Deadlines
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      expect(result.avgResolutionTimeHours).toBeCloseTo(12, 0);
+    });
+
+    it('should return null avg resolution when no resolved incidents', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      expect(result.avgResolutionTimeHours).toBeNull();
+    });
+
+    it('should set incidentResponsePlanActive when handled incidents exist', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count
+        .mockResolvedValueOnce(0) // openIncidents
+        .mockResolvedValueOnce(5); // handledIncidents
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      expect(result.incidentResponsePlanActive).toBe(true);
+    });
+
+    it('should give 15 points for 1-2 overdue NIS2 deadlines', async () => {
+      const old = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      prisma.user.findMany.mockResolvedValue([
+        { id: 'u1', totpEnabled: true, smsOtpEnabled: false },
+      ]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+      prisma.securityIncident.findMany
+        .mockResolvedValueOnce([]) // resolvedIncidents query
+        .mockResolvedValueOnce([
+          // checkNis2Deadlines query
+          mockIncident({ detectedAt: old, status: 'DETECTED' }),
+        ]);
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      // 25 (mfa) + 25 (encryption) + 25 (audit) + 15 (1-2 overdue) = 90
+      expect(result.complianceScore).toBe(90);
+    });
+
+    it('should give 5 points for 3+ overdue NIS2 deadlines', async () => {
+      const old = new Date(Date.now() - 96 * 60 * 60 * 1000);
+      prisma.user.findMany.mockResolvedValue([
+        { id: 'u1', totpEnabled: true, smsOtpEnabled: false },
+      ]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+      prisma.securityIncident.findMany
+        .mockResolvedValueOnce([]) // resolvedIncidents query
+        .mockResolvedValueOnce([
+          // checkNis2Deadlines query
+          mockIncident({ id: 'inc-1', detectedAt: old, status: 'DETECTED' }),
+          mockIncident({ id: 'inc-2', detectedAt: old, status: 'INVESTIGATING' }),
+          mockIncident({ id: 'inc-3', detectedAt: old, status: 'CONTAINED' }),
+        ]);
+
+      const result = await service.getComplianceOverview(TENANT_ID);
+
+      // 25 (mfa) + 25 (encryption) + 25 (audit) + 5 (3+ overdue) = 80
+      expect(result.complianceScore).toBe(80);
+    });
+  });
+
+  // ─── update — additional branches ───
+  describe('update (additional branches)', () => {
+    it('should handle partial update with multiple fields', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue({
+        ...inc,
+        title: 'New title',
+        rootCause: 'Weak password',
+        preventiveMeasures: 'Enforce MFA',
+      });
+
+      const result = await service.update(TENANT_ID, 'inc-uuid-001', {
+        title: 'New title',
+        rootCause: 'Weak password',
+        preventiveMeasures: 'Enforce MFA',
+      });
+
+      expect(prisma.securityIncident.update).toHaveBeenCalledWith({
+        where: { id: 'inc-uuid-001' },
+        data: expect.objectContaining({
+          title: 'New title',
+          rootCause: 'Weak password',
+          preventiveMeasures: 'Enforce MFA',
+        }),
+      });
+      expect(result).toBeDefined();
+    });
+
+    it('should not include undefined fields in update', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { title: 'Only title' });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).not.toHaveProperty('rootCause');
+      expect(updateCall.data).not.toHaveProperty('preventiveMeasures');
+    });
+  });
+
+  // ─── findAll — additional filters ───
+  describe('findAll (additional filters)', () => {
+    it('should apply severity filter', async () => {
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+
+      await service.findAll(TENANT_ID, { severity: 'CRITICAL' });
+
+      expect(prisma.securityIncident.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, severity: 'CRITICAL' },
+        }),
+      );
+    });
+
+    it('should apply incidentType filter', async () => {
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+
+      await service.findAll(TENANT_ID, { incidentType: 'data_breach' });
+
+      expect(prisma.securityIncident.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID, incidentType: 'data_breach' },
+        }),
+      );
+    });
+
+    it('should use default pagination when not provided', async () => {
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+      prisma.securityIncident.count.mockResolvedValue(0);
+
+      const result = await service.findAll(TENANT_ID, {});
+
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+    });
+  });
+
+  // ─── updateStatus — set resolvedAt ───
+  describe('updateStatus (resolvedAt)', () => {
+    it('should set resolvedAt when transitioning to RESOLVED', async () => {
+      const inc = mockIncident({ status: 'CONTAINED' });
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue({ ...inc, status: 'RESOLVED' });
+
+      await service.updateStatus(TENANT_ID, 'inc-uuid-001', { status: 'RESOLVED' });
+
+      expect(prisma.securityIncident.update).toHaveBeenCalledWith({
+        where: { id: 'inc-uuid-001' },
+        data: expect.objectContaining({
+          status: 'RESOLVED',
+          resolvedAt: expect.any(Date),
+        }),
+      });
+    });
+  });
+
+  // ─── getDashboard — additional cases ───
+  describe('getDashboard (additional cases)', () => {
+    it('should return null avgResolutionTimeHours when no resolved incidents', async () => {
+      prisma.securityIncident.findMany.mockResolvedValue([
+        mockIncident({ status: 'DETECTED', resolvedAt: null }),
+      ]);
+
+      const result = await service.getDashboard(TENANT_ID);
+
+      expect(result.avgResolutionTimeHours).toBeNull();
+    });
+
+    it('should count by severity and status', async () => {
+      prisma.securityIncident.findMany.mockResolvedValue([
+        mockIncident({ severity: 'HIGH', status: 'DETECTED' }),
+        mockIncident({ severity: 'CRITICAL', status: 'INVESTIGATING' }),
+        mockIncident({ severity: 'HIGH', status: 'CLOSED' }),
+      ]);
+
+      const result = await service.getDashboard(TENANT_ID);
+
+      expect(result.bySeverity.HIGH).toBe(2);
+      expect(result.bySeverity.CRITICAL).toBe(1);
+      expect(result.byStatus.DETECTED).toBe(1);
+      expect(result.byStatus.INVESTIGATING).toBe(1);
+      expect(result.byStatus.CLOSED).toBe(1);
+    });
+  });
+
+  // ─── checkNis2Deadlines — within deadline ───
+  describe('checkNis2Deadlines (within deadline)', () => {
+    it('should not flag incidents within 24h', async () => {
+      const recent = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12h ago
+      prisma.securityIncident.findMany.mockResolvedValue([
+        mockIncident({ detectedAt: recent, status: 'DETECTED' }),
+      ]);
+
+      const alerts = await service.checkNis2Deadlines(TENANT_ID);
+
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].earlyWarningOverdue).toBe(false);
+      expect(alerts[0].fullReportOverdue).toBe(false);
     });
   });
 });

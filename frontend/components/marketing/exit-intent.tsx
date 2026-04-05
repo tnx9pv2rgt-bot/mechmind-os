@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 
-const STORAGE_KEY = 'mechmind-exit-shown';
+const STORAGE_KEY = 'mechmind-exit-dismissed';
+const DISMISS_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 giorni
 
 export function ExitIntent(): React.ReactElement {
   const [isVisible, setIsVisible] = useState(false);
@@ -15,27 +16,33 @@ export function ExitIntent(): React.ReactElement {
   const handleClose = useCallback((): void => {
     setIsVisible(false);
     try {
-      sessionStorage.setItem(STORAGE_KEY, '1');
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
     } catch {
-      // sessionStorage not available
+      // localStorage not available
     }
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth < 768) return;
     try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return;
+      const dismissed = localStorage.getItem(STORAGE_KEY);
+      if (dismissed && Date.now() - parseInt(dismissed, 10) < DISMISS_EXPIRY_MS) return;
     } catch {
-      // sessionStorage not available
+      // localStorage not available
     }
 
+    let triggered = false;
     const handleMouseLeave = (e: MouseEvent): void => {
-      if (e.clientY <= 0) setIsVisible(true);
+      if (e.clientY <= 0 && !triggered) {
+        triggered = true;
+        setIsVisible(true);
+        document.removeEventListener('mouseleave', handleMouseLeave);
+      }
     };
 
     const timer = setTimeout(() => {
       document.addEventListener('mouseleave', handleMouseLeave);
-    }, 10000);
+    }, 60000);
 
     return () => {
       clearTimeout(timer);
@@ -67,7 +74,7 @@ export function ExitIntent(): React.ReactElement {
           />
 
           <motion.div
-            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#2f2f2f]"
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[var(--surface-elevated)]"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -76,7 +83,7 @@ export function ExitIntent(): React.ReactElement {
             <button
               type="button"
               onClick={handleClose}
-              className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full text-[#8e8ea0] transition-colors hover:bg-[#f7f7f8] hover:text-[#0d0d0d] dark:hover:bg-[#444654]"
+              className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)] dark:hover:bg-[var(--border-default)]"
               aria-label="Chiudi"
             >
               <span className="pointer-events-none" aria-hidden="true">&#10005;</span>
@@ -85,15 +92,15 @@ export function ExitIntent(): React.ReactElement {
             <div className="p-8 text-center">
               {!isSubmitted ? (
                 <>
-                  <h3 className="text-xl font-bold text-[#0d0d0d] dark:text-[#ececec]">
-                    Aspetta! Prima di andare...
+                  <h3 className="text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                    Un regalo prima di andare
                   </h3>
 
-                  <p className="mt-2 text-sm text-[#6e6e80] dark:text-[#8e8ea0]">
-                    Scarica gratis: &ldquo;5 errori che costano &euro;500/mese alla tua officina&rdquo;
+                  <p className="mt-2 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Guida gratuita: &ldquo;5 consigli per risparmiare nella gestione della tua officina&rdquo;
                   </p>
-                  <p className="mt-1 text-xs text-[#8e8ea0]">
-                    Guida pratica di 12 pagine con checklist operativa.
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                    12 pagine pratiche con checklist operativa.
                   </p>
 
                   <form onSubmit={handleSubmit} className="mt-6">
@@ -103,12 +110,12 @@ export function ExitIntent(): React.ReactElement {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="La tua email aziendale"
-                      className="min-h-[44px] w-full rounded-xl border border-[#e5e5e5] bg-[#f7f7f8] px-4 py-3 text-center text-sm text-[#0d0d0d] outline-none placeholder:text-[#8e8ea0] dark:border-[#444654] dark:bg-[#212121] dark:text-[#ececec]"
+                      className="min-h-[44px] w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-3 text-center text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)]"
                     />
 
                     <button
                       type="submit"
-                      className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#0d0d0d] text-white dark:bg-white dark:text-[#0d0d0d] px-6 py-3 text-sm font-semibold transition-all hover:bg-[#2f2f2f] dark:hover:bg-[#e5e5e5] active:scale-[0.97]"
+                      className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--border-default)] bg-white px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
                     >
                       Scarica la guida gratis &rarr;
                     </button>
@@ -118,9 +125,9 @@ export function ExitIntent(): React.ReactElement {
                         type="checkbox"
                         checked={marketingConsent}
                         onChange={(e) => setMarketingConsent(e.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-[#e5e5e5] text-[#0d0d0d] focus:ring-[#0d0d0d]/20 dark:focus:ring-white/20"
+                        className="mt-1 h-4 w-4 rounded border-[var(--border-default)] text-[var(--text-primary)] focus:ring-[#0d0d0d]/20 dark:focus:ring-white/20"
                       />
-                      <span className="text-xs text-[#8e8ea0]">
+                      <span className="text-xs text-[var(--text-secondary)]">
                         Accetto di ricevere aggiornamenti da MechMind (max 2 email/mese)
                       </span>
                     </label>
@@ -129,7 +136,7 @@ export function ExitIntent(): React.ReactElement {
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="mt-4 w-full text-center text-sm text-[#8e8ea0] transition-colors hover:text-[#6e6e80]"
+                    className="mt-4 w-full text-center text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-tertiary)]"
                   >
                     No grazie, voglio continuare &rarr;
                   </button>
@@ -137,14 +144,14 @@ export function ExitIntent(): React.ReactElement {
               ) : (
                 <div className="py-8 text-center">
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0d0d0d]/5 dark:bg-white/10">
-                    <svg className="h-6 w-6 text-[#0d0d0d] dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="h-6 w-6 text-[var(--text-primary)] dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <p className="text-lg font-semibold text-[#0d0d0d] dark:text-[#ececec]">
+                  <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Fatto! Controlla la tua email.
                   </p>
-                  <p className="mt-1 text-sm text-[#8e8ea0]">
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
                     La guida arriverà in pochi minuti.
                   </p>
                 </div>

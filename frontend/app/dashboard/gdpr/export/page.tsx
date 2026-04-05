@@ -94,7 +94,7 @@ export default function GdprExportPage() {
 
   return (
     <div>
-      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
+      <header className="">
         <div className="px-4 sm:px-8 py-5">
           <Breadcrumb
             items={[
@@ -113,10 +113,10 @@ export default function GdprExportPage() {
               Indietro
             </AppleButton>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[#ececec]">
+              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
                 Esportazione Dati
               </h1>
-              <p className="text-apple-gray dark:text-[#636366] text-body mt-1">
+              <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
                 Esporta tutti i tuoi dati personali (Art. 20 GDPR)
               </p>
             </div>
@@ -137,10 +137,10 @@ export default function GdprExportPage() {
                   <Shield className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     Diritto alla Portabilita dei Dati
                   </h2>
-                  <p className="text-footnote text-apple-gray dark:text-[#636366]">
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                     Ai sensi dell&apos;Art. 20 del GDPR
                   </p>
                 </div>
@@ -149,11 +149,11 @@ export default function GdprExportPage() {
             <AppleCardContent>
               {status === 'idle' && (
                 <div className="space-y-4">
-                  <p className="text-sm text-apple-gray dark:text-[#636366]">
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
                     Puoi richiedere una copia completa di tutti i dati personali associati al tuo
                     account. Il file sara disponibile in formato ZIP contenente:
                   </p>
-                  <ul className="text-sm text-apple-gray dark:text-[#636366] space-y-2 pl-4">
+                  <ul className="text-body text-apple-gray dark:text-[var(--text-secondary)] space-y-2 pl-4">
                     <li className="flex items-start gap-2">
                       <FileText className="h-4 w-4 mt-0.5 flex-shrink-0 text-apple-blue" />
                       Dati del profilo e dell&apos;account
@@ -190,7 +190,7 @@ export default function GdprExportPage() {
                           {i > 0 && (
                             <div
                               className={`h-0.5 w-8 sm:w-12 ${
-                                isDone ? 'bg-apple-green' : 'bg-gray-200 dark:bg-[#424242]'
+                                isDone ? 'bg-apple-green' : 'bg-gray-200 dark:bg-[var(--surface-active)]'
                               }`}
                             />
                           )}
@@ -201,7 +201,7 @@ export default function GdprExportPage() {
                                   ? 'bg-apple-blue text-white'
                                   : isDone
                                   ? 'bg-apple-green text-white'
-                                  : 'bg-gray-100 dark:bg-[#353535] text-apple-gray'
+                                  : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray'
                               }`}
                             >
                               {isActive ? (
@@ -212,7 +212,7 @@ export default function GdprExportPage() {
                                 <StepIcon className="h-5 w-5" />
                               )}
                             </div>
-                            <span className="text-[10px] text-apple-gray dark:text-[#636366] text-center whitespace-nowrap">
+                            <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] text-center whitespace-nowrap">
                               {step.label}
                             </span>
                           </div>
@@ -223,11 +223,11 @@ export default function GdprExportPage() {
 
                   <div className="text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-apple-blue mx-auto mb-3" />
-                    <p className="text-sm font-medium text-apple-dark dark:text-[#ececec]">
+                    <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
                       Esportazione in corso...
                     </p>
                     {estimatedTime && (
-                      <p className="text-xs text-apple-gray dark:text-[#636366] mt-1">
+                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
                         Tempo stimato: {estimatedTime}
                       </p>
                     )}
@@ -246,10 +246,10 @@ export default function GdprExportPage() {
                       <CheckCircle className="h-8 w-8 text-white" />
                     </div>
                   </motion.div>
-                  <h3 className="text-lg font-semibold text-apple-dark dark:text-[#ececec]">
+                  <h3 className="text-headline font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                     I tuoi dati sono pronti!
                   </h3>
-                  <p className="text-sm text-apple-gray dark:text-[#636366]">
+                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
                     Il file ZIP e pronto per il download. Il link sara disponibile per 24 ore.
                   </p>
                   <AppleButton
@@ -266,8 +266,8 @@ export default function GdprExportPage() {
 
               {status === 'error' && (
                 <div className="text-center space-y-4">
-                  <AlertCircle className="h-12 w-12 text-red-400 mx-auto" />
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-12 w-12 text-apple-red mx-auto" />
+                  <p className="text-body text-apple-red dark:text-apple-red">
                     {error || 'Si e verificato un errore durante l\'esportazione'}
                   </p>
                   <AppleButton variant="secondary" onClick={startExport}>

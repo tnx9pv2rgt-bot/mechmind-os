@@ -12,7 +12,10 @@ import {
   ClipboardList,
   ArrowLeft,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { DeviceList } from '@/components/security/device-list';
 import { RecoveryPhoneSetup } from '@/components/security/recovery-phone-setup';
 import { SecurityActivityTimeline } from '@/components/security/security-activity-timeline';
@@ -64,56 +67,22 @@ async function fetcher<T>(url: string): Promise<T> {
 }
 
 // ─── Animation variants ───
-const cardVariants = {
-  initial: { opacity: 0, y: 30, scale: 0.98 },
-  animate: {
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
     opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
-const staggerContainer = {
-  animate: { transition: { staggerChildren: 0.1 } },
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
-
-// ─── Section wrapper ───
-function SectionCard({
-  icon,
-  title,
-  subtitle,
-  children,
-  delay = 0,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-  delay?: number;
-}): React.ReactElement {
-  return (
-    <motion.div
-      initial="initial"
-      animate="animate"
-      variants={cardVariants}
-      transition={{ delay }}
-    >
-      <div className="rounded-3xl border border-[#4e4e4e] bg-[#1a1a1a] overflow-hidden">
-        <div className="border-b border-[#4e4e4e] px-6 py-5">
-          <div className="flex items-center gap-3">
-            {icon}
-            <div>
-              <h2 className="text-base font-semibold text-white">{title}</h2>
-              <p className="mt-0.5 text-xs text-[#888]">{subtitle}</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6">{children}</div>
-      </div>
-    </motion.div>
-  );
-}
 
 // ─── Main Page ───
 export default function SecuritySettingsPage(): React.ReactElement {
@@ -255,24 +224,24 @@ export default function SecuritySettingsPage(): React.ReactElement {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div>
       {/* Header */}
-      <header className="border-b border-[#4e4e4e] bg-[#1a1a1a]/80 backdrop-blur-xl">
-        <div className="px-4 py-5 sm:px-8">
-          <div className="flex items-center gap-3">
+      <header>
+        <div className='px-4 sm:px-8 py-5'>
+          <div className='flex items-center gap-3'>
             <Link
-              href="/dashboard/settings"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[#888] transition-colors hover:bg-white/5 hover:text-white"
-              aria-label="Torna alle impostazioni"
+              href='/dashboard/settings'
+              className='inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-apple-gray dark:text-[var(--text-secondary)] transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+              aria-label='Torna alle impostazioni'
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className='h-5 w-5' />
             </Link>
             <div>
-              <h1 className="text-xl font-semibold text-white sm:text-2xl">
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
                 Sicurezza
               </h1>
-              <p className="mt-0.5 text-sm text-[#888]">
-                Gestisci dispositivi, verifica SMS e attività del tuo account
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+                Gestisci dispositivi, verifica SMS e attivita del tuo account
               </p>
             </div>
           </div>
@@ -281,127 +250,183 @@ export default function SecuritySettingsPage(): React.ReactElement {
 
       {/* Content */}
       <motion.div
-        className="mx-auto max-w-3xl space-y-6 p-4 sm:p-8"
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
+        className='p-4 sm:p-8 max-w-3xl mx-auto space-y-6'
+        variants={containerVariants}
+        initial='hidden'
+        animate='visible'
       >
         {/* Section 1: Dispositivi Fidati */}
-        <SectionCard
-          icon={<Shield className="h-5 w-5 text-green-400" />}
-          title="Dispositivi fidati"
-          subtitle="I dispositivi fidati saltano la verifica 2FA"
-          delay={0}
-        >
-          <DeviceList
-            devices={devicesData || []}
-            isLoading={devicesLoading}
-            onTrust={handleTrustDevice}
-            onUntrust={handleUntrustDevice}
-            onUntrustAll={handleUntrustAll}
-            onRefresh={() => void mutateDevices()}
-          />
-        </SectionCard>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 rounded-xl bg-apple-green/10 flex items-center justify-center'>
+                  <Shield className='h-5 w-5 text-apple-green' />
+                </div>
+                <div>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    Dispositivi fidati
+                  </h2>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    I dispositivi fidati saltano la verifica 2FA
+                  </p>
+                </div>
+              </div>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <DeviceList
+                devices={devicesData || []}
+                isLoading={devicesLoading}
+                onTrust={handleTrustDevice}
+                onUntrust={handleUntrustDevice}
+                onUntrustAll={handleUntrustAll}
+                onRefresh={() => void mutateDevices()}
+              />
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
         {/* Section 2: Telefono di Recupero */}
-        <SectionCard
-          icon={<Smartphone className="h-5 w-5 text-blue-400" />}
-          title="Telefono di recupero"
-          subtitle="Usato come ultimo metodo per recuperare l'accesso al tuo account"
-          delay={0.1}
-        >
-          {phoneLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-[#888]" />
-            </div>
-          ) : (
-            <RecoveryPhoneSetup
-              currentPhone={phoneStatus?.phone || null}
-              isVerified={phoneStatus?.isVerified || false}
-              onSetPhone={handleSetPhone}
-              onVerifyPhone={handleVerifyPhone}
-              onRemovePhone={handleRemovePhone}
-              onRefresh={() => void mutatePhone()}
-            />
-          )}
-        </SectionCard>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                  <Smartphone className='h-5 w-5 text-apple-blue' />
+                </div>
+                <div>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    Telefono di recupero
+                  </h2>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Usato come ultimo metodo per recuperare l&apos;accesso al tuo account
+                  </p>
+                </div>
+              </div>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {phoneLoading ? (
+                <div className='flex items-center justify-center py-8'>
+                  <Loader2 className='h-6 w-6 animate-spin text-apple-blue' />
+                </div>
+              ) : (
+                <RecoveryPhoneSetup
+                  currentPhone={phoneStatus?.phone || null}
+                  isVerified={phoneStatus?.isVerified || false}
+                  onSetPhone={handleSetPhone}
+                  onVerifyPhone={handleVerifyPhone}
+                  onRemovePhone={handleRemovePhone}
+                  onRefresh={() => void mutatePhone()}
+                />
+              )}
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
 
         {/* Section 3: Verifica SMS */}
-        <SectionCard
-          icon={<MessageSquare className="h-5 w-5 text-yellow-400" />}
-          title="Verifica SMS"
-          subtitle="Ricevi un codice via SMS quando accedi da un dispositivo non fidato"
-          delay={0.2}
-        >
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-xl bg-yellow-500/10 px-4 py-3 text-xs text-yellow-400">
-              <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <p>Meno sicuro dell&apos;app authenticator. Consigliato solo come fallback.</p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-white">
-                  {phoneStatus?.smsOtpEnabled ? 'Attiva' : 'Disattiva'}
-                </p>
-                <p className="mt-0.5 text-xs text-[#888]">
-                  {phoneStatus?.isVerified
-                    ? 'Telefono di recupero verificato'
-                    : 'Richiede un telefono di recupero verificato'}
-                </p>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 rounded-xl bg-apple-orange/10 flex items-center justify-center'>
+                  <MessageSquare className='h-5 w-5 text-apple-orange' />
+                </div>
+                <div>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    Verifica SMS
+                  </h2>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Ricevi un codice via SMS quando accedi da un dispositivo non fidato
+                  </p>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleSmsOtpToggle}
-                disabled={smsToggleLoading || phoneLoading}
-                className={`relative inline-flex h-8 w-14 min-h-[44px] min-w-[56px] items-center rounded-full transition-colors focus:outline-none ${
-                  phoneStatus?.smsOtpEnabled
-                    ? 'bg-green-500'
-                    : 'bg-[#4e4e4e]'
-                } disabled:opacity-50`}
-                role="switch"
-                aria-checked={phoneStatus?.smsOtpEnabled || false}
-                aria-label="Attiva verifica SMS"
-              >
-                {smsToggleLoading ? (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  </span>
-                ) : (
-                  <span
-                    className={`inline-block h-6 w-6 rounded-full bg-white shadow-lg transition-transform ${
-                      phoneStatus?.smsOtpEnabled ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                  />
-                )}
-              </button>
-            </div>
-          </div>
-        </SectionCard>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='space-y-4'>
+                <div className='flex items-start gap-2 rounded-xl bg-apple-orange/5 dark:bg-apple-orange/10 px-4 py-3'>
+                  <AlertCircle className='mt-0.5 h-4 w-4 shrink-0 text-apple-orange' />
+                  <p className='text-footnote text-apple-orange'>
+                    Meno sicuro dell&apos;app authenticator. Consigliato solo come fallback.
+                  </p>
+                </div>
 
-        {/* Section 4: Attività di Sicurezza */}
-        <SectionCard
-          icon={<ClipboardList className="h-5 w-5 text-purple-400" />}
-          title="Attività di sicurezza"
-          subtitle="Cronologia degli accessi e delle modifiche alla sicurezza"
-          delay={0.3}
-        >
-          <div className="space-y-4">
-            <SecuritySummaryCard
-              summary={summaryData || null}
-              isLoading={summaryLoading}
-            />
-            <SecurityActivityTimeline
-              events={allEvents}
-              isLoading={activityLoading && activityPage === 1}
-              hasMore={activityData?.hasMore || false}
-              onLoadMore={handleLoadMore}
-              isLoadingMore={isLoadingMore}
-            />
-          </div>
-        </SectionCard>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      {phoneStatus?.smsOtpEnabled ? 'Attiva' : 'Disattiva'}
+                    </p>
+                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      {phoneStatus?.isVerified
+                        ? 'Telefono di recupero verificato'
+                        : 'Richiede un telefono di recupero verificato'}
+                    </p>
+                  </div>
+                  <button
+                    type='button'
+                    onClick={handleSmsOtpToggle}
+                    disabled={smsToggleLoading || phoneLoading}
+                    className={`relative inline-flex h-8 w-14 min-h-[44px] min-w-[56px] items-center rounded-full transition-colors focus:outline-none ${
+                      phoneStatus?.smsOtpEnabled
+                        ? 'bg-apple-green'
+                        : 'bg-apple-border dark:bg-[var(--border-default)]'
+                    } disabled:opacity-50`}
+                    role='switch'
+                    aria-checked={phoneStatus?.smsOtpEnabled || false}
+                    aria-label='Attiva verifica SMS'
+                  >
+                    {smsToggleLoading ? (
+                      <span className='absolute inset-0 flex items-center justify-center'>
+                        <Loader2 className='h-4 w-4 animate-spin text-white' />
+                      </span>
+                    ) : (
+                      <span
+                        className={`inline-block h-6 w-6 rounded-full bg-white shadow-lg transition-transform ${
+                          phoneStatus?.smsOtpEnabled ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
+
+        {/* Section 4: Attivita di Sicurezza */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
+                  <ClipboardList className='h-5 w-5 text-apple-purple' />
+                </div>
+                <div>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    Attivita di sicurezza
+                  </h2>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Cronologia degli accessi e delle modifiche alla sicurezza
+                  </p>
+                </div>
+              </div>
+            </AppleCardHeader>
+            <AppleCardContent>
+              <div className='space-y-4'>
+                <SecuritySummaryCard
+                  summary={summaryData || null}
+                  isLoading={summaryLoading}
+                />
+                <SecurityActivityTimeline
+                  events={allEvents}
+                  isLoading={activityLoading && activityPage === 1}
+                  hasMore={activityData?.hasMore || false}
+                  onLoadMore={handleLoadMore}
+                  isLoadingMore={isLoadingMore}
+                />
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
       </motion.div>
     </div>
   );

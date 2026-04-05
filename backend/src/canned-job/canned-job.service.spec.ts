@@ -23,6 +23,7 @@ const mockPrisma = {
   workOrder: {
     findFirst: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   $transaction: jest.fn(),
 };
@@ -275,17 +276,24 @@ describe('CannedJobService', () => {
         laborItems: [],
         partsUsed: [],
       });
-      mockPrisma.workOrder.update.mockResolvedValue({ id: 'wo-1' });
+      mockPrisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.applyToWorkOrder('t1', 'cj-1', 'wo-1');
       expect(result).toEqual({ updated: true });
-      expect(mockPrisma.workOrder.update).toHaveBeenCalledWith(
+      expect(mockPrisma.workOrder.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: { id: 'wo-1', tenantId: 't1' },
           data: expect.objectContaining({
-            laborItems: [
-              { description: 'Cambio olio', quantity: 1, unitPrice: 2500, laborHours: 0.5 },
-            ],
-            partsUsed: [{ description: 'Filtro', quantity: 2, unitPrice: 1500, partId: 'p1' }],
+            laborItems: JSON.parse(
+              JSON.stringify([
+                { description: 'Cambio olio', quantity: 1, unitPrice: 2500, laborHours: 0.5 },
+              ]),
+            ),
+            partsUsed: JSON.parse(
+              JSON.stringify([
+                { description: 'Filtro', quantity: 2, unitPrice: 1500, partId: 'p1' },
+              ]),
+            ),
           }),
         }),
       );
@@ -312,17 +320,20 @@ describe('CannedJobService', () => {
         laborItems: [{ description: 'Existing' }],
         partsUsed: [{ description: 'Existing part' }],
       });
-      mockPrisma.workOrder.update.mockResolvedValue({ id: 'wo-1' });
+      mockPrisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       await service.applyToWorkOrder('t1', 'cj-1', 'wo-1');
-      expect(mockPrisma.workOrder.update).toHaveBeenCalledWith(
+      expect(mockPrisma.workOrder.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: { id: 'wo-1', tenantId: 't1' },
           data: expect.objectContaining({
-            laborItems: [
-              { description: 'Existing' },
-              { description: 'New labor', quantity: 1, unitPrice: 3000, laborHours: 1 },
-            ],
-            partsUsed: [{ description: 'Existing part' }],
+            laborItems: JSON.parse(
+              JSON.stringify([
+                { description: 'Existing' },
+                { description: 'New labor', quantity: 1, unitPrice: 3000, laborHours: 1 },
+              ]),
+            ),
+            partsUsed: JSON.parse(JSON.stringify([{ description: 'Existing part' }])),
           }),
         }),
       );

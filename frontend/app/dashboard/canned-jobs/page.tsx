@@ -273,11 +273,11 @@ export default function CannedJobsPage() {
   return (
     <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header className=''>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Template Lavoro</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Template Lavoro</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
               Modelli predefiniti per velocizzare preventivi e ordini di lavoro
             </p>
           </div>
@@ -313,7 +313,7 @@ export default function CannedJobsPage() {
                   <select
                     value={categoryFilter}
                     onChange={e => setCategoryFilter(e.target.value)}
-                    className='h-10 pl-10 pr-4 rounded-md border border-gray-300 dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-sm text-gray-900 dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none cursor-pointer'
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {categories.map(cat => (
                       <option key={cat} value={cat}>
@@ -334,7 +334,7 @@ export default function CannedJobsPage() {
               <AppleCardContent>
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                     Impossibile caricare i template di lavoro
                   </p>
                   <AppleButton variant='ghost' className='mt-4' onClick={() => mutateJobs()}>
@@ -354,7 +354,7 @@ export default function CannedJobsPage() {
               <AppleCardContent>
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                     Nessun template. Crea il primo template per velocizzare i preventivi.
                   </p>
                   <AppleButton variant='ghost' className='mt-4' onClick={openCreateModal}>
@@ -371,10 +371,10 @@ export default function CannedJobsPage() {
                 <AppleCardHeader>
                   <div className='flex items-center gap-2'>
                     <Layers className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       {category}
                     </h2>
-                    <span className='text-footnote text-apple-gray dark:text-[#636366] ml-2'>
+                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] ml-2'>
                       ({categoryJobs.length})
                     </span>
                   </div>
@@ -389,7 +389,7 @@ export default function CannedJobsPage() {
                     {categoryJobs.map((job, index) => (
                       <motion.div
                         key={job.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a] hover:shadow-apple transition-all duration-300'
+                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
@@ -400,17 +400,17 @@ export default function CannedJobsPage() {
                             <Wrench className='h-6 w-6 text-apple-orange' />
                           </div>
                           <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               {job.name}
                             </p>
-                            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                               {job.description}
                             </p>
                             <div className='flex items-center gap-3 mt-1'>
-                              <span className='text-[11px] text-apple-gray dark:text-[#636366] flex items-center gap-1'>
+                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'>
                                 <Layers className='h-3 w-3' /> {job.lines?.length || 0} righe
                               </span>
-                              <span className='text-[11px] text-apple-gray dark:text-[#636366] flex items-center gap-1'>
+                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'>
                                 <Euro className='h-3 w-3' /> {formatCurrency(job.totalPrice)}
                               </span>
                             </div>
@@ -436,7 +436,7 @@ export default function CannedJobsPage() {
                           <AppleButton
                             variant='ghost'
                             size='sm'
-                            icon={<Trash2 className='h-3.5 w-3.5 text-red-500' />}
+                            icon={<Trash2 className='h-3.5 w-3.5 text-apple-red' />}
                             onClick={() => setDeleteTarget(job.id)}
                           />
                         </div>
@@ -457,22 +457,22 @@ export default function CannedJobsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className='w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-2xl p-6 m-4'
+            className='w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl p-6 m-4'
           >
             <div className='flex items-center justify-between mb-6'>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 {editingJob.id ? 'Modifica Template' : 'Nuovo Template'}
               </h2>
-              <button onClick={() => setShowModal(false)} aria-label='Chiudi'>
+              <AppleButton variant='ghost' size='sm' onClick={() => setShowModal(false)} aria-label='Chiudi'>
                 <X className='h-5 w-5 text-apple-gray' />
-              </button>
+              </AppleButton>
             </div>
 
             <form onSubmit={rhfHandleSubmit(handleSave)} className='space-y-4'>
               <div>
                 <label
                   htmlFor='job-name'
-                  className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'
+                  className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'
                 >
                   Nome *
                 </label>
@@ -481,12 +481,12 @@ export default function CannedJobsPage() {
                   {...registerJob('name')}
                   placeholder='Es. Tagliando 30.000 km'
                 />
-                {jobErrors.name && <p className='text-xs text-red-500 mt-1'>{jobErrors.name.message}</p>}
+                {jobErrors.name && <p className='text-footnote text-apple-red mt-1'>{jobErrors.name.message}</p>}
               </div>
               <div>
                 <label
                   htmlFor='job-description'
-                  className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'
+                  className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'
                 >
                   Descrizione
                 </label>
@@ -499,14 +499,14 @@ export default function CannedJobsPage() {
               <div>
                 <label
                   htmlFor='job-category'
-                  className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'
+                  className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'
                 >
                   Categoria
                 </label>
                 <select
                   id='job-category'
                   {...registerJob('category')}
-                  className='w-full h-10 px-3 rounded-md border border-gray-300 dark:border-[#424242] bg-white dark:bg-[#353535] text-sm text-gray-900 dark:text-[#ececec]'
+                  className='w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] text-body text-apple-dark dark:text-[var(--text-primary)]'
                 >
                   {categories.slice(1).map(cat => (
                     <option key={cat} value={cat}>
@@ -514,13 +514,13 @@ export default function CannedJobsPage() {
                     </option>
                   ))}
                 </select>
-                {jobErrors.category && <p className='text-xs text-red-500 mt-1'>{jobErrors.category.message}</p>}
+                {jobErrors.category && <p className='text-footnote text-apple-red mt-1'>{jobErrors.category.message}</p>}
               </div>
 
               {/* Lines */}
               <div>
                 <div className='flex items-center justify-between mb-3'>
-                  <label className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+                  <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                     Righe
                   </label>
                   <AppleButton
@@ -533,18 +533,18 @@ export default function CannedJobsPage() {
                     Aggiungi riga
                   </AppleButton>
                 </div>
-                {jobErrors.lines?.message && <p className='text-xs text-red-500 mb-2'>{jobErrors.lines.message}</p>}
+                {jobErrors.lines?.message && <p className='text-footnote text-apple-red mb-2'>{jobErrors.lines.message}</p>}
                 <div className='space-y-3'>
                   {lineFields.map((field, i) => (
                     <div
                       key={field.id}
-                      className='p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[#353535] space-y-2'
+                      className='p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-2'
                     >
                       <div className='flex items-center gap-2'>
                         <select
                           {...registerJob(`lines.${i}.type`)}
                           aria-label={`Tipo riga ${i + 1}`}
-                          className='h-9 px-2 rounded-md border border-gray-300 dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-xs text-gray-900 dark:text-[#ececec]'
+                          className='h-9 px-2 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-footnote text-apple-dark dark:text-[var(--text-primary)]'
                         >
                           <option value='LABOR'>Manodopera</option>
                           <option value='PART'>Ricambio</option>
@@ -553,27 +553,29 @@ export default function CannedJobsPage() {
                           <Input
                             placeholder='Descrizione'
                             {...registerJob(`lines.${i}.description`)}
-                            className='flex-1 h-9 text-sm'
+                            className='flex-1 h-9 text-body'
                           />
                           {jobErrors.lines?.[i]?.description && (
-                            <p className='text-xs text-red-500 mt-0.5'>{jobErrors.lines[i].description?.message}</p>
+                            <p className='text-footnote text-apple-red mt-0.5'>{jobErrors.lines[i].description?.message}</p>
                           )}
                         </div>
                         {lineFields.length > 1 && (
-                          <button
+                          <AppleButton
+                            variant='ghost'
+                            size='sm'
                             type='button'
                             onClick={() => removeLine(i)}
                             aria-label={`Rimuovi riga ${i + 1}`}
                           >
-                            <X className='h-4 w-4 text-red-500' />
-                          </button>
+                            <X className='h-4 w-4 text-apple-red' />
+                          </AppleButton>
                         )}
                       </div>
                       <div className='flex items-center gap-2'>
                         <div className='flex-1'>
                           <label
                             htmlFor={`qty-${i}`}
-                            className='text-[10px] text-apple-gray dark:text-[#636366]'
+                            className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'
                           >
                             Quantit&agrave;
                           </label>
@@ -581,16 +583,16 @@ export default function CannedJobsPage() {
                             id={`qty-${i}`}
                             type='number'
                             {...registerJob(`lines.${i}.quantity`, { valueAsNumber: true })}
-                            className='h-9 text-sm'
+                            className='h-9 text-body'
                           />
                           {jobErrors.lines?.[i]?.quantity && (
-                            <p className='text-xs text-red-500 mt-0.5'>{jobErrors.lines[i].quantity?.message}</p>
+                            <p className='text-footnote text-apple-red mt-0.5'>{jobErrors.lines[i].quantity?.message}</p>
                           )}
                         </div>
                         <div className='flex-1'>
                           <label
                             htmlFor={`price-${i}`}
-                            className='text-[10px] text-apple-gray dark:text-[#636366]'
+                            className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'
                           >
                             Prezzo unit.
                           </label>
@@ -599,17 +601,17 @@ export default function CannedJobsPage() {
                             type='number'
                             step='0.01'
                             {...registerJob(`lines.${i}.unitPrice`, { valueAsNumber: true })}
-                            className='h-9 text-sm'
+                            className='h-9 text-body'
                           />
                           {jobErrors.lines?.[i]?.unitPrice && (
-                            <p className='text-xs text-red-500 mt-0.5'>{jobErrors.lines[i].unitPrice?.message}</p>
+                            <p className='text-footnote text-apple-red mt-0.5'>{jobErrors.lines[i].unitPrice?.message}</p>
                           )}
                         </div>
                         {watchJob(`lines.${i}.type`) === 'LABOR' && (
                           <div className='flex-1'>
                             <label
                               htmlFor={`hours-${i}`}
-                              className='text-[10px] text-apple-gray dark:text-[#636366] flex items-center gap-1'
+                              className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'
                             >
                               <Clock className='h-3 w-3' /> Ore
                             </label>
@@ -618,7 +620,7 @@ export default function CannedJobsPage() {
                               type='number'
                               step='0.25'
                               {...registerJob(`lines.${i}.laborHours`, { valueAsNumber: true })}
-                              className='h-9 text-sm'
+                              className='h-9 text-body'
                             />
                           </div>
                         )}
@@ -628,8 +630,8 @@ export default function CannedJobsPage() {
                 </div>
               </div>
 
-              <div className='flex items-center justify-between pt-4 border-t border-gray-200 dark:border-[#424242]'>
-                <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+              <div className='flex items-center justify-between pt-4 border-t border-apple-border dark:border-[var(--border-default)]'>
+                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Totale: {formatCurrency(modalTotalPrice)}
                 </p>
                 <div className='flex items-center gap-3'>
@@ -652,17 +654,17 @@ export default function CannedJobsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className='w-full max-w-md bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-2xl p-6 m-4'
+            className='w-full max-w-md bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl p-6 m-4'
           >
             <div className='flex items-center justify-between mb-6'>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Applica Template
               </h2>
-              <button onClick={() => setShowApplyModal(false)} aria-label='Chiudi'>
+              <AppleButton variant='ghost' size='sm' onClick={() => setShowApplyModal(false)} aria-label='Chiudi'>
                 <X className='h-5 w-5 text-apple-gray' />
-              </button>
+              </AppleButton>
             </div>
-            <p className='text-body text-apple-gray dark:text-[#636366] mb-6'>
+            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-6'>
               Seleziona dove applicare il template:
             </p>
             <div className='space-y-3'>

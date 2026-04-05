@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstimateService } from './estimate.service';
 import { PrismaService } from '../../common/services/prisma.service';
 import { LoggerService } from '../../common/services/logger.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
 
 // Mock Prisma enums that may not be generated in test environment
 jest.mock('@prisma/client', () => ({
@@ -11,10 +13,19 @@ jest.mock('@prisma/client', () => ({
   EstimateStatus: {
     DRAFT: 'DRAFT',
     SENT: 'SENT',
+    PARTIALLY_APPROVED: 'PARTIALLY_APPROVED',
     ACCEPTED: 'ACCEPTED',
     REJECTED: 'REJECTED',
     CONVERTED: 'CONVERTED',
     EXPIRED: 'EXPIRED',
+  },
+  PublicTokenType: {
+    ESTIMATE_APPROVAL: 'ESTIMATE_APPROVAL',
+    PAYMENT: 'PAYMENT',
+    DVI_REPORT: 'DVI_REPORT',
+    REVIEW_REQUEST: 'REVIEW_REQUEST',
+    CHECKIN: 'CHECKIN',
+    MEMBERSHIP_INVITE: 'MEMBERSHIP_INVITE',
   },
 }));
 
@@ -30,6 +41,8 @@ const mockPrisma = {
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
     delete: jest.fn(),
   },
   $transaction: jest.fn(),
@@ -37,6 +50,13 @@ const mockPrisma = {
 
 const mockEventEmitter = { emit: jest.fn() };
 const mockLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
+const mockPublicTokenService = {
+  generateToken: jest.fn(),
+  validateToken: jest.fn(),
+  consumeToken: jest.fn(),
+  revokeTokensForEntity: jest.fn(),
+};
+const mockConfigService = { get: jest.fn().mockReturnValue('https://app.mechmind.io') };
 
 describe('EstimateService', () => {
   let service: EstimateService;
@@ -48,6 +68,8 @@ describe('EstimateService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: mockEventEmitter },
         { provide: LoggerService, useValue: mockLogger },
+        { provide: PublicTokenService, useValue: mockPublicTokenService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -486,6 +508,152 @@ describe('EstimateService', () => {
         estimateNumber: 'EST-001',
       });
       await expect(service.send('t1', '1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('sendForApproval', () => {
+    it('should generate token and return approval URL', async () => {
+      const estimate = { id: '1', status: 'DRAFT', customerId: 'c1', estimateNumber: 'EST-001' };
+      mockPrisma.estimate.findFirst.mockResolvedValue(estimate);
+      mockPublicTokenService.revokeTokensForEntity.mockResolvedValue(0);
+      mockPublicTokenService.generateToken.mockResolvedValue({ token: 'abc123' });
+      mockPrisma.estimate.update.mockResolvedValue({
+        ...estimate,
+        status: 'SENT',
+        approvalToken: 'abc123',
+      });
+
+      const result = await service.sendForApproval('t1', '1', 'SMS');
+      expect(result.approvalUrl).toContain('abc123');
+      expect(mockPublicTokenService.generateToken).toHaveBeenCalled();
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'estimate.sentForApproval',
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('getByApprovalToken', () => {
+    it('should return estimate by valid token', async () => {
+      const tokenRecord = { entityId: '1', tenantId: 't1' };
+      mockPublicTokenService.validateToken.mockResolvedValue(tokenRecord);
+      const estimate = { id: '1', estimateNumber: 'EST-001', lines: [] };
+      mockPrisma.estimate.findFirst.mockResolvedValue(estimate);
+
+      const result = await service.getByApprovalToken('abc123');
+      expect(result).toEqual(estimate);
+    });
+
+    it('should throw NotFoundException if estimate not found', async () => {
+      mockPublicTokenService.validateToken.mockResolvedValue({ entityId: 'x', tenantId: 't1' });
+      mockPrisma.estimate.findFirst.mockResolvedValue(null);
+
+      await expect(service.getByApprovalToken('abc123')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('processApproval', () => {
+    it('should approve all lines and set status ACCEPTED', async () => {
+      const tokenRecord = { entityId: '1', tenantId: 't1' };
+      mockPublicTokenService.validateToken.mockResolvedValue(tokenRecord);
+      const estimate = {
+        id: '1',
+        status: 'SENT',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+        lines: [{ id: 'l1' }, { id: 'l2' }],
+      };
+      mockPrisma.estimate.findFirst.mockResolvedValue(estimate);
+      mockPrisma.estimateLine.update.mockResolvedValue({});
+      mockPrisma.estimateLine.findMany.mockResolvedValue([
+        { id: 'l1', customerApproved: true },
+        { id: 'l2', customerApproved: true },
+      ]);
+      mockPrisma.estimate.update.mockResolvedValue({ ...estimate, status: 'ACCEPTED' });
+      mockPublicTokenService.consumeToken.mockResolvedValue({});
+
+      const result = await service.processApproval('abc123', [
+        { lineId: 'l1', approved: true },
+        { lineId: 'l2', approved: true },
+      ]);
+      expect(result!.status).toBe('ACCEPTED');
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('estimate.approved', expect.any(Object));
+    });
+
+    it('should set PARTIALLY_APPROVED when some lines rejected', async () => {
+      const tokenRecord = { entityId: '1', tenantId: 't1' };
+      mockPublicTokenService.validateToken.mockResolvedValue(tokenRecord);
+      const estimate = {
+        id: '1',
+        status: 'SENT',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+        lines: [{ id: 'l1' }, { id: 'l2' }],
+      };
+      mockPrisma.estimate.findFirst.mockResolvedValue(estimate);
+      mockPrisma.estimateLine.update.mockResolvedValue({});
+      mockPrisma.estimateLine.findMany.mockResolvedValue([
+        { id: 'l1', customerApproved: true },
+        { id: 'l2', customerApproved: false },
+      ]);
+      mockPrisma.estimate.update.mockResolvedValue({ ...estimate, status: 'PARTIALLY_APPROVED' });
+      mockPublicTokenService.consumeToken.mockResolvedValue({});
+
+      const result = await service.processApproval('abc123', [
+        { lineId: 'l1', approved: true },
+        { lineId: 'l2', approved: false, reason: 'Troppo caro' },
+      ]);
+      expect(result!.status).toBe('PARTIALLY_APPROVED');
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'estimate.partiallyApproved',
+        expect.any(Object),
+      );
+    });
+
+    it('should throw BadRequestException if estimate not in SENT status', async () => {
+      mockPublicTokenService.validateToken.mockResolvedValue({ entityId: '1', tenantId: 't1' });
+      mockPrisma.estimate.findFirst.mockResolvedValue({
+        id: '1',
+        status: 'ACCEPTED',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+        lines: [],
+      });
+      await expect(service.processApproval('abc123', [])).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('approveAll', () => {
+    it('should approve all lines and set status ACCEPTED', async () => {
+      const tokenRecord = { entityId: '1', tenantId: 't1' };
+      mockPublicTokenService.validateToken.mockResolvedValue(tokenRecord);
+      const estimate = {
+        id: '1',
+        status: 'SENT',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+        lines: [{ id: 'l1' }, { id: 'l2' }],
+      };
+      mockPrisma.estimate.findFirst.mockResolvedValue(estimate);
+      mockPrisma.estimateLine.updateMany.mockResolvedValue({ count: 2 });
+      mockPrisma.estimate.update.mockResolvedValue({ ...estimate, status: 'ACCEPTED' });
+      mockPublicTokenService.consumeToken.mockResolvedValue({});
+
+      const result = await service.approveAll('abc123');
+      expect(result!.status).toBe('ACCEPTED');
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('estimate.approved', expect.any(Object));
+    });
+
+    it('should throw BadRequestException if estimate not in SENT status', async () => {
+      mockPublicTokenService.validateToken.mockResolvedValue({ entityId: '1', tenantId: 't1' });
+      mockPrisma.estimate.findFirst.mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+        lines: [],
+      });
+      await expect(service.approveAll('abc123')).rejects.toThrow(BadRequestException);
     });
   });
 });

@@ -1,6 +1,7 @@
 ---
 name: performance
 description: Ottimizzazione performance backend e frontend. Usa quando chiesto di velocizzare, ottimizzare, o quando endpoint sono lenti.
+disable-model-invocation: true
 allowed-tools: [Read, Grep, "Bash(curl *)", "Bash(time *)"]
 ---
 

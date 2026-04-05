@@ -49,6 +49,17 @@ export class CustomerService {
   ) {}
 
   /**
+   * Build searchName from plain-text name parts (lowercase, normalized).
+   * Stored unencrypted for O(log n) DB-level search.
+   */
+  private buildSearchName(firstName?: string | null, lastName?: string | null): string | null {
+    const parts = [firstName, lastName]
+      .filter(Boolean)
+      .map(s => (s as string).toLowerCase().trim());
+    return parts.length > 0 ? parts.join(' ') : null;
+  }
+
+  /**
    * Create a new customer with encrypted PII
    */
   async create(tenantId: string, dto: CreateCustomerDto): Promise<CustomerWithDecryptedData> {
@@ -81,6 +92,7 @@ export class CustomerService {
           encryptedFirstName,
           encryptedLastName,
           phoneHash,
+          searchName: this.buildSearchName(dto.firstName, dto.lastName),
           gdprConsent: dto.gdprConsent || false,
           gdprConsentAt: dto.gdprConsent
             ? dto.gdprConsentAt
@@ -278,6 +290,17 @@ export class CustomerService {
         updateData.encryptedLastName = dto.lastName ? this.encryption.encrypt(dto.lastName) : null;
       }
 
+      // Update searchName when name changes
+      if (dto.firstName !== undefined || dto.lastName !== undefined) {
+        const newFirst =
+          dto.firstName !== undefined
+            ? dto.firstName
+            : this.safeDecrypt(existing.encryptedFirstName);
+        const newLast =
+          dto.lastName !== undefined ? dto.lastName : this.safeDecrypt(existing.encryptedLastName);
+        updateData.searchName = this.buildSearchName(newFirst, newLast);
+      }
+
       if (dto.notes !== undefined) {
         updateData.notes = dto.notes;
       }
@@ -406,21 +429,37 @@ export class CustomerService {
    */
   async findAll(
     tenantId: string,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; search?: string },
   ): Promise<{ customers: CustomerWithDecryptedData[]; total: number }> {
     return this.prisma.withTenant(tenantId, async prisma => {
+      const where: Prisma.CustomerWhereInput = { tenantId };
+
+      // Server-side search: searchName (DB-level), phoneHash/emailHash (exact), partitaIva (plain)
+      if (options?.search) {
+        const q = options.search.trim();
+        const qLower = q.toLowerCase();
+        where.OR = [
+          { searchName: { contains: qLower } },
+          { partitaIva: { contains: q } },
+          { phoneHash: this.encryption.hash(q) },
+          { emailHash: this.encryption.hash(q) },
+        ];
+      }
+
       const [customers, total] = await Promise.all([
         prisma.customer.findMany({
-          where: { tenantId },
+          where,
           take: options?.limit || 50,
           skip: options?.offset || 0,
           orderBy: { createdAt: 'desc' },
         }),
-        prisma.customer.count({ where: { tenantId } }),
+        prisma.customer.count({ where }),
       ]);
 
+      const decrypted = customers.map(c => this.decryptCustomer(c));
+
       return {
-        customers: customers.map(c => this.decryptCustomer(c)),
+        customers: decrypted,
         total,
       };
     });

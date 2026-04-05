@@ -21,19 +21,19 @@ const italianTemplates: Record<NotificationType, (vars: Record<string, string>) 
     `Ciao ${v.customerName}, appuntamento confermato per ${v.date} alle ${v.time}${v.workshopName ? ` da ${v.workshopName}` : ''}${v.bookingCode ? ` (Codice: ${v.bookingCode})` : ''}. Ti aspettiamo!`,
 
   [NotificationType.BOOKING_REMINDER]: (v) =>
-    `Ciao ${v.customerName}, ti ricordiamo l'appuntamento domani ${v.date} alle ${v.time}${v.location ? ` presso ${v.location}` : ''}. Conferma o modifica: ${v.link || 'https://mechmind.io/portal'}`,
+    `Ciao ${v.customerName}, ti ricordiamo l'appuntamento domani ${v.date} alle ${v.time}${v.location ? ` presso ${v.location}` : ''}. Conferma o modifica: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.BOOKING_CANCELLED]: (v) =>
-    `Ciao ${v.customerName}, l'appuntamento del ${v.date} alle ${v.time} è stato cancellato. Per riprenotare: ${v.link || 'https://mechmind.io/portal'}`,
+    `Ciao ${v.customerName}, l'appuntamento del ${v.date} alle ${v.time} è stato cancellato. Per riprenotare: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.INVOICE_READY]: (v) =>
-    `Ciao ${v.customerName}, fattura pronta. Importo: ${v.amount || 'N/D'}. Visualizza: ${v.link || 'https://mechmind.io/portal'}`,
+    `Ciao ${v.customerName}, fattura pronta. Importo: ${v.amount || 'N/D'}. Visualizza: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.INSPECTION_COMPLETE]: (v) =>
     `Ciao ${v.customerName}, ispezione completata!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
 
   [NotificationType.MAINTENANCE_DUE]: (v) =>
-    `Ciao ${v.customerName}, ${v.service || 'manutenzione'} dovuta tra ${v.days || 'pochi'} giorni. Prenota: ${v.link || 'https://mechmind.io/portal'}`,
+    `Ciao ${v.customerName}, ${v.service || 'manutenzione'} dovuta tra ${v.days || 'pochi'} giorni. Prenota: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.VEHICLE_READY]: (v) =>
     `Ciao ${v.customerName}, il tuo ${v.vehicle || 'veicolo'} è pronto per il ritiro!${v.totalAmount ? ` Importo: ${v.totalAmount}` : ''}${v.pickupTime ? ` Orario: ${v.pickupTime}` : ''}`,
@@ -42,19 +42,19 @@ const italianTemplates: Record<NotificationType, (vars: Record<string, string>) 
     `Ciao ${v.customerName}, aggiornamento: ${v.status || 'in lavorazione'}. ${v.link ? `Dettagli: ${v.link}` : ''}`,
 
   [NotificationType.PAYMENT_REMINDER]: (v) =>
-    `Ciao ${v.customerName}, promemoria pagamento fattura ${v.amount ? `di ${v.amount}` : ''}. Paga qui: ${v.link || 'https://mechmind.io/portal'}`,
+    `Ciao ${v.customerName}, promemoria pagamento fattura ${v.amount ? `di ${v.amount}` : ''}. Paga qui: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.WELCOME]: (v) =>
     `Benvenuto ${v.customerName}! Grazie per esserti registrato su MechMind OS.`,
 
   [NotificationType.PASSWORD_RESET]: (v) =>
-    `Ciao ${v.customerName}, per reimpostare la password clicca qui: ${v.link || 'https://mechmind.io/reset-password'}`,
+    `Ciao ${v.customerName}, per reimpostare la password clicca qui: ${v.link || 'https://mechmind.it/reset-password'}`,
 
   [NotificationType.CUSTOM]: (v) =>
     v.message || `Ciao ${v.customerName}, hai un nuovo messaggio da MechMind OS.`,
 
   [NotificationType.GDPR_EXPORT_READY]: (v) =>
-    `Ciao ${v.customerName}, i tuoi dati sono pronti per il download. Link: ${v.link || 'https://mechmind.io/portal'}`,
+    `Ciao ${v.customerName}, i tuoi dati sono pronti per il download. Link: ${v.link || 'https://mechmind.it/portal'}`,
 };
 
 // English message templates
@@ -63,19 +63,19 @@ const englishTemplates: Record<NotificationType, (vars: Record<string, string>) 
     `Hi ${v.customerName}, appointment confirmed for ${v.date} at ${v.time}${v.workshopName ? ` at ${v.workshopName}` : ''}${v.bookingCode ? ` (Code: ${v.bookingCode})` : ''}. See you soon!`,
 
   [NotificationType.BOOKING_REMINDER]: (v) =>
-    `Hi ${v.customerName}, reminder: your appointment is tomorrow ${v.date} at ${v.time}${v.location ? ` at ${v.location}` : ''}. Confirm or modify: ${v.link || 'https://mechmind.io/portal'}`,
+    `Hi ${v.customerName}, reminder: your appointment is tomorrow ${v.date} at ${v.time}${v.location ? ` at ${v.location}` : ''}. Confirm or modify: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.BOOKING_CANCELLED]: (v) =>
-    `Hi ${v.customerName}, your appointment on ${v.date} at ${v.time} has been cancelled. To reschedule: ${v.link || 'https://mechmind.io/portal'}`,
+    `Hi ${v.customerName}, your appointment on ${v.date} at ${v.time} has been cancelled. To reschedule: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.INVOICE_READY]: (v) =>
-    `Hi ${v.customerName}, your invoice is ready. Amount: ${v.amount || 'N/A'}. View: ${v.link || 'https://mechmind.io/portal'}`,
+    `Hi ${v.customerName}, your invoice is ready. Amount: ${v.amount || 'N/A'}. View: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.INSPECTION_COMPLETE]: (v) =>
     `Hi ${v.customerName}, inspection completed!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
 
   [NotificationType.MAINTENANCE_DUE]: (v) =>
-    `Hi ${v.customerName}, ${v.service || 'maintenance'} due in ${v.days || 'a few'} days. Book: ${v.link || 'https://mechmind.io/portal'}`,
+    `Hi ${v.customerName}, ${v.service || 'maintenance'} due in ${v.days || 'a few'} days. Book: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.VEHICLE_READY]: (v) =>
     `Hi ${v.customerName}, your ${v.vehicle || 'vehicle'} is ready for pickup!${v.totalAmount ? ` Amount: ${v.totalAmount}` : ''}${v.pickupTime ? ` Time: ${v.pickupTime}` : ''}`,
@@ -84,19 +84,19 @@ const englishTemplates: Record<NotificationType, (vars: Record<string, string>) 
     `Hi ${v.customerName}, status update: ${v.status || 'in progress'}. ${v.link ? `Details: ${v.link}` : ''}`,
 
   [NotificationType.PAYMENT_REMINDER]: (v) =>
-    `Hi ${v.customerName}, payment reminder${v.amount ? ` for ${v.amount}` : ''}. Pay here: ${v.link || 'https://mechmind.io/portal'}`,
+    `Hi ${v.customerName}, payment reminder${v.amount ? ` for ${v.amount}` : ''}. Pay here: ${v.link || 'https://mechmind.it/portal'}`,
 
   [NotificationType.WELCOME]: (v) =>
     `Welcome ${v.customerName}! Thanks for registering on MechMind OS.`,
 
   [NotificationType.PASSWORD_RESET]: (v) =>
-    `Hi ${v.customerName}, to reset your password click here: ${v.link || 'https://mechmind.io/reset-password'}`,
+    `Hi ${v.customerName}, to reset your password click here: ${v.link || 'https://mechmind.it/reset-password'}`,
 
   [NotificationType.CUSTOM]: (v) =>
     v.message || `Hi ${v.customerName}, you have a new message from MechMind OS.`,
 
   [NotificationType.GDPR_EXPORT_READY]: (v) =>
-    `Hi ${v.customerName}, your data is ready for download. Link: ${v.link || 'https://mechmind.io/portal'}`,
+    `Hi ${v.customerName}, your data is ready for download. Link: ${v.link || 'https://mechmind.it/portal'}`,
 };
 
 // Template metadata

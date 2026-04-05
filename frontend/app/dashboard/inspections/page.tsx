@@ -2,55 +2,28 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
-import { Pagination } from '@/components/ui/pagination';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { motion } from 'framer-motion';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Input } from '@/components/ui/input';
 import {
   ClipboardCheck,
-  Search,
   Plus,
-  User,
-  AlertCircle,
+  Search,
   Filter,
-  Trash2,
+  Loader2,
   Eye,
-  ArrowLeft,
-  ChevronRight,
+  Trash2,
+  AlertCircle,
+  AlertTriangle,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
-import Link from 'next/link';
 import { toast } from 'sonner';
-
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-};
+import { Pagination } from '@/components/ui/pagination';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface InspectionItem {
   id: string;
@@ -65,26 +38,38 @@ interface InspectionItem {
   maxSeverity: string;
 }
 
-const severityConfig: Record<string, { color: string; label: string }> = {
-  CRITICO: { color: colors.error, label: 'Critico' },
-  ALTO: { color: '#fb923c', label: 'Alto' },
-  MEDIO: { color: colors.warning, label: 'Medio' },
-  BASSO: { color: colors.info, label: 'Basso' },
-  OK: { color: colors.success, label: 'OK' },
-};
-
-const typeLabels: Record<string, string> = {
-  PRE_PURCHASE: 'Pre-Acquisto',
-  PERIODIC: 'Periodica',
-  PRE_SALE: 'Pre-Vendita',
-  WARRANTY: 'Garanzia',
-  ACCIDENT: 'Incidente',
+const severityConfig: Record<string, { color: string; bg: string; label: string }> = {
+  CRITICO: {
+    color: 'text-red-700 dark:text-red-300',
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    label: 'Critico',
+  },
+  ALTO: {
+    color: 'text-orange-700 dark:text-orange-300',
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    label: 'Alto',
+  },
+  MEDIO: {
+    color: 'text-yellow-700 dark:text-yellow-300',
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    label: 'Medio',
+  },
+  BASSO: {
+    color: 'text-blue-700 dark:text-blue-300',
+    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    label: 'Basso',
+  },
+  OK: {
+    color: 'text-green-700 dark:text-green-300',
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    label: 'OK',
+  },
 };
 
 type SeverityFilter = 'ALL' | 'CRITICO' | 'ALTO' | 'MEDIO' | 'BASSO' | 'OK';
 
 const severityFilterOptions: { value: SeverityFilter; label: string }[] = [
-  { value: 'ALL', label: 'Tutte' },
+  { value: 'ALL', label: 'Tutte le gravità' },
   { value: 'CRITICO', label: 'Critico' },
   { value: 'ALTO', label: 'Alto' },
   { value: 'MEDIO', label: 'Medio' },
@@ -92,12 +77,39 @@ const severityFilterOptions: { value: SeverityFilter; label: string }[] = [
   { value: 'OK', label: 'OK' },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
 export default function InspectionsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('ALL');
-  const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
   const {
@@ -158,301 +170,233 @@ export default function InspectionsPage() {
     ok: inspections.filter(i => i.maxSeverity === 'OK').length,
   };
 
-  const kpiCards = [
-    { label: 'Totali', value: statCounts.total, color: colors.info },
-    { label: 'Critiche', value: statCounts.critico, color: colors.error },
-    { label: 'Gravità Alta', value: statCounts.alto, color: '#fb923c' },
-    { label: 'Tutto OK', value: statCounts.ok, color: colors.success },
+  const statCards = [
+    {
+      label: 'Totale Ispezioni',
+      value: String(statCounts.total),
+      icon: ClipboardCheck,
+      color: 'bg-apple-blue',
+    },
+    {
+      label: 'Critiche',
+      value: String(statCounts.critico),
+      icon: ShieldAlert,
+      color: 'bg-apple-orange',
+    },
+    {
+      label: 'Gravità Alta',
+      value: String(statCounts.alto),
+      icon: AlertTriangle,
+      color: 'bg-apple-green',
+    },
+    {
+      label: 'Tutto OK',
+      value: String(statCounts.ok),
+      icon: ShieldCheck,
+      color: 'bg-apple-purple',
+    },
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className="sticky top-0 z-30 backdrop-blur-xl border-b"
-        style={{
-          backgroundColor: `${colors.bg}cc`,
-          borderColor: colors.borderSubtle,
-        }}
-      >
-        <div className="px-4 sm:px-8 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="p-2 rounded-xl transition-colors hover:bg-white/5"
-              aria-label="Torna alla dashboard"
-            >
-              <ArrowLeft className="h-5 w-5" style={{ color: colors.textSecondary }} />
-            </Link>
-            <div>
-              <h1 className="text-[28px] font-light" style={{ color: colors.textPrimary }}>
-                Ispezioni
-              </h1>
-              <p className="text-[13px] mt-0.5" style={{ color: colors.textTertiary }}>
-                Gestione ispezioni veicoli
-              </p>
-            </div>
+      <header>
+        <div className='px-8 py-5 flex items-center justify-between'>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ispezioni</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Gestione ispezioni veicoli
+            </p>
           </div>
-          <button
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium transition-colors"
-            style={{ backgroundColor: colors.accent, color: colors.bg }}
+          <AppleButton
+            icon={<Plus className='h-4 w-4' />}
             onClick={() => router.push('/dashboard/inspections/new')}
           >
-            <Plus className="h-4 w-4" />
             Nuova Ispezione
-          </button>
+          </AppleButton>
         </div>
       </header>
 
-      <div className="p-4 sm:p-8 space-y-6">
-        {/* KPI Cards */}
+      <motion.div
+        className='p-8 space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        {/* Stats */}
         <motion.div
-          initial="hidden"
-          animate="visible"
+          className='grid grid-cols-2 lg:grid-cols-4 gap-bento'
           variants={containerVariants}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-4"
         >
-          {kpiCards.map(stat => (
-            <motion.div key={stat.label} variants={itemVariants}>
-              <div
-                className="rounded-2xl border h-[120px] flex flex-col justify-center px-5"
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: colors.borderSubtle,
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: stat.color }}
-                  />
-                  <div>
-                    <p
-                      className="text-2xl font-light"
-                      style={{
-                        color: colors.textPrimary,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
+          {statCards.map(stat => (
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div
+                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      {isLoading ? '...' : stat.value}
-                    </p>
-                    <p className="text-[13px]" style={{ color: colors.textTertiary }}>
-                      {stat.label}
-                    </p>
+                      <stat.icon className='h-5 w-5 text-white' />
+                    </div>
                   </div>
-                </div>
-              </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {isLoading ? '...' : stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Search + Filters */}
-        <motion.div initial="hidden" animate="visible" variants={itemVariants}>
-          <div
-            className="rounded-2xl border p-4"
-            style={{
-              backgroundColor: colors.surface,
-              borderColor: colors.borderSubtle,
-            }}
-          >
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.textMuted }} />
-                <input
-                  type="text"
-                  placeholder="Cerca per targa, veicolo, cliente o tecnico..."
-                  aria-label="Cerca ispezioni"
-                  value={searchQuery}
-                  onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
-                  className="w-full pl-12 h-12 rounded-xl border text-sm focus:outline-none focus:border-white/30 transition-colors"
-                  style={{
-                    backgroundColor: colors.glowStrong,
-                    borderColor: colors.borderSubtle,
-                    color: colors.textPrimary,
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-center flex-wrap gap-2">
-                {severityFilterOptions.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => { setSeverityFilter(opt.value); setPage(1); }}
-                    className="h-10 px-4 rounded-full text-sm font-medium transition-colors border"
-                    style={
-                      severityFilter === opt.value
-                        ? { backgroundColor: colors.accent, color: colors.bg, borderColor: colors.accent }
-                        : { backgroundColor: 'transparent', color: colors.textSecondary, borderColor: colors.border }
-                    }
+        {/* Filters */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex flex-col sm:flex-row gap-4'>
+                <div className='relative flex-1'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Input
+                    placeholder='Cerca per targa, veicolo, cliente o tecnico...'
+                    aria-label='Cerca ispezioni'
+                    value={searchQuery}
+                    onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
+                    className='pl-10'
+                  />
+                </div>
+                <div className='relative'>
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <select
+                    value={severityFilter}
+                    onChange={e => { setSeverityFilter(e.target.value as SeverityFilter); setPage(1); }}
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
-                    {opt.label}
-                  </button>
-                ))}
+                    {severityFilterOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
-          </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
-        {/* List */}
-        <motion.div initial="hidden" animate="visible" variants={itemVariants}>
-          {inspectionsError ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <AlertCircle className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
-                Impossibile caricare le ispezioni
-              </p>
-              <button
-                className="mt-4 h-10 px-4 rounded-full text-sm font-medium border transition-colors hover:bg-white/5"
-                style={{ borderColor: colors.border, color: colors.textPrimary }}
-                onClick={() => mutate()}
-              >
-                Riprova
-              </button>
-            </div>
-          ) : isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white" />
-            </div>
-          ) : filteredInspections.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <ClipboardCheck className="h-12 w-12 mb-4" style={{ color: colors.borderSubtle }} />
-              <p className="text-base font-medium mb-1" style={{ color: colors.textPrimary }}>
-                Nessuna ispezione trovata
-              </p>
-              <p className="text-sm mb-4 max-w-md" style={{ color: colors.textTertiary }}>
-                {searchQuery || severityFilter !== 'ALL'
-                  ? 'Nessun risultato. Prova con altri filtri.'
-                  : 'Non ci sono ispezioni registrate. Crea una nuova ispezione per iniziare.'}
-              </p>
-              {!searchQuery && severityFilter === 'ALL' && (
-                <button
-                  className="h-10 px-4 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-2"
-                  style={{ backgroundColor: colors.accent, color: colors.bg }}
-                  onClick={() => router.push('/dashboard/inspections/new')}
+        {/* Inspections List */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                Elenco Ispezioni
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {inspectionsError ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare le ispezioni
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => mutate()}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : isLoading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                </div>
+              ) : filteredInspections.length === 0 ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Nessuna ispezione trovata. Crea la prima ispezione.
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => router.push('/dashboard/inspections/new')}
+                  >
+                    Crea la prima ispezione
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className='space-y-3'
+                  variants={containerVariants}
+                  initial='hidden'
+                  animate='visible'
                 >
-                  <Plus className="h-4 w-4" />
-                  Nuova Ispezione
-                </button>
-              )}
-            </div>
-          ) : (
-            <div
-              className="rounded-2xl border overflow-hidden"
-              style={{
-                backgroundColor: colors.surface,
-                borderColor: colors.borderSubtle,
-              }}
-            >
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                {filteredInspections.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inspection) => {
-                  const sev = severityConfig[inspection.maxSeverity] || severityConfig.OK;
-                  return (
-                    <motion.div
-                      key={inspection.id}
-                      variants={itemVariants}
-                      className="flex items-center gap-4 px-5 py-4 border-b transition-colors cursor-pointer group"
-                      style={{ borderColor: colors.borderSubtle }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.surfaceHover; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                      onClick={() => router.push(`/dashboard/inspections/${inspection.id}`)}
-                    >
-                      {/* Severity bar */}
-                      <div
-                        className="w-1 h-12 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: sev.color }}
-                      />
-
-                      {/* Main content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-1">
-                          <p className="text-sm font-medium truncate" style={{ color: colors.textPrimary }}>
-                            {inspection.vehicle}
-                          </p>
+                  {filteredInspections.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inspection, index) => {
+                    const sev = severityConfig[inspection.maxSeverity] || severityConfig.OK;
+                    return (
+                      <motion.div
+                        key={inspection.id}
+                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        variants={listItemVariants}
+                        custom={index}
+                        whileHover={{ scale: 1.005, x: 4 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className='flex items-center gap-4'>
+                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                            <ClipboardCheck className='h-6 w-6 text-apple-blue' />
+                          </div>
+                          <div>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              {inspection.vehicle || inspection.plate}
+                            </p>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              #{inspection.id.slice(0, 8)} &bull; {inspection.plate} &bull; {inspection.customer}
+                              {inspection.technician && ` &bull; ${inspection.technician}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-4'>
                           <span
-                            className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full flex-shrink-0"
-                            style={{
-                              backgroundColor: `${sev.color}20`,
-                              color: sev.color,
-                            }}
+                            className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${sev.bg} ${sev.color}`}
                           >
                             {sev.label}
                           </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs" style={{ color: colors.textTertiary }}>
-                          <span className="font-mono">#{inspection.id.slice(0, 6)}</span>
-                          <span>{inspection.plate}</span>
-                          <span className="hidden sm:inline">{inspection.customer}</span>
-                          {inspection.technician && (
-                            <span className="hidden md:inline flex items-center gap-1">
-                              <User className="h-3 w-3 inline" />
-                              {inspection.technician}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right side */}
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <div className="hidden sm:block text-right">
-                          <p className="text-xs" style={{ color: colors.textTertiary }}>
-                            {inspection.date}
-                          </p>
-                          <p
-                            className="text-xs"
-                            style={{ color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}
-                          >
+                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[80px] text-right'>
                             {inspection.itemCount} elementi
                           </p>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
+                            {inspection.date}
+                          </p>
+                          <div className='flex items-center gap-2'>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              icon={<Eye className='h-3.5 w-3.5' />}
+                              onClick={() => router.push(`/dashboard/inspections/${inspection.id}`)}
+                            >
+                              Visualizza
+                            </AppleButton>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              icon={<Trash2 className='h-3.5 w-3.5' />}
+                              onClick={() => setDeleteId(inspection.id)}
+                            >
+                              Elimina
+                            </AppleButton>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/dashboard/inspections/${inspection.id}`);
-                            }}
-                            className="p-2 rounded-lg transition-colors hover:bg-white/5 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                            aria-label="Dettagli"
-                            title="Dettagli"
-                          >
-                            <Eye className="h-4 w-4" style={{ color: colors.textMuted }} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(inspection.id);
-                            }}
-                            className="p-2 rounded-lg transition-colors hover:bg-white/5 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                            aria-label="Elimina ispezione"
-                            title="Elimina"
-                          >
-                            <Trash2 className="h-4 w-4" style={{ color: colors.textMuted }} />
-                          </button>
-                        </div>
-                        <ChevronRight
-                          className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ color: colors.textMuted }}
-                        />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-
-              <div className="p-4">
-                <Pagination
-                  page={page}
-                  totalPages={Math.ceil(filteredInspections.length / PAGE_SIZE)}
-                  onPageChange={setPage}
-                />
-              </div>
-            </div>
-          )}
+                      </motion.div>
+                    );
+                  })}
+                  <Pagination page={page} totalPages={Math.ceil(filteredInspections.length / PAGE_SIZE)} onPageChange={setPage} />
+                </motion.div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
-      </div>
+      </motion.div>
 
       <ConfirmDialog
         open={!!deleteId}

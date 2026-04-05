@@ -5,6 +5,7 @@ import { BookingService } from './booking.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
+import { EncryptionService } from '@common/services/encryption.service';
 
 describe('BookingService', () => {
   let service: BookingService;
@@ -96,6 +97,13 @@ describe('BookingService', () => {
             warn: jest.fn(),
             error: jest.fn(),
             debug: jest.fn(),
+          },
+        },
+        {
+          provide: EncryptionService,
+          useValue: {
+            encrypt: jest.fn((v: string) => `enc_${v}`),
+            decrypt: jest.fn((v: string) => (v.startsWith('enc_') ? v.slice(4) : v)),
           },
         },
       ],
@@ -703,6 +711,290 @@ describe('BookingService', () => {
       expect(result.total).toBe(0);
       expect(result.byStatus).toEqual({});
       expect(result.bySource).toEqual({});
+    });
+  });
+
+  // =========================================================================
+  // reserveSlot — error handling branches
+  // =========================================================================
+  describe('reserveSlot — error handling', () => {
+    const dto = {
+      slotId: SLOT_ID,
+      customerId: CUSTOMER_ID,
+      vehicleId: 'vehicle-001',
+      serviceIds: ['service-001'],
+      notes: 'Oil change',
+    };
+
+    it('should throw BadRequestException on generic error', async () => {
+      (prisma.withSerializableTransaction as jest.Mock).mockRejectedValue(
+        new Error('Something went wrong'),
+      );
+
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow('Something went wrong');
+    });
+
+    it('should rethrow ConflictException from transaction', async () => {
+      (prisma.withSerializableTransaction as jest.Mock).mockRejectedValue(
+        new ConflictException('Slot is not available'),
+      );
+
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(ConflictException);
+    });
+
+    it('should handle reservation without vehicleId', async () => {
+      const dtoNoVehicle = { ...dto, vehicleId: undefined };
+
+      const result = await service.reserveSlot(TENANT_ID, dtoNoVehicle);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle reservation without serviceIds', async () => {
+      const dtoNoServices = { ...dto, serviceIds: undefined };
+
+      const result = await service.reserveSlot(TENANT_ID, dtoNoServices);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle reservation with empty notes', async () => {
+      const dtoNoNotes = { ...dto, notes: undefined };
+
+      const result = await service.reserveSlot(TENANT_ID, dtoNoNotes);
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // updateBooking — status transition
+  // =========================================================================
+  describe('updateBooking — status transition', () => {
+    it('should validate status transition when status provided', async () => {
+      const existing = { id: 'booking-001', tenantId: TENANT_ID, status: 'COMPLETED' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(existing);
+
+      // COMPLETED cannot transition to CONFIRMED
+      await expect(
+        service.updateBooking(TENANT_ID, 'booking-001', { status: 'CONFIRMED' }),
+      ).rejects.toThrow();
+    });
+
+    it('should update notes without status transition', async () => {
+      const existing = { id: 'booking-001', tenantId: TENANT_ID, status: 'PENDING' };
+      const updated = { ...existing, notes: 'Updated notes' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(existing);
+      (prisma.booking.update as jest.Mock).mockResolvedValue(updated);
+
+      const result = await service.updateBooking(TENANT_ID, 'booking-001', {
+        notes: 'Updated notes',
+      });
+
+      expect(result).toEqual(updated);
+    });
+  });
+
+  // =========================================================================
+  // createBooking — additional branches
+  // =========================================================================
+  describe('createBooking — optional fields', () => {
+    const baseDto = {
+      customerId: CUSTOMER_ID,
+      slotId: SLOT_ID,
+      scheduledDate: '2024-06-01T09:00:00Z',
+    };
+
+    it('should handle technicianId and liftPosition', async () => {
+      const dtoWithExtras = {
+        ...baseDto,
+        vehicleId: 'vehicle-001',
+        technicianId: 'tech-001',
+        liftPosition: 'Lift 3',
+        durationMinutes: 90,
+        notes: 'Special request',
+        source: 'PHONE' as const,
+      };
+      const mockBooking = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        scheduledDate: new Date(baseDto.scheduledDate),
+        source: 'PHONE',
+      };
+      (prisma.booking.create as jest.Mock).mockResolvedValue(mockBooking);
+
+      const result = await service.createBooking(TENANT_ID, dtoWithExtras);
+      expect(result).toEqual(mockBooking);
+    });
+  });
+
+  // =========================================================================
+  // rescheduleBooking
+  // =========================================================================
+  describe('rescheduleBooking', () => {
+    const mockExisting = {
+      id: 'booking-001',
+      tenantId: TENANT_ID,
+      status: 'CONFIRMED',
+      scheduledDate: new Date('2024-06-01T09:00:00Z'),
+      slotId: SLOT_ID,
+      slot: { id: SLOT_ID },
+    };
+
+    it('should reschedule booking to new date without new slot', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(mockExisting);
+      const rescheduled = { ...mockExisting, scheduledDate: new Date('2024-06-05T10:00:00Z') };
+      (prisma.booking.update as jest.Mock).mockResolvedValue(rescheduled);
+
+      const result = await service.rescheduleBooking(TENANT_ID, 'booking-001', {
+        newDate: '2024-06-05T10:00:00Z',
+      });
+
+      expect(result).toEqual(rescheduled);
+      expect(prisma.bookingSlot.update).not.toHaveBeenCalled();
+    });
+
+    it('should reschedule to a new slot', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(mockExisting);
+      (prisma.bookingSlot.findFirst as jest.Mock).mockResolvedValue({
+        id: 'new-slot',
+        tenantId: TENANT_ID,
+        status: 'AVAILABLE',
+      });
+      const rescheduled = { ...mockExisting, slotId: 'new-slot' };
+      (prisma.booking.update as jest.Mock).mockResolvedValue(rescheduled);
+
+      const result = await service.rescheduleBooking(TENANT_ID, 'booking-001', {
+        newDate: '2024-06-05T10:00:00Z',
+        newSlotId: 'new-slot',
+        reason: 'Customer requested',
+      });
+
+      expect(result).toEqual(rescheduled);
+      // Should free old slot
+      expect(prisma.bookingSlot.update).toHaveBeenCalledWith({
+        where: { id: SLOT_ID },
+        data: { status: 'AVAILABLE' },
+      });
+    });
+
+    it('should throw NotFoundException when booking not found', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.rescheduleBooking(TENANT_ID, 'nonexistent', {
+          newDate: '2024-06-05T10:00:00Z',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException for non-reschedulable status', async () => {
+      const completed = { ...mockExisting, status: 'COMPLETED' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(completed);
+
+      await expect(
+        service.rescheduleBooking(TENANT_ID, 'booking-001', {
+          newDate: '2024-06-05T10:00:00Z',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('should throw NotFoundException when new slot not found', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(mockExisting);
+      (prisma.bookingSlot.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.rescheduleBooking(TENANT_ID, 'booking-001', {
+          newDate: '2024-06-05T10:00:00Z',
+          newSlotId: 'nonexistent-slot',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException when new slot is not available', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(mockExisting);
+      (prisma.bookingSlot.findFirst as jest.Mock).mockResolvedValue({
+        id: 'booked-slot',
+        tenantId: TENANT_ID,
+        status: 'BOOKED',
+      });
+
+      await expect(
+        service.rescheduleBooking(TENANT_ID, 'booking-001', {
+          newDate: '2024-06-05T10:00:00Z',
+          newSlotId: 'booked-slot',
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should handle PENDING status as reschedulable', async () => {
+      const pending = { ...mockExisting, status: 'PENDING' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(pending);
+      (prisma.booking.update as jest.Mock).mockResolvedValue(pending);
+
+      const result = await service.rescheduleBooking(TENANT_ID, 'booking-001', {
+        newDate: '2024-06-05T10:00:00Z',
+      });
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle booking without existing slotId when rescheduling to new slot', async () => {
+      const noSlot = { ...mockExisting, slotId: null, slot: null };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(noSlot);
+      (prisma.bookingSlot.findFirst as jest.Mock).mockResolvedValue({
+        id: 'new-slot',
+        tenantId: TENANT_ID,
+        status: 'AVAILABLE',
+      });
+      (prisma.booking.update as jest.Mock).mockResolvedValue({ ...noSlot, slotId: 'new-slot' });
+
+      const result = await service.rescheduleBooking(TENANT_ID, 'booking-001', {
+        newDate: '2024-06-05T10:00:00Z',
+        newSlotId: 'new-slot',
+      });
+
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // cancelBooking — additional branches
+  // =========================================================================
+  describe('cancelBooking — edge cases', () => {
+    it('should cancel without reason', async () => {
+      const booking = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        status: 'PENDING',
+        slot: null,
+      };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(booking);
+      (prisma.booking.update as jest.Mock).mockResolvedValue({ ...booking, status: 'CANCELLED' });
+
+      const result = await service.cancelBooking(TENANT_ID, 'booking-001');
+      expect(result.status).toBe('CANCELLED');
+    });
+  });
+
+  // =========================================================================
+  // findAll — edge cases
+  // =========================================================================
+  describe('findAll — edge cases', () => {
+    it('should apply only fromDate without toDate', async () => {
+      (prisma.booking.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.booking.count as jest.Mock).mockResolvedValue(0);
+
+      // Only fromDate, no toDate — should not create scheduledDate filter
+      await service.findAll(TENANT_ID, { fromDate: new Date('2024-01-01') });
+
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            scheduledDate: expect.anything(),
+          }),
+        }),
+      );
     });
   });
 });

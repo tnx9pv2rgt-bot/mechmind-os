@@ -1,6 +1,7 @@
 ---
 name: refactor
 description: Refactoring sicuro con test. Usa quando chiesto di refactorare, pulire, riorganizzare codice, estrarre funzioni, o ridurre duplicazione.
+disable-model-invocation: true
 allowed-tools: [Read, Write, Edit, Grep, Glob, "Bash(npx jest *)", "Bash(npx tsc *)", "Bash(npm run lint*)", "Bash(git diff *)"]
 ---
 

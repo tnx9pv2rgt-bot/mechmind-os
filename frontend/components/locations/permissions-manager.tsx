@@ -520,16 +520,16 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                       <table className='w-full'>
                         <thead className='bg-gray-50 dark:bg-gray-800'>
                           <tr>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                               Utente
                             </th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                               Ruolo
                             </th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                               Permessi
                             </th>
-                            <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                            <th className='px-6 py-3 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                               Azioni
                             </th>
                           </tr>

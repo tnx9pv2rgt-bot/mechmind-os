@@ -158,8 +158,8 @@ export default function OBDVehicleDetailPage() {
   if (hasError) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
-        <AlertCircle className='h-12 w-12 text-red-400 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[#636366] mb-4'>Dati OBD non disponibili</p>
+        <AlertCircle className='h-12 w-12 text-apple-red/60 mb-4' />
+        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>Dati OBD non disponibili</p>
         <Link href='/dashboard/obd'>
           <AppleButton variant='secondary'>Torna a OBD</AppleButton>
         </Link>
@@ -169,7 +169,7 @@ export default function OBDVehicleDetailPage() {
 
   return (
     <div>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-8 py-5'>
           <Breadcrumb
             items={[
@@ -184,11 +184,11 @@ export default function OBDVehicleDetailPage() {
                 <Car className='h-5 w-5 text-apple-purple' />
               </div>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>{vehicleName}</h1>
-                <p className='text-apple-gray dark:text-[#636366] text-body'>
+                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>{vehicleName}</h1>
+                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body'>
                   {vehiclePlate && `Targa: ${vehiclePlate} - `}Diagnostica OBD-II
                   {liveData?.connected && (
-                    <span className='ml-2 text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'>
+                    <span className='ml-2 text-footnote px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-apple-green dark:text-green-300'>
                       Connesso
                     </span>
                   )}
@@ -208,10 +208,10 @@ export default function OBDVehicleDetailPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-body font-medium transition-colors ${
                   activeTab === tab.key
                     ? 'bg-apple-blue text-white'
-                    : 'text-apple-gray dark:text-[#636366] hover:bg-apple-light-gray/50 dark:hover:bg-[#353535]'
+                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
                 }`}
               >
                 {tab.label}
@@ -239,12 +239,12 @@ export default function OBDVehicleDetailPage() {
                       <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-3`}>
                         <item.icon className='h-5 w-5 text-white' />
                       </div>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>{item.label}</p>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{item.label}</p>
                       <div className='flex items-baseline gap-1'>
-                        <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                        <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                           {item.value != null ? String(item.value) : '--'}
                         </p>
-                        <span className='text-caption text-apple-gray dark:text-[#636366]'>{item.unit}</span>
+                        <span className='text-caption text-apple-gray dark:text-[var(--text-secondary)]'>{item.unit}</span>
                       </div>
                     </AppleCardContent>
                   </AppleCard>
@@ -257,10 +257,10 @@ export default function OBDVehicleDetailPage() {
                 <AppleCard className='bg-apple-orange/5 border-apple-orange/20'>
                   <AppleCardContent className='text-center py-8'>
                     <AlertTriangle className='h-8 w-8 text-apple-orange mx-auto mb-3' />
-                    <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>
+                    <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                       Dispositivo non connesso
                     </p>
-                    <p className='text-footnote text-apple-gray dark:text-[#636366] mt-1'>
+                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                       I dati live non sono disponibili. Verifica la connessione del dispositivo OBD.
                     </p>
                   </AppleCardContent>
@@ -278,7 +278,7 @@ export default function OBDVehicleDetailPage() {
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
                     <AlertTriangle className='h-5 w-5 text-apple-red' />
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
+                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Codici di Errore ({activeDTCs.length} attivi)
                     </h2>
                   </div>
@@ -303,7 +303,7 @@ export default function OBDVehicleDetailPage() {
                 ) : dtcCodes.length === 0 ? (
                   <div className='text-center py-12'>
                     <CheckCircle className='h-8 w-8 text-apple-green mx-auto mb-3' />
-                    <p className='text-body text-apple-gray dark:text-[#636366]'>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                       Nessun codice di errore. Il veicolo è in buone condizioni.
                     </p>
                   </div>
@@ -314,21 +314,21 @@ export default function OBDVehicleDetailPage() {
                       return (
                         <div
                           key={tc.id}
-                          className={`flex items-center justify-between p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[#353535]/50 ${tc.resolved ? 'opacity-50' : ''}`}
+                          className={`flex items-center justify-between p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]/50 ${tc.resolved ? 'opacity-50' : ''}`}
                         >
                           <div className='flex items-center gap-4'>
                             <div className='w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center'>
-                              <span className='text-sm font-bold text-red-600 dark:text-red-400'>{tc.code}</span>
+                              <span className='text-body font-bold text-apple-red dark:text-red-400'>{tc.code}</span>
                             </div>
                             <div>
-                              <p className='text-body font-medium text-apple-dark dark:text-[#ececec]'>{tc.description}</p>
-                              <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                              <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{tc.description}</p>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                                 Rilevato: {new Date(tc.detectedAt).toLocaleDateString('it-IT')}
                                 {tc.resolved && <span className='ml-2 text-apple-green'>Risolto</span>}
                               </p>
                             </div>
                           </div>
-                          <span className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${sev.bg} ${sev.color}`}>
+                          <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${sev.bg} ${sev.color}`}>
                             {sev.label}
                           </span>
                         </div>
@@ -349,7 +349,7 @@ export default function OBDVehicleDetailPage() {
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
                     <Clock className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec]'>
+                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Storico Letture
                     </h2>
                   </div>
@@ -363,10 +363,10 @@ export default function OBDVehicleDetailPage() {
                       <button
                         key={r.value}
                         onClick={() => setDateRange(r.value)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                        className={`px-3 py-1 rounded-lg text-footnote font-medium transition-colors ${
                           dateRange === r.value
                             ? 'bg-apple-blue text-white'
-                            : 'text-apple-gray hover:bg-apple-light-gray/50 dark:hover:bg-[#353535]'
+                            : 'text-apple-gray hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
                         }`}
                       >
                         {r.label}
@@ -383,7 +383,7 @@ export default function OBDVehicleDetailPage() {
                 ) : history.length === 0 ? (
                   <div className='text-center py-12'>
                     <Clock className='h-8 w-8 text-apple-gray/40 mx-auto mb-3' />
-                    <p className='text-body text-apple-gray dark:text-[#636366]'>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                       Nessuno storico disponibile per il periodo selezionato.
                     </p>
                   </div>
@@ -391,7 +391,7 @@ export default function OBDVehicleDetailPage() {
                   <div className='space-y-6'>
                     {/* RPM Chart */}
                     <div>
-                      <h3 className='text-sm font-medium text-apple-gray dark:text-[#636366] mb-2'>RPM Motore</h3>
+                      <h3 className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2'>RPM Motore</h3>
                       <div className='h-48'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <LineChart data={history}>
@@ -415,7 +415,7 @@ export default function OBDVehicleDetailPage() {
 
                     {/* Temperature Chart */}
                     <div>
-                      <h3 className='text-sm font-medium text-apple-gray dark:text-[#636366] mb-2'>Temperatura Motore</h3>
+                      <h3 className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2'>Temperatura Motore</h3>
                       <div className='h-48'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <LineChart data={history}>
@@ -439,7 +439,7 @@ export default function OBDVehicleDetailPage() {
 
                     {/* Battery Chart */}
                     <div>
-                      <h3 className='text-sm font-medium text-apple-gray dark:text-[#636366] mb-2'>Tensione Batteria</h3>
+                      <h3 className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2'>Tensione Batteria</h3>
                       <div className='h-48'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <LineChart data={history}>

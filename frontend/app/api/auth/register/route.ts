@@ -22,11 +22,9 @@ function slugify(text: string): string {
 /**
  * POST /api/auth/register
  *
- * Proxies registration to the backend which has the full Prisma schema
+ * Proxies registration to the NestJS backend which has the full Prisma schema
  * with User model and bcrypt for password hashing.
- *
- * If backend doesn't have a register endpoint, we use the frontend
- * Prisma client with the available models (Tenant + TenantUser).
+ * If backend is unavailable, returns 502 — no Prisma fallback.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -155,58 +153,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
       }
     } catch {
-      // Backend non disponibile — fallback Prisma locale
-    }
-
-    // Fallback: local registration using frontend Prisma (Tenant + TenantUser)
-    const { prisma } = await import('@/lib/prisma');
-
-    // Check slug uniqueness
-    const existingTenant = await prisma.tenant.findUnique({ where: { slug } });
-    if (existingTenant) {
+      // Backend non disponibile — restituisci errore 502
       return NextResponse.json(
-        { error: 'Questo slug è già in uso. Scegline un altro.' },
-        { status: 409 }
+        { error: 'Backend non raggiungibile. Riprova tra qualche secondo.' },
+        { status: 502 }
       );
     }
 
-    // Check email uniqueness
-    const existingUser = await prisma.tenantUser.findFirst({
-      where: { email: body.email.toLowerCase().trim() },
-    });
-    if (existingUser) {
-      return NextResponse.json({ error: 'Questa email è già registrata.' }, { status: 409 });
-    }
-
-    // Create tenant + user in transaction
-    const result = await prisma.$transaction(async tx => {
-      const tenant = await tx.tenant.create({
-        data: {
-          name: body.shopName.trim(),
-          slug,
-          email: body.email.toLowerCase().trim(),
-          country: 'IT',
-        },
-      });
-
-      await tx.tenantUser.create({
-        data: {
-          tenantId: tenant.id,
-          userId: `local_${Date.now()}`,
-          email: body.email.toLowerCase().trim(),
-          role: 'ADMIN',
-          isActive: true,
-        },
-      });
-
-      return tenant;
-    });
-
-    return NextResponse.json({
-      success: true,
-      tenantSlug: result.slug,
-      message: 'Registrazione completata! Puoi accedere.',
-    });
+    // If we reach here, the backend returned a 5xx error
+    return NextResponse.json(
+      { error: 'Errore del server durante la registrazione. Riprova.' },
+      { status: 502 }
+    );
   } catch (error: unknown) {
     console.error('[register] Error:', error);
     return NextResponse.json(

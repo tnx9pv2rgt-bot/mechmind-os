@@ -76,7 +76,7 @@ export class CreateWasteEntryDto {
   @IsUUID()
   destinationId?: string;
 
-  @ApiPropertyOptional({ description: 'ID dell\'ordine di lavoro collegato' })
+  @ApiPropertyOptional({ description: "ID dell'ordine di lavoro collegato" })
   @IsOptional()
   @IsUUID()
   workOrderId?: string;

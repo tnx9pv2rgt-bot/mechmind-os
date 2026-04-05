@@ -32,6 +32,40 @@ export class InvoiceService {
     private readonly encryption: EncryptionService,
   ) {}
 
+  /**
+   * Decrypt customer PII fields embedded in invoice relations.
+   * Only decrypts if encrypted fields are present (e.g. encryptedFirstName).
+   */
+  private decryptCustomerInInvoice<T extends { customer?: Record<string, unknown> | null }>(
+    invoice: T,
+  ): T {
+    if (!invoice.customer) return invoice;
+    const c = invoice.customer as Record<string, unknown>;
+
+    // Only apply decryption if encrypted fields exist on the customer object
+    const hasEncryptedFields = 'encryptedFirstName' in c || 'encryptedEmail' in c;
+    if (!hasEncryptedFields) return invoice;
+
+    const safeDecrypt = (val: unknown): string | null => {
+      if (!val || typeof val !== 'string') return null;
+      try {
+        return this.encryption.decrypt(val);
+      } catch {
+        return '[encrypted]';
+      }
+    };
+    return {
+      ...invoice,
+      customer: {
+        ...c,
+        firstName: safeDecrypt(c.encryptedFirstName),
+        lastName: safeDecrypt(c.encryptedLastName),
+        email: safeDecrypt(c.encryptedEmail),
+        phone: safeDecrypt(c.encryptedPhone),
+      },
+    };
+  }
+
   async findAll(
     tenantId: string,
     filters?: InvoiceFilters,
@@ -71,7 +105,7 @@ export class InvoiceService {
     ]);
 
     return {
-      data: invoices,
+      data: invoices.map(inv => this.decryptCustomerInInvoice(inv)),
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };
   }
@@ -86,7 +120,7 @@ export class InvoiceService {
       throw new NotFoundException(`Invoice with id ${id} not found`);
     }
 
-    return invoice;
+    return this.decryptCustomerInInvoice(invoice);
   }
 
   async create(tenantId: string, dto: CreateInvoiceDto) {
@@ -134,7 +168,7 @@ export class InvoiceService {
       });
 
       this.logger.log(`Invoice ${invoiceNumber} created for tenant ${tenantId}`);
-      return invoice;
+      return this.decryptCustomerInInvoice(invoice);
     });
   }
 
@@ -169,11 +203,17 @@ export class InvoiceService {
       data.status = dto.status;
     }
 
-    return this.prisma.invoice.update({
-      where: { id },
+    await this.prisma.invoice.updateMany({
+      where: { id, tenantId },
       data,
+    });
+
+    const updated = await this.prisma.invoice.findFirst({
+      where: { id, tenantId },
       include: { customer: true },
     });
+
+    return updated ? this.decryptCustomerInInvoice(updated) : updated;
   }
 
   async remove(tenantId: string, id: string) {
@@ -183,8 +223,8 @@ export class InvoiceService {
       throw new BadRequestException('Only DRAFT invoices can be deleted');
     }
 
-    await this.prisma.invoice.update({
-      where: { id },
+    await this.prisma.invoice.updateMany({
+      where: { id, tenantId },
       data: { deletedAt: new Date(), status: 'CANCELLED' },
     });
     this.logger.log(`Invoice ${existing.invoiceNumber} soft-deleted for tenant ${tenantId}`);
@@ -197,17 +237,21 @@ export class InvoiceService {
       throw new BadRequestException('Only DRAFT invoices can be sent');
     }
 
-    const invoice = await this.prisma.invoice.update({
-      where: { id },
+    await this.prisma.invoice.updateMany({
+      where: { id, tenantId },
       data: {
         status: 'SENT',
         sentAt: new Date(),
       },
+    });
+
+    const invoice = await this.prisma.invoice.findFirst({
+      where: { id, tenantId },
       include: { customer: true },
     });
 
     this.logger.log(`Invoice ${existing.invoiceNumber} sent for tenant ${tenantId}`);
-    return invoice;
+    return invoice ? this.decryptCustomerInInvoice(invoice) : invoice;
   }
 
   async markPaid(tenantId: string, id: string) {
@@ -220,17 +264,21 @@ export class InvoiceService {
       throw new BadRequestException('Cannot mark a cancelled invoice as paid');
     }
 
-    const invoice = await this.prisma.invoice.update({
-      where: { id },
+    await this.prisma.invoice.updateMany({
+      where: { id, tenantId },
       data: {
         status: 'PAID',
         paidAt: new Date(),
       },
+    });
+
+    const invoice = await this.prisma.invoice.findFirst({
+      where: { id, tenantId },
       include: { customer: true },
     });
 
     this.logger.log(`Invoice ${existing.invoiceNumber} marked as paid for tenant ${tenantId}`);
-    return invoice;
+    return invoice ? this.decryptCustomerInInvoice(invoice) : invoice;
   }
 
   async getStats(tenantId: string) {

@@ -67,12 +67,12 @@ function TabContent({ tabId }: { tabId: string }): React.ReactElement {
     <div className="p-5 sm:p-8">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-semibold text-[#0d0d0d] dark:text-[#ececec]">{tab.content.title}</h4>
-          <p className="mt-0.5 text-xs text-[#8e8ea0]">{tab.content.description}</p>
+          <h4 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{tab.content.title}</h4>
+          <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{tab.content.description}</p>
         </div>
         <div className="flex gap-1.5">
           <div className="h-7 w-16 rounded-md bg-[#0d0d0d]/5 dark:bg-white/10" />
-          <div className="h-7 w-7 rounded-md bg-[#f7f7f8] dark:bg-[#2f2f2f]" />
+          <div className="h-7 w-7 rounded-md bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]" />
         </div>
       </div>
 
@@ -81,15 +81,15 @@ function TabContent({ tabId }: { tabId: string }): React.ReactElement {
           {el.type === 'kpi-row' && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="rounded-lg bg-[#f7f7f8] p-3 dark:bg-[#171717]">
-                  <div className="h-2 w-12 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
-                  <div className="mt-2 h-4 w-16 rounded bg-[#d9d9e3] dark:bg-[#444654]" />
+                <div key={n} className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-secondary)]">
+                  <div className="h-2 w-12 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
+                  <div className="mt-2 h-4 w-16 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
                 </div>
               ))}
             </div>
           )}
           {el.type === 'chart' && (
-            <div className="rounded-lg bg-[#f7f7f8] p-4 dark:bg-[#171717]">
+            <div className="rounded-lg bg-[var(--surface-secondary)] p-4 dark:bg-[var(--surface-secondary)]">
               <div className="flex h-28 items-end gap-2">
                 {[35, 50, 40, 70, 55, 80, 60, 85, 72, 90, 65, 95].map((h, idx) => (
                   <div
@@ -102,20 +102,20 @@ function TabContent({ tabId }: { tabId: string }): React.ReactElement {
             </div>
           )}
           {el.type === 'table' && (
-            <div className="rounded-lg border border-[#e5e5e5] dark:border-[#444654]">
-              <div className="border-b border-[#e5e5e5] bg-[#f7f7f8] px-4 py-2 dark:border-[#444654] dark:bg-[#171717]">
+            <div className="rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)]">
+              <div className="border-b border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-2 dark:border-[var(--border-default)] dark:bg-[var(--surface-secondary)]">
                 <div className="flex gap-8">
                   {['Targa', 'Cliente', 'Stato', 'Importo'].map((h) => (
-                    <span key={h} className="text-[10px] font-medium uppercase text-[#8e8ea0]">{h}</span>
+                    <span key={h} className="text-[10px] font-medium uppercase text-[var(--text-secondary)]">{h}</span>
                   ))}
                 </div>
               </div>
               {[1, 2, 3, 4].map((r) => (
-                <div key={r} className="flex items-center gap-8 border-b border-[#e5e5e5]/50 px-4 py-2.5 last:border-0 dark:border-[#444654]/50">
-                  <div className="h-2.5 w-16 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
-                  <div className="h-2.5 w-20 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
+                <div key={r} className="flex items-center gap-8 border-b border-[var(--border-default)]/50 px-4 py-2.5 last:border-0 dark:border-[var(--border-default)]/50">
+                  <div className="h-2.5 w-16 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
+                  <div className="h-2.5 w-20 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
                   <div className="h-5 w-14 rounded-full bg-[#0d0d0d]/5 dark:bg-white/10" />
-                  <div className="h-2.5 w-12 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
+                  <div className="h-2.5 w-12 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
                 </div>
               ))}
             </div>
@@ -123,12 +123,12 @@ function TabContent({ tabId }: { tabId: string }): React.ReactElement {
           {el.type === 'status-bar' && (
             <div className="flex gap-3">
               {[
-                { label: 'Bozza', color: 'bg-[#e5e5e5] dark:bg-[#444654]' },
+                { label: 'Bozza', color: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]' },
                 { label: 'Inviata', color: 'bg-[#0d0d0d]/5 dark:bg-white/10' },
                 { label: 'Pagata', color: 'bg-[#0d0d0d]/10 dark:bg-white/15' },
               ].map((s) => (
                 <div key={s.label} className={`flex-1 rounded-lg ${s.color} p-3`}>
-                  <div className="text-[10px] font-medium text-[#6e6e80] dark:text-[#8e8ea0]">{s.label}</div>
+                  <div className="text-[10px] font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{s.label}</div>
                   <div className="mt-1 h-4 w-8 rounded bg-[#0d0d0d]/5 dark:bg-white/10" />
                 </div>
               ))}
@@ -137,19 +137,19 @@ function TabContent({ tabId }: { tabId: string }): React.ReactElement {
           {el.type === 'list' && (
             <div className="space-y-2">
               {[1, 2, 3].map((r) => (
-                <div key={r} className="flex items-center gap-3 rounded-lg bg-[#f7f7f8] px-4 py-3 dark:bg-[#171717]">
+                <div key={r} className="flex items-center gap-3 rounded-lg bg-[var(--surface-secondary)] px-4 py-3 dark:bg-[var(--surface-secondary)]">
                   <div className="h-2.5 w-2.5 rounded-full bg-[#0d0d0d] dark:bg-white" />
-                  <div className="h-2.5 flex-1 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
-                  <div className="h-2.5 w-16 rounded bg-[#e5e5e5] dark:bg-[#444654]" />
+                  <div className="h-2.5 flex-1 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
+                  <div className="h-2.5 w-16 rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
                 </div>
               ))}
             </div>
           )}
           {el.type === 'calendar' && (
-            <div className="rounded-lg bg-[#f7f7f8] p-4 dark:bg-[#171717]">
+            <div className="rounded-lg bg-[var(--surface-secondary)] p-4 dark:bg-[var(--surface-secondary)]">
               <div className="grid grid-cols-7 gap-1">
                 {['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((d, idx) => (
-                  <div key={idx} className="py-1 text-center text-[10px] font-medium text-[#8e8ea0]">{d}</div>
+                  <div key={idx} className="py-1 text-center text-[10px] font-medium text-[var(--text-secondary)]">{d}</div>
                 ))}
                 {Array.from({ length: 35 }).map((_, idx) => {
                   const hasEvent = [4, 7, 12, 15, 19, 23, 27].includes(idx);
@@ -158,8 +158,8 @@ function TabContent({ tabId }: { tabId: string }): React.ReactElement {
                       key={idx}
                       className={`flex h-8 items-center justify-center rounded text-xs ${
                         hasEvent
-                          ? 'bg-[#0d0d0d]/5 dark:bg-white/10 font-medium text-[#0d0d0d] dark:text-white'
-                          : 'text-[#8e8ea0]'
+                          ? 'bg-[#0d0d0d]/5 dark:bg-white/10 font-medium text-[var(--text-primary)] dark:text-white'
+                          : 'text-[var(--text-secondary)]'
                       }`}
                     >
                       {idx + 1 <= 31 ? idx + 1 : ''}
@@ -206,7 +206,7 @@ export function ProductDemo(): React.ReactElement {
   const activeTabIndex = tabs.findIndex((t) => t.id === activeTab);
 
   return (
-    <section id="demo" ref={sectionRef} className="bg-white py-20 dark:bg-[#212121] lg:py-28">
+    <section id="demo" ref={sectionRef} className="bg-white py-20 dark:bg-[var(--surface-primary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -215,7 +215,7 @@ export function ProductDemo(): React.ReactElement {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-4xl">
             Vedi MechMind in azione
           </h2>
         </motion.div>
@@ -227,9 +227,9 @@ export function ProductDemo(): React.ReactElement {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <div className="overflow-hidden rounded-2xl border border-[#e5e5e5] bg-white shadow-2xl dark:border-[#444654] dark:bg-[#2f2f2f]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-white shadow-2xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
             {/* Tab bar */}
-            <div className="flex border-b border-[#e5e5e5] bg-[#f7f7f8] dark:border-[#444654] dark:bg-[#171717]">
+            <div className="flex border-b border-[var(--border-default)] bg-[var(--surface-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-secondary)]">
               {tabs.map((tab, i) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -239,8 +239,8 @@ export function ProductDemo(): React.ReactElement {
                     onClick={() => handleTabClick(tab.id)}
                     className={`relative flex flex-1 items-center justify-center gap-2 px-4 py-3.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? 'text-[#0d0d0d] dark:text-white'
-                        : 'text-[#6e6e80] hover:text-[#0d0d0d] dark:text-[#8e8ea0] dark:hover:text-[#ececec]'
+                        ? 'text-[var(--text-primary)] dark:text-white'
+                        : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] dark:text-[var(--text-secondary)] dark:hover:text-[var(--text-primary)]'
                     }`}
                   >
                     <span>{tab.label}</span>
@@ -291,7 +291,7 @@ export function ProductDemo(): React.ReactElement {
         >
           <Link
             href="/auth/register"
-            className="inline-flex items-center gap-2 rounded-full bg-[#0d0d0d] dark:bg-white px-6 py-3 text-sm font-semibold text-white dark:text-[#0d0d0d] transition-all hover:bg-[#2f2f2f] dark:hover:bg-[#e5e5e5] active:scale-[0.97]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-white px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
           >
             Prova gratis — vedilo tu stesso &rarr;
           </Link>

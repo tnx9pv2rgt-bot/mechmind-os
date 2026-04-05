@@ -22,7 +22,7 @@ export function SessionExpiredDialog({ open }: SessionExpiredProps): React.React
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" />
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[50%] z-[100] w-full max-w-sm translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-gray-200 bg-white p-8 shadow-apple-lg dark:border-gray-700 dark:bg-[#2f2f2f]"
+          className="fixed left-[50%] top-[50%] z-[100] w-full max-w-sm translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-gray-200 bg-white p-8 shadow-apple-lg dark:border-gray-700 dark:bg-[var(--surface-elevated)]"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}

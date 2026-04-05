@@ -111,7 +111,7 @@ export function ExportMenu({
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-[#b4b4b4] transition-colors duration-200 hover:bg-[#383838] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors duration-200 hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
         aria-label="Menu esportazione"
         aria-expanded={open}
         aria-haspopup="menu"
@@ -128,7 +128,7 @@ export function ExportMenu({
             animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, y: -4 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-[#4e4e4e] bg-[#2f2f2f]/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+            className="absolute right-0 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface-elevated)]/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
           >
             {MENU_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -138,7 +138,7 @@ export function ExportMenu({
                   type="button"
                   role="menuitem"
                   onClick={() => handleAction(item.id)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-[#b4b4b4] transition-colors duration-150 hover:bg-[#383838] hover:text-white focus:outline-none focus-visible:bg-[#383838] focus-visible:text-white"
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:bg-[var(--surface-active)] focus-visible:text-white"
                   aria-label={item.ariaLabel}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />

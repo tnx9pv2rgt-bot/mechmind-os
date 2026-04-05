@@ -51,9 +51,29 @@ describe('Contract Gap Analysis', () => {
       const routePath = path.join(frontendDir, 'app', call, 'route.ts');
       if (fs.existsSync(routePath)) continue;
 
+      // Check the call directory itself for dynamic child routes (e.g. /api/public/estimates → /api/public/estimates/[token]/route.ts)
+      const callDir = path.join(frontendDir, 'app', call);
+      let hasRoute = false;
+      if (fs.existsSync(callDir) && fs.statSync(callDir).isDirectory()) {
+        try {
+          const entries = fs.readdirSync(callDir);
+          for (const entry of entries) {
+            if (entry.startsWith('[')) {
+              const dynamicRoute = path.join(callDir, entry, 'route.ts');
+              if (fs.existsSync(dynamicRoute)) {
+                hasRoute = true;
+                break;
+              }
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+      if (hasRoute) continue;
+
       // Check parent directory for dynamic route
       const parentDir = path.join(frontendDir, 'app', path.dirname(call));
-      let hasRoute = false;
       if (fs.existsSync(parentDir)) {
         try {
           const entries = fs.readdirSync(parentDir);

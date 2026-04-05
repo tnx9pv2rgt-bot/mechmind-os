@@ -392,11 +392,11 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="pb-3 pl-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="pb-3 pl-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
                   Rank
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center gap-1">
@@ -410,7 +410,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("ordersCompleted")}
                 >
                   <div className="flex items-center gap-1">
@@ -424,7 +424,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("revenue")}
                 >
                   <div className="flex items-center gap-1">
@@ -438,7 +438,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("avgTime")}
                 >
                   <div className="flex items-center gap-1">
@@ -453,7 +453,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("rating")}
                 >
                   <div className="flex items-center gap-1">
@@ -468,7 +468,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("efficiency")}
                 >
                   <div className="flex items-center gap-1">

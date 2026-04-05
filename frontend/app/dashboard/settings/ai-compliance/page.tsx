@@ -198,10 +198,10 @@ export default function AiCompliancePage() {
         <AppleCard className="max-w-md w-full">
           <AppleCardContent className="text-center py-12">
             <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2">
+            <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2">
               Errore di caricamento
             </h3>
-            <p className="text-body text-apple-gray dark:text-[#636366]">
+            <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
               Impossibile caricare il registro delle decisioni IA.
             </p>
           </AppleCardContent>
@@ -213,17 +213,17 @@ export default function AiCompliancePage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
+      <header>
         <div className="px-4 sm:px-8 py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                <h1 className="text-headline text-apple-dark dark:text-[#ececec]">
+                <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
                   Conformità IA — EU AI Act
                 </h1>
               </div>
-              <p className="text-apple-gray dark:text-[#636366] text-body mt-1">
+              <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
                 Registro trasparenza, revisione umana e audit delle decisioni assistite da IA
               </p>
             </div>
@@ -245,10 +245,10 @@ export default function AiCompliancePage() {
                     <Sparkles className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                   </div>
                   <div>
-                    <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                       Decisioni IA Totali
                     </p>
-                    <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">
+                    <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
                       {dashboard.totalDecisions ?? 0}
                     </p>
                   </div>
@@ -265,10 +265,10 @@ export default function AiCompliancePage() {
                     <PenLine className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                       Tasso Sovrascrittura
                     </p>
-                    <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">
+                    <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
                       {Math.round((dashboard.overrideRate ?? 0) * 100)}%
                     </p>
                   </div>
@@ -285,10 +285,10 @@ export default function AiCompliancePage() {
                     <BarChart3 className="w-5 h-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                       Confidenza Media
                     </p>
-                    <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">
+                    <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
                       {Math.round((dashboard.avgConfidence ?? 0) * 100)}%
                     </p>
                   </div>
@@ -305,10 +305,10 @@ export default function AiCompliancePage() {
                     <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
-                    <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                       In Attesa Revisione
                     </p>
-                    <p className="text-title-1 font-bold text-apple-dark dark:text-[#ececec]">
+                    <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
                       {dashboard.pendingReview ?? 0}
                     </p>
                   </div>
@@ -366,7 +366,7 @@ export default function AiCompliancePage() {
           <AppleCardHeader>
             <div className="flex items-center gap-3">
               <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">
+              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
                 Registro Decisioni IA ({total})
               </h2>
             </div>
@@ -377,14 +377,14 @@ export default function AiCompliancePage() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-apple-border/30 dark:border-[#424242]">
-                        <th className="text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Data</th>
-                        <th className="text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Funzionalità</th>
-                        <th className="text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Modello</th>
-                        <th className="text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Confidenza</th>
-                        <th className="text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Revisione Umana</th>
-                        <th className="text-left py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Stato</th>
-                        <th className="text-right py-3 px-4 text-footnote font-medium text-apple-gray uppercase tracking-wider">Azioni</th>
+                      <tr className="border-b border-apple-border/30 dark:border-[var(--border-default)]">
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Data</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Funzionalità</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Modello</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Confidenza</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Revisione Umana</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Stato</th>
+                        <th className="text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Azioni</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -394,12 +394,12 @@ export default function AiCompliancePage() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: index * 0.02 }}
-                          className="border-b border-apple-border/20 dark:border-[#424242]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[#353535] transition-colors"
+                          className="border-b border-apple-border/20 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
                         >
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-3 h-3 text-apple-gray flex-shrink-0" />
-                              <span className="text-body text-apple-dark dark:text-[#ececec] whitespace-nowrap">
+                              <span className="text-body text-apple-dark dark:text-[var(--text-primary)] whitespace-nowrap">
                                 {new Date(dec.createdAt).toLocaleString('it-IT')}
                               </span>
                             </div>
@@ -410,12 +410,12 @@ export default function AiCompliancePage() {
                             </Badge>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="text-body text-apple-dark dark:text-[#ececec] font-mono text-sm">
+                            <span className="text-body text-apple-dark dark:text-[var(--text-primary)] font-mono text-sm">
                               {dec.modelUsed}
                             </span>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="text-body text-apple-dark dark:text-[#ececec]">
+                            <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
                               {formatConfidence(dec.confidence)}
                             </span>
                           </td>
@@ -438,7 +438,7 @@ export default function AiCompliancePage() {
                           </td>
                           <td className="py-3 px-4">
                             {dec.humanReviewed ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              <CheckCircle2 className="w-4 h-4 text-apple-green" />
                             ) : (
                               <XCircle className="w-4 h-4 text-orange-400" />
                             )}
@@ -476,8 +476,8 @@ export default function AiCompliancePage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242]/50">
-                    <p className="text-footnote text-apple-gray dark:text-[#636366]">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                       Pagina {page} di {totalPages}
                     </p>
                     <div className="flex gap-2">
@@ -506,10 +506,10 @@ export default function AiCompliancePage() {
             ) : (
               <div className="text-center py-12">
                 <Sparkles className="w-12 h-12 text-apple-gray/30 mx-auto mb-4" />
-                <h3 className="text-body font-medium text-apple-dark dark:text-[#ececec] mb-1">
+                <h3 className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1">
                   Nessuna decisione IA registrata
                 </h3>
-                <p className="text-footnote text-apple-gray dark:text-[#636366]">
+                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                   Le decisioni assistite da IA verranno registrate qui automaticamente.
                 </p>
               </div>
@@ -528,55 +528,55 @@ export default function AiCompliancePage() {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">Data</p>
-                  <p className="text-body text-apple-dark dark:text-[#ececec]">
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Data</p>
+                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
                     {new Date(selectedDecision.createdAt).toLocaleString('it-IT')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">Funzionalità</p>
-                  <p className="text-body text-apple-dark dark:text-[#ececec]">
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Funzionalità</p>
+                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
                     {FEATURE_LABELS[selectedDecision.featureName] ?? selectedDecision.featureName}
                   </p>
                 </div>
                 <div>
-                  <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">Modello</p>
-                  <p className="text-body text-apple-dark dark:text-[#ececec] font-mono text-sm">{selectedDecision.modelUsed}</p>
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Modello</p>
+                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)] font-mono text-sm">{selectedDecision.modelUsed}</p>
                 </div>
                 <div>
-                  <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">Confidenza</p>
-                  <p className="text-body text-apple-dark dark:text-[#ececec]">{formatConfidence(selectedDecision.confidence)}</p>
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Confidenza</p>
+                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{formatConfidence(selectedDecision.confidence)}</p>
                 </div>
                 {selectedDecision.entityType && (
                   <div>
-                    <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">Entità</p>
-                    <p className="text-body text-apple-dark dark:text-[#ececec]">
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Entità</p>
+                    <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
                       {selectedDecision.entityType} ({selectedDecision.entityId})
                     </p>
                   </div>
                 )}
                 {selectedDecision.processingTimeMs != null && (
                   <div>
-                    <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider">Tempo elaborazione</p>
-                    <p className="text-body text-apple-dark dark:text-[#ececec]">{selectedDecision.processingTimeMs} ms</p>
+                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Tempo elaborazione</p>
+                    <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{selectedDecision.processingTimeMs} ms</p>
                   </div>
                 )}
               </div>
               <div>
-                <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-2">Input (sanitizzato)</p>
-                <pre className="p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl text-sm overflow-auto max-h-32 text-apple-dark dark:text-[#ececec]">
+                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-2">Input (sanitizzato)</p>
+                <pre className="p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-sm overflow-auto max-h-32 text-apple-dark dark:text-[var(--text-primary)]">
                   {selectedDecision.inputSummary}
                 </pre>
               </div>
               <div>
-                <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-2">Output IA</p>
-                <pre className="p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl text-sm overflow-auto max-h-32 text-apple-dark dark:text-[#ececec]">
+                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-2">Output IA</p>
+                <pre className="p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-sm overflow-auto max-h-32 text-apple-dark dark:text-[var(--text-primary)]">
                   {selectedDecision.outputSummary}
                 </pre>
               </div>
               {selectedDecision.humanReviewed && (
-                <div className="border-t border-apple-border/20 dark:border-[#424242]/50 pt-4">
-                  <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-2">Revisione Umana</p>
+                <div className="border-t border-apple-border/20 dark:border-[var(--border-default)]/50 pt-4">
+                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-2">Revisione Umana</p>
                   <div className="flex items-center gap-2 mb-2">
                     {selectedDecision.humanOverridden ? (
                       <Badge className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-0">Sovrascritta</Badge>
@@ -584,13 +584,13 @@ export default function AiCompliancePage() {
                       <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-0">Confermata</Badge>
                     )}
                     {selectedDecision.reviewedAt && (
-                      <span className="text-footnote text-apple-gray dark:text-[#636366]">
+                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
                         il {new Date(selectedDecision.reviewedAt).toLocaleString('it-IT')}
                       </span>
                     )}
                   </div>
                   {selectedDecision.humanDecision && (
-                    <pre className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm overflow-auto max-h-32 text-apple-dark dark:text-[#ececec]">
+                    <pre className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm overflow-auto max-h-32 text-apple-dark dark:text-[var(--text-primary)]">
                       {selectedDecision.humanDecision}
                     </pre>
                   )}
@@ -616,13 +616,13 @@ export default function AiCompliancePage() {
           </DialogHeader>
           {reviewTarget && (
             <div className="space-y-4 py-4">
-              <p className="text-body text-apple-gray dark:text-[#636366]">
+              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
                 Rivedi la decisione &ldquo;{FEATURE_LABELS[reviewTarget.featureName] ?? reviewTarget.featureName}&rdquo;
                 con confidenza {formatConfidence(reviewTarget.confidence)}.
               </p>
               <div>
-                <p className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider mb-2">Output IA</p>
-                <pre className="p-3 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl text-sm overflow-auto max-h-24 text-apple-dark dark:text-[#ececec]">
+                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-2">Output IA</p>
+                <pre className="p-3 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-sm overflow-auto max-h-24 text-apple-dark dark:text-[var(--text-primary)]">
                   {reviewTarget.outputSummary}
                 </pre>
               </div>
@@ -648,7 +648,7 @@ export default function AiCompliancePage() {
 
               {isOverride && (
                 <div>
-                  <label htmlFor="override-text" className="text-footnote text-apple-gray dark:text-[#636366] uppercase tracking-wider block mb-2">
+                  <label htmlFor="override-text" className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] block mb-2">
                     La tua decisione
                   </label>
                   <textarea
@@ -656,7 +656,7 @@ export default function AiCompliancePage() {
                     value={overrideText}
                     onChange={(e) => setOverrideText(e.target.value)}
                     placeholder="Descrivi la tua decisione alternativa..."
-                    className="w-full rounded-xl border border-apple-border/30 dark:border-[#424242] bg-white dark:bg-[#353535] p-3 text-sm text-apple-dark dark:text-[#ececec] min-h-[80px] resize-y"
+                    className="w-full rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] p-3 text-sm text-apple-dark dark:text-[var(--text-primary)] min-h-[80px] resize-y"
                   />
                 </div>
               )}

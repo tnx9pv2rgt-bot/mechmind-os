@@ -54,7 +54,7 @@ const navItems = [
 
 function LoadingScreen(): React.ReactElement {
   return (
-    <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center'>
+    <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center'>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -67,7 +67,7 @@ function LoadingScreen(): React.ReactElement {
             className='w-8 h-8 border-2 border-white border-t-transparent rounded-full'
           />
         </div>
-        <p className='text-apple-gray dark:text-[#636366]'>Caricamento...</p>
+        <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Caricamento...</p>
       </motion.div>
     </div>
   );
@@ -146,9 +146,9 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
   return (
     <PortalCustomerProvider>
       <SkipLink targetId='main-content' />
-      <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121]'>
+      <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)]'>
         {/* ===== HEADER ===== */}
-        <header className='sticky top-0 z-50 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-[#353535]/50'>
+        <header className='sticky top-0 z-50 bg-white/80 dark:bg-[var(--surface-tertiary)]/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-[var(--border-default)]/50'>
           <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
             <div className='flex items-center justify-between h-16'>
               {/* Logo */}
@@ -159,7 +159,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                 <div className='w-9 h-9 rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center'>
                   <Car className='h-5 w-5 text-white' />
                 </div>
-                <span className='text-base font-semibold text-apple-dark dark:text-[#ececec] hidden sm:block'>
+                <span className='text-base font-semibold text-apple-dark dark:text-[var(--text-primary)] hidden sm:block'>
                   Portale Clienti
                 </span>
               </Link>
@@ -175,7 +175,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                         isActive
                           ? 'bg-apple-blue/10 text-apple-blue'
-                          : 'text-apple-gray hover:text-apple-dark dark:hover:text-[#ececec] hover:bg-gray-100 dark:hover:bg-[#2f2f2f]'
+                          : 'text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-[var(--surface-elevated)]'
                       }`}
                     >
                       <item.icon className='h-4 w-4' />
@@ -198,7 +198,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                 {/* Mobile menu button */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className='md:hidden p-2 rounded-lg text-apple-gray hover:text-apple-dark dark:hover:text-[#ececec] min-w-[44px] min-h-[44px] flex items-center justify-center'
+                  className='md:hidden p-2 rounded-lg text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] min-w-[44px] min-h-[44px] flex items-center justify-center'
                   aria-label={mobileMenuOpen ? 'Chiudi menu' : 'Apri menu'}
                 >
                   {mobileMenuOpen ? <X className='h-5 w-5' /> : <Menu className='h-5 w-5' />}
@@ -214,7 +214,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className='md:hidden border-t border-gray-200/50 dark:border-[#353535]/50 bg-white dark:bg-[#1a1a1a]'
+                className='md:hidden border-t border-gray-200/50 dark:border-[var(--border-default)]/50 bg-white dark:bg-[var(--surface-tertiary)]'
               >
                 <nav className='px-4 py-3 space-y-1'>
                   {navItems.map(item => {
@@ -226,7 +226,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                         className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
                           isActive
                             ? 'bg-apple-blue/10 text-apple-blue'
-                            : 'text-apple-gray hover:text-apple-dark dark:hover:text-[#ececec] hover:bg-gray-100 dark:hover:bg-[#2f2f2f]'
+                            : 'text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-[var(--surface-elevated)]'
                         }`}
                       >
                         <item.icon className='h-5 w-5' />
@@ -263,9 +263,9 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
         </AnimatePresence>
 
         {/* ===== FOOTER ===== */}
-        <footer className='border-t border-gray-200/50 dark:border-[#353535]/50 mt-auto'>
+        <footer className='border-t border-gray-200/50 dark:border-[var(--border-default)]/50 mt-auto'>
           <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-            <div className='flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-apple-gray dark:text-[#636366]'>
+            <div className='flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-apple-gray dark:text-[var(--text-secondary)]'>
               <p>Portale Clienti MechMind OS</p>
               <a
                 href='mailto:supporto@mechmind.it'
@@ -278,7 +278,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
         </footer>
 
         {/* ===== MOBILE BOTTOM NAV ===== */}
-        <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-xl border-t border-gray-200/50 dark:border-[#353535]/50 z-40 safe-area-bottom'>
+        <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[var(--surface-tertiary)]/90 backdrop-blur-xl border-t border-gray-200/50 dark:border-[var(--border-default)]/50 z-40 safe-area-bottom'>
           <div className='flex items-center justify-around py-2'>
             {navItems.slice(0, 5).map(item => {
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');

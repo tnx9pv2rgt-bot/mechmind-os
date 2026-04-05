@@ -70,14 +70,17 @@ export class CustomerController {
   @ApiOperation({ summary: 'Get all customers' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   async getCustomers(
     @CurrentTenant() tenantId: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('search') search?: string,
   ) {
     const result = await this.customerService.findAll(tenantId, {
       limit: limit ? parseInt(limit) : undefined,
       offset: offset ? parseInt(offset) : undefined,
+      search: search || undefined,
     });
 
     return {

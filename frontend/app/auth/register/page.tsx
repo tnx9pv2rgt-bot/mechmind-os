@@ -167,7 +167,7 @@ export default function RegisterPage(): React.ReactElement {
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Officina creata!
           </h1>
-          <p className="text-[15px] text-[#b4b4b4] leading-relaxed max-w-[320px] mx-auto">
+          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto">
             La tua officina sarà raggiungibile su{' '}
             <strong className="text-white">mechmind.it/{createdSlug}</strong>.
             Controlla la tua email per verificare l&apos;account.
@@ -204,7 +204,7 @@ export default function RegisterPage(): React.ReactElement {
             <h1 className="text-[28px] font-normal text-white tracking-tight">
               Crea il tuo account
             </h1>
-            <p className="mt-1 text-[15px] text-[#b4b4b4] leading-relaxed">
+            <p className="mt-1 text-[15px] text-[var(--text-secondary)] leading-relaxed">
               Registrati gratuitamente in 30 secondi.
             </p>
           </div>
@@ -226,10 +226,10 @@ export default function RegisterPage(): React.ReactElement {
               name="shopName"
               autoComplete="organization"
               aria-describedby={fieldErrors.shopName ? 'err-shop' : undefined}
-              className={`${inputStyle} ${fieldErrors.shopName ? 'border-[#888]' : ''}`}
+              className={`${inputStyle} ${fieldErrors.shopName ? 'border-[var(--text-tertiary)]' : ''}`}
             />
             {fieldErrors.shopName && (
-              <p id="err-shop" role="alert" className="mt-1 pl-5 text-[12px] text-[#b4b4b4]">{fieldErrors.shopName}</p>
+              <p id="err-shop" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.shopName}</p>
             )}
           </div>
 
@@ -251,21 +251,21 @@ export default function RegisterPage(): React.ReactElement {
               />
               <div className="absolute right-5 top-1/2 -translate-y-1/2 text-sm">
                 {slugChecking && (
-                  <span className="text-[#888]">...</span>
+                  <span className="text-[var(--text-tertiary)]">...</span>
                 )}
                 {!slugChecking && slugAvailable === true && effectiveSlug.length >= 3 && (
                   <span className="text-white">✓</span>
                 )}
                 {!slugChecking && slugAvailable === false && (
-                  <span className="text-[#b4b4b4]">✕</span>
+                  <span className="text-[var(--text-secondary)]">✕</span>
                 )}
               </div>
             </div>
             {effectiveSlug && (
-              <p className="mt-1 pl-5 text-[12px] text-[#888]">
-                mechmind.it/<span className="font-medium text-[#b4b4b4]">{effectiveSlug}</span>
+              <p className="mt-1 pl-5 text-[12px] text-[var(--text-tertiary)]">
+                mechmind.it/<span className="font-medium text-[var(--text-secondary)]">{effectiveSlug}</span>
                 {slugAvailable === false && (
-                  <span className="text-[#b4b4b4] ml-2">Nome già in uso</span>
+                  <span className="text-[var(--text-secondary)] ml-2">Nome già in uso</span>
                 )}
               </p>
             )}
@@ -287,10 +287,10 @@ export default function RegisterPage(): React.ReactElement {
                 name="firstName"
                 autoComplete="given-name"
                 aria-describedby={fieldErrors.firstName ? 'err-first' : undefined}
-                className={`${inputStyle} ${fieldErrors.firstName ? 'border-[#888]' : ''}`}
+                className={`${inputStyle} ${fieldErrors.firstName ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               {fieldErrors.firstName && (
-                <p id="err-first" role="alert" className="mt-1 pl-5 text-[12px] text-[#b4b4b4]">{fieldErrors.firstName}</p>
+                <p id="err-first" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.firstName}</p>
               )}
             </div>
             <div>
@@ -307,10 +307,10 @@ export default function RegisterPage(): React.ReactElement {
                 name="lastName"
                 autoComplete="family-name"
                 aria-describedby={fieldErrors.lastName ? 'err-last' : undefined}
-                className={`${inputStyle} ${fieldErrors.lastName ? 'border-[#888]' : ''}`}
+                className={`${inputStyle} ${fieldErrors.lastName ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               {fieldErrors.lastName && (
-                <p id="err-last" role="alert" className="mt-1 pl-5 text-[12px] text-[#b4b4b4]">{fieldErrors.lastName}</p>
+                <p id="err-last" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.lastName}</p>
               )}
             </div>
           </div>
@@ -330,10 +330,10 @@ export default function RegisterPage(): React.ReactElement {
               name="email"
               autoComplete="email"
               aria-describedby={fieldErrors.email ? 'err-email' : undefined}
-              className={`${inputStyle} ${fieldErrors.email ? 'border-[#888]' : ''}`}
+              className={`${inputStyle} ${fieldErrors.email ? 'border-[var(--text-tertiary)]' : ''}`}
             />
             {fieldErrors.email && (
-              <p id="err-email" role="alert" className="mt-1 pl-5 text-[12px] text-[#b4b4b4]">{fieldErrors.email}</p>
+              <p id="err-email" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.email}</p>
             )}
           </div>
 
@@ -353,12 +353,12 @@ export default function RegisterPage(): React.ReactElement {
                 name="password"
                 autoComplete="new-password"
                 aria-describedby={fieldErrors.password ? 'err-password' : undefined}
-                className={`${inputStyle} pr-20 ${fieldErrors.password ? 'border-[#888]' : ''}`}
+                className={`${inputStyle} pr-20 ${fieldErrors.password ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[#b4b4b4] transition-colors hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
               >
@@ -366,7 +366,7 @@ export default function RegisterPage(): React.ReactElement {
               </button>
             </div>
             {fieldErrors.password && (
-              <p id="err-password" role="alert" className="mt-1 pl-5 text-[12px] text-[#b4b4b4]">{fieldErrors.password}</p>
+              <p id="err-password" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.password}</p>
             )}
           </div>
 
@@ -386,27 +386,27 @@ export default function RegisterPage(): React.ReactElement {
                 aria-label="Accetto i termini e le condizioni"
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0 peer"
               />
-              <span className="flex h-5 w-5 items-center justify-center rounded border border-[#4e4e4e] bg-[#2f2f2f] peer-checked:bg-white peer-checked:border-white peer-focus-visible:ring-2 peer-focus-visible:ring-white/50 transition-colors pointer-events-none" aria-hidden="true">
+              <span className="flex h-5 w-5 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-elevated)] peer-checked:bg-white peer-checked:border-white peer-focus-visible:ring-2 peer-focus-visible:ring-white/50 transition-colors pointer-events-none" aria-hidden="true">
                 {acceptTerms && (
-                  <svg className="h-3.5 w-3.5 text-[#0d0d0d]" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <svg className="h-3.5 w-3.5 text-[var(--text-primary)]" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                     <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" />
                   </svg>
                 )}
               </span>
             </span>
-            <span className="text-[13px] text-[#b4b4b4] leading-relaxed">
+            <span className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
               Accetto i{' '}
-              <Link href="/terms" className="font-medium text-white underline decoration-[#888] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center">
+              <Link href="/terms" className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center">
                 Termini e Condizioni
               </Link>{' '}
               e l&apos;
-              <Link href="/privacy" className="font-medium text-white underline decoration-[#888] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center">
+              <Link href="/privacy" className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center">
                 Informativa sulla Privacy
               </Link>
             </span>
           </label>
           {fieldErrors.acceptTerms && (
-            <p role="alert" className="pl-5 text-[12px] text-[#b4b4b4]">{fieldErrors.acceptTerms}</p>
+            <p role="alert" className="pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.acceptTerms}</p>
           )}
 
           {/* Error */}
@@ -415,7 +415,7 @@ export default function RegisterPage(): React.ReactElement {
               role="alert"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[13px] text-[#b4b4b4] pl-5"
+              className="text-[13px] text-[var(--text-secondary)] pl-5"
             >
               {error}
             </motion.p>
@@ -431,9 +431,9 @@ export default function RegisterPage(): React.ReactElement {
           </button>
 
           {/* Login link */}
-          <p className="text-center text-[13px] text-[#888]">
+          <p className="text-center text-[13px] text-[var(--text-tertiary)]">
             Hai già un account?{' '}
-            <Link href="/auth" className="font-medium text-white underline decoration-[#888] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] justify-center inline-flex items-center">
+            <Link href="/auth" className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] justify-center inline-flex items-center">
               Accedi
             </Link>
           </p>

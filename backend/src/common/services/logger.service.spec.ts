@@ -5,6 +5,7 @@ import { LoggerService } from './logger.service';
 describe('LoggerService', () => {
   let service: LoggerService;
   let configService: { get: jest.Mock };
+  let stdoutSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     configService = { get: jest.fn().mockReturnValue('info') };
@@ -14,8 +15,7 @@ describe('LoggerService', () => {
     }).compile();
 
     service = module.get<LoggerService>(LoggerService);
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
   });
 
   afterEach(() => {
@@ -31,7 +31,7 @@ describe('LoggerService', () => {
       service.setContext('TestModule');
       service.log('test message');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[TestModule]'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('[TestModule]'));
     });
   });
 
@@ -39,14 +39,14 @@ describe('LoggerService', () => {
     it('should output a log message with context', () => {
       service.log('hello world', 'MyContext');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[MyContext]'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('hello world'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('[MyContext]'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('hello world'));
     });
 
     it('should default context to Application', () => {
       service.log('test');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[Application]'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('[Application]'));
     });
   });
 
@@ -54,13 +54,13 @@ describe('LoggerService', () => {
     it('should output error message', () => {
       service.error('something failed', undefined, 'ErrorCtx');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('something failed'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('something failed'));
     });
 
     it('should print stack trace when provided', () => {
       service.error('fail', 'Error: stack trace here');
 
-      expect(console.error).toHaveBeenCalledWith('Error: stack trace here');
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('Error: stack trace here'));
     });
   });
 
@@ -68,7 +68,7 @@ describe('LoggerService', () => {
     it('should output warning message', () => {
       service.warn('caution', 'WarnCtx');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('caution'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('caution'));
     });
   });
 
@@ -77,14 +77,14 @@ describe('LoggerService', () => {
       configService.get.mockReturnValue('debug');
       service.debug('debug info');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('debug info'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('debug info'));
     });
 
     it('should suppress debug message when LOG_LEVEL is info', () => {
       configService.get.mockReturnValue('info');
       service.debug('hidden');
 
-      expect(console.log).not.toHaveBeenCalled();
+      expect(stdoutSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -93,21 +93,21 @@ describe('LoggerService', () => {
       configService.get.mockReturnValue('verbose');
       service.verbose('verbose info');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('verbose info'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('verbose info'));
     });
 
     it('should output verbose message when LOG_LEVEL is debug', () => {
       configService.get.mockReturnValue('debug');
       service.verbose('also visible');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('also visible'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('also visible'));
     });
 
     it('should suppress verbose message when LOG_LEVEL is info', () => {
       configService.get.mockReturnValue('info');
       service.verbose('hidden');
 
-      expect(console.log).not.toHaveBeenCalled();
+      expect(stdoutSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -120,8 +120,32 @@ describe('LoggerService', () => {
 
       service.log('json test', 'JsonCtx');
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('"level":"LOG"'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('"message":"json test"'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('"level":"LOG"'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('"message":"json test"'));
+    });
+
+    it('should include structured context fields in JSON', () => {
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'LOG_FORMAT') return 'json';
+        return 'info';
+      });
+
+      service.setStructuredContext({
+        traceId: 'trace-123',
+        tenantId: 'tenant-abc',
+        userId: 'user-xyz',
+        requestId: 'req-456',
+      });
+
+      service.log('structured test', 'StructCtx');
+
+      const output = stdoutSpy.mock.calls[0][0] as string;
+      const parsed = JSON.parse(output);
+      expect(parsed.traceId).toBe('trace-123');
+      expect(parsed.tenantId).toBe('tenant-abc');
+      expect(parsed.userId).toBe('user-xyz');
+      expect(parsed.requestId).toBe('req-456');
+      expect(parsed.service).toBe('mechmind-backend');
     });
   });
 });

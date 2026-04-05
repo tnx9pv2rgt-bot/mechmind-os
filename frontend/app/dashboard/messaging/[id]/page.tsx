@@ -104,7 +104,7 @@ export default function MessagingThreadPage() {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center'>
         <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[#636366] mb-4'>Conversazione non trovata</p>
+        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>Conversazione non trovata</p>
         <Link href='/dashboard/messaging'>
           <AppleButton variant='secondary'>Torna ai messaggi</AppleButton>
         </Link>
@@ -114,7 +114,7 @@ export default function MessagingThreadPage() {
 
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] max-w-4xl mx-auto w-full sm:px-4 lg:px-0'>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50 px-8 py-4'>
+      <header className='px-8 py-4'>
         <Breadcrumb
           items={[
             { label: 'Dashboard', href: '/dashboard' },
@@ -127,14 +127,14 @@ export default function MessagingThreadPage() {
             <User className='h-5 w-5 text-apple-blue' />
           </div>
           <div>
-            <h1 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+            <h1 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
               {conversation?.customerName || 'Conversazione'}
             </h1>
-            <p className='text-footnote text-apple-gray dark:text-[#636366] flex items-center gap-1'>
+            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'>
               <Phone className='h-3 w-3' />
               {conversation?.customerPhone}
               {conversation?.channel && (
-                <span className='ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-apple-blue/10 text-apple-blue'>
+                <span className='ml-2 text-footnote px-1.5 py-0.5 rounded-full bg-apple-blue/10 text-apple-blue'>
                   {conversation.channel}
                 </span>
               )}
@@ -146,7 +146,7 @@ export default function MessagingThreadPage() {
       <div className='flex-1 overflow-y-auto p-8 space-y-4'>
         {messages.length === 0 ? (
           <div className='text-center py-12'>
-            <p className='text-apple-gray dark:text-[#636366]'>Nessun messaggio. Invia il primo messaggio.</p>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Nessun messaggio. Invia il primo messaggio.</p>
           </div>
         ) : (
           messages.map(msg => {
@@ -161,11 +161,11 @@ export default function MessagingThreadPage() {
                 <div className={`max-w-[70%] px-4 py-3 rounded-2xl ${
                   msg.direction === 'OUTBOUND'
                     ? 'bg-apple-blue text-white rounded-br-md'
-                    : 'bg-apple-light-gray dark:bg-[#353535] text-apple-dark dark:text-[#ececec] rounded-bl-md'
+                    : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)] rounded-bl-md'
                 }`}>
-                  <p className='text-sm'>{msg.body}</p>
+                  <p className='text-body'>{msg.body}</p>
                   <div className={`flex items-center gap-1 mt-1 ${msg.direction === 'OUTBOUND' ? 'justify-end' : ''}`}>
-                    <p className={`text-[10px] ${msg.direction === 'OUTBOUND' ? 'text-white/60' : 'text-apple-gray dark:text-[#636366]'}`}>
+                    <p className={`text-footnote ${msg.direction === 'OUTBOUND' ? 'text-white/60' : 'text-apple-gray dark:text-[var(--text-secondary)]'}`}>
                       {new Date(msg.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     {msg.direction === 'OUTBOUND' && StatusIcon && (
@@ -180,7 +180,7 @@ export default function MessagingThreadPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className='border-t border-apple-border/20 dark:border-[#424242]/50 bg-white dark:bg-[#212121] px-8 py-4'>
+      <div className='border-t border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white dark:bg-[var(--surface-primary)] px-8 py-4'>
         <div className='flex gap-3'>
           <Input
             value={newMessage}

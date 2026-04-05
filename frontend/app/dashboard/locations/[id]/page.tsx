@@ -192,7 +192,7 @@ export default function LocationDetailPage() {
 
   return (
     <div>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-8 py-5'>
           <Breadcrumb
             items={[
@@ -203,8 +203,8 @@ export default function LocationDetailPage() {
           />
           <div className='flex items-center justify-between'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>{location.name}</h1>
-              <p className='text-body text-apple-gray dark:text-[#636366] mt-1'>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>{location.name}</h1>
+              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
                 {location.address}, {location.postalCode} {location.city} ({location.province})
               </p>
             </div>
@@ -218,20 +218,22 @@ export default function LocationDetailPage() {
         </div>
       </header>
 
-      <div className='border-b border-apple-border/20 dark:border-[#424242]/50 bg-white/60 dark:bg-[#212121]/60'>
+      <div className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white/60 dark:bg-[var(--surface-primary)]/60'>
         <div className='px-8 flex gap-1'>
           {tabs.map(tab => (
-            <button
+            <AppleButton
               key={tab.id}
+              variant='ghost'
+              size='sm'
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`rounded-none border-0 border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-apple-blue text-apple-blue'
                   : 'border-transparent text-apple-gray hover:text-apple-dark'
               }`}
             >
               {tab.label}
-            </button>
+            </AppleButton>
           ))}
         </div>
       </div>
@@ -242,43 +244,43 @@ export default function LocationDetailPage() {
             <motion.div variants={cardVariants} className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
-                    <MapPin className='h-5 w-5 text-apple-gray' /> Indirizzo
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <MapPin className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' /> Indirizzo
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-2'>
-                  <p className='text-body text-apple-dark dark:text-[#ececec]'>
+                  <p className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
                     {location.address}, {location.postalCode} {location.city} ({location.province})
                   </p>
                   {location.phone && (
-                    <p className='text-sm text-apple-gray'>Tel: {location.phone}</p>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Tel: {location.phone}</p>
                   )}
                   {location.email && (
-                    <p className='text-sm text-apple-gray'>Email: {location.email}</p>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Email: {location.email}</p>
                   )}
                 </AppleCardContent>
               </AppleCard>
 
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
-                    <Clock className='h-5 w-5 text-apple-gray' /> Orari
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Clock className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' /> Orari
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {location.openingHours ? (
                     <div className='space-y-2'>
                       {Object.entries(location.openingHours).map(([day, hours]) => (
-                        <div key={day} className='flex justify-between text-sm'>
-                          <span className='text-apple-gray capitalize'>{day}</span>
-                          <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+                        <div key={day} className='flex justify-between'>
+                          <span className='text-body text-apple-gray dark:text-[var(--text-secondary)] capitalize'>{day}</span>
+                          <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                             {hours}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className='text-sm text-apple-gray'>Orari non configurati</p>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Orari non configurati</p>
                   )}
                 </AppleCardContent>
               </AppleCard>
@@ -289,29 +291,29 @@ export default function LocationDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
-                    <Warehouse className='h-5 w-5 text-apple-gray' /> Bay/Ponti (
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Warehouse className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' /> Bay/Ponti (
                     {(location.bays || []).length})
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {(location.bays || []).length === 0 ? (
-                    <p className='text-center py-8 text-apple-gray'>Nessun bay configurato.</p>
+                    <p className='text-center py-8 text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun bay configurato.</p>
                   ) : (
                     <div className='space-y-3'>
                       {location.bays.map(bay => (
                         <div
                           key={bay.id}
-                          className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535]'
+                          className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                         >
                           <div>
-                            <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               {bay.name}
                             </p>
-                            <p className='text-sm text-apple-gray'>{bay.type}</p>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{bay.type}</p>
                           </div>
                           <span
-                            className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${
+                            className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
                               bay.status === 'AVAILABLE'
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
                                 : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
@@ -332,32 +334,32 @@ export default function LocationDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] flex items-center gap-2'>
-                    <Users className='h-5 w-5 text-apple-gray' /> Tecnici (
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Users className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' /> Tecnici (
                     {(location.technicians || []).length})
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {(location.technicians || []).length === 0 ? (
-                    <p className='text-center py-8 text-apple-gray'>Nessun tecnico assegnato.</p>
+                    <p className='text-center py-8 text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun tecnico assegnato.</p>
                   ) : (
                     <div className='space-y-3'>
                       {location.technicians.map(tech => (
                         <div
                           key={tech.id}
-                          className='flex items-center gap-4 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535]'
+                          className='flex items-center gap-4 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                         >
                           <div className='w-10 h-10 rounded-full bg-apple-blue/10 flex items-center justify-center'>
-                            <span className='text-sm font-bold text-apple-blue'>
+                            <span className='text-footnote font-bold text-apple-blue'>
                               {tech.firstName[0]}
                               {tech.lastName[0]}
                             </span>
                           </div>
                           <div>
-                            <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               {tech.firstName} {tech.lastName}
                             </p>
-                            <p className='text-sm text-apple-gray'>{tech.role}</p>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{tech.role}</p>
                           </div>
                         </div>
                       ))}
@@ -374,24 +376,24 @@ export default function LocationDetailPage() {
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-6'>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <p className='text-footnote text-apple-gray'>Ordini di Lavoro</p>
-                      <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Ordini di Lavoro</p>
+                      <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         {location.stats.totalWo}
                       </p>
                     </AppleCardContent>
                   </AppleCard>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <p className='text-footnote text-apple-gray'>Tempo medio (ore)</p>
-                      <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Tempo medio (ore)</p>
+                      <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         {location.stats.avgCompletionTime.toFixed(1)}
                       </p>
                     </AppleCardContent>
                   </AppleCard>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <p className='text-footnote text-apple-gray'>Fatturato</p>
-                      <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Fatturato</p>
+                      <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
                         {formatCurrency(location.stats.revenue)}
                       </p>
                     </AppleCardContent>
@@ -402,7 +404,7 @@ export default function LocationDetailPage() {
                   <AppleCardContent>
                     <div className='text-center py-8'>
                       <BarChart3 className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                      <p className='text-apple-gray'>Statistiche non disponibili.</p>
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Statistiche non disponibili.</p>
                     </div>
                   </AppleCardContent>
                 </AppleCard>
@@ -418,47 +420,47 @@ export default function LocationDetailPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className='w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-2xl p-6 m-4'
+            className='w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl p-6 m-4'
           >
             <div className='flex items-center justify-between mb-6'>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                 Modifica Sede
               </h2>
-              <button onClick={() => setEditDialogOpen(false)} aria-label='Chiudi'>
+              <AppleButton variant='ghost' size='sm' onClick={() => setEditDialogOpen(false)} aria-label='Chiudi'>
                 <X className='h-5 w-5 text-apple-gray' />
-              </button>
+              </AppleButton>
             </div>
             <form onSubmit={handleSubmit(handleSave)} className='space-y-4'>
               <div>
-                <label htmlFor='edit-name' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                <label htmlFor='edit-name' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                   Nome sede *
                 </label>
                 <Input id='edit-name' {...register('name')} />
-                {formErrors.name && <p className='text-xs text-red-500 mt-1'>{formErrors.name.message}</p>}
+                {formErrors.name && <p className='text-footnote text-apple-red mt-1'>{formErrors.name.message}</p>}
               </div>
               <div>
-                <label htmlFor='edit-address' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                <label htmlFor='edit-address' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                   Indirizzo *
                 </label>
                 <Input id='edit-address' {...register('address')} />
-                {formErrors.address && <p className='text-xs text-red-500 mt-1'>{formErrors.address.message}</p>}
+                {formErrors.address && <p className='text-footnote text-apple-red mt-1'>{formErrors.address.message}</p>}
               </div>
               <div className='grid grid-cols-3 gap-4'>
                 <div>
-                  <label htmlFor='edit-city' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                  <label htmlFor='edit-city' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                     Città *
                   </label>
                   <Input id='edit-city' {...register('city')} />
-                  {formErrors.city && <p className='text-xs text-red-500 mt-1'>{formErrors.city.message}</p>}
+                  {formErrors.city && <p className='text-footnote text-apple-red mt-1'>{formErrors.city.message}</p>}
                 </div>
                 <div>
-                  <label htmlFor='edit-province' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                  <label htmlFor='edit-province' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                     Provincia
                   </label>
                   <Input id='edit-province' {...register('province')} />
                 </div>
                 <div>
-                  <label htmlFor='edit-postalCode' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                  <label htmlFor='edit-postalCode' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                     CAP
                   </label>
                   <Input id='edit-postalCode' {...register('postalCode')} />
@@ -466,20 +468,20 @@ export default function LocationDetailPage() {
               </div>
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <label htmlFor='edit-phone' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                  <label htmlFor='edit-phone' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                     Telefono
                   </label>
                   <Input id='edit-phone' {...register('phone')} />
                 </div>
                 <div>
-                  <label htmlFor='edit-email' className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-1 block'>
+                  <label htmlFor='edit-email' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
                     Email
                   </label>
                   <Input id='edit-email' type='email' {...register('email')} />
-                  {formErrors.email && <p className='text-xs text-red-500 mt-1'>{formErrors.email.message}</p>}
+                  {formErrors.email && <p className='text-footnote text-apple-red mt-1'>{formErrors.email.message}</p>}
                 </div>
               </div>
-              <div className='flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#424242]'>
+              <div className='flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[var(--border-default)]'>
                 <AppleButton variant='secondary' type='button' onClick={() => setEditDialogOpen(false)}>
                   Annulla
                 </AppleButton>

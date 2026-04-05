@@ -78,7 +78,7 @@ export function RoiCalculator(): React.ReactElement {
   const phoneHours = Math.round(techs * 2 * METHOD_MULTIPLIER[method]);
 
   return (
-    <section id="roi" ref={ref} className="bg-[#f7f7f8] py-20 dark:bg-[#171717] lg:py-28">
+    <section id="roi" ref={ref} className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-secondary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -87,7 +87,7 @@ export function RoiCalculator(): React.ReactElement {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-4xl">
             Quanto puoi risparmiare con MechMind?
           </h2>
         </motion.div>
@@ -99,13 +99,13 @@ export function RoiCalculator(): React.ReactElement {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <div className="overflow-hidden rounded-2xl border border-[#e5e5e5] bg-white shadow-xl dark:border-[#444654] dark:bg-[#2f2f2f]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-white shadow-xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
             <div className="grid grid-cols-1 lg:grid-cols-2">
               {/* Left: Inputs */}
-              <div className="border-b border-[#e5e5e5] p-6 dark:border-[#444654] sm:p-8 lg:border-b-0 lg:border-r">
+              <div className="border-b border-[var(--border-default)] p-6 dark:border-[var(--border-default)] sm:p-8 lg:border-b-0 lg:border-r">
                 {/* Vehicles slider */}
                 <div className="mb-8">
-                  <label className="mb-3 block text-sm font-medium text-[#0d0d0d] dark:text-[#ececec]">
+                  <label className="mb-3 block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Quanti veicoli lavori al mese?
                   </label>
                   <div className="relative">
@@ -117,11 +117,11 @@ export function RoiCalculator(): React.ReactElement {
                       value={vehicles}
                       onChange={(e) => setVehicles(Number(e.target.value))}
                       aria-label="Numero di veicoli al mese"
-                      className="min-h-[44px] h-2 w-full cursor-pointer appearance-none rounded-full bg-[#e5e5e5] accent-[#0d0d0d] dark:accent-white dark:bg-[#444654] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#0d0d0d] dark:[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md"
+                      className="min-h-[44px] h-2 w-full cursor-pointer appearance-none rounded-full bg-[var(--border-default)] accent-[#0d0d0d] dark:accent-white dark:bg-[var(--border-default)] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#0d0d0d] dark:[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md"
                     />
-                    <div className="mt-2 flex justify-between text-xs text-[#8e8ea0]">
+                    <div className="mt-2 flex justify-between text-xs text-[var(--text-secondary)]">
                       <span>10</span>
-                      <span className="text-base font-bold text-[#0d0d0d] dark:text-white">{vehicles}</span>
+                      <span className="text-base font-bold text-[var(--text-primary)] dark:text-white">{vehicles}</span>
                       <span>200</span>
                     </div>
                   </div>
@@ -129,7 +129,7 @@ export function RoiCalculator(): React.ReactElement {
 
                 {/* Technicians */}
                 <div className="mb-8">
-                  <label className="mb-3 block text-sm font-medium text-[#0d0d0d] dark:text-[#ececec]">
+                  <label className="mb-3 block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Quanti tecnici hai?
                   </label>
                   <div className="grid grid-cols-4 gap-2">
@@ -140,8 +140,8 @@ export function RoiCalculator(): React.ReactElement {
                         onClick={() => setSelectedTechIdx(i)}
                         className={`min-h-[44px] rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                           i === selectedTechIdx
-                            ? 'border-[#0d0d0d] dark:border-white bg-[#0d0d0d]/5 dark:bg-white/10 text-[#0d0d0d] dark:text-white'
-                            : 'border-[#e5e5e5] text-[#6e6e80] hover:border-[#d9d9e3] dark:border-[#444654] dark:text-[#8e8ea0] dark:hover:border-[#6e6e80]'
+                            ? 'border-[#0d0d0d] dark:border-white bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white'
+                            : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:border-[var(--border-default)] dark:border-[var(--border-default)] dark:text-[var(--text-secondary)] dark:hover:border-[var(--text-tertiary)]'
                         }`}
                       >
                         {opt.label}
@@ -152,7 +152,7 @@ export function RoiCalculator(): React.ReactElement {
 
                 {/* Current method */}
                 <div>
-                  <label className="mb-3 block text-sm font-medium text-[#0d0d0d] dark:text-[#ececec]">
+                  <label className="mb-3 block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Come gestisci oggi?
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -163,8 +163,8 @@ export function RoiCalculator(): React.ReactElement {
                         onClick={() => setMethod(opt.id)}
                         className={`min-h-[44px] rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                           method === opt.id
-                            ? 'border-[#0d0d0d] dark:border-white bg-[#0d0d0d]/5 dark:bg-white/10 text-[#0d0d0d] dark:text-white'
-                            : 'border-[#e5e5e5] text-[#6e6e80] hover:border-[#d9d9e3] dark:border-[#444654] dark:text-[#8e8ea0] dark:hover:border-[#6e6e80]'
+                            ? 'border-[#0d0d0d] dark:border-white bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white'
+                            : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:border-[var(--border-default)] dark:border-[var(--border-default)] dark:text-[var(--text-secondary)] dark:hover:border-[var(--text-tertiary)]'
                         }`}
                       >
                         {opt.label}
@@ -175,29 +175,29 @@ export function RoiCalculator(): React.ReactElement {
               </div>
 
               {/* Right: Result */}
-              <div className="flex flex-col items-center justify-center bg-[#f7f7f8] p-6 text-center dark:bg-[#212121] sm:p-8">
-                <p className="text-sm font-medium text-[#6e6e80] dark:text-[#8e8ea0]">
+              <div className="flex flex-col items-center justify-center bg-[var(--surface-secondary)] p-6 text-center dark:bg-[var(--surface-primary)] sm:p-8">
+                <p className="text-sm font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   Con MechMind potresti risparmiare
                 </p>
-                <p className="mt-3 text-5xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-6xl">
+                <p className="mt-3 text-5xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-6xl">
                   &euro;<AnimatedCounter value={roi.total} />
                 </p>
-                <p className="mt-1 text-sm text-[#8e8ea0]">al mese</p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">al mese</p>
 
                 {/* Breakdown */}
                 <div className="mt-8 w-full space-y-3">
                   <div className="flex items-center gap-3 text-left">
-                    <span className="flex-1 text-sm text-[#6e6e80] dark:text-[#8e8ea0]">
+                    <span className="flex-1 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       {adminHours}h/mese in meno di burocrazia
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-left">
-                    <span className="flex-1 text-sm text-[#6e6e80] dark:text-[#8e8ea0]">
+                    <span className="flex-1 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       +15% fatturato medio (ARO più alto)
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-left">
-                    <span className="flex-1 text-sm text-[#6e6e80] dark:text-[#8e8ea0]">
+                    <span className="flex-1 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       {phoneHours}h/mese in meno al telefono
                     </span>
                   </div>
@@ -206,7 +206,7 @@ export function RoiCalculator(): React.ReactElement {
                 {/* CTA */}
                 <Link
                   href="/auth/register"
-                  className="mt-8 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#0d0d0d] dark:bg-white px-6 py-3 text-sm font-semibold text-white dark:text-[#0d0d0d] transition-all hover:bg-[#2f2f2f] dark:hover:bg-[#e5e5e5] active:scale-[0.97]"
+                  className="mt-8 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--border-default)] bg-white px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
                 >
                   Inizia a risparmiare — Prova gratis &rarr;
                 </Link>
@@ -214,8 +214,8 @@ export function RoiCalculator(): React.ReactElement {
             </div>
 
             {/* Methodology note */}
-            <div className="border-t border-[#e5e5e5] bg-[#f7f7f8] px-6 py-3 dark:border-[#444654] dark:bg-[#171717]">
-              <p className="text-center text-xs text-[#8e8ea0]">
+            <div className="border-t border-[var(--border-default)] bg-[var(--surface-secondary)] px-6 py-3 dark:border-[var(--border-default)] dark:bg-[var(--surface-secondary)]">
+              <p className="text-center text-xs text-[var(--text-secondary)]">
                 Basato su dati medi di officine italiane. Il risparmio reale può variare.
               </p>
             </div>

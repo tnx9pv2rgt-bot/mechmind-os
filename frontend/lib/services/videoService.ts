@@ -234,7 +234,7 @@ const VEHICLE_SEGMENTS: Omit<VideoSegment, 'id' | 'hotspots' | 'thumbnailUrl'>[]
 const STORAGE_CONFIG = {
   bucketName: process.env.NEXT_PUBLIC_S3_BUCKET || 'mechmind-videos',
   region: process.env.NEXT_PUBLIC_S3_REGION || 'eu-west-1',
-  baseUrl: process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.mechmind.io',
+  baseUrl: process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.mechmind.it',
 }
 
 // =============================================================================
@@ -640,7 +640,7 @@ export async function generateThumbnailFromFile(
  * 
  * @example
  * ```typescript
- * const frame = await extractFrame('https://cdn.mechmind.io/video.mp4', 5.5)
+ * const frame = await extractFrame('https://cdn.mechmind.it/video.mp4', 5.5)
  * ```
  */
 export async function extractFrame(
@@ -694,7 +694,7 @@ export async function extractFrame(
  * 
  * @example
  * ```typescript
- * const hls = await generateHLSPlaylist('https://cdn.mechmind.io/video.mp4')
+ * const hls = await generateHLSPlaylist('https://cdn.mechmind.it/video.mp4')
  * // Use hls.playlistUrl with video player
  * ```
  */

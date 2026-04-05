@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 // Constants
 // =============================================================================
 const DEMO_KEY = 'mechmind_demo';
+const DEMO_START_KEY = 'mechmind_demo_start';
 const DEMO_DURATION = 60 * 60; // 1 hour in seconds
 
 // =============================================================================
@@ -29,7 +30,7 @@ const DemoContext = createContext<DemoContextType>({
 export const useDemo = () => useContext(DemoContext);
 
 // =============================================================================
-// Helpers
+// Helpers — everything in localStorage for cross-tab + restart persistence
 // =============================================================================
 export function isDemoMode(): boolean {
   if (typeof window === 'undefined') return false;
@@ -40,19 +41,31 @@ export function setDemoMode(active: boolean): void {
   if (typeof window === 'undefined') return;
   if (active) {
     localStorage.setItem(DEMO_KEY, 'true');
-    sessionStorage.setItem('demo_start', Date.now().toString());
+    // Only set start time if there isn't one already (prevents reset on re-activation)
+    if (!localStorage.getItem(DEMO_START_KEY)) {
+      localStorage.setItem(DEMO_START_KEY, Date.now().toString());
+    }
   } else {
     localStorage.removeItem(DEMO_KEY);
-    sessionStorage.removeItem('demo_start');
+    localStorage.removeItem(DEMO_START_KEY);
+    sessionStorage.removeItem('exit_intent_shown');
     fetch('/api/auth/demo-session', { method: 'DELETE' }).catch(() => {});
   }
 }
 
+/** Start a fresh demo — always resets the timer */
+export function startFreshDemo(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(DEMO_KEY, 'true');
+  localStorage.setItem(DEMO_START_KEY, Date.now().toString());
+}
+
 function getSecondsLeft(): number {
   if (typeof window === 'undefined') return DEMO_DURATION;
-  const start = sessionStorage.getItem('demo_start');
+  const start = localStorage.getItem(DEMO_START_KEY);
   if (!start) {
-    sessionStorage.setItem('demo_start', Date.now().toString());
+    // Demo flag is set but no start time — set one now
+    localStorage.setItem(DEMO_START_KEY, Date.now().toString());
     return DEMO_DURATION;
   }
   const elapsed = Math.floor((Date.now() - parseInt(start, 10)) / 1000);
@@ -84,20 +97,20 @@ function DemoExpiredModal() {
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className='relative w-full max-w-[420px] rounded-3xl bg-white dark:bg-[#2f2f2f] p-8 text-center'
+        className='relative w-full max-w-[420px] rounded-3xl bg-white dark:bg-[var(--surface-elevated)] p-8 text-center'
       >
         <div className='mb-6'>
-          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec]'>
+          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--text-primary)] dark:bg-[var(--text-primary)]'>
             <span className='text-2xl'>&#x23F0;</span>
           </div>
-          <h2 className='text-[24px] font-bold text-[#0d0d0d] dark:text-[#ececec] tracking-tight'>
+          <h2 className='text-[24px] font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] tracking-tight'>
             La demo è terminata
           </h2>
-          <p className='mt-2 text-[15px] text-[#636366] leading-relaxed'>
+          <p className='mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed'>
             Hai provato MechMind OS per 1 ora. Registrati gratis per continuare con 7 giorni di
             trial completo.
           </p>
-          <p className='mt-3 text-[13px] text-[#636366]'>
+          <p className='mt-3 text-[13px] text-[var(--text-secondary)]'>
             &#x1F527; 850+ officine usano già MechMind OS
           </p>
         </div>
@@ -108,7 +121,7 @@ function DemoExpiredModal() {
               setDemoMode(false);
               router.push('/auth/register');
             }}
-            className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d] h-[40px] text-[15px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] transition-colors'
+            className='flex w-full items-center justify-center rounded-full bg-[#2f2f2f] text-white h-[52px] text-[15px] font-semibold hover:bg-[#3a3a3a] transition-colors'
           >
             Registrati gratis — 7 giorni trial
           </button>
@@ -117,7 +130,7 @@ function DemoExpiredModal() {
               setDemoMode(false);
               router.push('/auth');
             }}
-            className='text-[13px] font-medium text-[#636366] hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors'
+            className='text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
           >
             Torna al login
           </button>
@@ -137,24 +150,24 @@ function DemoExitIntent({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className='fixed bottom-4 right-4 z-[9997] max-w-sm w-full shadow-2xl rounded-xl border p-4 bg-white dark:bg-[#2f2f2f] border-[#e5e5e5] dark:border-[#424242]'
+      className='fixed bottom-4 right-4 z-[9997] max-w-sm w-full shadow-2xl rounded-xl border p-4 bg-white dark:bg-[var(--surface-elevated)] border-[var(--border-default)] dark:border-[var(--border-default)]'
     >
       <button
         onClick={onClose}
-        className='absolute top-2 right-3 text-[#636366] hover:text-[#0d0d0d] dark:hover:text-[#ececec] text-lg transition-colors'
+        className='absolute top-2 right-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] text-lg transition-colors'
         aria-label='Chiudi'
       >
         &times;
       </button>
-      <p className='font-semibold text-[14px] text-[#0d0d0d] dark:text-[#ececec] mb-1'>
+      <p className='font-semibold text-[14px] text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
         Aspetta! Non perdere i tuoi progressi
       </p>
-      <p className='text-[13px] text-[#636366] mb-3'>
+      <p className='text-[13px] text-[var(--text-secondary)] mb-3'>
         Registrati gratis e continua da dove eri rimasto. 7 giorni senza carta di credito.
       </p>
       <a
         href='/auth/register'
-        className='flex w-full items-center justify-center rounded-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-white h-[36px] text-[13px] font-semibold hover:bg-[#2f2f2f] dark:hover:bg-[#d9d9d9] transition-colors'
+        className='flex w-full items-center justify-center rounded-full bg-neutral-500 dark:bg-neutral-600 text-white dark:text-white h-[36px] text-[13px] font-semibold hover:bg-neutral-600 dark:hover:bg-neutral-700 transition-colors'
       >
         Registrati gratis
       </a>
@@ -170,23 +183,13 @@ function DemoBanner({ secondsLeft, onExit }: { secondsLeft: number; onExit: () =
     .toString()
     .padStart(2, '0');
   const s = (secondsLeft % 60).toString().padStart(2, '0');
-  const isUrgent = secondsLeft < 600;
-  const isCritical = secondsLeft < 300;
 
   return (
-    <div className='w-full bg-[#0d0d0d] dark:bg-[#ececec] text-white dark:text-[#0d0d0d]'>
+    <div className='w-full' style={{ background: 'transparent', color: '#ffffff' }}>
       <div className='flex items-center justify-between px-4 py-2 text-[13px]'>
-        <span className='font-medium'>
+        <span className='font-medium' style={{ color: '#ff0000' }}>
           Modalità demo —{' '}
-          <span
-            className={
-              isCritical
-                ? 'font-mono font-bold text-red-400 dark:text-red-600 animate-pulse'
-                : isUrgent
-                  ? 'font-mono font-bold text-orange-400 dark:text-orange-600'
-                  : 'font-mono font-semibold'
-            }
-          >
+          <span className='font-mono font-bold' style={{ color: '#ff0000' }}>
             {m}:{s}
           </span>{' '}
           rimast{secondsLeft === 1 ? 'o' : 'i'}
@@ -194,6 +197,7 @@ function DemoBanner({ secondsLeft, onExit }: { secondsLeft: number; onExit: () =
         <button
           onClick={onExit}
           className='text-[13px] font-semibold underline underline-offset-2 hover:opacity-70 transition-opacity'
+          style={{ color: '#999999' }}
         >
           Registrati gratis
         </button>
@@ -219,15 +223,41 @@ export function DemoProvider({
   const router = useRouter();
   const fiveMinToastShown = useRef(false);
 
-  // Init
+  // Init — read from localStorage (single source of truth)
   useEffect(() => {
     const demo = localStorage.getItem(DEMO_KEY) === 'true';
     setIsDemo(demo);
     if (demo) {
       const left = getSecondsLeft();
       setSecondsLeft(left);
-      if (left <= 0) setShowExpired(true);
+      if (left <= 0) {
+        setShowExpired(true);
+      }
     }
+  }, []);
+
+  // Cross-tab sync: if another tab clears demo, this tab should react
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === DEMO_KEY) {
+        if (e.newValue === null || e.newValue !== 'true') {
+          // Demo was deactivated in another tab
+          setIsDemo(false);
+          setShowExpired(false);
+        } else {
+          // Demo was activated in another tab
+          setIsDemo(true);
+          setSecondsLeft(getSecondsLeft());
+        }
+      }
+      if (e.key === DEMO_START_KEY && e.newValue === null) {
+        // Start time cleared — demo ended
+        setIsDemo(false);
+        setShowExpired(false);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // Timer countdown

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-fetcher';
-import { toast } from 'sonner';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Pagination } from '@/components/ui/pagination';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Input } from '@/components/ui/input';
 import {
   Megaphone,
   Plus,
@@ -15,36 +16,14 @@ import {
   Send,
   Eye,
   MousePointerClick,
-  Calendar,
   Filter,
   AlertCircle,
   Loader2,
   TrendingUp,
   Users,
-  BarChart3,
-  ArrowLeft,
-  ChevronRight,
+  Search,
 } from 'lucide-react';
-
-const colors = {
-  bg: '#1a1a1a',
-  surface: '#2f2f2f',
-  surfaceHover: '#383838',
-  border: '#4e4e4e',
-  borderSubtle: '#3a3a3a',
-  textPrimary: '#ffffff',
-  textSecondary: '#b4b4b4',
-  textTertiary: '#888888',
-  textMuted: '#666666',
-  accent: '#ffffff',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
-  purple: '#a78bfa',
-  glow: 'rgba(255,255,255,0.03)',
-  glowStrong: 'rgba(255,255,255,0.06)',
-};
+import { Pagination } from '@/components/ui/pagination';
 
 interface Campaign {
   id: string;
@@ -72,39 +51,97 @@ interface CampaignsResponse {
   stats?: CampaignStats;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; barColor: string }> = {
-  DRAFT: { label: 'Bozza', color: colors.textTertiary, barColor: colors.textMuted },
-  SCHEDULED: { label: 'Pianificata', color: colors.info, barColor: colors.info },
-  IN_PROGRESS: { label: 'In Corso', color: colors.warning, barColor: colors.warning },
-  COMPLETED: { label: 'Completata', color: colors.success, barColor: colors.success },
-  CANCELLED: { label: 'Annullata', color: colors.error, barColor: colors.error },
+const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
+  DRAFT: {
+    color: 'text-apple-dark dark:text-[var(--text-primary)]',
+    bg: 'bg-apple-light-gray dark:bg-[var(--surface-elevated)]',
+    label: 'Bozza',
+  },
+  SCHEDULED: {
+    color: 'text-blue-700 dark:text-blue-300',
+    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    label: 'Pianificata',
+  },
+  IN_PROGRESS: {
+    color: 'text-orange-700 dark:text-orange-300',
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    label: 'In Corso',
+  },
+  COMPLETED: {
+    color: 'text-green-700 dark:text-green-300',
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    label: 'Completata',
+  },
+  CANCELLED: {
+    color: 'text-red-700 dark:text-red-300',
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    label: 'Annullata',
+  },
 };
 
-const TYPE_CONFIG: Record<string, { label: string; icon: typeof Mail }> = {
+const typeConfig: Record<string, { label: string; icon: typeof Mail }> = {
   EMAIL: { label: 'Email', icon: Mail },
   SMS: { label: 'SMS', icon: MessageSquare },
   WHATSAPP: { label: 'WhatsApp', icon: MessageSquare },
 };
 
+type CampaignStatusFilter = 'ALL' | 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+type CampaignTypeFilter = 'ALL' | 'EMAIL' | 'SMS' | 'WHATSAPP';
+
+const statusOptions: { value: CampaignStatusFilter; label: string }[] = [
+  { value: 'ALL', label: 'Tutti gli stati' },
+  { value: 'DRAFT', label: 'Bozza' },
+  { value: 'SCHEDULED', label: 'Pianificata' },
+  { value: 'IN_PROGRESS', label: 'In Corso' },
+  { value: 'COMPLETED', label: 'Completata' },
+  { value: 'CANCELLED', label: 'Annullata' },
+];
+
+const typeOptions: { value: CampaignTypeFilter; label: string }[] = [
+  { value: 'ALL', label: 'Tutti i tipi' },
+  { value: 'EMAIL', label: 'Email' },
+  { value: 'SMS', label: 'SMS' },
+  { value: 'WHATSAPP', label: 'WhatsApp' },
+];
+
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function MarketingCampaignsPage() {
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<CampaignTypeFilter>('ALL');
+  const [statusFilter, setStatusFilter] = useState<CampaignStatusFilter>('ALL');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
   const queryParams = new URLSearchParams();
-  if (typeFilter) queryParams.set('type', typeFilter);
-  if (statusFilter) queryParams.set('status', statusFilter);
+  if (typeFilter !== 'ALL') queryParams.set('type', typeFilter);
+  if (statusFilter !== 'ALL') queryParams.set('status', statusFilter);
   queryParams.set('page', String(page));
   queryParams.set('limit', String(PAGE_SIZE));
 
@@ -137,289 +174,289 @@ export default function MarketingCampaignsPage() {
     ? Math.ceil(campaignsData.meta.total / PAGE_SIZE)
     : Math.ceil(campaigns.length / PAGE_SIZE) || 1;
 
+  const filteredCampaigns = campaigns.filter(c => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!c.name?.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
   const statCards = [
-    { label: 'Campagne Attive', value: String(stats.activeCampaigns), icon: Megaphone, iconColor: colors.purple },
-    { label: 'Email Inviate', value: String(stats.totalSent), icon: Send, iconColor: colors.success },
-    { label: 'Tasso Apertura', value: `${stats.avgOpenRate.toFixed(1)}%`, icon: TrendingUp, iconColor: colors.warning },
-    { label: 'Conversioni', value: String(stats.totalConversions), icon: MousePointerClick, iconColor: colors.info },
+    {
+      label: 'Campagne Attive',
+      value: String(stats.activeCampaigns),
+      icon: Megaphone,
+      color: 'bg-apple-purple',
+    },
+    {
+      label: 'Email Inviate',
+      value: String(stats.totalSent),
+      icon: Send,
+      color: 'bg-apple-green',
+    },
+    {
+      label: 'Tasso Apertura',
+      value: `${stats.avgOpenRate.toFixed(1)}%`,
+      icon: TrendingUp,
+      color: 'bg-apple-orange',
+    },
+    {
+      label: 'Conversioni',
+      value: String(stats.totalConversions),
+      icon: MousePointerClick,
+      color: 'bg-apple-blue',
+    },
   ];
 
   return (
-    <div className='min-h-screen' style={{ backgroundColor: colors.bg }}>
+    <div>
       {/* Header */}
-      <header
-        className='sticky top-0 z-30 backdrop-blur-xl border-b'
-        style={{ backgroundColor: `${colors.bg}cc`, borderColor: colors.borderSubtle }}
-      >
+      <header>
         <div className='px-8 py-5 flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Link href='/dashboard'>
-              <button
-                className='w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-white/5'
-                style={{ color: colors.textSecondary }}
-              >
-                <ArrowLeft className='h-5 w-5' />
-              </button>
-            </Link>
-            <div>
-              <h1 className='text-[28px] font-light' style={{ color: colors.textPrimary }}>
-                Campagne Marketing
-              </h1>
-              <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
-                Gestisci campagne email, SMS e WhatsApp
-              </p>
-            </div>
+          <div>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Campagne Marketing</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              Gestisci campagne email, SMS e WhatsApp
+            </p>
           </div>
-          <Link href='/dashboard/marketing/new'>
-            <button
-              className='h-10 px-5 rounded-full text-sm font-medium flex items-center gap-2 transition-colors hover:opacity-90'
-              style={{ backgroundColor: colors.accent, color: colors.bg }}
-            >
-              <Plus className='h-4 w-4' />
-              Nuova Campagna
-            </button>
-          </Link>
+          <AppleButton
+            icon={<Plus className='h-4 w-4' />}
+            onClick={() => router.push('/dashboard/marketing/new')}
+          >
+            Nuova Campagna
+          </AppleButton>
         </div>
       </header>
 
-      <motion.div className='p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
-        {/* Stats Row */}
-        <motion.div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' variants={containerVariants}>
+      <motion.div
+        className='p-8 space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        {/* Stats */}
+        <motion.div
+          className='grid grid-cols-2 lg:grid-cols-4 gap-bento'
+          variants={containerVariants}
+        >
           {statCards.map(stat => (
-            <motion.div
-              key={stat.label}
-              variants={itemVariants}
-              className='rounded-2xl border h-[120px] flex flex-col justify-center px-5'
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-            >
-              <div className='flex items-center gap-3 mb-3'>
-                <div
-                  className='w-10 h-10 rounded-xl flex items-center justify-center'
-                  style={{ backgroundColor: `${stat.iconColor}15` }}
-                >
-                  <stat.icon className='h-5 w-5' style={{ color: stat.iconColor }} />
-                </div>
-              </div>
-              <p
-                className='text-2xl font-semibold'
-                style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}
-              >
-                {isLoading ? '...' : stat.value}
-              </p>
-              <p className='text-[13px]' style={{ color: colors.textTertiary }}>{stat.label}</p>
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div
+                      className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                    >
+                      <stat.icon className='h-5 w-5 text-white' />
+                    </div>
+                  </div>
+                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    {isLoading ? '...' : stat.value}
+                  </p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                </AppleCardContent>
+              </AppleCard>
             </motion.div>
           ))}
         </motion.div>
 
         {/* Filters */}
-        <motion.div variants={itemVariants} className='flex justify-center flex-wrap gap-3'>
-          <div className='flex items-center gap-2'>
-            <Filter className='h-4 w-4' style={{ color: colors.textMuted }} />
-            <span className='text-sm' style={{ color: colors.textTertiary }}>Filtri:</span>
-          </div>
-          <select
-            value={typeFilter}
-            onChange={e => { setTypeFilter(e.target.value); setPage(1); }}
-            className='text-sm h-10 px-4 rounded-full border outline-none'
-            style={{
-              backgroundColor: colors.glowStrong,
-              borderColor: colors.borderSubtle,
-              color: colors.textPrimary,
-            }}
-          >
-            <option value=''>Tutti i tipi</option>
-            <option value='EMAIL'>Email</option>
-            <option value='SMS'>SMS</option>
-            <option value='WHATSAPP'>WhatsApp</option>
-          </select>
-          <select
-            value={statusFilter}
-            onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-            className='text-sm h-10 px-4 rounded-full border outline-none'
-            style={{
-              backgroundColor: colors.glowStrong,
-              borderColor: colors.borderSubtle,
-              color: colors.textPrimary,
-            }}
-          >
-            <option value=''>Tutti gli stati</option>
-            <option value='DRAFT'>Bozza</option>
-            <option value='SCHEDULED'>Pianificata</option>
-            <option value='IN_PROGRESS'>In Corso</option>
-            <option value='COMPLETED'>Completata</option>
-            <option value='CANCELLED'>Annullata</option>
-          </select>
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex flex-col sm:flex-row gap-4'>
+                <div className='relative flex-1'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Input
+                    placeholder='Cerca campagna per nome...'
+                    aria-label='Cerca campagne'
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className='pl-10'
+                  />
+                </div>
+                <div className='relative'>
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <select
+                    value={typeFilter}
+                    onChange={e => { setTypeFilter(e.target.value as CampaignTypeFilter); setPage(1); }}
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                  >
+                    {typeOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className='relative'>
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <select
+                    value={statusFilter}
+                    onChange={e => { setStatusFilter(e.target.value as CampaignStatusFilter); setPage(1); }}
+                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                  >
+                    {statusOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Campaigns List */}
-        <motion.div
-          variants={itemVariants}
-          className='rounded-2xl border overflow-hidden'
-          style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-        >
-          <div className='px-5 py-4 flex items-center gap-2 border-b' style={{ borderColor: colors.borderSubtle }}>
-            <Megaphone className='h-5 w-5' style={{ color: colors.purple }} />
-            <h2 className='text-base font-medium' style={{ color: colors.textPrimary }}>Campagne</h2>
-          </div>
-
-          {error ? (
-            <div className='flex flex-col items-center justify-center py-16 text-center'>
-              <AlertCircle className='h-12 w-12 mb-4' style={{ color: colors.borderSubtle }} />
-              <p className='text-sm' style={{ color: colors.textTertiary }}>
-                Impossibile caricare le campagne
-              </p>
-              <button
-                className='mt-4 h-10 px-4 rounded-full text-sm border transition-colors hover:bg-white/5'
-                style={{ borderColor: colors.border, color: colors.textSecondary }}
-                onClick={() => mutate()}
-              >
-                Riprova
-              </button>
-            </div>
-          ) : isLoading ? (
-            <div className='flex items-center justify-center py-16'>
-              <Loader2 className='h-8 w-8 animate-spin' style={{ color: colors.textMuted }} />
-            </div>
-          ) : campaigns.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-16 text-center'>
-              <div
-                className='w-16 h-16 rounded-2xl flex items-center justify-center mb-4'
-                style={{ backgroundColor: `${colors.purple}15` }}
-              >
-                <Megaphone className='h-8 w-8' style={{ color: colors.borderSubtle }} />
-              </div>
-              <p className='text-base font-medium mb-1' style={{ color: colors.textPrimary }}>
-                Nessuna campagna
-              </p>
-              <p className='text-[13px] max-w-sm mb-6' style={{ color: colors.textTertiary }}>
-                Crea la tua prima campagna marketing per raggiungere i clienti.
-              </p>
-              <Link href='/dashboard/marketing/new'>
-                <button
-                  className='h-10 px-5 rounded-full text-sm font-medium flex items-center gap-2 transition-colors hover:opacity-90'
-                  style={{ backgroundColor: colors.accent, color: colors.bg }}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                Elenco Campagne
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {error ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare le campagne
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => mutate()}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : isLoading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                </div>
+              ) : filteredCampaigns.length === 0 ? (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <Megaphone className='h-12 w-12 text-apple-gray/40 mb-4' />
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    Nessuna campagna. Crea la tua prima campagna marketing.
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => router.push('/dashboard/marketing/new')}
+                  >
+                    Crea la prima campagna
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className='space-y-3'
+                  variants={containerVariants}
+                  initial='hidden'
+                  animate='visible'
                 >
-                  <Plus className='h-4 w-4' />
-                  Crea Campagna
-                </button>
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className='divide-y' style={{ borderColor: colors.borderSubtle }}>
-                {campaigns.map(campaign => {
-                  const statusCfg = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.DRAFT;
-                  const typeCfg = TYPE_CONFIG[campaign.type] || TYPE_CONFIG.EMAIL;
-                  const TypeIcon = typeCfg.icon;
+                  {filteredCampaigns.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((campaign, index) => {
+                    const status = statusConfig[campaign.status] || statusConfig.DRAFT;
+                    const typeCfg = typeConfig[campaign.type] || typeConfig.EMAIL;
+                    const TypeIcon = typeCfg.icon;
 
-                  return (
-                    <div
-                      key={campaign.id}
-                      className='flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors group'
-                      style={{ borderColor: colors.borderSubtle }}
-                      onClick={() => window.location.href = `/dashboard/marketing/${campaign.id}`}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.surfaceHover)}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    >
-                      {/* Status bar */}
-                      <div
-                        className='w-1 h-12 rounded-full flex-shrink-0'
-                        style={{ backgroundColor: statusCfg.barColor }}
-                      />
-                      {/* Info */}
-                      <div className='flex-1 min-w-0'>
-                        <p className='text-sm font-medium truncate' style={{ color: colors.textPrimary }}>
-                          {campaign.name}
-                        </p>
-                        <div className='flex items-center gap-3 mt-1'>
-                          <div className='flex items-center gap-1'>
-                            <TypeIcon className='h-3.5 w-3.5' style={{ color: colors.textMuted }} />
-                            <span className='text-[12px]' style={{ color: colors.textTertiary }}>{typeCfg.label}</span>
+                    return (
+                      <motion.div
+                        key={campaign.id}
+                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        variants={listItemVariants}
+                        custom={index}
+                        whileHover={{ scale: 1.005, x: 4 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className='flex items-center gap-4'>
+                          <div className='w-12 h-12 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
+                            <TypeIcon className='h-6 w-6 text-apple-purple' />
                           </div>
+                          <div>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              {campaign.name}
+                            </p>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              {typeCfg.label} &bull; {campaign.recipientCount} destinatari &bull; {campaign.sentCount} inviati
+                            </p>
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-4'>
                           <span
-                            className='text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full'
-                            style={{ backgroundColor: `${statusCfg.color}18`, color: statusCfg.color }}
+                            className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
                           >
-                            {statusCfg.label}
+                            {status.label}
                           </span>
-                        </div>
-                      </div>
-                      {/* Metrics */}
-                      <div className='hidden sm:flex items-center gap-6 text-right'>
-                        <div>
-                          <p className='text-xs' style={{ color: colors.textMuted }}>Destinatari</p>
-                          <p className='text-sm font-medium' style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
-                            {campaign.recipientCount}
-                          </p>
-                        </div>
-                        <div>
-                          <p className='text-xs' style={{ color: colors.textMuted }}>Inviati</p>
-                          <p className='text-sm font-medium' style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
-                            {campaign.sentCount}
-                          </p>
-                        </div>
-                        <div>
-                          <p className='text-xs' style={{ color: colors.textMuted }}>Aperti</p>
-                          <p className='text-sm font-medium' style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
-                            {campaign.openedCount}
-                          </p>
-                        </div>
-                        <div>
-                          <p className='text-xs' style={{ color: colors.textMuted }}>Click</p>
-                          <p className='text-sm font-medium' style={{ color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
-                            {campaign.clickedCount}
-                          </p>
-                        </div>
-                        <div>
-                          <p className='text-xs' style={{ color: colors.textMuted }}>Data</p>
-                          <p className='text-[13px]' style={{ color: colors.textTertiary, fontVariantNumeric: 'tabular-nums' }}>
+                          <div className='hidden sm:flex items-center gap-3 text-right'>
+                            <div>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Aperti</p>
+                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                {campaign.openedCount}
+                              </p>
+                            </div>
+                            <div>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Click</p>
+                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                {campaign.clickedCount}
+                              </p>
+                            </div>
+                          </div>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
                             {new Date(campaign.scheduledAt || campaign.createdAt).toLocaleDateString('it-IT')}
                           </p>
+                          <AppleButton
+                            variant='ghost'
+                            size='sm'
+                            icon={<Eye className='h-3.5 w-3.5' />}
+                            onClick={() => router.push(`/dashboard/marketing/${campaign.id}`)}
+                          >
+                            Dettagli
+                          </AppleButton>
                         </div>
-                      </div>
-                      <ChevronRight
-                        className='h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0'
-                        style={{ color: colors.textMuted }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-              <div className='px-5 py-4 border-t' style={{ borderColor: colors.borderSubtle }}>
-                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-              </div>
-            </>
-          )}
+                      </motion.div>
+                    );
+                  })}
+                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                </motion.div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
 
         {/* Segments Link */}
-        <motion.div variants={itemVariants}>
-          <Link href='/dashboard/marketing/segments'>
-            <div
-              className='rounded-2xl border p-5 flex items-center justify-between cursor-pointer transition-colors group'
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderSubtle }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.surfaceHover)}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = colors.surface)}
-            >
-              <div className='flex items-center gap-4'>
-                <div
-                  className='w-12 h-12 rounded-xl flex items-center justify-center'
-                  style={{ backgroundColor: `${colors.info}15` }}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div
+                className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer'
+                onClick={() => router.push('/dashboard/marketing/segments')}
+              >
+                <div className='flex items-center gap-4'>
+                  <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
+                    <Users className='h-6 w-6 text-apple-blue' />
+                  </div>
+                  <div>
+                    <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      Segmenti Clienti
+                    </p>
+                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      Crea e gestisci segmenti per targettizzare le campagne
+                    </p>
+                  </div>
+                </div>
+                <AppleButton
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => router.push('/dashboard/marketing/segments')}
                 >
-                  <Users className='h-6 w-6' style={{ color: colors.info }} />
-                </div>
-                <div>
-                  <h3 className='text-sm font-medium' style={{ color: colors.textPrimary }}>
-                    Segmenti Clienti
-                  </h3>
-                  <p className='text-[13px] mt-0.5' style={{ color: colors.textTertiary }}>
-                    Crea e gestisci segmenti per targettizzare le campagne
-                  </p>
-                </div>
+                  Gestisci
+                </AppleButton>
               </div>
-              <ChevronRight className='h-5 w-5' style={{ color: colors.textMuted }} />
-            </div>
-          </Link>
+            </AppleCardContent>
+          </AppleCard>
         </motion.div>
       </motion.div>
     </div>

@@ -42,7 +42,7 @@ const typeIcons: Record<string, { icon: typeof Bell; color: string; bg: string }
   warranty: { icon: Shield, color: 'text-apple-blue', bg: 'bg-blue-50 dark:bg-blue-900/20' },
   maintenance: { icon: Clock, color: 'text-apple-red', bg: 'bg-red-50 dark:bg-red-900/20' },
   message: { icon: MessageCircle, color: 'text-apple-blue', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  system: { icon: Bell, color: 'text-apple-gray', bg: 'bg-gray-100 dark:bg-[#353535]' },
+  system: { icon: Bell, color: 'text-apple-gray', bg: 'bg-gray-100 dark:bg-[var(--surface-hover)]' },
 };
 
 function getTimeAgo(dateStr: string): string {
@@ -131,8 +131,8 @@ export default function PortalNotificationsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Notifiche</h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Notifiche</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Le tue notifiche e aggiornamenti
           </p>
         </div>
@@ -151,11 +151,11 @@ export default function PortalNotificationsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Notifiche</h1>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Notifiche</h1>
         </div>
         <div className='text-center py-16'>
           <AlertCircle className='h-12 w-12 text-apple-red/40 mx-auto mb-4' />
-          <p className='text-apple-gray dark:text-[#636366] mb-4'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
             Impossibile caricare le notifiche
           </p>
           <button onClick={() => mutate()} className='text-apple-blue hover:underline'>
@@ -171,8 +171,8 @@ export default function PortalNotificationsPage(): React.ReactElement {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>Notifiche</h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Notifiche</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             {unreadCount > 0
               ? `${unreadCount} notific${unreadCount === 1 ? 'a' : 'he'} non lett${unreadCount === 1 ? 'a' : 'e'}`
               : 'Tutte le notifiche lette'}
@@ -196,10 +196,10 @@ export default function PortalNotificationsPage(): React.ReactElement {
         <AppleCard>
           <AppleCardContent className='text-center py-16'>
             <BellOff className='h-16 w-16 text-apple-gray/30 mx-auto mb-4' />
-            <h3 className='text-lg font-medium text-apple-dark dark:text-[#ececec] mb-2'>
+            <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
               Nessuna notifica
             </h3>
-            <p className='text-apple-gray dark:text-[#636366]'>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)]'>
               Le notifiche relative a prenotazioni, riparazioni e fatture appariranno qui.
             </p>
           </AppleCardContent>
@@ -242,17 +242,17 @@ export default function PortalNotificationsPage(): React.ReactElement {
                           <p
                             className={`text-sm ${
                               isUnread
-                                ? 'font-semibold text-apple-dark dark:text-[#ececec]'
-                                : 'font-medium text-apple-gray dark:text-[#ababab]'
+                                ? 'font-semibold text-apple-dark dark:text-[var(--text-primary)]'
+                                : 'font-medium text-apple-gray dark:text-[var(--text-secondary)]'
                             }`}
                           >
                             {notification.title}
                           </p>
-                          <span className='text-[11px] text-apple-gray dark:text-[#636366] flex-shrink-0'>
+                          <span className='text-[11px] text-apple-gray dark:text-[var(--text-secondary)] flex-shrink-0'>
                             {getTimeAgo(notification.createdAt)}
                           </span>
                         </div>
-                        <p className='text-sm text-apple-gray dark:text-[#636366] mt-0.5 line-clamp-2'>
+                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mt-0.5 line-clamp-2'>
                           {notification.message}
                         </p>
                       </div>

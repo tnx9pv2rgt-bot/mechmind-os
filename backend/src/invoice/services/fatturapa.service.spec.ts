@@ -251,6 +251,205 @@ describe('FatturapaService', () => {
     });
   });
 
+  describe('generateXml — additional branches', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+      prisma.invoice.update.mockResolvedValue(mockInvoice);
+    });
+
+    it('should throw NotFoundException when tenant not found', async () => {
+      prisma.tenant.findUnique.mockResolvedValue(null);
+
+      await expect(service.generateXml(INVOICE_ID, TENANT_ID)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException when tenant P.IVA is empty', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        ...mockTenant,
+        settings: { ...mockTenant.settings, partitaIva: '' },
+      });
+
+      await expect(service.generateXml(INVOICE_ID, TENANT_ID)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when tenant P.IVA is only spaces', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        ...mockTenant,
+        settings: { ...mockTenant.settings, partitaIva: '   ' },
+      });
+
+      await expect(service.generateXml(INVOICE_ID, TENANT_ID)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException for invalid codiceFiscale format', async () => {
+      const invalidCF = {
+        ...mockInvoice,
+        customer: { ...mockCustomer, codiceFiscale: 'INVALID' },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invalidCF);
+
+      await expect(service.generateXml(INVOICE_ID, TENANT_ID)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should accept customer with only partitaIva (no codiceFiscale)', async () => {
+      const onlyPiva = {
+        ...mockInvoice,
+        customer: { ...mockCustomer, codiceFiscale: null, partitaIva: '12345678901' },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(onlyPiva);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('12345678901');
+    });
+
+    it('should use legacyItems fallback when invoiceItems is empty', async () => {
+      const legacyInvoice = {
+        ...mockInvoice,
+        invoiceItems: [],
+        items: [
+          { description: 'Legacy item', quantity: 2, unitPrice: 30, vatRate: 22, discount: 0 },
+        ],
+      };
+      prisma.invoice.findFirst.mockResolvedValue(legacyInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('Legacy item');
+    });
+
+    it('should return empty items when both invoiceItems and legacyItems are empty', async () => {
+      const emptyItemsInvoice = {
+        ...mockInvoice,
+        invoiceItems: [],
+        items: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(emptyItemsInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('DatiBeniServizi');
+    });
+
+    it('should include ritenuta when ritenutaType is set', async () => {
+      const ritenutaInvoice = {
+        ...mockInvoice,
+        ritenutaType: 'RT01',
+        ritenutaAmount: new Decimal(10),
+        ritenutaRate: new Decimal(20),
+        ritenutaCausale: 'A',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(ritenutaInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<DatiRitenuta>');
+      expect(xml).toContain('<TipoRitenuta>RT01</TipoRitenuta>');
+      expect(xml).toContain('<ImportoRitenuta>10.00</ImportoRitenuta>');
+    });
+
+    it('should include causale when notes are set', async () => {
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<Causale>Manutenzione ordinaria</Causale>');
+    });
+
+    it('should include dataScadenzaPagamento when dueDate is set', async () => {
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<DataScadenzaPagamento>2026-04-15</DataScadenzaPagamento>');
+    });
+
+    it('should omit dataScadenzaPagamento when dueDate is null', async () => {
+      const noDueDate = { ...mockInvoice, dueDate: null };
+      prisma.invoice.findFirst.mockResolvedValue(noDueDate);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).not.toContain('DataScadenzaPagamento');
+    });
+
+    it('should handle 0% VAT items with natura N4', async () => {
+      const zeroVatItems = [
+        {
+          ...mockInvoiceItems[0],
+          vatRate: new Decimal(0),
+          naturaIva: 'N2.2',
+        },
+      ];
+      const zeroVatInvoice = { ...mockInvoice, invoiceItems: zeroVatItems };
+      prisma.invoice.findFirst.mockResolvedValue(zeroVatInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<Natura>N2.2</Natura>');
+      expect(xml).toContain('<AliquotaIVA>0.00</AliquotaIVA>');
+    });
+
+    it('should default naturaIva to N4 for 0% items without explicit natura', async () => {
+      const zeroVatItems = [
+        {
+          ...mockInvoiceItems[0],
+          vatRate: new Decimal(0),
+          naturaIva: null,
+        },
+      ];
+      const zeroVatInvoice = { ...mockInvoice, invoiceItems: zeroVatItems };
+      prisma.invoice.findFirst.mockResolvedValue(zeroVatInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<Natura>N4</Natura>');
+    });
+
+    it('should handle PROFORMA document type as TD01', async () => {
+      const proforma = { ...mockInvoice, documentType: 'PROFORMA' };
+      prisma.invoice.findFirst.mockResolvedValue(proforma);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<TipoDocumento>TD01</TipoDocumento>');
+    });
+
+    it('should handle tenant with null settings', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({ ...mockTenant, settings: null });
+
+      await expect(service.generateXml(INVOICE_ID, TENANT_ID)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should use operationDate when available over createdAt', async () => {
+      const opDateInvoice = {
+        ...mockInvoice,
+        operationDate: new Date('2026-02-28'),
+      };
+      prisma.invoice.findFirst.mockResolvedValue(opDateInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<Data>2026-02-28</Data>');
+    });
+
+    it('should handle discount in line items', async () => {
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      // Item 2 has 10% discount: 2 * 15 * 0.9 = 27
+      expect(xml).toContain('27.00');
+    });
+
+    it('should handle customer without encryptedFirstName', async () => {
+      const noNameInvoice = {
+        ...mockInvoice,
+        customer: { ...mockCustomer, encryptedFirstName: null },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(noNameInvoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<Nome></Nome>');
+    });
+  });
+
   describe('buildXml', () => {
     it('should escape XML special characters', () => {
       const xml = service.buildXml({
@@ -302,6 +501,165 @@ describe('FatturapaService', () => {
 
       expect(xml).toContain('Test &amp; Sons &lt;SRL&gt;');
       expect(xml).toContain('Via &quot;Test&quot;');
+    });
+
+    it('should include ritenuta in XML when provided', () => {
+      const xml = service.buildXml({
+        tenant: {
+          ragioneSociale: 'Test SRL',
+          partitaIva: '12345678901',
+          codiceFiscale: 'CF123',
+          regimeFiscale: 'RF01',
+          indirizzo: 'Via Roma',
+          cap: '00100',
+          comune: 'Roma',
+          provincia: 'RM',
+          nazione: 'IT',
+        },
+        customer: {
+          tipo: 'AZIENDA',
+          denominazione: 'Azienda Client',
+          partitaIva: '98765432109',
+          codiceFiscale: 'CF789',
+          indirizzo: 'Via Test',
+          cap: '20100',
+          comune: 'Milano',
+          provincia: 'MI',
+          nazione: 'IT',
+        },
+        invoice: {
+          tipoDocumento: 'TD01',
+          numero: 'INV-002',
+          data: '2026-03-20',
+          divisa: 'EUR',
+          causale: 'Riparazione motore',
+          bollo: false,
+          ritenuta: {
+            tipoRitenuta: 'RT01',
+            importoRitenuta: 100,
+            aliquotaRitenuta: 20,
+            causalePagamento: 'A',
+          },
+        },
+        items: [
+          {
+            numero: 1,
+            descrizione: 'Service',
+            quantita: 1,
+            prezzoUnitario: 500,
+            prezzoTotale: 500,
+            aliquotaIva: 22,
+          },
+        ],
+        riepilogoIva: [{ aliquotaIva: 22, imponibile: 500, imposta: 110 }],
+        pagamento: {
+          condizioniPagamento: 'TP01',
+          modalitaPagamento: 'MP05',
+          importoPagamento: 610,
+          dataScadenzaPagamento: '2026-04-20',
+        },
+      });
+
+      expect(xml).toContain('<DatiRitenuta>');
+      expect(xml).toContain('<TipoRitenuta>RT01</TipoRitenuta>');
+      expect(xml).toContain('<Causale>Riparazione motore</Causale>');
+      expect(xml).toContain('<Denominazione>Azienda Client</Denominazione>');
+      expect(xml).toContain('<DataScadenzaPagamento>2026-04-20</DataScadenzaPagamento>');
+    });
+
+    it('should include Natura in riepilogoIva for 0% rate', () => {
+      const xml = service.buildXml({
+        tenant: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+          codiceFiscale: 'CF',
+          regimeFiscale: 'RF01',
+          indirizzo: 'Via',
+          cap: '00100',
+          comune: 'Roma',
+          provincia: 'RM',
+          nazione: 'IT',
+        },
+        customer: {
+          tipo: 'PERSONA',
+          nome: 'Mario',
+          cognome: 'Rossi',
+          codiceFiscale: 'CF456',
+          indirizzo: 'Via',
+          cap: '20100',
+          comune: 'Milano',
+          provincia: 'MI',
+          nazione: 'IT',
+        },
+        invoice: {
+          tipoDocumento: 'TD01',
+          numero: 'INV-003',
+          data: '2026-03-25',
+          divisa: 'EUR',
+        },
+        items: [
+          {
+            numero: 1,
+            descrizione: 'Esente',
+            quantita: 1,
+            prezzoUnitario: 100,
+            prezzoTotale: 100,
+            aliquotaIva: 0,
+            natura: 'N2.2',
+          },
+        ],
+        riepilogoIva: [{ aliquotaIva: 0, imponibile: 100, imposta: 0, natura: 'N2.2' }],
+        pagamento: {
+          condizioniPagamento: 'TP02',
+          modalitaPagamento: 'MP01',
+          importoPagamento: 100,
+        },
+      });
+
+      expect(xml).toContain('<Natura>N2.2</Natura>');
+    });
+
+    it('should handle customer without PEC or sdiCode', () => {
+      const xml = service.buildXml({
+        tenant: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+          codiceFiscale: 'CF',
+          regimeFiscale: 'RF01',
+          indirizzo: 'Via',
+          cap: '00100',
+          comune: 'Roma',
+          provincia: 'RM',
+          nazione: 'IT',
+        },
+        customer: {
+          tipo: 'PERSONA',
+          nome: 'Luigi',
+          cognome: 'Verdi',
+          codiceFiscale: 'CF789',
+          indirizzo: 'Via',
+          cap: '20100',
+          comune: 'Milano',
+          provincia: 'MI',
+          nazione: 'IT',
+        },
+        invoice: {
+          tipoDocumento: 'TD01',
+          numero: 'INV-004',
+          data: '2026-03-30',
+          divisa: 'EUR',
+        },
+        items: [],
+        riepilogoIva: [],
+        pagamento: {
+          condizioniPagamento: 'TP02',
+          modalitaPagamento: 'MP05',
+          importoPagamento: 0,
+        },
+      });
+
+      expect(xml).toContain('<CodiceDestinatario>0000000</CodiceDestinatario>');
+      expect(xml).not.toContain('PECDestinatario');
     });
   });
 });

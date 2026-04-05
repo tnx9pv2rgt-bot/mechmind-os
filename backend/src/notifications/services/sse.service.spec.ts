@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SseService } from './sse.service';
 import { RedisPubSubService } from './redis-pubsub.service';
-import { NotificationEventData } from '../dto/notification-event.dto';
+import { NotificationEventData, SseMessageEvent } from '../dto/notification-event.dto';
 import { Subject } from 'rxjs';
 
 describe('SseService', () => {
@@ -56,27 +56,25 @@ describe('SseService', () => {
       expect(typeof stream.subscribe).toBe('function');
     });
 
-    it('should send initial connected event', done => {
+    it('should send initial connected event', () => {
       const stream = service.createEventStream(mockClientId, mockTenantId, mockUserId);
+      const receivedEvents: SseMessageEvent[] = [];
 
-      // Use a variable to hold the subscription so it can be unsubscribed
-      // after the synchronous 'connected' event is received.
       const sub = stream.subscribe({
         next: event => {
-          if (event.event === 'connected') {
-            const data = JSON.parse(event.data);
-            expect(data.clientId).toBe(mockClientId);
-            expect(data.message).toBe('Connected to notification stream');
-            expect(data.timestamp).toBeDefined();
-            // Defer unsubscribe to next tick since the initial event fires
-            // synchronously during subscribe() before sub is assigned.
-            setImmediate(() => {
-              sub?.unsubscribe();
-              done();
-            });
-          }
+          receivedEvents.push(event);
         },
       });
+
+      // The connected event is emitted synchronously during subscribe
+      expect(receivedEvents.length).toBeGreaterThanOrEqual(1);
+      const connectedEvent = receivedEvents.find(e => e.event === 'connected');
+      expect(connectedEvent).toBeDefined();
+      const data = JSON.parse(connectedEvent!.data);
+      expect(data.clientId).toBe(mockClientId);
+      expect(data.message).toBe('Connected to notification stream');
+      expect(data.timestamp).toBeDefined();
+      sub.unsubscribe();
     });
 
     it('should register client and increment connected count', () => {
@@ -95,23 +93,21 @@ describe('SseService', () => {
       expect(redisPubSub.getTenantObservable).toHaveBeenCalledWith(mockTenantId);
     });
 
-    it('should cleanup client on unsubscribe', done => {
+    it('should cleanup client on unsubscribe', async () => {
       const clientId = 'client-cleanup';
       const stream = service.createEventStream(clientId, mockTenantId, mockUserId);
 
       const subscription = stream.subscribe(() => {});
 
-      // Give time for the client to register
-      setTimeout(() => {
-        const countBefore = service.getConnectedClientsCount();
-        subscription.unsubscribe();
+      const countBefore = service.getConnectedClientsCount();
+      expect(countBefore).toBeGreaterThanOrEqual(1);
 
-        // Give time for cleanup
-        setTimeout(() => {
-          expect(service.getConnectedClientsCount()).toBeLessThanOrEqual(countBefore);
-          done();
-        }, 100);
-      }, 50);
+      subscription.unsubscribe();
+
+      // cleanupClient is async — flush microtasks so Map.delete() completes
+      await new Promise(resolve => process.nextTick(resolve));
+
+      expect(service.getConnectedClientsCount()).toBeLessThan(countBefore);
     });
   });
 
@@ -253,10 +249,131 @@ describe('SseService', () => {
   });
 
   // =========================================================================
+  // handleNotification filtering
+  // =========================================================================
+  describe('handleNotification — user filtering', () => {
+    it('should filter out notifications for different users', () => {
+      const stream = service.createEventStream('filter-client', mockTenantId, 'user-A');
+
+      const receivedEvents: string[] = [];
+
+      const sub = stream.subscribe({
+        next: event => {
+          receivedEvents.push(event.event || 'unknown');
+        },
+      });
+
+      // Emit a notification for user-B via the mock subject (synchronous)
+      mockSubject.next({
+        type: 'booking_created',
+        tenantId: mockTenantId,
+        userId: 'user-B',
+        title: 'Test',
+        message: 'For user B',
+        timestamp: new Date().toISOString(),
+      });
+
+      // Should only have 'connected', not 'booking_created' (filtered)
+      expect(receivedEvents).toContain('connected');
+      expect(receivedEvents).not.toContain('booking_created');
+      sub.unsubscribe();
+    });
+
+    it('should deliver notifications matching the user', () => {
+      const stream = service.createEventStream('match-client', mockTenantId, 'user-A');
+
+      const receivedEvents: string[] = [];
+
+      const sub = stream.subscribe({
+        next: event => {
+          receivedEvents.push(event.event || 'unknown');
+        },
+      });
+
+      // Emit notification for user-A (synchronous via Subject)
+      mockSubject.next({
+        type: 'booking_confirmed',
+        tenantId: mockTenantId,
+        userId: 'user-A',
+        title: 'Test',
+        message: 'For user A',
+        timestamp: new Date().toISOString(),
+      });
+
+      expect(receivedEvents).toContain('booking_confirmed');
+      sub.unsubscribe();
+    });
+
+    it('should deliver broadcast notifications (no userId) to all users', () => {
+      const stream = service.createEventStream('broadcast-client', mockTenantId, 'user-A');
+
+      const receivedEvents: string[] = [];
+
+      const sub = stream.subscribe({
+        next: event => {
+          receivedEvents.push(event.event || 'unknown');
+        },
+      });
+
+      // Broadcast notification without userId (synchronous via Subject)
+      mockSubject.next({
+        type: 'booking_created',
+        tenantId: mockTenantId,
+        title: 'System',
+        message: 'Broadcast',
+        timestamp: new Date().toISOString(),
+      });
+
+      // No userId filter → notification passes through with its original type
+      expect(receivedEvents).toContain('booking_created');
+      sub.unsubscribe();
+    });
+  });
+
+  // =========================================================================
+  // createEventStream — no redis observable
+  // =========================================================================
+  describe('createEventStream — no redis observable', () => {
+    it('should handle null getTenantObservable gracefully', () => {
+      (redisPubSub.getTenantObservable as jest.Mock).mockReturnValueOnce(null);
+
+      const stream = service.createEventStream('no-redis-client', mockTenantId);
+      const receivedEvents: string[] = [];
+
+      const sub = stream.subscribe({
+        next: event => {
+          receivedEvents.push(event.event || 'unknown');
+        },
+      });
+
+      expect(receivedEvents).toContain('connected');
+      sub.unsubscribe();
+    });
+  });
+
+  // =========================================================================
+  // cleanupClient — remaining clients for same tenant
+  // =========================================================================
+  describe('cleanupClient — remaining tenant clients', () => {
+    it('should not unsubscribe from Redis when other clients remain for tenant', () => {
+      const stream1 = service.createEventStream('remain-1', mockTenantId);
+      const stream2 = service.createEventStream('remain-2', mockTenantId);
+
+      const sub1 = stream1.subscribe(() => {});
+      stream2.subscribe(() => {});
+
+      sub1.unsubscribe();
+
+      // Should NOT call unsubscribeFromTenant because remain-2 is still connected
+      expect(redisPubSub.unsubscribeFromTenant).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
   // Tenant isolation in SSE
   // =========================================================================
   describe('tenant isolation in SSE streams', () => {
-    it('should only deliver notifications for the correct tenant', done => {
+    it('should only deliver notifications for the correct tenant', () => {
       const stream = service.createEventStream('iso-client', mockTenantId, mockUserId);
 
       const receivedEvents: string[] = [];
@@ -267,12 +384,9 @@ describe('SseService', () => {
         },
       });
 
-      // The initial 'connected' event should be received
-      setTimeout(() => {
-        expect(receivedEvents).toContain('connected');
-        subscription.unsubscribe();
-        done();
-      }, 100);
+      // The initial 'connected' event should be received synchronously
+      expect(receivedEvents).toContain('connected');
+      subscription.unsubscribe();
     });
   });
 });

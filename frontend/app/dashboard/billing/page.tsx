@@ -66,10 +66,31 @@ const invoicesFetcher = (url: string): Promise<Invoice[]> =>
     return Array.isArray(list) ? list : [];
   });
 
-const fadeIn = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4 },
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const statsCardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
 export default function BillingPage() {
@@ -113,7 +134,7 @@ export default function BillingPage() {
       paid: { icon: CheckCircle, bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', label: 'Pagata' },
       open: { icon: Clock, bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', label: 'In Attesa' },
       uncollectible: { icon: XCircle, bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', label: 'Fallita' },
-      void: { icon: XCircle, bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-300', label: 'Annullata' },
+      void: { icon: XCircle, bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]', text: 'text-apple-gray dark:text-[var(--text-secondary)]', label: 'Annullata' },
     };
     return configs[status] || configs.open;
   };
@@ -136,10 +157,10 @@ export default function BillingPage() {
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
             <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'>
+            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[#636366]'>
+            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
               Impossibile caricare lo storico fatture.
             </p>
           </AppleCardContent>
@@ -149,55 +170,54 @@ export default function BillingPage() {
   }
 
   return (
-    <div className='min-h-screen'>
+    <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-4 sm:px-8 py-5'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Fatturazione</h1>
-              <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Fatturazione</h1>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
                 Gestisci pagamenti e storico fatture
               </p>
             </div>
-            <AppleButton variant='secondary' onClick={handleManagePayment} disabled={processing}>
-              <Settings className='w-4 h-4 mr-2' />
+            <AppleButton variant='secondary' onClick={handleManagePayment} disabled={processing} icon={<Settings className='w-4 h-4' />}>
               Gestisci Pagamenti
             </AppleButton>
           </div>
         </div>
       </header>
 
-      <div className='p-4 sm:p-8 max-w-5xl mx-auto space-y-6'>
+      <motion.div className='p-4 sm:p-8 max-w-5xl mx-auto space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
         {/* Payment Method */}
-        <motion.div initial='initial' animate='animate' variants={fadeIn}>
+        <motion.div variants={listItemVariants}>
           <AppleCard>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
                 <CreditCard className='h-5 w-5 text-apple-blue' />
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Metodo di Pagamento
                 </h2>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               {paymentMethod ? (
-                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'>
+                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl'>
                   <div className='flex items-center gap-4'>
                     <div className='w-14 h-10 bg-gradient-to-r from-gray-700 to-gray-900 rounded-lg flex items-center justify-center'>
                       <CreditCard className='w-6 h-6 text-white' />
                     </div>
                     <div>
-                      <p className='text-body font-medium text-apple-dark dark:text-[#ececec] capitalize'>
+                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] capitalize'>
                         {paymentMethod.brand} &bull;&bull;&bull;&bull; {paymentMethod.last4}
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                         Scade {paymentMethod.expMonth}/{paymentMethod.expYear}
                       </p>
                     </div>
                   </div>
                   <div className='flex items-center gap-3'>
-                    <CheckCircle className='w-5 h-5 text-green-500' />
+                    <CheckCircle className='w-5 h-5 text-apple-green' />
                     <AppleButton variant='secondary' size='sm' onClick={handleManagePayment} disabled={processing}>
                       Modifica
                     </AppleButton>
@@ -224,17 +244,13 @@ export default function BillingPage() {
         </motion.div>
 
         {/* Invoice History */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <motion.div variants={listItemVariants}>
           <AppleCard>
             <AppleCardHeader>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
                   <Receipt className='h-5 w-5 text-apple-blue' />
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                     Storico Fatture
                   </h2>
                 </div>
@@ -251,20 +267,20 @@ export default function BillingPage() {
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
                     <thead>
-                      <tr className='border-b border-apple-border/30 dark:border-[#424242]'>
-                        <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray dark:text-[#636366] uppercase tracking-wider'>
+                      <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           Data
                         </th>
-                        <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray dark:text-[#636366] uppercase tracking-wider'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           Numero
                         </th>
-                        <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray dark:text-[#636366] uppercase tracking-wider'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           Importo
                         </th>
-                        <th className='text-left py-3 px-4 text-footnote font-medium text-apple-gray dark:text-[#636366] uppercase tracking-wider'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           Stato
                         </th>
-                        <th className='text-right py-3 px-4 text-footnote font-medium text-apple-gray dark:text-[#636366] uppercase tracking-wider'>
+                        <th className='text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           PDF
                         </th>
                       </tr>
@@ -279,15 +295,15 @@ export default function BillingPage() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.03 }}
-                            className='border-b border-apple-border/20 dark:border-[#424242]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[#353535] transition-colors'
+                            className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                           >
-                            <td className='py-3 px-4 text-body text-apple-dark dark:text-[#ececec]'>
+                            <td className='py-3 px-4 text-body text-apple-dark dark:text-[var(--text-primary)]'>
                               {new Date(invoice.date).toLocaleDateString('it-IT')}
                             </td>
-                            <td className='py-3 px-4 text-body font-medium text-apple-dark dark:text-[#ececec]'>
+                            <td className='py-3 px-4 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                               #{invoice.number}
                             </td>
-                            <td className='py-3 px-4 text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <td className='py-3 px-4 text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               &euro;{(invoice.amount / 100).toFixed(2).replace('.', ',')}
                             </td>
                             <td className='py-3 px-4'>
@@ -302,7 +318,7 @@ export default function BillingPage() {
                                   href={invoice.pdfUrl}
                                   target='_blank'
                                   rel='noopener noreferrer'
-                                  className='inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[#353535] transition-colors min-w-[44px] min-h-[44px]'
+                                  className='inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)] transition-colors min-w-[44px] min-h-[44px]'
                                 >
                                   <Download className='w-4 h-4 text-apple-gray' />
                                 </a>
@@ -319,10 +335,10 @@ export default function BillingPage() {
               ) : (
                 <div className='text-center py-12'>
                   <Receipt className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-body font-medium text-apple-dark dark:text-[#ececec] mb-1'>
+                  <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
                     Nessuna fattura
                   </h3>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                     Le fatture appariranno qui dopo il primo pagamento.
                   </p>
                 </div>
@@ -330,7 +346,7 @@ export default function BillingPage() {
             </AppleCardContent>
           </AppleCard>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }

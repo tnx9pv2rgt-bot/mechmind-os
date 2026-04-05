@@ -129,7 +129,7 @@ export function RecoveryPhoneSetup({
                   setStep('input');
                   setPhone('');
                 }}
-                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#4e4e4e] px-4 py-2 text-xs font-medium text-[#b4b4b4] transition-colors hover:border-white/30 hover:text-white"
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-white/30 hover:text-white"
               >
                 Modifica
               </button>
@@ -155,7 +155,7 @@ export function RecoveryPhoneSetup({
             className="space-y-3"
           >
             <div className="flex gap-2">
-              <div className="flex h-[52px] w-20 items-center justify-center rounded-l-full border border-r-0 border-[#4e4e4e] bg-[#2f2f2f] text-sm text-[#b4b4b4]">
+              <div className="flex h-[52px] w-20 items-center justify-center rounded-l-full border border-r-0 border-[var(--border-strong)] bg-[var(--surface-elevated)] text-sm text-[var(--text-secondary)]">
                 +39
               </div>
               <input
@@ -163,7 +163,7 @@ export function RecoveryPhoneSetup({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/[^0-9\s]/g, ''))}
                 placeholder="333 123 4567"
-                className="h-[52px] flex-1 rounded-r-full border border-[#4e4e4e] bg-[#2f2f2f] px-4 text-base text-white placeholder-[#888] outline-none transition-colors"
+                className="h-[52px] flex-1 rounded-r-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] px-4 text-base text-white placeholder-[var(--text-tertiary)] outline-none transition-colors"
                 aria-label="Numero di telefono"
               />
             </div>
@@ -171,7 +171,7 @@ export function RecoveryPhoneSetup({
               type="button"
               onClick={handleSendCode}
               disabled={isLoading || phone.length < 8}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-[#0d0d0d] transition-colors hover:bg-[#e5e5e5] disabled:opacity-30"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-active)] disabled:opacity-30"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -184,7 +184,7 @@ export function RecoveryPhoneSetup({
               <button
                 type="button"
                 onClick={() => setStep('display')}
-                className="min-h-[44px] w-full text-center text-xs text-[#888] transition-colors hover:text-white"
+                className="min-h-[44px] w-full text-center text-xs text-[var(--text-tertiary)] transition-colors hover:text-white"
               >
                 Annulla
               </button>
@@ -201,7 +201,7 @@ export function RecoveryPhoneSetup({
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            <p className="text-center text-sm text-[#b4b4b4]">
+            <p className="text-center text-sm text-[var(--text-secondary)]">
               Inserisci il codice a 6 cifre inviato al +39 {phone}
             </p>
             <OTPInput
@@ -215,7 +215,7 @@ export function RecoveryPhoneSetup({
               type="button"
               onClick={() => handleVerify()}
               disabled={isLoading || otpCode.length !== 6}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-[#0d0d0d] transition-colors hover:bg-[#e5e5e5] disabled:opacity-30"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-active)] disabled:opacity-30"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verifica'}
             </button>
@@ -224,7 +224,7 @@ export function RecoveryPhoneSetup({
                 type="button"
                 onClick={handleSendCode}
                 disabled={isLoading}
-                className="min-h-[44px] text-xs text-[#888] transition-colors hover:text-white"
+                className="min-h-[44px] text-xs text-[var(--text-tertiary)] transition-colors hover:text-white"
               >
                 Rinvia codice
               </button>
@@ -235,7 +235,7 @@ export function RecoveryPhoneSetup({
                   setOtpCode('');
                   setError('');
                 }}
-                className="min-h-[44px] text-xs text-[#888] transition-colors hover:text-white"
+                className="min-h-[44px] text-xs text-[var(--text-tertiary)] transition-colors hover:text-white"
               >
                 Cambia numero
               </button>

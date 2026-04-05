@@ -1,6 +1,7 @@
 ---
 name: prisma-migration
 description: Gestisci migrazioni Prisma in sicurezza. Usa quando chiesto di modificare schema, aggiungere modello, cambiare colonna, o creare migration.
+disable-model-invocation: true
 allowed-tools: [Read, Write, "Bash(npx prisma *)", "Bash(npx jest *)", "Bash(npx tsc *)", "Bash(cat *)"]
 ---
 

@@ -5,11 +5,7 @@
  * Conforme al D.Lgs. 152/2006 e al sistema RENTRI.
  */
 
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { CreateWasteEntryDto, WasteEntryQueryDto } from '../dto/waste-entry.dto';
 import { CreateTransporterDto, UpdateTransporterDto } from '../dto/waste-transporter.dto';
@@ -105,11 +101,7 @@ export class RentriService {
     return entry;
   }
 
-  async createEntry(
-    tenantId: string,
-    dto: CreateWasteEntryDto,
-    userId?: string,
-  ): Promise<unknown> {
+  async createEntry(tenantId: string, dto: CreateWasteEntryDto, userId?: string): Promise<unknown> {
     const entryNumber = await this.generateEntryNumber(tenantId, dto.entryType);
 
     return this.prisma.wasteEntry.create({
@@ -166,7 +158,8 @@ export class RentriService {
     if (dto.transporterId !== undefined) updateData.transporterId = dto.transporterId;
     if (dto.destinationId !== undefined) updateData.destinationId = dto.destinationId;
     if (dto.workOrderId !== undefined) updateData.workOrderId = dto.workOrderId;
-    if (dto.storageLocationCode !== undefined) updateData.storageLocationCode = dto.storageLocationCode;
+    if (dto.storageLocationCode !== undefined)
+      updateData.storageLocationCode = dto.storageLocationCode;
     if (dto.notes !== undefined) updateData.notes = dto.notes;
 
     return this.prisma.wasteEntry.update({
@@ -206,7 +199,7 @@ export class RentriService {
   searchCerCodes(query: string): CerCode[] {
     const q = query.toLowerCase();
     return AUTO_REPAIR_CER_CODES.filter(
-      (cer) =>
+      cer =>
         cer.code.toLowerCase().includes(q) ||
         cer.description.toLowerCase().includes(q) ||
         cer.commonName.toLowerCase().includes(q) ||
@@ -334,10 +327,7 @@ export class RentriService {
     });
 
     const totalEntriesThisYear = entries.length;
-    const totalKgThisYear = entries.reduce(
-      (sum, e) => sum + Number(e.quantityKg),
-      0,
-    );
+    const totalKgThisYear = entries.reduce((sum, e) => sum + Number(e.quantityKg), 0);
 
     // Aggregate by CER code
     const cerMap = new Map<string, WasteDashboardCerSummary>();

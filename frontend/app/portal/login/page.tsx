@@ -75,7 +75,7 @@ export default function PortalLoginPage() {
   };
 
   return (
-    <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
       <div className='w-full max-w-md'>
         {/* Logo */}
         <motion.div
@@ -86,10 +86,10 @@ export default function PortalLoginPage() {
           <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
             <Car className='h-10 w-10 text-white' />
           </div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             MechMind Portal
           </h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>Accedi al tuo account cliente</p>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>Accedi al tuo account cliente</p>
         </motion.div>
 
         {/* Login Form */}
@@ -114,7 +114,7 @@ export default function PortalLoginPage() {
               <form onSubmit={handleSubmit} className='space-y-5'>
                 {/* Email */}
                 <div className='space-y-2'>
-                  <Label htmlFor='email' className='text-apple-dark dark:text-[#ececec]'>
+                  <Label htmlFor='email' className='text-apple-dark dark:text-[var(--text-primary)]'>
                     Email
                   </Label>
                   <div className='relative'>
@@ -126,7 +126,7 @@ export default function PortalLoginPage() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       autoComplete='email'
-                      className='pl-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                      className='pl-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                     />
                   </div>
                   {fieldErrors.email && (
@@ -136,7 +136,7 @@ export default function PortalLoginPage() {
 
                 {/* Password */}
                 <div className='space-y-2'>
-                  <Label htmlFor='password' className='text-apple-dark dark:text-[#ececec]'>
+                  <Label htmlFor='password' className='text-apple-dark dark:text-[var(--text-primary)]'>
                     Password
                   </Label>
                   <div className='relative'>
@@ -148,7 +148,7 @@ export default function PortalLoginPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       autoComplete='current-password'
-                      className='pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                      className='pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
                     />
                     <button
                       type='button'
@@ -168,7 +168,7 @@ export default function PortalLoginPage() {
                 <div className='flex items-center justify-between text-sm'>
                   <label className='flex items-center gap-2 cursor-pointer'>
                     <input type='checkbox' className='rounded border-apple-border' />
-                    <span className='text-apple-gray dark:text-[#636366]'>Ricordami</span>
+                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Ricordami</span>
                   </label>
                   <Link href='/portal/reset-password' className='text-apple-blue hover:underline'>
                     Password dimenticata?
@@ -189,8 +189,8 @@ export default function PortalLoginPage() {
               </form>
 
               {/* Register Link */}
-              <div className='mt-6 pt-6 border-t border-apple-border/30 dark:border-[#424242]/30 text-center'>
-                <p className='text-apple-gray dark:text-[#636366] text-sm'>
+              <div className='mt-6 pt-6 border-t border-apple-border/30 dark:border-[var(--border-default)]/30 text-center'>
+                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-sm'>
                   Non hai un account?{' '}
                   <Link
                     href='/portal/register'
@@ -213,7 +213,7 @@ export default function PortalLoginPage() {
         >
           <Link
             href='/'
-            className='text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors'
+            className='text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors'
           >
             ← Torna al sito principale
           </Link>

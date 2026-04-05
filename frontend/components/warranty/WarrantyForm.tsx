@@ -196,8 +196,8 @@ export function WarrantyForm({
                       <Button
                         variant={'outline'}
                         className={cn(
-                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[#4e4e4e] bg-[#2f2f2f] text-white hover:bg-[#383838]',
-                          !field.value && 'text-[#888]'
+                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white hover:bg-[var(--surface-active)]',
+                          !field.value && 'text-[var(--text-tertiary)]'
                         )}
                       >
                         {field.value ? format(field.value, 'PPP') : <span>Seleziona una data</span>}
@@ -233,8 +233,8 @@ export function WarrantyForm({
                       <Button
                         variant={'outline'}
                         className={cn(
-                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[#4e4e4e] bg-[#2f2f2f] text-white hover:bg-[#383838]',
-                          !field.value && 'text-[#888]'
+                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white hover:bg-[var(--surface-active)]',
+                          !field.value && 'text-[var(--text-tertiary)]'
                         )}
                       >
                         {field.value ? format(field.value, 'PPP') : <span>Seleziona una data</span>}
@@ -349,12 +349,12 @@ export function WarrantyForm({
         {/* Actions */}
         <div className='flex items-center justify-end gap-3'>
           {onCancel && (
-            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[#4e4e4e] bg-transparent text-white hover:bg-white/5'>
+            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'>
               <X className='h-4 w-4 mr-2' />
               Annulla
             </Button>
           )}
-          <Button type='submit' disabled={isLoading} className='rounded-full h-[52px] bg-white text-[#0d0d0d] hover:bg-[#e5e5e5]'>
+          <Button type='submit' disabled={isLoading} className='rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'>
             <Save className='h-4 w-4 mr-2' />
             {isLoading ? 'Salvataggio...' : 'Salva Garanzia'}
           </Button>

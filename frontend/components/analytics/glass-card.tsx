@@ -37,7 +37,7 @@ export function GlassCard({
 }: GlassCardProps): React.ReactElement {
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[#2f2f2f]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-colors duration-300 hover:border-white/20 ${SIZE_CLASSES[size]} ${className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-colors duration-300 hover:border-white/20 ${SIZE_CLASSES[size]} ${className}`}
     >
       {/* Ambient radial glow */}
       <div
@@ -53,7 +53,7 @@ export function GlassCard({
             {title}
           </h3>
           {subtitle && (
-            <p className="mt-0.5 text-xs text-[#888888] sm:text-sm">
+            <p className="mt-0.5 text-xs text-[var(--text-tertiary)] sm:text-sm">
               {subtitle}
             </p>
           )}

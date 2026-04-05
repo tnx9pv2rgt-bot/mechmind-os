@@ -4,11 +4,13 @@ import { HealthController } from './health.controller';
 import { PrismaService } from '../services/prisma.service';
 import { RedisService } from '../services/redis.service';
 import { LoggerService } from '../services/logger.service';
+import { ShutdownService } from '../services/shutdown.service';
 
 describe('HealthController', () => {
   let controller: HealthController;
   let prisma: jest.Mocked<PrismaService>;
   let redis: jest.Mocked<RedisService>;
+  let shutdownService: { isShuttingDown: boolean };
 
   const mockResponse = (): { status: jest.Mock; json: jest.Mock } => {
     const res = {
@@ -44,12 +46,19 @@ describe('HealthController', () => {
             log: jest.fn(),
           },
         },
+        {
+          provide: ShutdownService,
+          useValue: {
+            isShuttingDown: false,
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<HealthController>(HealthController);
     prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
     redis = module.get(RedisService) as jest.Mocked<RedisService>;
+    shutdownService = module.get(ShutdownService);
   });
 
   it('should be defined', () => {
@@ -156,6 +165,23 @@ describe('HealthController', () => {
           }),
         }),
       );
+    });
+
+    it('should return 503 with shutting_down status during graceful shutdown', async () => {
+      shutdownService.isShuttingDown = true;
+
+      const res = mockResponse();
+      await controller.readiness(res as never);
+
+      expect(res.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'shutting_down',
+          message: 'Server is shutting down, draining in-flight requests',
+        }),
+      );
+      // Should NOT have checked the database
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
     });
   });
 });

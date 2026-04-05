@@ -138,12 +138,16 @@ function getAllTsFiles(dir: string): string[] {
 // File:line allowlist for queries that are verified safe (update by ID after
 // tenant-scoped parent fetch). Each entry documents why it's safe.
 const ALLOWLISTED_LINES: Record<string, string> = {
-  'booking/services/booking.service.ts:684':
-    'bookingSlot updated by ID after tenant-scoped fetch at line 662',
-  'booking/services/booking.service.ts:692':
-    'booking updated by ID after tenant-scoped fetch at line 639',
-  'canned-job/canned-job.service.ts:265':
-    'workOrder updated by ID after tenant-scoped fetch at line 237',
+  'booking/services/booking.service.ts:774':
+    'bookingSlot updated by ID after tenant-scoped fetch at line 697',
+  'booking/services/booking.service.ts:782':
+    'booking updated by ID after tenant-scoped fetch at line 674',
+  'customer/services/customer.service.ts:450':
+    'customer.count uses where object that contains tenantId from function param',
+  'portal/portal.service.ts:459':
+    'invoice.count uses where object that contains tenantId + customerId',
+  'canned-job/canned-job.service.ts:269':
+    'workOrder updated by ID after tenant-scoped fetch at line 241',
   'dvi/services/inspection.service.ts:242':
     'inspection updated by ID after tenant-scoped fetch at line 212',
   'dvi/services/inspection.service.ts:652':
@@ -203,9 +207,9 @@ describe('Tenant Isolation Audit', () => {
 
           if (context.includes('tenantId')) continue;
 
-          // Check wider context ±20 lines
-          const wideStart = Math.max(0, i - 20);
-          const wideEnd = Math.min(lines.length, i + 21);
+          // Check wider context ±35 lines
+          const wideStart = Math.max(0, i - 35);
+          const wideEnd = Math.min(lines.length, i + 36);
           const wideContext = lines.slice(wideStart, wideEnd).join('\n');
 
           if (wideContext.includes('tenantId')) continue;

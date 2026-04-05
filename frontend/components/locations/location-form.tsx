@@ -79,14 +79,14 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Nome sede */}
       <div className="space-y-2">
-        <Label htmlFor="name" className="text-sm font-medium text-apple-dark dark:text-[#ececec] flex items-center gap-2">
+        <Label htmlFor="name" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
           <Building2 className="h-4 w-4 text-apple-blue" />
           Nome sede *
         </Label>
         <Input
           id="name"
           placeholder="Es. Officina Centro, Sede Nord..."
-          className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+          className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
           {...register('name')}
         />
         {errors.name && (
@@ -97,14 +97,14 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
       {/* Indirizzo + Città */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="address" className="text-sm font-medium text-apple-dark dark:text-[#ececec] flex items-center gap-2">
+          <Label htmlFor="address" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
             <MapPin className="h-4 w-4 text-apple-orange" />
             Indirizzo
           </Label>
           <Input
             id="address"
             placeholder="Via Roma 1"
-            className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+            className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
             {...register('address')}
           />
           {errors.address && (
@@ -113,13 +113,13 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="city" className="text-sm font-medium text-apple-dark dark:text-[#ececec]">
+          <Label htmlFor="city" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)]">
             Città
           </Label>
           <Input
             id="city"
             placeholder="Milano"
-            className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+            className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
             {...register('city')}
           />
           {errors.city && (
@@ -131,14 +131,14 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
       {/* CAP + Paese */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="postalCode" className="text-sm font-medium text-apple-dark dark:text-[#ececec]">
+          <Label htmlFor="postalCode" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)]">
             CAP
           </Label>
           <Input
             id="postalCode"
             placeholder="20100"
             maxLength={5}
-            className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+            className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
             {...register('postalCode')}
           />
           {errors.postalCode && (
@@ -147,14 +147,14 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="country" className="text-sm font-medium text-apple-dark dark:text-[#ececec] flex items-center gap-2">
+          <Label htmlFor="country" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
             <Globe className="h-4 w-4 text-apple-green" />
             Paese
           </Label>
           <Input
             id="country"
             placeholder="IT"
-            className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+            className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
             {...register('country')}
           />
         </div>
@@ -163,14 +163,14 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
       {/* Telefono + Email */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-apple-dark dark:text-[#ececec] flex items-center gap-2">
+          <Label htmlFor="phone" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
             <Phone className="h-4 w-4 text-apple-teal" />
             Telefono
           </Label>
           <Input
             id="phone"
             placeholder="+39 02 1234567"
-            className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+            className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
             {...register('phone')}
           />
           {errors.phone && (
@@ -179,7 +179,7 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-apple-dark dark:text-[#ececec] flex items-center gap-2">
+          <Label htmlFor="email" className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
             <Mail className="h-4 w-4 text-apple-purple" />
             Email
           </Label>
@@ -187,7 +187,7 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
             id="email"
             type="email"
             placeholder="sede@officina.it"
-            className="h-12 rounded-xl bg-white/60 dark:bg-[#2c2c2e] border-apple-border/30 dark:border-[#424242] focus:ring-apple-blue"
+            className="h-12 rounded-xl bg-white/60 dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)] focus:ring-apple-blue"
             {...register('email')}
           />
           {errors.email && (
@@ -199,8 +199,8 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
       {/* Sede principale toggle */}
       <div className="flex items-center justify-between p-4 rounded-2xl bg-apple-blue/5 dark:bg-apple-blue/10 border border-apple-blue/10 dark:border-apple-blue/20">
         <div>
-          <p className="text-sm font-medium text-apple-dark dark:text-[#ececec]">Sede principale</p>
-          <p className="text-xs text-apple-gray dark:text-[#636366] mt-0.5">Imposta come sede principale dell&apos;attività</p>
+          <p className="text-sm font-medium text-apple-dark dark:text-[var(--text-primary)]">Sede principale</p>
+          <p className="text-xs text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">Imposta come sede principale dell&apos;attività</p>
         </div>
         <Switch
           checked={isMain}
@@ -209,7 +209,7 @@ export function LocationForm({ onSubmit, onCancel, initialData }: LocationFormPr
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-apple-border/20 dark:border-[#424242]/50">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
         <AppleButton
           type="button"
           variant="secondary"

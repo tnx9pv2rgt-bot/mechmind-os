@@ -3,7 +3,12 @@ import { RentriController } from './rentri.controller';
 import { RentriService } from '../services/rentri.service';
 import { FirService } from '../services/fir.service';
 import { MudService } from '../services/mud.service';
-import { WasteEntryType, WasteHazardClass, WastePhysicalState, WasteFirStatus } from '@prisma/client';
+import {
+  WasteEntryType,
+  WasteHazardClass,
+  WastePhysicalState,
+  WasteFirStatus,
+} from '@prisma/client';
 
 describe('RentriController', () => {
   let controller: RentriController;
@@ -187,16 +192,26 @@ describe('RentriController', () => {
     it('should delegate to firService.updateStatus', async () => {
       firService.updateStatus.mockResolvedValue({ ...mockFir, status: WasteFirStatus.VIDIMATED });
 
-      const result = await controller.updateFirStatus(TENANT_ID, 'fir-001', { status: WasteFirStatus.VIDIMATED });
+      const result = await controller.updateFirStatus(TENANT_ID, 'fir-001', {
+        status: WasteFirStatus.VIDIMATED,
+      });
 
-      expect(firService.updateStatus).toHaveBeenCalledWith(TENANT_ID, 'fir-001', WasteFirStatus.VIDIMATED);
+      expect(firService.updateStatus).toHaveBeenCalledWith(
+        TENANT_ID,
+        'fir-001',
+        WasteFirStatus.VIDIMATED,
+      );
       expect(result).toBeDefined();
     });
   });
 
   describe('vidimateFir', () => {
     it('should delegate to firService.vidimateFir', async () => {
-      firService.vidimateFir.mockResolvedValue({ ...mockFir, status: WasteFirStatus.VIDIMATED, vivifirCode: 'VF123' });
+      firService.vidimateFir.mockResolvedValue({
+        ...mockFir,
+        status: WasteFirStatus.VIDIMATED,
+        vivifirCode: 'VF123',
+      });
 
       const result = await controller.vidimateFir(TENANT_ID, 'fir-001', { vivifirCode: 'VF123' });
 
@@ -223,9 +238,15 @@ describe('RentriController', () => {
       const transporter = { id: 'tr-001', name: 'Test', fiscalCode: '123' };
       rentriService.createTransporter.mockResolvedValue(transporter);
 
-      const result = await controller.createTransporter(TENANT_ID, { name: 'Test', fiscalCode: '123' });
+      const result = await controller.createTransporter(TENANT_ID, {
+        name: 'Test',
+        fiscalCode: '123',
+      });
 
-      expect(rentriService.createTransporter).toHaveBeenCalledWith(TENANT_ID, { name: 'Test', fiscalCode: '123' });
+      expect(rentriService.createTransporter).toHaveBeenCalledWith(TENANT_ID, {
+        name: 'Test',
+        fiscalCode: '123',
+      });
       expect(result).toEqual(transporter);
     });
   });
@@ -248,9 +269,17 @@ describe('RentriController', () => {
       const destination = { id: 'dest-001', name: 'Test', fiscalCode: '456', address: 'Via Test' };
       rentriService.createDestination.mockResolvedValue(destination);
 
-      const result = await controller.createDestination(TENANT_ID, { name: 'Test', fiscalCode: '456', address: 'Via Test' });
+      const result = await controller.createDestination(TENANT_ID, {
+        name: 'Test',
+        fiscalCode: '456',
+        address: 'Via Test',
+      });
 
-      expect(rentriService.createDestination).toHaveBeenCalledWith(TENANT_ID, { name: 'Test', fiscalCode: '456', address: 'Via Test' });
+      expect(rentriService.createDestination).toHaveBeenCalledWith(TENANT_ID, {
+        name: 'Test',
+        fiscalCode: '456',
+        address: 'Via Test',
+      });
       expect(result).toEqual(destination);
     });
   });
@@ -259,7 +288,13 @@ describe('RentriController', () => {
 
   describe('getDashboard', () => {
     it('should delegate to rentriService.getDashboard', async () => {
-      const dashboard = { totalEntriesThisYear: 10, totalKgThisYear: 500, byCer: [], monthlyTrend: [], storageAlerts: 0 };
+      const dashboard = {
+        totalEntriesThisYear: 10,
+        totalKgThisYear: 500,
+        byCer: [],
+        monthlyTrend: [],
+        storageAlerts: 0,
+      };
       rentriService.getDashboard.mockResolvedValue(dashboard);
 
       const result = await controller.getDashboard(TENANT_ID);

@@ -104,7 +104,7 @@ function ToggleSwitch({ checked, onChange, label, id }: ToggleSwitchProps): Reac
 
   return (
     <div className="flex items-center justify-between py-3">
-      <label htmlFor={id} className="cursor-pointer text-sm text-[#b4b4b4]">
+      <label htmlFor={id} className="cursor-pointer text-sm text-[var(--text-secondary)]">
         {label}
       </label>
       <button
@@ -113,14 +113,14 @@ function ToggleSwitch({ checked, onChange, label, id }: ToggleSwitchProps): Reac
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative h-7 w-12 flex-shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#2f2f2f] ${
-          checked ? 'bg-white' : 'bg-[#3a3a3a]'
+        className={`relative h-7 w-12 flex-shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-elevated)] ${
+          checked ? 'bg-white' : 'bg-[var(--surface-active)]'
         }`}
         style={{ minWidth: 48, minHeight: 28 }}
       >
         <motion.div
           className={`absolute top-0.5 h-6 w-6 rounded-full shadow-md ${
-            checked ? 'bg-[#1a1a1a]' : 'bg-[#666666]'
+            checked ? 'bg-[var(--surface-tertiary)]' : 'bg-[var(--text-secondary)]'
           }`}
           animate={{ left: checked ? 22 : 2 }}
           transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 30 }}
@@ -181,7 +181,7 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-[#b4b4b4] transition-colors duration-200 hover:bg-[#383838] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors duration-200 hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
         aria-label="Personalizza dashboard"
         aria-expanded={open}
       >
@@ -212,15 +212,15 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
               animate={reducedMotion ? { opacity: 1 } : { x: 0 }}
               exit={reducedMotion ? { opacity: 0 } : { x: '100%' }}
               transition={reducedMotion ? { duration: 0.15 } : { type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed right-0 top-0 z-50 flex h-full w-80 max-w-[90vw] flex-col border-l border-[#4e4e4e] bg-[#2f2f2f] shadow-[0_0_60px_rgba(0,0,0,0.5)]"
+              className="fixed right-0 top-0 z-50 flex h-full w-80 max-w-[90vw] flex-col border-l border-[var(--border-strong)] bg-[var(--surface-elevated)] shadow-[0_0_60px_rgba(0,0,0,0.5)]"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#3a3a3a] px-5 py-4">
+              <div className="flex items-center justify-between border-b border-[var(--border-strong)] px-5 py-4">
                 <h2 className="text-base font-semibold text-white">Personalizza</h2>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#888888] transition-colors hover:bg-[#383838] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                   aria-label="Chiudi pannello personalizzazione"
                 >
                   <X className="h-4 w-4" />
@@ -229,10 +229,10 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
 
               {/* Toggles */}
               <div className="flex-1 overflow-y-auto px-5 py-2">
-                <p className="mb-2 text-xs text-[#666666]">
+                <p className="mb-2 text-xs text-[var(--text-secondary)]">
                   Seleziona le sezioni da mostrare nella dashboard
                 </p>
-                <div className="divide-y divide-[#3a3a3a]">
+                <div className="divide-y divide-[var(--border-strong)]">
                   {sectionKeys.map((key) => (
                     <ToggleSwitch
                       key={key}
@@ -246,11 +246,11 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
               </div>
 
               {/* Footer */}
-              <div className="border-t border-[#3a3a3a] px-5 py-4">
+              <div className="border-t border-[var(--border-strong)] px-5 py-4">
                 <button
                   type="button"
                   onClick={resetDefaults}
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#4e4e4e] text-sm text-[#b4b4b4] transition-colors hover:bg-[#383838] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--border-strong)] text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                   aria-label="Ripristina impostazioni predefinite"
                 >
                   <RotateCcw className="h-4 w-4" />

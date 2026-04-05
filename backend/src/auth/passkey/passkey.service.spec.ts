@@ -573,13 +573,13 @@ describe('PasskeyService', () => {
     const passkeyId = 'pk-1';
 
     it('should delete a passkey owned by the user', async () => {
-      prisma.passkey.findUnique.mockResolvedValue({ id: passkeyId, userId });
+      prisma.passkey.findFirst.mockResolvedValue({ id: passkeyId, userId });
       prisma.passkey.delete.mockResolvedValue({});
 
       await service.deletePasskey(userId, passkeyId);
 
-      expect(prisma.passkey.findUnique).toHaveBeenCalledWith({
-        where: { id: passkeyId },
+      expect(prisma.passkey.findFirst).toHaveBeenCalledWith({
+        where: { id: passkeyId, userId },
       });
       expect(prisma.passkey.delete).toHaveBeenCalledWith({
         where: { id: passkeyId },
@@ -588,19 +588,16 @@ describe('PasskeyService', () => {
     });
 
     it('should throw NotFoundException when passkey does not exist', async () => {
-      prisma.passkey.findUnique.mockResolvedValue(null);
+      prisma.passkey.findFirst.mockResolvedValue(null);
 
       await expect(service.deletePasskey(userId, passkeyId)).rejects.toThrow(NotFoundException);
       expect(prisma.passkey.delete).not.toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException when user does not own the passkey', async () => {
-      prisma.passkey.findUnique.mockResolvedValue({
-        id: passkeyId,
-        userId: 'other-user',
-      });
+    it('should throw NotFoundException when user does not own the passkey', async () => {
+      prisma.passkey.findFirst.mockResolvedValue(null);
 
-      await expect(service.deletePasskey(userId, passkeyId)).rejects.toThrow(ForbiddenException);
+      await expect(service.deletePasskey(userId, passkeyId)).rejects.toThrow(NotFoundException);
       expect(prisma.passkey.delete).not.toHaveBeenCalled();
     });
   });

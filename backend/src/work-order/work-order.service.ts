@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/services/prisma.service';
 import { validateTransition, TransitionMap } from '../common/utils/state-machine';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
@@ -39,6 +40,29 @@ export class WorkOrderService {
   private readonly MAX_TIMER_MINUTES = 8 * 60;
 
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Normalize JSON array fields that may be double-wrapped (e.g. [[]] → [])
+   */
+  private normalizeJsonArray(value: unknown): unknown[] {
+    if (!value || !Array.isArray(value)) return [];
+    // Unwrap [[items...]] → [items...]
+    if (value.length === 1 && Array.isArray(value[0])) {
+      return value[0];
+    }
+    return value;
+  }
+
+  /**
+   * Normalize work order JSON fields to prevent [[]] double-wrapping
+   */
+  private normalizeWorkOrder<T extends Record<string, unknown>>(wo: T): T {
+    return {
+      ...wo,
+      laborItems: this.normalizeJsonArray(wo.laborItems),
+      partsUsed: this.normalizeJsonArray(wo.partsUsed),
+    };
+  }
 
   /**
    * Generate a unique WO number: WO-{YEAR}-{SEQUENCE_PADDED_4}
@@ -110,7 +134,13 @@ export class WorkOrderService {
         this.prisma.workOrder.count({ where }),
       ]);
 
-      return { workOrders, total, page, limit, pages: Math.ceil(total / limit) };
+      return {
+        workOrders: workOrders.map(wo => this.normalizeWorkOrder(wo)),
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      };
     } catch (error) {
       this.logger.error(`Failed to list work orders: ${error}`);
       throw new InternalServerErrorException('Failed to list work orders');
@@ -145,7 +175,7 @@ export class WorkOrderService {
         throw new NotFoundException(`Work order ${id} not found`);
       }
 
-      return workOrder;
+      return this.normalizeWorkOrder(workOrder);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -162,19 +192,47 @@ export class WorkOrderService {
     try {
       const woNumber = await this.generateWoNumber(tenantId);
 
+      // Build create data — new DMS fields are cast because the Prisma client
+      // types will be updated after the next migration run.
+      const createData = {
+        tenantId,
+        woNumber,
+        vehicleId: dto.vehicleId,
+        customerId: dto.customerId,
+        technicianId: dto.technicianId,
+        bookingId: dto.bookingId,
+        diagnosis: dto.diagnosis,
+        customerRequest: dto.customerRequest,
+        mileageIn: dto.mileageIn,
+        status: 'PENDING',
+        // New DMS fields
+        priority: dto.priority,
+        woType: dto.woType,
+        serviceAdvisorId: dto.serviceAdvisorId,
+        dropOffType: dto.dropOffType,
+        courtesyCarRequested: dto.courtesyCarRequested,
+        courtesyCarPlate: dto.courtesyCarPlate,
+        internalNotes: dto.internalNotes,
+        customerVisibleNotes: dto.customerVisibleNotes,
+        preExistingDamage: dto.preExistingDamage,
+        testDriveBefore: dto.testDriveBefore,
+        marketingSource: dto.marketingSource,
+        preAuthAmount: dto.preAuthAmount,
+        taxExempt: dto.taxExempt,
+        taxExemptCert: dto.taxExemptCert,
+        recallCheckDone: dto.recallCheckDone,
+        parkingSpot: dto.parkingSpot,
+        keyTag: dto.keyTag,
+        preferredContact: dto.preferredContact,
+        estimatedCompletion: dto.estimatedCompletion
+          ? new Date(dto.estimatedCompletion)
+          : undefined,
+        estimatedPickup: dto.estimatedPickup ? new Date(dto.estimatedPickup) : undefined,
+        assignedBayId: dto.assignedBayId,
+      } as unknown as Prisma.WorkOrderUncheckedCreateInput;
+
       const workOrder = await this.prisma.workOrder.create({
-        data: {
-          tenantId,
-          woNumber,
-          vehicleId: dto.vehicleId,
-          customerId: dto.customerId,
-          technicianId: dto.technicianId,
-          bookingId: dto.bookingId,
-          diagnosis: dto.diagnosis,
-          customerRequest: dto.customerRequest,
-          mileageIn: dto.mileageIn,
-          status: 'PENDING',
-        },
+        data: createData,
         include: {
           vehicle: {
             select: {
@@ -449,12 +507,20 @@ export class WorkOrderService {
           },
         });
 
-        const updatedWo = await tx.workOrder.update({
-          where: { id },
+        const woUpdateResult = await tx.workOrder.updateMany({
+          where: { id, tenantId },
           data: {
             status: 'INVOICED',
             invoiceId: invoice.id,
           },
+        });
+
+        if (woUpdateResult.count === 0) {
+          throw new NotFoundException(`Work order ${id} not found`);
+        }
+
+        const updatedWo = await tx.workOrder.findFirst({
+          where: { id, tenantId },
         });
 
         return { invoice, workOrder: updatedWo };
@@ -671,8 +737,8 @@ export class WorkOrderService {
     const totalMinutes = allLogs.reduce((sum, l) => sum + (l.durationMinutes ?? 0), 0);
     const totalHours = parseFloat((totalMinutes / 60).toFixed(2));
 
-    await this.prisma.workOrder.update({
-      where: { id: workOrderId },
+    await this.prisma.workOrder.updateMany({
+      where: { id: workOrderId, tenantId },
       data: { laborHours: totalHours },
     });
 

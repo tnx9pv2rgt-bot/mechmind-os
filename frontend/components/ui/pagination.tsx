@@ -30,13 +30,13 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
         aria-label="Pagina precedente"
-        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#424242] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="p-2 rounded-lg hover:bg-[var(--surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        <ChevronLeft className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+        <ChevronLeft className="h-4 w-4 text-[var(--text-secondary)]" />
       </button>
       {pages.map((p, i) =>
         p === '...' ? (
-          <span key={`dots-${i}`} className="px-2 text-gray-400 dark:text-gray-500">
+          <span key={`dots-${i}`} className="px-2 text-[var(--text-tertiary)]">
             ...
           </span>
         ) : (
@@ -47,8 +47,8 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
             aria-label={`Pagina ${p}`}
             className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-colors ${
               p === page
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#424242]'
+                ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
             }`}
           >
             {p}
@@ -59,9 +59,9 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
         aria-label="Pagina successiva"
-        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#424242] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="p-2 rounded-lg hover:bg-[var(--surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+        <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
       </button>
     </nav>
   );

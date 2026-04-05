@@ -49,7 +49,7 @@ function BillingSuccessContent() {
   }, [sessionId])
 
   return (
-    <div className="min-h-screen bg-apple-light-gray dark:bg-[#212121] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-apple-light-gray dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -70,10 +70,10 @@ function BillingSuccessContent() {
                 <CheckCircle className="w-8 h-8 text-green-600" />
               )}
             </motion.div>
-            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">
+            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
               {isLoading ? 'Verifica in corso...' : 'Abbonamento Attivato!'}
             </h1>
-            <p className="text-body text-apple-gray dark:text-[#636366] mt-2">
+            <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-2">
               {isLoading 
                 ? 'Stiamo confermando il tuo pagamento...'
                 : 'Grazie per aver scelto MechMind OS. Il tuo abbonamento è ora attivo.'
@@ -88,12 +88,12 @@ function BillingSuccessContent() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="p-4 bg-apple-light-gray/50 dark:bg-[#353535]/50 rounded-xl"
+                  className="p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]/50 rounded-xl"
                 >
-                  <h3 className="text-footnote font-semibold text-apple-gray dark:text-[#636366] uppercase mb-2">
+                  <h3 className="text-footnote font-semibold text-apple-gray dark:text-[var(--text-secondary)] uppercase mb-2">
                     Cosa succede ora?
                   </h3>
-                  <ul className="space-y-2 text-body text-apple-dark dark:text-[#ececec]">
+                  <ul className="space-y-2 text-body text-apple-dark dark:text-[var(--text-primary)]">
                     <li className="flex items-start gap-2">
                       <span className="text-green-500 mt-0.5">✓</span>
                       Riceverai una email di conferma con i dettagli
@@ -155,11 +155,11 @@ function BillingSuccessContent() {
 export default function BillingSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-apple-light-gray dark:bg-[#212121] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-apple-light-gray dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
         <AppleCard>
           <AppleCardHeader className="text-center">
             <Loader2 className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
-            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[#ececec]">Caricamento...</h1>
+            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Caricamento...</h1>
           </AppleCardHeader>
         </AppleCard>
       </div>

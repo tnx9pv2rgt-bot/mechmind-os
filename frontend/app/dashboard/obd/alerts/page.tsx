@@ -132,7 +132,7 @@ export default function OBDAlertsPage() {
 
   return (
     <div>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
             <Breadcrumb
@@ -142,8 +142,8 @@ export default function OBDAlertsPage() {
                 { label: 'Regole Alert' },
               ]}
             />
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Regole Alert OBD</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Regole Alert OBD</h1>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
               Configura notifiche automatiche per valori anomali
             </p>
           </div>
@@ -160,20 +160,20 @@ export default function OBDAlertsPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center justify-between'>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>Nuova Regola</h2>
-                  <button onClick={() => setShowForm(false)}>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Nuova Regola</h2>
+                  <AppleButton variant='ghost' size='sm' onClick={() => setShowForm(false)} aria-label='Chiudi'>
                     <X className='h-5 w-5 text-apple-gray' />
-                  </button>
+                  </AppleButton>
                 </div>
               </AppleCardHeader>
               <AppleCardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                     <div>
-                      <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>Metrica</label>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Metrica</label>
                       <select
                         {...register('metric')}
-                        className='w-full text-sm px-3 py-2 rounded-xl border border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec]'
+                        className='w-full text-body px-3 py-2 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]'
                       >
                         {METRIC_OPTIONS.map(m => (
                           <option key={m.value} value={m.value}>{m.label}</option>
@@ -181,10 +181,10 @@ export default function OBDAlertsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>Operatore</label>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Operatore</label>
                       <select
                         {...register('operator')}
-                        className='w-full text-sm px-3 py-2 rounded-xl border border-apple-border dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec]'
+                        className='w-full text-body px-3 py-2 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]'
                       >
                         {OPERATOR_OPTIONS.map(o => (
                           <option key={o.value} value={o.value}>{o.label}</option>
@@ -192,14 +192,14 @@ export default function OBDAlertsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'>Soglia</label>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Soglia</label>
                       <Input type='number' step='0.1' {...register('threshold')} placeholder='Es: 100' />
-                      {formErrors.threshold && <p className='text-xs text-red-500 mt-1'>{formErrors.threshold.message}</p>}
+                      {formErrors.threshold && <p className='text-footnote text-apple-red mt-1'>{formErrors.threshold.message}</p>}
                     </div>
                   </div>
 
                   <div>
-                    <label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-3 block'>Canali di notifica</label>
+                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-3 block'>Canali di notifica</label>
                     <div className='flex gap-4'>
                       {[
                         { key: 'notifyEmail' as const, label: 'Email' },
@@ -210,9 +210,9 @@ export default function OBDAlertsPage() {
                           <input
                             type='checkbox'
                             {...register(ch.key)}
-                            className='w-4 h-4 rounded border-gray-300 text-apple-blue focus:ring-apple-blue'
+                            className='w-4 h-4 rounded border-apple-border text-apple-blue focus:ring-apple-blue'
                           />
-                          <span className='text-sm text-apple-dark dark:text-[#ececec]'>{ch.label}</span>
+                          <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>{ch.label}</span>
                         </label>
                       ))}
                     </div>
@@ -235,14 +235,14 @@ export default function OBDAlertsPage() {
             <AppleCardHeader>
               <div className='flex items-center gap-2'>
                 <Bell className='h-5 w-5 text-apple-orange' />
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>Regole Configurate</h2>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Regole Configurate</h2>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               {error ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>Impossibile caricare le regole</p>
+                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Impossibile caricare le regole</p>
                   <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>Riprova</AppleButton>
                 </div>
               ) : isLoading ? (
@@ -254,8 +254,8 @@ export default function OBDAlertsPage() {
                   <div className='w-16 h-16 rounded-2xl bg-apple-orange/10 flex items-center justify-center mb-4'>
                     <Bell className='h-8 w-8 text-apple-orange/60' />
                   </div>
-                  <p className='text-title-3 font-semibold text-apple-dark dark:text-[#ececec] mb-1'>Nessuna regola alert</p>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366] max-w-sm mb-6'>
+                  <p className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-1'>Nessuna regola alert</p>
+                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] max-w-sm mb-6'>
                     Crea regole per ricevere notifiche quando i valori OBD superano le soglie configurate.
                   </p>
                   <AppleButton icon={<Plus className='h-4 w-4' />} onClick={() => setShowForm(true)}>
@@ -267,25 +267,25 @@ export default function OBDAlertsPage() {
                   {alerts.map(alert => (
                     <div
                       key={alert.id}
-                      className={`flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] ${!alert.enabled ? 'opacity-50' : ''}`}
+                      className={`flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] ${!alert.enabled ? 'opacity-50' : ''}`}
                     >
                       <div className='flex items-center gap-4'>
                         <div className='w-10 h-10 rounded-xl bg-apple-orange/10 flex items-center justify-center'>
                           <Bell className='h-5 w-5 text-apple-orange' />
                         </div>
                         <div>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
+                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                             {getMetricLabel(alert.metric)} {getOperatorLabel(alert.operator).split('(')[1]?.replace(')', '') || alert.operator} {alert.threshold}
                           </p>
-                          <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                             Notifica via: {alert.notificationChannels.join(', ')}
                           </p>
                         </div>
                       </div>
-                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                      <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
                         alert.enabled
-                          ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                          ? 'bg-green-100 dark:bg-green-900/40 text-apple-green dark:text-green-300'
+                          : 'bg-apple-light-gray dark:bg-[var(--surface-elevated)] text-apple-gray dark:text-[var(--text-secondary)]'
                       }`}>
                         {alert.enabled ? 'Attiva' : 'Disattivata'}
                       </span>

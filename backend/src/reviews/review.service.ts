@@ -1,7 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../common/services/prisma.service';
 import { NotificationV2Service } from '../notifications/services/notification-v2.service';
-import { NotificationType, NotificationChannel } from '@prisma/client';
+import { PublicTokenService } from '../public-token/public-token.service';
+import { NotificationType, NotificationChannel, PublicTokenType } from '@prisma/client';
 import { NOTIFICATION_EVENTS } from '../notifications/constants/notification-events';
 
 export interface ReviewStats {
@@ -25,6 +28,9 @@ export class ReviewService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationV2Service,
+    private readonly publicTokenService: PublicTokenService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -150,5 +156,102 @@ export class ReviewService {
       page,
       limit,
     };
+  }
+
+  /**
+   * Schedule an automatic review request to be sent after work order completion.
+   * Generates a public token and emits an event with delay metadata
+   * so that BullMQ can send the actual notification after a configurable delay.
+   */
+  async scheduleAutoReviewRequest(
+    tenantId: string,
+    workOrderId: string,
+    customerId: string,
+  ): Promise<{ reviewUrl: string; scheduledFor: Date }> {
+    // Verify customer exists
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: customerId, tenantId },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Cliente ${customerId} non trovato`);
+    }
+
+    // Generate public token for review (7 days expiry)
+    const publicToken = await this.publicTokenService.generateToken(
+      tenantId,
+      PublicTokenType.REVIEW_REQUEST,
+      workOrderId,
+      'WorkOrder',
+      168, // 7 days
+      { customerId, workOrderId },
+    );
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'https://app.mechmind.io');
+    const reviewUrl = `${frontendUrl}/public/reviews/${publicToken.token}`;
+
+    // Default delay: 2 hours after work order completion
+    const delayMs = 2 * 60 * 60 * 1000;
+    const scheduledFor = new Date(Date.now() + delayMs);
+
+    this.eventEmitter.emit('review.requestScheduled', {
+      tenantId,
+      workOrderId,
+      customerId,
+      reviewUrl,
+      token: publicToken.token,
+      delayMs,
+      scheduledFor,
+    });
+
+    this.logger.log(
+      `Auto review request scheduled for customer ${customerId}, work order ${workOrderId}, tenant ${tenantId}`,
+    );
+
+    return { reviewUrl, scheduledFor };
+  }
+
+  /**
+   * Send review request immediately (called by BullMQ worker or manually).
+   * Generates a public token and emits the send event.
+   */
+  async sendReviewRequest(tenantId: string, workOrderId: string): Promise<{ reviewUrl: string }> {
+    // Find the work order to get the customer
+    const workOrder = await this.prisma.workOrder.findFirst({
+      where: { id: workOrderId, tenantId },
+      select: { id: true, customerId: true },
+    });
+
+    if (!workOrder) {
+      throw new NotFoundException(`Ordine di lavoro ${workOrderId} non trovato`);
+    }
+
+    // Revoke any previous review tokens for this work order
+    await this.publicTokenService.revokeTokensForEntity(tenantId, 'WorkOrder', workOrderId);
+
+    // Generate new public token (7 days expiry)
+    const publicToken = await this.publicTokenService.generateToken(
+      tenantId,
+      PublicTokenType.REVIEW_REQUEST,
+      workOrderId,
+      'WorkOrder',
+      168, // 7 days
+      { customerId: workOrder.customerId },
+    );
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'https://app.mechmind.io');
+    const reviewUrl = `${frontendUrl}/public/reviews/${publicToken.token}`;
+
+    this.eventEmitter.emit('review.requestSent', {
+      tenantId,
+      workOrderId,
+      customerId: workOrder.customerId,
+      reviewUrl,
+      token: publicToken.token,
+    });
+
+    this.logger.log(`Review request sent for work order ${workOrderId}, tenant ${tenantId}`);
+
+    return { reviewUrl };
   }
 }

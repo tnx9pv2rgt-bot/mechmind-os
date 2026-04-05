@@ -153,7 +153,9 @@ export class SubscriptionService {
       this.prisma.subscription.count({ where }),
     ]);
 
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    const serializedData = data.map(sub => this.serializeBigIntFields(sub));
+
+    return { data: serializedData, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   // ==========================================
@@ -640,6 +642,21 @@ export class SubscriptionService {
         enabled: true,
       })),
     });
+  }
+
+  /**
+   * Converts BigInt fields to Number for JSON serialization.
+   * Prisma returns storageLimitBytes / storageUsedBytes as BigInt,
+   * which JSON.stringify cannot handle.
+   */
+  private serializeBigIntFields<T extends Record<string, unknown>>(obj: T): T {
+    const result = { ...obj };
+    for (const key of Object.keys(result)) {
+      if (typeof result[key] === 'bigint') {
+        (result as Record<string, unknown>)[key] = Number(result[key]);
+      }
+    }
+    return result as T;
   }
 
   // Metodi Stripe commentati - stripe non installato

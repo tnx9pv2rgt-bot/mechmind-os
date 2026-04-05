@@ -84,7 +84,7 @@ function VerifyEmailContent(): React.ReactElement {
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Verifica in corso...
           </h1>
-          <p className="text-[15px] text-[#b4b4b4] leading-relaxed">
+          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
             Stiamo verificando il tuo indirizzo email
           </p>
         </motion.div>
@@ -102,7 +102,7 @@ function VerifyEmailContent(): React.ReactElement {
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Email verificata!
           </h1>
-          <p className="text-[15px] text-[#b4b4b4] leading-relaxed">
+          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
             Il tuo indirizzo email è stato verificato con successo.
             <br />
             Verrai reindirizzato al login...
@@ -120,17 +120,17 @@ function VerifyEmailContent(): React.ReactElement {
           className="space-y-5"
         >
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-            <span className="text-2xl text-[#b4b4b4]">✕</span>
+            <span className="text-2xl text-[var(--text-secondary)]">✕</span>
           </div>
           <h1 className="text-[28px] font-normal text-white tracking-tight">
             Verifica non riuscita
           </h1>
-          <p className="text-[15px] text-[#b4b4b4] leading-relaxed max-w-[320px] mx-auto" role="alert">
+          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto" role="alert">
             {error}
           </p>
 
           {resendSuccess ? (
-            <p className="text-[14px] text-[#b4b4b4] font-medium">
+            <p className="text-[14px] text-[var(--text-secondary)] font-medium">
               Email di verifica reinviata con successo!
             </p>
           ) : (
@@ -145,7 +145,7 @@ function VerifyEmailContent(): React.ReactElement {
 
           <Link
             href="/auth"
-            className="inline-flex items-center min-h-[44px] text-[14px] font-medium text-[#888] hover:text-white transition-colors"
+            className="inline-flex items-center min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors"
           >
             Torna al login
           </Link>
@@ -162,7 +162,7 @@ export default function VerifyEmailPage(): React.ReactElement {
         fallback={
           <div className="text-center space-y-4">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            <p className="text-[15px] text-[#b4b4b4]">Caricamento...</p>
+            <p className="text-[15px] text-[var(--text-secondary)]">Caricamento...</p>
           </div>
         }
       >

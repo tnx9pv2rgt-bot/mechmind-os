@@ -6,17 +6,17 @@ const pillars = [
   {
     title: 'Gestisci',
     description: 'Ordini di lavoro, ispezioni, stati in tempo reale, timer tecnico, canned jobs.',
-    bg: 'bg-[#f7f7f8] dark:bg-[#2f2f2f]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]',
   },
   {
     title: 'Fattura',
     description: 'Fatturazione elettronica SDI, Text-to-Pay, pagamenti rateali, note di credito.',
-    bg: 'bg-[#f7f7f8] dark:bg-[#2f2f2f]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]',
   },
   {
     title: 'Prenota',
     description: 'Calendario, prenotazioni online 24/7, portale cliente, promemoria SMS automatici.',
-    bg: 'bg-[#f7f7f8] dark:bg-[#2f2f2f]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]',
   },
 ] as const;
 
@@ -39,7 +39,7 @@ export function FeaturePillars(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="funzionalita" className="bg-white py-20 dark:bg-[#212121] lg:py-28">
+    <section id="funzionalita" className="bg-white py-20 dark:bg-[var(--surface-primary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -49,10 +49,10 @@ export function FeaturePillars(): React.ReactElement {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold tracking-tight text-[#0d0d0d] dark:text-[#ececec] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)] sm:text-4xl">
             Tutto ciò che serve alla tua officina.
             <br />
-            <span className="text-[#6e6e80] dark:text-[#8e8ea0]">Nient&apos;altro.</span>
+            <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Nient&apos;altro.</span>
           </h2>
         </motion.div>
 
@@ -71,24 +71,24 @@ export function FeaturePillars(): React.ReactElement {
                 className={`group relative overflow-hidden rounded-2xl ${pillar.bg} p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]`}
               >
                 {/* Title */}
-                <h3 className="mb-3 text-xl font-bold text-[#0d0d0d] dark:text-[#ececec]">
+                <h3 className="mb-3 text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   {pillar.title}
                 </h3>
 
                 {/* Description */}
-                <p className="mb-6 text-base leading-relaxed text-[#6e6e80] dark:text-[#8e8ea0]">
+                <p className="mb-6 text-base leading-relaxed text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   {pillar.description}
                 </p>
 
                 {/* Screenshot placeholder */}
-                <div className="overflow-hidden rounded-xl border border-[#e5e5e5]/50 bg-white/60 dark:border-[#444654]/30 dark:bg-[#212121]/50">
-                  <div className="aspect-[4/3] w-full bg-[#f7f7f8] dark:bg-[#171717]" />
+                <div className="overflow-hidden rounded-xl border border-[var(--border-default)]/50 bg-white/60 dark:border-[var(--border-default)]/30 dark:bg-[var(--surface-primary)]/50">
+                  <div className="aspect-[4/3] w-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-secondary)]" />
                 </div>
 
                 {/* Link */}
                 <a
                   href="#demo"
-                  className="mt-5 inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[#0d0d0d] transition-colors hover:text-[#0d0d0d] dark:text-white dark:hover:text-white"
+                  className="mt-5 inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--text-primary)] dark:text-white dark:hover:text-white"
                 >
                   Scopri &rarr;
                 </a>

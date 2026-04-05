@@ -148,7 +148,7 @@ export default function PortalRegisterPage() {
   };
 
   return (
-    <div className='min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
       <div className='w-full max-w-md'>
         {/* Logo */}
         <motion.div
@@ -159,10 +159,10 @@ export default function PortalRegisterPage() {
           <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
             <Car className='h-10 w-10 text-white' />
           </div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             Crea il tuo account
           </h1>
-          <p className='text-apple-gray dark:text-[#636366] mt-1'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
             Inizia a gestire i tuoi veicoli
           </p>
         </motion.div>
@@ -173,19 +173,19 @@ export default function PortalRegisterPage() {
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step >= 1
                 ? 'bg-apple-blue text-white'
-                : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
+                : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-500 dark:text-[var(--text-secondary)]'
             }`}
           >
             {step > 1 ? <CheckCircle className='h-4 w-4' /> : '1'}
           </div>
           <div
-            className={`w-12 h-0.5 ${step > 1 ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[#424242]'}`}
+            className={`w-12 h-0.5 ${step > 1 ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[var(--border-default)]'}`}
           />
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step >= 2
                 ? 'bg-apple-blue text-white'
-                : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
+                : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-500 dark:text-[var(--text-secondary)]'
             }`}
           >
             2
@@ -331,7 +331,7 @@ export default function PortalRegisterPage() {
                           )}
                         </button>
                       </div>
-                      <p className='text-xs text-apple-gray dark:text-[#636366]'>
+                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>
                         Minimo 8 caratteri
                       </p>
                       {fieldErrors.password && (
@@ -363,7 +363,7 @@ export default function PortalRegisterPage() {
 
                     {/* GDPR Consent */}
                     <div className='space-y-2'>
-                      <div className='flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'>
+                      <div className='flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl'>
                         <Shield className='h-5 w-5 text-apple-blue flex-shrink-0 mt-0.5' />
                         <div className='flex-1'>
                           <div className='flex items-start gap-3'>
@@ -376,7 +376,7 @@ export default function PortalRegisterPage() {
                             />
                             <Label
                               htmlFor='gdpr'
-                              className='text-sm text-apple-dark dark:text-[#ececec] cursor-pointer'
+                              className='text-sm text-apple-dark dark:text-[var(--text-primary)] cursor-pointer'
                             >
                               Accetto l&apos;{' '}
                               <Link href='/privacy' className='text-apple-blue hover:underline'>
@@ -403,7 +403,7 @@ export default function PortalRegisterPage() {
                       />
                       <Label
                         htmlFor='marketing'
-                        className='text-sm text-apple-gray dark:text-[#636366] cursor-pointer'
+                        className='text-sm text-apple-gray dark:text-[var(--text-secondary)] cursor-pointer'
                       >
                         Voglio ricevere offerte e novità (facoltativo)
                       </Label>
@@ -427,8 +427,8 @@ export default function PortalRegisterPage() {
               </form>
 
               {/* Login Link */}
-              <div className='mt-6 pt-6 border-t border-apple-border/30 dark:border-[#424242]/30 text-center'>
-                <p className='text-apple-gray dark:text-[#636366] text-sm'>
+              <div className='mt-6 pt-6 border-t border-apple-border/30 dark:border-[var(--border-default)]/30 text-center'>
+                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-sm'>
                   Hai già un account?{' '}
                   <Link
                     href='/portal/login'
@@ -450,7 +450,7 @@ export default function PortalRegisterPage() {
         >
           <Link
             href='/'
-            className='text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors'
+            className='text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors'
           >
             ← Torna al sito principale
           </Link>

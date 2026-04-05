@@ -123,7 +123,7 @@ export function RevenueTreemap(): React.ReactElement {
               className="inline-block h-3 w-3 rounded-sm"
               style={{ backgroundColor: color }}
             />
-            <span className="text-xs text-[#b4b4b4]">{label}</span>
+            <span className="text-xs text-[var(--text-secondary)]">{label}</span>
           </div>
         ))}
       </div>
@@ -149,7 +149,7 @@ export function RevenueTreemap(): React.ReactElement {
           tooltip={({ node }) => (
             <div
               style={{
-                background: '#2f2f2f',
+                background: 'var(--surface-elevated)',
                 color: '#ffffff',
                 padding: '8px 12px',
                 borderRadius: '8px',

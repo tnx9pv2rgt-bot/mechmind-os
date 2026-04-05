@@ -2,18 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  ChevronLeft,
   Car,
   Shield,
   CheckCircle,
   Clock,
   Camera,
   FileText,
-  Download,
-  Share2,
   Loader2,
   AlertCircle,
   AlertTriangle,
@@ -22,11 +18,13 @@ import {
   Wrench,
   User,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import {
+  AppleCard,
+  AppleCardContent,
+  AppleCardHeader,
+} from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 
@@ -96,6 +94,25 @@ function getMaxSeverity(items: InspectionItem[]): string {
   return maxSeverity;
 }
 
+type TabId = 'checklist' | 'foto' | 'report';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
 export default function InspectionDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -105,6 +122,7 @@ export default function InspectionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('checklist');
 
   const fetchInspection = useCallback(async () => {
     setIsLoading(true);
@@ -192,19 +210,24 @@ export default function InspectionDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='w-8 h-8 animate-spin text-gray-400' />
+        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
       </div>
     );
   }
 
   if (error || !inspection) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-[60vh] gap-4'>
-        <AlertCircle className='h-12 w-12 text-red-400' />
-        <p className='text-gray-500 dark:text-[#636366]'>{error || 'Ispezione non trovata'}</p>
-        <Link href='/dashboard/inspections'>
-          <Button variant='outline'>Torna alle ispezioni</Button>
-        </Link>
+      <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
+        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
+        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+          {error || 'Ispezione non trovata'}
+        </p>
+        <AppleButton
+          variant='ghost'
+          onClick={() => router.push('/dashboard/inspections')}
+        >
+          Torna alle ispezioni
+        </AppleButton>
       </div>
     );
   }
@@ -231,10 +254,16 @@ export default function InspectionDetailPage() {
     }
   }
 
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'checklist', label: 'Checklist' },
+    { id: 'foto', label: `Foto (${allPhotos.length})` },
+    { id: 'report', label: 'Report' },
+  ];
+
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#2f2f2f]'>
+    <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-4 sm:px-8 py-5'>
           <Breadcrumb
             items={[
@@ -244,272 +273,327 @@ export default function InspectionDetailPage() {
             ]}
           />
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2'>
-            <div className='flex items-center gap-4'>
-              <Link href='/dashboard/inspections'>
-                <Button variant='ghost' size='icon' className='rounded-full' aria-label='Torna alle ispezioni'>
-                  <ChevronLeft className='w-5 h-5' />
-                </Button>
-              </Link>
-              <div>
-                <div className='flex items-center gap-3'>
-                  <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-                    Ispezione #{inspection.id.slice(0, 8)}
-                  </h1>
-                  <span className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${maxSevCfg.bg} ${maxSevCfg.color}`}>
-                    {maxSevCfg.label}
-                  </span>
-                </div>
-                <p className='text-gray-500 dark:text-[#636366] text-sm'>
-                  {inspection.vehicle} | {inspection.plate} | {inspection.date}
-                  {inspection.inspector !== 'N/D' && ` | Tecnico: ${inspection.inspector}`}
-                </p>
+            <div>
+              <div className='flex items-center gap-3'>
+                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                  Ispezione #{inspection.id.slice(0, 8)}
+                </h1>
+                <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${maxSevCfg.bg} ${maxSevCfg.color}`}>
+                  {maxSevCfg.label}
+                </span>
               </div>
+              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+                {inspection.vehicle} | {inspection.plate} | {inspection.date}
+                {inspection.inspector !== 'N/D' && ` | Tecnico: ${inspection.inspector}`}
+              </p>
             </div>
             <div className='flex flex-wrap gap-2'>
-              <Button
-                variant='outline'
-                className='rounded-full'
+              <AppleButton
+                variant='secondary'
+                size='sm'
+                icon={<Wrench className='h-4 w-4' />}
                 onClick={handleGenerateEstimate}
-                disabled={actionLoading}
+                loading={actionLoading}
               >
-                <Wrench className='w-4 h-4 mr-2' />
                 Genera Preventivo
-              </Button>
-              <Button variant='outline' className='rounded-full' onClick={() => window.print()}>
-                <Printer className='w-4 h-4 mr-2' />
+              </AppleButton>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                icon={<Printer className='h-4 w-4' />}
+                onClick={() => window.print()}
+              >
                 Stampa Report
-              </Button>
-              <Button variant='outline' className='rounded-full' onClick={handleSendToClient} disabled={actionLoading}>
-                <Send className='w-4 h-4 mr-2' />
+              </AppleButton>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                icon={<Send className='h-4 w-4' />}
+                onClick={handleSendToClient}
+                loading={actionLoading}
+              >
                 Invia al Cliente
-              </Button>
-              <Button
-                variant='outline'
-                className='rounded-full text-red-500 hover:text-red-600 hover:border-red-300'
+              </AppleButton>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                className='text-red-500 hover:text-red-600'
                 onClick={() => setDeleteConfirmOpen(true)}
               >
                 Elimina
-              </Button>
+              </AppleButton>
             </div>
           </div>
         </div>
       </header>
 
-      <div className='p-4 sm:p-8 max-w-6xl mx-auto space-y-6'>
-        {/* Vehicle Info */}
-        <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
-          {[
-            { label: 'Veicolo', value: `${inspection.vehicle}`, icon: Car },
-            { label: 'Targa', value: inspection.plate, icon: Shield },
-            { label: 'Tecnico', value: inspection.inspector, icon: User },
-            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : 'N/D', icon: Clock },
-          ].map(info => (
-            <Card key={info.label} className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl border-0 shadow-sm'>
-              <CardContent className='p-4 flex items-center gap-3'>
-                <info.icon className='w-5 h-5 text-gray-400 flex-shrink-0' />
-                <div>
-                  <p className='text-xs text-gray-500 dark:text-[#636366]'>{info.label}</p>
-                  <p className='text-sm font-medium text-gray-900 dark:text-[#ececec]'>{info.value}</p>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Tabs */}
+      <div className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white/60 dark:bg-[var(--surface-primary)]/60 backdrop-blur-sm'>
+        <div className='px-4 sm:px-8 flex gap-1 overflow-x-auto'>
+          {tabs.map(tab => (
+            <AppleButton
+              key={tab.id}
+              variant='ghost'
+              size='sm'
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-none border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-apple-blue text-apple-blue'
+                  : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+              }`}
+            >
+              {tab.label}
+            </AppleButton>
           ))}
         </div>
+      </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue='checklist' className='w-full'>
-          <TabsList className='grid w-full grid-cols-3 bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl'>
-            <TabsTrigger value='checklist'>Checklist</TabsTrigger>
-            <TabsTrigger value='foto'>Foto ({allPhotos.length})</TabsTrigger>
-            <TabsTrigger value='report'>Report</TabsTrigger>
-          </TabsList>
+      <motion.div
+        className='p-8 max-w-6xl mx-auto space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        {/* Vehicle Info Cards */}
+        <motion.div className='grid grid-cols-2 sm:grid-cols-4 gap-4' variants={containerVariants}>
+          {[
+            { label: 'Veicolo', value: inspection.vehicle, icon: Car, color: 'bg-apple-blue' },
+            { label: 'Targa', value: inspection.plate, icon: Shield, color: 'bg-apple-green' },
+            { label: 'Tecnico', value: inspection.inspector, icon: User, color: 'bg-apple-purple' },
+            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : 'N/D', icon: Clock, color: 'bg-apple-orange' },
+          ].map(info => (
+            <motion.div key={info.label} variants={cardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center gap-3'>
+                    <div className={`w-10 h-10 rounded-xl ${info.color} flex items-center justify-center flex-shrink-0`}>
+                      <info.icon className='h-5 w-5 text-white' />
+                    </div>
+                    <div>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{info.label}</p>
+                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{info.value}</p>
+                    </div>
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
+          ))}
+        </motion.div>
 
-          {/* Checklist Tab */}
-          <TabsContent value='checklist' className='mt-6 space-y-6'>
+        {/* Checklist Tab */}
+        {activeTab === 'checklist' && (
+          <>
             {Object.keys(grouped).length === 0 ? (
-              <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
-                <CardContent className='p-8 text-center'>
-                  <FileText className='w-12 h-12 text-gray-400 mx-auto mb-4' />
-                  <p className='text-gray-500 dark:text-[#636366]'>Nessun elemento registrato</p>
-                </CardContent>
-              </Card>
+              <motion.div variants={cardVariants}>
+                <AppleCard hover={false}>
+                  <AppleCardContent>
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                      <FileText className='h-12 w-12 text-apple-gray/40 mb-4' />
+                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                        Nessun elemento registrato
+                      </p>
+                    </div>
+                  </AppleCardContent>
+                </AppleCard>
+              </motion.div>
             ) : (
               Object.entries(grouped).map(([category, items]) => (
-                <Card key={category} className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
-                  <CardHeader>
-                    <CardTitle className='text-lg'>
-                      {categoryLabels[category] || category}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='space-y-3'>
-                      {items.map(item => {
-                        const sev = severityConfig[item.severity] || severityConfig.OK;
-                        return (
-                          <div
-                            key={item.id}
-                            className={`flex items-start gap-3 p-3 rounded-xl ${
-                              item.severity === 'CRITICO' ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30' :
-                              item.severity === 'ALTO' ? 'bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/30' :
-                              'bg-gray-50 dark:bg-[#353535]'
-                            }`}
-                          >
-                            <div className='flex-1'>
-                              <div className='flex items-center gap-2 mb-1'>
-                                <span className='text-sm font-medium text-gray-900 dark:text-[#ececec]'>
-                                  {item.name}
-                                </span>
-                                <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${sev.bg} ${sev.color}`}>
-                                  {sev.label}
-                                </span>
-                              </div>
-                              {item.notes && (
-                                <p className='text-xs text-gray-500 dark:text-[#636366]'>{item.notes}</p>
-                              )}
-                            </div>
-                            {item.photos.length > 0 && (
-                              <div className='flex gap-1'>
-                                {item.photos.slice(0, 3).map((photo, i) => (
-                                  <div key={i} className='w-10 h-10 rounded-lg bg-gray-200 dark:bg-[#424242] overflow-hidden flex items-center justify-center'>
-                                    <Camera className='w-4 h-4 text-gray-400' />
-                                  </div>
-                                ))}
-                                {item.photos.length > 3 && (
-                                  <div className='w-10 h-10 rounded-lg bg-gray-200 dark:bg-[#424242] flex items-center justify-center text-xs font-medium text-gray-500'>
-                                    +{item.photos.length - 3}
-                                  </div>
+                <motion.div key={category} variants={cardVariants}>
+                  <AppleCard hover={false}>
+                    <AppleCardHeader>
+                      <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        {categoryLabels[category] || category}
+                      </h2>
+                    </AppleCardHeader>
+                    <AppleCardContent>
+                      <div className='space-y-3'>
+                        {items.map(item => {
+                          const sev = severityConfig[item.severity] || severityConfig.OK;
+                          return (
+                            <div
+                              key={item.id}
+                              className={`flex items-start gap-3 p-3 rounded-xl ${
+                                item.severity === 'CRITICO' ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30' :
+                                item.severity === 'ALTO' ? 'bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/30' :
+                                'bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                              }`}
+                            >
+                              <div className='flex-1'>
+                                <div className='flex items-center gap-2 mb-1'>
+                                  <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                                    {item.name}
+                                  </span>
+                                  <span className={`text-footnote font-semibold px-2 py-0.5 rounded-full ${sev.bg} ${sev.color}`}>
+                                    {sev.label}
+                                  </span>
+                                </div>
+                                {item.notes && (
+                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{item.notes}</p>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                              {item.photos.length > 0 && (
+                                <div className='flex gap-1'>
+                                  {item.photos.slice(0, 3).map((photo, i) => (
+                                    <div key={i} className='w-10 h-10 rounded-lg bg-apple-light-gray dark:bg-[var(--surface-active)] overflow-hidden flex items-center justify-center'>
+                                      <Camera className='w-4 h-4 text-apple-gray' />
+                                    </div>
+                                  ))}
+                                  {item.photos.length > 3 && (
+                                    <div className='w-10 h-10 rounded-lg bg-apple-light-gray dark:bg-[var(--surface-active)] flex items-center justify-center text-xs font-medium text-apple-gray'>
+                                      +{item.photos.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
               ))
             )}
-          </TabsContent>
+          </>
+        )}
 
-          {/* Foto Tab */}
-          <TabsContent value='foto' className='mt-6'>
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
-              <CardContent className='p-6'>
+        {/* Foto Tab */}
+        {activeTab === 'foto' && (
+          <motion.div variants={cardVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  Foto
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
                 {allPhotos.length === 0 ? (
-                  <div className='text-center py-12'>
-                    <Camera className='w-12 h-12 text-gray-400 mx-auto mb-4' />
-                    <p className='text-gray-500 dark:text-[#636366]'>Nessuna foto registrata</p>
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <Camera className='h-12 w-12 text-apple-gray/40 mb-4' />
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      Nessuna foto registrata
+                    </p>
                   </div>
                 ) : (
                   <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
                     {allPhotos.map((photo, i) => (
                       <div
                         key={i}
-                        className='aspect-square rounded-xl bg-gray-100 dark:bg-[#353535] overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
+                        className='aspect-square rounded-xl bg-apple-light-gray dark:bg-[var(--surface-hover)] overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
                       >
-                        <Camera className='w-8 h-8 text-gray-400' />
+                        <Camera className='w-8 h-8 text-apple-gray' />
                       </div>
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        )}
 
-          {/* Report Tab */}
-          <TabsContent value='report' className='mt-6 space-y-6'>
+        {/* Report Tab */}
+        {activeTab === 'report' && (
+          <>
             {/* Severity Summary */}
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
-              <CardHeader>
-                <CardTitle>Riepilogo per Gravità</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='grid grid-cols-5 gap-4'>
-                  {(['CRITICO', 'ALTO', 'MEDIO', 'BASSO', 'OK'] as const).map(sev => {
-                    const cfg = severityConfig[sev];
-                    return (
-                      <div key={sev} className='text-center'>
-                        <div className={`w-12 h-12 rounded-xl ${cfg.bg} flex items-center justify-center mx-auto mb-2`}>
-                          <span className={`text-lg font-bold ${cfg.color}`}>
-                            {severityCounts[sev]}
-                          </span>
+            <motion.div variants={cardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    Riepilogo per Gravita
+                  </h2>
+                </AppleCardHeader>
+                <AppleCardContent>
+                  <div className='grid grid-cols-5 gap-4'>
+                    {(['CRITICO', 'ALTO', 'MEDIO', 'BASSO', 'OK'] as const).map(sev => {
+                      const cfg = severityConfig[sev];
+                      return (
+                        <div key={sev} className='text-center'>
+                          <div className={`w-12 h-12 rounded-xl ${cfg.bg} flex items-center justify-center mx-auto mb-2`}>
+                            <span className={`text-headline font-bold ${cfg.color}`}>
+                              {severityCounts[sev]}
+                            </span>
+                          </div>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{cfg.label}</p>
                         </div>
-                        <p className='text-xs text-gray-500 dark:text-[#636366]'>{cfg.label}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      );
+                    })}
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
 
             {/* Printable Summary */}
-            <Card className='bg-white/80 dark:bg-[#2f2f2f]/80 border-0 shadow-sm'>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <FileText className='w-5 h-5' />
-                  Riepilogo Ispezione
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4 text-sm'>
-                  <div>
-                    <span className='text-gray-500 dark:text-[#636366]'>Veicolo:</span>{' '}
-                    <span className='font-medium'>{inspection.vehicle} ({inspection.plate})</span>
+            <motion.div variants={cardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <div className='flex items-center gap-2'>
+                    <FileText className='h-4 w-4 text-apple-gray' />
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      Riepilogo Ispezione
+                    </h2>
                   </div>
-                  <div>
-                    <span className='text-gray-500 dark:text-[#636366]'>Data:</span>{' '}
-                    <span className='font-medium'>{inspection.date}</span>
-                  </div>
-                  <div>
-                    <span className='text-gray-500 dark:text-[#636366]'>Tecnico:</span>{' '}
-                    <span className='font-medium'>{inspection.inspector}</span>
-                  </div>
-                  <div>
-                    <span className='text-gray-500 dark:text-[#636366]'>Tipo:</span>{' '}
-                    <span className='font-medium'>{typeLabels[inspection.type] || inspection.type}</span>
-                  </div>
-                  <div>
-                    <span className='text-gray-500 dark:text-[#636366]'>Km:</span>{' '}
-                    <span className='font-medium'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : 'N/D'}</span>
-                  </div>
-                  <div>
-                    <span className='text-gray-500 dark:text-[#636366]'>Elementi totali:</span>{' '}
-                    <span className='font-medium'>{inspection.items.length}</span>
-                  </div>
-                </div>
-
-                {(severityCounts.CRITICO > 0 || severityCounts.ALTO > 0) && (
-                  <div className='mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30'>
-                    <div className='flex items-center gap-2 mb-2'>
-                      <AlertTriangle className='w-4 h-4 text-red-500' />
-                      <span className='text-sm font-semibold text-red-700 dark:text-red-300'>
-                        Elementi che richiedono intervento
-                      </span>
+                </AppleCardHeader>
+                <AppleCardContent className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Veicolo:</span>{' '}
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.vehicle} ({inspection.plate})</span>
                     </div>
-                    <ul className='space-y-1'>
-                      {inspection.items
-                        .filter(i => i.severity === 'CRITICO' || i.severity === 'ALTO')
-                        .map(item => (
-                          <li key={item.id} className='text-sm text-red-600 dark:text-red-400'>
-                            {item.name} ({severityConfig[item.severity]?.label})
-                            {item.notes && ` — ${item.notes}`}
-                          </li>
-                        ))}
-                    </ul>
+                    <div className='text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Data:</span>{' '}
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.date}</span>
+                    </div>
+                    <div className='text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Tecnico:</span>{' '}
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.inspector}</span>
+                    </div>
+                    <div className='text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Tipo:</span>{' '}
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{typeLabels[inspection.type] || inspection.type}</span>
+                    </div>
+                    <div className='text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Km:</span>{' '}
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : 'N/D'}</span>
+                    </div>
+                    <div className='text-body'>
+                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Elementi totali:</span>{' '}
+                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.items.length}</span>
+                    </div>
                   </div>
-                )}
 
-                {inspection.notes && (
-                  <div className='mt-4'>
-                    <p className='text-sm text-gray-500 dark:text-[#636366] mb-1'>Note generali:</p>
-                    <p className='text-sm text-gray-900 dark:text-[#ececec] whitespace-pre-wrap'>{inspection.notes}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                  {(severityCounts.CRITICO > 0 || severityCounts.ALTO > 0) && (
+                    <div className='mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30'>
+                      <div className='flex items-center gap-2 mb-2'>
+                        <AlertTriangle className='w-4 h-4 text-red-500' />
+                        <span className='text-body font-semibold text-red-700 dark:text-red-300'>
+                          Elementi che richiedono intervento
+                        </span>
+                      </div>
+                      <ul className='space-y-1'>
+                        {inspection.items
+                          .filter(i => i.severity === 'CRITICO' || i.severity === 'ALTO')
+                          .map(item => (
+                            <li key={item.id} className='text-footnote text-red-600 dark:text-red-400'>
+                              {item.name} ({severityConfig[item.severity]?.label})
+                              {item.notes && ` — ${item.notes}`}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {inspection.notes && (
+                    <div className='mt-4'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-1'>Note generali:</p>
+                      <p className='text-body text-apple-dark dark:text-[var(--text-primary)] whitespace-pre-wrap'>{inspection.notes}</p>
+                    </div>
+                  )}
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
+          </>
+        )}
+      </motion.div>
 
       <ConfirmDialog
         open={deleteConfirmOpen}

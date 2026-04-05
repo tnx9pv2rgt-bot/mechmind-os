@@ -90,12 +90,12 @@ export function Breadcrumb(): React.ReactElement | null {
           return (
             <li key={item.href} className="flex items-center gap-1.5">
               {index > 0 && (
-                <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" aria-hidden="true" />
+                <ChevronRight className="h-3.5 w-3.5 text-[var(--text-tertiary)] shrink-0" aria-hidden="true" />
               )}
 
               {isLast ? (
                 <span
-                  className="font-semibold text-gray-900 dark:text-white truncate max-w-[200px]"
+                  className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate max-w-[200px]"
                   aria-current="page"
                 >
                   {item.label}
@@ -104,7 +104,7 @@ export function Breadcrumb(): React.ReactElement | null {
                 <Link
                   href={item.href}
                   className={cn(
-                    'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors truncate max-w-[160px]',
+                    'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors truncate max-w-[160px]',
                     index === 0 && 'flex items-center gap-1'
                   )}
                 >

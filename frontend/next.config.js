@@ -33,6 +33,9 @@ const nextConfig = {
   },
 
   // Experimental features
+  // SWC minifier — faster and smaller output than Terser
+  swcMinify: true,
+
   experimental: {
     instrumentationHook: true,
     serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
@@ -42,6 +45,11 @@ const nextConfig = {
       '@radix-ui/react-icons',
       'recharts',
       'react-phone-number-input',
+      'date-fns',
+      'sonner',
+      'zod',
+      '@hookform/resolvers',
+      'cmdk',
       // NOTE: @simplewebauthn/browser removed — barrel optimization breaks
       // dynamic import of startAuthentication (vercel/next.js#61995)
     ],
@@ -207,6 +215,20 @@ const nextConfig = {
               process.env.NODE_ENV === 'production'
                 ? 'public, max-age=31536000, immutable'
                 : 'no-store, must-revalidate',
+          },
+        ],
+      },
+      // Service Worker — MAI cachare, il browser deve sempre verificare
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
           },
         ],
       },

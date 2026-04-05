@@ -152,7 +152,7 @@ function StatusStepper({ status }: { status: string }): React.ReactElement {
                     ? 'bg-apple-green text-white'
                     : isCurrent
                       ? 'bg-apple-blue text-white ring-2 ring-apple-blue/30'
-                      : 'bg-gray-200 dark:bg-[#424242] text-gray-400'
+                      : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-400'
                 }`}
               >
                 {isDone ? (
@@ -167,7 +167,7 @@ function StatusStepper({ status }: { status: string }): React.ReactElement {
                     ? 'text-apple-green font-medium'
                     : isCurrent
                       ? 'text-apple-blue font-medium'
-                      : 'text-apple-gray dark:text-[#636366]'
+                      : 'text-apple-gray dark:text-[var(--text-secondary)]'
                 }`}
               >
                 {step.short}
@@ -176,7 +176,7 @@ function StatusStepper({ status }: { status: string }): React.ReactElement {
             {index < fsmSteps.length - 1 && (
               <div
                 className={`h-0.5 flex-1 mx-0.5 mt-[-16px] ${
-                  index < activeIndex ? 'bg-apple-green' : 'bg-gray-200 dark:bg-[#424242]'
+                  index < activeIndex ? 'bg-apple-green' : 'bg-gray-200 dark:bg-[var(--border-default)]'
                 }`}
               />
             )}
@@ -204,7 +204,7 @@ export default function PortalRepairsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             Stato Riparazioni
           </h1>
         </div>
@@ -223,13 +223,13 @@ export default function PortalRepairsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
             Stato Riparazioni
           </h1>
         </div>
         <div className='text-center py-16'>
           <AlertCircle className='h-12 w-12 text-apple-red/40 mx-auto mb-4' />
-          <p className='text-apple-gray dark:text-[#636366] mb-4'>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
             Impossibile caricare le riparazioni
           </p>
           <button onClick={() => mutate()} className='text-apple-blue hover:underline'>
@@ -251,10 +251,10 @@ export default function PortalRepairsPage(): React.ReactElement {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+        <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
           Stato Riparazioni
         </h1>
-        <p className='text-apple-gray dark:text-[#636366] mt-1'>
+        <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
           Segui lo stato delle riparazioni in tempo reale
         </p>
       </div>
@@ -262,7 +262,7 @@ export default function PortalRepairsPage(): React.ReactElement {
       {/* Active Repairs */}
       {activeRepairs.length > 0 && (
         <div className='space-y-4'>
-          <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+          <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
             Riparazioni Attive
           </h2>
           {activeRepairs.map((repair) => {
@@ -284,10 +284,10 @@ export default function PortalRepairsPage(): React.ReactElement {
                           <Wrench className='h-6 w-6 text-apple-blue' />
                         </div>
                         <div>
-                          <p className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                          <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                             {repair.woNumber}
                           </p>
-                          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                             <Car className='h-3 w-3 inline mr-1' />
                             {repair.vehicleMake} {repair.vehicleModel} — {repair.vehiclePlate}
                           </p>
@@ -318,7 +318,7 @@ export default function PortalRepairsPage(): React.ReactElement {
 
                     {/* Last update */}
                     {repair.updatedAt && (
-                      <p className='text-xs text-apple-gray dark:text-[#636366] mb-3'>
+                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] mb-3'>
                         Ultimo aggiornamento:{' '}
                         {new Date(repair.updatedAt).toLocaleString('it-IT', {
                           day: '2-digit',
@@ -354,24 +354,24 @@ export default function PortalRepairsPage(): React.ReactElement {
                           exit={{ height: 0, opacity: 0 }}
                           className='overflow-hidden'
                         >
-                          <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242] space-y-3'>
+                          <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)] space-y-3'>
                             {repair.diagnosis && (
-                              <div className='p-3 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'>
-                                <p className='text-xs text-apple-gray dark:text-[#636366] mb-1'>
+                              <div className='p-3 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-xl'>
+                                <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
                                   Diagnosi
                                 </p>
-                                <p className='text-sm text-apple-dark dark:text-[#ececec]'>
+                                <p className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                                   {repair.diagnosis}
                                 </p>
                               </div>
                             )}
 
                             {repair.customerRequest && (
-                              <div className='p-3 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'>
-                                <p className='text-xs text-apple-gray dark:text-[#636366] mb-1'>
+                              <div className='p-3 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-xl'>
+                                <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
                                   Richiesta cliente
                                 </p>
-                                <p className='text-sm text-apple-dark dark:text-[#ececec]'>
+                                <p className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                                   {repair.customerRequest}
                                 </p>
                               </div>
@@ -379,15 +379,15 @@ export default function PortalRepairsPage(): React.ReactElement {
 
                             {repair.items && repair.items.length > 0 && (
                               <div className='space-y-2'>
-                                <p className='text-xs text-apple-gray dark:text-[#636366]'>
+                                <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>
                                   Lavori previsti
                                 </p>
                                 {repair.items.map((item, i) => (
                                   <div
                                     key={i}
-                                    className='flex items-center justify-between p-2 bg-apple-light-gray/20 dark:bg-[#353535] rounded-lg'
+                                    className='flex items-center justify-between p-2 bg-apple-light-gray/20 dark:bg-[var(--surface-hover)] rounded-lg'
                                   >
-                                    <span className='text-sm text-apple-dark dark:text-[#ececec]'>
+                                    <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
                                       {item.description}
                                     </span>
                                     <Badge className='text-[10px]'>{item.status}</Badge>
@@ -397,11 +397,11 @@ export default function PortalRepairsPage(): React.ReactElement {
                             )}
 
                             {repair.totalCost !== null && repair.totalCost > 0 && (
-                              <div className='flex items-center justify-between pt-3 border-t border-apple-border/20 dark:border-[#424242]'>
-                                <span className='text-sm text-apple-gray dark:text-[#636366]'>
+                              <div className='flex items-center justify-between pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+                                <span className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                                   Costo Stimato
                                 </span>
-                                <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                                <span className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                                   {repair.totalCost.toLocaleString('it-IT', {
                                     style: 'currency',
                                     currency: 'EUR',
@@ -424,7 +424,7 @@ export default function PortalRepairsPage(): React.ReactElement {
       {/* Completed */}
       {completedRepairs.length > 0 && (
         <div className='space-y-4'>
-          <h2 className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>Completate</h2>
+          <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Completate</h2>
           {completedRepairs.map((repair) => {
             const status = statusConfig[repair.status] || statusConfig.COMPLETED;
             return (
@@ -434,10 +434,10 @@ export default function PortalRepairsPage(): React.ReactElement {
                     <div className='flex items-center gap-3'>
                       <CheckCircle className='h-5 w-5 text-apple-green' />
                       <div>
-                        <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                        <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                           {repair.woNumber} — {repair.vehicleMake} {repair.vehicleModel}
                         </p>
-                        <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
                           {repair.vehiclePlate}
                           {repair.actualCompletionTime &&
                             ` — Completato il ${new Date(repair.actualCompletionTime).toLocaleDateString('it-IT')}`}
@@ -447,7 +447,7 @@ export default function PortalRepairsPage(): React.ReactElement {
                     <div className='text-right'>
                       <Badge className={`${status.color} text-white text-xs`}>{status.label}</Badge>
                       {repair.totalCost !== null && repair.totalCost > 0 && (
-                        <p className='text-sm font-semibold mt-1 text-apple-dark dark:text-[#ececec]'>
+                        <p className='text-sm font-semibold mt-1 text-apple-dark dark:text-[var(--text-primary)]'>
                           {repair.totalCost.toLocaleString('it-IT', {
                             style: 'currency',
                             currency: 'EUR',
@@ -467,10 +467,10 @@ export default function PortalRepairsPage(): React.ReactElement {
         <AppleCard>
           <AppleCardContent className='text-center py-12'>
             <Wrench className='h-12 w-12 text-apple-gray mx-auto mb-4' />
-            <h3 className='text-lg font-medium text-apple-dark dark:text-[#ececec] mb-2'>
+            <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
               Nessuna riparazione in corso
             </h3>
-            <p className='text-apple-gray dark:text-[#636366]'>
+            <p className='text-apple-gray dark:text-[var(--text-secondary)]'>
               Quando avrai riparazioni attive, potrai seguirne lo stato qui.
             </p>
           </AppleCardContent>

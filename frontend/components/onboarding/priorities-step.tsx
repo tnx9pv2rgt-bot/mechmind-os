@@ -38,7 +38,7 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
         <h2 className="text-xl font-normal text-white">Cosa ti serve di più?</h2>
-        <p className="mt-1 text-[13px] text-[#b4b4b4]">Scegli massimo {MAX_SELECTIONS}</p>
+        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Scegli massimo {MAX_SELECTIONS}</p>
       </div>
 
       <motion.div
@@ -61,7 +61,7 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
                 'relative flex min-h-[90px] flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all duration-200',
                 isSelected
                   ? 'border-white/60 bg-white/10'
-                  : 'border-[#444] bg-[#3a3a3a] hover:border-[#666] hover:bg-[#404040]',
+                  : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
@@ -77,8 +77,8 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[#999]'}>{priority.icon}</span>
-              <span className={['text-[13px] font-medium leading-tight', isSelected ? 'text-white' : 'text-[#ccc]'].join(' ')}>
+              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{priority.icon}</span>
+              <span className={['text-[13px] font-medium leading-tight', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
                 {priority.name}
               </span>
             </motion.button>
@@ -87,7 +87,7 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
       </motion.div>
 
       <motion.p
-        className="text-[12px] text-[#666]"
+        className="text-[12px] text-[var(--text-tertiary)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}

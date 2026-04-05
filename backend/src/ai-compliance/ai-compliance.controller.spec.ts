@@ -120,12 +120,7 @@ describe('AiComplianceController', () => {
 
       const result = await controller.recordReview(TENANT_ID, USER_ID, 'dec-001', dto);
 
-      expect(service.recordHumanReview).toHaveBeenCalledWith(
-        TENANT_ID,
-        'dec-001',
-        dto,
-        USER_ID,
-      );
+      expect(service.recordHumanReview).toHaveBeenCalledWith(TENANT_ID, 'dec-001', dto, USER_ID);
       expect(result.humanOverridden).toBe(true);
     });
   });

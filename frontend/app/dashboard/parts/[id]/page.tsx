@@ -206,7 +206,7 @@ export default function PartDetailPage() {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
         <AlertCircle className='h-12 w-12 text-red-400 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[#636366] mb-4'>
+        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
           {error || 'Ricambio non trovato'}
         </p>
         <AppleButton
@@ -231,7 +231,7 @@ export default function PartDetailPage() {
   return (
     <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header>
         <div className='px-8 py-5'>
           <Breadcrumb
             items={[
@@ -246,12 +246,12 @@ export default function PartDetailPage() {
                 <Package className='h-6 w-6 text-apple-blue' />
               </div>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>{part.name}</h1>
-                <p className='text-footnote text-apple-gray dark:text-[#636366]'>
+                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>{part.name}</h1>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                   SKU: {part.sku} {part.partNumber && `| OE: ${part.partNumber}`} | {part.supplierName}
                 </p>
               </div>
-              <span className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${stockBadge.cls}`}>
+              <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${stockBadge.cls}`}>
                 {stockBadge.label}
               </span>
             </div>
@@ -293,13 +293,13 @@ export default function PartDetailPage() {
           {[
             { label: 'Stock Attuale', value: String(part.currentStock), color: part.currentStock <= part.minStockLevel ? 'text-red-500' : 'text-apple-green' },
             { label: 'Scorta Minima', value: String(part.minStockLevel), color: 'text-apple-gray' },
-            { label: 'Prezzo Acquisto', value: formatCurrency(part.costPrice), color: 'text-apple-dark dark:text-[#ececec]' },
+            { label: 'Prezzo Acquisto', value: formatCurrency(part.costPrice), color: 'text-apple-dark dark:text-[var(--text-primary)]' },
             { label: 'Prezzo Vendita', value: formatCurrency(part.retailPrice), color: 'text-apple-blue' },
           ].map(s => (
             <AppleCard key={s.label} hover={false}>
               <AppleCardContent className='text-center py-4'>
                 <p className={`text-title-1 font-bold ${s.color}`}>{s.value}</p>
-                <p className='text-footnote text-apple-gray dark:text-[#636366]'>{s.label}</p>
+                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{s.label}</p>
               </AppleCardContent>
             </AppleCard>
           ))}
@@ -308,15 +308,15 @@ export default function PartDetailPage() {
 
       {/* Tabs */}
       <div className='px-8 pt-6'>
-        <div className='flex gap-1 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl p-1 w-fit'>
+        <div className='flex gap-1 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl p-1 w-fit'>
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-body font-medium transition-colors ${
                 activeTab === t.key
-                  ? 'bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] shadow-sm'
-                  : 'text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec]'
+                  ? 'bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] shadow-sm'
+                  : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
               }`}
             >
               {t.label}
@@ -337,7 +337,7 @@ export default function PartDetailPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Informazioni Ricambio
                 </h2>
               </AppleCardHeader>
@@ -353,7 +353,7 @@ export default function PartDetailPage() {
                       { key: 'location', label: 'Posizione Magazzino' },
                     ] as const).map(f => (
                       <div key={f.key}>
-                        <label className='text-sm font-medium text-apple-gray dark:text-[#636366] mb-1 block'>
+                        <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block'>
                           {f.label}
                         </label>
                         <Input
@@ -368,7 +368,7 @@ export default function PartDetailPage() {
                       { key: 'minStockLevel', label: 'Scorta Minima' },
                     ] as const).map(f => (
                       <div key={f.key}>
-                        <label className='text-sm font-medium text-apple-gray dark:text-[#636366] mb-1 block'>
+                        <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block'>
                           {f.label}
                         </label>
                         <Input
@@ -381,14 +381,14 @@ export default function PartDetailPage() {
                       </div>
                     ))}
                     <div className='md:col-span-2'>
-                      <label className='text-sm font-medium text-apple-gray dark:text-[#636366] mb-1 block'>
+                      <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block'>
                         Note
                       </label>
                       <textarea
                         value={editData.notes || ''}
                         onChange={e => setEditData(prev => ({ ...prev, notes: e.target.value }))}
                         rows={3}
-                        className='w-full px-3 py-2 rounded-lg border border-apple-border/50 dark:border-[#424242] bg-white dark:bg-[#353535] text-sm resize-none'
+                        className='w-full px-3 py-2 rounded-lg border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] text-sm resize-none'
                       />
                     </div>
                   </div>
@@ -408,15 +408,15 @@ export default function PartDetailPage() {
                       { label: 'Stock Attuale', value: String(part.currentStock) },
                       { label: 'Scorta Minima', value: String(part.minStockLevel) },
                     ].map(row => (
-                      <div key={row.label} className='flex justify-between py-2 border-b border-apple-border/20 dark:border-[#424242]/50'>
-                        <span className='text-sm text-apple-gray dark:text-[#636366]'>{row.label}</span>
-                        <span className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>{row.value}</span>
+                      <div key={row.label} className='flex justify-between py-2 border-b border-apple-border/20 dark:border-[var(--border-default)]/50'>
+                        <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>{row.label}</span>
+                        <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{row.value}</span>
                       </div>
                     ))}
                     {part.notes && (
                       <div className='md:col-span-2 pt-2'>
-                        <span className='text-sm text-apple-gray dark:text-[#636366]'>Note</span>
-                        <p className='text-sm text-apple-dark dark:text-[#ececec] mt-1 whitespace-pre-wrap'>{part.notes}</p>
+                        <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Note</span>
+                        <p className='text-body text-apple-dark dark:text-[var(--text-primary)] mt-1 whitespace-pre-wrap'>{part.notes}</p>
                       </div>
                     )}
                   </div>
@@ -431,7 +431,7 @@ export default function PartDetailPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Storico Movimenti
                 </h2>
               </AppleCardHeader>
@@ -439,7 +439,7 @@ export default function PartDetailPage() {
                 {movements.length === 0 ? (
                   <div className='text-center py-12'>
                     <Package className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[#636366]'>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                       Nessun movimento registrato
                     </p>
                   </div>
@@ -449,7 +449,7 @@ export default function PartDetailPage() {
                       {movements.slice((movementsPage - 1) * MOVEMENTS_PAGE_SIZE, movementsPage * MOVEMENTS_PAGE_SIZE).map(m => (
                         <div
                           key={m.id}
-                          className='flex items-center justify-between p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[#353535]'
+                          className='flex items-center justify-between p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
                         >
                           <div className='flex items-center gap-3'>
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -462,15 +462,15 @@ export default function PartDetailPage() {
                               )}
                             </div>
                             <div>
-                              <p className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+                              <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                                 {m.type === 'IN' ? 'Carico' : 'Scarico'}: {m.reason}
                               </p>
-                              <p className='text-xs text-apple-gray dark:text-[#636366]'>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                                 {new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                           </div>
-                          <span className={`text-sm font-bold ${m.type === 'IN' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          <span className={`text-body font-bold ${m.type === 'IN' ? 'text-apple-green' : 'text-apple-red'}`}>
                             {m.type === 'IN' ? '+' : '-'}{m.quantity}
                           </span>
                         </div>
@@ -495,7 +495,7 @@ export default function PartDetailPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                   Ordini di Lavoro Collegati
                 </h2>
               </AppleCardHeader>
@@ -503,7 +503,7 @@ export default function PartDetailPage() {
                 {linkedWOs.length === 0 ? (
                   <div className='text-center py-12'>
                     <Wrench className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[#636366]'>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                       Nessun ordine di lavoro collegato
                     </p>
                   </div>
@@ -512,7 +512,7 @@ export default function PartDetailPage() {
                     {linkedWOs.map(wo => (
                       <div
                         key={wo.id}
-                        className='flex items-center justify-between p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a] cursor-pointer transition-all'
+                        className='flex items-center justify-between p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] cursor-pointer transition-all'
                         onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
                         role='button'
                         tabIndex={0}
@@ -523,19 +523,19 @@ export default function PartDetailPage() {
                             <Wrench className='h-5 w-5 text-apple-blue' />
                           </div>
                           <div>
-                            <p className='text-sm font-semibold text-apple-dark dark:text-[#ececec]'>
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                               {wo.number}
                             </p>
-                            <p className='text-xs text-apple-gray dark:text-[#636366]'>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                               {wo.customerName} - {wo.vehiclePlate}
                             </p>
                           </div>
                         </div>
                         <div className='text-right'>
-                          <p className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
                             Qta: {wo.quantity}
                           </p>
-                          <p className='text-xs text-apple-gray dark:text-[#636366]'>
+                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                             {new Date(wo.date).toLocaleDateString('it-IT')}
                           </p>
                         </div>

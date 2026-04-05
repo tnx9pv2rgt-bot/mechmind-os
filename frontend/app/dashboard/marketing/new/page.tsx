@@ -128,7 +128,7 @@ export default function NewCampaignPage() {
 
   return (
     <div>
-      <header className='bg-[#1a1a1a] border-b border-[#4e4e4e]'>
+      <header>
         <div className='px-8 py-5'>
           <Breadcrumb
             items={[
@@ -137,7 +137,10 @@ export default function NewCampaignPage() {
               { label: 'Nuova Campagna' },
             ]}
           />
-          <h1 className='text-headline text-white'>Nuova Campagna</h1>
+          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuova Campagna</h1>
+          <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            Crea una nuova campagna di marketing
+          </p>
         </div>
       </header>
 
@@ -146,16 +149,16 @@ export default function NewCampaignPage() {
         <div className='flex items-center justify-between mb-8'>
           {STEPS.map((s, i) => (
             <div key={s.label} className='flex items-center'>
-              <div className={`flex items-center gap-2 ${i <= step ? 'text-white' : 'text-[#888]'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  i < step ? 'bg-white text-[#0d0d0d]' : i === step ? 'bg-[#383838] text-white border-2 border-[#ececec]' : 'bg-[#2f2f2f] border border-[#4e4e4e] text-[#888]'
+              <div className={`flex items-center gap-2 ${i <= step ? 'text-apple-dark dark:text-[var(--text-primary)]' : 'text-apple-gray dark:text-[var(--text-secondary)]'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-footnote font-bold ${
+                  i < step ? 'bg-apple-blue text-white' : i === step ? 'bg-apple-light-gray dark:bg-[var(--surface-active)] text-apple-dark dark:text-[var(--text-primary)] border-2 border-apple-blue dark:border-[var(--border-default)]' : 'bg-apple-light-gray dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-gray dark:text-[var(--text-secondary)]'
                 }`}>
                   {i < step ? <Check className='h-4 w-4' /> : i + 1}
                 </div>
-                <span className='text-xs font-medium hidden sm:inline'>{s.label}</span>
+                <span className='text-footnote font-medium hidden sm:inline'>{s.label}</span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`w-8 sm:w-16 h-0.5 mx-2 ${i < step ? 'bg-white' : 'bg-[#4e4e4e]'}`} />
+                <div className={`w-8 sm:w-16 h-0.5 mx-2 ${i < step ? 'bg-apple-blue' : 'bg-apple-border dark:bg-[var(--border-default)]'}`} />
               )}
             </div>
           ))}
@@ -168,23 +171,23 @@ export default function NewCampaignPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-2 font-semibold text-white'>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Tipo e Nome
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent className='space-y-6'>
                     <div>
-                      <label className='text-sm font-medium text-white mb-2 block'>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>
                         Nome campagna
                       </label>
                       <Input
                         {...register('name')}
                         placeholder='Es: Promozione Tagliando Primavera'
                       />
-                      {errors.name && <p className='text-xs text-red-500 mt-1'>{errors.name.message}</p>}
+                      {errors.name && <p className='text-footnote text-apple-red mt-1'>{errors.name.message}</p>}
                     </div>
                     <div>
-                      <label className='text-sm font-medium text-white mb-3 block'>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-3 block'>
                         Tipo di campagna
                       </label>
                       <div className='grid grid-cols-3 gap-3'>
@@ -199,13 +202,13 @@ export default function NewCampaignPage() {
                             onClick={() => setValue('type', t.value)}
                             className={`p-4 rounded-2xl text-left transition-all border ${
                               formValues.type === t.value
-                                ? 'border-[#ececec] bg-[#383838]'
-                                : 'border-[#4e4e4e] bg-[#2f2f2f] hover:bg-[#383838]'
+                                ? 'border-apple-blue dark:border-[var(--border-default)] bg-apple-blue/5 dark:bg-[var(--surface-active)]'
+                                : 'border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]'
                             }`}
                           >
-                            <t.icon className={`h-6 w-6 mb-2 ${formValues.type === t.value ? 'text-white' : 'text-[#888]'}`} />
-                            <p className='text-sm font-semibold text-white'>{t.label}</p>
-                            <p className='text-xs text-[#888]'>{t.desc}</p>
+                            <t.icon className={`h-6 w-6 mb-2 ${formValues.type === t.value ? 'text-apple-blue' : 'text-apple-gray dark:text-[var(--text-secondary)]'}`} />
+                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>{t.label}</p>
+                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{t.desc}</p>
                           </button>
                         ))}
                       </div>
@@ -220,17 +223,17 @@ export default function NewCampaignPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-2 font-semibold text-white'>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Destinatari
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent className='space-y-4'>
-                    <p className='text-body text-[#888]'>
+                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
                       Seleziona un segmento di clienti o invia a tutti i clienti.
                     </p>
                     {segmentsLoading ? (
                       <div className='flex items-center justify-center py-8'>
-                        <Loader2 className='h-6 w-6 animate-spin text-white' />
+                        <Loader2 className='h-6 w-6 animate-spin text-apple-blue' />
                       </div>
                     ) : (
                       <div className='space-y-3'>
@@ -239,15 +242,15 @@ export default function NewCampaignPage() {
                           onClick={() => setValue('segmentId', '')}
                           className={`w-full p-4 rounded-2xl text-left transition-all border ${
                             !formValues.segmentId
-                              ? 'border-[#ececec] bg-[#383838]'
-                              : 'border-[#4e4e4e] bg-[#2f2f2f] hover:bg-[#383838]'
+                              ? 'border-apple-blue dark:border-[var(--border-default)] bg-apple-blue/5 dark:bg-[var(--surface-active)]'
+                              : 'border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]'
                           }`}
                         >
                           <div className='flex items-center gap-3'>
-                            <Users className='h-5 w-5 text-white' />
+                            <Users className='h-5 w-5 text-apple-blue' />
                             <div>
-                              <p className='text-sm font-semibold text-white'>Tutti i clienti</p>
-                              <p className='text-xs text-[#888]'>Invia a tutti i clienti registrati</p>
+                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Tutti i clienti</p>
+                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Invia a tutti i clienti registrati</p>
                             </div>
                           </div>
                         </button>
@@ -258,16 +261,16 @@ export default function NewCampaignPage() {
                             onClick={() => setValue('segmentId', seg.id)}
                             className={`w-full p-4 rounded-2xl text-left transition-all border ${
                               formValues.segmentId === seg.id
-                                ? 'border-[#ececec] bg-[#383838]'
-                                : 'border-[#4e4e4e] bg-[#2f2f2f] hover:bg-[#383838]'
+                                ? 'border-apple-blue dark:border-[var(--border-default)] bg-apple-blue/5 dark:bg-[var(--surface-active)]'
+                                : 'border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]'
                             }`}
                           >
                             <div className='flex items-center justify-between'>
                               <div className='flex items-center gap-3'>
-                                <Users className='h-5 w-5 text-[#888]' />
+                                <Users className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
                                 <div>
-                                  <p className='text-sm font-semibold text-white'>{seg.name}</p>
-                                  <p className='text-xs text-[#888]'>{seg.customerCount} clienti</p>
+                                  <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>{seg.name}</p>
+                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{seg.customerCount} clienti</p>
                                 </div>
                               </div>
                             </div>
@@ -285,14 +288,14 @@ export default function NewCampaignPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-2 font-semibold text-white'>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Contenuto
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent className='space-y-4'>
                     {formValues.type === 'EMAIL' && (
                       <div>
-                        <label className='text-sm font-medium text-white mb-2 block'>
+                        <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>
                           Oggetto email
                         </label>
                         <Input
@@ -302,16 +305,16 @@ export default function NewCampaignPage() {
                       </div>
                     )}
                     <div>
-                      <label className='text-sm font-medium text-white mb-2 block'>
+                      <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>
                         Corpo del messaggio
                       </label>
                       <textarea
                         {...register('body')}
                         rows={8}
-                        className='w-full rounded-2xl border border-[#4e4e4e] bg-[#2f2f2f] text-white placeholder-[#888] px-5 py-3 outline-none text-sm resize-none'
+                        className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                         placeholder='Scrivi il contenuto del messaggio...'
                       />
-                      {errors.body && <p className='text-xs text-red-500 mt-1'>{errors.body.message}</p>}
+                      {errors.body && <p className='text-footnote text-apple-red mt-1'>{errors.body.message}</p>}
                     </div>
                   </AppleCardContent>
                 </AppleCard>
@@ -323,7 +326,7 @@ export default function NewCampaignPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-2 font-semibold text-white'>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Pianificazione
                     </h2>
                   </AppleCardHeader>
@@ -334,29 +337,29 @@ export default function NewCampaignPage() {
                         onClick={() => setValue('sendNow', true)}
                         className={`w-full p-4 rounded-2xl text-left transition-all border ${
                           formValues.sendNow
-                            ? 'border-[#ececec] bg-[#383838]'
-                            : 'border-[#4e4e4e] bg-[#2f2f2f] hover:bg-[#383838]'
+                            ? 'border-apple-blue dark:border-[var(--border-default)] bg-apple-blue/5 dark:bg-[var(--surface-active)]'
+                            : 'border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]'
                         }`}
                       >
-                        <p className='text-sm font-semibold text-white'>Invia subito</p>
-                        <p className='text-xs text-[#888]'>La campagna verrà inviata immediatamente</p>
+                        <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Invia subito</p>
+                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>La campagna verrà inviata immediatamente</p>
                       </button>
                       <button
                         type='button'
                         onClick={() => setValue('sendNow', false)}
                         className={`w-full p-4 rounded-2xl text-left transition-all border ${
                           !formValues.sendNow
-                            ? 'border-[#ececec] bg-[#383838]'
-                            : 'border-[#4e4e4e] bg-[#2f2f2f] hover:bg-[#383838]'
+                            ? 'border-apple-blue dark:border-[var(--border-default)] bg-apple-blue/5 dark:bg-[var(--surface-active)]'
+                            : 'border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]'
                         }`}
                       >
-                        <p className='text-sm font-semibold text-white'>Pianifica invio</p>
-                        <p className='text-xs text-[#888]'>Scegli data e ora per l&apos;invio</p>
+                        <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Pianifica invio</p>
+                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Scegli data e ora per l&apos;invio</p>
                       </button>
                     </div>
                     {!formValues.sendNow && (
                       <div>
-                        <label className='text-sm font-medium text-white mb-2 block'>
+                        <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>
                           Data e ora di invio
                         </label>
                         <Input
@@ -375,7 +378,7 @@ export default function NewCampaignPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-2 font-semibold text-white'>
+                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                       Riepilogo Campagna
                     </h2>
                   </AppleCardHeader>
@@ -388,15 +391,15 @@ export default function NewCampaignPage() {
                         { label: 'Destinatari', value: formValues.segmentId ? segments.find(s => s.id === formValues.segmentId)?.name || 'Segmento selezionato' : 'Tutti i clienti' },
                         { label: 'Invio', value: formValues.sendNow ? 'Immediato' : formValues.scheduledAt ? new Date(formValues.scheduledAt).toLocaleString('it-IT') : 'Non pianificato' },
                       ].map(row => (
-                        <div key={row.label} className='flex justify-between text-sm py-2 border-b border-[#4e4e4e]'>
-                          <span className='text-[#888]'>{row.label}</span>
-                          <span className='font-medium text-white'>{row.value}</span>
+                        <div key={row.label} className='flex justify-between text-body py-2 border-b border-apple-border dark:border-[var(--border-default)]'>
+                          <span className='text-apple-gray dark:text-[var(--text-secondary)]'>{row.label}</span>
+                          <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{row.value}</span>
                         </div>
                       ))}
                     </div>
                     <div className='mt-4'>
-                      <p className='text-sm text-[#888] mb-2'>Anteprima messaggio</p>
-                      <div className='p-4 bg-[#383838] border border-[#4e4e4e] rounded-2xl text-sm text-white whitespace-pre-wrap max-h-40 overflow-y-auto'>
+                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-2'>Anteprima messaggio</p>
+                      <div className='p-4 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] border border-apple-border dark:border-[var(--border-default)] rounded-2xl text-body text-apple-dark dark:text-[var(--text-primary)] whitespace-pre-wrap max-h-40 overflow-y-auto'>
                         {formValues.body || 'Nessun contenuto'}
                       </div>
                     </div>

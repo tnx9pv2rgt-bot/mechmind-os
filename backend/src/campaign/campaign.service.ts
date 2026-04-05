@@ -101,9 +101,13 @@ export class CampaignService {
     if (dto.segmentType !== undefined) data.segmentType = dto.segmentType ?? null;
     if (dto.segmentFilters !== undefined) data.segmentFilters = dto.segmentFilters ?? undefined;
 
-    const updated = await this.prisma.campaign.update({
-      where: { id },
+    await this.prisma.campaign.updateMany({
+      where: { id, tenantId },
       data,
+    });
+
+    const updated = await this.prisma.campaign.findFirst({
+      where: { id, tenantId },
     });
 
     return updated as unknown as Record<string, unknown>;
@@ -116,7 +120,7 @@ export class CampaignService {
       throw new BadRequestException('Solo le campagne in bozza possono essere eliminate');
     }
 
-    await this.prisma.campaign.delete({ where: { id } });
+    await this.prisma.campaign.deleteMany({ where: { id, tenantId } });
     this.logger.log(`Campaign ${id} deleted for tenant ${tenantId}`);
   }
 
@@ -134,9 +138,13 @@ export class CampaignService {
       throw new BadRequestException('La data di programmazione deve essere nel futuro');
     }
 
-    const updated = await this.prisma.campaign.update({
-      where: { id },
+    await this.prisma.campaign.updateMany({
+      where: { id, tenantId },
       data: { status: 'SCHEDULED', scheduledAt },
+    });
+
+    const updated = await this.prisma.campaign.findFirst({
+      where: { id, tenantId },
     });
 
     this.logger.log(`Campaign ${id} scheduled for ${scheduledAt.toISOString()}`);
@@ -152,8 +160,8 @@ export class CampaignService {
     // Count recipients based on segment
     const recipientCount = await this.resolveRecipientCount(tenantId, existing);
 
-    const updated = await this.prisma.campaign.update({
-      where: { id },
+    await this.prisma.campaign.updateMany({
+      where: { id, tenantId },
       data: {
         status: 'SENDING',
         totalRecipients: recipientCount,
@@ -161,10 +169,14 @@ export class CampaignService {
       },
     });
 
+    const updated = await this.prisma.campaign.findFirst({
+      where: { id, tenantId },
+    });
+
     // In production: queue bulk send via BullMQ
     // For now, mark as SENT after initiating
-    await this.prisma.campaign.update({
-      where: { id },
+    await this.prisma.campaign.updateMany({
+      where: { id, tenantId },
       data: {
         status: 'SENT',
         totalSent: recipientCount,

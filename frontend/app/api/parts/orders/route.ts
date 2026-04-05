@@ -5,10 +5,10 @@ import { proxyToNestJS, getQueryParams } from '@/lib/auth/api-proxy';
 
 export async function GET(req: NextRequest) {
   const params = getQueryParams(req);
-  return proxyToNestJS({ backendPath: 'v1/parts/orders', params });
+  return proxyToNestJS({ backendPath: 'v1/parts/purchase-orders/list', params });
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  return proxyToNestJS({ backendPath: 'v1/parts/orders', method: 'POST', body });
+  return proxyToNestJS({ backendPath: 'v1/parts/purchase-orders', method: 'POST', body });
 }

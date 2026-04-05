@@ -8,20 +8,20 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#212121] px-6 py-12">
+    <div className="min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] px-6 py-12">
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-[28px] font-bold text-[#0d0d0d] dark:text-[#ececec] tracking-tight">
+        <h1 className="text-[28px] font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] tracking-tight">
           Condizioni Generali di Utilizzo
         </h1>
-        <p className="mt-2 text-[13px] text-[#636366]">
+        <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
           Ultimo aggiornamento: 1 marzo 2026
         </p>
 
-        <div className="mt-10 space-y-8 text-[15px] text-[#0d0d0d] dark:text-[#d1d1d1] leading-relaxed">
+        <div className="mt-10 space-y-8 text-[15px] text-[var(--text-primary)] dark:text-[var(--text-primary)] leading-relaxed">
 
           {/* 1. Accettazione */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               1. Accettazione delle Condizioni
             </h2>
             <p>
@@ -35,7 +35,7 @@ export default function TermsPage() {
 
           {/* 2. Descrizione del Servizio */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               2. Descrizione del Servizio
             </h2>
             <p>
@@ -49,7 +49,7 @@ export default function TermsPage() {
 
           {/* 3. Registrazione e Account */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               3. Registrazione e Account
             </h2>
             <p>
@@ -64,7 +64,7 @@ export default function TermsPage() {
 
           {/* 4. Piani e Pagamenti */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               4. Piani di Abbonamento e Pagamenti
             </h2>
             <p>
@@ -79,11 +79,11 @@ export default function TermsPage() {
 
           {/* 5. Obblighi dell'Utente */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               5. Obblighi dell&apos;Utente
             </h2>
             <p>L&apos;Utente si impegna a:</p>
-            <ul className="list-disc list-inside mt-2 space-y-1 text-[#636366] dark:text-[#a1a1a1]">
+            <ul className="list-disc list-inside mt-2 space-y-1 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
               <li>Utilizzare il Servizio in conformità alla normativa vigente e alle presenti condizioni</li>
               <li>Non utilizzare il Servizio per scopi illeciti, fraudolenti o lesivi dei diritti di terzi</li>
               <li>Non tentare di accedere a dati o funzionalità non autorizzate</li>
@@ -95,7 +95,7 @@ export default function TermsPage() {
 
           {/* 6. Dati Personali e Privacy */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               6. Trattamento dei Dati Personali
             </h2>
             <p>
@@ -111,7 +111,7 @@ export default function TermsPage() {
 
           {/* 7. Sicurezza dei Dati */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               7. Sicurezza e Protezione dei Dati
             </h2>
             <p>
@@ -126,7 +126,7 @@ export default function TermsPage() {
 
           {/* 8. Proprietà Intellettuale */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               8. Proprietà Intellettuale
             </h2>
             <p>
@@ -141,7 +141,7 @@ export default function TermsPage() {
 
           {/* 9. Disponibilità del Servizio */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               9. Disponibilità del Servizio e SLA
             </h2>
             <p>
@@ -155,7 +155,7 @@ export default function TermsPage() {
 
           {/* 10. Limitazione di Responsabilità */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               10. Limitazione di Responsabilità
             </h2>
             <p>
@@ -171,7 +171,7 @@ export default function TermsPage() {
 
           {/* 11. Garanzie */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               11. Esclusione di Garanzie
             </h2>
             <p>
@@ -185,7 +185,7 @@ export default function TermsPage() {
 
           {/* 12. Indennizzo */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               12. Indennizzo
             </h2>
             <p>
@@ -199,7 +199,7 @@ export default function TermsPage() {
 
           {/* 13. Modifiche al Servizio */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               13. Modifiche al Servizio e alle Condizioni
             </h2>
             <p>
@@ -213,7 +213,7 @@ export default function TermsPage() {
 
           {/* 14. Recesso e Risoluzione */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               14. Recesso e Risoluzione
             </h2>
             <p>
@@ -229,7 +229,7 @@ export default function TermsPage() {
 
           {/* 15. Portabilità dei Dati */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               15. Portabilità ed Esportazione dei Dati
             </h2>
             <p>
@@ -243,12 +243,12 @@ export default function TermsPage() {
 
           {/* 16. Comunicazioni */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               16. Comunicazioni
             </h2>
             <p>
               Le comunicazioni tra le parti avverranno tramite email agli indirizzi indicati in fase
-              di registrazione (per l&apos;Utente) e all&apos;indirizzo supporto@mechmind.io (per il Fornitore).
+              di registrazione (per l&apos;Utente) e all&apos;indirizzo supporto@mechmind.it (per il Fornitore).
               Le comunicazioni relative a modifiche contrattuali, sospensione del Servizio o
               variazioni di prezzo saranno inviate con almeno 30 giorni di anticipo.
             </p>
@@ -256,7 +256,7 @@ export default function TermsPage() {
 
           {/* 17. Forza Maggiore */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               17. Forza Maggiore
             </h2>
             <p>
@@ -270,7 +270,7 @@ export default function TermsPage() {
 
           {/* 18. Cessione */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               18. Cessione del Contratto
             </h2>
             <p>
@@ -283,7 +283,7 @@ export default function TermsPage() {
 
           {/* 19. Legge Applicabile */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               19. Legge Applicabile
             </h2>
             <p>
@@ -297,7 +297,7 @@ export default function TermsPage() {
 
           {/* 20. Foro Competente */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               20. Foro Competente
             </h2>
             <p>
@@ -310,7 +310,7 @@ export default function TermsPage() {
 
           {/* 21. Disposizioni Finali */}
           <section>
-            <h2 className="text-[17px] font-semibold text-[#0d0d0d] dark:text-[#ececec] mb-2">
+            <h2 className="text-[17px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">
               21. Disposizioni Finali
             </h2>
             <p>
@@ -325,16 +325,16 @@ export default function TermsPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 pt-8 border-t border-[#e0e0e0] dark:border-[#424242]">
-          <p className="text-[13px] text-[#636366]">
+        <div className="mt-12 pt-8 border-t border-[var(--border-default)] dark:border-[var(--border-default)]">
+          <p className="text-[13px] text-[var(--text-secondary)]">
             Per domande relative alle presenti condizioni, contattare:{' '}
-            <a href="mailto:legal@mechmind.io" className="underline hover:text-[#0d0d0d] dark:hover:text-[#ececec] transition-colors">
-              legal@mechmind.io
+            <a href="mailto:legal@mechmind.it" className="underline hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors">
+              legal@mechmind.it
             </a>
           </p>
           <Link
             href="/auth"
-            className="mt-6 inline-flex items-center text-[14px] font-medium text-[#0d0d0d] dark:text-[#ececec] hover:opacity-70 transition-opacity"
+            className="mt-6 inline-flex items-center text-[14px] font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] hover:opacity-70 transition-opacity"
           >
             &larr; Torna al login
           </Link>
