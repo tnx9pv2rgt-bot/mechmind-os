@@ -10,10 +10,13 @@ import {
   IsBoolean,
   IsUUID,
   IsArray,
+  IsEnum,
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MovementType, OrderStatus } from '@prisma/client';
+import { MovementType, OrderStatus, PartType } from '@prisma/client';
+
+export { PartType };
 
 // ==========================================
 // Part Management
@@ -114,6 +117,41 @@ export class CreatePartDto {
   @IsOptional()
   @IsUUID()
   supplierId?: string;
+
+  // ---- Compliance 2026 ----
+  @ApiPropertyOptional({
+    description: 'Tipologia ricambio — EU Right to Repair 2024/1799',
+    enum: PartType,
+    default: PartType.GENUINE,
+  })
+  @IsOptional()
+  @IsEnum(PartType)
+  partType?: PartType;
+
+  @ApiPropertyOptional({
+    description: 'Mesi di garanzia (GENUINE/AFTERMARKET/REGENERATED=24, USED=3)',
+    example: 24,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  warrantyMonths?: number;
+
+  @ApiPropertyOptional({
+    description: 'Codice motore/telaio di provenienza (per ricambi usati)',
+    example: 'AJQ-VW-2019',
+  })
+  @IsOptional()
+  @IsString()
+  originCode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Barcode EAN/QR per tracciabilità',
+    example: '4007752124815',
+  })
+  @IsOptional()
+  @IsString()
+  barcode?: string;
 }
 
 export class UpdatePartDto {
@@ -139,6 +177,27 @@ export class UpdatePartDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ enum: PartType })
+  @IsOptional()
+  @IsEnum(PartType)
+  partType?: PartType;
+
+  @ApiPropertyOptional({ example: 24 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  warrantyMonths?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  originCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  barcode?: string;
 }
 
 // ==========================================
@@ -364,6 +423,18 @@ export class PartResponseDto {
 
   @ApiPropertyOptional({ description: 'Nome del fornitore', example: 'Autoricambi Bianchi S.r.l.' })
   supplierName?: string;
+
+  @ApiPropertyOptional({ enum: PartType, description: 'Tipologia ricambio (compliance 2026)' })
+  partType?: PartType;
+
+  @ApiPropertyOptional({ description: 'Mesi di garanzia' })
+  warrantyMonths?: number;
+
+  @ApiPropertyOptional({ description: 'Codice di provenienza (ricambi usati)' })
+  originCode?: string;
+
+  @ApiPropertyOptional({ description: 'Barcode EAN/QR' })
+  barcode?: string;
 }
 
 export class InventoryMovementResponseDto {

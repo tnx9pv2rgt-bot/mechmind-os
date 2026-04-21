@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { NotificationV2Service, CreateNotificationDTO } from './notification-v2.service';
+import { EmailService } from '../email/email.service';
+import { NotificationsGateway } from '../gateways/notifications.gateway';
 
 // Mock Twilio
 const mockTwilioCreate = jest.fn();
@@ -152,6 +154,21 @@ describe('NotificationV2Service', () => {
             encrypt: jest.fn((val: string) => `enc-${val}`),
             decrypt: jest.fn((val: string) => val.replace('enc-', '')),
             hash: jest.fn((val: string) => `hash-${val}`),
+          },
+        },
+        {
+          provide: EmailService,
+          useValue: {
+            sendEstimateApproval: jest
+              .fn()
+              .mockResolvedValue({ success: true, messageId: 'mock-email-id' }),
+          },
+        },
+        {
+          provide: NotificationsGateway,
+          useValue: {
+            broadcastToTenant: jest.fn(),
+            sendToUser: jest.fn(),
           },
         },
       ],
@@ -406,7 +423,7 @@ describe('NotificationV2Service', () => {
         customerId: mockCustomerId,
         tenantId: mockTenantId,
         type: 'BOOKING_CONFIRMATION' as never,
-        channel: 'EMAIL' as never,
+        channel: 'IN_APP' as never,
         message: 'Test',
       });
 
@@ -878,6 +895,21 @@ describe('NotificationV2Service', () => {
               encrypt: jest.fn((val: string) => `enc-${val}`),
               decrypt: jest.fn((val: string) => val.replace('enc-', '')),
               hash: jest.fn((val: string) => `hash-${val}`),
+            },
+          },
+          {
+            provide: EmailService,
+            useValue: {
+              sendEstimateApproval: jest
+                .fn()
+                .mockResolvedValue({ success: true, messageId: 'mock-email-id' }),
+            },
+          },
+          {
+            provide: NotificationsGateway,
+            useValue: {
+              broadcastToTenant: jest.fn(),
+              sendToUser: jest.fn(),
             },
           },
         ],

@@ -81,6 +81,10 @@ export class PartsService {
         minStockLevel: dto.minStockLevel ?? 5,
         reorderPoint: dto.reorderPoint ?? 10,
         supplierId: dto.supplierId,
+        partType: dto.partType,
+        warrantyMonths: dto.warrantyMonths ?? (dto.partType === 'USED' ? 3 : 24),
+        originCode: dto.originCode,
+        barcode: dto.barcode,
       },
       include: { supplier: true, inventory: true },
     });
@@ -178,6 +182,10 @@ export class PartsService {
         retailPrice:
           dto.retailPrice !== undefined ? new Prisma.Decimal(dto.retailPrice) : undefined,
         isActive: dto.isActive,
+        partType: dto.partType,
+        warrantyMonths: dto.warrantyMonths,
+        originCode: dto.originCode,
+        barcode: dto.barcode,
       },
       include: { supplier: true, inventory: true },
     });
@@ -609,6 +617,10 @@ export class PartsService {
       availableQuantity,
       isLowStock: stockQuantity <= part.minStockLevel,
       supplierName: part.supplier?.name,
+      partType: part.partType ?? undefined,
+      warrantyMonths: part.warrantyMonths ?? undefined,
+      originCode: part.originCode ?? undefined,
+      barcode: part.barcode ?? undefined,
     };
   }
 

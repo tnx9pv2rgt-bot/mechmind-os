@@ -27,11 +27,9 @@ describe('QuickBooksService', () => {
   it('should export CSV with correct headers', async () => {
     const mockInvoices = [
       {
-        id: 'inv-1',
-        tenantId: 't1',
         invoiceNumber: 'INV-001',
         customerId: 'cust-1',
-        customer: { id: 'cust-1', encryptedFirstName: 'enc_Mario' },
+        customer: { searchName: 'mario rossi' },
         subtotal: { toString: () => '100.00' },
         taxAmount: { toString: () => '22.00' },
         total: { toString: () => '122.00' },
@@ -60,14 +58,25 @@ describe('QuickBooksService', () => {
     expect(csv).toContain('22.00');
     expect(csv).toContain('122.00');
     expect(csv).toContain('PAID');
+    expect(csv).toContain('mario rossi');
 
     expect(mockPrisma.invoice.findMany).toHaveBeenCalledWith({
       where: {
         tenantId: 't1',
         createdAt: { gte: dateFrom, lte: dateTo },
       },
-      include: { customer: true },
+      select: {
+        createdAt: true,
+        invoiceNumber: true,
+        customerId: true,
+        customer: { select: { searchName: true } },
+        subtotal: true,
+        taxAmount: true,
+        total: true,
+        status: true,
+      },
       orderBy: { createdAt: 'asc' },
+      take: 5000,
     });
   });
 

@@ -545,6 +545,11 @@ describe('ReportingService', () => {
         booking: { count: jest.fn().mockResolvedValue(0) },
         workOrder: { count: jest.fn().mockResolvedValue(0) },
         estimate: { count: jest.fn().mockResolvedValue(0) },
+        part: { count: jest.fn().mockResolvedValue(0) },
+        $queryRaw: jest.fn().mockResolvedValue([{ count: BigInt(0) }]) as unknown as Record<
+          string,
+          jest.Mock
+        >,
       };
     });
 
@@ -572,12 +577,13 @@ describe('ReportingService', () => {
         .mockResolvedValueOnce(0) // woCompletedPrevMonth
         .mockResolvedValueOnce(0); // woTotalPrevMonth
 
-      // estimate.count called 4 times
+      // estimate.count called 5 times (4 original + 1 for preventiviInScadenza)
       mockKpiPrisma.estimate.count
         .mockResolvedValueOnce(0) // estimatesThisMonth
         .mockResolvedValueOnce(0) // estimatesConvertedThisMonth
         .mockResolvedValueOnce(0) // estimatesPrevMonth
-        .mockResolvedValueOnce(0); // estimatesConvertedPrevMonth
+        .mockResolvedValueOnce(0) // estimatesConvertedPrevMonth
+        .mockResolvedValueOnce(0); // preventiviInScadenza
 
       const svc = await buildServiceWithKpiPrisma();
       const result = await svc.getDashboardKpis(tenantId);
@@ -596,6 +602,9 @@ describe('ReportingService', () => {
       expect(result.grossMargin).toBe(0);
       expect(result.cashFlow7d).toBe(0);
       expect(result.revenueTarget).toBe(0);
+      expect(result.scorteInAllarme).toBe(0);
+      expect(result.preventiviInScadenza).toBe(0);
+      expect(result.rightToRepairPct).toBe(100); // no parts → 100%
     });
 
     it('should calculate efficiency and conversion with non-zero data', async () => {
@@ -624,7 +633,8 @@ describe('ReportingService', () => {
         .mockResolvedValueOnce(20) // estimatesThisMonth
         .mockResolvedValueOnce(15) // estimatesConvertedThisMonth
         .mockResolvedValueOnce(10) // estimatesPrevMonth
-        .mockResolvedValueOnce(5); // estimatesConvertedPrevMonth
+        .mockResolvedValueOnce(5) // estimatesConvertedPrevMonth
+        .mockResolvedValueOnce(2); // preventiviInScadenza
 
       const svc = await buildServiceWithKpiPrisma();
       const result = await svc.getDashboardKpis(tenantId);

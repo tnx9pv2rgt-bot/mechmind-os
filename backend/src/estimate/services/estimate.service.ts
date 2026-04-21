@@ -346,6 +346,12 @@ export class EstimateService {
 
     validateTransition(estimate.status, EstimateStatus.CONVERTED, ESTIMATE_TRANSITIONS, 'estimate');
 
+    if (!estimate.termsAccepted || !estimate.customerSignature) {
+      throw new BadRequestException(
+        'Conversione non consentita: il cliente non ha firmato il preventivo (D.Lgs. 206/2005)',
+      );
+    }
+
     const updated = await this.prisma.estimate.update({
       where: { id },
       data: {
@@ -458,6 +464,9 @@ export class EstimateService {
   async processApproval(
     token: string,
     approvals: LineApprovalInput[],
+    signature?: string,
+    termsAccepted?: boolean,
+    ipAddress?: string,
   ): Promise<ReturnType<PrismaService['estimate']['findFirst']>> {
     const tokenRecord = await this.publicTokenService.validateToken(token);
     const estimateId = tokenRecord.entityId;
@@ -521,6 +530,9 @@ export class EstimateService {
         status: newStatus,
         ...(newStatus === EstimateStatus.ACCEPTED && { acceptedAt: now }),
         ...(newStatus === EstimateStatus.REJECTED && { rejectedAt: now }),
+        ...(signature && { customerSignature: signature, customerSignedAt: now }),
+        ...(termsAccepted !== undefined && { termsAccepted }),
+        ...(ipAddress && { approvalIpAddress: ipAddress }),
       },
       include: { lines: { orderBy: { position: 'asc' } } },
     });
@@ -561,7 +573,12 @@ export class EstimateService {
   /**
    * Approve all lines of an estimate via public token
    */
-  async approveAll(token: string): Promise<ReturnType<PrismaService['estimate']['findFirst']>> {
+  async approveAll(
+    token: string,
+    signature?: string,
+    termsAccepted?: boolean,
+    ipAddress?: string,
+  ): Promise<ReturnType<PrismaService['estimate']['findFirst']>> {
     const tokenRecord = await this.publicTokenService.validateToken(token);
     const estimateId = tokenRecord.entityId;
     const tenantId = tokenRecord.tenantId;
@@ -600,6 +617,9 @@ export class EstimateService {
       data: {
         status: EstimateStatus.ACCEPTED,
         acceptedAt: now,
+        ...(signature && { customerSignature: signature, customerSignedAt: now }),
+        ...(termsAccepted !== undefined && { termsAccepted }),
+        ...(ipAddress && { approvalIpAddress: ipAddress }),
       },
       include: { lines: { orderBy: { position: 'asc' } } },
     });

@@ -394,7 +394,14 @@ describe('EstimateService', () => {
 
   describe('convertToBooking', () => {
     it('should convert an ACCEPTED estimate to booking', async () => {
-      const estimate = { id: '1', status: 'ACCEPTED', customerId: 'c1', estimateNumber: 'EST-001' };
+      const estimate = {
+        id: '1',
+        status: 'ACCEPTED',
+        customerId: 'c1',
+        estimateNumber: 'EST-001',
+        termsAccepted: true,
+        customerSignature: 'sig',
+      };
       mockPrisma.estimate.findFirst.mockResolvedValue(estimate);
       mockPrisma.estimate.update.mockResolvedValue({
         ...estimate,

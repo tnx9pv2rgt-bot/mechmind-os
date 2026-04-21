@@ -4,9 +4,16 @@
  * Public (no auth) endpoints for customer estimate approval via token.
  */
 
-import { Controller, Get, Post, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  MinLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstimateService } from '../services/estimate.service';
@@ -34,6 +41,32 @@ export class ApproveEstimateLinesDto {
   @ValidateNested({ each: true })
   @Type(() => LineApprovalDto)
   approvals: LineApprovalDto[];
+
+  @ApiProperty({
+    description: 'Nome cliente come firma digitale (D.Lgs. 206/2005)',
+    example: 'Mario Rossi',
+  })
+  @IsString()
+  @MinLength(2)
+  customerSignature: string;
+
+  @ApiProperty({ description: 'Accettazione termini e condizioni' })
+  @IsBoolean()
+  termsAccepted: boolean;
+}
+
+export class ApproveAllDto {
+  @ApiProperty({
+    description: 'Nome cliente come firma digitale (D.Lgs. 206/2005)',
+    example: 'Mario Rossi',
+  })
+  @IsString()
+  @MinLength(2)
+  customerSignature: string;
+
+  @ApiProperty({ description: 'Accettazione termini e condizioni' })
+  @IsBoolean()
+  termsAccepted: boolean;
 }
 
 // ======================== Controller ========================
@@ -63,8 +96,15 @@ export class EstimatePublicController {
   async approveLines(
     @Param('token') token: string,
     @Body() dto: ApproveEstimateLinesDto,
+    @Ip() ip: string,
   ): Promise<{ success: boolean; data: unknown; message: string }> {
-    const estimate = await this.estimateService.processApproval(token, dto.approvals);
+    const estimate = await this.estimateService.processApproval(
+      token,
+      dto.approvals,
+      dto.customerSignature,
+      dto.termsAccepted,
+      ip,
+    );
     return {
       success: true,
       data: estimate,
@@ -79,8 +119,15 @@ export class EstimatePublicController {
   @ApiResponse({ status: 200, description: 'Tutte le righe approvate' })
   async approveAll(
     @Param('token') token: string,
+    @Body() dto: ApproveAllDto,
+    @Ip() ip: string,
   ): Promise<{ success: boolean; data: unknown; message: string }> {
-    const estimate = await this.estimateService.approveAll(token);
+    const estimate = await this.estimateService.approveAll(
+      token,
+      dto.customerSignature,
+      dto.termsAccepted,
+      ip,
+    );
     return {
       success: true,
       data: estimate,

@@ -247,6 +247,43 @@ export class NotificationTriggersService {
   // ESTIMATE EVENTS
   // ==========================================
 
+  @OnEvent('estimate.sentForApproval')
+  async onEstimateSentForApproval(event: {
+    estimateId: string;
+    tenantId: string;
+    customerId: string;
+    channel: string;
+    approvalUrl: string;
+  }): Promise<void> {
+    this.logger.log(`Estimate sent for approval: ${event.estimateId} via ${event.channel}`);
+
+    const notifChannel =
+      event.channel === 'WHATSAPP'
+        ? NotificationChannel.WHATSAPP
+        : event.channel === 'EMAIL'
+          ? NotificationChannel.EMAIL
+          : NotificationChannel.SMS;
+
+    try {
+      await this.notificationService.sendImmediate({
+        customerId: event.customerId,
+        tenantId: event.tenantId,
+        type: NotificationType.STATUS_UPDATE,
+        channel: notifChannel,
+        metadata: {
+          estimateId: event.estimateId,
+          approvalUrl: event.approvalUrl,
+          template: NOTIFICATION_EVENTS.ESTIMATE_SENT.template,
+          subject: 'Preventivo da approvare',
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send approval request: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
   @OnEvent('estimate.sent')
   async onEstimateSent(event: {
     estimateId: string;
@@ -274,6 +311,37 @@ export class NotificationTriggersService {
     } catch (error) {
       this.logger.error(
         `Failed to send estimate notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  @OnEvent('estimate.partiallyApproved')
+  async onEstimatePartiallyApproved(event: {
+    estimateId: string;
+    tenantId: string;
+    customerId: string;
+    approvedLineIds: string[];
+    rejectedLineIds: string[];
+  }): Promise<void> {
+    this.logger.log(`Estimate partially approved: ${event.estimateId}`);
+
+    try {
+      await this.notificationService.sendImmediate({
+        customerId: event.customerId,
+        tenantId: event.tenantId,
+        type: NotificationType.STATUS_UPDATE,
+        channel: NotificationChannel.IN_APP,
+        metadata: {
+          estimateId: event.estimateId,
+          approvedCount: event.approvedLineIds.length,
+          rejectedCount: event.rejectedLineIds.length,
+          template: NOTIFICATION_EVENTS.ESTIMATE_PARTIALLY_APPROVED.template,
+          subject: NOTIFICATION_EVENTS.ESTIMATE_PARTIALLY_APPROVED.subject,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send partial approval notification: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -563,6 +631,73 @@ export class NotificationTriggersService {
   // ==========================================
   // CRON JOBS — SCHEDULED NOTIFICATIONS
   // ==========================================
+
+  /**
+   * Every day at 08:00 (Europe/Rome) — mark expired estimates and notify workshop.
+   * D.Lgs. 206/2005: il preventivo ha validità determinata; scaduto non può essere
+   * accettato né convertito in ordine di lavoro.
+   * INTENTIONALLY cross-tenant: cron marks expired estimates system-wide.
+   */
+  @Cron('0 8 * * *', { timeZone: 'Europe/Rome' })
+  async markExpiredEstimates(): Promise<number> {
+    this.logger.log('Running mark expired estimates cron job...');
+
+    const now = new Date();
+    let notifiedCount = 0;
+
+    try {
+      const expiredEstimates = await this.prisma.estimate.findMany({
+        where: {
+          validUntil: { lt: now },
+          status: { notIn: ['EXPIRED', 'ACCEPTED', 'CONVERTED', 'REJECTED'] },
+        },
+        select: { id: true, tenantId: true, customerId: true, estimateNumber: true },
+      });
+
+      if (expiredEstimates.length === 0) {
+        this.logger.log('No estimates to expire');
+        return 0;
+      }
+
+      await this.prisma.estimate.updateMany({
+        where: { id: { in: expiredEstimates.map(e => e.id) } },
+        data: { status: 'EXPIRED' },
+      });
+
+      this.logger.log(`Marked ${expiredEstimates.length} estimates as EXPIRED`);
+
+      for (const estimate of expiredEstimates) {
+        if (!estimate.customerId) continue;
+        try {
+          await this.notificationService.sendImmediate({
+            customerId: estimate.customerId,
+            tenantId: estimate.tenantId,
+            type: NotificationType.STATUS_UPDATE,
+            channel: NotificationChannel.IN_APP,
+            metadata: {
+              estimateId: estimate.id,
+              estimateNumber: estimate.estimateNumber,
+              template: NOTIFICATION_EVENTS.ESTIMATE_EXPIRED.template,
+              subject: NOTIFICATION_EVENTS.ESTIMATE_EXPIRED.subject,
+            },
+          });
+          notifiedCount++;
+        } catch (error) {
+          this.logger.error(
+            `Failed to notify expired estimate ${estimate.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
+
+      this.logger.log(`Expired estimates notified: ${notifiedCount}/${expiredEstimates.length}`);
+    } catch (error) {
+      this.logger.error(
+        `Mark expired estimates cron failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+
+    return notifiedCount;
+  }
 
   /**
    * Every day at 18:00 (Europe/Rome) — send booking reminders for tomorrow

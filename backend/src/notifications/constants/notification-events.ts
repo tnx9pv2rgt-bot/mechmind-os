@@ -58,6 +58,16 @@ export const NOTIFICATION_EVENTS = {
     template: 'estimate-rejected',
     subject: 'Preventivo rifiutato dal cliente',
   },
+  ESTIMATE_PARTIALLY_APPROVED: {
+    channels: ['IN_APP', 'SMS'] as const,
+    template: 'estimate-partially-approved',
+    subject: 'Preventivo parzialmente approvato',
+  },
+  ESTIMATE_EXPIRED: {
+    channels: ['IN_APP'] as const,
+    template: 'estimate-expired',
+    subject: 'Preventivo scaduto',
+  },
 
   // Invoice
   INVOICE_SENT: {

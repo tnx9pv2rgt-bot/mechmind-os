@@ -53,6 +53,10 @@ export class ReportingService {
     grossMargin: number;
     cashFlow7d: number;
     revenueTarget: number;
+    // 2026 Compliance KPIs
+    scorteInAllarme: number;
+    preventiviInScadenza: number;
+    rightToRepairPct: number;
   }> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -68,6 +72,9 @@ export class ReportingService {
 
     // 30 days ago for overdue threshold
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // 7 days from now for expiring estimates
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const [
       clientiTotali,
@@ -93,6 +100,11 @@ export class ReportingService {
       laborRevenue,
       // Financial: cash flow last 7 days (payments received - refunds)
       paymentsLast7d,
+      // 2026 compliance KPIs
+      preventiviInScadenza,
+      totalPartsCount,
+      trackedPartsCount,
+      lowStockRaw,
     ] = await Promise.all([
       // KPI 1: Clienti totali del tenant
       this.prisma.customer.count({
@@ -236,6 +248,29 @@ export class ReportingService {
         },
         _sum: { total: true },
       }),
+
+      // KPI 18: Preventivi in scadenza entro 7 giorni (Right to Repair 2024/1799 + D.Lgs. 206/2005)
+      this.prisma.estimate.count({
+        where: {
+          tenantId,
+          status: { in: ['SENT', 'PARTIALLY_APPROVED'] },
+          validUntil: { gte: now, lte: sevenDaysFromNow },
+        },
+      }),
+
+      // KPI 19 & 20: Right to Repair traceability — parti con barcode / totale parti attive
+      this.prisma.part.count({ where: { tenantId, isActive: true } }),
+      this.prisma.part.count({ where: { tenantId, isActive: true, barcode: { not: null } } }),
+
+      // KPI 21: Scorte in allarme via raw correlated query (Prisma ORM non supporta cross-model field comparison)
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*)::bigint AS count
+        FROM inventory_items ii
+        JOIN parts p ON ii.part_id = p.id
+        WHERE p.tenant_id = ${tenantId}::uuid
+          AND p.is_active = true
+          AND ii.quantity <= p.min_stock_level
+      `,
     ]);
 
     // Calculate efficiency (completed / total work orders)
@@ -264,6 +299,11 @@ export class ReportingService {
 
     const currentMonthRevenue = Number(fatturatoMese._sum.total ?? 0);
 
+    const rightToRepairPct =
+      totalPartsCount > 0 ? Math.round((trackedPartsCount / totalPartsCount) * 100) : 100;
+
+    const scorteInAllarme = Number((lowStockRaw as [{ count: bigint }])[0]?.count ?? 0);
+
     return {
       clientiTotali,
       veicoliTotali,
@@ -279,6 +319,9 @@ export class ReportingService {
       grossMargin,
       cashFlow7d: Number(paymentsLast7d._sum.total ?? 0),
       revenueTarget: Math.round(currentMonthRevenue * 1.15),
+      scorteInAllarme,
+      preventiviInScadenza,
+      rightToRepairPct,
     };
   }
 

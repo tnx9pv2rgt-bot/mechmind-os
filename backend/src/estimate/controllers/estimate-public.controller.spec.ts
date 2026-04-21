@@ -57,11 +57,19 @@ describe('EstimatePublicController', () => {
           { lineId: 'line-001', approved: true },
           { lineId: 'line-002', approved: false, reason: 'Troppo caro' },
         ],
+        customerSignature: 'Mario Rossi',
+        termsAccepted: true,
       };
 
-      const result = await controller.approveLines('tok-abc', dto);
+      const result = await controller.approveLines('tok-abc', dto, '127.0.0.1');
 
-      expect(service.processApproval).toHaveBeenCalledWith('tok-abc', dto.approvals);
+      expect(service.processApproval).toHaveBeenCalledWith(
+        'tok-abc',
+        dto.approvals,
+        'Mario Rossi',
+        true,
+        '127.0.0.1',
+      );
       expect(result).toEqual({
         success: true,
         data: approved,
@@ -71,13 +79,14 @@ describe('EstimatePublicController', () => {
   });
 
   describe('approveAll', () => {
-    it('should delegate to service with token', async () => {
+    it('should delegate to service with token and signature', async () => {
       const approved = { ...mockEstimate, status: 'ACCEPTED' };
       service.approveAll.mockResolvedValue(approved as never);
+      const dto = { customerSignature: 'Mario Rossi', termsAccepted: true };
 
-      const result = await controller.approveAll('tok-abc');
+      const result = await controller.approveAll('tok-abc', dto, '127.0.0.1');
 
-      expect(service.approveAll).toHaveBeenCalledWith('tok-abc');
+      expect(service.approveAll).toHaveBeenCalledWith('tok-abc', 'Mario Rossi', true, '127.0.0.1');
       expect(result).toEqual({
         success: true,
         data: approved,

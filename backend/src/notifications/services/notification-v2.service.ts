@@ -11,6 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EmailService } from '../email/email.service';
+import { NotificationsGateway } from '../gateways/notifications.gateway';
 import twilio from 'twilio';
 import type { Twilio } from 'twilio';
 import {
@@ -69,6 +71,8 @@ export class NotificationV2Service {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly encryption: EncryptionService,
+    private readonly emailService: EmailService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {
     const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
@@ -237,6 +241,48 @@ export class NotificationV2Service {
         case NotificationChannel.WHATSAPP:
           messageId = await this.sendWhatsApp(phone, message);
           break;
+        case NotificationChannel.IN_APP: {
+          const notification = await this.prisma.notification.create({
+            data: {
+              customerId: data.customerId,
+              tenantId: data.tenantId,
+              type: data.type,
+              channel: data.channel,
+              status: NotificationStatus.DELIVERED,
+              message,
+              sentAt: new Date(),
+              metadata: (data.metadata || {}) as Prisma.InputJsonValue,
+            },
+          });
+          this.notificationsGateway.broadcastToTenant(data.tenantId, 'notification:new', {
+            id: notification.id,
+            type: data.type,
+            message,
+            metadata: data.metadata,
+            createdAt: notification.createdAt,
+          });
+          this.eventEmitter.emit('notification.sent', notification);
+          return { success: true, notificationId: notification.id, messageId: notification.id };
+        }
+        case NotificationChannel.EMAIL: {
+          const customerEmail = await this.decryptEmail(customer.encryptedEmail);
+          if (!customerEmail) {
+            return { success: false, error: 'Customer email not available' };
+          }
+          const customerName = await this.getCustomerName(customer);
+          const approvalUrl = data.metadata?.approvalUrl as string | undefined;
+          const emailResult = await this.emailService.sendEstimateApproval({
+            customerName,
+            customerEmail,
+            estimateId: (data.metadata?.estimateId as string) || '',
+            approvalUrl: approvalUrl || '',
+          });
+          if (!emailResult.success) {
+            return { success: false, error: emailResult.error };
+          }
+          messageId = emailResult.messageId || 'email-' + Date.now();
+          break;
+        }
         default:
           return { success: false, error: 'Unsupported channel' };
       }
@@ -687,6 +733,16 @@ export class NotificationV2Service {
     } catch {
       this.logger.warn('Failed to decrypt phone, using raw value');
       return encryptedPhone;
+    }
+  }
+
+  private async decryptEmail(encryptedEmail: string | null | undefined): Promise<string | null> {
+    if (!encryptedEmail) return null;
+    try {
+      return this.encryption.decrypt(encryptedEmail);
+    } catch {
+      this.logger.warn('Failed to decrypt email');
+      return null;
     }
   }
 
