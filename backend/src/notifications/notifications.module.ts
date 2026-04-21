@@ -10,6 +10,7 @@ import { NotificationV2Service } from './services/notification-v2.service';
 import { NotificationTriggersService } from './services/notification-triggers.service';
 import { EmailService } from './email/email.service';
 import { SmsService } from './sms/sms.service';
+import { PecService } from './pec/pec.service';
 
 // Controllers
 import { NotificationsController } from './controllers/notifications.controller';
@@ -90,6 +91,7 @@ import { SmsProcessor } from './processors/sms.processor';
     NotificationTriggersService,
     EmailService,
     SmsService,
+    PecService,
     SseService,
     RedisPubSubService,
 
@@ -108,6 +110,7 @@ import { SmsProcessor } from './processors/sms.processor';
     NotificationTriggersService,
     EmailService,
     SmsService,
+    PecService,
     SseService,
   ],
 })

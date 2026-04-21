@@ -3,6 +3,16 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
 
+// next-intl configuration (will be activated once npm install next-intl is successful)
+let withNextIntl = (config) => config;
+try {
+  const createNextIntlPlugin = require('next-intl/plugin');
+  withNextIntl = createNextIntlPlugin('./i18n/config.ts');
+} catch (error) {
+  // next-intl not installed yet — plugin will be loaded after npm install
+  console.warn('⚠️  next-intl not installed. Run: npm install next-intl');
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for non-Vercel hosting (Render, Docker)
@@ -275,7 +285,7 @@ const nextConfig = {
   // (lucide-icons/lucide#1482, vercel/next.js#53668).
 };
 
-module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
+module.exports = withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
   silent: true,
   org: process.env.SENTRY_ORG || '',
   project: process.env.SENTRY_PROJECT || '',

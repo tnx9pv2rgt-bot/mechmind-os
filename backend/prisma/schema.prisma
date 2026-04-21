@@ -14,10 +14,10 @@ datasource db {
 // ==========================================
 
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  settings  Json     @default("{}")
+  id         String   @id @default(uuid())
+  name       String
+  slug       String   @unique
+  settings   Json     @default("{}")
   isActive   Boolean  @default(true) @map("is_active")
   apiKeyHash String?  @map("api_key_hash")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -60,7 +60,7 @@ model Tenant {
   dataRetentionExecutionLogs DataRetentionExecutionLog[]
 
   // LPR (License Plate Recognition)
-  lprCameras            LprCamera[]
+  lprCameras             LprCamera[]
   licensePlateDetections LicensePlateDetection[]
 
   // Shop Floor
@@ -68,13 +68,13 @@ model Tenant {
   shopFloorEvents ShopFloorEvent[]
   workOrders      WorkOrder[]
   technicians     Technician[]
-  
+
   // Vehicle Twin
-  vehicleTwinConfigs VehicleTwinConfig[]
-  vehicleTwinComponents VehicleTwinComponent[]
-  componentHistories ComponentHistory[]
+  vehicleTwinConfigs     VehicleTwinConfig[]
+  vehicleTwinComponents  VehicleTwinComponent[]
+  componentHistories     ComponentHistory[]
   vehicleHealthHistories VehicleHealthHistory[]
-  vehicleDamages VehicleDamage[]
+  vehicleDamages         VehicleDamage[]
 
   // Fleet
   fleets        Fleet[]
@@ -121,6 +121,9 @@ model Tenant {
   // AI Compliance (EU AI Act)
   aiDecisionLogs AiDecisionLog[]
 
+  // Webhooks
+  webhookSubscriptions WebhookSubscription[]
+
   @@map("tenants")
 }
 
@@ -150,10 +153,10 @@ model User {
   passkeys Passkey[]
 
   // Recovery
-  backupCodes            BackupCode[]
-  recoveryEmail          String?      @map("recovery_email")
-  recoveryPhone          String?      @map("recovery_phone")  // encrypted via EncryptionService
-  recoveryPhoneVerified  Boolean      @default(false) @map("recovery_phone_verified")
+  backupCodes           BackupCode[]
+  recoveryEmail         String?      @map("recovery_email")
+  recoveryPhone         String?      @map("recovery_phone") // encrypted via EncryptionService
+  recoveryPhoneVerified Boolean      @default(false) @map("recovery_phone_verified")
 
   // MFA
   totpSecret     String?   @map("totp_secret") // encrypted
@@ -227,11 +230,11 @@ model Customer {
   deletedAt          DateTime? @map("deleted_at")
 
   // Dati fiscali (fatturazione elettronica italiana)
-  customerType    CustomerType @default(PERSONA) @map("customer_type")
-  codiceFiscale   String?      @map("codice_fiscale")
-  partitaIva      String?      @map("partita_iva")
-  sdiCode         String?      @map("sdi_code")
-  pecEmail        String?      @map("pec_email")
+  customerType  CustomerType @default(PERSONA) @map("customer_type")
+  codiceFiscale String?      @map("codice_fiscale")
+  partitaIva    String?      @map("partita_iva")
+  sdiCode       String?      @map("sdi_code")
+  pecEmail      String?      @map("pec_email")
 
   // Indirizzo (obbligatorio per fatturazione)
   address    String? @map("address")
@@ -320,8 +323,8 @@ model CustomerEncrypted {
 }
 
 model Vehicle {
-  id           String   @id @default(uuid())
-  licensePlate String   @map("license_plate")
+  id           String        @id @default(uuid())
+  licensePlate String        @map("license_plate")
   make         String
   model        String
   year         Int?
@@ -329,8 +332,8 @@ model Vehicle {
   notes        String?
   status       VehicleStatus @default(ACTIVE)
   mileage      Int?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   // Tenant relation
   tenantId String @map("tenant_id")
@@ -372,13 +375,13 @@ model Vehicle {
   // Shop Floor
   workOrders WorkOrder[]
   currentBay ServiceBay[]
-  rfidTag    String?    @map("rfid_tag") @unique
-  
+  rfidTag    String?      @unique @map("rfid_tag")
+
   // Vehicle Twin
-  twinConfig    VehicleTwinConfig?
+  twinConfig     VehicleTwinConfig?
   twinComponents VehicleTwinComponent[]
-  healthHistory VehicleHealthHistory[]
-  damages       VehicleDamage[]
+  healthHistory  VehicleHealthHistory[]
+  damages        VehicleDamage[]
 
   // Soft delete (GDPR)
   deletedAt DateTime? @map("deleted_at")
@@ -520,7 +523,7 @@ model Service {
   category    String?
   duration    Int      @default(60) // minutes
   price       Decimal  @db.Decimal(10, 2)
-  laborRate   Decimal? @db.Decimal(10, 2) @map("labor_rate")
+  laborRate   Decimal? @map("labor_rate") @db.Decimal(10, 2)
   isActive    Boolean  @default(true) @map("is_active")
   isCannedJob Boolean  @default(false) @map("is_canned_job")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -531,7 +534,7 @@ model Service {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relations
-  bookings BookingService[]
+  bookings          BookingService[]
   workOrderServices WorkOrderService[]
 
   @@unique([tenantId, name])
@@ -560,8 +563,8 @@ model BookingService {
 // ==========================================
 
 model Invoice {
-  id        String  @id @default(uuid())
-  tenantId  String  @map("tenant_id")
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
 
   customerId String   @map("customer_id")
   customer   Customer @relation(fields: [customerId], references: [id])
@@ -578,10 +581,10 @@ model Invoice {
   /// @deprecated Use InvoiceItem relation instead
   // Legacy JSON items (kept for backward compatibility, prefer invoiceItems relation)
   items     Json?
-  subtotal  Decimal   @db.Decimal(10, 2)
-  taxRate   Decimal   @default(22) @db.Decimal(5, 2) @map("tax_rate")
-  taxAmount Decimal   @db.Decimal(10, 2) @map("tax_amount")
-  total     Decimal   @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+  taxRate   Decimal @default(22) @map("tax_rate") @db.Decimal(5, 2)
+  taxAmount Decimal @map("tax_amount") @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
 
   notes   String?
   dueDate DateTime? @map("due_date")
@@ -590,17 +593,17 @@ model Invoice {
   pdfUrl  String?   @map("pdf_url")
 
   // Fatturazione elettronica italiana
-  documentType      InvoiceDocumentType @default(FATTURA) @map("document_type")
-  paymentMethod     PaymentMethod?      @map("payment_method")
-  paymentTerms      PaymentTerms        @default(IMMEDIATO) @map("payment_terms")
-  stampDuty         Boolean             @default(false) @map("stamp_duty")
-  stampDutyAmount   Decimal?            @db.Decimal(10, 2) @map("stamp_duty_amount")
-  taxRegime         TaxRegime           @default(ORDINARIO) @map("tax_regime")
+  documentType    InvoiceDocumentType @default(FATTURA) @map("document_type")
+  paymentMethod   PaymentMethod?      @map("payment_method")
+  paymentTerms    PaymentTerms        @default(IMMEDIATO) @map("payment_terms")
+  stampDuty       Boolean             @default(false) @map("stamp_duty")
+  stampDutyAmount Decimal?            @map("stamp_duty_amount") @db.Decimal(10, 2)
+  taxRegime       TaxRegime           @default(ORDINARIO) @map("tax_regime")
 
   // SDI (Sistema di Interscambio)
-  sdiStatus         SdiStatus?          @map("sdi_status")
-  sdiTransmissionId String?             @map("sdi_transmission_id")
-  xmlUrl            String?             @map("xml_url")
+  sdiStatus         SdiStatus? @map("sdi_status")
+  sdiTransmissionId String?    @map("sdi_transmission_id")
+  xmlUrl            String?    @map("xml_url")
 
   // Nota di credito
   creditNoteOfId String?   @map("credit_note_of_id")
@@ -611,36 +614,36 @@ model Invoice {
   invoiceItems InvoiceItem[]
 
   // Text-to-Pay (Stripe Checkout)
-  paymentLinkUrl    String?   @map("payment_link_url")
-  paymentLinkId     String?   @map("payment_link_id")
+  paymentLinkUrl String? @map("payment_link_url")
+  paymentLinkId  String? @map("payment_link_id")
 
   // BNPL (Buy Now Pay Later — Scalapay)
-  bnplProvider      String?   @map("bnpl_provider")
-  bnplOrderId       String?   @map("bnpl_order_id")
-  bnplStatus        String?   @map("bnpl_status")
+  bnplProvider String? @map("bnpl_provider")
+  bnplOrderId  String? @map("bnpl_order_id")
+  bnplStatus   String? @map("bnpl_status")
 
   // Stripe payment idempotency
-  stripeEventId     String?   @unique @map("stripe_event_id")
+  stripeEventId String? @unique @map("stripe_event_id")
 
   // Art. 226 #8, DPR 633/1972 Art. 21 — Data operazione (se diversa da data emissione)
-  operationDate   DateTime?    @map("operation_date")
+  operationDate DateTime? @map("operation_date")
 
   // Ritenuta d'acconto (Art. 25, DPR 600/1973)
-  ritenutaType    String?      @map("ritenuta_type")       // RT01=persone fisiche, RT02=persone giuridiche
-  ritenutaRate    Decimal?     @db.Decimal(5,2) @map("ritenuta_rate")   // Aliquota ritenuta (es. 20%)
-  ritenutaAmount  Decimal?     @db.Decimal(10,2) @map("ritenuta_amount") // Importo ritenuta calcolato
-  ritenutaCausale String?      @map("ritenuta_causale")    // Causale pagamento (A-Z per CU)
+  ritenutaType    String?  @map("ritenuta_type") // RT01=persone fisiche, RT02=persone giuridiche
+  ritenutaRate    Decimal? @map("ritenuta_rate") @db.Decimal(5, 2) // Aliquota ritenuta (es. 20%)
+  ritenutaAmount  Decimal? @map("ritenuta_amount") @db.Decimal(10, 2) // Importo ritenuta calcolato
+  ritenutaCausale String?  @map("ritenuta_causale") // Causale pagamento (A-Z per CU)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
   @@unique([tenantId, invoiceNumber])
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, status])
   @@index([customerId])
   @@index([bookingId])
-  @@index([status])
   @@map("invoices")
 }
 
@@ -652,13 +655,13 @@ model InvoiceItem {
   itemType    InvoiceItemType @default(SERVICE) @map("item_type")
   description String
   quantity    Decimal         @db.Decimal(10, 3)
-  unitPrice   Decimal         @db.Decimal(10, 2) @map("unit_price")
-  vatRate     Decimal         @db.Decimal(5, 2) @map("vat_rate")
+  unitPrice   Decimal         @map("unit_price") @db.Decimal(10, 2)
+  vatRate     Decimal         @map("vat_rate") @db.Decimal(5, 2)
   discount    Decimal         @default(0) @db.Decimal(5, 2)
   subtotal    Decimal         @db.Decimal(10, 2)
-  vatAmount   Decimal         @db.Decimal(10, 2) @map("vat_amount")
+  vatAmount   Decimal         @map("vat_amount") @db.Decimal(10, 2)
   total       Decimal         @db.Decimal(10, 2)
-  naturaIva   String?         @map("natura_iva")  // Codice Natura IVA (N1-N7) per esenzioni/esclusioni
+  naturaIva   String?         @map("natura_iva") // Codice Natura IVA (N1-N7) per esenzioni/esclusioni
   partId      String?         @map("part_id")
   createdAt   DateTime        @default(now()) @map("created_at")
 
@@ -1086,8 +1089,8 @@ model ObdReading {
   // Geolocation (if available)
   latitude  Float?
   longitude Float?
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId String @map("tenant_id")
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String @map("tenant_id")
 
   @@index([tenantId])
   @@index([deviceId])
@@ -1179,8 +1182,8 @@ model Part {
   // Compliance 2026 — EU Right to Repair 2024/1799 + D.Lgs. 206/2005
   partType       PartType @default(GENUINE) @map("part_type")
   warrantyMonths Int      @default(24) @map("warranty_months") // GENUINE/AFTERMARKET/REGENERATED=24, USED=3
-  originCode     String?  @map("origin_code")  // codice motore/telaio di provenienza (ricambi usati)
-  barcode        String?  // EAN/QR per tracciabilità magazzino
+  originCode     String?  @map("origin_code") // codice motore/telaio di provenienza (ricambi usati)
+  barcode        String? // EAN/QR per tracciabilità magazzino
 
   // Inventory
   minStockLevel Int  @default(5) @map("min_stock_level")
@@ -1193,10 +1196,10 @@ model Part {
   supplierId String?   @map("supplier_id")
   supplier   Supplier? @relation(fields: [supplierId], references: [id])
 
-  inventory    InventoryItem[]
-  movements    InventoryMovement[]
-  orderItems   PurchaseOrderItem[]
-  bookingParts BookingPart[]
+  inventory      InventoryItem[]
+  movements      InventoryMovement[]
+  orderItems     PurchaseOrderItem[]
+  bookingParts   BookingPart[]
   workOrderParts WorkOrderPart[]
 
   isActive  Boolean  @default(true) @map("is_active")
@@ -1271,6 +1274,7 @@ model InventoryItem {
 
   @@unique([partId, storageLocation])
   @@index([tenantId])
+  @@index([tenantId, quantity])
   @@index([locationId])
   @@map("inventory_items")
 }
@@ -1339,8 +1343,8 @@ model PurchaseOrder {
   @@unique([tenantId, orderNumber])
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, status])
   @@index([supplierId])
-  @@index([status])
   @@map("purchase_orders")
 }
 
@@ -1391,10 +1395,10 @@ model BookingPart {
 
 // Tipologia ricambio — D.Lgs. 206/2005 + EU Right to Repair 2024/1799
 enum PartType {
-  GENUINE       // OEM / originale
-  AFTERMARKET   // Compatibile (non OEM)
-  REGENERATED   // Rigenerato (garanzia 24 mesi)
-  USED          // Usato da demolitore (garanzia minima 3 mesi)
+  GENUINE // OEM / originale
+  AFTERMARKET // Compatibile (non OEM)
+  REGENERATED // Rigenerato (garanzia 24 mesi)
+  USED // Usato da demolitore (garanzia minima 3 mesi)
 }
 
 enum MovementType {
@@ -1874,9 +1878,9 @@ model BackupCode {
 }
 
 model MagicLink {
-  id       String  @id @default(cuid())
+  id       String @id @default(cuid())
   email    String
-  token    String  @unique
+  token    String @unique
   tenantId String @map("tenant_id")
 
   expiresAt DateTime  @map("expires_at") // 15 minutes
@@ -1894,14 +1898,14 @@ model MagicLink {
 }
 
 model SmsOtp {
-  id          String @id @default(cuid())
-  tenantId    String @map("tenant_id")
-  userId      String @map("user_id")
+  id          String    @id @default(cuid())
+  tenantId    String    @map("tenant_id")
+  userId      String    @map("user_id")
   phone       String // hashed via EncryptionService.hash()
   code        String // bcrypt hashed
   purpose     String // 'login_mfa' | 'recovery' | 'phone_verify'
-  attempts    Int    @default(0)
-  maxAttempts Int    @default(5) @map("max_attempts")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
   expiresAt   DateTime  @map("expires_at")
   usedAt      DateTime? @map("used_at")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -2126,33 +2130,33 @@ model DataRetentionExecutionLog {
 // ============================================
 
 model LicensePlateDetection {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Detection details
-  imageUrl      String   @map("image_url")
-  detectedText  String   @map("detected_text")
-  confidence    Float
-  country       String?
-  region        String?
-  vehicleType   String?  @map("vehicle_type")
-  boundingBox   Json?    @map("bounding_box")
-  
+  imageUrl     String  @map("image_url")
+  detectedText String  @map("detected_text")
+  confidence   Float
+  country      String?
+  region       String?
+  vehicleType  String? @map("vehicle_type")
+  boundingBox  Json?   @map("bounding_box")
+
   // Provider info
-  provider      String
-  rawResponse   Json?    @map("raw_response")
-  
+  provider    String
+  rawResponse Json?  @map("raw_response")
+
   // Camera reference
-  cameraId      String?  @map("camera_id")
-  camera        LprCamera? @relation(fields: [cameraId], references: [id])
-  
+  cameraId String?    @map("camera_id")
+  camera   LprCamera? @relation(fields: [cameraId], references: [id])
+
   // Relations
-  entryExits    VehicleEntryExit[]
-  
+  entryExits VehicleEntryExit[]
+
   // Timestamps
-  processedAt   DateTime @default(now()) @map("processed_at")
-  createdAt     DateTime @default(now()) @map("created_at")
+  processedAt DateTime @default(now()) @map("processed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
@@ -2163,38 +2167,38 @@ model LicensePlateDetection {
 }
 
 model VehicleEntryExit {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
 
   // Entry/Exit details
-  type          EntryExitType @map("type")
-  licensePlate  String        @map("license_plate")
-  
+  type         EntryExitType @map("type")
+  licensePlate String        @map("license_plate")
+
   // Detection reference
-  detectionId   String        @map("detection_id")
-  detection     LicensePlateDetection @relation(fields: [detectionId], references: [id])
-  
+  detectionId String                @map("detection_id")
+  detection   LicensePlateDetection @relation(fields: [detectionId], references: [id])
+
   // Image and confidence
-  imageUrl      String        @map("image_url")
-  confidence    Float
-  
+  imageUrl   String @map("image_url")
+  confidence Float
+
   // Location
-  location      String?
-  cameraId      String?       @map("camera_id")
-  
+  location String?
+  cameraId String? @map("camera_id")
+
   // Vehicle relation (if known)
-  vehicleId     String?       @map("vehicle_id")
-  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
-  
+  vehicleId String?  @map("vehicle_id")
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
   // Authorization
-  isAuthorized  Boolean       @default(false) @map("is_authorized")
-  
+  isAuthorized Boolean @default(false) @map("is_authorized")
+
   // Parking session relations
-  parkingEntrySessions  ParkingSession[] @relation("EntrySession")
-  parkingExitSessions   ParkingSession[] @relation("ExitSession")
-  
+  parkingEntrySessions ParkingSession[] @relation("EntrySession")
+  parkingExitSessions  ParkingSession[] @relation("ExitSession")
+
   // Timestamp
-  timestamp     DateTime      @default(now())
+  timestamp DateTime @default(now())
 
   @@index([tenantId])
   @@index([licensePlate])
@@ -2204,30 +2208,30 @@ model VehicleEntryExit {
 }
 
 model ParkingSession {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
 
   // Vehicle info
-  licensePlate  String    @map("license_plate")
-  vehicleId     String?   @map("vehicle_id")
-  vehicle       Vehicle?  @relation(fields: [vehicleId], references: [id])
-  
+  licensePlate String   @map("license_plate")
+  vehicleId    String?  @map("vehicle_id")
+  vehicle      Vehicle? @relation(fields: [vehicleId], references: [id])
+
   // Entry/Exit references
-  entryId       String    @unique @map("entry_id")
-  entry         VehicleEntryExit @relation("EntrySession", fields: [entryId], references: [id])
-  exitId        String?   @unique @map("exit_id")
-  exit          VehicleEntryExit? @relation("ExitSession", fields: [exitId], references: [id])
-  
+  entryId String            @unique @map("entry_id")
+  entry   VehicleEntryExit  @relation("EntrySession", fields: [entryId], references: [id])
+  exitId  String?           @unique @map("exit_id")
+  exit    VehicleEntryExit? @relation("ExitSession", fields: [exitId], references: [id])
+
   // Session status
-  status        ParkingSessionStatus @default(ACTIVE)
-  
+  status ParkingSessionStatus @default(ACTIVE)
+
   // Timestamps
-  entryTime     DateTime  @default(now()) @map("entry_time")
-  exitTime      DateTime? @map("exit_time")
-  durationMinutes Int?    @map("duration_minutes")
-  
+  entryTime       DateTime  @default(now()) @map("entry_time")
+  exitTime        DateTime? @map("exit_time")
+  durationMinutes Int?      @map("duration_minutes")
+
   // Parking spot
-  parkingSpotId String?   @map("parking_spot_id")
+  parkingSpotId String? @map("parking_spot_id")
 
   @@index([tenantId])
   @@index([licensePlate])
@@ -2237,29 +2241,29 @@ model ParkingSession {
 }
 
 model LprCamera {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Camera details
-  name        String
-  location    String
-  direction   EntryExitType // ENTRY or EXIT
-  
+  name      String
+  location  String
+  direction EntryExitType // ENTRY or EXIT
+
   // Provider config
-  provider    String
-  config      Json?    @default("{}")
-  
+  provider String
+  config   Json?  @default("{}")
+
   // Status
-  isActive    Boolean  @default(true) @map("is_active")
+  isActive    Boolean   @default(true) @map("is_active")
   lastCapture DateTime? @map("last_capture")
-  
+
   // Relations
-  detections  LicensePlateDetection[]
-  
+  detections LicensePlateDetection[]
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
@@ -2288,7 +2292,7 @@ model ObdFreezeFrame {
   device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   dtcCode    String   @map("dtc_code")
-  data       Json     // Freeze frame data as JSON
+  data       Json // Freeze frame data as JSON
   capturedAt DateTime @default(now()) @map("captured_at")
 
   @@index([deviceId])
@@ -2302,13 +2306,13 @@ model ObdMode06Result {
   deviceId String    @map("device_id")
   device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
-  testId      String  @map("test_id")
-  componentId String? @map("component_id")
-  testName    String  @map("test_name")
+  testId      String   @map("test_id")
+  componentId String?  @map("component_id")
+  testName    String   @map("test_name")
   value       Float?
-  minValue    Float?  @map("min_value")
-  maxValue    Float?  @map("max_value")
-  status      String  // PASS, FAIL, PENDING
+  minValue    Float?   @map("min_value")
+  maxValue    Float?   @map("max_value")
+  status      String // PASS, FAIL, PENDING
   unit        String?
   recordedAt  DateTime @default(now()) @map("recorded_at")
 
@@ -2323,10 +2327,10 @@ model ObdEvapTest {
   deviceId String    @map("device_id")
   device   ObdDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
-  testType    String   @map("test_type") // LEAK, PRESSURE, VACUUM
-  status      String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
-  results     Json?    // Test results as JSON
-  startedAt   DateTime @default(now()) @map("started_at")
+  testType    String    @map("test_type") // LEAK, PRESSURE, VACUUM
+  status      String    @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  results     Json? // Test results as JSON
+  startedAt   DateTime  @default(now()) @map("started_at")
   completedAt DateTime? @map("completed_at")
 
   @@index([deviceId])
@@ -2340,9 +2344,9 @@ model ObdEvapTest {
 // ============================================
 
 model ShopFloor {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   name   String
   status String @default("ACTIVE")
@@ -2360,8 +2364,8 @@ model ShopFloor {
 }
 
 model ServiceBay {
-  id          String   @id @default(uuid())
-  shopFloorId String   @map("shop_floor_id")
+  id          String    @id @default(uuid())
+  shopFloorId String    @map("shop_floor_id")
   shopFloor   ShopFloor @relation(fields: [shopFloorId], references: [id], onDelete: Cascade)
 
   name   String
@@ -2374,16 +2378,16 @@ model ServiceBay {
   floor     Int   @default(1)
 
   // Capabilities
-  capabilities    String[]
+  capabilities     String[]
   maxVehicleWeight Float    @map("max_vehicle_weight")
-  liftCapacity    Float?    @map("lift_capacity")
+  liftCapacity     Float?   @map("lift_capacity")
 
   // Current state
-  currentVehicleId   String?   @map("current_vehicle_id")
-  currentVehicle     Vehicle?  @relation(fields: [currentVehicleId], references: [id])
-  currentWorkOrderId String?   @map("current_work_order_id")
+  currentVehicleId   String?    @map("current_vehicle_id")
+  currentVehicle     Vehicle?   @relation(fields: [currentVehicleId], references: [id])
+  currentWorkOrderId String?    @map("current_work_order_id")
   currentWorkOrder   WorkOrder? @relation(fields: [currentWorkOrderId], references: [id])
-  checkInTime        DateTime? @map("check_in_time")
+  checkInTime        DateTime?  @map("check_in_time")
 
   // Relations
   sensors        Sensor[]
@@ -2398,8 +2402,8 @@ model ServiceBay {
 }
 
 model ParkingSpot {
-  id          String @id @default(uuid())
-  shopFloorId String @map("shop_floor_id")
+  id          String    @id @default(uuid())
+  shopFloorId String    @map("shop_floor_id")
   shopFloor   ShopFloor @relation(fields: [shopFloorId], references: [id], onDelete: Cascade)
 
   name   String
@@ -2410,8 +2414,8 @@ model ParkingSpot {
   locationX Float @map("location_x")
   locationY Float @map("location_y")
 
-  vehicleId     String? @map("vehicle_id")
-  licensePlate  String? @map("license_plate")
+  vehicleId    String? @map("vehicle_id")
+  licensePlate String? @map("license_plate")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -2422,17 +2426,17 @@ model ParkingSpot {
 }
 
 model Sensor {
-  id     String @id @default(uuid())
-  bayId  String @map("bay_id")
-  bay    ServiceBay @relation(fields: [bayId], references: [id], onDelete: Cascade)
+  id    String     @id @default(uuid())
+  bayId String     @map("bay_id")
+  bay   ServiceBay @relation(fields: [bayId], references: [id], onDelete: Cascade)
 
-  type   String // RFID, BLUETOOTH_BEACON, ULTRASONIC, PIR, CAMERA, PRESSURE, MAGNETIC
-  name   String
+  type     String // RFID, BLUETOOTH_BEACON, ULTRASONIC, PIR, CAMERA, PRESSURE, MAGNETIC
+  name     String
   isActive Boolean @default(true) @map("is_active")
 
-  lastReading DateTime? @map("last_reading")
-  batteryLevel Int?     @map("battery_level")
-  config      Json?
+  lastReading  DateTime? @map("last_reading")
+  batteryLevel Int?      @map("battery_level")
+  config       Json?
 
   readings SensorReading[]
 
@@ -2442,14 +2446,14 @@ model Sensor {
 }
 
 model SensorReading {
-  id        String   @id @default(uuid())
-  sensorId  String   @map("sensor_id")
-  sensor    Sensor     @relation(fields: [sensorId], references: [id], onDelete: Cascade)
-  bayId     String   @map("bay_id")
-  bay       ServiceBay @relation(fields: [bayId], references: [id], onDelete: Cascade)
+  id       String     @id @default(uuid())
+  sensorId String     @map("sensor_id")
+  sensor   Sensor     @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  bayId    String     @map("bay_id")
+  bay      ServiceBay @relation(fields: [bayId], references: [id], onDelete: Cascade)
 
-  type   String // RFID, BLUETOOTH_BEACON, ULTRASONIC, PIR, CAMERA, PRESSURE, MAGNETIC
-  data   Json
+  type String // RFID, BLUETOOTH_BEACON, ULTRASONIC, PIR, CAMERA, PRESSURE, MAGNETIC
+  data Json
 
   timestamp DateTime @default(now())
 
@@ -2460,9 +2464,9 @@ model SensorReading {
 }
 
 model ShopFloorEvent {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   type      String // VEHICLE_ENTRY, VEHICLE_EXIT, BAY_ASSIGNMENT, STATUS_CHANGE, TECHNICIAN_MOVE
   timestamp DateTime @default(now())
@@ -2484,18 +2488,18 @@ model ShopFloorEvent {
 }
 
 model WorkOrder {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  woNumber String @map("wo_number")
+  woNumber String          @map("wo_number")
   status   WorkOrderStatus @default(PENDING)
 
   // Relations
-  vehicleId  String  @map("vehicle_id")
-  vehicle    Vehicle @relation(fields: [vehicleId], references: [id])
+  vehicleId String  @map("vehicle_id")
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
 
-  customerId String  @map("customer_id")
+  customerId String @map("customer_id")
 
   technicianId String? @map("technician_id")
 
@@ -2504,26 +2508,26 @@ model WorkOrder {
   assignedBayId String? @map("assigned_bay_id")
 
   // Diagnosis & customer input
-  diagnosis       String?  @db.Text
-  customerRequest String?  @db.Text @map("customer_request")
+  diagnosis       String? @db.Text
+  customerRequest String? @map("customer_request") @db.Text
 
   // Cost tracking
   /// @deprecated Use WorkOrderService relation instead
-  laborItems Json?   @map("labor_items")
+  laborItems Json?    @map("labor_items")
   /// @deprecated Use WorkOrderPart relation instead
-  partsUsed  Json?   @map("parts_used")
-  laborHours Decimal? @db.Decimal(5, 2) @map("labor_hours")
-  laborCost  Decimal? @db.Decimal(10, 2) @map("labor_cost")
-  partsCost  Decimal? @db.Decimal(10, 2) @map("parts_cost")
-  totalCost  Decimal? @db.Decimal(10, 2) @map("total_cost")
+  partsUsed  Json?    @map("parts_used")
+  laborHours Decimal? @map("labor_hours") @db.Decimal(5, 2)
+  laborCost  Decimal? @map("labor_cost") @db.Decimal(10, 2)
+  partsCost  Decimal? @map("parts_cost") @db.Decimal(10, 2)
+  totalCost  Decimal? @map("total_cost") @db.Decimal(10, 2)
 
   // Vehicle state
   mileageIn  Int? @map("mileage_in")
   mileageOut Int? @map("mileage_out")
 
   // Media
-  photos           Json?   @map("photos")
-  customerSignature String? @db.Text @map("customer_signature")
+  photos            Json?   @map("photos")
+  customerSignature String? @map("customer_signature") @db.Text
 
   // Timestamps
   actualStartTime      DateTime? @map("actual_start_time")
@@ -2548,32 +2552,32 @@ model WorkOrder {
   reviewRequestSentAt DateTime? @map("review_request_sent_at")
 
   // --- New DMS fields ---
-  priority          String?     @default("NORMAL") @db.VarChar(20)
-  woType            String?     @default("CUSTOMER_PAY") @map("wo_type") @db.VarChar(30)
-  serviceAdvisorId  String?     @map("service_advisor_id")
-  dropOffType       String?     @map("drop_off_type") @db.VarChar(30)
-  courtesyCarRequested Boolean? @default(false) @map("courtesy_car_requested")
-  courtesyCarPlate  String?     @map("courtesy_car_plate") @db.VarChar(20)
-  internalNotes     String?     @map("internal_notes") @db.Text
-  customerVisibleNotes String?  @map("customer_visible_notes") @db.Text
-  preExistingDamage String?     @map("pre_existing_damage") @db.Text
-  testDriveBefore   Boolean?    @default(false) @map("test_drive_before")
-  testDriveAfter    Boolean?    @default(false) @map("test_drive_after")
-  marketingSource   String?     @map("marketing_source") @db.VarChar(100)
-  preAuthAmount     Decimal?    @map("pre_auth_amount") @db.Decimal(10, 2)
-  taxExempt         Boolean?    @default(false) @map("tax_exempt")
-  taxExemptCert     String?     @map("tax_exempt_cert") @db.VarChar(50)
-  recallCheckDone   Boolean?    @default(false) @map("recall_check_done")
-  parkingSpot       String?     @map("parking_spot") @db.VarChar(20)
-  keyTag            String?     @map("key_tag") @db.VarChar(50)
-  preferredContact  String?     @map("preferred_contact") @db.VarChar(20)
-  estimatedPickup   DateTime?   @map("estimated_pickup")
+  priority             String?   @default("NORMAL") @db.VarChar(20)
+  woType               String?   @default("CUSTOMER_PAY") @map("wo_type") @db.VarChar(30)
+  serviceAdvisorId     String?   @map("service_advisor_id")
+  dropOffType          String?   @map("drop_off_type") @db.VarChar(30)
+  courtesyCarRequested Boolean?  @default(false) @map("courtesy_car_requested")
+  courtesyCarPlate     String?   @map("courtesy_car_plate") @db.VarChar(20)
+  internalNotes        String?   @map("internal_notes") @db.Text
+  customerVisibleNotes String?   @map("customer_visible_notes") @db.Text
+  preExistingDamage    String?   @map("pre_existing_damage") @db.Text
+  testDriveBefore      Boolean?  @default(false) @map("test_drive_before")
+  testDriveAfter       Boolean?  @default(false) @map("test_drive_after")
+  marketingSource      String?   @map("marketing_source") @db.VarChar(100)
+  preAuthAmount        Decimal?  @map("pre_auth_amount") @db.Decimal(10, 2)
+  taxExempt            Boolean?  @default(false) @map("tax_exempt")
+  taxExemptCert        String?   @map("tax_exempt_cert") @db.VarChar(50)
+  recallCheckDone      Boolean?  @default(false) @map("recall_check_done")
+  parkingSpot          String?   @map("parking_spot") @db.VarChar(20)
+  keyTag               String?   @map("key_tag") @db.VarChar(50)
+  preferredContact     String?   @map("preferred_contact") @db.VarChar(20)
+  estimatedPickup      DateTime? @map("estimated_pickup")
 
   // Optimistic locking
   version Int @default(0)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
   @@unique([tenantId, woNumber])
@@ -2582,7 +2586,6 @@ model WorkOrder {
   @@index([tenantId, status])
   @@index([vehicleId])
   @@index([customerId])
-  @@index([status])
   @@map("work_orders")
 }
 
@@ -2607,12 +2610,12 @@ model TechnicianTimeLog {
 }
 
 model WorkOrderTechnician {
-  id        String   @id @default(uuid())
-  workOrderId String @map("work_order_id")
+  id          String    @id @default(uuid())
+  workOrderId String    @map("work_order_id")
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   technicianId String @map("technician_id")
-  
+
   assignedAt DateTime @default(now()) @map("assigned_at")
 
   @@unique([workOrderId, technicianId])
@@ -2622,35 +2625,35 @@ model WorkOrderTechnician {
 }
 
 model WorkOrderService {
-  id        String   @id @default(uuid())
-  workOrderId String @map("work_order_id")
+  id          String    @id @default(uuid())
+  workOrderId String    @map("work_order_id")
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
-  serviceId String @map("service_id")
+  serviceId String  @map("service_id")
   service   Service @relation(fields: [serviceId], references: [id])
 
   status String @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
 
-  estimatedMinutes Int @map("estimated_minutes")
-  actualMinutes    Int? @map("actual_minutes")
-  technicianId     String? @map("technician_id")
+  estimatedMinutes   Int     @map("estimated_minutes")
+  actualMinutes      Int?    @map("actual_minutes")
+  technicianId       String? @map("technician_id")
   relatedComponentId String? @map("related_component_id")
 
   // --- 3C Fields ---
-  customerConcern   String?     @map("customer_concern") @db.Text
-  cause             String?     @db.Text
-  correction        String?     @db.Text
-  authorized        Boolean?    @default(true)
-  declined          Boolean?    @default(false)
-  declinedReason    String?     @map("declined_reason") @db.VarChar(255)
-  laborRate         Decimal?    @map("labor_rate") @db.Decimal(10, 2)
-  laborType         String?     @map("labor_type") @db.VarChar(20)
-  opCode            String?     @map("op_code") @db.VarChar(30)
-  isSublet          Boolean?    @default(false) @map("is_sublet")
-  subletVendor      String?     @map("sublet_vendor") @db.VarChar(100)
-  warrantyType      String?     @map("warranty_type") @db.VarChar(30)
-  description       String?     @db.Text
-  estimatedCost     Decimal?    @map("estimated_cost") @db.Decimal(10, 2)
+  customerConcern String?  @map("customer_concern") @db.Text
+  cause           String?  @db.Text
+  correction      String?  @db.Text
+  authorized      Boolean? @default(true)
+  declined        Boolean? @default(false)
+  declinedReason  String?  @map("declined_reason") @db.VarChar(255)
+  laborRate       Decimal? @map("labor_rate") @db.Decimal(10, 2)
+  laborType       String?  @map("labor_type") @db.VarChar(20)
+  opCode          String?  @map("op_code") @db.VarChar(30)
+  isSublet        Boolean? @default(false) @map("is_sublet")
+  subletVendor    String?  @map("sublet_vendor") @db.VarChar(100)
+  warrantyType    String?  @map("warranty_type") @db.VarChar(30)
+  description     String?  @db.Text
+  estimatedCost   Decimal? @map("estimated_cost") @db.Decimal(10, 2)
 
   @@unique([workOrderId, serviceId])
   @@index([workOrderId])
@@ -2659,12 +2662,12 @@ model WorkOrderService {
 }
 
 model WorkOrderPart {
-  id        String   @id @default(uuid())
-  workOrderId String @map("work_order_id")
+  id          String    @id @default(uuid())
+  workOrderId String    @map("work_order_id")
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   partId String @map("part_id")
-  part   Part @relation(fields: [partId], references: [id])
+  part   Part   @relation(fields: [partId], references: [id])
 
   quantity Int
   status   String @default("PENDING") // PENDING, INSTALLED
@@ -2688,15 +2691,15 @@ model Technician {
   isActive Boolean @default(true) @map("is_active")
 
   // Skills for AI scheduling
-  skills    String[] @default([])
+  skills          String[] @default([])
   specializations String[] @default([])
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  payConfig  TechnicianPayConfig[]
-  goals      TechnicianGoal[]
+  payConfig      TechnicianPayConfig[]
+  goals          TechnicianGoal[]
   payrollRecords PayrollRecord[]
 
   @@index([tenantId])
@@ -2710,27 +2713,27 @@ model Technician {
 // ============================================
 
 model VehicleTwinConfig {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   vehicleId String  @unique @map("vehicle_id")
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   // Configuration
-  isEnabled        Boolean @default(true) @map("is_enabled")
-  syncInterval     Int     @default(300) @map("sync_interval") // seconds
-  dataRetentionDays Int    @default(365) @map("data_retention_days")
-  
+  isEnabled         Boolean @default(true) @map("is_enabled")
+  syncInterval      Int     @default(300) @map("sync_interval") // seconds
+  dataRetentionDays Int     @default(365) @map("data_retention_days")
+
   // Features
-  trackLocation    Boolean @default(true) @map("track_location")
-  trackHealth      Boolean @default(true) @map("track_health")
-  trackComponents  Boolean @default(true) @map("track_components")
-  
+  trackLocation   Boolean @default(true) @map("track_location")
+  trackHealth     Boolean @default(true) @map("track_health")
+  trackComponents Boolean @default(true) @map("track_components")
+
   // Metadata
   lastSyncedAt DateTime? @map("last_synced_at")
   config       Json?     @default("{}")
-  
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -2741,31 +2744,31 @@ model VehicleTwinConfig {
 }
 
 model VehicleTwinComponent {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   vehicleId String  @map("vehicle_id")
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   // Component details
-  name        String
-  category    String // ENGINE, TRANSMISSION, BRAKES, SUSPENSION, ELECTRICAL, etc
-  position    String? // Front, Rear, Left, Right, etc
-  partNumber  String? @map("part_number")
-  
+  name       String
+  category   String // ENGINE, TRANSMISSION, BRAKES, SUSPENSION, ELECTRICAL, etc
+  position   String? // Front, Rear, Left, Right, etc
+  partNumber String? @map("part_number")
+
   // Lifecycle
-  installedAt DateTime @default(now()) @map("installed_at")
-  expectedLifespanKm Int? @map("expected_lifespan_km")
-  expectedLifespanMonths Int? @map("expected_lifespan_months")
-  
+  installedAt            DateTime @default(now()) @map("installed_at")
+  expectedLifespanKm     Int?     @map("expected_lifespan_km")
+  expectedLifespanMonths Int?     @map("expected_lifespan_months")
+
   // Current state
-  status      String @default("ACTIVE") // ACTIVE, WARNING, CRITICAL, REPLACED
-  condition   Float @default(100.0) // 0-100 percentage
-  wearLevel   Float @default(0.0) // 0-100 percentage
-  currentMileage Int? @map("current_mileage")
-  estimatedRemainingKm Int? @map("estimated_remaining_km")
-  
+  status               String @default("ACTIVE") // ACTIVE, WARNING, CRITICAL, REPLACED
+  condition            Float  @default(100.0) // 0-100 percentage
+  wearLevel            Float  @default(0.0) // 0-100 percentage
+  currentMileage       Int?   @map("current_mileage")
+  estimatedRemainingKm Int?   @map("estimated_remaining_km")
+
   // Relations
   history ComponentHistory[]
 
@@ -2781,25 +2784,25 @@ model VehicleTwinComponent {
 }
 
 model ComponentHistory {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  componentId String @map("component_id")
+  componentId String               @map("component_id")
   component   VehicleTwinComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
 
   // Event details
-  eventType   String @map("event_type") // INSTALLED, INSPECTED, REPLACED, REPAIRED, CONDITION_CHANGED
-  mileage     Int?
-  condition   Float? // 0-100
-  wearLevel   Float? @map("wear_level") // 0-100
-  notes       String?
-  
+  eventType String  @map("event_type") // INSTALLED, INSPECTED, REPLACED, REPAIRED, CONDITION_CHANGED
+  mileage   Int?
+  condition Float? // 0-100
+  wearLevel Float?  @map("wear_level") // 0-100
+  notes     String?
+
   // Relations
-  workOrderId String? @map("work_order_id")
+  workOrderId  String? @map("work_order_id")
   inspectionId String? @map("inspection_id")
-  
-  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  recordedAt DateTime @default(now()) @map("recorded_at")
 
   @@index([tenantId])
   @@index([componentId])
@@ -2809,29 +2812,29 @@ model ComponentHistory {
 }
 
 model VehicleHealthHistory {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   vehicleId String  @map("vehicle_id")
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   // Health metrics
-  overallScore   Int @map("overall_score") // 0-100
-  engineScore    Int @map("engine_score") // 0-100
+  overallScore      Int @map("overall_score") // 0-100
+  engineScore       Int @map("engine_score") // 0-100
   transmissionScore Int @map("transmission_score") // 0-100
-  brakesScore    Int @map("brakes_score") // 0-100
-  suspensionScore Int @map("suspension_score") // 0-100
-  electricalScore Int @map("electrical_score") // 0-100
-  
+  brakesScore       Int @map("brakes_score") // 0-100
+  suspensionScore   Int @map("suspension_score") // 0-100
+  electricalScore   Int @map("electrical_score") // 0-100
+
   // OBD data
-  hasErrorCodes Boolean @default(false) @map("has_error_codes")
+  hasErrorCodes Boolean  @default(false) @map("has_error_codes")
   errorCodes    String[] @default([]) @map("error_codes")
-  
+
   // Metadata
-  mileage       Int?
-  recordedAt    DateTime @default(now()) @map("recorded_at")
-  source        String @default("OBD") // OBD, INSPECTION, MANUAL
+  mileage    Int?
+  recordedAt DateTime @default(now()) @map("recorded_at")
+  source     String   @default("OBD") // OBD, INSPECTION, MANUAL
 
   @@index([tenantId])
   @@index([vehicleId])
@@ -2840,9 +2843,9 @@ model VehicleHealthHistory {
 }
 
 model VehicleDamage {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   vehicleId String  @map("vehicle_id")
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
@@ -2853,21 +2856,21 @@ model VehicleDamage {
   category    String // EXTERIOR, INTERIOR, MECHANICAL, ELECTRICAL
   position    String? // Front bumper, Rear left door, etc
   description String?
-  
+
   // Images
-  images      String[] // Array of image URLs
-  
+  images String[] // Array of image URLs
+
   // Status
-  status      String @default("ACTIVE") // ACTIVE, REPAIRED, DOCUMENTED
-  
+  status String @default("ACTIVE") // ACTIVE, REPAIRED, DOCUMENTED
+
   // Relations
   inspectionId String? @map("inspection_id")
-  
+
   // Timestamps
-  discoveredAt DateTime @default(now()) @map("discovered_at")
+  discoveredAt DateTime  @default(now()) @map("discovered_at")
   repairedAt   DateTime? @map("repaired_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
@@ -2885,10 +2888,10 @@ model Fleet {
   tenantId String @map("tenant_id")
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  name        String
-  description String?
-  companyName String?  @map("company_name")
-  contactName String?  @map("contact_name")
+  name         String
+  description  String?
+  companyName  String? @map("company_name")
+  contactName  String? @map("contact_name")
   contactEmail String? @map("contact_email")
   contactPhone String? @map("contact_phone")
 
@@ -2898,9 +2901,9 @@ model Fleet {
 
   vehicles FleetVehicle[]
 
+  @@unique([tenantId, name])
   @@index([tenantId])
   @@index([tenantId, createdAt])
-  @@unique([tenantId, name])
   @@map("fleets")
 }
 
@@ -2935,19 +2938,19 @@ model TireSet {
   vehicleId String? @map("vehicle_id")
 
   // Tire details
-  brand   String
-  model   String
-  size    String  // e.g. "225/45 R17"
-  season  TireSeason
-  dot     String? // Manufacturing date code
+  brand  String
+  model  String
+  size   String // e.g. "225/45 R17"
+  season TireSeason
+  dot    String? // Manufacturing date code
 
   // Condition
   treadDepthMm Float? @map("tread_depth_mm") // mm remaining
   wearLevel    Float  @default(0) @map("wear_level") // 0-100%
 
   // Storage
-  storageLocation String?  @map("storage_location") // e.g. "RACK-A3"
-  isStored        Boolean  @default(false) @map("is_stored")
+  storageLocation String?   @map("storage_location") // e.g. "RACK-A3"
+  isStored        Boolean   @default(false) @map("is_stored")
   storedAt        DateTime? @map("stored_at")
 
   // Mounting
@@ -2983,17 +2986,17 @@ model Estimate {
   tenantId String @map("tenant_id")
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  estimateNumber String @map("estimate_number") // EST-2026-001
-  customerId     String @map("customer_id")
+  estimateNumber String  @map("estimate_number") // EST-2026-001
+  customerId     String  @map("customer_id")
   vehicleId      String? @map("vehicle_id")
 
   status EstimateStatus @default(DRAFT)
 
   // Financial (Decimal for monetary consistency)
-  subtotalCents Decimal  @map("subtotal_cents") @db.Decimal(10, 2)
-  vatCents      Decimal  @map("vat_cents") @db.Decimal(10, 2)
-  totalCents    Decimal  @map("total_cents") @db.Decimal(10, 2)
-  discountCents Decimal  @default(0) @map("discount_cents") @db.Decimal(10, 2)
+  subtotalCents Decimal @map("subtotal_cents") @db.Decimal(10, 2)
+  vatCents      Decimal @map("vat_cents") @db.Decimal(10, 2)
+  totalCents    Decimal @map("total_cents") @db.Decimal(10, 2)
+  discountCents Decimal @default(0) @map("discount_cents") @db.Decimal(10, 2)
 
   // Validity
   validUntil DateTime? @map("valid_until")
@@ -3005,7 +3008,7 @@ model Estimate {
   bookingId String? @map("booking_id")
 
   notes     String?
-  createdBy String  @map("created_by")
+  createdBy String   @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -3013,17 +3016,17 @@ model Estimate {
   presentationMode EstimatePresentationMode @default(SINGLE) @map("presentation_mode")
 
   // Digital approval
-  approvalToken   String?   @map("approval_token")
-  approvalSentAt  DateTime? @map("approval_sent_at")
-  approvalMethod  String?   @map("approval_method") // SMS, WHATSAPP, EMAIL
+  approvalToken  String?   @map("approval_token")
+  approvalSentAt DateTime? @map("approval_sent_at")
+  approvalMethod String?   @map("approval_method") // SMS, WHATSAPP, EMAIL
 
   // Legal compliance — D.Lgs. 206/2005 Codice del Consumo
-  customerSignature String?   @map("customer_signature")   // nome scritto dal cliente come firma digitale
+  customerSignature String?   @map("customer_signature") // nome scritto dal cliente come firma digitale
   customerSignedAt  DateTime? @map("customer_signed_at")
   termsAccepted     Boolean   @default(false) @map("terms_accepted")
   approvalIpAddress String?   @map("approval_ip_address")
 
-  lines EstimateLine[]
+  lines            EstimateLine[]
   declinedServices DeclinedService[]
 
   @@unique([tenantId, estimateNumber])
@@ -3039,12 +3042,12 @@ model EstimateLine {
   estimateId String   @map("estimate_id")
   estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
 
-  type        EstimateLineType // LABOR, PART, OTHER
-  description String
-  quantity    Int      @default(1)
-  unitPriceCents Decimal @map("unit_price_cents") @db.Decimal(10, 2)
-  totalCents  Decimal   @map("total_cents") @db.Decimal(10, 2)
-  vatRate     Decimal  @default(22.00) @map("vat_rate") @db.Decimal(5, 2)
+  type           EstimateLineType // LABOR, PART, OTHER
+  description    String
+  quantity       Int              @default(1)
+  unitPriceCents Decimal          @map("unit_price_cents") @db.Decimal(10, 2)
+  totalCents     Decimal          @map("total_cents") @db.Decimal(10, 2)
+  vatRate        Decimal          @default(22.00) @map("vat_rate") @db.Decimal(5, 2)
 
   // Optional part reference
   partId String? @map("part_id")
@@ -3110,29 +3113,29 @@ model LaborGuide {
 
   entries LaborGuideEntry[]
 
+  @@unique([tenantId, name])
   @@index([tenantId])
   @@index([tenantId, createdAt])
-  @@unique([tenantId, name])
   @@map("labor_guides")
 }
 
 model LaborGuideEntry {
-  id      String     @id @default(uuid())
-  guideId String     @map("guide_id")
-  guide   LaborGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
-  tenantId String    @map("tenant_id")
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String     @id @default(uuid())
+  guideId  String     @map("guide_id")
+  guide    LaborGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  tenantId String     @map("tenant_id")
+  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Vehicle matching
-  make  String
-  model String?
-  yearFrom Int? @map("year_from")
-  yearTo   Int? @map("year_to")
+  make     String
+  model    String?
+  yearFrom Int?    @map("year_from")
+  yearTo   Int?    @map("year_to")
 
   // Operation
-  operationCode String  @map("operation_code")
-  operationName String  @map("operation_name")
-  category      String  // ENGINE, BRAKES, ELECTRICAL, etc.
+  operationCode String @map("operation_code")
+  operationName String @map("operation_name")
+  category      String // ENGINE, BRAKES, ELECTRICAL, etc.
 
   // Time
   laborTimeMinutes Int @map("labor_time_minutes")
@@ -3160,16 +3163,16 @@ model AccountingSync {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Provider
-  provider AccountingProvider
-  externalId String? @map("external_id") // ID in external system
+  provider   AccountingProvider
+  externalId String?            @map("external_id") // ID in external system
 
   // Entity being synced
   entityType String @map("entity_type") // INVOICE, CUSTOMER, PAYMENT
-  entityId   String @map("entity_id")   // Internal ID
+  entityId   String @map("entity_id") // Internal ID
 
   // Sync status
   status    AccountingSyncStatus @default(PENDING)
-  direction String @default("OUTBOUND") // OUTBOUND (us -> provider), INBOUND
+  direction String               @default("OUTBOUND") // OUTBOUND (us -> provider), INBOUND
 
   // Result
   syncedAt    DateTime? @map("synced_at")
@@ -3268,18 +3271,18 @@ enum VehicleStatus {
 // ==========================================
 
 model CannedJob {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   name        String
   description String?
   category    String?
-  isActive    Boolean  @default(true) @map("is_active")
+  isActive    Boolean         @default(true) @map("is_active")
   lines       CannedJobLine[]
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -3288,17 +3291,17 @@ model CannedJob {
 }
 
 model CannedJobLine {
-  id          String   @id @default(cuid())
-  cannedJobId String   @map("canned_job_id")
+  id          String    @id @default(cuid())
+  cannedJobId String    @map("canned_job_id")
   cannedJob   CannedJob @relation(fields: [cannedJobId], references: [id], onDelete: Cascade)
 
   type        CannedLineType
   description String
-  partId      String?  @map("part_id")
-  quantity    Float    @default(1)
-  unitPrice   Int      @map("unit_price") // centesimi
-  laborHours  Float?   @map("labor_hours")
-  position    Int      @default(0)
+  partId      String?        @map("part_id")
+  quantity    Float          @default(1)
+  unitPrice   Int            @map("unit_price") // centesimi
+  laborHours  Float?         @map("labor_hours")
+  position    Int            @default(0)
 
   @@index([cannedJobId])
   @@map("canned_job_lines")
@@ -3310,16 +3313,16 @@ enum CannedLineType {
 }
 
 model CannedResponse {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  category    String   // DVI, COMUNICAZIONE, DIAGNOSI
-  text        String
-  severity    String?  // LOW, MEDIUM, HIGH, CRITICAL (solo per DVI)
-  isActive    Boolean  @default(true) @map("is_active")
+  category String // DVI, COMUNICAZIONE, DIAGNOSI
+  text     String
+  severity String? // LOW, MEDIUM, HIGH, CRITICAL (solo per DVI)
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId, category])
   @@map("canned_responses")
@@ -3330,18 +3333,18 @@ model CannedResponse {
 // ==========================================
 
 model SmsThread {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  customerId  String   @map("customer_id")
-  customer    Customer @relation(fields: [customerId], references: [id])
-  phoneHash   String   @map("phone_hash")
-  messages    SmsMessage[]
-  unreadCount Int      @default(0) @map("unread_count")
-  lastMessageAt DateTime? @map("last_message_at")
+  customerId    String       @map("customer_id")
+  customer      Customer     @relation(fields: [customerId], references: [id])
+  phoneHash     String       @map("phone_hash")
+  messages      SmsMessage[]
+  unreadCount   Int          @default(0) @map("unread_count")
+  lastMessageAt DateTime?    @map("last_message_at")
 
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
   @@index([tenantId, phoneHash])
@@ -3349,14 +3352,14 @@ model SmsThread {
 }
 
 model SmsMessage {
-  id        String   @id @default(cuid())
-  threadId  String   @map("thread_id")
-  thread    SmsThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  threadId String    @map("thread_id")
+  thread   SmsThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   direction SmsDirection
   body      String
-  status    SmsStatus @default(SENT)
-  twilioSid String?  @map("twilio_sid")
+  status    SmsStatus    @default(SENT)
+  twilioSid String?      @map("twilio_sid")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -3369,31 +3372,31 @@ model SmsMessage {
 // ============================================
 
 model Campaign {
-  id              String          @id @default(uuid())
-  tenantId        String          @map("tenant_id")
-  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  name            String
-  type            CampaignType    @default(EMAIL)
-  status          CampaignStatus  @default(DRAFT)
-  template        String          @db.Text
-  subject         String?
+  name     String
+  type     CampaignType   @default(EMAIL)
+  status   CampaignStatus @default(DRAFT)
+  template String         @db.Text
+  subject  String?
 
-  scheduledAt     DateTime?       @map("scheduled_at")
-  sentAt          DateTime?       @map("sent_at")
+  scheduledAt DateTime? @map("scheduled_at")
+  sentAt      DateTime? @map("sent_at")
 
-  segmentType     String?         @map("segment_type")
-  segmentFilters  Json?           @map("segment_filters")
+  segmentType    String? @map("segment_type")
+  segmentFilters Json?   @map("segment_filters")
 
-  totalRecipients Int             @default(0) @map("total_recipients")
-  totalSent       Int             @default(0) @map("total_sent")
-  totalOpened     Int             @default(0) @map("total_opened")
-  totalClicked    Int             @default(0) @map("total_clicked")
+  totalRecipients Int @default(0) @map("total_recipients")
+  totalSent       Int @default(0) @map("total_sent")
+  totalOpened     Int @default(0) @map("total_opened")
+  totalClicked    Int @default(0) @map("total_clicked")
 
-  recipients      CampaignRecipient[]
+  recipients CampaignRecipient[]
 
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -3401,14 +3404,14 @@ model Campaign {
 }
 
 model CampaignRecipient {
-  id          String    @id @default(uuid())
-  campaignId  String    @map("campaign_id")
-  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  customerId  String    @map("customer_id")
-  status      String    @default("PENDING")
-  sentAt      DateTime? @map("sent_at")
-  openedAt    DateTime? @map("opened_at")
-  clickedAt   DateTime? @map("clicked_at")
+  id         String    @id @default(uuid())
+  campaignId String    @map("campaign_id")
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customerId String    @map("customer_id")
+  status     String    @default("PENDING")
+  sentAt     DateTime? @map("sent_at")
+  openedAt   DateTime? @map("opened_at")
+  clickedAt  DateTime? @map("clicked_at")
 
   @@index([campaignId])
   @@index([customerId])
@@ -3484,17 +3487,17 @@ model WasteEntry {
   entryType   WasteEntryType @map("entry_type")
   entryDate   DateTime       @map("entry_date")
 
-  cerCode       String            @map("cer_code")
-  cerDescription String           @map("cer_description")
-  hazardClass   WasteHazardClass  @map("hazard_class")
-  physicalState WastePhysicalState @map("physical_state")
+  cerCode        String             @map("cer_code")
+  cerDescription String             @map("cer_description")
+  hazardClass    WasteHazardClass   @map("hazard_class")
+  physicalState  WastePhysicalState @map("physical_state")
 
-  quantityKg    Decimal  @map("quantity_kg") @db.Decimal(10, 3)
-  quantityUnits Int?     @map("quantity_units")
-  unitType      String?  @map("unit_type")
+  quantityKg    Decimal @map("quantity_kg") @db.Decimal(10, 3)
+  quantityUnits Int?    @map("quantity_units")
+  unitType      String? @map("unit_type")
 
-  originDescription String?  @map("origin_description")
-  isOwnProduction   Boolean  @default(true) @map("is_own_production")
+  originDescription String? @map("origin_description")
+  isOwnProduction   Boolean @default(true) @map("is_own_production")
 
   transporterId String?           @map("transporter_id")
   transporter   WasteTransporter? @relation(fields: [transporterId], references: [id])
@@ -3510,8 +3513,8 @@ model WasteEntry {
   storageLocationCode String?   @map("storage_location_code")
   storedSince         DateTime? @map("stored_since")
 
-  notes     String? @db.Text
-  createdBy String? @map("created_by")
+  notes     String?  @db.Text
+  createdBy String?  @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -3530,22 +3533,22 @@ model WasteFir {
   tenantId String @map("tenant_id")
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  firNumber  String        @map("fir_number")
-  status     WasteFirStatus @default(DRAFT)
-  vivifirCode String?      @map("vivifir_code")
+  firNumber   String         @map("fir_number")
+  status      WasteFirStatus @default(DRAFT)
+  vivifirCode String?        @map("vivifir_code")
 
-  cerCode       String            @map("cer_code")
-  cerDescription String           @map("cer_description")
-  hazardClass   WasteHazardClass  @map("hazard_class")
-  physicalState WastePhysicalState @map("physical_state")
+  cerCode        String             @map("cer_code")
+  cerDescription String             @map("cer_description")
+  hazardClass    WasteHazardClass   @map("hazard_class")
+  physicalState  WastePhysicalState @map("physical_state")
 
-  quantityKg    Decimal  @map("quantity_kg") @db.Decimal(10, 3)
-  quantityUnits Int?     @map("quantity_units")
-  unitType      String?  @map("unit_type")
+  quantityKg    Decimal @map("quantity_kg") @db.Decimal(10, 3)
+  quantityUnits Int?    @map("quantity_units")
+  unitType      String? @map("unit_type")
 
-  producerName           String @map("producer_name")
-  producerFiscalCode     String @map("producer_fiscal_code")
-  producerAddress        String @map("producer_address")
+  producerName           String  @map("producer_name")
+  producerFiscalCode     String  @map("producer_fiscal_code")
+  producerAddress        String  @map("producer_address")
   producerRegistrationNo String? @map("producer_registration_no")
 
   transporterId String           @map("transporter_id")
@@ -3559,15 +3562,15 @@ model WasteFir {
   deliveryDate     DateTime? @map("delivery_date")
   confirmationDate DateTime? @map("confirmation_date")
 
-  adrClass   String? @map("adr_class")
-  adrUnNumber String? @map("adr_un_number")
+  adrClass     String? @map("adr_class")
+  adrUnNumber  String? @map("adr_un_number")
   vehiclePlate String? @map("vehicle_plate")
 
   entries WasteEntry[]
 
-  notes     String? @db.Text
-  pdfUrl    String? @map("pdf_url")
-  createdBy String? @map("created_by")
+  notes     String?  @db.Text
+  pdfUrl    String?  @map("pdf_url")
+  createdBy String?  @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -3654,7 +3657,7 @@ model SecurityIncident {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   title       String
-  description String @db.Text
+  description String                   @db.Text
   severity    SecurityIncidentSeverity
   status      SecurityIncidentStatus   @default(DETECTED)
 
@@ -3671,9 +3674,9 @@ model SecurityIncident {
   dataBreached    Boolean  @default(false) @map("data_breached")
 
   // Response
-  responseActions    String? @db.Text @map("response_actions")
-  rootCause          String? @db.Text @map("root_cause")
-  preventiveMeasures String? @db.Text @map("preventive_measures")
+  responseActions    String? @map("response_actions") @db.Text
+  rootCause          String? @map("root_cause") @db.Text
+  preventiveMeasures String? @map("preventive_measures") @db.Text
 
   // Audit
   createdBy String?  @map("created_by")
@@ -3696,16 +3699,16 @@ model AiDecisionLog {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // What AI did
-  featureName   String  @map("feature_name")
-  modelUsed     String  @map("model_used")
-  inputSummary  String  @db.Text @map("input_summary")
-  outputSummary String  @db.Text @map("output_summary")
-  confidence    Decimal? @db.Decimal(5, 4) @map("confidence")
+  featureName   String   @map("feature_name")
+  modelUsed     String   @map("model_used")
+  inputSummary  String   @map("input_summary") @db.Text
+  outputSummary String   @map("output_summary") @db.Text
+  confidence    Decimal? @map("confidence") @db.Decimal(5, 4)
 
   // Human oversight
   humanReviewed   Boolean   @default(false) @map("human_reviewed")
   humanOverridden Boolean   @default(false) @map("human_overridden")
-  humanDecision   String?   @db.Text @map("human_decision")
+  humanDecision   String?   @map("human_decision") @db.Text
   reviewedBy      String?   @map("reviewed_by")
   reviewedAt      DateTime? @map("reviewed_at")
 
@@ -3739,16 +3742,16 @@ enum PublicTokenType {
 }
 
 model PublicToken {
-  id         String   @id @default(uuid())
-  tenantId   String   @map("tenant_id")
-  token      String   @unique
+  id         String          @id @default(uuid())
+  tenantId   String          @map("tenant_id")
+  token      String          @unique
   type       PublicTokenType
-  entityId   String   @map("entity_id")
-  entityType String   @map("entity_type")
-  expiresAt  DateTime @map("expires_at")
-  usedAt     DateTime? @map("used_at")
+  entityId   String          @map("entity_id")
+  entityType String          @map("entity_type")
+  expiresAt  DateTime        @map("expires_at")
+  usedAt     DateTime?       @map("used_at")
   metadata   Json?
-  createdAt  DateTime @default(now()) @map("created_at")
+  createdAt  DateTime        @default(now()) @map("created_at")
 
   @@index([token])
   @@index([tenantId])
@@ -3761,18 +3764,18 @@ model PublicToken {
 // ============================================================================
 
 model WhatsAppTemplate {
-  id                String   @id @default(uuid())
-  tenantId          String   @map("tenant_id")
-  twilioTemplateSid String   @map("twilio_template_sid")
+  id                String    @id @default(uuid())
+  tenantId          String    @map("tenant_id")
+  twilioTemplateSid String    @map("twilio_template_sid")
   name              String
-  category          String   // UTILITY, MARKETING, AUTHENTICATION
-  language          String   @default("it")
-  bodyTemplate      String   @db.Text @map("body_template")
-  variables         String[] @default([])
-  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  category          String // UTILITY, MARKETING, AUTHENTICATION
+  language          String    @default("it")
+  bodyTemplate      String    @map("body_template") @db.Text
+  variables         String[]  @default([])
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
   approvedAt        DateTime? @map("approved_at")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -3784,27 +3787,27 @@ model WhatsAppTemplate {
 // ============================================================================
 
 model DeclinedService {
-  id                String   @id @default(uuid())
-  tenantId          String   @map("tenant_id")
-  customerId        String   @map("customer_id")
-  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  vehicleId         String?  @map("vehicle_id")
-  estimateId        String   @map("estimate_id")
-  estimate          Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
-  estimateLineId    String   @map("estimate_line_id")
-  serviceDescription String  @map("service_description")
-  estimatedCostCents Decimal @map("estimated_cost_cents") @db.Decimal(10, 2)
-  severity          String?  // CRITICAL, WARNING, INFO (from inspection if linked)
-  declinedAt        DateTime @map("declined_at")
+  id                 String   @id @default(uuid())
+  tenantId           String   @map("tenant_id")
+  customerId         String   @map("customer_id")
+  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vehicleId          String?  @map("vehicle_id")
+  estimateId         String   @map("estimate_id")
+  estimate           Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  estimateLineId     String   @map("estimate_line_id")
+  serviceDescription String   @map("service_description")
+  estimatedCostCents Decimal  @map("estimated_cost_cents") @db.Decimal(10, 2)
+  severity           String? // CRITICAL, WARNING, INFO (from inspection if linked)
+  declinedAt         DateTime @map("declined_at")
 
   // Follow-up tracking
-  followUpSentAt    DateTime? @map("follow_up_sent_at")
-  followUpCount     Int       @default(0) @map("follow_up_count")
-  followUpCampaignId String?  @map("follow_up_campaign_id")
+  followUpSentAt     DateTime? @map("follow_up_sent_at")
+  followUpCount      Int       @default(0) @map("follow_up_count")
+  followUpCampaignId String?   @map("follow_up_campaign_id")
 
   // Conversion tracking
-  convertedAt       DateTime? @map("converted_at")
-  convertedBookingId String?  @map("converted_booking_id")
+  convertedAt        DateTime? @map("converted_at")
+  convertedBookingId String?   @map("converted_booking_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -3827,18 +3830,18 @@ enum MembershipStatus {
 }
 
 model MembershipProgram {
-  id              String   @id @default(uuid())
-  tenantId        String   @map("tenant_id")
-  name            String
-  description     String?  @db.Text
-  priceMonthly    Decimal  @map("price_monthly") @db.Decimal(10, 2)
-  priceYearly     Decimal? @map("price_yearly") @db.Decimal(10, 2)
-  stripePriceMonthlyId String? @map("stripe_price_monthly_id")
-  stripePriceYearlyId  String? @map("stripe_price_yearly_id")
+  id                   String   @id @default(uuid())
+  tenantId             String   @map("tenant_id")
+  name                 String
+  description          String?  @db.Text
+  priceMonthly         Decimal  @map("price_monthly") @db.Decimal(10, 2)
+  priceYearly          Decimal? @map("price_yearly") @db.Decimal(10, 2)
+  stripePriceMonthlyId String?  @map("stripe_price_monthly_id")
+  stripePriceYearlyId  String?  @map("stripe_price_yearly_id")
 
   // Benefits configuration
-  benefits        Json     // Array of { type, description, maxPerMonth, discountPercent }
-  maxRedemptionsPerMonth Int @default(2) @map("max_redemptions_per_month")
+  benefits               Json // Array of { type, description, maxPerMonth, discountPercent }
+  maxRedemptionsPerMonth Int  @default(2) @map("max_redemptions_per_month")
 
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
@@ -3852,17 +3855,17 @@ model MembershipProgram {
 }
 
 model CustomerMembership {
-  id                  String   @id @default(uuid())
-  tenantId            String   @map("tenant_id")
-  customerId          String   @map("customer_id")
-  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  programId           String   @map("program_id")
-  program             MembershipProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  stripeSubscriptionId String? @map("stripe_subscription_id")
+  id                   String            @id @default(uuid())
+  tenantId             String            @map("tenant_id")
+  customerId           String            @map("customer_id")
+  customer             Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  programId            String            @map("program_id")
+  program              MembershipProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String?           @map("stripe_subscription_id")
 
   status    MembershipStatus @default(ACTIVE)
-  startDate DateTime @map("start_date")
-  endDate   DateTime? @map("end_date")
+  startDate DateTime         @map("start_date")
+  endDate   DateTime?        @map("end_date")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -3876,14 +3879,14 @@ model CustomerMembership {
 }
 
 model MembershipRedemption {
-  id           String   @id @default(uuid())
-  membershipId String   @map("membership_id")
+  id           String             @id @default(uuid())
+  membershipId String             @map("membership_id")
   membership   CustomerMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  benefitType  String   @map("benefit_type")
-  bookingId    String?  @map("booking_id")
-  workOrderId  String?  @map("work_order_id")
-  redeemedAt   DateTime @map("redeemed_at")
-  valueCents   Decimal  @map("value_cents") @db.Decimal(10, 2)
+  benefitType  String             @map("benefit_type")
+  bookingId    String?            @map("booking_id")
+  workOrderId  String?            @map("work_order_id")
+  redeemedAt   DateTime           @map("redeemed_at")
+  valueCents   Decimal            @map("value_cents") @db.Decimal(10, 2)
 
   @@index([membershipId])
   @@map("membership_redemptions")
@@ -3919,58 +3922,58 @@ enum PayrollStatus {
 }
 
 model TechnicianGoal {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
-  technicianId String   @map("technician_id")
+  id           String     @id @default(uuid())
+  tenantId     String     @map("tenant_id")
+  technicianId String     @map("technician_id")
   technician   Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
-  goalType     GoalType @map("goal_type")
-  targetValue  Decimal  @map("target_value") @db.Decimal(10, 2)
-  currentValue Decimal  @default(0) @map("current_value") @db.Decimal(10, 2)
+  goalType     GoalType   @map("goal_type")
+  targetValue  Decimal    @map("target_value") @db.Decimal(10, 2)
+  currentValue Decimal    @default(0) @map("current_value") @db.Decimal(10, 2)
   period       GoalPeriod
-  startDate    DateTime @map("start_date")
-  endDate      DateTime @map("end_date")
-  createdAt    DateTime @default(now()) @map("created_at")
+  startDate    DateTime   @map("start_date")
+  endDate      DateTime   @map("end_date")
+  createdAt    DateTime   @default(now()) @map("created_at")
 
   @@index([tenantId, technicianId])
   @@map("technician_goals")
 }
 
 model TechnicianPayConfig {
-  id                   String   @id @default(uuid())
-  tenantId             String   @map("tenant_id")
-  technicianId         String   @map("technician_id")
-  technician           Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
-  payType              PayType  @map("pay_type")
-  hourlyRateCents      Decimal? @map("hourly_rate_cents") @db.Decimal(10, 2)
-  flatRatePerJobCents  Decimal? @map("flat_rate_per_job_cents") @db.Decimal(10, 2)
-  overtimeMultiplier   Decimal  @default(1.5) @map("overtime_multiplier") @db.Decimal(3, 2)
-  overtimeThresholdHours Decimal @default(40) @map("overtime_threshold_hours") @db.Decimal(5, 2)
-  bonusRules           Json?    @map("bonus_rules")
-  effectiveFrom        DateTime @map("effective_from")
-  effectiveTo          DateTime? @map("effective_to")
-  createdAt            DateTime @default(now()) @map("created_at")
+  id                     String     @id @default(uuid())
+  tenantId               String     @map("tenant_id")
+  technicianId           String     @map("technician_id")
+  technician             Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  payType                PayType    @map("pay_type")
+  hourlyRateCents        Decimal?   @map("hourly_rate_cents") @db.Decimal(10, 2)
+  flatRatePerJobCents    Decimal?   @map("flat_rate_per_job_cents") @db.Decimal(10, 2)
+  overtimeMultiplier     Decimal    @default(1.5) @map("overtime_multiplier") @db.Decimal(3, 2)
+  overtimeThresholdHours Decimal    @default(40) @map("overtime_threshold_hours") @db.Decimal(5, 2)
+  bonusRules             Json?      @map("bonus_rules")
+  effectiveFrom          DateTime   @map("effective_from")
+  effectiveTo            DateTime?  @map("effective_to")
+  createdAt              DateTime   @default(now()) @map("created_at")
 
   @@index([tenantId, technicianId])
   @@map("technician_pay_configs")
 }
 
 model PayrollRecord {
-  id             String   @id @default(uuid())
-  tenantId       String   @map("tenant_id")
-  technicianId   String   @map("technician_id")
-  technician     Technician @relation(fields: [technicianId], references: [id], onDelete: Cascade)
-  period         String   // "2026-03" format
-  regularHours   Decimal  @map("regular_hours") @db.Decimal(6, 2)
-  overtimeHours  Decimal  @default(0) @map("overtime_hours") @db.Decimal(6, 2)
-  regularPayCents  Decimal @map("regular_pay_cents") @db.Decimal(10, 2)
-  overtimePayCents Decimal @default(0) @map("overtime_pay_cents") @db.Decimal(10, 2)
-  bonusPayCents    Decimal @default(0) @map("bonus_pay_cents") @db.Decimal(10, 2)
-  totalPayCents    Decimal @map("total_pay_cents") @db.Decimal(10, 2)
-  status         PayrollStatus @default(DRAFT)
-  approvedBy     String?  @map("approved_by")
-  approvedAt     DateTime? @map("approved_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id               String        @id @default(uuid())
+  tenantId         String        @map("tenant_id")
+  technicianId     String        @map("technician_id")
+  technician       Technician    @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  period           String // "2026-03" format
+  regularHours     Decimal       @map("regular_hours") @db.Decimal(6, 2)
+  overtimeHours    Decimal       @default(0) @map("overtime_hours") @db.Decimal(6, 2)
+  regularPayCents  Decimal       @map("regular_pay_cents") @db.Decimal(10, 2)
+  overtimePayCents Decimal       @default(0) @map("overtime_pay_cents") @db.Decimal(10, 2)
+  bonusPayCents    Decimal       @default(0) @map("bonus_pay_cents") @db.Decimal(10, 2)
+  totalPayCents    Decimal       @map("total_pay_cents") @db.Decimal(10, 2)
+  status           PayrollStatus @default(DRAFT)
+  approvedBy       String?       @map("approved_by")
+  approvedAt       DateTime?     @map("approved_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   @@unique([tenantId, technicianId, period])
   @@index([tenantId])
@@ -3985,10 +3988,10 @@ model PayrollRecord {
 model BenchmarkMetric {
   id          String   @id @default(uuid())
   tenantId    String   @map("tenant_id")
-  period      String   // "2026-03"
+  period      String // "2026-03"
   metricType  String   @map("metric_type") // ARO, CAR_COUNT, LABOR_RATE, PARTS_MARGIN, TECH_EFFICIENCY
   value       Decimal  @db.Decimal(10, 2)
-  percentile  Int?     // 0-100, shop's ranking
+  percentile  Int? // 0-100, shop's ranking
   industryAvg Decimal? @map("industry_avg") @db.Decimal(10, 2)
   createdAt   DateTime @default(now()) @map("created_at")
 
@@ -3998,16 +4001,16 @@ model BenchmarkMetric {
 }
 
 model IndustryBenchmark {
-  id          String   @id @default(uuid())
-  region      String   // "IT", "EU", "US"
-  shopSize    String   @map("shop_size") // SMALL, MEDIUM, LARGE
-  period      String   // "2026-03"
-  metricType  String   @map("metric_type")
-  avgValue    Decimal  @map("avg_value") @db.Decimal(10, 2)
-  medianValue Decimal  @map("median_value") @db.Decimal(10, 2)
-  p25         Decimal  @db.Decimal(10, 2)
-  p75         Decimal  @db.Decimal(10, 2)
-  sampleSize  Int      @map("sample_size")
+  id           String   @id @default(uuid())
+  region       String // "IT", "EU", "US"
+  shopSize     String   @map("shop_size") // SMALL, MEDIUM, LARGE
+  period       String // "2026-03"
+  metricType   String   @map("metric_type")
+  avgValue     Decimal  @map("avg_value") @db.Decimal(10, 2)
+  medianValue  Decimal  @map("median_value") @db.Decimal(10, 2)
+  p25          Decimal  @db.Decimal(10, 2)
+  p75          Decimal  @db.Decimal(10, 2)
+  sampleSize   Int      @map("sample_size")
   calculatedAt DateTime @map("calculated_at")
 
   @@unique([region, shopSize, period, metricType])
@@ -4019,15 +4022,15 @@ model IndustryBenchmark {
 // ============================================================================
 
 model MaintenanceScheduleTemplate {
-  id            String   @id @default(uuid())
-  make          String
-  model         String
-  yearFrom      Int      @map("year_from")
-  yearTo        Int      @map("year_to")
-  serviceType   String   @map("service_type") // OIL_CHANGE, BRAKE_PADS, TIMING_BELT, etc.
-  intervalKm    Int?     @map("interval_km")
-  intervalMonths Int?    @map("interval_months")
-  description   String
+  id                 String   @id @default(uuid())
+  make               String
+  model              String
+  yearFrom           Int      @map("year_from")
+  yearTo             Int      @map("year_to")
+  serviceType        String   @map("service_type") // OIL_CHANGE, BRAKE_PADS, TIMING_BELT, etc.
+  intervalKm         Int?     @map("interval_km")
+  intervalMonths     Int?     @map("interval_months")
+  description        String
   estimatedCostCents Decimal? @map("estimated_cost_cents") @db.Decimal(10, 2)
 
   @@index([make, model])
@@ -4035,18 +4038,18 @@ model MaintenanceScheduleTemplate {
 }
 
 model PredictedMaintenance {
-  id               String   @id @default(uuid())
-  tenantId         String   @map("tenant_id")
-  vehicleId        String   @map("vehicle_id")
-  customerId       String   @map("customer_id")
-  serviceType      String   @map("service_type")
-  predictedDate    DateTime @map("predicted_date")
-  predictedMileage Int?     @map("predicted_mileage")
-  confidence       Decimal  @db.Decimal(3, 2) @default(0.70)
+  id                 String    @id @default(uuid())
+  tenantId           String    @map("tenant_id")
+  vehicleId          String    @map("vehicle_id")
+  customerId         String    @map("customer_id")
+  serviceType        String    @map("service_type")
+  predictedDate      DateTime  @map("predicted_date")
+  predictedMileage   Int?      @map("predicted_mileage")
+  confidence         Decimal   @default(0.70) @db.Decimal(3, 2)
   notificationSentAt DateTime? @map("notification_sent_at")
-  bookedAt         DateTime? @map("booked_at")
-  bookingId        String?   @map("booking_id")
-  createdAt        DateTime @default(now()) @map("created_at")
+  bookedAt           DateTime? @map("booked_at")
+  bookingId          String?   @map("booking_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
 
   @@index([tenantId])
   @@index([tenantId, vehicleId])
@@ -4059,15 +4062,15 @@ model PredictedMaintenance {
 // ============================================================================
 
 model SupplierApiConfig {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
-  supplierName String   @map("supplier_name") // AUTODOC, TECDOC, LOCAL
-  apiEndpoint  String?  @map("api_endpoint")
-  apiKey       String?  @map("api_key") // Encrypted
-  isActive     Boolean  @default(true) @map("is_active")
+  id           String    @id @default(uuid())
+  tenantId     String    @map("tenant_id")
+  supplierName String    @map("supplier_name") // AUTODOC, TECDOC, LOCAL
+  apiEndpoint  String?   @map("api_endpoint")
+  apiKey       String?   @map("api_key") // Encrypted
+  isActive     Boolean   @default(true) @map("is_active")
   lastSyncAt   DateTime? @map("last_sync_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@unique([tenantId, supplierName])
   @@index([tenantId])
@@ -4086,22 +4089,43 @@ enum VehicleHistorySource {
 }
 
 model VehicleHistoryRecord {
-  id         String   @id @default(uuid())
-  tenantId   String   @map("tenant_id")
-  vehicleId  String   @map("vehicle_id")
-  vin        String?
-  source     VehicleHistorySource @default(LOCAL)
-  eventType  String   @map("event_type") // SERVICE, REPAIR, INSPECTION, ACCIDENT, SALE
-  eventDate  DateTime @map("event_date")
-  description String  @db.Text
-  mileage    Int?
-  shopName   String?  @map("shop_name")
-  costCents  Decimal? @map("cost_cents") @db.Decimal(10, 2)
-  metadata   Json?
-  importedAt DateTime? @map("imported_at")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id          String               @id @default(uuid())
+  tenantId    String               @map("tenant_id")
+  vehicleId   String               @map("vehicle_id")
+  vin         String?
+  source      VehicleHistorySource @default(LOCAL)
+  eventType   String               @map("event_type") // SERVICE, REPAIR, INSPECTION, ACCIDENT, SALE
+  eventDate   DateTime             @map("event_date")
+  description String               @db.Text
+  mileage     Int?
+  shopName    String?              @map("shop_name")
+  costCents   Decimal?             @map("cost_cents") @db.Decimal(10, 2)
+  metadata    Json?
+  importedAt  DateTime?            @map("imported_at")
+  createdAt   DateTime             @default(now()) @map("created_at")
 
   @@index([tenantId, vehicleId])
   @@index([vin])
   @@map("vehicle_history_records")
+}
+
+// ==========================================
+// WEBHOOKS
+// ==========================================
+
+model WebhookSubscription {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  url       String // HTTPS endpoint del cliente
+  events    String[] // ['booking.created', 'invoice.paid', ...]
+  secret    String // segreto HMAC per firma payload
+  isActive  Boolean  @default(true) @map("is_active")
+  failCount Int      @default(0) @map("fail_count") // per disabilitare dopo troppi fallimenti
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("webhook_subscriptions")
 }

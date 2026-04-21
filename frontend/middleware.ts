@@ -4,9 +4,13 @@ import type { NextRequest } from 'next/server';
 // Route matcher — exclude static files, images, and public assets
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|favicon\\.svg|manifest\\.json|robots\\.txt|sw\\.js|mockServiceWorker\\.js|og-image|twitter-image).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|favicon\\.svg|manifest\\.json|robots\\.txt|sw\\.js|mockServiceWorker\\.js|og-image|twitter-image|api).*)',
   ],
 };
+
+// Supported locales for i18n
+const LOCALES = ['it', 'en', 'de'];
+const DEFAULT_LOCALE = 'it';
 
 // =============================================================================
 // Route Classification
@@ -51,12 +55,69 @@ function isPortalPath(pathname: string): boolean {
   return pathname.startsWith('/portal') && !isPublicPath(pathname);
 }
 
+/**
+ * Extract or set locale from pathname
+ * Supports both /it/dashboard and /dashboard (default locale)
+ */
+function getLocaleFromPathname(pathname: string): string {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length > 0 && LOCALES.includes(segments[0])) {
+    return segments[0];
+  }
+  // Check cookie for preferred locale
+  return DEFAULT_LOCALE;
+}
+
+/**
+ * Get locale-prefixed path
+ */
+function getLocalizedPathname(pathname: string, locale: string): string {
+  const segments = pathname.split('/').filter(Boolean);
+  // If first segment is already a locale, replace it
+  if (segments.length > 0 && LOCALES.includes(segments[0])) {
+    segments[0] = locale;
+    return '/' + segments.join('/');
+  }
+  // Otherwise, prepend locale
+  if (pathname === '/') {
+    return `/${locale}`;
+  }
+  return `/${locale}${pathname}`;
+}
+
 // =============================================================================
 // Main Middleware — Edge-compatible (NO Prisma, NO Node.js APIs)
 // =============================================================================
 
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+
+  // =========================================================================
+  // i18n — Locale routing (prepend locale if missing)
+  // =========================================================================
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length === 0 || !LOCALES.includes(segments[0])) {
+    // Get preferred locale from cookie or browser header
+    let locale = DEFAULT_LOCALE;
+    const localeCookie = request.cookies.get('NEXT_LOCALE')?.value;
+    if (localeCookie && LOCALES.includes(localeCookie)) {
+      locale = localeCookie;
+    }
+
+    // Redirect to localized path
+    const localizedPathname = getLocalizedPathname(pathname, locale);
+    const response = NextResponse.redirect(
+      new URL(localizedPathname, request.url)
+    );
+    response.cookies.set('NEXT_LOCALE', locale, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+    });
+    return response;
+  }
 
   // Create response
   const response = NextResponse.next();

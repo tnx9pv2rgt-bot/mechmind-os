@@ -1,0 +1,112 @@
+name: Tenant Isolation Audit
+
+on:
+  pull_request:
+    paths:
+      - 'backend/src/**/*.service.ts'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed service files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -E 'backend/src/.+\.service\.ts$' \
+            | grep -v '\.spec\.' \
+            | head -10 || true)
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Static tenant isolation audit
+        id: audit
+        if: steps.changed.outputs.files != ''
+        run: |
+          PASS=true
+          REPORT="## Tenant Isolation Audit\n\n"
+          REPORT+="_Audit statico su service files modificati._\n\n"
+
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            [ ! -f "$FILE" ] && continue
+
+            FILE_OK=true
+            ISSUES=""
+
+            # Check 1: Prisma queries without tenantId
+            MISSING_TENANT=$(grep -nE 'this\.prisma\.\w+\.(findMany|findFirst|findUnique|update|updateMany|delete|deleteMany|count|aggregate|upsert)\b' "$FILE" \
+              | grep -v 'tenantId' | grep -v '^\s*//' || true)
+            if [ -n "$MISSING_TENANT" ]; then
+              FILE_OK=false
+              ISSUES+="**tenantId mancante:**\n\`\`\`\n$MISSING_TENANT\n\`\`\`\n"
+            fi
+
+            # Check 2: console.log in production code
+            CONSOLE_LOG=$(grep -nE 'console\.(log|warn|error|debug)\(' "$FILE" || true)
+            if [ -n "$CONSOLE_LOG" ]; then
+              FILE_OK=false
+              ISSUES+="**console.log vietato (usa Logger):**\n\`\`\`\n$CONSOLE_LOG\n\`\`\`\n"
+            fi
+
+            # Check 3: @ts-ignore / @ts-expect-error
+            TS_IGNORE=$(grep -nE '@ts-ignore|@ts-expect-error' "$FILE" || true)
+            if [ -n "$TS_IGNORE" ]; then
+              FILE_OK=false
+              ISSUES+="**@ts-ignore vietato:**\n\`\`\`\n$TS_IGNORE\n\`\`\`\n"
+            fi
+
+            # Check 4: queryRaw without parameters (potential SQL injection)
+            RAW_SQL=$(grep -nE '\$queryRaw`[^`]*\$\{' "$FILE" || true)
+            if [ -n "$RAW_SQL" ]; then
+              FILE_OK=false
+              ISSUES+="**queryRaw con interpolazione diretta (SQL injection risk):**\n\`\`\`\n$RAW_SQL\n\`\`\`\n"
+            fi
+
+            if [ "$FILE_OK" = "true" ]; then
+              REPORT+="### \`$FILE\` — PASS\n\n"
+            else
+              PASS=false
+              REPORT+="### \`$FILE\` — FAIL\n\n$ISSUES\n"
+            fi
+          done <<< "${{ steps.changed.outputs.files }}"
+
+          printf "$REPORT" > audit-result.md
+
+          if [ "$PASS" = "false" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post audit as PR comment
+        if: steps.changed.outputs.files != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('audit-result.md')) return;
+            const body = fs.readFileSync('audit-result.md', 'utf8');
+            if (!body.trim()) return;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail if issues found
+        if: steps.audit.outputs.status == 'fail'
+        run: |
+          echo "Audit fallito: vedi commento PR per i dettagli."
+          exit 1
