@@ -37,6 +37,10 @@ interface DashboardStats {
   grossMargin: number;
   cashFlow7d: number;
   revenueTarget: number;
+  // 2026 Compliance KPIs
+  scorteInAllarme: number;
+  preventiviInScadenza: number;
+  rightToRepairPct: number;
 }
 
 interface Alert {
@@ -649,9 +653,18 @@ interface Part {
   retailPrice?: number;
   minStockLevel?: number;
   currentStock?: number;
+  stockQuantity?: number;
+  reservedQuantity?: number;
+  availableQuantity?: number;
+  isLowStock?: boolean;
   supplierId?: string;
   supplierName?: string;
   supplier?: Supplier;
+  // EU Right to Repair 2024/1799
+  partType?: 'GENUINE' | 'AFTERMARKET' | 'REGENERATED' | 'USED';
+  warrantyMonths?: number;
+  originCode?: string;
+  barcode?: string;
   createdAt: string;
 }
 

@@ -66,6 +66,8 @@ export default function PublicEstimateApprovalPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
+  const [customerSignature, setCustomerSignature] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Fetch estimate data
   useEffect(() => {
@@ -136,22 +138,40 @@ export default function PublicEstimateApprovalPage() {
 
   const handleSubmit = async (): Promise<void> => {
     if (!estimate || submitting) return;
+
+    if (!customerSignature.trim() || customerSignature.trim().length < 2) {
+      toast.error('Inserisci il tuo nome e cognome per firmare il preventivo.');
+      return;
+    }
+    if (!termsAccepted) {
+      toast.error('Devi accettare i termini e condizioni per procedere.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const payload = {
-        items: Object.entries(decisions).map(([itemId, decision]) => ({
-          itemId,
-          approved: decision.approved,
-          rejectionReason: decision.approved ? undefined : decision.rejectionReason || undefined,
-        })),
-      };
+      const allApprovedByCustomer = Object.values(decisions).every(d => d.approved);
 
-      const res = await fetch(`/api/public/estimates/${token}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      let res: Response;
+      if (allApprovedByCustomer) {
+        res = await fetch(`/api/public/estimates/${token}/approve-all`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerSignature: customerSignature.trim(), termsAccepted }),
+        });
+      } else {
+        const approvals = Object.entries(decisions).map(([lineId, decision]) => ({
+          lineId,
+          approved: decision.approved,
+          reason: decision.approved ? undefined : decision.rejectionReason || undefined,
+        }));
+        res = await fetch(`/api/public/estimates/${token}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approvals, customerSignature: customerSignature.trim(), termsAccepted }),
+        });
+      }
 
       if (!res.ok) {
         toast.error('Errore nell\'invio della risposta. Riprova.');
@@ -434,11 +454,49 @@ export default function PublicEstimateApprovalPage() {
         </div>
       </div>
 
+      {/* Firma digitale + Termini (D.Lgs. 206/2005) */}
+      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] uppercase tracking-wider">
+          Firma e Consenso
+        </h2>
+
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
+            Nome e Cognome (firma digitale) *
+          </label>
+          <input
+            type="text"
+            value={customerSignature}
+            onChange={e => setCustomerSignature(e.target.value)}
+            placeholder="es. Mario Rossi"
+            className="w-full h-12 px-4 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-strong)]
+                       bg-white dark:bg-[var(--surface-primary)] text-base text-[var(--text-primary)] dark:text-[var(--text-primary)]
+                       placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/30"
+          />
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">
+            Inserendo il tuo nome accetti il preventivo con valore di firma ai sensi del D.Lgs. 206/2005.
+          </p>
+        </div>
+
+        <label className="flex items-start gap-3 cursor-pointer min-h-[44px]">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={e => setTermsAccepted(e.target.checked)}
+            className="mt-0.5 h-5 w-5 rounded border-[var(--border-default)] text-[var(--brand)] focus:ring-[var(--brand)]/30 flex-shrink-0"
+          />
+          <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
+            Autorizzo l&apos;officina ad eseguire i lavori approvati. Sono consapevole che lavori aggiuntivi oltre il
+            10% del presente preventivo richiedono mia esplicita autorizzazione (D.Lgs. 206/2005 art. 67).
+          </span>
+        </label>
+      </div>
+
       {/* Submit Button */}
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || !customerSignature.trim() || !termsAccepted}
         className="w-full py-4 rounded-xl bg-[var(--brand)] text-white font-semibold text-base
                    hover:bg-[var(--brand)]/90 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed
                    transition-colors min-h-[52px] flex items-center justify-center gap-2"
@@ -451,7 +509,7 @@ export default function PublicEstimateApprovalPage() {
         ) : (
           <>
             <CheckCircle2 className="w-5 h-5" />
-            Conferma scelte
+            Firma e Conferma
           </>
         )}
       </button>

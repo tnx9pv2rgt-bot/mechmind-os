@@ -10,19 +10,19 @@ import type { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { BACKEND_BASE } from '@/lib/config';
 
-function getToken(request: NextRequest): string | undefined {
+async function getToken(request: NextRequest): Promise<string | undefined> {
   const authHeader = request.headers.get('Authorization');
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   return cookieStore.get('portal_token')?.value || cookieStore.get('auth_token')?.value;
 }
 
 // GET - Get profile
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const token = getToken(request);
+    const token = await getToken(request);
 
     if (!token) {
       return NextResponse.json(
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // PUT - Update profile
 export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
-    const token = getToken(request);
+    const token = await getToken(request);
 
     if (!token) {
       return NextResponse.json(

@@ -33,6 +33,8 @@ import {
   Banknote,
   Receipt,
   Loader2,
+  Package,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -600,6 +602,9 @@ export default function DashboardPage(): React.ReactElement {
   const grossMargin = stats?.grossMargin ?? 67;
   const cashFlow7d = stats?.cashFlow7d ?? Math.round(revenue * 0.32);
   const tenantName = stats?.tenantName || user?.tenantName || 'La tua officina';
+  const scorteInAllarme = stats?.scorteInAllarme ?? 0;
+  const preventiviInScadenza = stats?.preventiviInScadenza ?? 0;
+  const rightToRepairPct = stats?.rightToRepairPct ?? 100;
 
   const recentWorkOrders = recentWOData?.data ?? [];
   const todayBookings = todayBookingsData?.data ?? [];
@@ -760,6 +765,55 @@ export default function DashboardPage(): React.ReactElement {
             isLoading={statsLoading}
           />
         </motion.div>
+
+        {/* ================================================================= */}
+        {/* Compliance 2026 — EU Right to Repair + D.Lgs. 206/2005 */}
+        {/* ================================================================= */}
+        {!statsLoading && (scorteInAllarme > 0 || preventiviInScadenza > 0 || rightToRepairPct < 100) && (
+          <motion.div variants={itemVariants} initial="hidden" animate="visible">
+            <div className="flex flex-wrap gap-3">
+              {scorteInAllarme > 0 && (
+                <Link href="/dashboard/parts?lowStock=true" className="flex-1 min-w-[200px]">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 hover:border-orange-400 dark:hover:border-orange-600 transition-colors">
+                    <Package className="h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" />
+                    <div className="min-w-0">
+                      <p className="text-footnote font-semibold text-orange-800 dark:text-orange-300">
+                        {scorteInAllarme} ricamb{scorteInAllarme === 1 ? 'io' : 'i'} sotto scorta
+                      </p>
+                      <p className="text-[11px] text-orange-600 dark:text-orange-400">Riordina per evitare fermi</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
+              {preventiviInScadenza > 0 && (
+                <Link href="/dashboard/estimates?expiring=7d" className="flex-1 min-w-[200px]">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/40 hover:border-yellow-400 dark:hover:border-yellow-600 transition-colors">
+                    <ClipboardList className="h-4 w-4 shrink-0 text-yellow-700 dark:text-yellow-400" />
+                    <div className="min-w-0">
+                      <p className="text-footnote font-semibold text-yellow-800 dark:text-yellow-300">
+                        {preventiviInScadenza} preventiv{preventiviInScadenza === 1 ? 'o' : 'i'} in scadenza
+                      </p>
+                      <p className="text-[11px] text-yellow-600 dark:text-yellow-500">Entro 7 giorni — D.Lgs. 206/2005</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
+              {rightToRepairPct < 100 && (
+                <Link href="/dashboard/parts" className="flex-1 min-w-[200px]">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 hover:border-blue-400 dark:hover:border-blue-600 transition-colors">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                    <div className="min-w-0">
+                      <p className="text-footnote font-semibold text-blue-800 dark:text-blue-300">
+                        Tracciabilità ricambi {rightToRepairPct}%
+                      </p>
+                      <p className="text-[11px] text-blue-600 dark:text-blue-500">Right to Repair — scadenza 31/07/2026</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* ================================================================= */}
         {/* Quick Actions */}

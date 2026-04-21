@@ -26,6 +26,10 @@ import {
   Loader2,
   AlertCircle,
   Pencil,
+  LogIn,
+  LogOut,
+  Download,
+  X,
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
@@ -127,6 +131,15 @@ const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
   URGENT: { label: 'Urgente', className: 'text-apple-red font-bold' },
 };
 
+const FUEL_LEVEL_OPTIONS = [
+  { value: 'EMPTY', label: 'Vuoto' },
+  { value: 'LOW', label: 'Basso (1/4)' },
+  { value: 'QUARTER', label: 'Un quarto' },
+  { value: 'HALF', label: 'Metà' },
+  { value: 'THREE_QUARTERS', label: 'Tre quarti' },
+  { value: 'FULL', label: 'Pieno' },
+];
+
 const TABS = [
   { key: 'dettagli', label: 'Dettagli', icon: ClipboardList },
   { key: 'lavorazioni', label: 'Lavorazioni', icon: Wrench },
@@ -165,6 +178,12 @@ export default function WorkOrderDetailPage(): React.ReactElement {
   })();
 
   const [transitioning, setTransitioning] = useState(false);
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const [showCheckOut, setShowCheckOut] = useState(false);
+  const [checkInForm, setCheckInForm] = useState({ mileageIn: '', fuelLevel: '', damageNotes: '', itemsLeftInCar: '' });
+  const [checkOutForm, setCheckOutForm] = useState({ mileageOut: '', fuelLevel: '', notes: '' });
+  const [checkInLoading, setCheckInLoading] = useState(false);
+  const [checkOutLoading, setCheckOutLoading] = useState(false);
 
   const setTab = (tab: TabKey): void => {
     const p = new URLSearchParams(searchParams.toString());
@@ -211,13 +230,82 @@ export default function WorkOrderDetailPage(): React.ReactElement {
 
   const handleGenerateInvoice = async (): Promise<void> => {
     try {
-      const res = await fetch(`/api/work-orders/${workOrderId}/invoice`, { method: 'POST' });
+      const res = await fetch(`/api/dashboard/work-orders/${workOrderId}/invoice`, { method: 'POST' });
       if (!res.ok) throw new Error('Errore generazione fattura');
       toast.success('Fattura generata con successo');
       mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Errore generazione fattura');
     }
+  };
+
+  const handleCheckIn = async (): Promise<void> => {
+    if (!checkInForm.mileageIn) { toast.error('Chilometraggio obbligatorio'); return; }
+    if (!wo) return;
+    setCheckInLoading(true);
+    try {
+      const body: Record<string, unknown> = {
+        vehicleId: wo.vehicleId,
+        customerId: wo.customerId,
+        mileageIn: parseInt(checkInForm.mileageIn, 10),
+      };
+      if (checkInForm.fuelLevel) body.fuelLevel = checkInForm.fuelLevel;
+      if (checkInForm.damageNotes) body.damageNotes = checkInForm.damageNotes;
+      if (checkInForm.itemsLeftInCar) body.itemsLeftInCar = checkInForm.itemsLeftInCar;
+
+      const res = await fetch(`/api/dashboard/work-orders/${workOrderId}/check-in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: { message?: string }; message?: string };
+        throw new Error(json.error?.message || json.message || 'Errore check-in');
+      }
+      toast.success('Check-in effettuato');
+      setShowCheckIn(false);
+      setCheckInForm({ mileageIn: '', fuelLevel: '', damageNotes: '', itemsLeftInCar: '' });
+      mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore durante il check-in');
+    } finally {
+      setCheckInLoading(false);
+    }
+  };
+
+  const handleCheckOut = async (): Promise<void> => {
+    if (!checkOutForm.mileageOut) { toast.error('Chilometraggio obbligatorio'); return; }
+    if (!checkOutForm.fuelLevel) { toast.error('Livello carburante obbligatorio'); return; }
+    setCheckOutLoading(true);
+    try {
+      const body: Record<string, unknown> = {
+        mileageOut: parseInt(checkOutForm.mileageOut, 10),
+        fuelLevel: checkOutForm.fuelLevel,
+      };
+      if (checkOutForm.notes) body.notes = checkOutForm.notes;
+
+      const res = await fetch(`/api/dashboard/work-orders/${workOrderId}/check-out`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: { message?: string }; message?: string };
+        throw new Error(json.error?.message || json.message || 'Errore check-out');
+      }
+      toast.success('Check-out effettuato');
+      setShowCheckOut(false);
+      setCheckOutForm({ mileageOut: '', fuelLevel: '', notes: '' });
+      mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore durante il check-out');
+    } finally {
+      setCheckOutLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = (): void => {
+    window.open(`/api/dashboard/work-orders/${workOrderId}/pdf`, '_blank');
   };
 
   // Loading
@@ -302,6 +390,24 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   Avanza a {nextLabel}
                 </AppleButton>
               )}
+              {!wo.mileageIn && !['DELIVERED', 'CANCELLED'].includes(wo.status) && (
+                <AppleButton
+                  variant="secondary"
+                  onClick={() => setShowCheckIn(true)}
+                  icon={<LogIn className="h-4 w-4" />}
+                >
+                  Check-in
+                </AppleButton>
+              )}
+              {wo.mileageIn && !wo.mileageOut && ['COMPLETED', 'READY', 'QC'].includes(wo.status) && (
+                <AppleButton
+                  variant="secondary"
+                  onClick={() => setShowCheckOut(true)}
+                  icon={<LogOut className="h-4 w-4" />}
+                >
+                  Check-out
+                </AppleButton>
+              )}
               {(wo.status === 'COMPLETED' || wo.status === 'READY') && (
                 <AppleButton
                   variant="secondary"
@@ -311,6 +417,13 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   Genera Fattura
                 </AppleButton>
               )}
+              <AppleButton
+                variant="ghost"
+                onClick={handleDownloadPdf}
+                icon={<Download className="h-4 w-4" />}
+              >
+                PDF
+              </AppleButton>
             </div>
           </div>
 
@@ -444,6 +557,162 @@ export default function WorkOrderDetailPage(): React.ReactElement {
           </div>
         </div>
       </div>
+
+      {/* Check-in Modal */}
+      {showCheckIn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-apple-border/20 dark:border-[var(--border-default)]">
+              <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
+                <LogIn className="h-5 w-5 text-apple-blue" />
+                Check-in Veicolo
+              </h2>
+              <button
+                onClick={() => setShowCheckIn(false)}
+                className="p-1.5 rounded-full text-apple-gray hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Chilometraggio ingresso *
+                </label>
+                <Input
+                  type="number"
+                  placeholder="es. 125000"
+                  value={checkInForm.mileageIn}
+                  onChange={(e) => setCheckInForm((f) => ({ ...f, mileageIn: e.target.value }))}
+                  min={0}
+                />
+              </div>
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Livello carburante
+                </label>
+                <select
+                  value={checkInForm.fuelLevel}
+                  onChange={(e) => setCheckInForm((f) => ({ ...f, fuelLevel: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                >
+                  <option value="">— Seleziona —</option>
+                  {FUEL_LEVEL_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Danni preesistenti
+                </label>
+                <textarea
+                  placeholder="es. Graffio paraurti anteriore destro"
+                  value={checkInForm.damageNotes}
+                  onChange={(e) => setCheckInForm((f) => ({ ...f, damageNotes: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Oggetti nel veicolo
+                </label>
+                <Input
+                  placeholder="es. Seggiolino bambino, ombrello"
+                  value={checkInForm.itemsLeftInCar}
+                  onChange={(e) => setCheckInForm((f) => ({ ...f, itemsLeftInCar: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-apple-border/20 dark:border-[var(--border-default)]">
+              <AppleButton variant="secondary" onClick={() => setShowCheckIn(false)}>
+                Annulla
+              </AppleButton>
+              <AppleButton
+                onClick={handleCheckIn}
+                loading={checkInLoading}
+                icon={<LogIn className="h-4 w-4" />}
+              >
+                Conferma Check-in
+              </AppleButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Check-out Modal */}
+      {showCheckOut && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-apple-border/20 dark:border-[var(--border-default)]">
+              <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
+                <LogOut className="h-5 w-5 text-apple-green" />
+                Check-out Veicolo
+              </h2>
+              <button
+                onClick={() => setShowCheckOut(false)}
+                className="p-1.5 rounded-full text-apple-gray hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Chilometraggio uscita *
+                </label>
+                <Input
+                  type="number"
+                  placeholder={wo.mileageIn ? String(wo.mileageIn) : 'es. 125050'}
+                  value={checkOutForm.mileageOut}
+                  onChange={(e) => setCheckOutForm((f) => ({ ...f, mileageOut: e.target.value }))}
+                  min={wo.mileageIn || 0}
+                />
+              </div>
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Livello carburante *
+                </label>
+                <select
+                  value={checkOutForm.fuelLevel}
+                  onChange={(e) => setCheckOutForm((f) => ({ ...f, fuelLevel: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                >
+                  <option value="">— Seleziona —</option>
+                  {FUEL_LEVEL_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                  Note riconsegna
+                </label>
+                <textarea
+                  placeholder="es. Veicolo lavato e sanificato"
+                  value={checkOutForm.notes}
+                  onChange={(e) => setCheckOutForm((f) => ({ ...f, notes: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-apple-border/20 dark:border-[var(--border-default)]">
+              <AppleButton variant="secondary" onClick={() => setShowCheckOut(false)}>
+                Annulla
+              </AppleButton>
+              <AppleButton
+                onClick={handleCheckOut}
+                loading={checkOutLoading}
+                icon={<LogOut className="h-4 w-4" />}
+              >
+                Conferma Check-out
+              </AppleButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

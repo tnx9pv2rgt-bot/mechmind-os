@@ -3,15 +3,6 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const DEMO_USER = {
-  id: 'demo-user',
-  email: 'demo@mechmind.it',
-  name: 'Utente Demo',
-  role: 'OWNER',
-  tenantId: 'demo-tenant',
-  tenantName: 'Officina Demo',
-}
-
 interface JwtPayload {
   sub: string
   email: string
@@ -44,17 +35,11 @@ function decodeJwtPayload(token: string): JwtPayload | null {
 
 /**
  * GET /api/auth/me
- * 1. If demo_session cookie → return demo user (no backend call)
- * 2. If auth_token cookie → decode JWT and return user info
- * 3. Otherwise → { user: null }
+ * Decode JWT from auth_token cookie and return user info.
+ * Demo sessions use a real token from backend auth, so no special handling needed.
  */
 export async function GET(): Promise<NextResponse> {
   const cookieStore = await cookies()
-
-  // Demo session — return fake user instantly
-  if (cookieStore.get('demo_session')?.value === '1') {
-    return NextResponse.json({ user: DEMO_USER })
-  }
 
   const token = cookieStore.get('auth_token')?.value
 

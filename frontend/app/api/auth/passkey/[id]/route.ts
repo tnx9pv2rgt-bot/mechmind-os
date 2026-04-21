@@ -15,10 +15,11 @@ const credentialsStore = new Map<string, {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const credentialId = params.id
+    const { id } = await params
+    const credentialId = id
 
     // In produzione: verifica sessione
     const userId = 'current-user-id' // Mock

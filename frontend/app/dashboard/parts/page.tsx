@@ -75,6 +75,16 @@ const supplierSchema = z.object({
 type SupplierFormData = z.infer<typeof supplierSchema>;
 
 // =============================================================================
+// Part Type Config (EU Right to Repair 2024/1799)
+// =============================================================================
+const partTypeConfig: Record<string, { color: string; bg: string; label: string }> = {
+  GENUINE: { color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/40', label: 'OEM' },
+  AFTERMARKET: { color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-100 dark:bg-orange-900/40', label: 'Aftermarket' },
+  REGENERATED: { color: 'text-green-700 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/40', label: 'Rigenerato' },
+  USED: { color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-100 dark:bg-purple-900/40', label: 'Usato' },
+};
+
+// =============================================================================
 // Stock Config
 // =============================================================================
 const stockConfig: Record<string, { color: string; bg: string; label: string }> = {
@@ -532,7 +542,7 @@ export default function PartsPage() {
                             <Package className='h-6 w-6 text-apple-blue' />
                           </div>
                           <div>
-                            <div className='flex items-center gap-2'>
+                            <div className='flex items-center gap-2 flex-wrap'>
                               <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
                                 {part.name}
                               </p>
@@ -541,6 +551,13 @@ export default function PartsPage() {
                               >
                                 {stock.label}
                               </span>
+                              {part.partType && partTypeConfig[part.partType] && (
+                                <span
+                                  className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${partTypeConfig[part.partType].bg} ${partTypeConfig[part.partType].color}`}
+                                >
+                                  {partTypeConfig[part.partType].label}
+                                </span>
+                              )}
                             </div>
                             <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
                               {part.brand && `${part.brand} \u2022 `}

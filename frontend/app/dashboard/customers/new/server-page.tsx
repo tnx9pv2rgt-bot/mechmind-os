@@ -31,8 +31,8 @@ async function getGeoData(): Promise<GeoData> {
   try {
     // In production, this would call your edge API
     // For now, we simulate with headers
-    const headersList = headers()
-    const cookiesList = cookies()
+    const headersList = await headers()
+    const cookiesList = await cookies()
     
     // Extract geolocation from headers (Cloudflare/Vercel)
     const country = headersList.get('cf-ipcountry') || headersList.get('x-vercel-ip-country') || 'IT'
