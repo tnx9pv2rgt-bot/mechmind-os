@@ -19,6 +19,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { IotModule } from './iot/iot.module';
 import { FleetModule } from './fleet/fleet.module';
 import { TireModule } from './tire/tire.module';
+import { InventoryAlertsModule } from './inventory-alerts/inventory-alerts.module';
 import { EstimateModule } from './estimate/estimate.module';
 import { LaborGuideModule } from './labor-guide/labor-guide.module';
 import { AccountingModule } from './accounting/accounting.module';
@@ -46,6 +47,8 @@ import { KioskModule } from './kiosk/kiosk.module';
 import { VehicleHistoryModule } from './vehicle-history/vehicle-history.module';
 import { PredictiveMaintenanceModule } from './predictive-maintenance/predictive-maintenance.module';
 import { PortalModule } from './portal/portal.module';
+import { WebhookSubscriptionModule } from './webhook-subscription/webhook-subscription.module';
+import { PeppolModule } from './peppol/peppol.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
@@ -95,6 +98,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     IotModule,
     FleetModule,
     TireModule,
+    InventoryAlertsModule,
     EstimateModule,
     LaborGuideModule,
     AccountingModule,
@@ -122,6 +126,8 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     VehicleHistoryModule,
     PredictiveMaintenanceModule,
     PortalModule,
+    WebhookSubscriptionModule,
+    PeppolModule,
   ],
   providers: [
     // Global exception filter
