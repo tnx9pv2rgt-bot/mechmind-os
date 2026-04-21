@@ -1,11 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
-import { fetcher } from '@/lib/swr-fetcher';
 import { toast } from 'sonner';
+import { fetcher } from '@/lib/swr-fetcher';
 import Link from 'next/link';
-import { useState } from 'react';
 import {
   Car,
   User,
@@ -16,10 +16,14 @@ import {
   Gauge,
   Calendar,
   FileText,
-  CheckCircle,
-  Clock,
+  FolderOpen,
   Loader2,
+  Save,
+  X,
 } from 'lucide-react';
+import { ServiceHistory } from '@/components/vehicles/service-history';
+import { MaintenanceAlerts } from '@/components/vehicles/maintenance-alerts';
+import { VehicleDocuments } from '@/components/vehicles/vehicle-documents';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -39,6 +43,11 @@ interface VehicleDetail {
   mileage?: number;
   status: string;
   customerId?: string;
+  revisionExpiry?: string | null;
+  insuranceExpiry?: string | null;
+  taxExpiry?: string | null;
+  lastServiceDate?: string | null;
+  nextServiceDueKm?: number | null;
   customer?: {
     id: string;
     firstName?: string;
@@ -46,21 +55,11 @@ interface VehicleDetail {
     email?: string;
     phone?: string;
   };
-  maintenanceItems?: MaintenanceItem[];
   workOrders?: WorkOrderSummary[];
   inspections?: InspectionSummary[];
   obdData?: OBDData;
   createdAt: string;
   updatedAt: string;
-}
-
-interface MaintenanceItem {
-  id: string;
-  description: string;
-  status: string;
-  scheduledDate?: string;
-  completedDate?: string;
-  cost?: number;
 }
 
 interface WorkOrderSummary {
@@ -92,6 +91,7 @@ interface OBDData {
 const TABS = [
   { key: 'dettagli', label: 'Dettagli', icon: Car },
   { key: 'manutenzione', label: 'Manutenzione', icon: Wrench },
+  { key: 'documenti', label: 'Documenti', icon: FolderOpen },
   { key: 'storico-odl', label: 'Storico OdL', icon: ClipboardList },
   { key: 'ispezioni', label: 'Ispezioni', icon: FileText },
   { key: 'obd', label: 'OBD', icon: Activity },
@@ -115,6 +115,7 @@ export default function VehicleDetailPage(): React.ReactElement {
   const searchParams = useSearchParams();
   const vehicleId = params.id as string;
   const activeTab = (searchParams.get('tab') as TabKey) || 'dettagli';
+  const isEditing = searchParams.get('edit') === 'true' && activeTab === 'dettagli';
 
   const { data: rawData, error, isLoading, mutate } = useSWR<VehicleDetail | { data: VehicleDetail }>(
     `/api/dashboard/vehicles/${vehicleId}`,
@@ -132,7 +133,19 @@ export default function VehicleDetailPage(): React.ReactElement {
   const setTab = (tab: TabKey): void => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('tab', tab);
+    newParams.delete('edit');
     router.push(`/dashboard/vehicles/${vehicleId}?${newParams.toString()}`);
+  };
+
+  const handleCancelEdit = (): void => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.delete('edit');
+    router.push(`/dashboard/vehicles/${vehicleId}?${newParams.toString()}`);
+  };
+
+  const handleSaved = (): void => {
+    void mutate();
+    handleCancelEdit();
   };
 
   const ownerName = vehicle?.customer
@@ -214,13 +227,15 @@ export default function VehicleDetailPage(): React.ReactElement {
                 </p>
               </div>
             </div>
-            <AppleButton
-              variant="secondary"
-              icon={<Pencil className="h-4 w-4" />}
-              onClick={() => router.push(`/dashboard/vehicles/${vehicleId}?tab=dettagli&edit=true`)}
-            >
-              Modifica
-            </AppleButton>
+            {!isEditing && (
+              <AppleButton
+                variant="secondary"
+                icon={<Pencil className="h-4 w-4" />}
+                onClick={() => router.push(`/dashboard/vehicles/${vehicleId}?tab=dettagli&edit=true`)}
+              >
+                Modifica
+              </AppleButton>
+            )}
           </div>
 
           {/* Tabs */}
@@ -249,8 +264,28 @@ export default function VehicleDetailPage(): React.ReactElement {
 
       {/* Tab Content */}
       <div className="p-4 sm:p-8">
-        {activeTab === 'dettagli' && <DetailsTab vehicle={vehicle} />}
-        {activeTab === 'manutenzione' && <MaintenanceTab items={vehicle.maintenanceItems || []} />}
+        {activeTab === 'dettagli' && (
+          <DetailsTab
+            vehicle={vehicle}
+            isEditing={isEditing}
+            vehicleId={vehicleId}
+            onSaved={handleSaved}
+            onCancel={handleCancelEdit}
+          />
+        )}
+        {activeTab === 'manutenzione' && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Scadenze e Alert</h2>
+              <MaintenanceAlerts vehicle={vehicle} />
+            </div>
+            <div>
+              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Storico Interventi</h2>
+              <ServiceHistory vehicleId={vehicleId} />
+            </div>
+          </div>
+        )}
+        {activeTab === 'documenti' && <VehicleDocuments vehicleId={vehicleId} />}
         {activeTab === 'storico-odl' && <WorkOrdersTab workOrders={vehicle.workOrders || []} />}
         {activeTab === 'ispezioni' && <InspectionsTab inspections={vehicle.inspections || []} vehicleId={vehicleId} />}
         {activeTab === 'obd' && <OBDTab data={vehicle.obdData} />}
@@ -260,7 +295,176 @@ export default function VehicleDetailPage(): React.ReactElement {
 }
 
 /* --- Details Tab --- */
-function DetailsTab({ vehicle }: { vehicle: VehicleDetail }): React.ReactElement {
+const FUEL_LABELS: Record<string, string> = {
+  BENZINA: 'Benzina', DIESEL: 'Diesel', GPL: 'GPL', METANO: 'Metano',
+  IBRIDO_BENZINA: 'Ibrido Benzina', IBRIDO_DIESEL: 'Ibrido Diesel',
+  ELETTRICO: 'Elettrico', IDROGENO: 'Idrogeno',
+};
+
+function DetailsTab({
+  vehicle,
+  isEditing,
+  vehicleId,
+  onSaved,
+  onCancel,
+}: {
+  vehicle: VehicleDetail;
+  isEditing: boolean;
+  vehicleId: string;
+  onSaved: () => void;
+  onCancel: () => void;
+}): React.ReactElement {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    licensePlate: vehicle.licensePlate || '',
+    make: vehicle.make || '',
+    model: vehicle.model || '',
+    year: vehicle.year ? String(vehicle.year) : '',
+    vin: vehicle.vin || '',
+    color: vehicle.color || '',
+    fuelType: vehicle.fuelType || '',
+    mileage: vehicle.mileage ? String(vehicle.mileage) : '',
+    revisionExpiry: vehicle.revisionExpiry ? vehicle.revisionExpiry.slice(0, 10) : '',
+    insuranceExpiry: vehicle.insuranceExpiry ? vehicle.insuranceExpiry.slice(0, 10) : '',
+    taxExpiry: vehicle.taxExpiry ? vehicle.taxExpiry.slice(0, 10) : '',
+    status: vehicle.status || 'ACTIVE',
+  });
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+    setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  const handleSave = async (): Promise<void> => {
+    if (!form.licensePlate.trim()) { toast.error('Targa obbligatoria'); return; }
+    if (!form.make.trim()) { toast.error('Marca obbligatoria'); return; }
+    if (!form.model.trim()) { toast.error('Modello obbligatorio'); return; }
+
+    setSaving(true);
+    try {
+      const body: Record<string, unknown> = {
+        licensePlate: form.licensePlate.trim(),
+        make: form.make.trim(),
+        model: form.model.trim(),
+        status: form.status,
+      };
+      if (form.year) body.year = parseInt(form.year, 10);
+      if (form.vin.trim()) body.vin = form.vin.trim();
+      if (form.color !== undefined) body.color = form.color.trim() || null;
+      if (form.fuelType) body.fuelType = form.fuelType;
+      if (form.mileage) body.mileage = parseInt(form.mileage, 10);
+      if (form.revisionExpiry) body.revisionExpiry = form.revisionExpiry;
+      if (form.insuranceExpiry) body.insuranceExpiry = form.insuranceExpiry;
+      if (form.taxExpiry) body.taxExpiry = form.taxExpiry;
+
+      const res = await fetch(`/api/dashboard/vehicles/${vehicleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json() as { message?: string };
+        throw new Error(err.message ?? 'Errore salvataggio');
+      }
+
+      toast.success('Veicolo aggiornato');
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore durante il salvataggio');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputClass = 'w-full h-10 px-3 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue/40';
+  const labelClass = 'block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1';
+
+  if (isEditing) {
+    return (
+      <AppleCard hover={false}>
+        <AppleCardHeader>
+          <div className="flex items-center justify-between">
+            <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Modifica Veicolo</h2>
+            <div className="flex gap-2">
+              <AppleButton variant="ghost" size="sm" onClick={onCancel} icon={<X className="h-4 w-4" />}>
+                Annulla
+              </AppleButton>
+              <AppleButton
+                variant="primary"
+                size="sm"
+                onClick={() => { void handleSave(); }}
+                icon={saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              >
+                {saving ? 'Salvataggio...' : 'Salva'}
+              </AppleButton>
+            </div>
+          </div>
+        </AppleCardHeader>
+        <AppleCardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>Targa *</label>
+              <input type="text" value={form.licensePlate} onChange={set('licensePlate')} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Marca *</label>
+              <input type="text" value={form.make} onChange={set('make')} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Modello *</label>
+              <input type="text" value={form.model} onChange={set('model')} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Anno</label>
+              <input type="number" value={form.year} onChange={set('year')} min={1900} max={new Date().getFullYear() + 1} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>VIN</label>
+              <input type="text" value={form.vin} onChange={set('vin')} maxLength={17} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Colore</label>
+              <input type="text" value={form.color} onChange={set('color')} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Carburante</label>
+              <select value={form.fuelType} onChange={set('fuelType')} className={inputClass}>
+                <option value="">— seleziona —</option>
+                {Object.entries(FUEL_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Chilometraggio (km)</label>
+              <input type="number" value={form.mileage} onChange={set('mileage')} min={0} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Stato</label>
+              <select value={form.status} onChange={set('status')} className={inputClass}>
+                <option value="ACTIVE">Attivo</option>
+                <option value="IN_SERVICE">In Lavorazione</option>
+                <option value="WAITING_PARTS">Attesa Ricambi</option>
+                <option value="READY">Pronto</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Scad. Revisione</label>
+              <input type="date" value={form.revisionExpiry} onChange={set('revisionExpiry')} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Scad. Assicurazione</label>
+              <input type="date" value={form.insuranceExpiry} onChange={set('insuranceExpiry')} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Scad. Bollo</label>
+              <input type="date" value={form.taxExpiry} onChange={set('taxExpiry')} className={inputClass} />
+            </div>
+          </div>
+        </AppleCardContent>
+      </AppleCard>
+    );
+  }
+
   const fields: { label: string; value: string; icon: React.ReactElement }[] = [
     { label: 'Targa', value: formatPlate(vehicle.licensePlate), icon: <Car className="h-4 w-4" /> },
     { label: 'VIN', value: vehicle.vin || '—', icon: <FileText className="h-4 w-4" /> },
@@ -268,7 +472,7 @@ function DetailsTab({ vehicle }: { vehicle: VehicleDetail }): React.ReactElement
     { label: 'Modello', value: vehicle.model || '—', icon: <Car className="h-4 w-4" /> },
     { label: 'Anno', value: vehicle.year ? String(vehicle.year) : '—', icon: <Calendar className="h-4 w-4" /> },
     { label: 'Colore', value: vehicle.color || '—', icon: <Car className="h-4 w-4" /> },
-    { label: 'Carburante', value: vehicle.fuelType || '—', icon: <Car className="h-4 w-4" /> },
+    { label: 'Carburante', value: vehicle.fuelType ? (FUEL_LABELS[vehicle.fuelType] ?? vehicle.fuelType) : '—', icon: <Car className="h-4 w-4" /> },
     { label: 'Chilometraggio', value: vehicle.mileage ? `${formatNumber(vehicle.mileage)} km` : '—', icon: <Gauge className="h-4 w-4" /> },
   ];
 
@@ -323,52 +527,6 @@ function DetailsTab({ vehicle }: { vehicle: VehicleDetail }): React.ReactElement
         )}
       </AppleCardContent>
     </AppleCard>
-  );
-}
-
-/* --- Maintenance Tab --- */
-function MaintenanceTab({ items }: { items: MaintenanceItem[] }): React.ReactElement {
-  if (items.length === 0) {
-    return (
-      <EmptyState
-        icon={Wrench}
-        title="Nessuna manutenzione"
-        description="Non ci sono interventi di manutenzione pianificati o completati per questo veicolo."
-        variant="first-time"
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <AppleCard key={item.id} hover={false}>
-          <AppleCardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {item.status === 'completed' ? (
-                  <CheckCircle className="h-5 w-5 text-apple-green" />
-                ) : (
-                  <Clock className="h-5 w-5 text-apple-orange" />
-                )}
-                <div>
-                  <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{item.description}</p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
-                    {item.scheduledDate ? `Pianificato: ${formatDate(item.scheduledDate)}` : ''}
-                    {item.completedDate ? ` | Completato: ${formatDate(item.completedDate)}` : ''}
-                  </p>
-                </div>
-              </div>
-              {item.cost != null && (
-                <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
-                  {formatCurrency(item.cost)}
-                </span>
-              )}
-            </div>
-          </AppleCardContent>
-        </AppleCard>
-      ))}
-    </div>
   );
 }
 

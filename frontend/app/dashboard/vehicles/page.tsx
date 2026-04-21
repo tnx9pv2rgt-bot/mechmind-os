@@ -17,10 +17,11 @@ import {
   Eye,
   Pencil,
   Trash2,
-  Fuel,
   AlertCircle,
+  AlertTriangle,
   Filter,
   Loader2,
+  ShieldAlert,
 } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -38,6 +39,9 @@ interface Vehicle {
   mileage?: number;
   status: string;
   customerId?: string;
+  revisionExpiry?: string | null;
+  insuranceExpiry?: string | null;
+  taxExpiry?: string | null;
   customer?: {
     id: string;
     firstName?: string;
@@ -49,9 +53,50 @@ interface Vehicle {
 
 interface VehiclesResponse {
   data: Vehicle[];
-  total: number;
-  page: number;
-  limit: number;
+  meta?: { total: number; limit: number; offset: number };
+  total?: number;
+}
+
+interface ExpiringResponse {
+  data: Vehicle[];
+  summary: { revision: number; insurance: number; tax: number; total: number };
+}
+
+function expiryWarning(dateStr?: string | null): 'expired' | 'soon' | null {
+  if (!dateStr) return null;
+  const days = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+  if (days < 0) return 'expired';
+  if (days <= 60) return 'soon';
+  return null;
+}
+
+function VehicleExpiryBadges({ vehicle }: { vehicle: Vehicle }) {
+  const revision = expiryWarning(vehicle.revisionExpiry);
+  const insurance = expiryWarning(vehicle.insuranceExpiry);
+  const tax = expiryWarning(vehicle.taxExpiry);
+
+  const alerts = [
+    revision === 'expired' && { label: 'Revisione scaduta', color: 'text-red-600 dark:text-red-400' },
+    revision === 'soon' && { label: 'Revisione in scadenza', color: 'text-orange-500 dark:text-orange-400' },
+    insurance === 'expired' && { label: 'Assicurazione scaduta', color: 'text-red-600 dark:text-red-400' },
+    insurance === 'soon' && { label: 'Assicurazione in scadenza', color: 'text-orange-500 dark:text-orange-400' },
+    tax === 'expired' && { label: 'Bollo scaduto', color: 'text-red-600 dark:text-red-400' },
+    tax === 'soon' && { label: 'Bollo in scadenza', color: 'text-orange-500 dark:text-orange-400' },
+  ].filter(Boolean) as { label: string; color: string }[];
+
+  if (alerts.length === 0) return null;
+
+  const hasExpired = alerts.some(a => a.color.includes('red'));
+
+  return (
+    <span
+      title={alerts.map(a => a.label).join(' • ')}
+      className={`inline-flex items-center gap-1 ml-1 ${hasExpired ? 'text-red-600 dark:text-red-400' : 'text-orange-500 dark:text-orange-400'}`}
+    >
+      <AlertTriangle className="h-3.5 w-3.5" />
+      <span className="text-[11px] font-semibold">{alerts.length}</span>
+    </span>
+  );
 }
 
 const FUEL_TYPES: { value: string; label: string }[] = [
@@ -114,6 +159,11 @@ export default function VehiclesPage(): React.ReactElement {
     fetcher,
   );
 
+  const { data: expiringData } = useSWR<ExpiringResponse>(
+    '/api/dashboard/vehicles/expiring?days=60',
+    fetcher,
+  );
+
   const vehicles: Vehicle[] = (() => {
     if (!rawData) return [];
     if (Array.isArray(rawData)) return rawData;
@@ -124,11 +174,13 @@ export default function VehiclesPage(): React.ReactElement {
   const total = (() => {
     if (!rawData) return 0;
     if (Array.isArray(rawData)) return rawData.length;
-    if ('total' in rawData) return rawData.total;
+    if ('meta' in rawData && rawData.meta) return rawData.meta.total;
+    if ('total' in rawData && rawData.total != null) return rawData.total;
     return vehicles.length;
   })();
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const expiringSummary = expiringData?.summary;
 
   const handleDelete = async (): Promise<void> => {
     if (!deleteTarget) return;
@@ -182,6 +234,36 @@ export default function VehiclesPage(): React.ReactElement {
         animate="visible"
         variants={containerVariants}
       >
+        {/* Expiry Banner */}
+        {expiringSummary && expiringSummary.total > 0 && (
+          <motion.div variants={listItemVariants}>
+            <div className="rounded-xl border border-orange-300/50 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-900/10 p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <ShieldAlert className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-body font-semibold text-orange-800 dark:text-orange-300">
+                      {expiringSummary.total} {expiringSummary.total === 1 ? 'veicolo con scadenze' : 'veicoli con scadenze'} nei prossimi 60 giorni
+                    </p>
+                    <p className="text-footnote text-orange-700/70 dark:text-orange-400/70 mt-0.5">
+                      {[
+                        expiringSummary.revision > 0 && `Revisione: ${expiringSummary.revision}`,
+                        expiringSummary.insurance > 0 && `Assicurazione: ${expiringSummary.insurance}`,
+                        expiringSummary.tax > 0 && `Bollo: ${expiringSummary.tax}`,
+                      ].filter(Boolean).join(' • ')}
+                    </p>
+                  </div>
+                </div>
+                <Link href="/dashboard/vehicles?scadenze=1">
+                  <AppleButton variant="ghost" size="sm">
+                    Vedi tutti
+                  </AppleButton>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Search + Filters */}
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
@@ -297,9 +379,12 @@ export default function VehiclesPage(): React.ReactElement {
                             className="border-b border-apple-border/10 dark:border-[var(--border-default)] last:border-b-0 transition-colors hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-active)]"
                           >
                             <td className="px-4 py-3">
-                              <span className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)]">
-                                {formatPlate(vehicle.licensePlate)}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)]">
+                                  {formatPlate(vehicle.licensePlate)}
+                                </span>
+                                <VehicleExpiryBadges vehicle={vehicle} />
+                              </div>
                               <span className="block sm:hidden text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
                                 {vehicle.make} {vehicle.model}
                               </span>

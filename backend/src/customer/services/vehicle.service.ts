@@ -86,7 +86,7 @@ export class VehicleService {
     options?: { limit?: number; offset?: number; search?: string; status?: string },
   ): Promise<{ vehicles: Vehicle[]; total: number }> {
     return this.prisma.withTenant(tenantId, async prisma => {
-      const where: Prisma.VehicleWhereInput = { tenantId };
+      const where: Prisma.VehicleWhereInput = { tenantId, deletedAt: null };
 
       if (options?.search) {
         where.OR = [
@@ -120,7 +120,7 @@ export class VehicleService {
   async findById(tenantId: string, vehicleId: string): Promise<VehicleWithRelations> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
-        where: { id: vehicleId, tenantId },
+        where: { id: vehicleId, tenantId, deletedAt: null },
         include: {
           customer: true,
           bookings: {
@@ -154,7 +154,7 @@ export class VehicleService {
 
       // Internal: bounded by single customer (typically < 10 vehicles)
       return prisma.vehicle.findMany({
-        where: { customerId, tenantId },
+        where: { customerId, tenantId, deletedAt: null },
         orderBy: { createdAt: 'desc' },
       });
     });
@@ -171,7 +171,7 @@ export class VehicleService {
       const normalizedPlate = licensePlate.toUpperCase().replace(/\s+/g, '');
 
       return prisma.vehicle.findFirst({
-        where: { licensePlate: normalizedPlate, tenantId },
+        where: { licensePlate: normalizedPlate, tenantId, deletedAt: null },
         include: {
           customer: true,
         },
@@ -185,7 +185,7 @@ export class VehicleService {
   async update(tenantId: string, vehicleId: string, dto: UpdateVehicleDto): Promise<Vehicle> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
-        where: { id: vehicleId, tenantId },
+        where: { id: vehicleId, tenantId, deletedAt: null },
       });
 
       if (!vehicle) {
@@ -204,6 +204,14 @@ export class VehicleService {
       if (dto.notes !== undefined) updateData.notes = dto.notes;
       if (dto.status) updateData.status = dto.status as VehicleStatus;
       if (dto.mileage !== undefined) updateData.mileage = dto.mileage;
+      if (dto.color !== undefined) updateData.color = dto.color;
+      if (dto.fuelType !== undefined) updateData.fuelType = dto.fuelType;
+      if (dto.insuranceExpiry !== undefined)
+        updateData.insuranceExpiry = dto.insuranceExpiry ? new Date(dto.insuranceExpiry) : null;
+      if (dto.taxExpiry !== undefined)
+        updateData.taxExpiry = dto.taxExpiry ? new Date(dto.taxExpiry) : null;
+      if (dto.revisionExpiry !== undefined)
+        updateData.revisionExpiry = dto.revisionExpiry ? new Date(dto.revisionExpiry) : null;
 
       const updated = await prisma.vehicle.update({
         where: { id: vehicleId },
@@ -217,23 +225,65 @@ export class VehicleService {
   }
 
   /**
+   * Find vehicles with documents expiring within the given number of days.
+   * Returns vehicles where revisionExpiry, insuranceExpiry, or taxExpiry
+   * falls within [now, now + days ahead] or already past.
+   */
+  async findExpiring(
+    tenantId: string,
+    days: number = 60,
+  ): Promise<{
+    vehicles: Prisma.VehicleGetPayload<{ include: { customer: true } }>[];
+    summary: { revision: number; insurance: number; tax: number; total: number };
+  }> {
+    return this.prisma.withTenant(tenantId, async prisma => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() + days);
+
+      const vehicles = await prisma.vehicle.findMany({
+        where: {
+          tenantId,
+          deletedAt: null,
+          OR: [
+            { revisionExpiry: { lte: cutoff } },
+            { insuranceExpiry: { lte: cutoff } },
+            { taxExpiry: { lte: cutoff } },
+          ],
+        },
+        include: { customer: true },
+        orderBy: [{ revisionExpiry: 'asc' }, { insuranceExpiry: 'asc' }],
+      });
+
+      const summary = {
+        revision: vehicles.filter(v => v.revisionExpiry && v.revisionExpiry <= cutoff).length,
+        insurance: vehicles.filter(v => v.insuranceExpiry && v.insuranceExpiry <= cutoff).length,
+        tax: vehicles.filter(v => v.taxExpiry && v.taxExpiry <= cutoff).length,
+        total: vehicles.length,
+      };
+
+      return { vehicles, summary };
+    });
+  }
+
+  /**
    * Delete vehicle
    */
   async delete(tenantId: string, vehicleId: string): Promise<void> {
     return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
-        where: { id: vehicleId, tenantId },
+        where: { id: vehicleId, tenantId, deletedAt: null },
       });
 
       if (!vehicle) {
         throw new NotFoundException(`Vehicle ${vehicleId} not found`);
       }
 
-      await prisma.vehicle.delete({
+      await prisma.vehicle.update({
         where: { id: vehicleId },
+        data: { deletedAt: new Date() },
       });
 
-      this.logger.log(`Deleted vehicle ${vehicleId}`);
+      this.logger.log(`Soft-deleted vehicle ${vehicleId}`);
     });
   }
 }

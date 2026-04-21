@@ -231,6 +231,11 @@ export class UpdateVehicleDto {
   @IsOptional()
   @IsDateString()
   taxExpiry?: string;
+
+  @ApiPropertyOptional({ description: 'Scadenza revisione' })
+  @IsOptional()
+  @IsDateString()
+  revisionExpiry?: string;
 }
 
 export class VehicleResponseDto {

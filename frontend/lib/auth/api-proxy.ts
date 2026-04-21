@@ -18,6 +18,8 @@ interface ProxyConfig {
   backendPath: string;
   method?: string;
   body?: unknown;
+  /** Multipart FormData — skips JSON serialization and Content-Type header */
+  formData?: FormData;
   /** Extra query params to forward */
   params?: Record<string, string>;
 }
@@ -28,7 +30,7 @@ interface ProxyConfig {
  * Always calls the real backend — no mock data.
  */
 export async function proxyToNestJS(config: ProxyConfig): Promise<NextResponse> {
-  const { backendPath, method = 'GET', body, params } = config;
+  const { backendPath, method = 'GET', body, formData, params } = config;
   const cookieStore = await cookies();
 
   const token = cookieStore.get('auth_token')?.value || cookieStore.get('portal_token')?.value;
@@ -63,9 +65,10 @@ export async function proxyToNestJS(config: ProxyConfig): Promise<NextResponse> 
     if (qs) url += `?${qs}`;
   }
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+  if (!formData) {
+    headers['Content-Type'] = 'application/json';
+  }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -83,7 +86,7 @@ export async function proxyToNestJS(config: ProxyConfig): Promise<NextResponse> 
     let res = await fetch(url, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: formData ? formData : body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
 
@@ -108,7 +111,7 @@ export async function proxyToNestJS(config: ProxyConfig): Promise<NextResponse> 
             res = await fetch(url, {
               method,
               headers,
-              body: body ? JSON.stringify(body) : undefined,
+              body: formData ? formData : body ? JSON.stringify(body) : undefined,
             });
 
             // Set updated cookies in response

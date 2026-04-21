@@ -1,0 +1,1 @@
+-- Migration applied directly to database, file restored for Prisma consistency

@@ -74,6 +74,23 @@ export class VehicleController {
     };
   }
 
+  @Get('expiring')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get vehicles with expiring documents (revision, insurance, tax)' })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    type: Number,
+    description: 'Days window (default 60)',
+  })
+  async getExpiringVehicles(
+    @CurrentTenant() tenantId: string,
+    @Query('days') days?: string,
+  ): Promise<{ success: boolean; data: unknown; summary: unknown }> {
+    const result = await this.vehicleService.findExpiring(tenantId, days ? parseInt(days) : 60);
+    return { success: true, data: result.vehicles, summary: result.summary };
+  }
+
   @Get(':id')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get vehicle by ID' })
