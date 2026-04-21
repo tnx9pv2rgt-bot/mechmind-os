@@ -5,7 +5,12 @@
  * human review/override tracking, and compliance dashboard.
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { Prisma, AiDecisionLog } from '@prisma/client';
 import {
@@ -17,6 +22,8 @@ import {
 
 @Injectable()
 export class AiComplianceService {
+  private readonly logger = new Logger(AiComplianceService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -24,20 +31,25 @@ export class AiComplianceService {
    * Called by any service that uses AI (damage analysis, diagnostics, etc.)
    */
   async logDecision(tenantId: string, dto: LogAiDecisionDto): Promise<AiDecisionLog> {
-    return this.prisma.aiDecisionLog.create({
-      data: {
-        tenantId,
-        featureName: dto.featureName,
-        modelUsed: dto.modelUsed,
-        inputSummary: dto.inputSummary,
-        outputSummary: dto.outputSummary,
-        confidence: dto.confidence != null ? new Prisma.Decimal(dto.confidence) : null,
-        entityType: dto.entityType,
-        entityId: dto.entityId,
-        userId: dto.userId,
-        processingTimeMs: dto.processingTimeMs,
-      },
-    });
+    try {
+      return await this.prisma.aiDecisionLog.create({
+        data: {
+          tenantId,
+          featureName: dto.featureName,
+          modelUsed: dto.modelUsed,
+          inputSummary: dto.inputSummary,
+          outputSummary: dto.outputSummary,
+          confidence: dto.confidence != null ? new Prisma.Decimal(dto.confidence) : null,
+          entityType: dto.entityType,
+          entityId: dto.entityId,
+          userId: dto.userId,
+          processingTimeMs: dto.processingTimeMs,
+        },
+      });
+    } catch (error) {
+      this.logger.error('logDecision failed', error);
+      throw new InternalServerErrorException('Errore durante il salvataggio della decisione IA');
+    }
   }
 
   /**
@@ -49,24 +61,30 @@ export class AiComplianceService {
     dto: HumanReviewDto,
     reviewedBy: string,
   ): Promise<AiDecisionLog> {
-    const existing = await this.prisma.aiDecisionLog.findFirst({
-      where: { id, tenantId },
-    });
+    try {
+      const existing = await this.prisma.aiDecisionLog.findFirst({
+        where: { id, tenantId },
+      });
 
-    if (!existing) {
-      throw new NotFoundException(`Decisione IA ${id} non trovata`);
+      if (!existing) {
+        throw new NotFoundException(`Decisione IA ${id} non trovata`);
+      }
+
+      return await this.prisma.aiDecisionLog.update({
+        where: { id },
+        data: {
+          humanReviewed: true,
+          humanOverridden: dto.humanOverridden,
+          humanDecision: dto.humanDecision,
+          reviewedBy,
+          reviewedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error('recordHumanReview failed', error);
+      throw new InternalServerErrorException('Errore durante il salvataggio della revisione umana');
     }
-
-    return this.prisma.aiDecisionLog.update({
-      where: { id },
-      data: {
-        humanReviewed: true,
-        humanOverridden: dto.humanOverridden,
-        humanDecision: dto.humanDecision,
-        reviewedBy,
-        reviewedAt: new Date(),
-      },
-    });
   }
 
   /**
@@ -100,73 +118,89 @@ export class AiComplianceService {
       }
     }
 
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.aiDecisionLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.aiDecisionLog.count({ where }),
-    ]);
+    try {
+      const [data, total] = await this.prisma.$transaction([
+        this.prisma.aiDecisionLog.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.aiDecisionLog.count({ where }),
+      ]);
 
-    return { data, total };
+      return { data, total };
+    } catch (error) {
+      this.logger.error('findAll failed', error);
+      throw new InternalServerErrorException('Errore durante il recupero delle decisioni IA');
+    }
   }
 
   /**
    * Get a single AI decision by ID.
    */
   async findOne(tenantId: string, id: string): Promise<AiDecisionLog> {
-    const record = await this.prisma.aiDecisionLog.findFirst({
-      where: { id, tenantId },
-    });
+    try {
+      const record = await this.prisma.aiDecisionLog.findFirst({
+        where: { id, tenantId },
+      });
 
-    if (!record) {
-      throw new NotFoundException(`Decisione IA ${id} non trovata`);
+      if (!record) {
+        throw new NotFoundException(`Decisione IA ${id} non trovata`);
+      }
+
+      return record;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error('findOne failed', error);
+      throw new InternalServerErrorException('Errore durante il recupero della decisione IA');
     }
-
-    return record;
   }
 
   /**
    * Dashboard: compliance statistics for the tenant.
    */
   async getDashboard(tenantId: string): Promise<AiComplianceDashboardDto> {
-    const [totalDecisions, overriddenCount, pendingReview, avgResult, byFeatureRaw] =
-      await this.prisma.$transaction([
-        this.prisma.aiDecisionLog.count({ where: { tenantId } }),
-        this.prisma.aiDecisionLog.count({
-          where: { tenantId, humanOverridden: true },
-        }),
-        this.prisma.aiDecisionLog.count({
-          where: { tenantId, humanReviewed: false },
-        }),
-        this.prisma.aiDecisionLog.aggregate({
-          where: { tenantId, confidence: { not: null } },
-          _avg: { confidence: true },
-        }),
-        this.prisma.aiDecisionLog.groupBy({
-          by: ['featureName'],
-          where: { tenantId },
-          orderBy: { featureName: 'asc' },
-          _count: true,
-        }),
-      ]);
+    try {
+      const [totalDecisions, overriddenCount, pendingReview, avgResult, byFeatureRaw] =
+        await this.prisma.$transaction([
+          this.prisma.aiDecisionLog.count({ where: { tenantId } }),
+          this.prisma.aiDecisionLog.count({
+            where: { tenantId, humanOverridden: true },
+          }),
+          this.prisma.aiDecisionLog.count({
+            where: { tenantId, humanReviewed: false },
+          }),
+          this.prisma.aiDecisionLog.aggregate({
+            where: { tenantId, confidence: { not: null } },
+            _avg: { confidence: true },
+          }),
+          this.prisma.aiDecisionLog.groupBy({
+            by: ['featureName'],
+            where: { tenantId },
+            orderBy: { featureName: 'asc' },
+            _count: true,
+          }),
+        ]);
 
-    const overrideRate = totalDecisions > 0 ? overriddenCount / totalDecisions : 0;
-    const avgConfidence = avgResult._avg.confidence ? Number(avgResult._avg.confidence) : 0;
+      const overrideRate = totalDecisions > 0 ? overriddenCount / totalDecisions : 0;
+      const avgConfidence = avgResult._avg.confidence ? Number(avgResult._avg.confidence) : 0;
 
-    const byFeature: Record<string, number> = {};
-    for (const row of byFeatureRaw) {
-      byFeature[row.featureName] = Number(row._count);
+      const byFeature: Record<string, number> = {};
+      for (const row of byFeatureRaw) {
+        byFeature[row.featureName] = Number(row._count);
+      }
+
+      return {
+        totalDecisions,
+        overrideRate: Math.round(overrideRate * 10000) / 10000,
+        avgConfidence: Math.round(avgConfidence * 10000) / 10000,
+        pendingReview,
+        byFeature,
+      };
+    } catch (error) {
+      this.logger.error('getDashboard failed', error);
+      throw new InternalServerErrorException('Errore durante il recupero della dashboard AI');
     }
-
-    return {
-      totalDecisions,
-      overrideRate: Math.round(overrideRate * 10000) / 10000,
-      avgConfidence: Math.round(avgConfidence * 10000) / 10000,
-      pendingReview,
-      byFeature,
-    };
   }
 }

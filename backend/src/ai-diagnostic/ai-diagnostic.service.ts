@@ -102,8 +102,12 @@ export class AiDiagnosticService {
   /**
    * Get diagnostic history for a vehicle.
    */
-  async getDiagnosticHistory(tenantId: string, vehicleId: string): Promise<AiDecisionLog[]> {
-    // Verify vehicle exists and belongs to tenant
+  async getDiagnosticHistory(
+    tenantId: string,
+    vehicleId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<AiDecisionLog[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: { id: vehicleId, tenantId },
     });
@@ -121,6 +125,8 @@ export class AiDiagnosticService {
         },
       },
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
   }
 
