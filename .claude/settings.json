@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "deny": [
       "Bash(rm -rf *)",
@@ -77,7 +80,10 @@
       "Bash(date *)",
       "Bash(realpath *)",
       "Bash(dirname *)",
-      "Bash(basename *)"
+      "Bash(basename *)",
+      "Bash(npx playwright test *)",
+      "Bash(chmod +x *)",
+      "Bash(bash -n *)"
     ]
   },
   "hooks": {
@@ -87,11 +93,35 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/session-start.sh",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/session-start.sh'",
             "timeout": 15
           }
         ],
         "description": "Inietta contesto sessione (branch, porte, Docker status, demo tenant)"
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/post-compact.sh'",
+            "timeout": 10
+          }
+        ],
+        "description": "Re-inietta regole core dopo compaction del contesto"
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/notify.sh'",
+            "timeout": 5
+          }
+        ],
+        "description": "Notifica macOS quando Claude completa un task"
       }
     ],
     "Stop": [
@@ -99,10 +129,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nINPUT=$(cat)\nif [ \"$(echo \"$INPUT\" | jq -r '.stop_hook_active // false')\" = \"true\" ]; then exit 0; fi\n\nFAILED=0\n\n# TypeScript backend\nif [ -d \"backend\" ]; then\n  BE=$(cd backend && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error TS' || true)\n  if [ \"$BE\" -gt 0 ]; then\n    echo \"\" >&2\n    echo \"===== STOP HOOK: BACKEND TS ERRORS ($BE) =====\" >&2\n    cd backend && npx tsc --noEmit --pretty false 2>&1 | head -25 >&2\n    FAILED=1\n  fi\nfi\n\n# TypeScript frontend\nif [ -d \"frontend\" ]; then\n  FE=$(cd frontend && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error TS' || true)\n  if [ \"$FE\" -gt 0 ]; then\n    echo \"\" >&2\n    echo \"===== STOP HOOK: FRONTEND TS ERRORS ($FE) =====\" >&2\n    cd frontend && npx tsc --noEmit --pretty false 2>&1 | head -25 >&2\n    FAILED=1\n  fi\nfi\n\n# ESLint backend\nif [ -d \"backend\" ]; then\n  LINT_OUT=$(cd backend && npm run lint 2>&1)\n  LINT_ERR=$(echo \"$LINT_OUT\" | grep -cE '\\d+ error' || true)\n  if [ \"$LINT_ERR\" -gt 0 ]; then\n    echo \"\" >&2\n    echo \"===== STOP HOOK: ESLINT ERRORS =====\" >&2\n    echo \"$LINT_OUT\" | tail -10 >&2\n    FAILED=1\n  fi\nfi\n\nif [ \"$FAILED\" -gt 0 ]; then\n  echo \"\" >&2\n  echo \"BLOCCATO: Fixa tutti gli errori sopra prima di finire.\" >&2\n  exit 2\nfi\nexit 0"
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/stop-quality-gate.sh'",
+            "timeout": 120
           }
         ],
-        "description": "BLOCCA se TypeScript o ESLint hanno errori in backend/frontend"
+        "description": "BLOCCA se TypeScript, ESLint o spec mancanti"
       }
     ],
     "PreToolUse": [
@@ -118,13 +149,24 @@
       },
       {
         "matcher": "Bash",
+        "if": "Bash(git push*)",
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\n\n# Block push to main/master\nif echo \"$COMMAND\" | grep -qE 'git\\s+push.*\\s+(main|master)'; then\n  echo \"BLOCCATO: push diretto a main/master vietato. Usa un feature branch.\" >&2\n  exit 2\nfi\n\n# Block .env reads via cat/less/more/head/tail\nif echo \"$COMMAND\" | grep -qE '(cat|less|more|head|tail|vi|vim|nano|bat|code)\\s+.*\\.env'; then\n  echo \"BLOCCATO: lettura .env vietata via CLI. Usa process.env nel codice.\" >&2\n  exit 2\nfi\n\n# Block pipe-to-shell patterns\nif echo \"$COMMAND\" | grep -qE '(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh)'; then\n  echo \"BLOCCATO: download-and-execute vietato.\" >&2\n  exit 2\nfi\n\nexit 0"
+            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\nif echo \"$COMMAND\" | grep -qE 'git\\s+push.*\\s+(main|master)'; then\n  echo \"BLOCCATO: push diretto a main/master vietato. Usa un feature branch.\" >&2\n  exit 2\nfi\nexit 0"
           }
         ],
-        "description": "BLOCCA push diretto a main/master"
+        "description": "BLOCCA push diretto a main/master (solo su git push)"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\n\n# Block .env reads via cat/less/more/head/tail\nif echo \"$COMMAND\" | grep -qE '(cat|less|more|head|tail|vi|vim|nano|bat|code)\\s+.*\\.env'; then\n  echo \"BLOCCATO: lettura .env vietata via CLI. Usa process.env nel codice.\" >&2\n  exit 2\nfi\n\n# Block pipe-to-shell patterns\nif echo \"$COMMAND\" | grep -qE '(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh)'; then\n  echo \"BLOCCATO: download-and-execute vietato.\" >&2\n  exit 2\nfi\n\nexit 0"
+          }
+        ],
+        "description": "BLOCCA lettura .env via CLI e download-and-execute"
       }
     ],
     "PostToolUse": [
@@ -137,6 +179,29 @@
           }
         ],
         "description": "Auto-format Prettier + log ogni file modificato"
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/check-tenant-id.sh'",
+            "timeout": 10
+          }
+        ],
+        "description": "Avvisa se query Prisma in service.ts potrebbero mancare di tenantId"
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/task-completed.sh'",
+            "timeout": 10
+          }
+        ],
+        "description": "Ricorda quality gate dopo completion di task backend"
       }
     ]
   }

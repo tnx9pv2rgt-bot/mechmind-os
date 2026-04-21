@@ -13,19 +13,15 @@ Stack: NestJS 10 + Prisma 5.22 + PostgreSQL 15 + Redis 7 | Next.js 14 + Tailwind
 - JWT con `jti` per revocabilita'. MAI secret hardcoded.
 - TDD: test PRIMA, minimo 1 test per endpoint.
 - Errori (500/404/warning) = BUG. Fixa subito, non minimizzare MAI.
-- TODO/placeholder → implementa o rimuovi. MAI "possiamo farlo dopo".
 
 ## Anti-Mock — Hook-Enforced
 - Route API frontend (`app/api/*/route.ts`) → SOLO proxy al backend NestJS reale
-- VIETATO: mock data, demo data, fake data in qualsiasi route API
 - Backend non risponde → errore 502, MAI dati finti
 - Endpoint mancante → CREALO nel backend. Pattern: `proxyToNestJS({ backendPath: 'v1/[resource]' })`
 
 ## Come Lavorare
-- Fixa errori subito senza chiedere. Verifica dopo ogni modifica.
 - Fine task: `npx tsc --noEmit && npm run lint && npx jest --forceExit`
 - Backend modificato: curl endpoint, verifica 200.
-- Frontend modificato: 0 errori console.
 - UI tutta in italiano. Dark mode + responsive. Touch target 44px.
 - react-hook-form + Zod, SWR, toast (sonner), AlertDialog (Radix).
 - Controller: DTO + @ApiProperty + @ApiTags. Service: domain exceptions.

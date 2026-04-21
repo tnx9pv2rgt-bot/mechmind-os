@@ -1176,6 +1176,12 @@ model Part {
   retailPrice Decimal @map("retail_price") @db.Decimal(10, 2)
   vatRate     Decimal @default(22.00) @map("vat_rate") @db.Decimal(5, 2)
 
+  // Compliance 2026 — EU Right to Repair 2024/1799 + D.Lgs. 206/2005
+  partType       PartType @default(GENUINE) @map("part_type")
+  warrantyMonths Int      @default(24) @map("warranty_months") // GENUINE/AFTERMARKET/REGENERATED=24, USED=3
+  originCode     String?  @map("origin_code")  // codice motore/telaio di provenienza (ricambi usati)
+  barcode        String?  // EAN/QR per tracciabilità magazzino
+
   // Inventory
   minStockLevel Int  @default(5) @map("min_stock_level")
   maxStockLevel Int? @map("max_stock_level")
@@ -1382,6 +1388,14 @@ model BookingPart {
 // ==========================================
 // PARTS ENUMS
 // ==========================================
+
+// Tipologia ricambio — D.Lgs. 206/2005 + EU Right to Repair 2024/1799
+enum PartType {
+  GENUINE       // OEM / originale
+  AFTERMARKET   // Compatibile (non OEM)
+  REGENERATED   // Rigenerato (garanzia 24 mesi)
+  USED          // Usato da demolitore (garanzia minima 3 mesi)
+}
 
 enum MovementType {
   IN // Stock received
@@ -3002,6 +3016,12 @@ model Estimate {
   approvalToken   String?   @map("approval_token")
   approvalSentAt  DateTime? @map("approval_sent_at")
   approvalMethod  String?   @map("approval_method") // SMS, WHATSAPP, EMAIL
+
+  // Legal compliance — D.Lgs. 206/2005 Codice del Consumo
+  customerSignature String?   @map("customer_signature")   // nome scritto dal cliente come firma digitale
+  customerSignedAt  DateTime? @map("customer_signed_at")
+  termsAccepted     Boolean   @default(false) @map("terms_accepted")
+  approvalIpAddress String?   @map("approval_ip_address")
 
   lines EstimateLine[]
   declinedServices DeclinedService[]
