@@ -30,6 +30,7 @@ interface WorkOrderFilters {
   status?: string;
   vehicleId?: string;
   customerId?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -111,6 +112,14 @@ export class WorkOrderService {
       }
       if (filters?.customerId) {
         where.customerId = filters.customerId;
+      }
+      if (filters?.search) {
+        where.OR = [
+          { woNumber: { contains: filters.search, mode: 'insensitive' } },
+          { customerName: { contains: filters.search, mode: 'insensitive' } },
+          { vehiclePlate: { contains: filters.search, mode: 'insensitive' } },
+          { technicianName: { contains: filters.search, mode: 'insensitive' } },
+        ];
       }
 
       const [workOrders, total] = await Promise.all([
@@ -316,6 +325,63 @@ export class WorkOrderService {
       }
       this.logger.error(`Failed to update work order ${id}: ${error}`);
       throw new InternalServerErrorException('Failed to update work order');
+    }
+  }
+
+  /**
+   * Transition work order to a new status with validation
+   */
+  async transition(tenantId: string, id: string, newStatus: string): Promise<unknown> {
+    try {
+      const existing = await this.prisma.workOrder.findFirst({
+        where: { id, tenantId },
+      });
+
+      if (!existing) {
+        throw new NotFoundException(`Work order ${id} not found`);
+      }
+
+      validateTransition(existing.status, newStatus, WORK_ORDER_TRANSITIONS, 'work order');
+
+      const updated = await this.prisma.workOrder.updateMany({
+        where: { id, tenantId, version: existing.version },
+        data: {
+          // @ts-expect-error status is validated by validateTransition() above
+          status: newStatus,
+          version: { increment: 1 },
+        },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictException('Work order modified by another user. Refresh and retry.');
+      }
+
+      const workOrder = await this.prisma.workOrder.findFirst({
+        where: { id, tenantId },
+        include: {
+          vehicle: {
+            select: {
+              id: true,
+              licensePlate: true,
+              make: true,
+              model: true,
+            },
+          },
+        },
+      });
+
+      this.logger.log(`Work order ${id} transitioned to ${newStatus}`);
+      return workOrder;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      this.logger.error(`Failed to transition work order ${id}: ${error}`);
+      throw new InternalServerErrorException('Failed to transition work order');
     }
   }
 

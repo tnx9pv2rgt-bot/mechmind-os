@@ -45,6 +45,7 @@ export class WorkOrderController {
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'vehicleId', required: false })
   @ApiQuery({ name: 'customerId', required: false })
+  @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Work orders listed' })
@@ -53,6 +54,7 @@ export class WorkOrderController {
     @Query('status') status?: string,
     @Query('vehicleId') vehicleId?: string,
     @Query('customerId') customerId?: string,
+    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -60,6 +62,7 @@ export class WorkOrderController {
       status,
       vehicleId,
       customerId,
+      search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -100,6 +103,21 @@ export class WorkOrderController {
     @Body() dto: UpdateWorkOrderDto,
   ) {
     const workOrder = await this.workOrderService.update(tenantId, id, dto);
+    return { success: true, data: workOrder };
+  }
+
+  @Patch(':id/transition')
+  @ApiOperation({ summary: 'Transition work order status' })
+  @ApiParam({ name: 'id', description: 'Work order ID' })
+  @ApiResponse({ status: 200, description: 'Work order transitioned' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition' })
+  @ApiResponse({ status: 404, description: 'Work order not found' })
+  async transition(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() body: { status: string },
+  ) {
+    const workOrder = await this.workOrderService.transition(tenantId, id, body.status);
     return { success: true, data: workOrder };
   }
 
