@@ -68,13 +68,11 @@ const nextConfig = {
     },
   },
 
-  // HMR WebSocket configuration for development
+  // On-demand entries for development
   ...(process.env.NODE_ENV === 'development' && {
-    webpackDevMiddleware: {
-      watchOptions: {
-        poll: false,
-        ignored: ['**/node_modules/**', '**/.next/**', '**/.git/**'],
-      },
+    onDemandEntries: {
+      maxInactiveAge: 25 * 1000,
+      pagesBufferLength: 5,
     },
   }),
 
@@ -293,6 +291,31 @@ const nextConfig = {
   // Do NOT use modularizeImports for lucide-react — it conflicts with
   // optimizePackageImports and causes webpack module resolution errors
   // (lucide-icons/lucide#1482, vercel/next.js#53668).
+
+  // Rewrites for API proxy — eliminates CORS issues by proxying through Next.js
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Proxy /api/* to Next.js route handlers which forward to NestJS
+        // This avoids CORS issues by making requests same-origin
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        },
+      ],
+      afterFiles: [
+        // Fallback for direct backend calls if needed (dev-only for debugging)
+        ...(process.env.NODE_ENV === 'development'
+          ? [
+              {
+                source: '/v1/:path*',
+                destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3002'}/v1/:path*`,
+              },
+            ]
+          : []),
+      ],
+    };
+  },
 };
 
 module.exports = withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
