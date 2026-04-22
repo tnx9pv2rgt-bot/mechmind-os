@@ -698,7 +698,7 @@ export default function DashboardPage(): React.ReactElement {
           className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
         >
           <KpiCard
-            title="OdL Attivi"
+            title="Ordini di Lavoro"
             value={String(vehiclesInShop)}
             change={vehiclesChange}
             icon={Wrench}
@@ -729,7 +729,7 @@ export default function DashboardPage(): React.ReactElement {
             suffix="oggi"
           />
           <KpiCard
-            title="ARO Medio"
+            title="Scontrino Medio"
             value={formatCurrency(avgTicket)}
             change={avgTicketChange}
             icon={Gauge}
