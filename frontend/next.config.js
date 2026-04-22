@@ -68,6 +68,16 @@ const nextConfig = {
     },
   },
 
+  // HMR WebSocket configuration for development
+  ...(process.env.NODE_ENV === 'development' && {
+    webpackDevMiddleware: {
+      watchOptions: {
+        poll: false,
+        ignored: ['**/node_modules/**', '**/.next/**', '**/.git/**'],
+      },
+    },
+  }),
+
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
     // NOTE: Do NOT override splitChunks — Next.js manages chunk splitting
