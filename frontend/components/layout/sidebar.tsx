@@ -140,7 +140,7 @@ function getSidebarThemeStyles(sidebarTheme: SidebarTheme, resolvedAppTheme: str
     return {
       '--sidebar-bg': '#171717',
       '--sidebar-text': '#ececec',
-      '--sidebar-text-secondary': '#b4b4b4',
+      '--sidebar-text-[var(--text-secondary)]': '#b4b4b4',
       '--sidebar-hover': '#2f2f2f',
       '--sidebar-border': 'hsla(0, 0%, 100%, 0.1)',
       '--sidebar-active': '#2f2f2f',
@@ -150,7 +150,7 @@ function getSidebarThemeStyles(sidebarTheme: SidebarTheme, resolvedAppTheme: str
   return {
     '--sidebar-bg': '#f9f9f9',
     '--sidebar-text': '#0d0d0d',
-    '--sidebar-text-secondary': '#6e6e6e',
+    '--sidebar-text-[var(--text-secondary)]': '#6e6e6e',
     '--sidebar-hover': '#ececec',
     '--sidebar-border': '#e5e5e5',
     '--sidebar-active': '#ececec',
@@ -160,7 +160,7 @@ function getSidebarThemeStyles(sidebarTheme: SidebarTheme, resolvedAppTheme: str
 export function Sidebar(): React.ReactElement {
   const { expanded, mobileOpen, toggle, setMobileOpen } = useSidebarStore();
   const { toggle: toggleCommandPalette } = useCommandPaletteStore();
-  const { theme, setTheme, sidebarBehavior, sidebarTheme } = useThemeStore();
+  const { theme, setTheme, sidebarBehavior, sidebarTheme, setSidebarBehavior } = useThemeStore();
   const { resolvedTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -202,7 +202,7 @@ export function Sidebar(): React.ReactElement {
         if (isAutoMode) {
           setAutoVisible(prev => !prev);
         } else {
-          toggle();
+          setSidebarBehavior(effectiveExpanded ? 'collapsed' : 'expanded');
         }
       }
     }
@@ -247,7 +247,7 @@ export function Sidebar(): React.ReactElement {
       <div className="flex items-center h-14 px-4 shrink-0">
         <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-full bg-[var(--brand)] flex items-center justify-center shrink-0">
-            <Sparkles className="h-4 w-4 text-white" />
+            <Sparkles className="h-4 w-4 text-[var(--text-on-brand)]" />
           </div>
           <span
             className={cn(
@@ -262,7 +262,7 @@ export function Sidebar(): React.ReactElement {
         {/* Close button for mobile */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="ml-auto p-1.5 rounded-lg text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)] lg:hidden"
+          className="ml-auto p-1.5 rounded-lg text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)] lg:hidden"
           aria-label="Chiudi menu"
         >
           <X className="h-5 w-5" />
@@ -275,7 +275,7 @@ export function Sidebar(): React.ReactElement {
           onClick={toggleCommandPalette}
           className={cn(
             'flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm transition-colors',
-            'text-[var(--sidebar-text-secondary)]',
+            'text-[var(--sidebar-text-[var(--text-secondary)])]',
             'hover:bg-[var(--sidebar-hover)]',
             !effectiveExpanded && 'justify-center px-0'
           )}
@@ -328,7 +328,7 @@ export function Sidebar(): React.ReactElement {
                         'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
                         active
                           ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text)]'
-                          : 'text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)]',
+                          : 'text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)]',
                         !effectiveExpanded && 'justify-center px-0'
                       )}
                       title={!effectiveExpanded ? item.name : undefined}
@@ -357,13 +357,13 @@ export function Sidebar(): React.ReactElement {
         {/* Notification button */}
         <button
           className={cn(
-            'relative flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)] transition-colors',
+            'relative flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)] transition-colors',
             !effectiveExpanded && 'justify-center px-0'
           )}
           aria-label="Notifiche"
         >
           <Bell className="h-[18px] w-[18px] shrink-0" />
-          <span className="absolute top-1.5 left-7 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-1.5 left-7 w-2 h-2 bg-[var(--status-error-subtle)]0 rounded-full" />
           <span
             className={cn(
               'whitespace-nowrap transition-opacity duration-200',
@@ -379,7 +379,7 @@ export function Sidebar(): React.ReactElement {
           <DropdownMenu.Trigger asChild>
             <button
               className={cn(
-                'flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)] transition-colors',
+                'flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)] transition-colors',
                 !effectiveExpanded && 'justify-center px-0'
               )}
               aria-label="Tema"
@@ -454,7 +454,7 @@ export function Sidebar(): React.ReactElement {
                 )}
               >
                 <p className="text-sm font-medium text-[var(--sidebar-text)] truncate">Utente</p>
-                <p className="text-xs text-[var(--sidebar-text-secondary)] truncate">Officina</p>
+                <p className="text-xs text-[var(--sidebar-text-[var(--text-secondary)])] truncate">Officina</p>
               </div>
             </button>
           </DropdownMenu.Trigger>
@@ -490,7 +490,7 @@ export function Sidebar(): React.ReactElement {
               <DropdownMenu.Separator className="h-px bg-[var(--border-default)] my-1" />
 
               <DropdownMenu.Item
-                className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 rounded-xl cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 outline-none focus:bg-red-50 dark:focus:bg-red-950/30 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--status-error)] rounded-xl cursor-pointer hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error)]/40/30 outline-none focus:bg-[var(--status-error-subtle)] dark:focus:bg-[var(--status-error)]/40/30 transition-colors"
                 onSelect={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
@@ -503,7 +503,7 @@ export function Sidebar(): React.ReactElement {
         {/* Collapse toggle (desktop only, not shown in auto mode) */}
         {!isAutoMode && (
           <button
-            onClick={toggle}
+            onClick={() => setSidebarBehavior(effectiveExpanded ? 'collapsed' : 'expanded')}
             className={cn(
               'hidden lg:flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--text-tertiary)] hover:bg-[var(--sidebar-hover)] transition-colors',
               !effectiveExpanded && 'justify-center px-0'
@@ -571,7 +571,7 @@ export function Sidebar(): React.ReactElement {
           {/* Overlay backdrop when auto-sidebar is visible */}
           {autoVisible && (
             <div
-              className="hidden lg:block fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px]"
+              className="hidden lg:block fixed inset-0 z-30 bg-[var(--surface-primary)]/20 backdrop-blur-[2px]"
               onClick={() => setAutoVisible(false)}
               onMouseEnter={handleAutoLeave}
               aria-hidden="true"

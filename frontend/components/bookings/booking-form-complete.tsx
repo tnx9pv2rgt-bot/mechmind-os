@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   useForm,
@@ -9,7 +9,6 @@ import {
   FieldErrors,
   UseFormWatch,
   UseFormSetValue,
-  UseFormTrigger,
   FieldPath,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +16,6 @@ import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Car,
   User,
   Calendar,
   Clock,
@@ -27,34 +25,22 @@ import {
   ChevronRight,
   ChevronLeft,
   Mic,
-  Bell,
-  MessageSquare,
   AlertTriangle,
   Sparkles,
   Loader2,
-  X,
   Plus,
-  Wrench,
-  MapPin,
   Star,
   Volume2,
-  Settings,
   Shield,
   Zap,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AppleButton } from '@/components/ui/apple-button';
-import {
-  AppleCard,
-  AppleCardContent,
-  AppleCardHeader,
-} from '@/components/ui/apple-card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -68,8 +54,17 @@ import {
   useSearchCustomers,
   useAvailableSlots,
   useCreateBooking,
+  useCreateCustomer,
   useTenantSettings,
 } from '@/hooks/useApi';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useFormAutosave } from '@/hooks/useFormAutosave';
 
 // ============================================================================
@@ -126,7 +121,7 @@ const bookingFormSchema = z.object({
   licensePlate: z.string().min(5, 'Targa richiesta'),
   vehicleMake: z.string().min(2, 'Marca richiesta'),
   vehicleModel: z.string().min(2, 'Modello richiesto'),
-  vehicleYear: z.number().min(1900).max(2030),
+  vehicleYear: z.number().min(1900).max(2030).optional(),
   vehicleColor: z.string().optional(),
   vehicleVin: z.string().optional(),
   vehicleKm: z.number().int().min(0).max(9999999).optional(),
@@ -260,6 +255,7 @@ export function BookingFormComplete() {
   const { data: searchResults } = useSearchCustomers(customerSearch);
   const { data: slotsData } = useAvailableSlots(watchDate, watchDuration);
   const createBookingMutation = useCreateBooking();
+  const createCustomerMutation = useCreateCustomer();
   const { data: tenantSettings } = useTenantSettings();
 
   // Map API customers to local Customer shape for dropdown
@@ -287,26 +283,65 @@ export function BookingFormComplete() {
     setIsDecodingPlate(false);
   }, [watchLicensePlate, setValue]);
 
-  // Voice recording simulation
+  // Voice recording — Web Speech API (Chrome/Edge)
+  type MinimalRecognition = {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    onresult: ((event: { results: { [i: number]: { [j: number]: { transcript: string } }; length: number } }) => void) | null;
+    onerror: (() => void) | null;
+    onend: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+  };
+  const recognitionRef = useRef<MinimalRecognition | null>(null);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
     }
     return () => clearInterval(interval);
   }, [isRecording]);
 
   const toggleRecording = () => {
+    const w = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : null;
+    const SpeechRecognitionAPI = w?.['SpeechRecognition'] || w?.['webkitSpeechRecognition'];
+
+    if (!SpeechRecognitionAPI || typeof SpeechRecognitionAPI !== 'function') {
+      alert('Il tuo browser non supporta la trascrizione vocale. Usa Chrome, Edge o Safari.');
+      return;
+    }
+
     if (isRecording) {
+      recognitionRef.current?.stop();
       setIsRecording(false);
-      setValue(
-        'voiceNote',
-        'Freni che cigolano quando freno forte, specialmente al mattino quando è freddo.'
-      );
       setRecordingTime(0);
     } else {
+      const recognition = new (SpeechRecognitionAPI as new () => MinimalRecognition)();
+      recognition.lang = 'it-IT';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from({ length: event.results.length })
+          .map((_, i) => event.results[i][0].transcript)
+          .join(' ');
+        setValue('voiceNote', transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsRecording(false);
+        setRecordingTime(0);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        setRecordingTime(0);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
       setIsRecording(true);
       setRecordingTime(0);
     }
@@ -367,9 +402,22 @@ export function BookingFormComplete() {
   const onSubmit = async (data: BookingFormData) => {
     setIsSubmitting(true);
     try {
+      let customerId = data.customerId;
+
+      if (!customerId) {
+        const nameParts = data.customerName.trim().split(' ');
+        const newCustomer = await createCustomerMutation.mutateAsync({
+          phone: data.customerPhone,
+          email: data.customerEmail,
+          firstName: nameParts[0],
+          lastName: nameParts.slice(1).join(' ') || undefined,
+        });
+        customerId = newCustomer.id;
+      }
+
       const scheduledDate = `${data.date}T${data.time}:00`;
       await createBookingMutation.mutateAsync({
-        customerId: data.customerId || '',
+        customerId,
         slotId: data.selectedSlotId || '',
         scheduledDate,
         durationMinutes: data.duration,
@@ -474,18 +522,29 @@ export function BookingFormComplete() {
 
       <div className='p-8 max-w-4xl mx-auto space-y-6'>
         {/* Progress Bar */}
-        <AppleCard hover={false}>
-          <AppleCardContent>
-            <div className='h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
-              <motion.div
-                className='h-full bg-apple-blue'
-                initial={{ width: 0 }}
-                animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-          </AppleCardContent>
-        </AppleCard>
+        <div className='pt-2'>
+          <div className='relative h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
+            <motion.div
+              className='h-full bg-apple-blue rounded-full'
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+          <div className='relative h-4 mt-1'>
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => (
+              <span
+                key={step}
+                style={{ left: `${(step / totalSteps) * 100}%` }}
+                className={`absolute -translate-x-1/2 text-xs font-medium ${
+                  step <= currentStep ? 'text-apple-blue' : 'text-[var(--text-tertiary)]'
+                }`}
+              >
+                {step}
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* Form Content */}
         <AnimatePresence mode='wait'>
@@ -678,7 +737,7 @@ function Step1CustomerVehicle({
                     onClick={() => selectCustomer(customer)}
                     className='w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--surface-active)] transition-colors text-left'
                   >
-                    <div className='w-10 h-10 rounded-full bg-purple-400 flex items-center justify-center text-white font-semibold'>
+                    <div className='w-10 h-10 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-semibold'>
                       {customer.name
                         .split(' ')
                         .map(n => n[0])
@@ -881,7 +940,7 @@ function Step1CustomerVehicle({
             type='button'
             onClick={decodeLicensePlate}
             disabled={isDecodingPlate || !watch('licensePlate') || watch('licensePlate').length < 5}
-            className='h-[52px] mt-7 rounded-full bg-white hover:bg-[var(--surface-active)] text-[var(--text-primary)]'
+            className='h-[52px] mt-7 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)] flex items-center justify-center'
           >
             {isDecodingPlate ? (
               <Loader2 className='w-5 h-5 animate-spin' />
@@ -929,6 +988,118 @@ function Step1CustomerVehicle({
             </div>
           </motion.div>
         )}
+
+        {/* Dati veicolo — compilabili manualmente o via Decodifica */}
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4'>
+          <Controller
+            name='vehicleMake'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleMake' className='text-sm font-medium text-white mb-2 block'>
+                  Marca *
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleMake'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.vehicleMake}
+                  placeholder='es. Fiat'
+                  className='h-[52px] rounded-full'
+                />
+                {errors.vehicleMake && (
+                  <p role='alert' className='text-red-500 text-sm mt-1'>
+                    {errors.vehicleMake.message as string}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleModel'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleModel' className='text-sm font-medium text-white mb-2 block'>
+                  Modello *
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleModel'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.vehicleModel}
+                  placeholder='es. Panda'
+                  className='h-[52px] rounded-full'
+                />
+                {errors.vehicleModel && (
+                  <p role='alert' className='text-red-500 text-sm mt-1'>
+                    {errors.vehicleModel.message as string}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleYear'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleYear' className='text-sm font-medium text-white mb-2 block'>
+                  Anno
+                </Label>
+                <Input
+                  id='vehicleYear'
+                  type='number'
+                  min={1900}
+                  max={2030}
+                  autoComplete='off'
+                  placeholder='es. 2020'
+                  className='h-[52px] rounded-full'
+                  value={field.value ?? ''}
+                  onChange={e => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                />
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleColor'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleColor' className='text-sm font-medium text-white mb-2 block'>
+                  Colore
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleColor'
+                  autoComplete='off'
+                  placeholder='es. Bianco'
+                  className='h-[52px] rounded-full'
+                />
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleVin'
+            control={control}
+            render={({ field }) => (
+              <div className='sm:col-span-2'>
+                <Label htmlFor='vehicleVin' className='text-sm font-medium text-white mb-2 block'>
+                  VIN
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleVin'
+                  autoComplete='off'
+                  placeholder='es. WBA1234567890XYZ'
+                  className='h-[52px] rounded-full font-mono tracking-wider'
+                />
+              </div>
+            )}
+          />
+        </div>
 
         {/* Km attuali — DMS field */}
         <Controller
@@ -1128,9 +1299,9 @@ function Step2AppointmentDetails({
             <button
               key={option.value}
               onClick={() => setValue('urgency', option.value)}
-              className={`p-4 rounded-2xl border transition-all text-left ${
+              className={`p-4 rounded-2xl border transition-all text-left bg-[var(--surface-elevated)] ${
                 watch('urgency') === option.value
-                  ? 'border-[var(--text-primary)] bg-[var(--surface-active)]'
+                  ? 'border-green-500'
                   : 'border-[var(--border-strong)] hover:border-[var(--border-default)]'
               }`}
             >
@@ -1144,10 +1315,10 @@ function Step2AppointmentDetails({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className='mt-3 p-3 bg-red-50 rounded-xl flex items-start gap-2'
+            className='mt-3 p-3 bg-[var(--surface-elevated)] border border-red-500/30 rounded-xl flex items-start gap-2'
           >
             <AlertTriangle className='w-5 h-5 text-red-500 flex-shrink-0 mt-0.5' />
-            <p className='text-sm text-red-700'>
+            <p className='text-sm text-red-400'>
               Per interventi urgenti mostreremo solo gli slot disponibili nelle prossime 48 ore.
             </p>
           </motion.div>
@@ -1377,7 +1548,7 @@ function Step2AppointmentDetails({
                     technicians.map(tech => (
                       <SelectItem key={tech.id} value={tech.id}>
                         <div className='flex items-center gap-2'>
-                          <span className='w-6 h-6 rounded-full bg-purple-400 text-white text-xs flex items-center justify-center'>
+                          <span className='w-6 h-6 rounded-full bg-[var(--brand)] text-white text-xs flex items-center justify-center'>
                             {tech.name
                               .split(' ')
                               .map(n => n[0])
@@ -1658,6 +1829,34 @@ function Step4Capacity({
   const bufferTime = watch('bufferTime');
 
   return (
+    <>
+      <Dialog open={showWaitlistModal} onOpenChange={setShowWaitlistModal}>
+        <DialogContent className='bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'>
+          <DialogHeader>
+            <DialogTitle className='text-white'>Lista d&apos;Attesa</DialogTitle>
+            <DialogDescription className='text-[var(--text-tertiary)]'>
+              Il cliente verrà aggiunto alla lista d&apos;attesa per questa fascia oraria. Riceverà
+              una notifica automatica appena si libera uno slot.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => setShowWaitlistModal(false)}
+              className='rounded-full border-[var(--border-strong)] text-white hover:bg-white/5'
+            >
+              Annulla
+            </Button>
+            <Button
+              onClick={() => setShowWaitlistModal(false)}
+              className='rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)]'
+            >
+              Conferma Iscrizione
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -1673,19 +1872,19 @@ function Step4Capacity({
         </p>
       </div>
 
-      {/* Conflict Warning */}
-      {filteredSlots.length === 0 && (
+      {/* Conflict Warning — solo se la data è selezionata ma non ci sono slot disponibili */}
+      {filteredSlots.length === 0 && watch('date') && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className='bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3'
+          className='bg-[var(--surface-elevated)] border border-red-500/30 rounded-2xl p-5 flex items-start gap-3'
         >
           <AlertTriangle className='w-6 h-6 text-red-500 flex-shrink-0' />
           <div>
-            <h4 className='font-semibold text-red-800'>Attenzione: Capacità Saturation</h4>
-            <p className='text-sm text-red-600 mt-1'>
-              3 appuntamenti già presenti nella stessa fascia oraria. Considera di aggiungere il
-              cliente alla lista d&apos;attesa.
+            <h4 className='font-semibold text-red-400'>Nessuno slot disponibile</h4>
+            <p className='text-sm text-red-400/80 mt-1'>
+              Non ci sono slot liberi per la data selezionata. Puoi aggiungere il cliente alla lista
+              d&apos;attesa.
             </p>
             <Button
               onClick={() => setShowWaitlistModal(true)}
@@ -1693,7 +1892,7 @@ function Step4Capacity({
               className='mt-3 rounded-full border border-[var(--border-strong)] text-white hover:bg-white/5'
             >
               <Plus className='w-4 h-4 mr-2' />
-              Aggiungi a Lista d'Attesa
+              Aggiungi a Lista d&apos;Attesa
             </Button>
           </div>
         </motion.div>
@@ -1743,27 +1942,29 @@ function Step4Capacity({
                         </Badge>
                       )}
                     </div>
-                    <p className='text-sm text-[var(--text-tertiary)]'>
-                      {slot.technicianName} • {slot.liftAvailable}
-                    </p>
+                    {(slot.technicianName || slot.liftAvailable) && (
+                      <p className='text-sm text-[var(--text-tertiary)]'>
+                        {[slot.technicianName, slot.liftAvailable].filter(Boolean).join(' • ')}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className='text-right'>
-                  <div className='text-sm font-medium text-white'>
-                    Capacità
+                {slot.capacityPercentage > 0 && (
+                  <div className='text-right'>
+                    <div className='text-sm font-medium text-white'>Capacità</div>
+                    <div
+                      className={`text-sm ${
+                        slot.capacityPercentage > 80
+                          ? 'text-red-500'
+                          : slot.capacityPercentage > 50
+                            ? 'text-amber-500'
+                            : 'text-green-500'
+                      }`}
+                    >
+                      {slot.capacityPercentage}%
+                    </div>
                   </div>
-                  <div
-                    className={`text-sm ${
-                      slot.capacityPercentage > 80
-                        ? 'text-red-500'
-                        : slot.capacityPercentage > 50
-                          ? 'text-amber-500'
-                          : 'text-green-500'
-                    }`}
-                  >
-                    {slot.capacityPercentage}%
-                  </div>
-                </div>
+                )}
               </div>
             </motion.button>
           ))}
@@ -1812,6 +2013,7 @@ function Step4Capacity({
         </p>
       </div>
     </motion.div>
+    </>
   );
 }
 
@@ -2067,7 +2269,7 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
 
         <Button
           onClick={onClose}
-          className='rounded-full px-8 h-[52px] bg-white hover:bg-[var(--surface-active)] text-[var(--text-primary)]'
+          className='rounded-full px-8 h-[52px] bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)]'
         >
           Crea Nuova Prenotazione
         </Button>

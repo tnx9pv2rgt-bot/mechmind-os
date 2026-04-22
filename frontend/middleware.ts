@@ -55,36 +55,6 @@ function isPortalPath(pathname: string): boolean {
   return pathname.startsWith('/portal') && !isPublicPath(pathname);
 }
 
-/**
- * Extract or set locale from pathname
- * Supports both /it/dashboard and /dashboard (default locale)
- */
-function getLocaleFromPathname(pathname: string): string {
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length > 0 && LOCALES.includes(segments[0])) {
-    return segments[0];
-  }
-  // Check cookie for preferred locale
-  return DEFAULT_LOCALE;
-}
-
-/**
- * Get locale-prefixed path
- */
-function getLocalizedPathname(pathname: string, locale: string): string {
-  const segments = pathname.split('/').filter(Boolean);
-  // If first segment is already a locale, replace it
-  if (segments.length > 0 && LOCALES.includes(segments[0])) {
-    segments[0] = locale;
-    return '/' + segments.join('/');
-  }
-  // Otherwise, prepend locale
-  if (pathname === '/') {
-    return `/${locale}`;
-  }
-  return `/${locale}${pathname}`;
-}
-
 // =============================================================================
 // Main Middleware — Edge-compatible (NO Prisma, NO Node.js APIs)
 // =============================================================================
@@ -93,43 +63,34 @@ export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // =========================================================================
-  // i18n — Locale routing (prepend locale if missing)
+  // i18n — Set locale cookie (no URL prefix — pages live at /dashboard, not /it/dashboard)
   // =========================================================================
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length === 0 || !LOCALES.includes(segments[0])) {
-    // Get preferred locale from cookie or browser header
-    let locale = DEFAULT_LOCALE;
-    const localeCookie = request.cookies.get('NEXT_LOCALE')?.value;
-    if (localeCookie && LOCALES.includes(localeCookie)) {
-      locale = localeCookie;
-    }
+  const localeCookie = request.cookies.get('NEXT_LOCALE')?.value;
+  const locale = localeCookie && LOCALES.includes(localeCookie) ? localeCookie : DEFAULT_LOCALE;
 
-    // Redirect to localized path
-    const localizedPathname = getLocalizedPathname(pathname, locale);
-    const response = NextResponse.redirect(
-      new URL(localizedPathname, request.url)
-    );
+  // Create response
+  const response = NextResponse.next();
+
+  if (!localeCookie) {
     response.cookies.set('NEXT_LOCALE', locale, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
+      maxAge: 60 * 60 * 24 * 365,
     });
-    return response;
   }
-
-  // Create response
-  const response = NextResponse.next();
 
   // =========================================================================
   // Security headers
   // =========================================================================
   response.headers.set('X-DNS-Prefetch-Control', 'on');
-  response.headers.set(
-    'Strict-Transport-Security',
-    'max-age=63072000; includeSubDomains; preload'
-  );
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=63072000; includeSubDomains; preload'
+    );
+  }
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
 

@@ -1,7 +1,10 @@
 -- EU Right to Repair 2024/1799 + D.Lgs. 206/2005 compliance fields
 -- Traceability: part type, warranty months by type, origin code, barcode
 
-CREATE TYPE IF NOT EXISTS "PartType" AS ENUM ('GENUINE', 'AFTERMARKET', 'REGENERATED', 'USED');
+DO $$ BEGIN
+  CREATE TYPE "PartType" AS ENUM ('GENUINE', 'AFTERMARKET', 'REGENERATED', 'USED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 ALTER TABLE "parts"
   ADD COLUMN IF NOT EXISTS "part_type"       "PartType" NOT NULL DEFAULT 'GENUINE',

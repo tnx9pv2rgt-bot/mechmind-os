@@ -6,7 +6,7 @@ import Link from 'next/link';
 const DEMO_DURATION = 60 * 60; // 1 hour
 
 function getSecondsLeft(): number {
-  const start = sessionStorage.getItem('demo_start');
+  const start = localStorage.getItem('mechmind_demo_start');
   if (!start) return DEMO_DURATION;
   const elapsed = Math.floor((Date.now() - parseInt(start, 10)) / 1000);
   return Math.max(0, DEMO_DURATION - elapsed);

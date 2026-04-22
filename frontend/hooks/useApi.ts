@@ -193,10 +193,10 @@ export function useDashboardStats() {
       const raw = res.data;
       return 'data' in raw && raw.data ? raw.data : (raw as DashboardStats);
     },
-    staleTime: 60_000,
-    refetchInterval: 120_000,
+    staleTime: Infinity,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     retry: 3,
   });
 }
