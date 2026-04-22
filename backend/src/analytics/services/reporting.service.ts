@@ -58,212 +58,213 @@ export class ReportingService {
     preventiviInScadenza: number;
     rightToRepairPct: number;
   }> {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    // Previous month boundaries for month-over-month comparison
-    const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      // Previous month boundaries for month-over-month comparison
+      const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-    // 7 days ago for cash flow
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      // 7 days ago for cash flow
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // 30 days ago for overdue threshold
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // 30 days ago for overdue threshold
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // 7 days from now for expiring estimates
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      // 7 days from now for expiring estimates
+      const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const [
-      clientiTotali,
-      veicoliTotali,
-      fatturatoMese,
-      prenotazioniOggi,
-      workOrderAperti,
-      // Efficiency: completed vs total work orders this month
-      woCompletedThisMonth,
-      woTotalThisMonth,
-      woCompletedPrevMonth,
-      woTotalPrevMonth,
-      // Conversion: estimates converted to work orders this month
-      estimatesThisMonth,
-      estimatesConvertedThisMonth,
-      estimatesPrevMonth,
-      estimatesConvertedPrevMonth,
-      // Financial: unpaid invoices
-      unpaidInvoices,
-      // Financial: overdue invoices (issued > 30 days ago, still unpaid)
-      overdueInvoices,
-      // Financial: labor revenue this month (from work order line items)
-      laborRevenue,
-      // Financial: cash flow last 7 days (payments received - refunds)
-      paymentsLast7d,
-      // 2026 compliance KPIs
-      preventiviInScadenza,
-      totalPartsCount,
-      trackedPartsCount,
-      lowStockRaw,
-    ] = await Promise.all([
-      // KPI 1: Clienti totali del tenant
-      this.prisma.customer.count({
-        where: { tenantId },
-      }),
+      const [
+        clientiTotali,
+        veicoliTotali,
+        fatturatoMese,
+        prenotazioniOggi,
+        workOrderAperti,
+        // Efficiency: completed vs total work orders this month
+        woCompletedThisMonth,
+        woTotalThisMonth,
+        woCompletedPrevMonth,
+        woTotalPrevMonth,
+        // Conversion: estimates converted to work orders this month
+        estimatesThisMonth,
+        estimatesConvertedThisMonth,
+        estimatesPrevMonth,
+        estimatesConvertedPrevMonth,
+        // Financial: unpaid invoices
+        unpaidInvoices,
+        // Financial: overdue invoices (issued > 30 days ago, still unpaid)
+        overdueInvoices,
+        // Financial: labor revenue this month (from work order line items)
+        laborRevenue,
+        // Financial: cash flow last 7 days (payments received - refunds)
+        paymentsLast7d,
+        // 2026 compliance KPIs
+        preventiviInScadenza,
+        totalPartsCount,
+        trackedPartsCount,
+        lowStockRaw,
+      ] = await Promise.all([
+        // KPI 1: Clienti totali del tenant
+        this.prisma.customer.count({
+          where: { tenantId },
+        }),
 
-      // KPI 2: Veicoli totali (via customer.tenantId, Vehicle non ha tenantId)
-      this.prisma.vehicle.count({
-        where: { customer: { tenantId } },
-      }),
+        // KPI 2: Veicoli totali (via customer.tenantId, Vehicle non ha tenantId)
+        this.prisma.vehicle.count({
+          where: { customer: { tenantId } },
+        }),
 
-      // KPI 3: Fatturato mese corrente (fatture pagate)
-      this.prisma.invoice.aggregate({
-        where: {
-          tenantId,
-          status: 'PAID',
-          paidAt: { gte: startOfMonth },
-        },
-        _sum: { total: true },
-      }),
+        // KPI 3: Fatturato mese corrente (fatture pagate)
+        this.prisma.invoice.aggregate({
+          where: {
+            tenantId,
+            status: 'PAID',
+            paidAt: { gte: startOfMonth },
+          },
+          _sum: { total: true },
+        }),
 
-      // KPI 4: Prenotazioni di oggi
-      this.prisma.booking.count({
-        where: {
-          tenantId,
-          scheduledDate: { gte: startOfDay, lte: endOfDay },
-        },
-      }),
+        // KPI 4: Prenotazioni di oggi
+        this.prisma.booking.count({
+          where: {
+            tenantId,
+            scheduledDate: { gte: startOfDay, lte: endOfDay },
+          },
+        }),
 
-      // KPI 5: Work order aperti
-      this.prisma.workOrder.count({
-        where: {
-          tenantId,
-          status: { in: ['OPEN', 'PENDING', 'IN_PROGRESS', 'CHECKED_IN', 'WAITING_PARTS'] },
-        },
-      }),
+        // KPI 5: Work order aperti
+        this.prisma.workOrder.count({
+          where: {
+            tenantId,
+            status: { in: ['OPEN', 'PENDING', 'IN_PROGRESS', 'CHECKED_IN', 'WAITING_PARTS'] },
+          },
+        }),
 
-      // KPI 6: Work orders completed this month
-      this.prisma.workOrder.count({
-        where: {
-          tenantId,
-          status: 'COMPLETED',
-          updatedAt: { gte: startOfMonth },
-        },
-      }),
+        // KPI 6: Work orders completed this month
+        this.prisma.workOrder.count({
+          where: {
+            tenantId,
+            status: 'COMPLETED',
+            updatedAt: { gte: startOfMonth },
+          },
+        }),
 
-      // KPI 7: Total work orders this month
-      this.prisma.workOrder.count({
-        where: {
-          tenantId,
-          createdAt: { gte: startOfMonth },
-        },
-      }),
+        // KPI 7: Total work orders this month
+        this.prisma.workOrder.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfMonth },
+          },
+        }),
 
-      // KPI 8: Work orders completed previous month
-      this.prisma.workOrder.count({
-        where: {
-          tenantId,
-          status: 'COMPLETED',
-          updatedAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
-        },
-      }),
+        // KPI 8: Work orders completed previous month
+        this.prisma.workOrder.count({
+          where: {
+            tenantId,
+            status: 'COMPLETED',
+            updatedAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+          },
+        }),
 
-      // KPI 9: Total work orders previous month
-      this.prisma.workOrder.count({
-        where: {
-          tenantId,
-          createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
-        },
-      }),
+        // KPI 9: Total work orders previous month
+        this.prisma.workOrder.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+          },
+        }),
 
-      // KPI 10: Estimates created this month
-      this.prisma.estimate.count({
-        where: {
-          tenantId,
-          createdAt: { gte: startOfMonth },
-        },
-      }),
+        // KPI 10: Estimates created this month
+        this.prisma.estimate.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfMonth },
+          },
+        }),
 
-      // KPI 11: Estimates converted this month (status CONVERTED or with linked work order)
-      this.prisma.estimate.count({
-        where: {
-          tenantId,
-          createdAt: { gte: startOfMonth },
-          status: 'CONVERTED',
-        },
-      }),
+        // KPI 11: Estimates converted this month (status CONVERTED or with linked work order)
+        this.prisma.estimate.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfMonth },
+            status: 'CONVERTED',
+          },
+        }),
 
-      // KPI 12: Estimates created previous month
-      this.prisma.estimate.count({
-        where: {
-          tenantId,
-          createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
-        },
-      }),
+        // KPI 12: Estimates created previous month
+        this.prisma.estimate.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+          },
+        }),
 
-      // KPI 13: Estimates converted previous month
-      this.prisma.estimate.count({
-        where: {
-          tenantId,
-          createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
-          status: 'CONVERTED',
-        },
-      }),
+        // KPI 13: Estimates converted previous month
+        this.prisma.estimate.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+            status: 'CONVERTED',
+          },
+        }),
 
-      // KPI 14: Unpaid invoices total
-      this.prisma.invoice.aggregate({
-        where: {
-          tenantId,
-          status: { in: ['SENT', 'OVERDUE'] },
-        },
-        _sum: { total: true },
-      }),
+        // KPI 14: Unpaid invoices total
+        this.prisma.invoice.aggregate({
+          where: {
+            tenantId,
+            status: { in: ['SENT', 'OVERDUE'] },
+          },
+          _sum: { total: true },
+        }),
 
-      // KPI 15: Overdue invoices (sent > 30 days ago, still unpaid)
-      this.prisma.invoice.aggregate({
-        where: {
-          tenantId,
-          status: { in: ['SENT', 'OVERDUE'] },
-          sentAt: { lte: thirtyDaysAgo },
-        },
-        _sum: { total: true },
-      }),
+        // KPI 15: Overdue invoices (sent > 30 days ago, still unpaid)
+        this.prisma.invoice.aggregate({
+          where: {
+            tenantId,
+            status: { in: ['SENT', 'OVERDUE'] },
+            sentAt: { lte: thirtyDaysAgo },
+          },
+          _sum: { total: true },
+        }),
 
-      // KPI 16: Revenue breakdown this month (paid invoices subtotal vs total for margin)
-      this.prisma.invoice.aggregate({
-        where: {
-          tenantId,
-          status: 'PAID',
-          paidAt: { gte: startOfMonth },
-        },
-        _sum: { subtotal: true, total: true },
-      }),
+        // KPI 16: Revenue breakdown this month (paid invoices subtotal vs total for margin)
+        this.prisma.invoice.aggregate({
+          where: {
+            tenantId,
+            status: 'PAID',
+            paidAt: { gte: startOfMonth },
+          },
+          _sum: { subtotal: true, total: true },
+        }),
 
-      // KPI 17: Payments received last 7 days
-      this.prisma.invoice.aggregate({
-        where: {
-          tenantId,
-          status: 'PAID',
-          paidAt: { gte: sevenDaysAgo },
-        },
-        _sum: { total: true },
-      }),
+        // KPI 17: Payments received last 7 days
+        this.prisma.invoice.aggregate({
+          where: {
+            tenantId,
+            status: 'PAID',
+            paidAt: { gte: sevenDaysAgo },
+          },
+          _sum: { total: true },
+        }),
 
-      // KPI 18: Preventivi in scadenza entro 7 giorni (Right to Repair 2024/1799 + D.Lgs. 206/2005)
-      this.prisma.estimate.count({
-        where: {
-          tenantId,
-          status: { in: ['SENT', 'PARTIALLY_APPROVED'] },
-          validUntil: { gte: now, lte: sevenDaysFromNow },
-        },
-      }),
+        // KPI 18: Preventivi in scadenza entro 7 giorni (Right to Repair 2024/1799 + D.Lgs. 206/2005)
+        this.prisma.estimate.count({
+          where: {
+            tenantId,
+            status: { in: ['SENT', 'PARTIALLY_APPROVED'] },
+            validUntil: { gte: now, lte: sevenDaysFromNow },
+          },
+        }),
 
-      // KPI 19 & 20: Right to Repair traceability — parti con barcode / totale parti attive
-      this.prisma.part.count({ where: { tenantId, isActive: true } }),
-      this.prisma.part.count({ where: { tenantId, isActive: true, barcode: { not: null } } }),
+        // KPI 19 & 20: Right to Repair traceability — parti con barcode / totale parti attive
+        this.prisma.part.count({ where: { tenantId, isActive: true } }),
+        this.prisma.part.count({ where: { tenantId, isActive: true, barcode: { not: null } } }),
 
-      // KPI 21: Scorte in allarme via raw correlated query (Prisma ORM non supporta cross-model field comparison)
-      this.prisma.$queryRaw<[{ count: bigint }]>`
+        // KPI 21: Scorte in allarme via raw correlated query (Prisma ORM non supporta cross-model field comparison)
+        this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*)::bigint AS count
         FROM inventory_items ii
         JOIN parts p ON ii.part_id = p.id
@@ -271,58 +272,80 @@ export class ReportingService {
           AND p.is_active = true
           AND ii.quantity <= p.min_stock_level
       `,
-    ]);
+      ]);
 
-    // Calculate efficiency (completed / total work orders)
-    const efficiencyThisMonth =
-      woTotalThisMonth > 0 ? Math.round((woCompletedThisMonth / woTotalThisMonth) * 100) : 0;
-    const efficiencyPrevMonth =
-      woTotalPrevMonth > 0 ? Math.round((woCompletedPrevMonth / woTotalPrevMonth) * 100) : 0;
-    const efficiencyChange = efficiencyThisMonth - efficiencyPrevMonth;
+      // Calculate efficiency (completed / total work orders)
+      const efficiencyThisMonth =
+        woTotalThisMonth > 0 ? Math.round((woCompletedThisMonth / woTotalThisMonth) * 100) : 0;
+      const efficiencyPrevMonth =
+        woTotalPrevMonth > 0 ? Math.round((woCompletedPrevMonth / woTotalPrevMonth) * 100) : 0;
+      const efficiencyChange = efficiencyThisMonth - efficiencyPrevMonth;
 
-    // Calculate conversion (converted estimates / total estimates)
-    const conversionThisMonth =
-      estimatesThisMonth > 0
-        ? Math.round((estimatesConvertedThisMonth / estimatesThisMonth) * 100)
-        : 0;
-    const conversionPrevMonth =
-      estimatesPrevMonth > 0
-        ? Math.round((estimatesConvertedPrevMonth / estimatesPrevMonth) * 100)
-        : 0;
-    const conversionChange = conversionThisMonth - conversionPrevMonth;
+      // Calculate conversion (converted estimates / total estimates)
+      const conversionThisMonth =
+        estimatesThisMonth > 0
+          ? Math.round((estimatesConvertedThisMonth / estimatesThisMonth) * 100)
+          : 0;
+      const conversionPrevMonth =
+        estimatesPrevMonth > 0
+          ? Math.round((estimatesConvertedPrevMonth / estimatesPrevMonth) * 100)
+          : 0;
+      const conversionChange = conversionThisMonth - conversionPrevMonth;
 
-    // Gross margin: approximate as (subtotal - tax) / total; subtotal represents net revenue
-    const totalRevenue = Number(laborRevenue._sum.total ?? 0);
-    const subtotalRevenue = Number(laborRevenue._sum.subtotal ?? 0);
-    // Gross margin estimate: subtotal (pre-tax) as % of total (post-tax)
-    const grossMargin = totalRevenue > 0 ? Math.round((subtotalRevenue / totalRevenue) * 100) : 0;
+      // Gross margin: approximate as (subtotal - tax) / total; subtotal represents net revenue
+      const totalRevenue = Number(laborRevenue._sum.total ?? 0);
+      const subtotalRevenue = Number(laborRevenue._sum.subtotal ?? 0);
+      // Gross margin estimate: subtotal (pre-tax) as % of total (post-tax)
+      const grossMargin = totalRevenue > 0 ? Math.round((subtotalRevenue / totalRevenue) * 100) : 0;
 
-    const currentMonthRevenue = Number(fatturatoMese._sum.total ?? 0);
+      const currentMonthRevenue = Number(fatturatoMese._sum.total ?? 0);
 
-    const rightToRepairPct =
-      totalPartsCount > 0 ? Math.round((trackedPartsCount / totalPartsCount) * 100) : 100;
+      const rightToRepairPct =
+        totalPartsCount > 0 ? Math.round((trackedPartsCount / totalPartsCount) * 100) : 100;
 
-    const scorteInAllarme = Number((lowStockRaw as [{ count: bigint }])[0]?.count ?? 0);
+      const scorteInAllarme = Number((lowStockRaw as [{ count: bigint }])[0]?.count ?? 0);
 
-    return {
-      clientiTotali,
-      veicoliTotali,
-      fatturatoMese: currentMonthRevenue,
-      prenotazioniOggi,
-      workOrderAperti,
-      efficiency: efficiencyThisMonth,
-      efficiencyChange,
-      conversion: conversionThisMonth,
-      conversionChange,
-      unpaidAmount: Number(unpaidInvoices._sum.total ?? 0),
-      overdueAmount: Number(overdueInvoices._sum.total ?? 0),
-      grossMargin,
-      cashFlow7d: Number(paymentsLast7d._sum.total ?? 0),
-      revenueTarget: Math.round(currentMonthRevenue * 1.15),
-      scorteInAllarme,
-      preventiviInScadenza,
-      rightToRepairPct,
-    };
+      return {
+        clientiTotali,
+        veicoliTotali,
+        fatturatoMese: currentMonthRevenue,
+        prenotazioniOggi,
+        workOrderAperti,
+        efficiency: efficiencyThisMonth,
+        efficiencyChange,
+        conversion: conversionThisMonth,
+        conversionChange,
+        unpaidAmount: Number(unpaidInvoices._sum.total ?? 0),
+        overdueAmount: Number(overdueInvoices._sum.total ?? 0),
+        grossMargin,
+        cashFlow7d: Number(paymentsLast7d._sum.total ?? 0),
+        revenueTarget: Math.round(currentMonthRevenue * 1.15),
+        scorteInAllarme,
+        preventiviInScadenza,
+        rightToRepairPct,
+      };
+    } catch (error) {
+      console.error(`[getDashboardKpis] Error for tenant ${tenantId}:`, error);
+      return {
+        clientiTotali: 0,
+        veicoliTotali: 0,
+        fatturatoMese: 0,
+        prenotazioniOggi: 0,
+        workOrderAperti: 0,
+        efficiency: 0,
+        efficiencyChange: 0,
+        conversion: 0,
+        conversionChange: 0,
+        unpaidAmount: 0,
+        overdueAmount: 0,
+        grossMargin: 0,
+        cashFlow7d: 0,
+        revenueTarget: 0,
+        scorteInAllarme: 0,
+        preventiviInScadenza: 0,
+        rightToRepairPct: 0,
+      };
+    }
   }
 
   // ============== DASHBOARD SUMMARY (Materialized View) ==============

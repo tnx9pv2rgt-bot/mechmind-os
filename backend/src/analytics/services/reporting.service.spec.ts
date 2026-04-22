@@ -678,6 +678,53 @@ describe('ReportingService', () => {
       expect(result.efficiency).toBe(0);
       expect(result.conversion).toBe(0);
     });
+
+    it('should return default zeros when Promise.all() rejects', async () => {
+      // Simulate a database connection error
+      mockKpiPrisma.customer.count.mockRejectedValue(new Error('Database connection failed'));
+
+      const svc = await buildServiceWithKpiPrisma();
+      const result = await svc.getDashboardKpis(tenantId);
+
+      // Should return all zeros gracefully instead of throwing
+      expect(result.clientiTotali).toBe(0);
+      expect(result.veicoliTotali).toBe(0);
+      expect(result.fatturatoMese).toBe(0);
+      expect(result.prenotazioniOggi).toBe(0);
+      expect(result.workOrderAperti).toBe(0);
+      expect(result.efficiency).toBe(0);
+      expect(result.efficiencyChange).toBe(0);
+      expect(result.conversion).toBe(0);
+      expect(result.conversionChange).toBe(0);
+      expect(result.unpaidAmount).toBe(0);
+      expect(result.overdueAmount).toBe(0);
+      expect(result.grossMargin).toBe(0);
+      expect(result.cashFlow7d).toBe(0);
+      expect(result.revenueTarget).toBe(0);
+      expect(result.scorteInAllarme).toBe(0);
+      expect(result.preventiviInScadenza).toBe(0);
+      expect(result.rightToRepairPct).toBe(0);
+    });
+
+    it('should catch errors from $queryRaw and return default zeros', async () => {
+      mockKpiPrisma.customer.count.mockResolvedValue(50);
+      mockKpiPrisma.vehicle.count.mockResolvedValue(75);
+      mockKpiPrisma.booking.count.mockResolvedValue(3);
+      mockKpiPrisma.workOrder.count.mockResolvedValue(5);
+      mockKpiPrisma.estimate.count.mockResolvedValue(10);
+      mockKpiPrisma.part.count.mockResolvedValue(100);
+      mockKpiPrisma.invoice.aggregate.mockResolvedValue({ _sum: { total: 1000, subtotal: 800 } });
+
+      // Simulate error in the raw query for low stock count
+      mockKpiPrisma.$queryRaw.mockRejectedValue(new Error('Invalid SQL query'));
+
+      const svc = await buildServiceWithKpiPrisma();
+      const result = await svc.getDashboardKpis(tenantId);
+
+      // Should return all zeros due to error handling
+      expect(result.clientiTotali).toBe(0);
+      expect(result.scorteInAllarme).toBe(0);
+    });
   });
 
   // ============== getCustomKPIs ==============
