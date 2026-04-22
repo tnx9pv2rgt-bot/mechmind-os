@@ -93,8 +93,8 @@ function Sparkline({ data, color, height = 32 }: { data: number[]; color: string
       <AreaChart data={safeData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id={`sparkGrad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-            <stop offset="100%" stopColor={color} stopOpacity={0} />
+            <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.3 }} />
+            <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
           </linearGradient>
         </defs>
         <Area
@@ -214,23 +214,23 @@ function KpiCard({ title, value, change, icon: Icon, sparkData, sparkColor, href
                 >
                   <span style={{ color: sparkColor }}><Icon className="h-4.5 w-4.5" /></span>
                 </div>
-                <span className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]">
+                <span className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                   {title}
                 </span>
               </div>
               <ChevronRight
-                className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 text-apple-gray dark:text-[var(--text-secondary)]"
+                className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]"
               />
             </div>
 
             {/* Middle: big number */}
             <div className="mt-3">
               {isLoading ? (
-                <div className="w-24 h-8 rounded-lg animate-pulse bg-apple-light-gray dark:bg-[var(--border-default)]" />
+                <div className="w-24 h-8 rounded-lg animate-pulse bg-[var(--surface-secondary)] dark:bg-[var(--border-default)]" />
               ) : (
-                <p className="text-[28px] font-bold tracking-tight text-apple-dark dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
+                <p className="text-[28px] font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
                   <AnimatedValue value={value} />
-                  {suffix && <span className="text-[13px] font-medium ml-1.5 text-apple-gray dark:text-[var(--text-secondary)]">{suffix}</span>}
+                  {suffix && <span className="text-[13px] font-medium ml-1.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">{suffix}</span>}
                 </p>
               )}
             </div>
@@ -240,17 +240,17 @@ function KpiCard({ title, value, change, icon: Icon, sparkData, sparkColor, href
               {!isLoading ? (
                 <div className="flex items-center gap-1.5">
                   {isPositive ? (
-                    <span className="text-green-600 dark:text-green-400"><ArrowUpRight className="h-3 w-3" /></span>
+                    <span className="text-[var(--status-success)] dark:text-[var(--status-success)]"><ArrowUpRight className="h-3 w-3" /></span>
                   ) : (
-                    <span className="text-red-600 dark:text-red-400"><ArrowDownRight className="h-3 w-3" /></span>
+                    <span className="text-[var(--status-error)] dark:text-[var(--status-error)]"><ArrowDownRight className="h-3 w-3" /></span>
                   )}
                   <span
-                    className={`text-[11px] font-semibold ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                    className={`text-[11px] font-semibold ${isPositive ? 'text-[var(--status-success)] dark:text-[var(--status-success)]' : 'text-[var(--status-error)] dark:text-[var(--status-error)]'}`}
                     style={{ fontVariantNumeric: 'tabular-nums' }}
                   >
                     {isPositive ? '+' : ''}{change}%
                   </span>
-                  <span className="text-[11px] text-apple-gray dark:text-[var(--text-secondary)]">vs mese prec.</span>
+                  <span className="text-[11px] text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">vs mese prec.</span>
                 </div>
               ) : <div />}
               <div className="w-16 h-6 opacity-50 group-hover:opacity-100 transition-opacity">
@@ -365,10 +365,10 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
       workOrders.filter((wo) => statuses.includes(wo.status?.toLowerCase())).length;
 
     return [
-      { label: 'In Attesa', count: statusCount(['pending', 'open']), color: '#fbbf24', icon: Clock },
-      { label: 'In Corso', count: statusCount(['in_progress', 'confirmed']), color: '#60a5fa', icon: Wrench },
-      { label: 'Completati', count: statusCount(['completed']), color: '#34d399', icon: CheckCircle2 },
-      { label: 'Annullati', count: statusCount(['cancelled']), color: '#f87171', icon: AlertTriangle },
+      { label: 'In Attesa', count: statusCount(['pending', 'open']), color: 'var(--status-warning)', icon: Clock },
+      { label: 'In Corso', count: statusCount(['in_progress', 'confirmed']), color: 'var(--status-info)', icon: Wrench },
+      { label: 'Completati', count: statusCount(['completed']), color: 'var(--status-success)', icon: CheckCircle2 },
+      { label: 'Annullati', count: statusCount(['cancelled']), color: 'var(--status-error)', icon: AlertTriangle },
     ];
   }, [workOrders]);
 
@@ -395,7 +395,7 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
           return (
             <div
               key={col.label}
-              className="text-center p-3 rounded-xl border border-transparent bg-white/[0.06] transition-colors hover:border-white/10"
+              className="text-center p-3 rounded-xl border border-transparent bg-[var(--surface-secondary)]/[0.06] transition-colors hover:border-[var(--border-default)]/10"
             >
               {isLoading ? (
                 <div className="w-8 h-8 mx-auto rounded-lg animate-pulse bg-[var(--border-default)]" />
@@ -407,8 +407,8 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
                   >
                     <span style={{ color: col.color }}><ColIcon className="h-4 w-4" /></span>
                   </div>
-                  <p className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{col.count}</p>
-                  <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">{col.label}</p>
+                  <p className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{col.count}</p>
+                  <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">{col.label}</p>
                 </>
               )}
             </div>
@@ -435,21 +435,21 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
       label: 'Fatture non pagate',
       value: formatCurrency(unpaidAmount),
       icon: Receipt,
-      color: '#fbbf24',
+      color: 'var(--status-warning)',
       trend: 3,
     },
     {
       label: 'Scadute >30gg',
       value: formatCurrency(overdueAmount),
       icon: AlertTriangle,
-      color: '#f87171',
+      color: 'var(--status-error)',
       trend: -2,
     },
     {
       label: 'Margine lordo',
       value: `${grossMargin}%`,
       icon: Target,
-      color: '#34d399',
+      color: 'var(--status-success)',
       trend: 4,
     },
     {
@@ -468,7 +468,7 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
         return (
           <div
             key={m.label}
-            className="p-4 rounded-xl border border-transparent bg-white/[0.06] transition-colors hover:border-white/10"
+            className="p-4 rounded-xl border border-transparent bg-[var(--surface-secondary)]/[0.06] transition-colors hover:border-[var(--border-default)]/10"
           >
             {isLoading ? (
               <div className="space-y-2">
@@ -485,13 +485,13 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
                     <span style={{ color: m.color }}><MIcon className="h-4 w-4" /></span>
                   </div>
                   <span
-                    className={`text-[11px] font-medium ${m.trend >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`}
+                    className={`text-[11px] font-medium ${m.trend >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}
                   >
                     {m.trend >= 0 ? '+' : ''}{m.trend}%
                   </span>
                 </div>
-                <p className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
-                <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">{m.label}</p>
+                <p className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
+                <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">{m.label}</p>
               </>
             )}
           </div>
@@ -519,17 +519,17 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusDotColors: Record<string, string> = {
-  confirmed: '#34d399',
-  in_progress: '#60a5fa',
-  pending: '#fbbf24',
-  cancelled: '#f87171',
-  completed: '#34d399',
-  open: '#60a5fa',
-  OPEN: '#60a5fa',
-  IN_PROGRESS: '#fbbf24',
-  COMPLETED: '#34d399',
-  CANCELLED: '#f87171',
-  PENDING: '#fbbf24',
+  confirmed: 'var(--status-success)',
+  in_progress: 'var(--status-info)',
+  pending: 'var(--status-warning)',
+  cancelled: 'var(--status-error)',
+  completed: 'var(--status-success)',
+  open: 'var(--status-info)',
+  OPEN: 'var(--status-info)',
+  IN_PROGRESS: 'var(--status-warning)',
+  COMPLETED: 'var(--status-success)',
+  CANCELLED: 'var(--status-error)',
+  PENDING: 'var(--status-warning)',
 };
 
 // =============================================================================
@@ -567,11 +567,11 @@ function LiveTimestamp({ updatedAt, isFetching }: { updatedAt: number; isFetchin
 // Quick Actions
 // =============================================================================
 const quickActions = [
-  { label: 'Nuovo OdL', href: '/dashboard/work-orders/new', icon: Wrench, color: '#60a5fa' },
-  { label: 'Nuova Fattura', href: '/dashboard/invoices/new', icon: FileText, color: '#34d399' },
+  { label: 'Nuovo OdL', href: '/dashboard/work-orders/new', icon: Wrench, color: 'var(--status-info)' },
+  { label: 'Nuova Fattura', href: '/dashboard/invoices/new', icon: FileText, color: 'var(--status-success)' },
   { label: 'Nuovo Cliente', href: '/dashboard/customers/new/step1', icon: Users, color: '#a78bfa' },
-  { label: 'Prenotazione', href: '/dashboard/bookings/new', icon: Calendar, color: '#fbbf24' },
-  { label: 'Preventivo', href: '/dashboard/estimates/new', icon: ClipboardList, color: '#ec4899' },
+  { label: 'Prenotazione', href: '/dashboard/bookings/new', icon: Calendar, color: 'var(--status-warning)' },
+  { label: 'Preventivo', href: '/dashboard/estimates/new', icon: ClipboardList, color: 'var(--brand)' },
   { label: 'Ispezione', href: '/dashboard/inspections/new', icon: SearchIcon, color: '#22d3ee' },
 ];
 
@@ -651,7 +651,7 @@ export default function DashboardPage(): React.ReactElement {
       <header>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               {greeting}, <span className="font-normal">{user?.name || 'Utente'}</span>
             </h1>
             <div className="flex items-center gap-2 mt-1">
@@ -659,9 +659,9 @@ export default function DashboardPage(): React.ReactElement {
                 variants={pulseVariants}
                 animate="pulse"
                 className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: '#34d399' }}
+                style={{ backgroundColor: 'var(--status-success)' }}
               />
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])] text-body'>
                 {tenantName} &middot;{' '}
                 <span suppressHydrationWarning>
                   {new Date().toLocaleDateString('it-IT', {
@@ -709,7 +709,7 @@ export default function DashboardPage(): React.ReactElement {
             change={vehiclesChange}
             icon={Wrench}
             sparkData={sparkGen(vehiclesInShop || 5, vehiclesChange)}
-            sparkColor="#60a5fa"
+            sparkColor="var(--status-info)"
             href="/dashboard/work-orders?status=active"
             isLoading={statsLoading}
           />
@@ -719,7 +719,7 @@ export default function DashboardPage(): React.ReactElement {
             change={revenueChange}
             icon={TrendingUp}
             sparkData={sparkGen(revenue / 100 || 50, revenueChange)}
-            sparkColor="#34d399"
+            sparkColor="var(--status-success)"
             href="/dashboard/invoices?period=month"
             isLoading={statsLoading}
           />
@@ -729,7 +729,7 @@ export default function DashboardPage(): React.ReactElement {
             change={bookingsChange}
             icon={Calendar}
             sparkData={sparkGen(bookingsToday || 3, bookingsChange)}
-            sparkColor="#fbbf24"
+            sparkColor="var(--status-warning)"
             href="/dashboard/bookings?period=today"
             isLoading={statsLoading}
             suffix="oggi"
@@ -760,7 +760,7 @@ export default function DashboardPage(): React.ReactElement {
             change={conversionChange}
             icon={Target}
             sparkData={sparkGen(conversion || 70, conversionChange)}
-            sparkColor="#ec4899"
+            sparkColor="var(--brand)"
             href="/dashboard/analytics?metric=conversion"
             isLoading={statsLoading}
           />
@@ -774,39 +774,39 @@ export default function DashboardPage(): React.ReactElement {
             <div className="flex flex-wrap gap-3">
               {scorteInAllarme > 0 && (
                 <Link href="/dashboard/parts?lowStock=true" className="flex-1 min-w-[200px]">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 hover:border-orange-400 dark:hover:border-orange-600 transition-colors">
-                    <Package className="h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" />
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20 border border-[var(--status-warning)]/20 dark:border-[var(--status-warning)]/40 hover:border-[var(--status-warning)]/40 dark:hover:border-[var(--status-warning)] transition-colors">
+                    <Package className="h-4 w-4 shrink-0 text-[var(--status-warning)] dark:text-[var(--status-warning)]" />
                     <div className="min-w-0">
-                      <p className="text-footnote font-semibold text-orange-800 dark:text-orange-300">
+                      <p className="text-footnote font-semibold text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                         {scorteInAllarme} ricamb{scorteInAllarme === 1 ? 'io' : 'i'} sotto scorta
                       </p>
-                      <p className="text-[11px] text-orange-600 dark:text-orange-400">Riordina per evitare fermi</p>
+                      <p className="text-[11px] text-[var(--status-warning)] dark:text-[var(--status-warning)]">Riordina per evitare fermi</p>
                     </div>
                   </div>
                 </Link>
               )}
               {preventiviInScadenza > 0 && (
                 <Link href="/dashboard/estimates?expiring=7d" className="flex-1 min-w-[200px]">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/40 hover:border-yellow-400 dark:hover:border-yellow-600 transition-colors">
-                    <ClipboardList className="h-4 w-4 shrink-0 text-yellow-700 dark:text-yellow-400" />
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]/40 hover:border-[var(--status-warning)]/40 dark:hover:border-[var(--status-warning)] transition-colors">
+                    <ClipboardList className="h-4 w-4 shrink-0 text-[var(--status-warning)] dark:text-[var(--status-warning)]" />
                     <div className="min-w-0">
-                      <p className="text-footnote font-semibold text-yellow-800 dark:text-yellow-300">
+                      <p className="text-footnote font-semibold text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                         {preventiviInScadenza} preventiv{preventiviInScadenza === 1 ? 'o' : 'i'} in scadenza
                       </p>
-                      <p className="text-[11px] text-yellow-600 dark:text-yellow-500">Entro 7 giorni — D.Lgs. 206/2005</p>
+                      <p className="text-[11px] text-[var(--status-warning)] dark:text-[var(--status-warning)]">Entro 7 giorni — D.Lgs. 206/2005</p>
                     </div>
                   </div>
                 </Link>
               )}
               {rightToRepairPct < 100 && (
                 <Link href="/dashboard/parts" className="flex-1 min-w-[200px]">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-600 dark:bg-slate-700 border border-slate-500 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-colors">
-                    <ShieldCheck className="h-4 w-4 shrink-0 text-slate-100 dark:text-white" />
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--surface-active)] dark:bg-[var(--surface-primary)] border border-[var(--border-default)] dark:border-[var(--border-strong)] hover:border-[var(--border-default)]-400 dark:hover:border-[var(--border-default)] transition-colors">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]" />
                     <div className="min-w-0">
-                      <p className="text-footnote font-semibold text-white">
+                      <p className="text-footnote font-semibold text-[var(--text-on-brand)]">
                         Tracciabilità ricambi {rightToRepairPct}%
                       </p>
-                      <p className="text-[11px] text-slate-200 dark:text-slate-300">Right to Repair — scadenza 31/07/2026</p>
+                      <p className="text-[11px] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Right to Repair — scadenza 31/07/2026</p>
                     </div>
                   </div>
                 </Link>
@@ -852,21 +852,21 @@ export default function DashboardPage(): React.ReactElement {
               <AppleCardContent>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Andamento Fatturato
                     </h2>
-                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                       Questo mese vs precedente
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
                       <div className="w-3 h-[2px] rounded-full bg-apple-dark dark:bg-[var(--text-primary)]" />
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Corrente</span>
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Corrente</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-[2px] rounded-full opacity-40 bg-gray-400" />
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Precedente</span>
+                      <div className="w-3 h-[2px] rounded-full opacity-40 bg-[var(--surface-hover)]" />
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Precedente</span>
                     </div>
                   </div>
                 </div>
@@ -881,10 +881,10 @@ export default function DashboardPage(): React.ReactElement {
               <AppleCardContent>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Pipeline Lavori
                     </h2>
-                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                       Distribuzione ordini attivi
                     </p>
                   </div>
@@ -914,7 +914,7 @@ export default function DashboardPage(): React.ReactElement {
             <AppleCard hover={false} className="h-full">
               <AppleCardHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Ordini Recenti
                   </h2>
                   <Link href="/dashboard/work-orders">
@@ -927,12 +927,12 @@ export default function DashboardPage(): React.ReactElement {
               <AppleCardContent>
                 {woLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                   </div>
                 ) : recentWorkOrders.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <AlertCircle className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessun ordine recente</p>
+                    <AlertCircle className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Nessun ordine recente</p>
                     <Link href="/dashboard/work-orders/new">
                       <AppleButton variant="ghost" className="mt-4" icon={<Plus className="h-4 w-4" />}>
                         Crea OdL
@@ -944,17 +944,17 @@ export default function DashboardPage(): React.ReactElement {
                     {recentWorkOrders.slice(0, 6).map((wo) => (
                       <Link href={`/dashboard/work-orders/${wo.id}`} key={wo.id}>
                         <div
-                          className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple cursor-pointer group mb-2"
+                          className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple cursor-pointer group mb-2"
                         >
                           <div
                             className="w-2 h-2 rounded-full flex-shrink-0"
                             style={{ backgroundColor: statusDotColors[wo.status] || '#666666' }}
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]">
+                            <p className="text-body font-semibold truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {wo.customerName || 'N/D'}
                             </p>
-                            <p className="text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]">
+                            <p className="text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                               {wo.vehiclePlate && <><Car className="h-3 w-3 inline mr-1" />{wo.vehiclePlate}</>}
                               {!wo.vehiclePlate && (wo.orderNumber || `#${wo.id.slice(0, 6)}`)}
                             </p>
@@ -971,7 +971,7 @@ export default function DashboardPage(): React.ReactElement {
                             </span>
                           </div>
                           <ChevronRight
-                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-apple-gray dark:text-[var(--text-secondary)]"
+                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]"
                           />
                         </div>
                       </Link>
@@ -987,7 +987,7 @@ export default function DashboardPage(): React.ReactElement {
             <AppleCard hover={false} className="h-full">
               <AppleCardHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Oggi
                   </h2>
                   <Link href="/dashboard/calendar">
@@ -1000,12 +1000,12 @@ export default function DashboardPage(): React.ReactElement {
               <AppleCardContent>
                 {bookingsLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                   </div>
                 ) : todayBookings.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <AlertCircle className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessuna prenotazione oggi</p>
+                    <AlertCircle className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Nessuna prenotazione oggi</p>
                     <Link href="/dashboard/bookings/new">
                       <AppleButton variant="ghost" className="mt-4" icon={<Plus className="h-4 w-4" />}>
                         Nuova prenotazione
@@ -1018,11 +1018,11 @@ export default function DashboardPage(): React.ReactElement {
                       <Link href={`/dashboard/bookings/${booking.id}`} key={booking.id}>
                         <motion.div
                           whileHover={{ x: 3 }}
-                          className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple cursor-pointer group mb-2"
+                          className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple cursor-pointer group mb-2"
                         >
                           {/* Time */}
                           <div
-                            className="w-12 text-center flex-shrink-0 text-body font-mono font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                            className="w-12 text-center flex-shrink-0 text-body font-mono font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                           >
                             {new Date(booking.scheduledAt).toLocaleTimeString('it-IT', {
                               hour: '2-digit',
@@ -1036,10 +1036,10 @@ export default function DashboardPage(): React.ReactElement {
                           />
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]">
+                            <p className="text-body font-semibold truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {booking.customerName}
                             </p>
-                            <p className="text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]">
+                            <p className="text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                               {booking.vehiclePlate}
                               {booking.vehicleBrand ? ` · ${booking.vehicleBrand}` : ''}
                               {' · '}
@@ -1047,7 +1047,7 @@ export default function DashboardPage(): React.ReactElement {
                             </p>
                           </div>
                           <ChevronRight
-                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-apple-gray dark:text-[var(--text-secondary)]"
+                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]"
                           />
                         </motion.div>
                       </Link>
@@ -1064,10 +1064,10 @@ export default function DashboardPage(): React.ReactElement {
               <AppleCardContent>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Finanze
                     </h2>
-                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                       Riepilogo finanziario
                     </p>
                   </div>
@@ -1095,9 +1095,9 @@ export default function DashboardPage(): React.ReactElement {
           {(stats?.alerts ?? []).length > 0 ? (
             (stats?.alerts ?? []).slice(0, 4).map((alert) => {
               const alertColor =
-                alert.severity === 'error' ? '#f87171' :
-                alert.severity === 'warning' ? '#fbbf24' :
-                '#60a5fa';
+                alert.severity === 'error' ? 'var(--status-error)' :
+                alert.severity === 'warning' ? 'var(--status-warning)' :
+                'var(--status-info)';
               return (
                 <motion.div key={alert.id} variants={itemVariants}>
                   <AppleCard hover={false}>
@@ -1110,10 +1110,10 @@ export default function DashboardPage(): React.ReactElement {
                           <span style={{ color: alertColor }}><AlertCircle className="h-5 w-5" /></span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                          <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {alert.message}
                           </p>
-                          <p className="text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                          <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                             {formatDate(alert.createdAt)}
                           </p>
                         </div>
@@ -1129,14 +1129,14 @@ export default function DashboardPage(): React.ReactElement {
                 <AppleCard hover={false}>
                   <AppleCardContent>
                     <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-apple-green flex items-center justify-center flex-shrink-0">
-                        <CheckCircle2 className="h-5 w-5 text-white" />
+                      <div className="w-10 h-10 rounded-xl bg-[var(--status-success)] flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-5 w-5 text-[var(--text-on-brand)]" />
                       </div>
                       <div>
-                        <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                        <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           Tutto sotto controllo
                         </p>
-                        <p className="text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                        <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                           Nessun avviso critico. La tua officina funziona alla perfezione.
                         </p>
                       </div>
@@ -1148,14 +1148,14 @@ export default function DashboardPage(): React.ReactElement {
                 <AppleCard hover={false}>
                   <AppleCardContent>
                     <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-apple-blue flex items-center justify-center flex-shrink-0">
-                        <Zap className="h-5 w-5 text-white" />
+                      <div className="w-10 h-10 rounded-xl bg-[var(--brand)] flex items-center justify-center flex-shrink-0">
+                        <Zap className="h-5 w-5 text-[var(--text-on-brand)]" />
                       </div>
                       <div>
-                        <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                        <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {greeting}, {user?.name || 'Utente'}
                         </p>
-                        <p className="text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                        <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
                           Gestisci prenotazioni, clienti e veicoli dalla tua dashboard.
                         </p>
                       </div>
