@@ -800,13 +800,13 @@ export default function DashboardPage(): React.ReactElement {
               )}
               {rightToRepairPct < 100 && (
                 <Link href="/dashboard/parts" className="flex-1 min-w-[200px]">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 hover:border-blue-400 dark:hover:border-blue-600 transition-colors">
-                    <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-600 dark:bg-slate-700 border border-slate-500 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-colors">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-slate-100 dark:text-white" />
                     <div className="min-w-0">
-                      <p className="text-footnote font-semibold text-blue-800 dark:text-blue-300">
+                      <p className="text-footnote font-semibold text-white">
                         Tracciabilità ricambi {rightToRepairPct}%
                       </p>
-                      <p className="text-[11px] text-blue-600 dark:text-blue-500">Right to Repair — scadenza 31/07/2026</p>
+                      <p className="text-[11px] text-slate-200 dark:text-slate-300">Right to Repair — scadenza 31/07/2026</p>
                     </div>
                   </div>
                 </Link>
