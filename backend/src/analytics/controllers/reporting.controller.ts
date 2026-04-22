@@ -58,10 +58,10 @@ export class ReportingController {
   }
 
   @Get('dashboard')
-  @ApiOperation({ summary: 'Get dashboard summary KPIs (materialized view)' })
+  @ApiOperation({ summary: 'Get dashboard summary KPIs' })
   @ApiResponse({ status: 200 })
   async getDashboardSummary(@CurrentUser('tenantId') tenantId: string) {
-    return this.reportingService.getDashboardSummary(tenantId);
+    return this.reportingService.getDashboardKpis(tenantId);
   }
 
   @Get('kpis')

@@ -74,12 +74,30 @@ describe('ReportingController', () => {
 
   describe('getDashboardSummary', () => {
     it('should delegate to service with tenantId', async () => {
-      const summary = { totalRevenue: 10000, totalCustomers: 50 };
-      service.getDashboardSummary.mockResolvedValue(summary as never);
+      const summary = {
+        clientiTotali: 50,
+        veicoliTotali: 75,
+        fatturatoMese: 10000,
+        prenotazioniOggi: 5,
+        workOrderAperti: 8,
+        efficiency: 85,
+        efficiencyChange: 5,
+        conversion: 65,
+        conversionChange: 10,
+        unpaidAmount: 2000,
+        overdueAmount: 500,
+        grossMargin: 35,
+        cashFlow7d: 8000,
+        revenueTarget: 11500,
+        scorteInAllarme: 3,
+        preventiviInScadenza: 2,
+        rightToRepairPct: 92,
+      };
+      service.getDashboardKpis.mockResolvedValue(summary as never);
 
       const result = await controller.getDashboardSummary(TENANT_ID);
 
-      expect(service.getDashboardSummary).toHaveBeenCalledWith(TENANT_ID);
+      expect(service.getDashboardKpis).toHaveBeenCalledWith(TENANT_ID);
       expect(result).toEqual(summary);
     });
   });
