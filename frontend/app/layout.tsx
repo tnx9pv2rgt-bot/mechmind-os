@@ -87,18 +87,15 @@ export const metadata: Metadata = {
   },
 };
 
-// Viewport configuration
+// Viewport configuration — dark mode only
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   minimumScale: 1,
   userScalable: true,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4f4f4' },
-    { media: '(prefers-color-scheme: dark)', color: '#212121' },
-  ],
-  colorScheme: 'light dark',
+  themeColor: '#212121',
+  colorScheme: 'dark',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

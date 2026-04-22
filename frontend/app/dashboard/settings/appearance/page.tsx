@@ -1,6 +1,5 @@
 'use client';
 
-import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -83,13 +82,7 @@ function OptionButton({ selected, onClick, children, className }: { selected: bo
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AppearancePage(): React.JSX.Element {
-  const { setTheme: setNextTheme } = useTheme();
   const store = useThemeStore();
-
-  function handleThemeMode(mode: 'light' | 'dark' | 'system'): void {
-    store.setTheme(mode);
-    setNextTheme(mode);
-  }
 
   return (
     <div>
@@ -130,15 +123,9 @@ export default function AppearancePage(): React.JSX.Element {
               </div>
             </AppleCardHeader>
             <AppleCardContent>
-              <div className="grid grid-cols-3 gap-3">
-                <OptionButton selected={store.theme === 'light'} onClick={() => handleThemeMode('light')}>
-                  <Sun className="h-4 w-4" /> Chiaro
-                </OptionButton>
-                <OptionButton selected={store.theme === 'dark'} onClick={() => handleThemeMode('dark')}>
-                  <Moon className="h-4 w-4" /> Scuro
-                </OptionButton>
-                <OptionButton selected={store.theme === 'system'} onClick={() => handleThemeMode('system')}>
-                  <Monitor className="h-4 w-4" /> Sistema
+              <div className="grid grid-cols-1 gap-3">
+                <OptionButton selected={true} onClick={() => {}}>
+                  <Moon className="h-4 w-4" /> Scuro (modalita unica)
                 </OptionButton>
               </div>
             </AppleCardContent>
