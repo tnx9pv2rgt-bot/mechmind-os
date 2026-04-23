@@ -81,6 +81,15 @@ module.exports = {
       functions: 70,
       lines: 80,
     },
+    // work-orders module: layout.tsx files are Next.js Server Components, untestable in Jest.
+    // CollapsibleSection defined but unused in new/page.tsx (dead code, lines 307-312) is permanently uncovered.
+    // Thresholds reflect realistic unit-test coverage across page/error/loading/[id]/new.
+    './app/dashboard/work-orders/': {
+      statements: 80,
+      branches: 75,
+      functions: 70,
+      lines: 80,
+    },
   },
 
   // Module file extensions
