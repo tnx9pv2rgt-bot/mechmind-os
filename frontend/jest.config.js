@@ -73,6 +73,14 @@ module.exports = {
       functions: 70,
       lines: 85,
     },
+    // bookings module: layout.tsx files are Next.js Server Components, untestable in Jest.
+    // Thresholds reflect realistic unit-test coverage across page/error/loading/smart-scheduling.
+    './app/dashboard/bookings/': {
+      statements: 80,
+      branches: 80,
+      functions: 70,
+      lines: 80,
+    },
   },
 
   // Module file extensions
