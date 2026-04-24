@@ -109,6 +109,7 @@ describe('WorkOrderController', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         '2',
         '10',
       );
@@ -117,6 +118,7 @@ describe('WorkOrderController', () => {
         status: undefined,
         vehicleId: undefined,
         customerId: undefined,
+        search: undefined,
         page: 2,
         limit: 10,
       });
