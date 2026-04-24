@@ -26,6 +26,7 @@ import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
 import { createInterface } from 'readline';
 import { tmpdir } from 'os';
+import { selectModel, validateSpecFile, checkTypeScript, checkESLint } from './quality-gates.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -225,12 +226,34 @@ function extractPrismaModels(schema, mod) {
   return out.join('\n');
 }
 
-// ─── System prompt fisso (cachato) ───────────────────────────────────────────
+// ─── System prompt con XML structured format (2026 best practice) ───────────────
 
 const SYSTEM = `Sei un senior TypeScript engineer specializzato in NestJS testing per MechMind OS.
 
-## Pattern test obbligatorio
+Tu generi SOLO test spec.ts che soddisfano questi GATE critici:
 
+<security_gates>
+  <rule id="1">NO raw SQL - usa Prisma only</rule>
+  <rule id="2">Ogni query DEVE avere where: { tenantId } — NO multi-tenancy bypass</rule>
+  <rule id="3">NO hardcoded secrets (password, api_key, token)</rule>
+  <rule id="4">NO console.log — usa Logger service</rule>
+</security_gates>
+
+<testing_gates>
+  <rule id="5">MUST: const TENANT_ID = 'tenant-uuid-001'</rule>
+  <rule id="6">MUST: Tutte le expect() assertions su prisma.X DEVONO verificare tenantId</rule>
+  <rule id="7">MUST: Test happy path + error cases (ConflictException, NotFoundException, BadRequestException)</rule>
+  <rule id="8">MUST: Se esiste state machine (validateTransition), testa transizioni valide E invalide</rule>
+  <rule id="9">MUST: Test edge cases (null, empty, duplicate, concurrent, boundary)</rule>
+</testing_gates>
+
+<code_quality_gates>
+  <rule id="10">NO any TypeScript — use explicit types</rule>
+  <rule id="11">Max nesting: 5 levels</rule>
+  <rule id="12">Max line length: 120 chars</rule>
+</code_quality_gates>
+
+<pattern_required>
 \`\`\`typescript
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
@@ -263,23 +286,26 @@ describe('TheService', () => {
   });
 });
 \`\`\`
+</pattern_required>
 
-## Regole OBBLIGATORIE
-- Ogni mock Prisma DEVE includere \`tenantId: TENANT_ID\` nel where
-- Testa: happy path, NotFoundException, ConflictException, BadRequestException
-- Per state machine: testa transizioni valide E invalide
-- Mock tutti i servizi iniettati: PrismaService, EncryptionService, QueueService, LoggerService, EventEmitter2
-- Niente \`any\` TypeScript
-- Coverage target: statements ≥80%, branches ≥75%
+<output_format>
+Restituisci SOLO codice TypeScript completo (senza markdown).
+Ogni test DEVE passare le security_gates + testing_gates + code_quality_gates.
+NON GENERARE test che violi anche una sola regola.
+</output_format>
+`;
 
-## Output
-Restituisci SOLO il codice TypeScript del file .spec.ts completo. Niente markdown, niente commenti meta.`;
-
-// ─── Coverage Threshold (90%) ────────────────────────────────────────────────
+// ─── Coverage Threshold (90%) + Quality Gates ────────────────────────────────
 
 const COVERAGE_THRESHOLD = {
   statements: 90,
   branches: 90,
+};
+
+const QUALITY_THRESHOLD = {
+  security: 'CRITICAL', // 0 CRITICAL failures allowed
+  testing: 'HIGH', // 0 HIGH failures allowed
+  codeQuality: 'MEDIUM', // max 1 MEDIUM issue allowed
 };
 
 // ─── Helper: Estrai coverage da output Jest ────────────────────────────────────
@@ -297,6 +323,73 @@ function extractCoverageFromJest(output) {
     branchNum,
     passed: stmtNum >= COVERAGE_THRESHOLD.statements && branchNum >= COVERAGE_THRESHOLD.branches,
   };
+}
+
+// ─── Quality Gate: Strictness Check ───────────────────────────────────────────
+
+function runQualityGates(specFilePath, modulePath) {
+  console.error(`\n🔐 Quality Gates (Strictness Check)...`);
+
+  try {
+    const validation = validateSpecFile(specFilePath, modulePath);
+
+    console.error(`   SECURITY  : ${validation.critical.length} critical, ${validation.high.filter(f => f.gate === 'SECURITY').length} high`);
+    console.error(`   TESTING   : ${validation.high.filter(f => f.gate === 'TESTING').length} high`);
+    console.error(`   QUALITY   : ${validation.medium.length} medium`);
+
+    // SECURITY: 0 CRITICAL allowed
+    if (validation.critical.length > 0) {
+      console.error(`\n❌ SECURITY FAILED (${validation.critical.length} CRITICAL issues):`);
+      validation.critical.forEach(f => {
+        console.error(`   [${f.rule}] ${f.message}`);
+      });
+      return { passed: false, reason: 'SECURITY', validation };
+    }
+
+    // TESTING: 0 HIGH allowed
+    const testingHighFailures = validation.high.filter(f => f.gate === 'TESTING');
+    if (testingHighFailures.length > 0) {
+      console.error(`\n❌ TESTING QUALITY FAILED (${testingHighFailures.length} HIGH issues):`);
+      testingHighFailures.forEach(f => {
+        console.error(`   [${f.rule}] ${f.message}`);
+      });
+      return { passed: false, reason: 'TESTING', validation };
+    }
+
+    // CODE QUALITY: max 1 MEDIUM allowed
+    if (validation.medium.length > 2) {
+      console.error(`\n⚠️  CODE QUALITY WARNING (${validation.medium.length} medium issues):`);
+      validation.medium.slice(0, 3).forEach(f => {
+        console.error(`   ${f.message}`);
+      });
+    }
+
+    console.error(`   ✅ Quality gates PASSED`);
+    return { passed: true, validation };
+  } catch (err) {
+    console.error(`\n❌ Quality gates error: ${err.message}`);
+    return { passed: false, reason: 'ERROR', validation: null };
+  }
+}
+
+// ─── Linting Check ────────────────────────────────────────────────────────────
+
+function runLintingChecks(projectRoot) {
+  console.error(`\n📋 Linting Checks (tsc + eslint)...`);
+
+  // TypeScript strict check
+  const tsResult = checkTypeScript(projectRoot);
+  if (!tsResult.passed) {
+    console.error(`   ❌ TypeScript errors:`);
+    const errors = tsResult.errors.split('\n').slice(0, 5);
+    errors.forEach(e => {
+      if (e.trim()) console.error(`   ${e.trim()}`);
+    });
+    return { passed: false, reason: 'TYPESCRIPT' };
+  }
+  console.error(`   ✅ TypeScript strict check passed`);
+
+  return { passed: true };
 }
 
 // ─── Helper: Crea temp directory atomica ──────────────────────────────────────
@@ -408,7 +501,8 @@ async function main() {
     console.error(`   ${sourceFiles.length} file caricati (~${tokenEstimate.toLocaleString()} token)`);
     console.error(`\n   Generando ${allServices.length} spec file in RAM:`);
 
-    // Genera spec in temp
+    // ─── Genera spec in temp con quality gates ────────────────────────────────
+
     for (let i = 0; i < allServices.length; i++) {
       const originalPath = allServices[i];
       const relativePath = relative(originalModuleDir, originalPath);
@@ -418,65 +512,112 @@ async function main() {
 
       console.error(`   [${i + 1}/${allServices.length}] ${serviceBaseName}.spec.ts...`);
 
-      const prompt =
-        i === 0
-          ? `Genera il file .spec.ts completo per il service principale \`${serviceBaseName}\` del modulo \`${moduleName}\`.`
-          : `Genera il file .spec.ts completo per il service \`${serviceBaseName}\` del modulo \`${moduleName}\`.`;
+      const prompt = `<task>
+  <type>spec_generation</type>
+  <module>${moduleName}</module>
+  <service>${serviceBaseName}</service>
+  <requirements>
+    <coverage_min>90</coverage_min>
+    <security_gates>no_sql_injection, tenantId_everywhere, no_secrets</security_gates>
+    <testing_gates>tenant_id_const, tenant_id_assertions, happy_path, error_cases, edge_cases, state_machine_if_exists</testing_gates>
+    <code_quality>no_any, max_nesting_5, max_line_120</code_quality>
+  </requirements>
+</task>
 
-      try {
-        const response = await client.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 8192,
-          thinking: { type: 'adaptive', display: 'omitted' },
-          output_config: { effort: 'medium' },
-          system: [
-            {
-              type: 'text',
-              text: SYSTEM,
-              cache_control: { type: 'ephemeral' },
-            },
-          ],
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: sourceBlock,
-                  cache_control: { type: 'ephemeral' },
-                },
-                {
-                  type: 'text',
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-        });
+Genera il file .spec.ts completo per il service \`${serviceBaseName}\` del modulo \`${moduleName}\`.`;
 
-        const u = response.usage;
-        const cacheWrite = u.cache_creation_input_tokens ?? 0;
-        const cacheRead = u.cache_read_input_tokens ?? 0;
+      let specGenerated = null;
+      let generationModel = selectModel('generate', moduleName); // Matrice complessità moduli
+      let retries = 0;
+      const maxRetries = 2;
 
-        if (i === 0 && cacheWrite > 0) {
-          console.error(`       ⚡ Cache write: ${cacheWrite.toLocaleString()} token`);
+      while (retries <= maxRetries && !specGenerated) {
+        try {
+          // Cascade: se è un retry, usa Opus per migliorare
+          if (retries > 0) {
+            generationModel = 'claude-opus-4-7';
+            console.error(`       🔄 Retry ${retries}/${maxRetries} con Opus...`);
+          }
+
+          const response = await client.messages.create({
+            model: generationModel,
+            max_tokens: 8192,
+            thinking: { type: 'adaptive', display: 'omitted' },
+            output_config: { effort: 'high' },
+            system: [
+              {
+                type: 'text',
+                text: SYSTEM,
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: sourceBlock,
+                    cache_control: { type: 'ephemeral' },
+                  },
+                  {
+                    type: 'text',
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+          });
+
+          const u = response.usage;
+          const cacheWrite = u.cache_creation_input_tokens ?? 0;
+          const cacheRead = u.cache_read_input_tokens ?? 0;
+
+          if (i === 0 && cacheWrite > 0) {
+            console.error(`       ⚡ Cache write: ${cacheWrite.toLocaleString()} token`);
+          }
+          if (i > 0 && cacheRead > 0) {
+            const saved = Math.round(cacheRead * 0.9);
+            console.error(`       ✅ Cache read: -${saved.toLocaleString()} token`);
+          }
+
+          const textBlock = response.content.find(b => b.type === 'text');
+          if (!textBlock) {
+            console.error(`       ❌ Nessun output ricevuto`);
+            throw new Error('No text block in response');
+          }
+
+          // Scrivi temp
+          writeFileSync(tempSpecPath, textBlock.text + '\n');
+          console.error(`       ✅ Generato in RAM (${generationModel.split('-')[1].toUpperCase()})`);
+
+          // Quality gates check SUBITO
+          const qualityResult = runQualityGates(tempSpecPath, tempModuleDir);
+          if (!qualityResult.passed) {
+            if (retries < maxRetries) {
+              console.error(`       🔄 Quality gates failed, retrying con Opus...`);
+              retries++;
+              // Continua il loop per retry
+            } else {
+              throw new Error(`Quality gates failed: ${qualityResult.reason}`);
+            }
+          } else {
+            specGenerated = true;
+            console.error(`       ✅ Quality gates PASSED`);
+          }
+        } catch (err) {
+          if (retries < maxRetries) {
+            retries++;
+            console.error(`       ⚠️  Error: ${err.message}, retrying...`);
+          } else {
+            console.error(`       ❌ Fallito dopo ${maxRetries} retry: ${err.message}`);
+            throw err;
+          }
         }
-        if (i > 0 && cacheRead > 0) {
-          const saved = Math.round(cacheRead * 0.9);
-          console.error(`       ✅ Cache read: -${saved.toLocaleString()} token`);
-        }
+      }
 
-        const textBlock = response.content.find(b => b.type === 'text');
-        if (!textBlock) {
-          console.error(`       ❌ Nessun output ricevuto`);
-          continue;
-        }
-
-        writeFileSync(tempSpecPath, textBlock.text + '\n');
-        console.error(`       ✅ Generato in RAM`);
-      } catch (err) {
-        console.error(`       ❌ Errore: ${err.message}`);
-        throw err;
+      if (!specGenerated) {
+        throw new Error(`Could not generate ${serviceBaseName}.spec.ts after ${maxRetries} retries`);
       }
     }
 
@@ -499,9 +640,20 @@ async function main() {
       if (l.trim()) console.error(`   ${l}`);
     });
 
+    // ─── TypeScript Strict Check (prima di Jest) ────────────────────────────
+
+    console.error(`\n📝 TypeScript Strict Check...`);
+    const lintResult = runLintingChecks(tempDir);
+    if (!lintResult.passed) {
+      console.error(`\n❌  TypeScript check failed: ${lintResult.reason}`);
+      console.error(`   RAM workspace rimosso (atomic rollback).`);
+      rmSync(tempDir, { recursive: true, force: true });
+      process.exit(1);
+    }
+
     // ─── Verifica coverage (ATOMIC GATE) ──────────────────────────────────
 
-    console.error(`\n📊 Controllo coverage...`);
+    console.error(`\n📊 Coverage Check...`);
     console.error(`   Statements: ${coverage.stmt} (richiesto: ≥${COVERAGE_THRESHOLD.statements}%)`);
     console.error(`   Branches: ${coverage.branch} (richiesto: ≥${COVERAGE_THRESHOLD.branches}%)`);
 
