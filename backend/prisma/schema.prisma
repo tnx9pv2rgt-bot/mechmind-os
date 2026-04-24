@@ -34,6 +34,7 @@ model Tenant {
   inspections         Inspection[]
   inspectionTemplates InspectionTemplate[]
   aiDecisionOverrideAuditLogs AIDecisionOverrideAuditLog[]
+  aiVoiceInteractionLogs AIVoiceInteractionLog[]
 
   // OBD
   obdDevices  ObdDevice[]
