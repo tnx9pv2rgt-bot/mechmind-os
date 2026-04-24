@@ -9,6 +9,14 @@ import {
 import { SubscriptionService } from '../services/subscription.service';
 import { FeatureAccessService } from '../services/feature-access.service';
 
+jest.mock("stripe", () => {
+  return jest.fn(() => ({
+    webhooks: {
+      constructEvent: jest.fn(),
+    },
+  }));
+});
+
 describe('SubscriptionController', () => {
   let controller: SubscriptionController;
   let subscriptionService: jest.Mocked<SubscriptionService>;
@@ -476,6 +484,15 @@ describe('StripeWebhookController', () => {
     });
 
     it('should throw BadRequestException when constructEvent fails', async () => {
+      const Stripe = require('stripe');
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: {
+          constructEvent: jest.fn().mockImplementation(() => {
+            throw new Error('Invalid signature');
+          }),
+        },
+      }));
+
       configService.get.mockImplementation((key: string) => {
         if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
         if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
@@ -488,4 +505,170 @@ describe('StripeWebhookController', () => {
       );
     });
   });
-});
+
+
+
+
+    it('should handle charge.refunded event', async () => {
+      const Stripe = require('stripe');
+      const mockConstructEvent = jest.fn().mockReturnValue({
+        type: 'charge.refunded',
+        id: 'evt_test',
+        data: { object: { id: 'ch_test', amount: 2000 } },
+      } as any);
+
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: { constructEvent: mockConstructEvent },
+      }));
+
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
+        return undefined;
+      });
+
+      const req = { rawBody: Buffer.from('test') } as never;
+      const result = await controller.handleWebhook(req, 'sig_test');
+
+      expect(result).toEqual({ received: true });
+      expect(mockConstructEvent).toHaveBeenCalled();
+    });
+
+    it('should handle customer.subscription.deleted and cancel subscription', async () => {
+      const Stripe = require('stripe');
+      const mockConstructEvent = jest.fn().mockReturnValue({
+        type: 'customer.subscription.deleted',
+        id: 'evt_test',
+        data: {
+          object: {
+            id: 'sub_test',
+            metadata: { tenantId: 'tenant-123' },
+          },
+        },
+      } as any);
+
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: { constructEvent: mockConstructEvent },
+      }));
+
+      _subscriptionService.cancelSubscription.mockResolvedValue(undefined);
+
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
+        return undefined;
+      });
+
+      const req = { rawBody: Buffer.from('test') } as never;
+      const result = await controller.handleWebhook(req, 'sig_test');
+
+      expect(result).toEqual({ received: true });
+      expect(_subscriptionService.cancelSubscription).toHaveBeenCalledWith('tenant-123', true);
+    });
+
+    it('should handle checkout.session.completed event', async () => {
+      const Stripe = require('stripe');
+      const mockConstructEvent = jest.fn().mockReturnValue({
+        type: 'checkout.session.completed',
+        id: 'evt_test',
+        data: { object: { id: 'cs_test', metadata: { invoiceId: 'inv-123' } } },
+      } as any);
+
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: { constructEvent: mockConstructEvent },
+      }));
+
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
+        return undefined;
+      });
+
+      const req = { rawBody: Buffer.from('test') } as never;
+      const result = await controller.handleWebhook(req, 'sig_test');
+
+      expect(result).toEqual({ received: true });
+    });
+
+    it('should handle charge.dispute.created event', async () => {
+      const Stripe = require('stripe');
+      const mockConstructEvent = jest.fn().mockReturnValue({
+        type: 'charge.dispute.created',
+        id: 'evt_test',
+        data: { object: { id: 'dp_test' } },
+      } as any);
+
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: { constructEvent: mockConstructEvent },
+      }));
+
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
+        return undefined;
+      });
+
+      const req = { rawBody: Buffer.from('test') } as never;
+      const result = await controller.handleWebhook(req, 'sig_test');
+
+      expect(result).toEqual({ received: true });
+    });
+
+    it('should handle unhandled event types gracefully', async () => {
+      const Stripe = require('stripe');
+      const mockConstructEvent = jest.fn().mockReturnValue({
+        type: 'unknown.event',
+        id: 'evt_test',
+        data: { object: {} },
+      } as any);
+
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: { constructEvent: mockConstructEvent },
+      }));
+
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
+        return undefined;
+      });
+
+      const req = { rawBody: Buffer.from('test') } as never;
+      const result = await controller.handleWebhook(req, 'sig_test');
+
+      expect(result).toEqual({ received: true });
+    });
+
+  
+
+    it('should handle error when canceling subscription fails', async () => {
+      const Stripe = require('stripe');
+      const mockConstructEvent = jest.fn().mockReturnValue({
+        type: 'customer.subscription.deleted',
+        id: 'evt_test',
+        data: {
+          object: {
+            id: 'sub_test',
+            metadata: { tenantId: 'tenant-123' },
+          },
+        },
+      } as any);
+
+      (Stripe as jest.Mock).mockImplementation(() => ({
+        webhooks: { constructEvent: mockConstructEvent },
+      }));
+
+      _subscriptionService.cancelSubscription.mockRejectedValue(new Error('Cancel failed'));
+
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_123';
+        return undefined;
+      });
+
+      const req = { rawBody: Buffer.from('test') } as never;
+      const result = await controller.handleWebhook(req, 'sig_test');
+
+      expect(result).toEqual({ received: true });
+      expect(_subscriptionService.cancelSubscription).toHaveBeenCalledWith('tenant-123', true);
+    });
+  });

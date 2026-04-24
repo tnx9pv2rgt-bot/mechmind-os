@@ -55,6 +55,10 @@ interface MockPurchaseOrderItemDelegate {
   update: jest.Mock;
 }
 
+interface MockTenantDelegate {
+  findUnique: jest.Mock;
+}
+
 interface MockPrisma {
   part: MockPartDelegate;
   inventoryItem: MockInventoryItemDelegate;
@@ -62,6 +66,7 @@ interface MockPrisma {
   supplier: MockSupplierDelegate;
   purchaseOrder: MockPurchaseOrderDelegate;
   purchaseOrderItem: MockPurchaseOrderItemDelegate;
+  tenant: MockTenantDelegate;
   $transaction: jest.Mock;
 }
 
@@ -224,6 +229,9 @@ describe('PartsService', () => {
       purchaseOrderItem: {
         findMany: jest.fn(),
         update: jest.fn(),
+      },
+      tenant: {
+        findUnique: jest.fn(),
       },
       $transaction: jest.fn((args: unknown) => {
         if (Array.isArray(args)) {
@@ -1582,6 +1590,269 @@ describe('PartsService', () => {
         where: { id: 'poi-001' },
         data: { receivedQty: { increment: 10 } },
       });
+    });
+  });
+
+
+  // =========================================================================
+  // UPDATE ORDER STATUS
+  // =========================================================================
+
+  describe('updateOrderStatus', () => {
+    function makeMockOrderForUpdate(
+      overrides: Record<string, unknown> = {},
+    ): Record<string, unknown> {
+      return {
+        id: ORDER_ID,
+        tenantId: TENANT_ID,
+        orderNumber: 'PO-2024-0001',
+        status: OrderStatus.DRAFT,
+        supplier: { id: SUPPLIER_ID, name: 'Brembo' },
+        items: [
+          {
+            id: 'poi-001',
+            partId: PART_ID,
+            quantity: 10,
+            part: { id: PART_ID, name: 'Brake Pad Set' },
+          },
+        ],
+        ...overrides,
+      };
+    }
+
+    it('should update order status with valid transition', async () => {
+      prisma.purchaseOrder.findFirst.mockResolvedValue(
+        makeMockOrderForUpdate({ status: OrderStatus.DRAFT }),
+      );
+      prisma.purchaseOrder.update.mockResolvedValue(
+        makeMockOrderForUpdate({ status: OrderStatus.SENT }),
+      );
+
+      const result = await service.updateOrderStatus(
+        TENANT_ID,
+        ORDER_ID,
+        OrderStatus.SENT,
+      );
+
+      expect(prisma.purchaseOrder.findFirst).toHaveBeenCalledWith({
+        where: { id: ORDER_ID, tenantId: TENANT_ID },
+        include: { supplier: true, items: { include: { part: true } } },
+      });
+      expect(prisma.purchaseOrder.update).toHaveBeenCalledWith({
+        where: { id: ORDER_ID },
+        data: { status: OrderStatus.SENT },
+        include: { supplier: true, items: { include: { part: true } } },
+      });
+      expect(result.status).toBe(OrderStatus.SENT);
+    });
+
+    it('should throw NotFoundException if order does not exist', async () => {
+      prisma.purchaseOrder.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.updateOrderStatus(TENANT_ID, ORDER_ID, OrderStatus.SENT),
+      ).rejects.toThrow('Purchase order not found');
+    });
+
+    it('should enforce tenantId in order lookup', async () => {
+      prisma.purchaseOrder.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.updateOrderStatus(TENANT_ID, ORDER_ID, OrderStatus.SENT),
+      ).rejects.toThrow();
+
+      expect(prisma.purchaseOrder.findFirst).toHaveBeenCalledWith({
+        where: { id: ORDER_ID, tenantId: TENANT_ID },
+        include: { supplier: true, items: { include: { part: true } } },
+      });
+    });
+
+    it('should reject invalid status transitions', async () => {
+      prisma.purchaseOrder.findFirst.mockResolvedValue(
+        makeMockOrderForUpdate({ status: OrderStatus.RECEIVED }),
+      );
+
+      await expect(
+        service.updateOrderStatus(TENANT_ID, ORDER_ID, OrderStatus.DRAFT),
+      ).rejects.toThrow();
+    });
+
+    it('should allow SENT -> RECEIVED transition', async () => {
+      prisma.purchaseOrder.findFirst.mockResolvedValue(
+        makeMockOrderForUpdate({ status: OrderStatus.SENT }),
+      );
+      prisma.purchaseOrder.update.mockResolvedValue(
+        makeMockOrderForUpdate({ status: OrderStatus.RECEIVED }),
+      );
+
+      const result = await service.updateOrderStatus(
+        TENANT_ID,
+        ORDER_ID,
+        OrderStatus.RECEIVED,
+      );
+
+      expect(result.status).toBe(OrderStatus.RECEIVED);
+    });
+  });
+
+  // =========================================================================
+  // MATRIX PRICING
+  // =========================================================================
+
+  describe('calculateRetailPrice', () => {
+    it('should return cost price when no matrix is configured', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {},
+      });
+
+      const result = await service.calculateRetailPrice(100, TENANT_ID);
+
+      expect(result).toBe(100);
+    });
+
+    it('should return cost price when matrix has no rules', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: { partMarkupMatrix: { rules: [] } },
+      });
+
+      const result = await service.calculateRetailPrice(100, TENANT_ID);
+
+      expect(result).toBe(100);
+    });
+
+    it('should apply markup when cost is within first rule', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [
+              { maxCostPrice: 100, markupPercent: 20 },
+              { maxCostPrice: 500, markupPercent: 15 },
+            ],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(50, TENANT_ID);
+
+      expect(result).toBe(60);
+    });
+
+    it('should apply markup from second rule when cost exceeds first', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [
+              { maxCostPrice: 100, markupPercent: 20 },
+              { maxCostPrice: 500, markupPercent: 15 },
+            ],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(200, TENANT_ID);
+
+      expect(result).toBe(230);
+    });
+
+    it('should apply last rule when cost exceeds all thresholds', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [
+              { maxCostPrice: 100, markupPercent: 20 },
+              { maxCostPrice: 500, markupPercent: 15 },
+              { maxCostPrice: 1000, markupPercent: 10 },
+            ],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(2000, TENANT_ID);
+
+      expect(result).toBe(2200);
+    });
+
+    it('should handle cost at exact rule boundary', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [
+              { maxCostPrice: 100, markupPercent: 20 },
+              { maxCostPrice: 500, markupPercent: 15 },
+            ],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(100, TENANT_ID);
+
+      expect(result).toBe(120);
+    });
+
+    it('should correctly round to 2 decimal places', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [{ maxCostPrice: 1000, markupPercent: 33 }],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(10.33, TENANT_ID);
+
+      expect(result).toBe(13.74);
+    });
+
+    it('should sort rules by maxCostPrice before applying', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [
+              { maxCostPrice: 1000, markupPercent: 5 },
+              { maxCostPrice: 100, markupPercent: 20 },
+              { maxCostPrice: 500, markupPercent: 15 },
+            ],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(250, TENANT_ID);
+
+      expect(result).toBe(287.5);
+    });
+
+    it('should handle tenant with null settings', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: null,
+      });
+
+      const result = await service.calculateRetailPrice(100, TENANT_ID);
+
+      expect(result).toBe(100);
+    });
+
+    it('should handle cost of zero', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        id: TENANT_ID,
+        settings: {
+          partMarkupMatrix: {
+            rules: [{ maxCostPrice: 100, markupPercent: 20 }],
+          },
+        },
+      });
+
+      const result = await service.calculateRetailPrice(0, TENANT_ID);
+
+      expect(result).toBe(0);
     });
   });
 
