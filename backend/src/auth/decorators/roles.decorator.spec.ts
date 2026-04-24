@@ -30,7 +30,12 @@ describe('Roles Decorators', () => {
       }
 
       const metadata = Reflect.getMetadata(ROLES_KEY, TestController.prototype.testMethod);
-      expect(metadata).toEqual([UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC, UserRole.RECEPTIONIST]);
+      expect(metadata).toEqual([
+        UserRole.ADMIN,
+        UserRole.MANAGER,
+        UserRole.MECHANIC,
+        UserRole.RECEPTIONIST,
+      ]);
     });
 
     it('should allow empty roles array', () => {
@@ -181,7 +186,12 @@ describe('Roles Decorators', () => {
       }
 
       const metadata = Reflect.getMetadata(ROLES_KEY, TestController.prototype.testMethod);
-      expect(metadata).toEqual([UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC, UserRole.RECEPTIONIST]);
+      expect(metadata).toEqual([
+        UserRole.ADMIN,
+        UserRole.MANAGER,
+        UserRole.MECHANIC,
+        UserRole.RECEPTIONIST,
+      ]);
     });
 
     it('should include all four roles', () => {
@@ -256,7 +266,12 @@ describe('Roles Decorators', () => {
       }
 
       const metadata = Reflect.getMetadata(ROLES_KEY, TestController.prototype.testMethod);
-      expect(metadata).toEqual([UserRole.RECEPTIONIST, UserRole.MECHANIC, UserRole.ADMIN, UserRole.MANAGER]);
+      expect(metadata).toEqual([
+        UserRole.RECEPTIONIST,
+        UserRole.MECHANIC,
+        UserRole.ADMIN,
+        UserRole.MANAGER,
+      ]);
     });
   });
 });

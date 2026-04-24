@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { MfaController } from './mfa.controller';
@@ -269,13 +270,11 @@ describe('MfaController', () => {
       mfaService.verifyAndEnable.mockRejectedValue(error);
 
       const dto = { token: 'invalid-token' };
-      await expect(controller.verify('user-123', dto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(controller.verify('user-123', dto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should return success message on valid verification', async () => {
-      mfaService.verifyAndEnable.mockResolvedValue(undefined);
+      mfaService.verifyAndEnable.mockResolvedValue(true);
 
       const dto = { token: '123456' };
       const result = await controller.verify('user-123', dto);
@@ -292,10 +291,8 @@ describe('MfaController', () => {
       const error = new UnauthorizedException('Current password is incorrect');
       mfaService.disable.mockRejectedValue(error);
 
-      const dto = { password: 'wrong-password' };
-      await expect(controller.disable('user-123', dto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      const dto = { token: '123456', password: 'wrong-password' };
+      await expect(controller.disable('user-123', dto)).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -331,7 +328,9 @@ describe('MfaController', () => {
 
       const result = await controller.adminReset('user-123', 'admin-user');
 
-      expect(result).toEqual({ message: 'Two-factor authentication has been reset. User must set up MFA again.' });
+      expect(result).toEqual({
+        message: 'Two-factor authentication has been reset. User must set up MFA again.',
+      });
       expect(mfaService.adminReset).toHaveBeenCalledWith('user-123');
     });
   });

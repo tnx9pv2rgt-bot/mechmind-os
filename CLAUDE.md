@@ -9,6 +9,16 @@
 - Frontend test single: `npx jest --testPathPattern=nome`
 - Docker: `docker compose up -d postgres redis`
 
+## TEST GENERATION WORKFLOW (⚡ CRITICO)
+- **Correggi PRIMA di misurare**: Quando generi test con `/genera-test`, DEVI correggere TypeScript + ESLint PRIMA di coverage
+- **NO errori TS/ESLint nei test**: `tsc --noEmit` e `eslint src --max-warnings 0` DEVONO passare 100%
+- **Non skipparli**: Se vedi errori, risolvili. Non usare `@ts-ignore`, `// @ts-expect-error`, `any` nascosti
+- **Verifica finale obbligatoria**: Prima di dire "done": `npx tsc --noEmit && npx eslint src --max-warnings 0 && npx jest --forceExit`
+- **Dettagli**: `.claude/rules/test-generation.md`
+- **NASA-Level Standards**: `.claude/rules/nasa-level-quality.md` (ciclomatic complexity ≤10, assertions ≥2/func, MC/DC coverage)
+- **Complete Testing Strategy**: `.claude/rules/complete-testing-strategy.md` (V&V suite: unit→integration→E2E→load→security→regression→acceptance)
+- **CI/CD Automation Status**: `.claude/rules/automation-status.md` (45% automated now, 95% target; roadmap for E2E + load + acceptance)
+
 ## REGOLE NON NEGOZIABILI
 - TenantId: OGNI query Prisma DEVE avere `where: { tenantId }`. MAI senza.
 - PII: SOLO via EncryptionService (AES-256-CBC). MAI in chiaro.

@@ -178,4 +178,98 @@ describe('RolesGuard', () => {
       expect(reflector.getAllAndOverride).toHaveBeenCalledWith(ROLES_KEY, expect.any(Array));
     });
   });
+
+  // =========================================================================
+  // Multiple role scenarios
+  // =========================================================================
+  describe('multiple role access', () => {
+    it('should allow access when any of multiple required roles match', () => {
+      reflector.getAllAndOverride.mockReturnValue([
+        UserRole.ADMIN,
+        UserRole.MANAGER,
+        UserRole.MECHANIC,
+      ]);
+
+      const context = createMockContext({ role: UserRole.MECHANIC });
+      const result = guard.canActivate(context);
+
+      expect(result).toBe(true);
+    });
+
+    it('should deny access when none of multiple required roles match', () => {
+      reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN, UserRole.MANAGER]);
+
+      const context = createMockContext({ role: UserRole.RECEPTIONIST });
+
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    });
+
+    it('should check all required roles against user role', () => {
+      reflector.getAllAndOverride.mockReturnValue([
+        UserRole.ADMIN,
+        UserRole.MANAGER,
+        UserRole.MECHANIC,
+        UserRole.RECEPTIONIST,
+      ]);
+
+      const context = createMockContext({ role: UserRole.RECEPTIONIST });
+      const result = guard.canActivate(context);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // Edge cases with multiple roles
+  // =========================================================================
+  describe('edge cases', () => {
+    it('should handle single role in array', () => {
+      reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN]);
+
+      const context = createMockContext({ role: UserRole.ADMIN });
+      const result = guard.canActivate(context);
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle multiple occurrences of same role in required roles', () => {
+      reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN, UserRole.ADMIN]);
+
+      const context = createMockContext({ role: UserRole.ADMIN });
+      const result = guard.canActivate(context);
+
+      expect(result).toBe(true);
+    });
+
+    it('should throw ForbiddenException when user has no matching role', () => {
+      reflector.getAllAndOverride.mockReturnValue([
+        UserRole.ADMIN,
+        UserRole.MANAGER,
+        UserRole.MECHANIC,
+      ]);
+
+      const context = createMockContext({ role: UserRole.RECEPTIONIST });
+
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+      expect(() => guard.canActivate(context)).toThrow(
+        'Access denied. Required roles: ADMIN, MANAGER, MECHANIC',
+      );
+    });
+
+    it('should handle user object with additional properties', () => {
+      reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN]);
+
+      const context = createMockContext({
+        id: 'user-001',
+        email: 'admin@example.com',
+        tenantId: 'tenant-001',
+        role: UserRole.ADMIN,
+        extra: 'ignored',
+      });
+
+      const result = guard.canActivate(context);
+
+      expect(result).toBe(true);
+    });
+  });
 });

@@ -108,9 +108,7 @@ describe('TenantContextMiddleware', () => {
 
     await middleware.use(req, mockRes as unknown as Response, next);
 
-    expect(logger.error).toHaveBeenCalledWith(
-      `Failed to set tenant context: ${errorMessage}`,
-    );
+    expect(logger.error).toHaveBeenCalledWith(`Failed to set tenant context: ${errorMessage}`);
   });
 
   it('should properly log debug message when no tenantId exists', async () => {

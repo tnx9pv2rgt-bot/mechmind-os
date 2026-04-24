@@ -236,8 +236,70 @@ describe('PaymentLinkService', () => {
 
       await service.createPaymentLink(INVOICE_ID, TENANT_ID);
 
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Payment link created')
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Payment link created'));
+    });
+
+    it('should throw BadRequestException if Stripe not configured', async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: EncryptionService, useValue: encryption },
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn().mockImplementation((key: string, defaultVal?: string) => {
+                if (key === 'STRIPE_SECRET_KEY') return null; // No Stripe key
+                if (key === 'FRONTEND_URL') return defaultVal ?? 'https://app.mechmind.io';
+                return defaultVal ?? '';
+              }),
+            },
+          },
+        ],
+      }).compile();
+
+      const stripeDisabledService = module.get<PaymentLinkService>(PaymentLinkService);
+      const invoice = makeMockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      await expect(stripeDisabledService.createPaymentLink(INVOICE_ID, TENANT_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prisma.invoice.update).not.toHaveBeenCalled();
+    });
+
+    it('should handle Stripe session.url being null', async () => {
+      mockCheckoutSessionsCreate.mockResolvedValue({
+        id: MOCK_SESSION_ID,
+        url: null, // Simulate null URL
+      });
+      const invoice = makeMockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+
+      const result = await service.createPaymentLink(INVOICE_ID, TENANT_ID);
+
+      expect(result.url).toBe('');
+      expect(result.linkId).toBe(MOCK_SESSION_ID);
+    });
+
+    it('should handle invoice amount calculation with decimals', async () => {
+      const invoice = makeMockInvoice({ total: new Decimal('99.99') });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+
+      await service.createPaymentLink(INVOICE_ID, TENANT_ID);
+
+      expect(mockCheckoutSessionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [
+            expect.objectContaining({
+              price_data: expect.objectContaining({
+                unit_amount: 9999,
+              }),
+            }),
+          ],
+        }),
       );
     });
   });
@@ -272,6 +334,75 @@ describe('PaymentLinkService', () => {
 
       expect(encryption.decrypt).toHaveBeenCalledWith('enc-Mario');
     });
+
+    it('should throw NotFoundException if invoice not found in sendPaymentSms', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+
+      await expect(service.sendPaymentSms(INVOICE_ID, TENANT_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should log SMS queued message with decrypted name', async () => {
+      const invoice = makeMockInvoice({
+        status: 'SENT',
+        customer: { id: 'customer-001', encryptedFirstName: 'enc-Mario' },
+        paymentLinkUrl: 'https://checkout.stripe.com/pay/test',
+        paymentLinkId: 'cs_test',
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      encryption.decrypt.mockReturnValue('Mario');
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.sendPaymentSms('invoice-001', TENANT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Payment SMS queued'));
+    });
   });
 
+  describe('handlePaymentWebhook additional branches', () => {
+    const STRIPE_EVENT_ID = 'evt_test_abc123';
+
+    it('should log webhook skip for already processed event', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(makeMockInvoice({ status: 'PAID' }));
+      const loggerSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.handlePaymentWebhook(INVOICE_ID, 'cs_test123', STRIPE_EVENT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('already processed'));
+    });
+
+    it('should log webhook skip for invoice not found', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+      prisma.invoice.findUnique.mockResolvedValue(null);
+      const loggerSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.handlePaymentWebhook(INVOICE_ID, 'cs_test123', STRIPE_EVENT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('not found'));
+    });
+
+    it('should log webhook skip for already paid invoice', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+      prisma.invoice.findUnique.mockResolvedValue(makeMockInvoice({ status: 'PAID' }));
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.handlePaymentWebhook(INVOICE_ID, 'cs_test123', STRIPE_EVENT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('already paid'));
+    });
+
+    it('should log successful invoice paid marking via webhook', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+      prisma.invoice.findUnique.mockResolvedValue(
+        makeMockInvoice({ invoiceNumber: 'INV-2026-001' }),
+      );
+      prisma.invoice.update.mockResolvedValue({});
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.handlePaymentWebhook(INVOICE_ID, 'cs_test123', STRIPE_EVENT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('marked PAID'));
+    });
+  });
 });

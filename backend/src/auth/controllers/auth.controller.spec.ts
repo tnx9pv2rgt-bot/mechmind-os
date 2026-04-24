@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
@@ -1534,7 +1535,10 @@ describe('AuthController', () => {
       const sessionService = module.get(SessionService) as any;
       sessionService.revokeSession.mockResolvedValue(undefined);
 
-      const result = await controller.revokeSession(user as never, { sessionId: 'session-123' } as never);
+      const result = await controller.revokeSession(
+        user as never,
+        { sessionId: 'session-123' } as never,
+      );
 
       expect(result).toEqual({ success: true });
       expect(sessionService.revokeSession).toHaveBeenCalledWith('user-001', 'session-123');
@@ -1554,17 +1558,26 @@ describe('AuthController', () => {
       const sessionService = module.get(SessionService) as any;
       sessionService.revokeAllOtherSessions.mockResolvedValue(3);
 
-      const result = await controller.revokeOtherSessions(user as never, { currentSessionId: 'current-session' } as never);
+      const result = await controller.revokeOtherSessions(
+        user as never,
+        { currentSessionId: 'current-session' } as never,
+      );
 
       expect(result).toEqual({ success: true, count: 3 });
-      expect(sessionService.revokeAllOtherSessions).toHaveBeenCalledWith('user-001', 'current-session');
+      expect(sessionService.revokeAllOtherSessions).toHaveBeenCalledWith(
+        'user-001',
+        'current-session',
+      );
     });
 
     it('should handle no other sessions', async () => {
       const sessionService = module.get(SessionService) as any;
       sessionService.revokeAllOtherSessions.mockResolvedValue(0);
 
-      const result = await controller.revokeOtherSessions(user as never, { currentSessionId: 'current-session' } as never);
+      const result = await controller.revokeOtherSessions(
+        user as never,
+        { currentSessionId: 'current-session' } as never,
+      );
 
       expect(result).toEqual({ success: true, count: 0 });
     });
@@ -1679,7 +1692,7 @@ describe('AuthController', () => {
       mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
       authService.generateTokens.mockResolvedValue(mockTokens as never);
 
-      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+      const _result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
 
       expect(loginThrottle.getDelay).toHaveBeenCalled();
     });
@@ -1756,9 +1769,9 @@ describe('AuthController', () => {
       );
 
       const dto = { tempToken: 'invalid-temp', code: '123456' };
-      await expect(controller.verifyTwoFactor(dto as never, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.verifyTwoFactor(dto as never, '127.0.0.1', 'Mozilla/5.0'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when MFA code is invalid', async () => {
@@ -1769,9 +1782,9 @@ describe('AuthController', () => {
       mfaService.verify.mockRejectedValue(new UnauthorizedException('Invalid TOTP code'));
 
       const dto = { tempToken: 'temp-123', code: '000000' };
-      await expect(controller.verifyTwoFactor(dto as never, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.verifyTwoFactor(dto as never, '127.0.0.1', 'Mozilla/5.0'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -1781,7 +1794,242 @@ describe('AuthController', () => {
 
       prismaService.tenant.findFirst.mockResolvedValue(null);
 
-      await expect(controller.createDemoSession({} as never)).rejects.toThrow(NotFoundException);
+      await expect(controller.createDemoSession()).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('Login — Risk Assessment Edge Cases', () => {
+    it('should block login when risk assessment blocks it', async () => {
+      const authService = module.get(AuthService) as any;
+      const riskService = module.get(RiskAssessmentService) as any;
+
+      authService.validateUser.mockResolvedValue({
+        id: 'user-001',
+        email: 'test@example.com',
+        tenantId: 'tenant-001',
+      });
+
+      authService.isAccountLocked.mockResolvedValue({ locked: false });
+
+      riskService.assessLoginRisk.mockResolvedValue({
+        score: 95,
+        level: 'critical',
+        blockLogin: true,
+        requiresMfa: false,
+        signals: [],
+      });
+
+      const dto: any = {
+        email: 'test@example.com',
+        password: 'password123',
+        tenantSlug: 'test-tenant',
+      };
+
+      await expect(controller.login(dto, '192.168.1.1', '')).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('refreshToken — Error Handling', () => {
+    it('should throw UnauthorizedException when refresh fails', async () => {
+      const authService = module.get(AuthService) as any;
+
+      authService.refreshTokens.mockRejectedValue(
+        new UnauthorizedException('Invalid refresh token'),
+      );
+
+      const dto = { refreshToken: 'invalid-token' };
+
+      await expect(controller.refreshToken(dto)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should return new tokens on successful refresh', async () => {
+      const authService = module.get(AuthService) as any;
+
+      authService.refreshTokens.mockResolvedValue(mockTokens);
+
+      const dto = { refreshToken: 'valid-refresh-token' };
+
+      const result = await controller.refreshToken(dto);
+
+      expect(result).toEqual(mockTokens);
+      expect(authService.refreshTokens).toHaveBeenCalledWith('valid-refresh-token');
+    });
+  });
+
+  describe('refreshToken — Error Handling', () => {
+    it('should throw UnauthorizedException when refresh fails', async () => {
+      const authService = module.get(AuthService) as any;
+
+      authService.refreshTokens.mockRejectedValue(
+        new UnauthorizedException('Invalid refresh token'),
+      );
+
+      const dto: any = { refreshToken: 'invalid-token' };
+
+      await expect(controller.refreshToken(dto)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should return new tokens on successful refresh', async () => {
+      const authService = module.get(AuthService) as any;
+
+      authService.refreshTokens.mockResolvedValue(mockTokens);
+
+      const dto: any = { refreshToken: 'valid-refresh-token' };
+
+      const result = await controller.refreshToken(dto);
+
+      expect(result).toEqual(mockTokens);
+      expect(authService.refreshTokens).toHaveBeenCalledWith('valid-refresh-token');
+    });
+  });
+
+  describe('login — Risk Assessment Score Thresholds', () => {
+    it('should require MFA when risk score is 30 (threshold boundary)', async () => {
+      const authService = module.get(AuthService) as any;
+      const riskService = module.get(RiskAssessmentService) as any;
+      const mfaServiceMock = module.get(MfaService) as any;
+      const prismaService = module.get(PrismaService) as any;
+
+      authService.validateUser.mockResolvedValue(mockUser);
+      authService.isAccountLocked.mockResolvedValue({ locked: false });
+      authService.generateTwoFactorTempToken.mockResolvedValue('temp-token');
+
+      riskService.assessLoginRisk.mockResolvedValue({
+        score: 30,
+        level: 'low',
+        blockLogin: false,
+        requiresMfa: true,
+        signals: [],
+      });
+
+      mfaServiceMock.getStatus.mockResolvedValue({
+        enabled: true,
+        backupCodesCount: 10,
+      });
+
+      const loginThrottle = module.get(LoginThrottleService) as any;
+      loginThrottle.getDelay.mockResolvedValue({ delay: 0 });
+
+      prismaService.user.findUnique.mockResolvedValue({
+        smsOtpEnabled: false,
+        recoveryPhoneVerified: false,
+      });
+
+      const dto: any = {
+        email: mockUser.email,
+        password: 'password123',
+        tenantSlug: 'test-tenant',
+      };
+
+      const result = await controller.login(dto, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toHaveProperty('tempToken');
+      expect(result).toHaveProperty('requiresMfa', true);
+    });
+
+    it('should require device approval when risk score is 60 (medium-high boundary)', async () => {
+      const authService = module.get(AuthService) as any;
+      const riskService = module.get(RiskAssessmentService) as any;
+
+      authService.validateUser.mockResolvedValue(mockUser);
+      authService.isAccountLocked.mockResolvedValue({ locked: false });
+
+      riskService.assessLoginRisk.mockResolvedValue({
+        score: 60,
+        level: 'medium',
+        blockLogin: false,
+        requiresMfa: false,
+        requiresDeviceApproval: true,
+        signals: [],
+      });
+
+      const mfaServiceMock = module.get(MfaService) as any;
+      mfaServiceMock.getStatus.mockResolvedValue({
+        enabled: false,
+        backupCodesCount: 0,
+      });
+
+      authService.generateTokens.mockResolvedValue(mockTokens);
+
+      const loginThrottle = module.get(LoginThrottleService) as any;
+      loginThrottle.getDelay.mockResolvedValue({ delay: 0 });
+      loginThrottle.resetOnSuccess.mockResolvedValue(undefined);
+
+      const dto: any = {
+        email: mockUser.email,
+        password: 'password123',
+        tenantSlug: 'test-tenant',
+      };
+
+      const result = await controller.login(dto, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toHaveProperty('accessToken');
+    });
+
+    it('should block login when risk score is 90 (critical boundary)', async () => {
+      const authService = module.get(AuthService) as any;
+      const riskService = module.get(RiskAssessmentService) as any;
+
+      authService.validateUser.mockResolvedValue(mockUser);
+      authService.isAccountLocked.mockResolvedValue({ locked: false });
+
+      riskService.assessLoginRisk.mockResolvedValue({
+        score: 90,
+        level: 'critical',
+        blockLogin: true,
+        requiresMfa: false,
+        signals: [],
+      });
+
+      const loginThrottle = module.get(LoginThrottleService) as any;
+      loginThrottle.getDelay.mockResolvedValue({ delay: 0 });
+
+      const dto: any = {
+        email: mockUser.email,
+        password: 'password123',
+        tenantSlug: 'test-tenant',
+      };
+
+      await expect(controller.login(dto, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should allow login with low risk score (< 20)', async () => {
+      const authService = module.get(AuthService) as any;
+      const riskService = module.get(RiskAssessmentService) as any;
+      const mfaServiceMock = module.get(MfaService) as any;
+
+      authService.validateUser.mockResolvedValue(mockUser);
+      authService.isAccountLocked.mockResolvedValue({ locked: false });
+      authService.generateTokens.mockResolvedValue(mockTokens);
+
+      riskService.assessLoginRisk.mockResolvedValue({
+        score: 10,
+        level: 'low',
+        blockLogin: false,
+        requiresMfa: false,
+        signals: [],
+      });
+
+      mfaServiceMock.getStatus.mockResolvedValue({
+        enabled: false,
+        backupCodesCount: 0,
+      });
+
+      const loginThrottle = module.get(LoginThrottleService) as any;
+      loginThrottle.getDelay.mockResolvedValue({ delay: 0 });
+      loginThrottle.resetOnSuccess.mockResolvedValue(undefined);
+
+      const dto: any = {
+        email: mockUser.email,
+        password: 'password123',
+        tenantSlug: 'test-tenant',
+      };
+
+      const result = await controller.login(dto, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toHaveProperty('accessToken');
     });
   });
 });

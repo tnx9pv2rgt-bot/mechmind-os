@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
+import { Decimal } from '@prisma/client/runtime/library';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
 import { FatturapaService } from './services/fatturapa.service';
@@ -399,10 +401,12 @@ describe('InvoiceController', () => {
     });
   });
 
-
   describe('response wrapping', () => {
     it('should wrap all responses with success flag', async () => {
-      service.findAll.mockResolvedValue({ data: [], meta: { total: 0, page: 1, limit: 20, pages: 0 } });
+      service.findAll.mockResolvedValue({
+        data: [],
+        meta: { total: 0, page: 1, limit: 20, pages: 0 },
+      });
 
       const result = await controller.findAll(TENANT_ID);
 
@@ -412,7 +416,7 @@ describe('InvoiceController', () => {
     });
 
     it('should wrap create response with success', async () => {
-      const invoice = { id: 'inv-1', invoiceNumber: 'INV-0001' };
+      const invoice = { id: 'inv-1', invoiceNumber: 'INV-0001' } as any;
       service.create.mockResolvedValue(invoice);
 
       const result = await controller.create(TENANT_ID, {
@@ -424,7 +428,7 @@ describe('InvoiceController', () => {
     });
 
     it('should wrap getStats response', async () => {
-      const stats = { totalRevenue: 1000, invoiceCount: 5 };
+      const stats = { byStatus: {}, monthlyRevenue: { total: new Decimal(1000), count: 5 } } as any;
       service.getStats.mockResolvedValue(stats);
 
       const result = await controller.getStats(TENANT_ID);
@@ -446,6 +450,247 @@ describe('InvoiceController', () => {
         'Content-Disposition': expect.stringContaining('attachment'),
       });
       expect(res.send).toHaveBeenCalledWith('col1,col2\nval1,val2');
+    });
+  });
+
+  describe('Filtering combinations', () => {
+    it('should support status filter alone', async () => {
+      service.findAll.mockResolvedValue({
+        data: [{ ...mockInvoice, status: 'SENT' }],
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      });
+
+      await controller.findAll(TENANT_ID, 'SENT');
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ status: 'SENT' }),
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should support customerId filter alone', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      });
+
+      await controller.findAll(TENANT_ID, undefined, 'cust-001');
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ customerId: 'cust-001' }),
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should support date range filter', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      });
+
+      await controller.findAll(TENANT_ID, undefined, undefined, '2026-03-01', '2026-03-31');
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ dateFrom: '2026-03-01', dateTo: '2026-03-31' }),
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should support pagination with page parameter', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 50, page: 2, limit: 20, pages: 3 },
+      });
+
+      await controller.findAll(TENANT_ID, undefined, undefined, undefined, undefined, '2');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.any(Object), 2, undefined);
+    });
+
+    it('should support pagination with limit parameter', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 50, page: 1, limit: 50, pages: 1 },
+      });
+
+      await controller.findAll(
+        TENANT_ID,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        '50',
+      );
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.any(Object), undefined, 50);
+    });
+
+    it('should handle string page/limit conversion to integers', async () => {
+      service.findAll.mockResolvedValue({
+        data: [],
+        meta: { total: 0, page: 3, limit: 10, pages: 0 },
+      });
+
+      await controller.findAll(TENANT_ID, undefined, undefined, undefined, undefined, '3', '10');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.any(Object), 3, 10);
+    });
+  });
+
+  describe('Error propagation', () => {
+    it('should not catch service errors in findAll', async () => {
+      const error = new Error('Database error');
+      service.findAll.mockRejectedValue(error);
+
+      await expect(controller.findAll(TENANT_ID)).rejects.toThrow('Database error');
+    });
+
+    it('should not catch service errors in create', async () => {
+      const error = new Error('Validation error');
+      service.create.mockRejectedValue(error);
+
+      await expect(
+        controller.create(TENANT_ID, { customerId: 'cust-1', items: [] }),
+      ).rejects.toThrow('Validation error');
+    });
+
+    it('should not catch service errors in exportCsv', async () => {
+      const error = new Error('CSV generation failed');
+      service.exportCsv.mockRejectedValue(error);
+      const res = { set: jest.fn(), send: jest.fn() };
+
+      await expect(
+        controller.exportCsv(TENANT_ID, '2026-01-01', '2026-12-31', res as any),
+      ).rejects.toThrow('CSV generation failed');
+    });
+  });
+
+  describe('Pagination edge cases', () => {
+    it('should handle page=0 by passing 0 to service', async () => {
+      service.findAll.mockResolvedValue({
+        data: [],
+        meta: { total: 0, page: 0, limit: 20, pages: 0 },
+      });
+
+      await controller.findAll(TENANT_ID, undefined, undefined, undefined, undefined, '0');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.any(Object), 0, undefined);
+    });
+
+    it('should handle limit=1', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 100, page: 1, limit: 1, pages: 100 },
+      });
+
+      await controller.findAll(
+        TENANT_ID,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        '1',
+      );
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.any(Object), undefined, 1);
+    });
+  });
+
+  describe('CSV export edge cases', () => {
+    it('should handle empty CSV response', async () => {
+      service.exportCsv.mockResolvedValue('');
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.exportCsv(TENANT_ID, '2026-01-01', '2026-12-31', res);
+
+      expect(res.send).toHaveBeenCalledWith('');
+    });
+
+    it('should set UTF-8 encoding for CSV', async () => {
+      service.exportCsv.mockResolvedValue('header1,header2');
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.exportCsv(TENANT_ID, '2026-01-01', '2026-12-31', res);
+
+      expect(res.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'Content-Type': expect.stringContaining('utf-8'),
+        }),
+      );
+    });
+
+    it('should include attachment filename in Content-Disposition', async () => {
+      service.exportCsv.mockResolvedValue('data');
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.exportCsv(TENANT_ID, '2026-01-01', '2026-12-31', res);
+
+      expect(res.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'Content-Disposition': expect.stringContaining('fatture'),
+        }),
+      );
+    });
+  });
+
+  describe('Suite 2: Response Wrapping (3 new tests)', () => {
+    it('should wrap remove response with success message', async () => {
+      service.remove.mockResolvedValue(undefined);
+
+      const result = await controller.remove(TENANT_ID, 'inv-001');
+
+      expect(result).toEqual({
+        success: true,
+        message: 'Invoice deleted successfully',
+      });
+      expect(result).not.toHaveProperty('data');
+    });
+
+    it('should wrap refund response with creditNoteId when full refund', async () => {
+      const refundResult = {
+        refundedAmount: 183,
+        creditNoteId: 'credit-note-001',
+      };
+      service.refundInvoice.mockResolvedValue(refundResult as never);
+
+      const result = await controller.refundInvoice(TENANT_ID, 'inv-001');
+
+      expect(result).toEqual({ success: true, data: refundResult });
+      expect(result.data).toHaveProperty('creditNoteId');
+    });
+
+    it('should wrap PDF response with correct headers', async () => {
+      const buffer = Buffer.from('<html>test</html>');
+      pdfService.generateInvoicePdf.mockResolvedValue(buffer);
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.generatePdf('inv-001', TENANT_ID, res);
+
+      expect(res.set).toHaveBeenCalledWith({
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': expect.stringContaining('fattura-inv-001.html'),
+      });
+      expect(res.send).toHaveBeenCalledWith(buffer);
     });
   });
 });

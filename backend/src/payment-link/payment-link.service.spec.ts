@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -266,9 +267,9 @@ describe('PaymentLinkService', () => {
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       // Mock Stripe to throw a rate limit error
-      jest.spyOn(svcWithStripe['stripe'].checkout.sessions, 'create').mockRejectedValue(
-        new Error('Rate limit exceeded'),
-      );
+      jest
+        .spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create')
+        .mockRejectedValue(new Error('Rate limit exceeded'));
 
       await expect(
         svcWithStripe.createStripeCheckoutSession(TENANT_ID, 'inv-uuid-001'),
@@ -291,11 +292,11 @@ describe('PaymentLinkService', () => {
       }).compile();
 
       const svcWithStripe = module.get(PaymentLinkService);
-      const invoice = mockInvoice({ total: 150.50 });
+      const invoice = mockInvoice({ total: 150.5 });
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       const createSessionSpy = jest
-        .spyOn(svcWithStripe['stripe'].checkout.sessions, 'create')
+        .spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create')
         .mockResolvedValue({
           id: 'cs_test_123',
           url: 'https://checkout.stripe.com/pay/test',
@@ -336,7 +337,7 @@ describe('PaymentLinkService', () => {
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       const createSessionSpy = jest
-        .spyOn(svcWithStripe['stripe'].checkout.sessions, 'create')
+        .spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create')
         .mockResolvedValue({
           id: 'cs_test_123',
           url: 'https://checkout.stripe.com/pay/test',
@@ -359,7 +360,11 @@ describe('PaymentLinkService', () => {
   describe('[TIER_1] handlePaymentCompleted - State Machine & Idempotency', () => {
     it('should prevent double-payment race conditions with idempotent updates', async () => {
       const invoiceSent = mockInvoice({ paymentLinkId: 'cs_test_123', status: 'SENT' });
-      const invoicePaid = mockInvoice({ paymentLinkId: 'cs_test_123', status: 'PAID', paidAt: new Date() });
+      const invoicePaid = mockInvoice({
+        paymentLinkId: 'cs_test_123',
+        status: 'PAID',
+        paidAt: new Date(),
+      });
 
       // First webhook call - invoice is SENT
       prisma.invoice.findFirst.mockResolvedValue(invoiceSent);
@@ -411,7 +416,7 @@ describe('PaymentLinkService', () => {
   // ─── TIER_1 SECURITY: Tenant Isolation ───
   describe('[TIER_1] Tenant Isolation - No Cross-Tenant Access', () => {
     it('should NOT create payment link for invoice from different tenant', async () => {
-      const otherTenantInvoice = mockInvoice({ tenantId: 'other-tenant-uuid' });
+      const _otherTenantInvoice = mockInvoice({ tenantId: 'other-tenant-uuid' });
       prisma.invoice.findFirst.mockResolvedValue(null); // Simulating WHERE clause with different tenant
 
       await expect(
@@ -426,12 +431,12 @@ describe('PaymentLinkService', () => {
     });
 
     it('should NOT expose payment status for cross-tenant request', async () => {
-      const invoice = mockInvoice({ tenantId: TENANT_ID });
+      const _invoice = mockInvoice({ tenantId: TENANT_ID });
       prisma.invoice.findFirst.mockResolvedValue(null); // Different tenant filter
 
-      await expect(
-        service.getPaymentStatus('attacker-tenant', 'inv-uuid-001'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getPaymentStatus('attacker-tenant', 'inv-uuid-001')).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(prisma.invoice.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -490,19 +495,17 @@ describe('PaymentLinkService', () => {
       const invoice = mockInvoice();
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
-      jest
-        .spyOn(svcWithStripe['stripe'].checkout.sessions, 'create')
-        .mockResolvedValue({
-          id: 'cs_test_123',
-          url: 'https://checkout.stripe.com/pay/test',
-        } as any);
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_123',
+        url: 'https://checkout.stripe.com/pay/test',
+      } as any);
 
       const logSpy = jest.spyOn(svcWithStripe['logger'], 'log');
 
       await svcWithStripe.createStripeCheckoutSession(TENANT_ID, 'inv-uuid-001');
 
       // Verify no sensitive Stripe API data in logs
-      logSpy.mock.calls.forEach((call) => {
+      logSpy.mock.calls.forEach(call => {
         expect(JSON.stringify(call)).not.toContain('card_');
         expect(JSON.stringify(call)).not.toContain('pm_');
       });
@@ -553,7 +556,7 @@ describe('PaymentLinkService', () => {
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       const createSessionSpy = jest
-        .spyOn(svcWithStripe['stripe'].checkout.sessions, 'create')
+        .spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create')
         .mockResolvedValue({
           id: 'cs_test_123',
           url: 'https://checkout.stripe.com/pay/test',
@@ -610,12 +613,10 @@ describe('PaymentLinkService', () => {
       const invoice = mockInvoice();
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
-      jest
-        .spyOn(svcWithStripe['stripe'].checkout.sessions, 'create')
-        .mockResolvedValue({
-          id: 'cs_test_123',
-          url: 'https://checkout.stripe.com/pay/test',
-        } as any);
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_123',
+        url: 'https://checkout.stripe.com/pay/test',
+      } as any);
 
       prisma.invoice.update.mockResolvedValue({
         ...invoice,
@@ -648,12 +649,10 @@ describe('PaymentLinkService', () => {
       const invoice = mockInvoice();
       prisma.invoice.findFirst.mockResolvedValue(invoice);
 
-      jest
-        .spyOn(svcWithStripe['stripe'].checkout.sessions, 'create')
-        .mockResolvedValue({
-          id: 'cs_test_123',
-          url: 'https://checkout.stripe.com/pay/test',
-        } as any);
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_123',
+        url: 'https://checkout.stripe.com/pay/test',
+      } as any);
 
       prisma.invoice.update.mockResolvedValue({
         ...invoice,
@@ -665,6 +664,43 @@ describe('PaymentLinkService', () => {
 
       expect(result.channel).toBe('EMAIL');
       expect(result.sent).toBe(true);
+    });
+  });
+
+  describe('Suite 5: Validation & State Management (3 new tests)', () => {
+    it('should throw BadRequestException when invoice status is DRAFT', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice({ status: 'DRAFT' }));
+
+      await expect(service.createPaymentLink(TENANT_ID, 'inv-uuid-001', 'SMS')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw NotFoundException with correct message when invoice missing', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+
+      await expect(service.createPaymentLink(TENANT_ID, 'missing-id', 'SMS')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.invoice.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'missing-id', tenantId: TENANT_ID },
+        }),
+      );
+    });
+
+    it('should return payment status for unpaid OVERDUE invoice', async () => {
+      const overdueInvoice = mockInvoice({
+        status: 'OVERDUE',
+        paymentLinkUrl: 'https://checkout.stripe.com/test',
+        dueDate: new Date('2026-03-01'),
+      });
+      prisma.invoice.findFirst.mockResolvedValue(overdueInvoice);
+
+      const result = await service.getPaymentStatus(TENANT_ID, 'inv-uuid-001');
+
+      expect(result.status).toBe('OVERDUE');
+      expect(result.paymentLinkUrl).toBe('https://checkout.stripe.com/test');
     });
   });
 });

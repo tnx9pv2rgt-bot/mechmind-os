@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtStrategy, AuthenticatedUser } from './jwt.strategy';
 import { AuthService, JwtPayload } from '../services/auth.service';

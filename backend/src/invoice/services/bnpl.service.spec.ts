@@ -163,9 +163,7 @@ describe('BnplService', () => {
         where: { id: invoice.id },
         data: expect.objectContaining({ bnplStatus: 'DECLINED' }),
       });
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('DECLINED')
-      );
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('DECLINED'));
     });
 
     it('should log BNPL order creation', async () => {
@@ -176,9 +174,7 @@ describe('BnplService', () => {
 
       await service.createBnplOrder(INVOICE_ID, TENANT_ID);
 
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('BNPL order created')
-      );
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('BNPL order created'));
     });
 
     it('should warn when BNPL webhook receives unknown order', async () => {
@@ -187,9 +183,7 @@ describe('BnplService', () => {
 
       await service.handleBnplWebhook('unknown-order', 'APPROVED');
 
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('not found')
-      );
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('not found'));
     });
 
     it('should set bnplProvider to scalapay', async () => {
@@ -207,6 +201,78 @@ describe('BnplService', () => {
         }),
       });
     });
+
+    it('should handle DECLINED transition with logging', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(
+        makeMockInvoice({ bnplOrderId: 'bnpl_test', status: 'SENT' }),
+      );
+      prisma.invoice.update.mockResolvedValue({});
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.handleBnplWebhook('bnpl_test', 'DECLINED');
+
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('DECLINED'));
+    });
   });
 
+  describe('Idempotency and duplicate handling', () => {
+    it('should handle duplicate BNPL order creation calls', async () => {
+      const invoice = makeMockInvoice({ status: 'SENT', bnplOrderId: null });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+
+      const result1 = await service.createBnplOrder(INVOICE_ID, TENANT_ID);
+      const result2 = await service.createBnplOrder(INVOICE_ID, TENANT_ID);
+
+      expect(result1.orderId).toBeDefined();
+      expect(result2.orderId).toBeDefined();
+      expect(prisma.invoice.update).toHaveBeenCalledTimes(2);
+    });
+
+    it('should process APPROVED webhook after PENDING', async () => {
+      const invoice = makeMockInvoice({
+        bnplOrderId: 'bnpl_test',
+        status: 'SENT',
+        bnplStatus: 'PENDING',
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue({
+        ...invoice,
+        status: 'PAID',
+        bnplStatus: 'APPROVED',
+      });
+
+      await service.handleBnplWebhook('bnpl_test', 'APPROVED');
+
+      expect(prisma.invoice.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'PAID',
+            bnplStatus: 'APPROVED',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('Error scenarios', () => {
+    it('should not create BNPL order if invoice is CANCELLED', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(makeMockInvoice({ status: 'CANCELLED' }));
+
+      await expect(service.createBnplOrder(INVOICE_ID, TENANT_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prisma.invoice.update).not.toHaveBeenCalled();
+    });
+
+    it('should log warning for invoice not found in webhook', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+      const loggerSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.handleBnplWebhook('nonexistent', 'APPROVED');
+
+      expect(loggerSpy).toHaveBeenCalled();
+      expect(prisma.invoice.update).not.toHaveBeenCalled();
+    });
+  });
 });

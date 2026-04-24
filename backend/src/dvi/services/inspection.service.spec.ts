@@ -2335,7 +2335,11 @@ describe('InspectionService', () => {
       const result = await service.sendToCustomer(TENANT_ID, INSPECTION_ID, 'SMS');
 
       // Assert
-      expect(publicTokenService.revokeTokensForEntity).toHaveBeenCalledWith(TENANT_ID, 'Inspection', INSPECTION_ID);
+      expect(publicTokenService.revokeTokensForEntity).toHaveBeenCalledWith(
+        TENANT_ID,
+        'Inspection',
+        INSPECTION_ID,
+      );
       expect(publicTokenService.generateToken).toHaveBeenCalledWith(
         TENANT_ID,
         'DVI_REPORT',
@@ -2345,11 +2349,14 @@ describe('InspectionService', () => {
         { channel: 'SMS' },
       );
       expect(result.reportUrl).toContain('public-token-123');
-      expect(eventEmitter.emit).toHaveBeenCalledWith('inspection.sentToCustomer', expect.objectContaining({
-        inspectionId: INSPECTION_ID,
-        tenantId: TENANT_ID,
-        channel: 'SMS',
-      }));
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'inspection.sentToCustomer',
+        expect.objectContaining({
+          inspectionId: INSPECTION_ID,
+          tenantId: TENANT_ID,
+          channel: 'SMS',
+        }),
+      );
     });
 
     it('should support EMAIL channel', async () => {
@@ -2588,9 +2595,9 @@ describe('InspectionService', () => {
       (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
 
       // Act & Assert
-      await expect(service.approveRepairsViaToken('token', ['finding-invalid'], [])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.approveRepairsViaToken('token', ['finding-invalid'], []),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when inspection not found', async () => {
@@ -2600,7 +2607,9 @@ describe('InspectionService', () => {
       (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.approveRepairsViaToken('token', [], [])).rejects.toThrow(NotFoundException);
+      await expect(service.approveRepairsViaToken('token', [], [])).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should emit inspection.repairsApproved event', async () => {
@@ -2657,7 +2666,12 @@ describe('InspectionService', () => {
       (prisma.estimate.create as jest.Mock).mockResolvedValue(mockEstimate);
 
       // Act
-      const result = (await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, [FINDING_ID], MECHANIC_ID)) as typeof mockEstimate;
+      const result = (await service.createEstimateFromFindings(
+        TENANT_ID,
+        INSPECTION_ID,
+        [FINDING_ID],
+        MECHANIC_ID,
+      )) as typeof mockEstimate;
 
       // Assert
       expect(prisma.estimate.create).toHaveBeenCalledWith(
@@ -2855,7 +2869,12 @@ describe('InspectionService', () => {
 
       // Act & Assert
       await expect(
-        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID)
+        service.update(
+          TENANT_ID,
+          INSPECTION_ID,
+          { status: InspectionStatus.IN_PROGRESS },
+          MECHANIC_ID,
+        ),
       ).rejects.toThrow('Invalid inspection status transition');
     });
 
@@ -2870,7 +2889,12 @@ describe('InspectionService', () => {
 
       // Act & Assert
       await expect(
-        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID)
+        service.update(
+          TENANT_ID,
+          INSPECTION_ID,
+          { status: InspectionStatus.IN_PROGRESS },
+          MECHANIC_ID,
+        ),
       ).rejects.toThrow('Invalid inspection status transition');
     });
 
@@ -2885,7 +2909,12 @@ describe('InspectionService', () => {
 
       // Act & Assert
       await expect(
-        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.DECLINED }, MECHANIC_ID)
+        service.update(
+          TENANT_ID,
+          INSPECTION_ID,
+          { status: InspectionStatus.DECLINED },
+          MECHANIC_ID,
+        ),
       ).rejects.toThrow('Invalid inspection status transition');
     });
 
@@ -2905,7 +2934,12 @@ describe('InspectionService', () => {
       (prisma.inspection.update as jest.Mock).mockResolvedValue(updated);
 
       // Act
-      const result = await service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.APPROVED }, MECHANIC_ID);
+      const result = await service.update(
+        TENANT_ID,
+        INSPECTION_ID,
+        { status: InspectionStatus.APPROVED },
+        MECHANIC_ID,
+      );
 
       // Assert
       expect(result).toBeDefined();
@@ -2915,7 +2949,7 @@ describe('InspectionService', () => {
           data: expect.objectContaining({
             status: InspectionStatus.APPROVED,
           }),
-        })
+        }),
       );
     });
 
@@ -2935,7 +2969,12 @@ describe('InspectionService', () => {
       (prisma.inspection.update as jest.Mock).mockResolvedValue(updated);
 
       // Act
-      const result = await service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.PENDING_REVIEW }, MECHANIC_ID);
+      const result = await service.update(
+        TENANT_ID,
+        INSPECTION_ID,
+        { status: InspectionStatus.PENDING_REVIEW },
+        MECHANIC_ID,
+      );
 
       // Assert
       expect(result).toBeDefined();
@@ -2945,7 +2984,7 @@ describe('InspectionService', () => {
           data: expect.objectContaining({
             status: InspectionStatus.PENDING_REVIEW,
           }),
-        })
+        }),
       );
     });
 
@@ -2960,7 +2999,12 @@ describe('InspectionService', () => {
 
       // Act & Assert
       await expect(
-        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID)
+        service.update(
+          TENANT_ID,
+          INSPECTION_ID,
+          { status: InspectionStatus.IN_PROGRESS },
+          MECHANIC_ID,
+        ),
       ).rejects.toThrow();
     });
 
@@ -2980,14 +3024,19 @@ describe('InspectionService', () => {
       (prisma.inspection.update as jest.Mock).mockResolvedValue(updated);
 
       // Act
-      const result = await service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID);
+      const result = await service.update(
+        TENANT_ID,
+        INSPECTION_ID,
+        { status: InspectionStatus.IN_PROGRESS },
+        MECHANIC_ID,
+      );
 
       // Assert
       expect(result).toBeDefined();
       expect(prisma.inspection.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: INSPECTION_ID, tenantId: TENANT_ID },
-        })
+        }),
       );
     });
   });

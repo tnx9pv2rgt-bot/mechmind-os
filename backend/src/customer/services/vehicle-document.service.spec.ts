@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { VehicleDocumentService, VehicleDocType } from './vehicle-document.service';
@@ -51,11 +52,14 @@ describe('VehicleDocumentService', () => {
     filename: 'libretto.pdf',
     path: '/tmp/libretto.pdf',
     buffer: Buffer.from('test pdf content'),
+    stream: {} as any,
   };
 
   beforeEach(async () => {
     s3 = {
-      uploadBuffer: jest.fn().mockResolvedValue({ Key: 'vehicles/vehicle-001/documents/abc123.pdf' }),
+      uploadBuffer: jest
+        .fn()
+        .mockResolvedValue({ Key: 'vehicles/vehicle-001/documents/abc123.pdf' }),
       getSignedUrlForKey: jest.fn().mockResolvedValue('https://s3.example.com/signed-url'),
       delete: jest.fn().mockResolvedValue(undefined),
     };
@@ -170,7 +174,14 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicleDocument as Record<string, jest.Mock>).create.mockResolvedValueOnce(bolloDoc);
 
       // Act
-      const result = await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, pngFile, 'BOLLO', 'Bollo auto');
+      const result = await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        pngFile,
+        'BOLLO',
+        'Bollo auto',
+      );
 
       // Assert
       expect(s3.uploadBuffer).toHaveBeenCalledWith(
@@ -187,10 +198,19 @@ describe('VehicleDocumentService', () => {
       const webpFile = { ...mockFile, mimetype: 'image/webp', originalname: 'revisione.webp' };
       const revisioneDoc = { ...mockDocument, docType: 'REVISIONE' as VehicleDocType };
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
-      (prisma.vehicleDocument as Record<string, jest.Mock>).create.mockResolvedValueOnce(revisioneDoc);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).create.mockResolvedValueOnce(
+        revisioneDoc,
+      );
 
       // Act
-      const result = await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, webpFile, 'REVISIONE', 'Certificato revisione');
+      const result = await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        webpFile,
+        'REVISIONE',
+        'Certificato revisione',
+      );
 
       // Assert
       expect(s3.uploadBuffer).toHaveBeenCalledWith(
@@ -234,9 +254,9 @@ describe('VehicleDocumentService', () => {
       const docFile = { ...mockFile, mimetype: 'application/msword' };
 
       // Act & Assert
-      await expect(service.upload(TENANT_ID, VEHICLE_ID, USER_ID, docFile, 'LIBRETTO', 'Documento')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.upload(TENANT_ID, VEHICLE_ID, USER_ID, docFile, 'LIBRETTO', 'Documento'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException for Excel file', async () => {
@@ -247,9 +267,9 @@ describe('VehicleDocumentService', () => {
       };
 
       // Act & Assert
-      await expect(service.upload(TENANT_ID, VEHICLE_ID, USER_ID, xlsFile, 'LIBRETTO', 'Documento')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.upload(TENANT_ID, VEHICLE_ID, USER_ID, xlsFile, 'LIBRETTO', 'Documento'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when file exceeds 10MB', async () => {
@@ -278,7 +298,14 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
 
       // Act & Assert
-      const result = await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, maxFile, 'LIBRETTO', 'Documento massimo');
+      const result = await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        maxFile,
+        'LIBRETTO',
+        'Documento massimo',
+      );
 
       // Assert
       expect(result).toBeDefined();
@@ -291,13 +318,20 @@ describe('VehicleDocumentService', () => {
 
       // Act & Assert
       await expect(
-        service.upload(TENANT_ID, 'non-existent-vehicle', USER_ID, mockFile, 'LIBRETTO', 'Documento'),
+        service.upload(
+          TENANT_ID,
+          'non-existent-vehicle',
+          USER_ID,
+          mockFile,
+          'LIBRETTO',
+          'Documento',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should verify vehicle belongs to tenant before upload', async () => {
       // Arrange
-      const wrongTenantVehicle = { ...mockVehicle, tenantId: 'tenant-999' };
+      const _wrongTenantVehicle = { ...mockVehicle, tenantId: 'tenant-999' };
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
@@ -316,7 +350,14 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
 
       // Act
-      await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, mockFile, 'LIBRETTO', '  Nome con spazi  ');
+      await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        mockFile,
+        'LIBRETTO',
+        '  Nome con spazi  ',
+      );
 
       // Assert
       expect((prisma.vehicleDocument as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
@@ -331,7 +372,15 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
 
       // Act
-      await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, mockFile, 'LIBRETTO', 'Documento', undefined);
+      await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        mockFile,
+        'LIBRETTO',
+        'Documento',
+        undefined,
+      );
 
       // Assert
       expect((prisma.vehicleDocument as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
@@ -347,7 +396,15 @@ describe('VehicleDocumentService', () => {
       const expiryStr = '2025-12-31';
 
       // Act
-      await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, mockFile, 'LIBRETTO', 'Documento', expiryStr);
+      await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        mockFile,
+        'LIBRETTO',
+        'Documento',
+        expiryStr,
+      );
 
       // Assert
       expect((prisma.vehicleDocument as Record<string, jest.Mock>).create).toHaveBeenCalledWith({
@@ -448,7 +505,10 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
       const oldDoc = { ...mockDocument, id: 'doc-old', createdAt: new Date('2024-01-01') };
       const newDoc = { ...mockDocument, id: 'doc-new', createdAt: new Date('2024-06-15') };
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findMany.mockResolvedValueOnce([newDoc, oldDoc]);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findMany.mockResolvedValueOnce([
+        newDoc,
+        oldDoc,
+      ]);
 
       // Act
       const result = await service.list(TENANT_ID, VEHICLE_ID);
@@ -485,7 +545,9 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
-      await expect(service.list(TENANT_ID, 'non-existent-vehicle')).rejects.toThrow(NotFoundException);
+      await expect(service.list(TENANT_ID, 'non-existent-vehicle')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should filter by tenantId to prevent cross-tenant data access', async () => {
@@ -523,7 +585,9 @@ describe('VehicleDocumentService', () => {
     it('should return signed download URL for document', async () => {
       // Arrange
       const signedUrl = 'https://s3.amazonaws.com/bucket/key?signed=true&expires=3600';
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockDocument);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
       (s3.getSignedUrlForKey as jest.Mock).mockResolvedValueOnce(signedUrl);
 
       // Act
@@ -543,9 +607,9 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
-      await expect(service.getDownloadUrl(TENANT_ID, VEHICLE_ID, 'non-existent-doc')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getDownloadUrl(TENANT_ID, VEHICLE_ID, 'non-existent-doc'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should verify document belongs to vehicle and tenant', async () => {
@@ -553,7 +617,9 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
-      await expect(service.getDownloadUrl(TENANT_ID, VEHICLE_ID, DOCUMENT_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.getDownloadUrl(TENANT_ID, VEHICLE_ID, DOCUMENT_ID)).rejects.toThrow(
+        NotFoundException,
+      );
 
       // Assert: query includes all three filters
       expect((prisma.vehicleDocument as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
@@ -563,7 +629,9 @@ describe('VehicleDocumentService', () => {
 
     it('should request signed URL with 1-hour expiry', async () => {
       // Arrange
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockDocument);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
 
       // Act
       await service.getDownloadUrl(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
@@ -574,7 +642,7 @@ describe('VehicleDocumentService', () => {
 
     it('should prevent cross-tenant document access', async () => {
       // Arrange
-      const wrongTenantDoc = { ...mockDocument, tenantId: 'tenant-999' };
+      const _wrongTenantDoc = { ...mockDocument, tenantId: 'tenant-999' };
       (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
@@ -590,7 +658,9 @@ describe('VehicleDocumentService', () => {
       // Arrange
       const customS3Key = 'vehicles/vehicle-999/documents/custom-key.pdf';
       const docWithCustomKey = { ...mockDocument, s3Key: customS3Key };
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(docWithCustomKey);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        docWithCustomKey,
+      );
 
       // Act
       await service.getDownloadUrl(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
@@ -606,7 +676,9 @@ describe('VehicleDocumentService', () => {
   describe('remove', () => {
     it('should delete document and remove from S3', async () => {
       // Arrange
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockDocument);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
 
       // Act
       await service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
@@ -628,7 +700,9 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
-      await expect(service.remove(TENANT_ID, VEHICLE_ID, 'non-existent-doc')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(TENANT_ID, VEHICLE_ID, 'non-existent-doc')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should verify document belongs to vehicle and tenant before deletion', async () => {
@@ -636,7 +710,9 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
 
       // Act & Assert
-      await expect(service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID)).rejects.toThrow(
+        NotFoundException,
+      );
 
       // Assert: query includes all three filters
       expect((prisma.vehicleDocument as Record<string, jest.Mock>).findFirst).toHaveBeenCalledWith({
@@ -648,7 +724,9 @@ describe('VehicleDocumentService', () => {
       // Arrange
       const customS3Key = 'vehicles/vehicle-001/documents/abc123xyz.pdf';
       const docWithKey = { ...mockDocument, s3Key: customS3Key };
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(docWithKey);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        docWithKey,
+      );
 
       // Act
       await service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
@@ -659,7 +737,9 @@ describe('VehicleDocumentService', () => {
 
     it('should delete from database after S3 deletion', async () => {
       // Arrange
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockDocument);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
 
       // Act
       await service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
@@ -670,7 +750,8 @@ describe('VehicleDocumentService', () => {
 
       // Verify order: S3 delete called before DB delete
       const s3CallOrder = (s3.delete as jest.Mock).mock.invocationCallOrder[0];
-      const dbCallOrder = (prisma.vehicleDocument as Record<string, jest.Mock>).delete.mock.invocationCallOrder[0];
+      const dbCallOrder = (prisma.vehicleDocument as Record<string, jest.Mock>).delete.mock
+        .invocationCallOrder[0];
       expect(s3CallOrder).toBeLessThan(dbCallOrder);
     });
 
@@ -689,7 +770,9 @@ describe('VehicleDocumentService', () => {
 
     it('should delete by document ID only from database', async () => {
       // Arrange
-      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockDocument);
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
 
       // Act
       await service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
@@ -722,7 +805,13 @@ describe('VehicleDocumentService', () => {
 
       // Assert
       expect(result).toHaveLength(5);
-      expect(result.map((d) => d.docType)).toEqual(['LIBRETTO', 'ASSICURAZIONE', 'REVISIONE', 'BOLLO', 'ALTRO']);
+      expect(result.map(d => d.docType)).toEqual([
+        'LIBRETTO',
+        'ASSICURAZIONE',
+        'REVISIONE',
+        'BOLLO',
+        'ALTRO',
+      ]);
     });
 
     it('should handle concurrent uploads to same vehicle', async () => {
@@ -777,7 +866,15 @@ describe('VehicleDocumentService', () => {
       (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
 
       // Act
-      await service.upload(TENANT_ID, VEHICLE_ID, USER_ID, mockFile, 'LIBRETTO', 'Doc', '2025-12-31T23:59:59Z');
+      await service.upload(
+        TENANT_ID,
+        VEHICLE_ID,
+        USER_ID,
+        mockFile,
+        'LIBRETTO',
+        'Doc',
+        '2025-12-31T23:59:59Z',
+      );
 
       // Assert
       expect((prisma.vehicleDocument as Record<string, jest.Mock>).create).toHaveBeenCalledWith({

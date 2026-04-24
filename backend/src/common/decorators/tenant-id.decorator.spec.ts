@@ -1,5 +1,5 @@
-import { TenantId } from './tenant-id.decorator';
-import { ExecutionContext, createParamDecorator } from '@nestjs/common';
+import { TenantId as _TenantId } from './tenant-id.decorator';
+import { ExecutionContext, createParamDecorator as _createParamDecorator } from '@nestjs/common';
 
 describe('TenantId Decorator', () => {
   // Test the factory function directly by recreating the pattern

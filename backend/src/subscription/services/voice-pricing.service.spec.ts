@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/services/prisma.service';
 import {
   VOICE_PROVIDER_COSTS,
   VOICE_PRICING_STRATEGY,
+  QUARTERLY_REVIEW,
 } from '../config/voice-provider-costs.config';
 import { VOICE_ADDON, updateVoiceAddonPricing } from '../config/pricing.config';
 
@@ -222,7 +223,6 @@ describe('VoicePricingService', () => {
 
     it('should apply pricing when autoApply is true and price change required', async () => {
       // Import per modificare il config
-      const { QUARTERLY_REVIEW } = require('../config/voice-provider-costs.config');
       const originalAutoApply = QUARTERLY_REVIEW.autoApply;
 
       // Imposta prezzi molto alti per forzare price change
@@ -263,7 +263,6 @@ describe('VoicePricingService', () => {
 
     it('should log customer notification when result.notifyCustomers is true', async () => {
       // Imposta prezzi alti per forzare price change
-      const { QUARTERLY_REVIEW } = require('../config/voice-provider-costs.config');
       const originalAutoApply = QUARTERLY_REVIEW.autoApply;
 
       VOICE_PROVIDER_COSTS[0].costPerMinuteUsd = 1.0;
@@ -287,7 +286,6 @@ describe('VoicePricingService', () => {
   describe('quarterly review edge cases', () => {
     it('should return manual approval message when autoApply is false and price change required', async () => {
       // Imposta prezzi alti
-      const { QUARTERLY_REVIEW } = require('../config/voice-provider-costs.config');
 
       VOICE_PROVIDER_COSTS[0].costPerMinuteUsd = 1.0;
       VOICE_PROVIDER_COSTS[0].lastUpdated = new Date().toISOString().split('T')[0];

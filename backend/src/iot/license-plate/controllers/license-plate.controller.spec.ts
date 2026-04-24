@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { LicensePlateController } from './license-plate.controller';
 import { LicensePlateService } from '../services/license-plate.service';
