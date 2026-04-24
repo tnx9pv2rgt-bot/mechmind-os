@@ -266,6 +266,7 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 16:47 | backend | voice | **MODULE SUMMARY** | **100% / 84.84%** | ✅ **COMPLETATO** (89 test, Vapi integration, transcription, call routing) |
 | 2026-04-24 19:30 | backend | dvi | ai-decision-override.service | **17 test, EU AI Act** | ✅ COMPLETATO (Human override audit logging, GDPR Art.22 compliance) |
 | 2026-04-24 19:30 | backend | voice | ai-voice-transparency.service | **38 test, EU AI Act** | ✅ COMPLETATO (AI disclosure, escalation tracking, GDPR Art.22 audit trails) |
+| 2026-04-24 19:45 | backend | middleware | security-headers.spec.ts | **53 test, OWASP A02** | ✅ COMPLETATO (CSP, HSTS, CORS, headers validation, full OWASP checklist) |
 | 2026-04-24 16:50 | backend | rentri | rentri.service | **95.53% / 86.36%** | ✅ COMPLETATO (TIER_3) |
 | 2026-04-24 16:50 | backend | rentri | **MODULE SUMMARY** | **95.53% / 86.36%** | ✅ **COMPLETATO** (74 test, registration tracking, compliance) |
 | 2026-04-24 16:55 | backend | analytics | analytics.service | 181 test | ⏳ Coverage pending |
