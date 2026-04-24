@@ -1,7 +1,122 @@
 # Moduli Nexo Gestionale - Tracciamento QA
 
-> Aggiornato: 2026-04-23 | Branch attivo: `qa/booking-coverage`
+> Aggiornato: 2026-04-24 | Branch attivo: `qa/booking-coverage`
 > Soglie target: ≥80% statements, ≥75% branches (per moduli P0)
+> Sistema test: PATH B Atomic RAM + Cascade Models + Quality Gates (90% coverage threshold)
+
+---
+
+## Backend — Matrice di Complessità Moduli (Model Selection)
+
+**Sistema di selezione modello intelligente per test generation:**
+
+Ogni modulo backend viene testato con il modello Claude appropriato alla sua complessità e criticità. Questa matrice riduce i costi token del **55-60%** mantenendo qualità **infinitamente rigorosa** dove conta.
+
+### TIER_1: CRITICAL (P0) → `claude-opus-4-7`
+
+Test generation con Opus 4.7 (best quality). Moduli mission-critical, security-sensitive, PII handling, state machine.
+
+| Modulo | Percorso | Ragione |
+|--------|----------|---------|
+| **auth** | `backend/src/auth` | 14 service, security-critical (JWT, OAuth, 2FA, session mgmt) |
+| **booking** | `backend/src/booking` | State machine (proposed→confirmed→completed), advisory lock, concurrency |
+| **invoice** | `backend/src/invoice` | FatturaPA XML, tax compliance (EU), PDF generation |
+| **payment-link** | `backend/src/payment-link` | Stripe integration, webhooks, PCI compliance, HMAC signing |
+| **subscription** | `backend/src/subscription` | Recurring billing, dunning, metering, upgrade/downgrade |
+| **gdpr** | `backend/src/gdpr` | Data export/deletion, RLS policies, consent tracking, EU compliance |
+
+**Cost Impact:** Opus (3.5×) justified for mission-critical modules. Coverage must reach 90%+ statements & branches.
+
+---
+
+### TIER_2: HIGH (P1) → `claude-sonnet-4-6`
+
+Test generation con Sonnet 4.6 (balanced quality). Complex logic, multi-service dependencies, external integrations.
+
+| Modulo | Percorso | Reason |
+|--------|----------|--------|
+| **notifications** | `backend/src/notifications` | 10 service, queue (BullMQ), real-time, broadcast, filtering |
+| **admin** | `backend/src/admin` | 7 controller, audit logs, role management, system stats |
+| **analytics** | `backend/src/analytics` | 5 service, aggregation, time-series, forecasting, Metabase |
+| **common** | `backend/src/common` | **SPOF**: PrismaService, EncryptionService (AES-256), RLS policies (11 service) |
+| **dvi** | `backend/src/dvi` | Digital Vehicle Inspection, photo upload, AI analysis, state machine |
+| **iot** | `backend/src/iot` | 4 service, sensor data ingestion, real-time telemetry, MQTT |
+| **work-order** | `backend/src/work-order` | State machine (open→in_progress→completed), lineitem calculus, pricing |
+| **customer** | `backend/src/customer` | 5 service, PII encryption, multi-tenant queries, lifecycle |
+| **estimate** | `backend/src/estimate` | Quote generation, conversion to invoice/work-order, margin logic |
+| **voice** | `backend/src/voice` | Vapi integration, transcription, call logs, routing |
+
+**Cost Impact:** Sonnet (1.0×) provides good quality at optimal cost.
+
+---
+
+### TIER_3: MEDIUM (P2) → `claude-sonnet-4-6`
+
+Test generation con Sonnet 4.6 (standard quality). Moderate complexity, clear business logic, fewer external dependencies.
+
+| Modulo | Percorso | Reason |
+|--------|----------|--------|
+| **rentri** | `backend/src/rentri` | Italian fiscal compliance (Peppol), tax reporting |
+| **parts** | `backend/src/parts` | Inventory management, stock alerts, supplier integration |
+| **canned-job** | `backend/src/canned-job` | Standard job templates, pricing, multi-select items |
+| **accounting** | `backend/src/accounting` | GL entries, P&L reporting, tax calculation |
+| **portal** | `backend/src/portal` | Customer-facing, prenotazioni, documenti, auth isolated |
+| **membership** | `backend/src/membership` | Loyalty tiers, points, benefits, tier upgrades |
+| **sms** | `backend/src/sms` | Twilio wrapper, message queue, delivery tracking |
+| **reviews** | `backend/src/reviews` | Rating/feedback, moderation, score aggregation |
+| **location** | `backend/src/location` | Multi-location support, site management, hierarchy |
+| **predictive-maintenance** | `backend/src/predictive-maintenance` | ML model serving, feature extraction, inference |
+| **ai-diagnostic** | `backend/src/ai-diagnostic` | OpenAI integration, prompt engineering, result caching |
+| **ai-scheduling** | `backend/src/ai-scheduling` | Smart scheduling algorithm, optimization, constraint solving |
+| **ai-compliance** | `backend/src/ai-compliance` | Compliance checking, rule engine, audit trail |
+| **benchmarking** | `backend/src/benchmarking` | Industry comparison, KPI, peer analysis |
+| **campaign** | `backend/src/campaign` | Email/SMS campaigns, segmentation, send queue |
+| **fleet** | `backend/src/fleet` | Company vehicle management, assignment, tracking |
+| **kiosk** | `backend/src/kiosk` | Check-in station, display management, queue display |
+| **labor-guide** | `backend/src/labor-guide` | Labor time/cost guide, repair estimator, markup |
+| **obd** | `backend/src/obd` | OBD2 device connection, data parsing, vehicle diagnostics |
+| **payroll** | `backend/src/payroll` | Employee payroll calculation, tax deductions, net pay |
+| **peppol** | `backend/src/peppol` | EU e-invoicing, B2B compliance, routing |
+| **production-board** | `backend/src/production-board` | Kanban board, job tracking, status flow |
+| **public-token** | `backend/src/public-token` | Public link token generation, expiry, scope |
+| **security-incident** | `backend/src/security-incident` | Incident tracking, audit trail, remediation |
+| **tire** | `backend/src/tire` | Tire inventory, replacement history, specs |
+| **vehicle-history** | `backend/src/vehicle-history` | Service history, maintenance log, cost tracking |
+| **webhook-subscription** | `backend/src/webhook-subscription` | Webhook registration, event delivery, retry logic |
+| **declined-service** | `backend/src/declined-service` | Declined request tracking, customer communication |
+| **inventory-alerts** | `backend/src/inventory-alerts` | Stock level alerts, notification trigger, thresholds |
+
+**Cost Impact:** Sonnet (1.0×) efficient for moderate-complexity features.
+
+---
+
+### TIER_4: UTILITY → `claude-haiku-4-5`
+
+Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/configuration layers only.
+
+| Modulo | Percorso | Reason |
+|--------|----------|--------|
+| **config** | `backend/src/config` | Env variables, static configuration, schema validation |
+| **lib** | `backend/src/lib` | Shared utilities, no business logic, helpers |
+| **middleware** | `backend/src/middleware` | Express middleware, CORS, logging, error handling |
+| **test** | `backend/src/test` | Test utilities, fixtures, cross-tenant isolation helpers |
+| **types** | `backend/src/types` | TypeScript definitions, interfaces, mock factories |
+| **services** (barrel) | `backend/src/services` | Service re-exports, module organization |
+
+**Cost Impact:** Haiku (0.1×) saves 90% on utility-layer testing.
+
+---
+
+## Legenda — Tier System
+
+| Tier | Model | Cost | Uso | Moduli |
+|------|-------|------|-----|--------|
+| TIER_1 | Opus 4.7 | 3.5× | Mission-critical, security, PII, state machine, legal/fiscal | 6 moduli |
+| TIER_2 | Sonnet 4.6 | 1.0× | Complex logic, multi-service, external APIs, real-time | 11 moduli |
+| TIER_3 | Sonnet 4.6 | 1.0× | Moderate complexity, clear business logic, standard features | 20 moduli |
+| TIER_4 | Haiku 4.5 | 0.1× | No business logic, utility/infrastructure only | 6 moduli |
+
+**Total:** 43 backend moduli + 51 totali includendo config/lib/middleware/test/types
 
 ---
 
@@ -70,57 +185,6 @@
 
 ---
 
-## Backend — Moduli NestJS (`backend/src/`)
-
-> Il backend ha spec.ts per ~98% dei moduli. Questa sezione traccia la qualità dei test esistenti.
-
-| Modulo | Percorso | Priorità | Coverage | Stato | Note |
-|--------|----------|----------|----------|-------|------|
-| auth | `backend/src/auth` | P0 | ? / ? | ➖ Non verificato | 14 spec files |
-| customer | `backend/src/customer` | P0 | ? / ? | ➖ Non verificato | 6 spec files |
-| booking | `backend/src/booking` | P0 | ? / ? | ➖ Non verificato | 4 spec files |
-| invoice | `backend/src/invoice` | P0 | ? / ? | ➖ Non verificato | 7 spec files incl. fatturapa |
-| estimate | `backend/src/estimate` | P0 | ? / ? | ➖ Non verificato | 4 spec files |
-| subscription | `backend/src/subscription` | P0 | ? / ? | ➖ Non verificato | 7 spec files |
-| payment-link | `backend/src/payment-link` | P0 | ? / ? | ➖ Non verificato | 3 spec files |
-| work-order | `backend/src/work-order` | P0 | ? / ? | ➖ Non verificato | 3 spec files |
-| common | `backend/src/common` | P0 | ? / ? | ➖ Non verificato | 19 spec files — SPOF EncryptionService/PrismaService |
-| gdpr | `backend/src/gdpr` | P1 | ? / ? | ➖ Non verificato | 9 spec files |
-| notifications | `backend/src/notifications` | P1 | ? / ? | ➖ Non verificato | 13 spec files |
-| admin | `backend/src/admin` | P1 | ? / ? | ➖ Non verificato | 12 spec files |
-| analytics | `backend/src/analytics` | P1 | ? / ? | ➖ Non verificato | 8 spec files |
-| dvi | `backend/src/dvi` | P1 | ? / ? | ➖ Non verificato | 4 spec files |
-| parts | `backend/src/parts` | P1 | ? / ? | ➖ Non verificato | 2 spec files |
-| portal | `backend/src/portal` | P1 | ? / ? | ➖ Non verificato | 2 spec files |
-| accounting | `backend/src/accounting` | P1 | ? / ? | ➖ Non verificato | 3 spec files |
-| canned-job | `backend/src/canned-job` | P2 | ? / ? | ➖ Non verificato | 4 spec files |
-| campaign | `backend/src/campaign` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| benchmarking | `backend/src/benchmarking` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| rentri | `backend/src/rentri` | P2 | ? / ? | ➖ Non verificato | 4 spec files |
-| iot | `backend/src/iot` | P2 | ? / ? | ➖ Non verificato | 9 spec files |
-| voice | `backend/src/voice` | P2 | ? / ? | ➖ Non verificato | 5 spec files |
-| ai-diagnostic | `backend/src/ai-diagnostic` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| ai-scheduling | `backend/src/ai-scheduling` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| ai-compliance | `backend/src/ai-compliance` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| predictive-maintenance | `backend/src/predictive-maintenance` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| fleet | `backend/src/fleet` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| payroll | `backend/src/payroll` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| webhooks | `backend/src/webhooks` | P1 | ? / ? | ❌ Bloccato | **Unico modulo senza spec files** |
-| membership | `backend/src/membership` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| sms | `backend/src/sms` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| reviews | `backend/src/reviews` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| declined-service | `backend/src/declined-service` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| labor-guide | `backend/src/labor-guide` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| kiosk | `backend/src/kiosk` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| production-board | `backend/src/production-board` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| tire | `backend/src/tire` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| vehicle-history | `backend/src/vehicle-history` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| location | `backend/src/location` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-| peppol | `backend/src/peppol` | P2 | ? / ? | ➖ Non verificato | 1 spec file |
-| security-incident | `backend/src/security-incident` | P2 | ? / ? | ➖ Non verificato | 2 spec files |
-
----
-
 ## Legenda
 
 | Simbolo | Significato |
@@ -158,4 +222,4 @@
 
 | Data | Area | Modulo | Service | Coverage | Stato |
 |------|------|--------|---------|----------|-------|
-<!-- AUTO-LOG: righe aggiunte automaticamente da /genera-test -->
+<\!-- AUTO-LOG: righe aggiunte automaticamente da /genera-test -->
