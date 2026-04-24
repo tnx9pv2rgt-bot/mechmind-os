@@ -1,13 +1,7 @@
-import { TenantId as _TenantId } from './tenant-id.decorator';
-import { ExecutionContext, createParamDecorator as _createParamDecorator } from '@nestjs/common';
+import { TenantId } from './tenant-id.decorator';
+import { ExecutionContext } from '@nestjs/common';
 
 describe('TenantId Decorator', () => {
-  // Test the factory function directly by recreating the pattern
-  const testTenantIdFactory = (data: unknown, ctx: ExecutionContext): string => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.tenantId || request.user?.tenantId;
-  };
-
   describe('happy path', () => {
     it('should extract tenantId from request.tenantId', () => {
       const mockContext = {
@@ -19,7 +13,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBe('tenant-123');
     });
 
@@ -35,7 +29,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBe('user-tenant-456');
     });
 
@@ -51,7 +45,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBe('request-tenant');
     });
   });
@@ -67,7 +61,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBeUndefined();
     });
 
@@ -81,7 +75,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBeUndefined();
     });
 
@@ -96,7 +90,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBe(uuid);
     });
 
@@ -110,7 +104,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBe('12345');
     });
   });
@@ -124,7 +118,7 @@ describe('TenantId Decorator', () => {
       } as ExecutionContext;
 
       expect(() => {
-        testTenantIdFactory(undefined, mockContext);
+        TenantId(undefined, mockContext);
       }).not.toThrow();
     });
 
@@ -137,7 +131,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory(undefined, mockContext);
+      const result = TenantId(undefined, mockContext);
       expect(result).toBeUndefined();
     });
   });
@@ -153,7 +147,7 @@ describe('TenantId Decorator', () => {
         }),
       } as ExecutionContext;
 
-      const result = testTenantIdFactory('ignored-data', mockContext);
+      const result = TenantId('ignored-data', mockContext);
       expect(result).toBe('test-tenant');
     });
   });

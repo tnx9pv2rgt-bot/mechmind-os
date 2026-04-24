@@ -1331,9 +1331,8 @@ describe('BookingService', () => {
         ],
       }).compile();
 
-      const serviceWithErrorEncryption = moduleWithErrorEncryption.get<BookingService>(
-        BookingService,
-      );
+      const serviceWithErrorEncryption =
+        moduleWithErrorEncryption.get<BookingService>(BookingService);
 
       const mockBookingWithEncrypted = {
         id: 'booking-001',

@@ -1593,7 +1593,6 @@ describe('PartsService', () => {
     });
   });
 
-
   // =========================================================================
   // UPDATE ORDER STATUS
   // =========================================================================
@@ -1628,11 +1627,7 @@ describe('PartsService', () => {
         makeMockOrderForUpdate({ status: OrderStatus.SENT }),
       );
 
-      const result = await service.updateOrderStatus(
-        TENANT_ID,
-        ORDER_ID,
-        OrderStatus.SENT,
-      );
+      const result = await service.updateOrderStatus(TENANT_ID, ORDER_ID, OrderStatus.SENT);
 
       expect(prisma.purchaseOrder.findFirst).toHaveBeenCalledWith({
         where: { id: ORDER_ID, tenantId: TENANT_ID },
@@ -1685,11 +1680,7 @@ describe('PartsService', () => {
         makeMockOrderForUpdate({ status: OrderStatus.RECEIVED }),
       );
 
-      const result = await service.updateOrderStatus(
-        TENANT_ID,
-        ORDER_ID,
-        OrderStatus.RECEIVED,
-      );
+      const result = await service.updateOrderStatus(TENANT_ID, ORDER_ID, OrderStatus.RECEIVED);
 
       expect(result.status).toBe(OrderStatus.RECEIVED);
     });

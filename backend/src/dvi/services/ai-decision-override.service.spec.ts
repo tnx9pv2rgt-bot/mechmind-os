@@ -81,9 +81,7 @@ describe('AIDecisionOverrideService', () => {
         confidence: 80,
       };
 
-      await expect(service.reviewDVIAssessment('', dto)).rejects.toThrow(
-        'tenantId is required',
-      );
+      await expect(service.reviewDVIAssessment('', dto)).rejects.toThrow('tenantId is required');
     });
 
     it('should reject invalid confidence value (negative)', async () => {
@@ -147,8 +145,7 @@ describe('AIDecisionOverrideService', () => {
 
       await service.reviewDVIAssessment(TENANT_ID, dto);
 
-      const callArgs = (prisma.aIDecisionOverrideAuditLog.create as jest.Mock)
-        .mock.calls[0][0];
+      const callArgs = (prisma.aIDecisionOverrideAuditLog.create as jest.Mock).mock.calls[0][0];
       expect(callArgs.data.tenantId).toBe(TENANT_ID);
     });
 
@@ -171,9 +168,7 @@ describe('AIDecisionOverrideService', () => {
         updatedAt: new Date(),
       };
 
-      (prisma.aIDecisionOverrideAuditLog.create as jest.Mock).mockResolvedValue(
-        mockLog,
-      );
+      (prisma.aIDecisionOverrideAuditLog.create as jest.Mock).mockResolvedValue(mockLog);
 
       await service.reviewDVIAssessment(TENANT_ID, dto);
 
@@ -193,8 +188,7 @@ describe('AIDecisionOverrideService', () => {
 
       await service.reviewDVIAssessment(TENANT_ID, dto);
 
-      const callArgs = (prisma.aIDecisionOverrideAuditLog.create as jest.Mock)
-        .mock.calls[0][0];
+      const callArgs = (prisma.aIDecisionOverrideAuditLog.create as jest.Mock).mock.calls[0][0];
       expect(callArgs.data.notes).toBeNull();
     });
   });
@@ -224,9 +218,7 @@ describe('AIDecisionOverrideService', () => {
         },
       ];
 
-      (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock).mockResolvedValue(
-        mockHistory,
-      );
+      (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock).mockResolvedValue(mockHistory);
 
       const result = await service.getAssessmentOverrideHistory(TENANT_ID, ASSESSMENT_ID);
 
@@ -252,8 +244,7 @@ describe('AIDecisionOverrideService', () => {
 
       await service.getAssessmentOverrideHistory(TENANT_ID, ASSESSMENT_ID);
 
-      const callArgs = (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock)
-        .mock.calls[0][0];
+      const callArgs = (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock).mock.calls[0][0];
       expect(callArgs.where.tenantId).toBe(TENANT_ID);
       expect(callArgs.where.assessmentId).toBe(ASSESSMENT_ID);
     });
@@ -300,24 +291,16 @@ describe('AIDecisionOverrideService', () => {
         },
       ];
 
-      (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock).mockResolvedValue(
-        mockHistory,
-      );
+      (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock).mockResolvedValue(mockHistory);
 
       const result = await service.getAssessmentOverrideHistory(TENANT_ID, ASSESSMENT_ID);
 
-      expect(result[0].createdAt.getTime()).toBeGreaterThan(
-        result[1].createdAt.getTime(),
-      );
-      expect(result[1].createdAt.getTime()).toBeGreaterThan(
-        result[2].createdAt.getTime(),
-      );
+      expect(result[0].createdAt.getTime()).toBeGreaterThan(result[1].createdAt.getTime());
+      expect(result[1].createdAt.getTime()).toBeGreaterThan(result[2].createdAt.getTime());
     });
 
     it('should reject invalid tenantId', async () => {
-      await expect(
-        service.getAssessmentOverrideHistory('', ASSESSMENT_ID),
-      ).rejects.toThrow();
+      await expect(service.getAssessmentOverrideHistory('', ASSESSMENT_ID)).rejects.toThrow();
     });
 
     it('should select only necessary fields (data minimization)', async () => {
@@ -325,8 +308,7 @@ describe('AIDecisionOverrideService', () => {
 
       await service.getAssessmentOverrideHistory(TENANT_ID, ASSESSMENT_ID);
 
-      const callArgs = (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock)
-        .mock.calls[0][0];
+      const callArgs = (prisma.aIDecisionOverrideAuditLog.findMany as jest.Mock).mock.calls[0][0];
       const selectedFields = Object.keys(callArgs.select);
 
       expect(selectedFields).toContain('id');

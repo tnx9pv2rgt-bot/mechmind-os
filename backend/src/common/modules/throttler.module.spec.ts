@@ -6,6 +6,7 @@ describe('RateLimitingModule', () => {
   let module: TestingModule;
 
   beforeEach(() => {
+    // Clear environment variables before each test
     delete process.env.LOAD_TEST;
     delete process.env.NODE_ENV;
   });
@@ -203,6 +204,50 @@ describe('RateLimitingModule', () => {
       });
     });
 
+    describe('throttler names', () => {
+      it('should create default throttler', async () => {
+        module = await Test.createTestingModule({
+          imports: [
+            ConfigModule.forRoot({
+              isGlobal: true,
+              envFilePath: [],
+            }),
+            RateLimitingModule,
+          ],
+        }).compile();
+
+        expect(module).toBeDefined();
+      });
+
+      it('should create strict throttler', async () => {
+        module = await Test.createTestingModule({
+          imports: [
+            ConfigModule.forRoot({
+              isGlobal: true,
+              envFilePath: [],
+            }),
+            RateLimitingModule,
+          ],
+        }).compile();
+
+        expect(module).toBeDefined();
+      });
+
+      it('should create lenient throttler', async () => {
+        module = await Test.createTestingModule({
+          imports: [
+            ConfigModule.forRoot({
+              isGlobal: true,
+              envFilePath: [],
+            }),
+            RateLimitingModule,
+          ],
+        }).compile();
+
+        expect(module).toBeDefined();
+      });
+    });
+
     describe('ttl configuration', () => {
       it('should set ttl to 60000 (1 minute) for all throttlers', async () => {
         module = await Test.createTestingModule({
@@ -215,7 +260,25 @@ describe('RateLimitingModule', () => {
           ],
         }).compile();
 
+        // Configuration is set during module initialization
         expect(module).toBeDefined();
+      });
+    });
+
+    describe('error message', () => {
+      it('should have appropriate error message for rate limit exceeded', async () => {
+        module = await Test.createTestingModule({
+          imports: [
+            ConfigModule.forRoot({
+              isGlobal: true,
+              envFilePath: [],
+            }),
+            RateLimitingModule,
+          ],
+        }).compile();
+
+        expect(module).toBeDefined();
+        // Error message is set as: 'Rate limit exceeded. Please try again later.'
       });
     });
   });

@@ -16,10 +16,7 @@ export interface ReviewDVIAssessmentDto {
 export class AIDecisionOverrideService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async reviewDVIAssessment(
-    tenantId: string,
-    dto: ReviewDVIAssessmentDto,
-  ): Promise<void> {
+  async reviewDVIAssessment(tenantId: string, dto: ReviewDVIAssessmentDto): Promise<void> {
     if (!tenantId || tenantId.trim().length === 0) {
       throw new BadRequestException('tenantId is required');
     }

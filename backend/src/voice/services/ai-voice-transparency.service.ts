@@ -81,9 +81,7 @@ export class AIVoiceTransparencyService {
 
   async logVoiceDecision(decision: AIVoiceDecision): Promise<void> {
     if (!decision.callId || !decision.tenantId) {
-      throw new BadRequestException(
-        'callId and tenantId are required in decision object',
-      );
+      throw new BadRequestException('callId and tenantId are required in decision object');
     }
 
     this.logger.debug(
@@ -134,7 +132,8 @@ export class AIVoiceTransparencyService {
 
       return {
         escalationInitiated: true,
-        message: 'Your request to speak with a human has been logged. An agent will be with you shortly.',
+        message:
+          'Your request to speak with a human has been logged. An agent will be with you shortly.',
       };
     } catch (error) {
       this.logger.error(
@@ -161,15 +160,14 @@ export class AIVoiceTransparencyService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return logs.map((log) => ({
+    return logs.map(log => ({
       callId: log.callId,
       tenantId: log.tenantId,
       decisionType: log.decisionType,
       confidence: log.confidence || undefined,
       humanOverride: log.humanOverride,
       escalationReason: log.escalationReason || undefined,
-      transcriptMarkers:
-        (log.transcriptMarkers as unknown as TranscriptMarker[]) || undefined,
+      transcriptMarkers: (log.transcriptMarkers as unknown as TranscriptMarker[]) || undefined,
       createdAt: log.createdAt,
     }));
   }
@@ -205,15 +203,14 @@ export class AIVoiceTransparencyService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return logs.map((log) => ({
+    return logs.map(log => ({
       callId: log.callId,
       tenantId: log.tenantId,
       decisionType: log.decisionType,
       confidence: log.confidence || undefined,
       humanOverride: log.humanOverride,
       escalationReason: log.escalationReason || undefined,
-      transcriptMarkers:
-        (log.transcriptMarkers as unknown as TranscriptMarker[]) || undefined,
+      transcriptMarkers: (log.transcriptMarkers as unknown as TranscriptMarker[]) || undefined,
       createdAt: log.createdAt,
     }));
   }
@@ -269,7 +266,7 @@ export class AIVoiceTransparencyService {
       }),
     ]);
 
-    const totalCalls = new Set(total.map((log) => log.callId)).size;
+    const totalCalls = new Set(total.map(log => log.callId)).size;
     const optOutRate = totalCalls > 0 ? escalations / totalCalls : 0;
 
     return {

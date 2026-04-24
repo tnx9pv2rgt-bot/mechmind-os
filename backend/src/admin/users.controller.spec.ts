@@ -84,6 +84,117 @@ describe('UsersController', () => {
         }),
       );
     });
+
+    // ========================================================================
+    // ENHANCED TESTS FOR BRANCH COVERAGE — RBAC AUDIT TRAIL
+    // ========================================================================
+
+    it('should enforce tenant isolation in findAll', async () => {
+      const otherTenantReq = {
+        user: { userId: 'user-2', tenantId: 'tenant-2', email: 'other@test.com', role: 'ADMIN' },
+      };
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      await controller.findAll(otherTenantReq);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: 'tenant-2', deletedAt: null },
+        }),
+      );
+    });
+
+    it('should exclude soft-deleted users', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      await controller.findAll(mockReq);
+
+      const where = prisma.user.findMany.mock.calls[0][0].where;
+      expect(where.deletedAt).toBe(null);
+    });
+
+    it('should handle multiple valid roles', async () => {
+      const validRoles = ['ADMIN', 'MANAGER', 'MECHANIC', 'RECEPTIONIST', 'VIEWER'];
+
+      for (const role of validRoles) {
+        prisma.user.findMany.mockClear();
+        prisma.user.count.mockClear();
+        prisma.user.findMany.mockResolvedValue([]);
+        prisma.user.count.mockResolvedValue(0);
+
+        await controller.findAll(mockReq, role);
+
+        expect(prisma.user.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ role }),
+          }),
+        );
+      }
+    });
+
+    it('should handle pagination with default values', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      await controller.findAll(mockReq, undefined, '2', '20');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 20,
+          skip: 20,
+        }),
+      );
+    });
+
+    it('should clamp limit to max 100', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      await controller.findAll(mockReq, undefined, '1', '500');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 100,
+        }),
+      );
+    });
+
+    it('should handle page 0 as page 1', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      await controller.findAll(mockReq, undefined, '0', '25');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+        }),
+      );
+    });
+
+    it('should return success=true', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      const result = await controller.findAll(mockReq);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should order by createdAt descending', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
+
+      await controller.findAll(mockReq);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -105,6 +216,54 @@ describe('UsersController', () => {
       prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(controller.findOne(mockReq, 'nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    // ========================================================================
+    // ENHANCED TESTS FOR BRANCH COVERAGE — RBAC AUDIT TRAIL (findOne)
+    // ========================================================================
+
+    it('should enforce tenant isolation in findOne', async () => {
+      const otherTenantReq = {
+        user: { userId: 'user-2', tenantId: 'tenant-2', email: 'other@test.com', role: 'ADMIN' },
+      };
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(controller.findOne(otherTenantReq, 'u1')).rejects.toThrow(NotFoundException);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'u1', tenantId: 'tenant-2', deletedAt: null },
+        }),
+      );
+    });
+
+    it('should exclude soft-deleted users in findOne', async () => {
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(controller.findOne(mockReq, 'u1')).rejects.toThrow(NotFoundException);
+
+      const where = prisma.user.findFirst.mock.calls[0][0].where;
+      expect(where.deletedAt).toBe(null);
+    });
+
+    it('should select all relevant user fields', async () => {
+      const user = { id: 'u1', email: 'a@b.com', name: 'Test' };
+      prisma.user.findFirst.mockResolvedValue(user);
+
+      await controller.findOne(mockReq, 'u1');
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            isActive: true,
+            lastLoginAt: true,
+          }),
+        }),
+      );
     });
   });
 
@@ -151,6 +310,72 @@ describe('UsersController', () => {
         controller.update(mockReq, 'u1', { role: 'INVALID' as UserRole }),
       ).rejects.toThrow(BadRequestException);
     });
+
+    // ========================================================================
+    // ENHANCED TESTS FOR BRANCH COVERAGE — RBAC AUDIT TRAIL (update)
+    // ========================================================================
+
+    it('should enforce tenant isolation in update', async () => {
+      const otherTenantReq = {
+        user: { userId: 'user-2', tenantId: 'tenant-2', email: 'other@test.com', role: 'ADMIN' },
+      };
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(controller.update(otherTenantReq, 'u1', { name: 'Hacker' })).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'u1', tenantId: 'tenant-2' },
+        }),
+      );
+    });
+
+    it('should update only provided fields', async () => {
+      const existing = { id: 'u1', tenantId: 'tenant-1' };
+      const updated = { id: 'u1', name: 'NewName', email: 'old@test.com' };
+      prisma.user.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      await controller.update(mockReq, 'u1', { name: 'NewName' });
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: 'NewName' },
+        }),
+      );
+    });
+
+    it('should accept all valid roles for update', async () => {
+      const validRoles = ['ADMIN', 'MANAGER', 'MECHANIC', 'RECEPTIONIST', 'VIEWER'];
+      const existing = { id: 'u1', tenantId: 'tenant-1' };
+
+      for (const role of validRoles) {
+        prisma.user.findFirst.mockClear();
+        prisma.user.updateMany.mockClear();
+        prisma.user.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce({});
+        prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+        await controller.update(mockReq, 'u1', { role: role as UserRole });
+
+        expect(prisma.user.updateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: { role },
+          }),
+        );
+      }
+    });
+
+    it('should return success=true on update', async () => {
+      const existing = { id: 'u1', tenantId: 'tenant-1' };
+      prisma.user.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce({});
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await controller.update(mockReq, 'u1', { name: 'X' });
+
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('remove', () => {
@@ -181,6 +406,63 @@ describe('UsersController', () => {
       prisma.user.findFirst.mockResolvedValue(existing);
 
       await expect(controller.remove(mockReq, 'user-1')).rejects.toThrow(BadRequestException);
+    });
+
+    // ========================================================================
+    // ENHANCED TESTS FOR BRANCH COVERAGE — RBAC AUDIT TRAIL (remove)
+    // ========================================================================
+
+    it('should enforce tenant isolation in remove', async () => {
+      const otherTenantReq = {
+        user: { userId: 'user-2', tenantId: 'tenant-2', email: 'other@test.com', role: 'ADMIN' },
+      };
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(controller.remove(otherTenantReq, 'u1')).rejects.toThrow(NotFoundException);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'u1', tenantId: 'tenant-2' },
+        }),
+      );
+    });
+
+    it('should set isActive=false on delete', async () => {
+      const existing = { id: 'u3', tenantId: 'tenant-1' };
+      prisma.user.findFirst.mockResolvedValue(existing);
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      await controller.remove(mockReq, 'u3');
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ isActive: false }),
+        }),
+      );
+    });
+
+    it('should return success=true on remove', async () => {
+      const existing = { id: 'u4', tenantId: 'tenant-1' };
+      prisma.user.findFirst.mockResolvedValue(existing);
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await controller.remove(mockReq, 'u4');
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should use updateMany with tenantId scoping', async () => {
+      const existing = { id: 'u5', tenantId: 'tenant-1' };
+      prisma.user.findFirst.mockResolvedValue(existing);
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      await controller.remove(mockReq, 'u5');
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'u5', tenantId: 'tenant-1' },
+        }),
+      );
     });
   });
 });

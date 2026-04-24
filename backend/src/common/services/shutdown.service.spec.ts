@@ -76,6 +76,7 @@ describe('ShutdownService', () => {
       await service.onApplicationShutdown('SIGTERM');
       expect(service.isShuttingDown).toBe(true);
 
+      // Call again - should still be true
       await service.onApplicationShutdown('SIGTERM');
       expect(service.isShuttingDown).toBe(true);
     });
@@ -103,6 +104,12 @@ describe('ShutdownService', () => {
         service.setApp(mockApp2);
       }).not.toThrow();
     });
+
+    it('should handle setApp with null', () => {
+      expect(() => {
+        service.setApp(null as unknown as INestApplication);
+      }).not.toThrow();
+    });
   });
 
   describe('readiness probe behavior', () => {
@@ -117,10 +124,13 @@ describe('ShutdownService', () => {
     });
 
     it('should indicate graceful shutdown state', async () => {
+      // Simulate readiness probe checking before shutdown
       expect(service.isShuttingDown).toBe(false);
 
+      // Shutdown signal received
       await service.onApplicationShutdown('SIGTERM');
 
+      // Readiness probe should now return 503
       expect(service.isShuttingDown).toBe(true);
     });
   });
@@ -152,15 +162,33 @@ describe('ShutdownService', () => {
     });
   });
 
+  describe('concurrent access', () => {
+    it('should handle concurrent getter calls', async () => {
+      await service.onApplicationShutdown('SIGTERM');
+
+      const results = await Promise.all([
+        Promise.resolve(service.isShuttingDown),
+        Promise.resolve(service.isShuttingDown),
+        Promise.resolve(service.isShuttingDown),
+      ]);
+
+      expect(results).toEqual([true, true, true]);
+    });
+  });
+
   describe('lifecycle', () => {
     it('should follow shutdown lifecycle', async () => {
+      // 1. App is running
       expect(service.isShuttingDown).toBe(false);
 
+      // 2. App receives shutdown signal
       await service.onApplicationShutdown('SIGTERM');
       expect(service.isShuttingDown).toBe(true);
 
+      // 3. Readiness probe immediately starts returning 503
       expect(service.isShuttingDown).toBe(true);
 
+      // 4. Logger has been notified
       expect(loggerService.log).toHaveBeenCalled();
     });
   });

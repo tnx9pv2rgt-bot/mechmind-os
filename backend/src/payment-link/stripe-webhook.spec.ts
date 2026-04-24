@@ -11,10 +11,9 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
-import Stripe from 'stripe';
 import { PaymentLinkService } from './payment-link.service';
 import { PrismaService } from '../common/services/prisma.service';
 
@@ -156,7 +155,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
 
       it('should process payment for valid signature with payment_intent.succeeded', async () => {
         const payload = JSON.stringify(mockStripePayload({ type: 'payment_intent.succeeded' }));
-        const signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
+        const _signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
 
         const invoice = {
           id: 'inv-uuid-001',
@@ -245,7 +244,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
       });
 
       it('should NOT expose signature secret in error response', () => {
-        const invalidSignature = 't=1234567890,v1=bad';
+        const _invalidSignature = 't=1234567890,v1=bad';
         const errorMessage = `Webhook signature verification failed`;
 
         // Error response must NOT contain STRIPE_WEBHOOK_SECRET
@@ -265,11 +264,11 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
 
     describe('Missing signature header → 400 Bad Request', () => {
       it('should reject webhook without X-Stripe-Signature header', () => {
-        const payload = JSON.stringify(mockStripePayload());
-        const missingSignature = undefined;
+        const _payload = JSON.stringify(mockStripePayload());
+        const _missingSignature = undefined;
 
         // If signature header is missing, reject with 400
-        expect(missingSignature).toBeUndefined();
+        expect(_missingSignature).toBeUndefined();
         // Controller should throw BadRequestException
       });
 
@@ -281,7 +280,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
       });
 
       it('should NOT process payment when signature header is absent', async () => {
-        const payload = JSON.stringify(mockStripePayload());
+        const _payload = JSON.stringify(mockStripePayload());
         // No signature provided
 
         // Since there's no signature to validate, invoice should NOT be updated
@@ -493,7 +492,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
   describe('[PCI-003] Idempotency - Duplicate Webhook Prevention', () => {
     it('should NOT re-process payment when same webhook fires twice', async () => {
       const payload = JSON.stringify(mockStripePayload({ id: 'evt_test_duplicate' }));
-      const signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
+      const _signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
 
       const invoice = {
         id: 'inv-uuid-001',
@@ -531,7 +530,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
       const payload = JSON.stringify(
         mockStripePayload({ id: 'evt_test_dup_123', request: { idempotency_key: 'idkey123' } }),
       );
-      const signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
+      const _signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
 
       // First call
       const invoice = {
@@ -556,7 +555,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
 
     it('should create only 1 invoice entry even if webhook sent multiple times', async () => {
       const payload = JSON.stringify(mockStripePayload({ id: 'evt_duplicate_999' }));
-      const signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
+      const _signature = generateStripeSignature(payload, STRIPE_WEBHOOK_SECRET);
 
       const invoice = {
         id: 'inv-uuid-001',

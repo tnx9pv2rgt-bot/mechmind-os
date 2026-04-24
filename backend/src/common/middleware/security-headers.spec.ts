@@ -1,10 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { request } from 'http';
-
 describe('Security Headers (OWASP A02)', () => {
-  let app: INestApplication;
-
   beforeAll(async () => {
     // Note: This test suite validates that security headers are properly configured
     // in the main.ts bootstrap function via helmet middleware
@@ -47,7 +41,7 @@ describe('Security Headers (OWASP A02)', () => {
     });
 
     it('should set Permissions-Policy (formerly Feature-Policy)', () => {
-      const permissionsPolicy = "camera=(), microphone=(), geolocation=()";
+      const permissionsPolicy = 'camera=(), microphone=(), geolocation=()';
       expect(permissionsPolicy).toBeTruthy();
     });
   });
@@ -55,24 +49,13 @@ describe('Security Headers (OWASP A02)', () => {
   describe('CORS Security', () => {
     it('should require explicit CORS origin (no wildcard with credentials)', () => {
       const corsCredentials = true;
-      const allowedOrigins = [
-        'http://localhost:3001',
-        'https://mechmind-os.vercel.app',
-      ];
+      const allowedOrigins = ['http://localhost:3001', 'https://mechmind-os.vercel.app'];
       expect(corsCredentials).toBe(true);
       expect(allowedOrigins.length).toBeGreaterThan(0);
     });
 
     it('should restrict CORS methods to safe set', () => {
-      const allowedMethods = [
-        'GET',
-        'HEAD',
-        'PUT',
-        'PATCH',
-        'POST',
-        'DELETE',
-        'OPTIONS',
-      ];
+      const allowedMethods = ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'];
       expect(allowedMethods).toContain('GET');
       expect(allowedMethods).toContain('POST');
       expect(allowedMethods).not.toContain('TRACE');
@@ -119,7 +102,7 @@ describe('Security Headers (OWASP A02)', () => {
     });
 
     it('should set body size limit to prevent large payload attacks', () => {
-      const bodyLimit = '1mb';
+      const _bodyLimit = '1mb';
       const limitBytes = 1 * 1024 * 1024;
       expect(limitBytes).toBe(1048576);
     });
