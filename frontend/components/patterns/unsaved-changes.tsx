@@ -62,8 +62,8 @@ export function useUnsavedChanges(isDirty: boolean): {
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleCancel(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-950/40">
-              <AlertTriangle className="h-6 w-6 text-orange-500" />
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/40">
+              <AlertTriangle className="h-6 w-6 text-[var(--status-warning)]" />
             </div>
             <DialogTitle className="text-center">
               Modifiche non salvate

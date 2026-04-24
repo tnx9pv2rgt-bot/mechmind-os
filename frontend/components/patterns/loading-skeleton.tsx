@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>): React.ReactElement {
   return (
     <div
-      className={cn('animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700', className)}
+      className={cn('animate-pulse rounded-xl bg-[var(--border-default)] dark:bg-[var(--border-default)]', className)}
       {...props}
     />
   );
@@ -24,9 +24,9 @@ interface TableSkeletonProps {
 
 export function TableSkeleton({ rows = 5, columns = 4, className }: TableSkeletonProps): React.ReactElement {
   return (
-    <div className={cn('w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800', className)}>
+    <div className={cn('w-full overflow-hidden rounded-xl border border-[var(--border-default)] dark:border-[var(--border-strong)]', className)}>
       {/* Header */}
-      <div className="flex gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex gap-4 border-b border-[var(--border-default)] bg-[var(--surface-secondary)] px-6 py-4 dark:border-[var(--border-strong)] dark:bg-[var(--surface-primary)]">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={`head-${i}`} className="h-4 flex-1" />
         ))}
@@ -35,7 +35,7 @@ export function TableSkeleton({ rows = 5, columns = 4, className }: TableSkeleto
       {Array.from({ length: rows }).map((_, rowIdx) => (
         <div
           key={`row-${rowIdx}`}
-          className="flex gap-4 border-b border-gray-100 px-6 py-4 last:border-b-0 dark:border-gray-800"
+          className="flex gap-4 border-b border-[var(--border-default)] px-6 py-4 last:border-b-0 dark:border-[var(--border-strong)]"
         >
           {Array.from({ length: columns }).map((_, colIdx) => (
             <Skeleton
@@ -62,7 +62,7 @@ export function CardGridSkeleton({ count = 6, className }: CardGridSkeletonProps
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`card-${i}`}
-          className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950"
+          className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] p-6 dark:border-[var(--border-strong)] dark:bg-[var(--surface-primary)]"
         >
           <Skeleton className="mb-4 h-5 w-2/3" />
           <Skeleton className="mb-2 h-4 w-full" />
@@ -92,7 +92,7 @@ export function DetailSkeleton({ className }: DetailSkeletonProps): React.ReactE
         </div>
       </div>
       {/* Content blocks */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] p-6 dark:border-[var(--border-strong)] dark:bg-[var(--surface-primary)]">
         <Skeleton className="mb-4 h-5 w-1/4" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -104,7 +104,7 @@ export function DetailSkeleton({ className }: DetailSkeletonProps): React.ReactE
         </div>
       </div>
       {/* Secondary block */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] p-6 dark:border-[var(--border-strong)] dark:bg-[var(--surface-primary)]">
         <Skeleton className="mb-4 h-5 w-1/3" />
         <Skeleton className="mb-2 h-4 w-full" />
         <Skeleton className="mb-2 h-4 w-5/6" />
@@ -148,7 +148,7 @@ export function KPISkeleton({ count = 4, className }: KPISkeletonProps): React.R
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`kpi-${i}`}
-          className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950"
+          className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] p-5 dark:border-[var(--border-strong)] dark:bg-[var(--surface-primary)]"
         >
           <Skeleton className="mb-3 h-3 w-20" />
           <Skeleton className="mb-2 h-8 w-24" />

@@ -10,7 +10,7 @@ interface PasskeyPromptProps {
 
 const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'bg-white text-base font-normal text-[var(--text-primary)]',
+  'bg-[var(--surface-secondary)] text-base font-normal text-[var(--text-primary)]',
   'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:opacity-30',
 ].join(' ');
@@ -85,13 +85,13 @@ export function PasskeyPrompt({
   return (
     <div className="flex flex-col items-center gap-6 text-center">
       {/* Icon */}
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
         <span className="text-3xl">{platformInfo.icon}</span>
       </div>
 
       {/* Title & Description */}
       <div className="space-y-2">
-        <h2 className="text-xl font-normal text-white">
+        <h2 className="text-xl font-normal text-[var(--text-on-brand)]">
           Accesso più veloce
         </h2>
         <p className="text-sm text-[var(--text-tertiary)]">
@@ -117,7 +117,7 @@ export function PasskeyPrompt({
       <button
         type="button"
         onClick={handleSkip}
-        className="min-h-[44px] text-sm text-[var(--text-tertiary)] transition-colors hover:text-white"
+        className="min-h-[44px] text-sm text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)]"
       >
         Non ora, grazie &rarr;
       </button>

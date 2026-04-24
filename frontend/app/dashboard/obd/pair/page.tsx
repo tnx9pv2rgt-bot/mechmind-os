@@ -120,7 +120,7 @@ export default function OBDPairPage() {
               { label: 'Associa Dispositivo' },
             ]}
           />
-          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Associa Dispositivo OBD</h1>
+          <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Associa Dispositivo OBD</h1>
         </div>
       </header>
 
@@ -129,16 +129,16 @@ export default function OBDPairPage() {
         <div className='flex items-center justify-between mb-8'>
           {STEPS.map((s, i) => (
             <div key={s.label} className='flex items-center'>
-              <div className={`flex items-center gap-2 ${i <= step ? 'text-apple-blue' : 'text-apple-gray/40'}`}>
+              <div className={`flex items-center gap-2 ${i <= step ? 'text-[var(--brand)]' : 'text-[var(--text-tertiary)]/40'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-footnote font-bold ${
-                  i < step ? 'bg-apple-blue text-white' : i === step ? 'bg-apple-blue/10 text-apple-blue border-2 border-apple-blue' : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray'
+                  i < step ? 'bg-[var(--brand)] text-[var(--text-on-brand)]' : i === step ? 'bg-[var(--brand)]/10 text-[var(--brand)] border-2 border-[var(--brand)]' : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)]'
                 }`}>
                   {i < step ? <Check className='h-4 w-4' /> : i + 1}
                 </div>
                 <span className='text-footnote font-medium hidden sm:inline'>{s.label}</span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`w-8 sm:w-16 h-0.5 mx-2 ${i < step ? 'bg-apple-blue' : 'bg-apple-light-gray dark:bg-[var(--surface-hover)]'}`} />
+                <div className={`w-8 sm:w-16 h-0.5 mx-2 ${i < step ? 'bg-[var(--brand)]' : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]'}`} />
               )}
             </div>
           ))}
@@ -150,17 +150,17 @@ export default function OBDPairPage() {
             <motion.div initial='hidden' animate='visible' variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Seleziona Veicolo</h2>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Seleziona Veicolo</h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {vehiclesLoading ? (
                     <div className='flex items-center justify-center py-8'>
-                      <Loader2 className='h-6 w-6 animate-spin text-apple-blue' />
+                      <Loader2 className='h-6 w-6 animate-spin text-[var(--brand)]' />
                     </div>
                   ) : vehicles.length === 0 ? (
                     <div className='text-center py-8'>
-                      <Car className='h-8 w-8 text-apple-gray/40 mx-auto mb-3' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun veicolo disponibile</p>
+                      <Car className='h-8 w-8 text-[var(--text-tertiary)]/40 mx-auto mb-3' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun veicolo disponibile</p>
                     </div>
                   ) : (
                     <div className='space-y-2 max-h-96 overflow-y-auto'>
@@ -171,24 +171,24 @@ export default function OBDPairPage() {
                           onClick={() => setValue('vehicleId', v.id)}
                           className={`w-full p-4 rounded-2xl text-left transition-all border-2 ${
                             formValues.vehicleId === v.id
-                              ? 'border-apple-blue bg-apple-blue/5'
-                              : 'border-transparent bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] hover:bg-apple-light-gray dark:hover:bg-[var(--surface-active)]'
+                              ? 'border-[var(--brand)] bg-[var(--brand)]/5'
+                              : 'border-transparent bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)]'
                           }`}
                         >
                           <div className='flex items-center gap-3'>
-                            <Car className='h-5 w-5 text-apple-purple' />
+                            <Car className='h-5 w-5 text-[var(--brand)]' />
                             <div>
-                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {v.make} {v.model} ({v.year})
                               </p>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Targa: {v.plate}</p>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Targa: {v.plate}</p>
                             </div>
                           </div>
                         </button>
                       ))}
                     </div>
                   )}
-                  {errors.vehicleId && <p className='text-footnote text-apple-red mt-2'>{errors.vehicleId.message}</p>}
+                  {errors.vehicleId && <p className='text-footnote text-[var(--status-error)] mt-2'>{errors.vehicleId.message}</p>}
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -199,20 +199,20 @@ export default function OBDPairPage() {
             <motion.div initial='hidden' animate='visible' variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>ID Dispositivo</h2>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>ID Dispositivo</h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-4'>
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Inserisci l&apos;ID del dispositivo OBD-II o scansiona il codice QR sulla confezione.
                   </p>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>ID Dispositivo</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'>ID Dispositivo</label>
                     <Input {...register('deviceId')} placeholder='Es: OBD-2024-XXXX' />
-                    {errors.deviceId && <p className='text-footnote text-apple-red mt-1'>{errors.deviceId.message}</p>}
+                    {errors.deviceId && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.deviceId.message}</p>}
                   </div>
-                  <div className='p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-center'>
-                    <QrCode className='h-16 w-16 text-apple-gray/40 mx-auto mb-2' />
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <div className='p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl text-center'>
+                    <QrCode className='h-16 w-16 text-[var(--text-tertiary)]/40 mx-auto mb-2' />
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Scansione QR disponibile su dispositivi mobili
                     </p>
                   </div>
@@ -226,13 +226,13 @@ export default function OBDPairPage() {
             <motion.div initial='hidden' animate='visible' variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Test Connessione</h2>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Test Connessione</h2>
                 </AppleCardHeader>
                 <AppleCardContent className='text-center py-8 space-y-6'>
                   {testResult === 'idle' && (
                     <>
-                      <Wifi className='h-16 w-16 text-apple-gray/40 mx-auto' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <Wifi className='h-16 w-16 text-[var(--text-tertiary)]/40 mx-auto' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Verifica che il dispositivo {formValues.deviceId} sia acceso e nelle vicinanze.
                       </p>
                       <AppleButton type='button' onClick={handleTest}>Avvia Test</AppleButton>
@@ -240,20 +240,20 @@ export default function OBDPairPage() {
                   )}
                   {testResult === 'testing' && (
                     <>
-                      <Loader2 className='h-16 w-16 text-apple-blue mx-auto animate-spin' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Test in corso...</p>
+                      <Loader2 className='h-16 w-16 text-[var(--brand)] mx-auto animate-spin' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Test in corso...</p>
                     </>
                   )}
                   {testResult === 'success' && (
                     <>
-                      <CheckCircle className='h-16 w-16 text-apple-green mx-auto' />
-                      <p className='text-body font-medium text-apple-green'>Connessione riuscita</p>
+                      <CheckCircle className='h-16 w-16 text-[var(--status-success)] mx-auto' />
+                      <p className='text-body font-medium text-[var(--status-success)]'>Connessione riuscita</p>
                     </>
                   )}
                   {testResult === 'fail' && (
                     <>
-                      <AlertCircle className='h-16 w-16 text-apple-red mx-auto' />
-                      <p className='text-body text-apple-red'>Test fallito. Verifica il dispositivo.</p>
+                      <AlertCircle className='h-16 w-16 text-[var(--status-error)] mx-auto' />
+                      <p className='text-body text-[var(--status-error)]'>Test fallito. Verifica il dispositivo.</p>
                       <AppleButton type='button' variant='secondary' onClick={handleTest}>Riprova</AppleButton>
                     </>
                   )}
@@ -267,23 +267,23 @@ export default function OBDPairPage() {
             <motion.div initial='hidden' animate='visible' variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Conferma Associazione</h2>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Conferma Associazione</h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-4'>
                   <div className='space-y-3'>
-                    <div className='flex justify-between text-body py-2 border-b border-apple-border/10 dark:border-[var(--border-default)]/30'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Veicolo</span>
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='flex justify-between text-body py-2 border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/30'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Veicolo</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model} (${selectedVehicle.plate})` : '-'}
                       </span>
                     </div>
-                    <div className='flex justify-between text-body py-2 border-b border-apple-border/10 dark:border-[var(--border-default)]/30'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Dispositivo</span>
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{formValues.deviceId}</span>
+                    <div className='flex justify-between text-body py-2 border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/30'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Dispositivo</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formValues.deviceId}</span>
                     </div>
                     <div className='flex justify-between text-body py-2'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Test connessione</span>
-                      <span className={`font-medium ${testResult === 'success' ? 'text-apple-green' : 'text-apple-orange'}`}>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Test connessione</span>
+                      <span className={`font-medium ${testResult === 'success' ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                         {testResult === 'success' ? 'Superato' : 'Non verificato'}
                       </span>
                     </div>

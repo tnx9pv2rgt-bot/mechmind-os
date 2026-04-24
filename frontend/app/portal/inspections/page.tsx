@@ -68,7 +68,7 @@ export default function PortalInspectionsPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
@@ -79,10 +79,10 @@ export default function PortalInspectionsPage() {
     return (
       <PortalPageWrapper title='Ispezioni' customer={customer || undefined}>
         <div className='text-center py-16'>
-          <p className='text-apple-red mb-4'>{error}</p>
+          <p className='text-[var(--status-error)] mb-4'>{error}</p>
           <button
             onClick={() => mutate()}
-            className='text-apple-blue hover:underline'
+            className='text-[var(--brand)] hover:underline'
           >
             Riprova
           </button>
@@ -99,42 +99,42 @@ export default function PortalInspectionsPage() {
     >
       {/* Stats */}
       <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6'>
-        <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
+        <div className='p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
           <div className='flex items-center gap-3'>
-            <div className='w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center'>
-              <FileText className='h-6 w-6 text-apple-blue' />
+            <div className='w-12 h-12 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] flex items-center justify-center'>
+              <FileText className='h-6 w-6 text-[var(--brand)]' />
             </div>
             <div>
-              <p className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+              <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {inspections.length}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Ispezioni totali</p>
+              <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Ispezioni totali</p>
             </div>
           </div>
         </div>
-        <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
+        <div className='p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
           <div className='flex items-center gap-3'>
-            <div className='w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center'>
-              <TrendingUp className='h-6 w-6 text-apple-green' />
+            <div className='w-12 h-12 rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] flex items-center justify-center'>
+              <TrendingUp className='h-6 w-6 text-[var(--status-success)]' />
             </div>
             <div>
-              <p className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+              <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {averageScore.toFixed(1)}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Punteggio medio</p>
+              <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Punteggio medio</p>
             </div>
           </div>
         </div>
-        <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
+        <div className='p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple'>
           <div className='flex items-center gap-3'>
-            <div className='w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center'>
-              <Filter className='h-6 w-6 text-apple-purple' />
+            <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/5 dark:bg-[var(--brand)]/40/20 flex items-center justify-center'>
+              <Filter className='h-6 w-6 text-[var(--brand)]' />
             </div>
             <div>
-              <p className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+              <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {inspections.filter(i => i.status === 'approved').length}
               </p>
-              <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>Approvate</p>
+              <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Approvate</p>
             </div>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function PortalInspectionsPage() {
 
       {/* Filters */}
       <div className='flex items-center gap-3 mb-6'>
-        <div className='flex items-center gap-2 p-1 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple'>
+        <div className='flex items-center gap-2 p-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple'>
           {(['all', 'completed', 'approved'] as const).map(f => (
             <button
               key={f}
@@ -151,8 +151,8 @@ export default function PortalInspectionsPage() {
                 px-4 py-2 rounded-lg text-sm font-medium transition-all
                 ${
                   filter === f
-                    ? 'bg-apple-blue text-white shadow-sm'
-                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                    ? 'bg-[var(--brand)] text-[var(--text-on-brand)] shadow-sm'
+                    : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
                 }
               `}
             >

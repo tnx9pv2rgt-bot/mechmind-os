@@ -38,7 +38,7 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
-        <h2 className="text-xl font-normal text-white">Che tipo di officina hai?</h2>
+        <h2 className="text-xl font-normal text-[var(--text-on-brand)]">Che tipo di officina hai?</h2>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Personalizzeremo l&apos;esperienza per te</p>
       </div>
 
@@ -61,14 +61,14 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
               className={[
                 'relative flex min-h-[90px] flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all duration-200',
                 isSelected
-                  ? 'border-white/60 bg-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]'
+                  ? 'border-[var(--border-default)]/60 bg-[var(--surface-secondary)]/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]'
                   : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
               {isSelected && (
                 <motion.div
-                  className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white"
+                  className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--surface-secondary)]"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 25 }}
@@ -78,8 +78,8 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{type.icon}</span>
-              <span className={['text-[13px] font-medium', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
+              <span className={isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-secondary)]'}>{type.icon}</span>
+              <span className={['text-[13px] font-medium', isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-primary)]'].join(' ')}>
                 {type.name}
               </span>
               <span className="text-[11px] text-[var(--text-tertiary)]">{type.description}</span>

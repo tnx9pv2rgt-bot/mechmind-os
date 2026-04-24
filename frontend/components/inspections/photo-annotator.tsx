@@ -51,7 +51,7 @@ export function PhotoAnnotator({
         x: Math.max(0, Math.min(100, x)),
         y: Math.max(0, Math.min(100, y)),
         text: newText || 'Annotazione',
-        color: '#ef4444',
+        color: 'var(--status-error)',
         arrowDirection,
       };
 
@@ -72,10 +72,10 @@ export function PhotoAnnotator({
   };
 
   return (
-    <div className='flex flex-col h-full bg-gray-900 rounded-lg overflow-hidden'>
+    <div className='flex flex-col h-full bg-[var(--surface-primary)] rounded-lg overflow-hidden'>
       {/* Toolbar */}
       {!readOnly && (
-        <div className='flex items-center gap-2 p-3 bg-gray-800 border-b border-gray-700'>
+        <div className='flex items-center gap-2 p-3 bg-[var(--surface-primary)] border-b border-[var(--border-strong)]'>
           {!isAdding ? (
             <>
               <Button
@@ -88,9 +88,9 @@ export function PhotoAnnotator({
                 Aggiungi Annotazione
               </Button>
 
-              <div className='h-6 w-px bg-gray-600 mx-2' />
+              <div className='h-6 w-px bg-[var(--surface-active)] mx-2' />
 
-              <span className='text-xs text-gray-400'>Direzione freccia:</span>
+              <span className='text-xs text-[var(--text-tertiary)]'>Direzione freccia:</span>
               <div className='flex gap-1'>
                 {(['up', 'down', 'left', 'right'] as const).map(dir => {
                   const dirLabels = { up: 'Su', down: 'Giù', left: 'Sinistra', right: 'Destra' };
@@ -119,10 +119,10 @@ export function PhotoAnnotator({
                 value={newText}
                 onChange={e => setNewText(e.target.value)}
                 placeholder='Testo annotazione...'
-                className='flex-1 px-3 py-1.5 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none'
+                className='flex-1 px-3 py-1.5 text-sm bg-[var(--surface-active)] text-[var(--text-on-brand)] rounded border border-[var(--border-default)] focus:border-[var(--status-info)] focus:outline-none'
                 autoFocus
               />
-              <span className='text-xs text-gray-400'>Clicca sull&apos;immagine</span>
+              <span className='text-xs text-[var(--text-tertiary)]'>Clicca sull&apos;immagine</span>
               <Button size='sm' variant='ghost' onClick={() => setIsAdding(false)}>
                 <X className='h-4 w-4' />
               </Button>
@@ -145,7 +145,7 @@ export function PhotoAnnotator({
       <div
         ref={imageRef}
         className={cn(
-          'relative flex-1 overflow-hidden bg-black',
+          'relative flex-1 overflow-hidden bg-[var(--surface-primary)]',
           isAdding && !readOnly && 'cursor-crosshair'
         )}
         onClick={handleImageClick}
@@ -173,7 +173,7 @@ export function PhotoAnnotator({
             {/* Dot */}
             <div
               className={cn(
-                'w-4 h-4 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform',
+                'w-4 h-4 rounded-full border-2 border-[var(--border-default)] shadow-lg cursor-pointer transition-transform',
                 selectedAnnotation === annotation.id && 'scale-125'
               )}
               style={{ backgroundColor: annotation.color }}
@@ -182,7 +182,7 @@ export function PhotoAnnotator({
             {/* Arrow */}
             {annotation.arrowDirection && (
               <div
-                className='absolute text-white drop-shadow-md'
+                className='absolute text-[var(--text-on-brand)] drop-shadow-md'
                 style={{
                   ...(annotation.arrowDirection === 'up' && {
                     bottom: '100%',
@@ -218,7 +218,7 @@ export function PhotoAnnotator({
               <div
                 className={cn(
                   'absolute whitespace-nowrap px-2 py-1 rounded text-xs font-medium shadow-lg',
-                  'bg-white text-gray-900 border border-gray-200'
+                  'bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border-default)]'
                 )}
                 style={{
                   ...(annotation.arrowDirection === 'up' && { bottom: '140%' }),
@@ -243,7 +243,7 @@ export function PhotoAnnotator({
                         e.stopPropagation();
                         handleDelete(annotation.id);
                       }}
-                      className='text-red-500 hover:text-red-700'
+                      className='text-[var(--status-error)] hover:text-[var(--status-error)]'
                     >
                       <Trash2 className='h-3 w-3' />
                     </button>
@@ -258,7 +258,7 @@ export function PhotoAnnotator({
       </div>
 
       {/* Legend */}
-      <div className='p-3 bg-gray-800 border-t border-gray-700 text-xs text-gray-400'>
+      <div className='p-3 bg-[var(--surface-primary)] border-t border-[var(--border-strong)] text-xs text-[var(--text-tertiary)]'>
         {annotations.length} annotazioni • Clicca su un punto per modificarlo
       </div>
     </div>

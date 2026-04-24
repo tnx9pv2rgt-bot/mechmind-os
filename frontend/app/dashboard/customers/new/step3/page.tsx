@@ -233,8 +233,8 @@ export default function Step3Page() {
 
   if (!isLoaded) {
     return (
-      <div className='fixed inset-0 bg-apple-light-gray dark:bg-[var(--surface-tertiary)] flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+      <div className='fixed inset-0 bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -255,14 +255,14 @@ export default function Step3Page() {
       >
         {/* Section Header with Icon */}
         <div className='flex items-center gap-3 mb-6'>
-          <div className='w-12 h-12 rounded-2xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-            <Car className='w-6 h-6 text-apple-blue' />
+          <div className='w-12 h-12 rounded-2xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+            <Car className='w-6 h-6 text-[var(--brand)]' />
           </div>
           <div>
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Parco Veicoli
             </h2>
-            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Inserisci tutti i dati del libretto
             </p>
           </div>
@@ -275,12 +275,12 @@ export default function Step3Page() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -100 }}
-              className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-apple-border/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)] space-y-6'
+              className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-default)]/20 dark:border-[var(--border-default)] shadow-[var(--shadow-card)] space-y-6'
             >
               {/* Header Veicolo */}
               <div className='flex items-center justify-between mb-4'>
                 <div className='flex items-center gap-3'>
-                  <span className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <span className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Veicolo {index + 1}
                   </span>
                 </div>
@@ -292,7 +292,7 @@ export default function Step3Page() {
                     onClick={() => remove(index)}
                     aria-label={`Rimuovi veicolo ${index + 1}`}
                     icon={<Trash2 className='w-4 h-4' />}
-                    className='text-apple-red'
+                    className='text-[var(--status-error)]'
                   >
                     Rimuovi
                   </AppleButton>
@@ -302,10 +302,10 @@ export default function Step3Page() {
               {/* === SEZIONE 1: DATI PRINCIPALI === */}
               <div className='space-y-4'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Tag className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Tag className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Dati Principali
                   </h3>
                 </div>
@@ -315,7 +315,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.plate`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Targa
                     </Label>
@@ -323,7 +323,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.plate`}
                       {...register(`vehicles.${index}.plate`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
                       placeholder='AB123CD'
                       maxLength={10}
                     />
@@ -333,7 +333,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.vehicleType`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Tipologia
                     </Label>
@@ -350,7 +350,7 @@ export default function Step3Page() {
                     >
                       <SelectTrigger
                         id={`vehicles.${index}.vehicleType`}
-                        className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
+                        className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         <SelectValue placeholder='Seleziona...' />
                       </SelectTrigger>
@@ -369,7 +369,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.make`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Marca
                     </Label>
@@ -377,7 +377,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.make`}
                       {...register(`vehicles.${index}.make`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='Fiat'
                     />
                   </div>
@@ -386,7 +386,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.model`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Modello
                     </Label>
@@ -394,7 +394,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.model`}
                       {...register(`vehicles.${index}.model`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='Panda'
                     />
                   </div>
@@ -403,7 +403,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.variant`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Versione
                     </Label>
@@ -411,7 +411,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.variant`}
                       {...register(`vehicles.${index}.variant`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='1.0 Lounge'
                     />
                   </div>
@@ -420,7 +420,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.vin`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       VIN / Telaio
                     </Label>
@@ -428,7 +428,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.vin`}
                       {...register(`vehicles.${index}.vin`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
                       placeholder='ZFA31200000012345'
                       maxLength={17}
                     />
@@ -437,12 +437,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 2: MOTORIZZAZIONE === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Settings className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Settings className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Motorizzazione
                   </h3>
                 </div>
@@ -452,7 +452,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.fuel`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Carburante
                     </Label>
@@ -467,7 +467,7 @@ export default function Step3Page() {
                     >
                       <SelectTrigger
                         id={`vehicles.${index}.fuel`}
-                        className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
+                        className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         <SelectValue placeholder='Seleziona...' />
                       </SelectTrigger>
@@ -486,7 +486,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.displacement`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Cilindrata (cc)
                     </Label>
@@ -495,7 +495,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.displacement`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='999'
                     />
                   </div>
@@ -504,7 +504,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.powerKw`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Potenza (kW)
                     </Label>
@@ -523,7 +523,7 @@ export default function Step3Page() {
                         },
                       })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='51'
                     />
                   </div>
@@ -532,7 +532,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.powerCv`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Potenza (CV)
                     </Label>
@@ -551,7 +551,7 @@ export default function Step3Page() {
                         },
                       })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='69'
                     />
                   </div>
@@ -559,12 +559,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 3: EMISSIONI === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Wind className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Wind className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Emissioni</h3>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Emissioni</h3>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -572,7 +572,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.euroClass`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Classe Euro
                     </Label>
@@ -584,7 +584,7 @@ export default function Step3Page() {
                     >
                       <SelectTrigger
                         id={`vehicles.${index}.euroClass`}
-                        className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)]'
+                        className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         <SelectValue placeholder='Seleziona...' />
                       </SelectTrigger>
@@ -603,7 +603,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.co2`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       CO₂ (g/km)
                     </Label>
@@ -612,7 +612,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.co2`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='105'
                     />
                   </div>
@@ -620,12 +620,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 4: OMOLOGAZIONE === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <FileText className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <FileText className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Omologazione</h3>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Omologazione</h3>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -633,7 +633,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.natscode`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Codice NATS
                     </Label>
@@ -641,7 +641,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.natscode`}
                       {...register(`vehicles.${index}.natscode`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
                       placeholder='e1*2001/116*0035*01'
                     />
                   </div>
@@ -650,7 +650,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.ncte`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       NCTE
                     </Label>
@@ -658,7 +658,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.ncte`}
                       {...register(`vehicles.${index}.ncte`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none uppercase'
                       placeholder='N1234AB'
                     />
                   </div>
@@ -666,12 +666,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 5: DATI AMMINISTRATIVI === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Calendar className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Calendar className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Dati Amministrativi
                   </h3>
                 </div>
@@ -681,7 +681,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.registrationDate`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Data Immatricolazione
                     </Label>
@@ -690,7 +690,7 @@ export default function Step3Page() {
                       type='date'
                       {...register(`vehicles.${index}.registrationDate`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                     />
                   </div>
 
@@ -698,7 +698,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.year`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Anno
                     </Label>
@@ -707,7 +707,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.year`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='2020'
                     />
                   </div>
@@ -716,7 +716,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.km`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       KM attuali
                     </Label>
@@ -725,7 +725,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.km`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='50000'
                     />
                   </div>
@@ -734,7 +734,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.inspectionExpiry`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Scadenza Revisione
                     </Label>
@@ -743,19 +743,19 @@ export default function Step3Page() {
                       type='date'
                       {...register(`vehicles.${index}.inspectionExpiry`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                     />
                   </div>
                 </div>
               </div>
 
               {/* === SEZIONE 6: ASPETTO === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Palette className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Palette className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Aspetto</h3>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Aspetto</h3>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
@@ -763,7 +763,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.color`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Colore
                     </Label>
@@ -771,7 +771,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.color`}
                       {...register(`vehicles.${index}.color`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='Bianco'
                     />
                   </div>
@@ -780,7 +780,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.doors`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Porte
                     </Label>
@@ -789,7 +789,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.doors`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='5'
                       min={1}
                       max={9}
@@ -800,7 +800,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.seats`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Posti
                     </Label>
@@ -809,7 +809,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.seats`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='5'
                       min={1}
                       max={50}
@@ -819,12 +819,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 7: PNEUMATICI === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Gauge className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Gauge className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Pneumatici</h3>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Pneumatici</h3>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -832,7 +832,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.tiresFront`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Anteriori
                     </Label>
@@ -840,7 +840,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.tiresFront`}
                       {...register(`vehicles.${index}.tiresFront`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='195/55 R16'
                     />
                   </div>
@@ -849,7 +849,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.tiresRear`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Posteriori
                     </Label>
@@ -857,7 +857,7 @@ export default function Step3Page() {
                       id={`vehicles.${index}.tiresRear`}
                       {...register(`vehicles.${index}.tiresRear`)}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='195/55 R16'
                     />
                   </div>
@@ -865,12 +865,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 8: MASSE === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Scale className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Scale className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Masse (kg)</h3>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Masse (kg)</h3>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
@@ -878,7 +878,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.massOwn`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Massa a Vuoto
                     </Label>
@@ -887,7 +887,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.massOwn`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='1050'
                     />
                   </div>
@@ -896,7 +896,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.massMax`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Massa Complessiva
                     </Label>
@@ -905,7 +905,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.massMax`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='1600'
                     />
                   </div>
@@ -914,7 +914,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.massTrailer`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Rimorchiabile
                     </Label>
@@ -923,7 +923,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.massTrailer`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='800'
                     />
                   </div>
@@ -931,12 +931,12 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 9: DIMENSIONI === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Ruler className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Ruler className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Dimensioni (mm)
                   </h3>
                 </div>
@@ -946,7 +946,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.length`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Lunghezza
                     </Label>
@@ -955,7 +955,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.length`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='3685'
                     />
                   </div>
@@ -964,7 +964,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.width`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Larghezza
                     </Label>
@@ -973,7 +973,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.width`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='1645'
                     />
                   </div>
@@ -982,7 +982,7 @@ export default function Step3Page() {
                   <div>
                     <Label
                       htmlFor={`vehicles.${index}.height`}
-                      className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                     >
                       Altezza
                     </Label>
@@ -991,7 +991,7 @@ export default function Step3Page() {
                       type='number'
                       {...register(`vehicles.${index}.height`, { valueAsNumber: true })}
                       autoComplete='off'
-                      className='h-[52px] rounded-full border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
+                      className='h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                       placeholder='1550'
                     />
                   </div>
@@ -999,18 +999,18 @@ export default function Step3Page() {
               </div>
 
               {/* === SEZIONE 10: NOTE === */}
-              <div className='space-y-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+              <div className='space-y-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <div className='w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                    <Info className='w-4 h-4 text-apple-blue' />
+                  <div className='w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                    <Info className='w-4 h-4 text-[var(--brand)]' />
                   </div>
-                  <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Note</h3>
+                  <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Note</h3>
                 </div>
 
                 <div>
                   <Label
                     htmlFor={`vehicles.${index}.notes`}
-                    className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2 block'
+                    className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'
                   >
                     Note aggiuntive
                   </Label>
@@ -1018,7 +1018,7 @@ export default function Step3Page() {
                     id={`vehicles.${index}.notes`}
                     {...register(`vehicles.${index}.notes`)}
                     autoComplete='off'
-                    className='w-full h-24 px-5 py-3 rounded-2xl border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-primary)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none resize-none'
+                    className='w-full h-24 px-5 py-3 rounded-2xl border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none resize-none'
                     placeholder='Inserisci eventuali note, accessori, modifiche...'
                   />
                 </div>
@@ -1043,7 +1043,7 @@ export default function Step3Page() {
             <p
               role='alert'
               aria-live='assertive'
-              className='text-red-400 text-sm text-center'
+              className='text-[var(--status-error)] text-sm text-center'
             >
               {errors.vehicles.message}
             </p>

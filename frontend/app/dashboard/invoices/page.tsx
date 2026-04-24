@@ -48,28 +48,28 @@ type InvoiceStatus = 'ALL' | 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED'
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
   DRAFT: {
-    color: 'text-apple-gray dark:text-[var(--text-secondary)]',
-    bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]',
+    color: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
     label: 'Bozza',
   },
   SENT: {
-    color: 'text-apple-blue',
-    bg: 'bg-apple-blue/10',
+    color: 'text-[var(--brand)]',
+    bg: 'bg-[var(--brand)]/10',
     label: 'Inviata',
   },
   PAID: {
-    color: 'text-apple-green',
-    bg: 'bg-apple-green/10',
+    color: 'text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success)]/10',
     label: 'Pagata',
   },
   OVERDUE: {
-    color: 'text-apple-red',
-    bg: 'bg-apple-red/10',
+    color: 'text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error)]/10',
     label: 'Scaduta',
   },
   CANCELLED: {
-    color: 'text-apple-orange',
-    bg: 'bg-apple-orange/10',
+    color: 'text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10',
     label: 'Annullata',
   },
 };
@@ -198,25 +198,25 @@ export default function InvoicesPage() {
       label: 'Fatturato Mese',
       value: formatCurrency(stats.monthlyRevenue),
       icon: Euro,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'In Attesa',
       value: String(stats.pendingCount),
       icon: Clock,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'Inviate',
       value: String(stats.sentCount),
       icon: Send,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Pagate',
       value: String(stats.paidCount),
       icon: CheckCircle,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
@@ -226,8 +226,8 @@ export default function InvoicesPage() {
       <header>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Fatture</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Fatture</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci fatture e documenti fiscali
             </p>
           </div>
@@ -259,13 +259,13 @@ export default function InvoicesPage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -278,7 +278,7 @@ export default function InvoicesPage() {
             <AppleCardContent>
               <div className='flex flex-col sm:flex-row gap-4'>
                 <div className='relative flex-1'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <Input
                     placeholder='Cerca per numero o cliente...'
                     aria-label='Cerca fatture'
@@ -288,11 +288,11 @@ export default function InvoicesPage() {
                   />
                 </div>
                 <div className='relative'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                   <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value as InvoiceStatus)}
-                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {statusOptions.map(opt => (
                       <option key={opt.value} value={opt.value}>
@@ -310,15 +310,15 @@ export default function InvoicesPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Fatture
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {invoicesError || statsError ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare le fatture
                   </p>
                   <AppleButton
@@ -334,12 +334,12 @@ export default function InvoicesPage() {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : filteredInvoices.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessuna fattura trovata. Crea la prima fattura.
                   </p>
                   <AppleButton
@@ -362,21 +362,21 @@ export default function InvoicesPage() {
                     return (
                       <motion.div
                         key={inv.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
                         transition={{ duration: 0.2 }}
                       >
                         <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                            <FileText className='h-6 w-6 text-apple-blue' />
+                          <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                            <FileText className='h-6 w-6 text-[var(--brand)]' />
                           </div>
                           <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {inv.number || `#${inv.id.slice(0, 8)}`}
                             </p>
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {inv.customerName} &bull; Scadenza: {new Date(inv.dueDate).toLocaleDateString('it-IT')}
                             </p>
                           </div>
@@ -387,10 +387,10 @@ export default function InvoicesPage() {
                           >
                             {status.label}
                           </span>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[100px] text-right'>
+                          <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] min-w-[100px] text-right'>
                             {formatCurrency(inv.total)}
                           </p>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
                             {new Date(inv.createdAt).toLocaleDateString('it-IT')}
                           </p>
                           <div className='flex items-center gap-2'>

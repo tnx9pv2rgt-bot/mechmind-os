@@ -46,7 +46,7 @@ export function Hero(): React.ReactElement {
   }
 
   return (
-    <section className="relative overflow-hidden bg-white dark:bg-[var(--surface-primary)]">
+    <section className="relative overflow-hidden bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]">
       {/* Subtle background */}
       <div
         aria-hidden="true"
@@ -63,7 +63,7 @@ export function Hero(): React.ReactElement {
           custom={0.1}
         >
           Il gestionale per officine{' '}
-          <span className="text-[var(--text-primary)] dark:text-white underline decoration-[var(--border-default)] dark:decoration-[var(--border-default)] underline-offset-4">
+          <span className="text-[var(--text-primary)] dark:text-[var(--text-on-brand)] underline decoration-[var(--border-default)] dark:decoration-[var(--border-default)] underline-offset-4">
             che funziona davvero.
           </span>
         </motion.h1>
@@ -90,7 +90,7 @@ export function Hero(): React.ReactElement {
         >
           <Link
             href="/auth/register"
-            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)] bg-white px-8 text-base font-semibold text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
+            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] px-8 text-base font-semibold text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
           >
             Prova gratis &rarr;
           </Link>
@@ -98,7 +98,7 @@ export function Hero(): React.ReactElement {
             type="button"
             onClick={handleStartDemo}
             disabled={isDemoLoading}
-            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)] bg-white px-8 text-base font-medium text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
+            className="inline-flex h-14 min-w-[220px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] px-8 text-base font-medium text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
           >
             {isDemoLoading ? (
               <>
@@ -129,7 +129,7 @@ export function Hero(): React.ReactElement {
             type="button"
             onClick={handleStartDemo}
             disabled={isDemoLoading}
-            className="min-h-[44px] flex items-center text-sm font-medium text-[var(--text-tertiary)] underline decoration-[var(--border-default)] underline-offset-2 transition-colors hover:text-[var(--text-primary)] dark:text-[var(--text-secondary)] dark:decoration-[var(--border-default)] dark:hover:text-white"
+            className="min-h-[44px] flex items-center text-sm font-medium text-[var(--text-tertiary)] underline decoration-[var(--border-default)] underline-offset-2 transition-colors hover:text-[var(--text-primary)] dark:text-[var(--text-secondary)] dark:decoration-[var(--border-default)] dark:hover:text-[var(--text-on-brand)]"
           >
             Prova la demo live &rarr;
           </button>
@@ -142,7 +142,7 @@ export function Hero(): React.ReactElement {
           initial="hidden"
           animate="visible"
         >
-          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-white shadow-2xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface-secondary)] shadow-2xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
             {/* Browser chrome */}
             <div className="flex items-center gap-2 border-b border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-3 dark:border-[var(--border-default)] dark:bg-[var(--surface-secondary)]">
               <div className="flex gap-1.5">
@@ -209,8 +209,8 @@ export function Hero(): React.ReactElement {
               key={badge.label}
               className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] px-3 py-1.5 dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]"
             >
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500/10 dark:bg-green-400/10">
-                <svg className="h-3 w-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--status-success-subtle)]0/10 dark:bg-[var(--status-success)]/10">
+                <svg className="h-3 w-3 text-[var(--status-success)] dark:text-[var(--status-success)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>

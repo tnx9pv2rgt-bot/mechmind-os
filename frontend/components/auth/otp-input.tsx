@@ -130,7 +130,7 @@ export function OtpInput({
             className={[
               'h-14 w-12 rounded-xl border text-center text-xl font-normal',
               'outline-none transition-all duration-150',
-              'bg-[var(--surface-elevated)] text-white',
+              'bg-[var(--surface-elevated)] text-[var(--text-on-brand)]',
               'border-[var(--border-strong)]',
               'disabled:cursor-not-allowed disabled:opacity-50',
               'placeholder:text-[var(--text-tertiary)]',

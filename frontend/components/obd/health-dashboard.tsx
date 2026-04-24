@@ -51,24 +51,24 @@ export function HealthDashboard({
   onRefresh
 }: HealthDashboardProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600'
-    if (score >= 60) return 'text-yellow-600'
-    if (score >= 40) return 'text-orange-600'
-    return 'text-red-600'
+    if (score >= 80) return 'text-[var(--status-success)]'
+    if (score >= 60) return 'text-[var(--status-warning)]'
+    if (score >= 40) return 'text-[var(--status-warning)]'
+    return 'text-[var(--status-error)]'
   }
 
   const getScoreBg = (score: number) => {
-    if (score >= 80) return 'bg-green-600'
-    if (score >= 60) return 'bg-yellow-600'
-    if (score >= 40) return 'bg-orange-600'
-    return 'bg-red-600'
+    if (score >= 80) return 'bg-[var(--status-success)]'
+    if (score >= 60) return 'bg-[var(--status-warning)]'
+    if (score >= 40) return 'bg-[var(--status-warning)]'
+    return 'bg-[var(--status-error)]'
   }
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'improving': return <TrendingUp className="h-5 w-5 text-green-600" />
-      case 'degrading': return <TrendingDown className="h-5 w-5 text-red-600" />
-      default: return <Minus className="h-5 w-5 text-gray-400" />
+      case 'improving': return <TrendingUp className="h-5 w-5 text-[var(--status-success)]" />
+      case 'degrading': return <TrendingDown className="h-5 w-5 text-[var(--status-error)]" />
+      default: return <Minus className="h-5 w-5 text-[var(--text-tertiary)]" />
     }
   }
 
@@ -81,13 +81,13 @@ export function HealthDashboard({
   return (
     <div className="space-y-6">
       {/* Connection Status Bar */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-[var(--surface-secondary)] rounded-lg">
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-3 h-3 rounded-full animate-pulse",
-            connectionStatus === 'connected' ? "bg-green-500" :
-            connectionStatus === 'connecting' ? "bg-yellow-500" :
-            "bg-red-500"
+            connectionStatus === 'connected' ? "bg-[var(--status-success-subtle)]0" :
+            connectionStatus === 'connecting' ? "bg-[var(--status-warning)]/100" :
+            "bg-[var(--status-error-subtle)]0"
           )} />
           <span className="font-medium">
             {connectionStatus === 'connected' ? 'OBD-II Connesso' :
@@ -95,7 +95,7 @@ export function HealthDashboard({
              'OBD-II Disconnesso'}
           </span>
           {connectionStatus === 'connected' && (
-            <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">
+            <Badge variant="outline" className="text-[var(--status-success)] border-[var(--status-success)]/30 bg-[var(--status-success-subtle)]">
               <Wifi className="h-3 w-3 mr-1" />
               Live
             </Badge>
@@ -127,7 +127,7 @@ export function HealthDashboard({
         {/* Overall Score */}
         <Card className="col-span-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Health Score Generale</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)]">Health Score Generale</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center py-6">
@@ -157,13 +157,13 @@ export function HealthDashboard({
                   <span className={cn("text-4xl font-bold", getScoreColor(healthScore.overall))}>
                     {healthScore.overall}
                   </span>
-                  <span className="text-sm text-gray-500">/ 100</span>
+                  <span className="text-sm text-[var(--text-tertiary)]">/ 100</span>
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-center gap-2">
               {getTrendIcon(healthScore.trend)}
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-[var(--text-secondary)]">
                 {healthScore.trend === 'improving' ? 'In miglioramento' :
                  healthScore.trend === 'degrading' ? 'In peggioramento' : 'Stabile'}
               </span>
@@ -174,7 +174,7 @@ export function HealthDashboard({
         {/* Component Scores */}
         <Card className="col-span-8">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Punteggi per Componente</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)]">Punteggi per Componente</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
@@ -189,7 +189,7 @@ export function HealthDashboard({
                 <div key={key} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-gray-500" />
+                      <Icon className="h-4 w-4 text-[var(--text-tertiary)]" />
                       <span className="text-sm">{label}</span>
                     </div>
                     <span className={cn("text-sm font-medium", getScoreColor(value))}>
@@ -220,14 +220,14 @@ export function HealthDashboard({
         <TabsContent value="live" className="mt-4">
           <div className="grid grid-cols-4 gap-4">
             {[
-              { pid: '010C', label: 'RPM Motore', icon: Gauge, color: 'text-blue-600' },
-              { pid: '010D', label: 'Velocità', icon: Car, color: 'text-green-600' },
-              { pid: '0105', label: 'Temp. Refrigerante', icon: Thermometer, color: 'text-orange-600' },
-              { pid: '0111', label: 'Farfalla', icon: Activity, color: 'text-purple-600' },
-              { pid: '0104', label: 'Carico Motore', icon: Activity, color: 'text-red-600' },
-              { pid: '0110', label: 'Flusso Aria', icon: Wind, color: 'text-cyan-600' },
-              { pid: '0142', label: 'Voltaggio', icon: Zap, color: 'text-yellow-600' },
-              { pid: '012F', label: 'Carburante', icon: Gauge, color: 'text-indigo-600' },
+              { pid: '010C', label: 'RPM Motore', icon: Gauge, color: 'text-[var(--status-info)]' },
+              { pid: '010D', label: 'Velocità', icon: Car, color: 'text-[var(--status-success)]' },
+              { pid: '0105', label: 'Temp. Refrigerante', icon: Thermometer, color: 'text-[var(--status-warning)]' },
+              { pid: '0111', label: 'Farfalla', icon: Activity, color: 'text-[var(--brand)]' },
+              { pid: '0104', label: 'Carico Motore', icon: Activity, color: 'text-[var(--status-error)]' },
+              { pid: '0110', label: 'Flusso Aria', icon: Wind, color: 'text-[var(--status-info)]' },
+              { pid: '0142', label: 'Voltaggio', icon: Zap, color: 'text-[var(--status-warning)]' },
+              { pid: '012F', label: 'Carburante', icon: Gauge, color: 'text-[var(--brand)]' },
             ].map(({ pid, label, icon: Icon, color }) => {
               const value = getLiveValue(pid)
               return (
@@ -238,10 +238,10 @@ export function HealthDashboard({
                       {connectionStatus === 'connected' && value !== undefined ? (
                         <span className="text-2xl font-bold">{Math.round(value)}</span>
                       ) : (
-                        <span className="text-2xl font-bold text-gray-300">--</span>
+                        <span className="text-2xl font-bold text-[var(--text-tertiary)]">--</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">{label}</p>
+                    <p className="text-sm text-[var(--text-tertiary)] mt-2">{label}</p>
                   </CardContent>
                 </Card>
               )
@@ -252,11 +252,11 @@ export function HealthDashboard({
         <TabsContent value="alerts" className="mt-4">
           <div className="space-y-4">
             {alerts.length === 0 ? (
-              <Card className="bg-green-50 border-green-200">
+              <Card className="bg-[var(--status-success-subtle)] border-[var(--status-success)]/30">
                 <CardContent className="p-6 text-center">
-                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-green-800">Nessun Problema Previsto</h3>
-                  <p className="text-green-600 mt-2">
+                  <CheckCircle className="h-12 w-12 text-[var(--status-success)] mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-[var(--status-success)]">Nessun Problema Previsto</h3>
+                  <p className="text-[var(--status-success)] mt-2">
                     I modelli ML non hanno rilevato anomalie nei dati OBD
                   </p>
                 </CardContent>
@@ -267,16 +267,16 @@ export function HealthDashboard({
                   key={alert.id} 
                   className={cn(
                     "border-l-4",
-                    alert.severity === 'critical' ? "border-l-red-500 bg-red-50" :
-                    alert.severity === 'high' ? "border-l-orange-500 bg-orange-50" :
-                    alert.severity === 'medium' ? "border-l-yellow-500 bg-yellow-50" :
-                    "border-l-blue-500 bg-blue-50"
+                    alert.severity === 'critical' ? "border-l-red-500 bg-[var(--status-error-subtle)]" :
+                    alert.severity === 'high' ? "border-l-orange-500 bg-[var(--status-warning)]/5" :
+                    alert.severity === 'medium' ? "border-l-yellow-500 bg-[var(--status-warning)]/10" :
+                    "border-l-blue-500 bg-[var(--status-info-subtle)]"
                   )}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Brain className="h-5 w-5 text-purple-600" />
+                        <Brain className="h-5 w-5 text-[var(--brand)]" />
                         <CardTitle className="text-lg">{alert.component}</CardTitle>
                         <Badge variant={
                           alert.severity === 'critical' ? 'destructive' :
@@ -286,7 +286,7 @@ export function HealthDashboard({
                           {alert.severity.toUpperCase()}
                         </Badge>
                       </div>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-[var(--text-tertiary)]">
                         Confidenza: {Math.round(alert.confidence * 100)}%
                       </span>
                     </div>
@@ -295,23 +295,23 @@ export function HealthDashboard({
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-500">Probabilità guasto:</span>
+                        <span className="text-[var(--text-tertiary)]">Probabilità guasto:</span>
                         <p className="font-medium">{Math.round(alert.probability * 100)}%</p>
                       </div>
                       <div>
-                        <span className="text-gray-500">Stima costo:</span>
+                        <span className="text-[var(--text-tertiary)]">Stima costo:</span>
                         <p className="font-medium">€{alert.estimatedRepairCost.min} - €{alert.estimatedRepairCost.max}</p>
                       </div>
                       {alert.predictedFailureMileage && (
                         <div>
-                          <span className="text-gray-500">Previsto tra:</span>
+                          <span className="text-[var(--text-tertiary)]">Previsto tra:</span>
                           <p className="font-medium">{alert.predictedFailureMileage.toLocaleString()} km</p>
                         </div>
                       )}
                     </div>
-                    <div className="mt-4 p-3 bg-white rounded border">
+                    <div className="mt-4 p-3 bg-[var(--surface-secondary)] rounded border">
                       <span className="text-sm font-medium">Azione consigliata:</span>
-                      <p className="text-sm text-gray-600 mt-1">{alert.recommendedAction}</p>
+                      <p className="text-sm text-[var(--text-secondary)] mt-1">{alert.recommendedAction}</p>
                     </div>
                   </CardContent>
                 </Card>

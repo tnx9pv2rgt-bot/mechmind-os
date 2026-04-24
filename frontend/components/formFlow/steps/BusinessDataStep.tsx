@@ -158,21 +158,21 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-4">
-          <Building2 className="w-6 h-6 text-purple-600" />
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-[var(--brand)]/10 rounded-xl mb-4">
+          <Building2 className="w-6 h-6 text-[var(--brand)]" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
           Dati aziendali
         </h2>
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           Inserisci le informazioni della tua azienda
         </p>
       </div>
 
       {/* Country Selection */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Paese <span className="text-red-500">*</span>
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+          Paese <span className="text-[var(--status-error)]">*</span>
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {countries.map((country) => (
@@ -183,8 +183,8 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
               className={cn(
                 'px-3 py-2 rounded-lg text-sm border-2 transition-all',
                 localAnswers.country === country.code
-                  ? 'border-purple-500 bg-purple-50 text-purple-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-[var(--brand)] bg-[var(--brand)]/5 text-[var(--brand)]'
+                  : 'border-[var(--border-default)] hover:border-[var(--border-strong)]'
               )}
             >
               <span className="mr-1">{country.flag}</span>
@@ -196,29 +196,29 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
 
       {/* Company Name */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Ragione sociale <span className="text-red-500">*</span>
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+          Ragione sociale <span className="text-[var(--status-error)]">*</span>
         </label>
         <div className="relative">
-          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
           <input
             type="text"
             value={localAnswers.companyName || ''}
             onChange={(e) => handleChange('companyName', e.target.value)}
             placeholder="Nome della tua azienda"
-            className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/20 transition-all"
           />
         </div>
       </div>
 
       {/* VAT Number with verification */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
           {selectedCountry?.code === 'US' ? 'Tax ID / EIN' : 'Partita IVA'}
-          <span className="text-red-500">*</span>
+          <span className="text-[var(--status-error)]">*</span>
         </label>
         <div className="relative">
-          <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
           <input
             type="text"
             value={localAnswers.vatNumber || ''}
@@ -229,16 +229,16 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
             }
             className={cn(
               'w-full pl-10 pr-12 py-3 rounded-xl border-2 transition-all',
-              vatError && 'border-red-300 bg-red-50',
-              vatSuccess && 'border-green-300 bg-green-50',
-              !vatError && !vatSuccess && 'border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100'
+              vatError && 'border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]',
+              vatSuccess && 'border-[var(--status-success)]/30 bg-[var(--status-success-subtle)]',
+              !vatError && !vatSuccess && 'border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/20'
             )}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             {isVerifyingVAT ? (
-              <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+              <Loader2 className="w-5 h-5 text-[var(--brand)] animate-spin" />
             ) : localAnswers.vatValid ? (
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-[var(--status-success)]" />
             ) : null}
           </div>
         </div>
@@ -246,7 +246,7 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
         <AnimatePresence>
           {vatError && (
             <motion.p
-              className="mt-2 text-sm text-red-600 flex items-center gap-1"
+              className="mt-2 text-sm text-[var(--status-error)] flex items-center gap-1"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -257,7 +257,7 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
           )}
           {vatSuccess && (
             <motion.p
-              className="mt-2 text-sm text-green-600 flex items-center gap-1"
+              className="mt-2 text-sm text-[var(--status-success)] flex items-center gap-1"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -271,8 +271,8 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
 
       {/* Business Type */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tipo di società <span className="text-red-500">*</span>
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+          Tipo di società <span className="text-[var(--status-error)]">*</span>
         </label>
         <div className="space-y-2">
           {businessTypes.map((type) => (
@@ -283,16 +283,16 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
               className={cn(
                 'w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left',
                 localAnswers.businessType === type.id
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-[var(--brand)] bg-[var(--brand)]/5'
+                  : 'border-[var(--border-default)] hover:border-[var(--border-strong)]'
               )}
             >
               <div>
-                <div className="font-medium text-gray-900">{type.label}</div>
-                <div className="text-sm text-gray-500">{type.description}</div>
+                <div className="font-medium text-[var(--text-primary)]">{type.label}</div>
+                <div className="text-sm text-[var(--text-tertiary)]">{type.description}</div>
               </div>
               {localAnswers.businessType === type.id && (
-                <Check className="w-5 h-5 text-purple-500" />
+                <Check className="w-5 h-5 text-[var(--brand)]" />
               )}
             </button>
           ))}
@@ -302,17 +302,17 @@ export const BusinessDataStep: React.FC<BusinessDataStepProps> = ({
       {/* International warning */}
       {localAnswers.country && localAnswers.country !== 'IT' && (
         <motion.div
-          className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6"
+          className="p-4 bg-[var(--status-warning)]/5 border border-[var(--status-warning)]/30 rounded-xl mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="flex items-start gap-3">
-            <Globe className="w-5 h-5 text-amber-600 mt-0.5" />
+            <Globe className="w-5 h-5 text-[var(--status-warning)] mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-900">
+              <p className="text-sm font-medium text-[var(--status-warning)]">
                 Azienda internazionale rilevata
               </p>
-              <p className="text-sm text-amber-700 mt-1">
+              <p className="text-sm text-[var(--status-warning)] mt-1">
                 Ti verranno richiesti dati aggiuntivi per la fatturazione internazionale.
               </p>
             </div>

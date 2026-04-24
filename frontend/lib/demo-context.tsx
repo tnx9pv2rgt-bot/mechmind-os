@@ -91,13 +91,13 @@ function DemoExpiredModal() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-6'
+      className='fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--surface-primary)]/80 backdrop-blur-sm px-6'
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className='relative w-full max-w-[420px] rounded-3xl bg-white dark:bg-[var(--surface-elevated)] p-8 text-center'
+        className='relative w-full max-w-[420px] rounded-3xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] p-8 text-center'
       >
         <div className='mb-6'>
           <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--text-primary)] dark:bg-[var(--text-primary)]'>
@@ -106,11 +106,11 @@ function DemoExpiredModal() {
           <h2 className='text-[24px] font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] tracking-tight'>
             La demo è terminata
           </h2>
-          <p className='mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed'>
+          <p className='mt-2 text-[15px] text-[var(--text-[var(--text-secondary)])] leading-relaxed'>
             Hai provato MechMind OS per 1 ora. Registrati gratis per continuare con 7 giorni di
             trial completo.
           </p>
-          <p className='mt-3 text-[13px] text-[var(--text-secondary)]'>
+          <p className='mt-3 text-[13px] text-[var(--text-[var(--text-secondary)])]'>
             &#x1F527; 850+ officine usano già MechMind OS
           </p>
         </div>
@@ -121,7 +121,7 @@ function DemoExpiredModal() {
               setDemoMode(false);
               router.push('/auth/register');
             }}
-            className='flex w-full items-center justify-center rounded-full bg-[#2f2f2f] text-white h-[52px] text-[15px] font-semibold hover:bg-[#3a3a3a] transition-colors'
+            className='flex w-full items-center justify-center rounded-full bg-[#2f2f2f] text-[var(--text-on-brand)] h-[52px] text-[15px] font-semibold hover:bg-[#3a3a3a] transition-colors'
           >
             Registrati gratis — 7 giorni trial
           </button>
@@ -130,7 +130,7 @@ function DemoExpiredModal() {
               setDemoMode(false);
               router.push('/auth');
             }}
-            className='text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
+            className='text-[13px] font-medium text-[var(--text-[var(--text-secondary)])] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
           >
             Torna al login
           </button>
@@ -150,11 +150,11 @@ function DemoExitIntent({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className='fixed bottom-4 right-4 z-[9997] max-w-sm w-full shadow-2xl rounded-xl border p-4 bg-white dark:bg-[var(--surface-elevated)] border-[var(--border-default)] dark:border-[var(--border-default)]'
+      className='fixed bottom-4 right-4 z-[9997] max-w-sm w-full shadow-2xl rounded-xl border p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border-[var(--border-default)] dark:border-[var(--border-default)]'
     >
       <button
         onClick={onClose}
-        className='absolute top-2 right-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] text-lg transition-colors'
+        className='absolute top-2 right-3 text-[var(--text-[var(--text-secondary)])] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] text-lg transition-colors'
         aria-label='Chiudi'
       >
         &times;
@@ -162,12 +162,12 @@ function DemoExitIntent({ onClose }: { onClose: () => void }) {
       <p className='font-semibold text-[14px] text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
         Aspetta! Non perdere i tuoi progressi
       </p>
-      <p className='text-[13px] text-[var(--text-secondary)] mb-3'>
+      <p className='text-[13px] text-[var(--text-[var(--text-secondary)])] mb-3'>
         Registrati gratis e continua da dove eri rimasto. 7 giorni senza carta di credito.
       </p>
       <a
         href='/auth/register'
-        className='flex w-full items-center justify-center rounded-full bg-neutral-500 dark:bg-neutral-600 text-white dark:text-white h-[36px] text-[13px] font-semibold hover:bg-neutral-600 dark:hover:bg-neutral-700 transition-colors'
+        className='flex w-full items-center justify-center rounded-full bg-[var(--surface-hover)] dark:bg-[var(--surface-active)] text-[var(--text-on-brand)] dark:text-[var(--text-on-brand)] h-[36px] text-[13px] font-semibold hover:bg-[var(--surface-active)] dark:hover:bg-[var(--surface-active)] transition-colors'
       >
         Registrati gratis
       </a>

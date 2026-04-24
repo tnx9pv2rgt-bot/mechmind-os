@@ -99,17 +99,17 @@ export default function PortalTrackingPage() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)]'>
-        <Loader2 className='h-8 w-8 animate-spin text-blue-500' />
+      <div className='flex items-center justify-center min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]'>
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--status-info)]' />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)] p-8 text-center'>
-        <AlertCircle className='h-12 w-12 text-gray-400 dark:text-[var(--text-secondary)] mb-4' />
-        <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>{error || 'Ordine non trovato'}</p>
+      <div className='flex flex-col items-center justify-center min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] p-8 text-center'>
+        <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4' />
+        <p className='text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]'>{error || 'Ordine non trovato'}</p>
       </div>
     );
   }
@@ -117,19 +117,19 @@ export default function PortalTrackingPage() {
   const activeStep = getActiveStepIndex(data.status);
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)]'>
+    <div className='min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]'>
       {/* Header */}
-      <header className='bg-white dark:bg-[var(--surface-secondary)] border-b border-gray-200 dark:border-[var(--border-default)]'>
+      <header className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-secondary)] border-b border-[var(--border-default)] dark:border-[var(--border-default)]'>
         <div className='max-w-2xl mx-auto px-6 py-6'>
           <div className='flex items-center gap-4'>
-            <div className='w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
-              <Car className='h-6 w-6 text-blue-500' />
+            <div className='w-12 h-12 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30 flex items-center justify-center'>
+              <Car className='h-6 w-6 text-[var(--status-info)]' />
             </div>
             <div>
-              <h1 className='text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]'>
+              <h1 className='text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {data.vehicleMake} {data.vehicleModel}
               </h1>
-              <p className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>
+              <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Targa {data.vehiclePlate} — Ordine {data.woNumber}
               </p>
             </div>
@@ -139,8 +139,8 @@ export default function PortalTrackingPage() {
 
       <main className='max-w-2xl mx-auto px-6 py-8'>
         {/* Timeline */}
-        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
-          <h2 className='text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-6'>
+        <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+          <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-6'>
             Stato del veicolo
           </h2>
 
@@ -179,7 +179,7 @@ export default function PortalTrackingPage() {
                   {index < steps.length - 1 && (
                     <div
                       className={`absolute left-5 top-10 w-0.5 h-full ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-[var(--border-default)]'
+                        isCompleted ? 'bg-[var(--status-success)]' : 'bg-[var(--border-default)] dark:bg-[var(--border-default)]'
                       }`}
                     />
                   )}
@@ -188,10 +188,10 @@ export default function PortalTrackingPage() {
                   <div
                     className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                       isCompleted
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)]'
                         : isCurrent
-                          ? 'bg-blue-500 text-white animate-pulse'
-                          : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-400 dark:text-[var(--text-secondary)]'
+                          ? 'bg-[var(--status-info-subtle)]0 text-[var(--text-on-brand)] animate-pulse'
+                          : 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                     }`}
                   >
                     {isCompleted ? (
@@ -206,14 +206,14 @@ export default function PortalTrackingPage() {
                     <p
                       className={`font-medium ${
                         isFuture
-                          ? 'text-gray-400 dark:text-[var(--text-secondary)]'
-                          : 'text-gray-900 dark:text-[var(--text-primary)]'
+                          ? 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
+                          : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       }`}
                     >
                       {step.label}
                     </p>
                     {historyEntry && (
-                      <p className='text-xs text-gray-500 dark:text-[var(--text-secondary)] mt-0.5'>
+                      <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5'>
                         {new Date(historyEntry.timestamp).toLocaleDateString('it-IT', {
                           day: '2-digit',
                           month: 'long',
@@ -223,7 +223,7 @@ export default function PortalTrackingPage() {
                       </p>
                     )}
                     {isCurrent && extraMessage && (
-                      <p className='text-sm text-blue-600 dark:text-blue-400 mt-1'>
+                      <p className='text-sm text-[var(--status-info)] dark:text-[var(--status-info)] mt-1'>
                         {extraMessage}
                       </p>
                     )}
@@ -231,7 +231,7 @@ export default function PortalTrackingPage() {
                     {isCompleted && step.key === 'INSPECTION' && data.inspectionId && (
                       <a
                         href={`/portal/inspections/${data.inspectionId}`}
-                        className='text-sm text-blue-500 hover:underline mt-1 inline-block'
+                        className='text-sm text-[var(--status-info)] hover:underline mt-1 inline-block'
                       >
                         Vedi report
                       </a>
@@ -239,7 +239,7 @@ export default function PortalTrackingPage() {
                     {isCompleted && step.key === 'ESTIMATE_SENT' && data.estimateId && (
                       <a
                         href={`/portal/estimates/${data.estimateId}`}
-                        className='text-sm text-blue-500 hover:underline mt-1 inline-block'
+                        className='text-sm text-[var(--status-info)] hover:underline mt-1 inline-block'
                       >
                         Vedi preventivo
                       </a>
@@ -252,13 +252,13 @@ export default function PortalTrackingPage() {
 
           {/* Estimated completion */}
           {data.estimatedCompletion && activeStep < 7 && (
-            <div className='mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center gap-3'>
-              <Clock className='h-5 w-5 text-blue-500' />
+            <div className='mt-4 p-4 bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] rounded-xl flex items-center gap-3'>
+              <Clock className='h-5 w-5 text-[var(--status-info)]' />
               <div>
-                <p className='text-sm font-medium text-blue-700 dark:text-blue-300'>
+                <p className='text-sm font-medium text-[var(--status-info)] dark:text-[var(--status-info)]'>
                   Stima completamento
                 </p>
-                <p className='text-sm text-blue-600 dark:text-blue-400'>
+                <p className='text-sm text-[var(--status-info)] dark:text-[var(--status-info)]'>
                   {new Date(data.estimatedCompletion).toLocaleDateString('it-IT', {
                     weekday: 'long',
                     day: 'numeric',
@@ -274,8 +274,8 @@ export default function PortalTrackingPage() {
 
         {/* Check-in photos */}
         {(data.checkInPhotos || []).length > 0 && (
-          <div className='mt-6 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
-            <h3 className='font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-4'>Foto check-in</h3>
+          <div className='mt-6 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+            <h3 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>Foto check-in</h3>
             <div className='grid grid-cols-2 gap-2'>
               {data.checkInPhotos.slice(0, 4).map((url, i) => (
                 <img
@@ -290,7 +290,7 @@ export default function PortalTrackingPage() {
         )}
 
         {/* Auto-refresh notice */}
-        <p className='text-center text-xs text-gray-400 dark:text-[var(--text-secondary)] mt-6'>
+        <p className='text-center text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-6'>
           Questa pagina si aggiorna automaticamente ogni 30 secondi
         </p>
       </main>

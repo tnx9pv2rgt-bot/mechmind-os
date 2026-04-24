@@ -42,11 +42,11 @@ export function Header(): React.ReactElement {
   }
 
   return (
-    <header className="sticky top-0 z-20 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 gap-4">
+    <header className="sticky top-0 z-20 h-16 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border-b border-[var(--border-default)] dark:border-[var(--border-default)] flex items-center px-4 gap-4">
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
+        className="p-2 rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] lg:hidden"
         aria-label="Apri menu"
       >
         <Menu className="h-5 w-5" />
@@ -67,36 +67,36 @@ export function Header(): React.ReactElement {
           onClick={toggleCommandPalette}
           className={cn(
             'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
-            'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
-            'border border-gray-200 dark:border-gray-700'
+            'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]',
+            'border border-[var(--border-default)] dark:border-[var(--border-default)]'
           )}
           aria-label="Cerca"
         >
           <Search className="h-4 w-4" />
-          <span className="hidden md:inline text-gray-400 dark:text-gray-500">Cerca...</span>
-          <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-mono text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 rounded">
+          <span className="hidden md:inline text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Cerca...</span>
+          <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-mono text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded">
             <span className="text-xs">&#8984;</span>K
           </kbd>
         </button>
 
         {/* Notification bell */}
         <button
-          className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="relative p-2 rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
           aria-label="Notifiche"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--status-error-subtle)]0 rounded-full" />
         </button>
 
         {/* User dropdown */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button
-              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
               aria-label="Menu utente"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white text-xs font-semibold">U</span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center">
+                <span className="text-[var(--text-on-brand)] text-xs font-semibold">U</span>
               </div>
             </button>
           </DropdownMenu.Trigger>
@@ -105,7 +105,7 @@ export function Header(): React.ReactElement {
             <DropdownMenu.Content
               className={cn(
                 'z-50 min-w-[220px] rounded-xl p-1.5',
-                'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+                'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border border-[var(--border-default)] dark:border-[var(--border-default)]',
                 'shadow-apple-lg',
                 'animate-in fade-in slide-in-from-top-2 duration-200'
               )}
@@ -114,15 +114,15 @@ export function Header(): React.ReactElement {
             >
               {/* User info */}
               <div className="px-3 py-2 mb-1">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Utente</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">utente@officina.it</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Utente</p>
+                <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">utente@officina.it</p>
               </div>
 
-              <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+              <DropdownMenu.Separator className="h-px bg-[var(--border-default)] dark:bg-[var(--border-default)] my-1" />
 
               {/* Profile */}
               <DropdownMenu.Item
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 outline-none focus:bg-gray-100 dark:focus:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] rounded-lg cursor-pointer hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] outline-none focus:bg-[var(--surface-secondary)] dark:focus:bg-[var(--surface-active)] transition-colors"
                 onSelect={() => router.push('/dashboard/settings')}
               >
                 <User className="h-4 w-4" />
@@ -131,18 +131,18 @@ export function Header(): React.ReactElement {
 
               {/* Subscription */}
               <DropdownMenu.Item
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 outline-none focus:bg-gray-100 dark:focus:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] rounded-lg cursor-pointer hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] outline-none focus:bg-[var(--surface-secondary)] dark:focus:bg-[var(--surface-active)] transition-colors"
                 onSelect={() => router.push('/dashboard/subscription')}
               >
                 <CreditCard className="h-4 w-4" />
                 Abbonamento
               </DropdownMenu.Item>
 
-              <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+              <DropdownMenu.Separator className="h-px bg-[var(--border-default)] dark:bg-[var(--border-default)] my-1" />
 
               {/* Theme sub-menu */}
               <DropdownMenu.Sub>
-                <DropdownMenu.SubTrigger className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 outline-none focus:bg-gray-100 dark:focus:bg-gray-700 transition-colors data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700">
+                <DropdownMenu.SubTrigger className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] rounded-lg cursor-pointer hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] outline-none focus:bg-[var(--surface-secondary)] dark:focus:bg-[var(--surface-active)] transition-colors data-[state=open]:bg-[var(--surface-secondary)] dark:data-[state=open]:bg-[var(--surface-active)]">
                   {theme === 'dark' ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                   Tema
                 </DropdownMenu.SubTrigger>
@@ -151,7 +151,7 @@ export function Header(): React.ReactElement {
                   <DropdownMenu.SubContent
                     className={cn(
                       'z-50 min-w-[160px] rounded-xl p-1.5',
-                      'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+                      'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border border-[var(--border-default)] dark:border-[var(--border-default)]',
                       'shadow-apple-lg',
                       'animate-in fade-in slide-in-from-left-2 duration-200'
                     )}
@@ -162,14 +162,14 @@ export function Header(): React.ReactElement {
                       return (
                         <DropdownMenu.Item
                           key={option.value}
-                          className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 outline-none focus:bg-gray-100 dark:focus:bg-gray-700 transition-colors"
+                          className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] rounded-lg cursor-pointer hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] outline-none focus:bg-[var(--surface-secondary)] dark:focus:bg-[var(--surface-active)] transition-colors"
                           onSelect={() => setTheme(option.value)}
                         >
                           <div className="flex items-center gap-2">
                             <Icon className="h-4 w-4" />
                             {option.label}
                           </div>
-                          {theme === option.value && <Check className="h-4 w-4 text-blue-600" />}
+                          {theme === option.value && <Check className="h-4 w-4 text-[var(--status-info)]" />}
                         </DropdownMenu.Item>
                       );
                     })}
@@ -177,11 +177,11 @@ export function Header(): React.ReactElement {
                 </DropdownMenu.Portal>
               </DropdownMenu.Sub>
 
-              <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+              <DropdownMenu.Separator className="h-px bg-[var(--border-default)] dark:bg-[var(--border-default)] my-1" />
 
               {/* Logout */}
               <DropdownMenu.Item
-                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 outline-none focus:bg-red-50 dark:focus:bg-red-950/30 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--status-error)] dark:text-[var(--status-error)] rounded-lg cursor-pointer hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error)]/40/30 outline-none focus:bg-[var(--status-error-subtle)] dark:focus:bg-[var(--status-error)]/40/30 transition-colors"
                 onSelect={handleLogout}
               >
                 <LogOut className="h-4 w-4" />

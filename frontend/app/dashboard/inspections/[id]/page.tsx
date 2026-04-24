@@ -54,11 +54,11 @@ interface InspectionDetail {
 }
 
 const severityConfig: Record<string, { color: string; bg: string; label: string; order: number }> = {
-  CRITICO: { color: 'text-red-700 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/40', label: 'Critico', order: 0 },
-  ALTO: { color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-100 dark:bg-orange-900/40', label: 'Alto', order: 1 },
-  MEDIO: { color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/40', label: 'Medio', order: 2 },
-  BASSO: { color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/40', label: 'Basso', order: 3 },
-  OK: { color: 'text-green-700 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/40', label: 'OK', order: 4 },
+  CRITICO: { color: 'text-[var(--status-error)] dark:text-[var(--status-error)]', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', label: 'Critico', order: 0 },
+  ALTO: { color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', label: 'Alto', order: 1 },
+  MEDIO: { color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', label: 'Medio', order: 2 },
+  BASSO: { color: 'text-[var(--status-info)] dark:text-[var(--status-info)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', label: 'Basso', order: 3 },
+  OK: { color: 'text-[var(--status-success)] dark:text-[var(--status-success)]', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', label: 'OK', order: 4 },
 };
 
 const categoryLabels: Record<string, string> = {
@@ -210,7 +210,7 @@ export default function InspectionDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -218,8 +218,8 @@ export default function InspectionDetailPage() {
   if (error || !inspection) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
-        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
           {error || 'Ispezione non trovata'}
         </p>
         <AppleButton
@@ -275,14 +275,14 @@ export default function InspectionDetailPage() {
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2'>
             <div>
               <div className='flex items-center gap-3'>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Ispezione #{inspection.id.slice(0, 8)}
                 </h1>
                 <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${maxSevCfg.bg} ${maxSevCfg.color}`}>
                   {maxSevCfg.label}
                 </span>
               </div>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 {inspection.vehicle} | {inspection.plate} | {inspection.date}
                 {inspection.inspector !== 'N/D' && ` | Tecnico: ${inspection.inspector}`}
               </p>
@@ -317,7 +317,7 @@ export default function InspectionDetailPage() {
               <AppleButton
                 variant='ghost'
                 size='sm'
-                className='text-red-500 hover:text-red-600'
+                className='text-[var(--status-error)] hover:text-[var(--status-error)]'
                 onClick={() => setDeleteConfirmOpen(true)}
               >
                 Elimina
@@ -328,7 +328,7 @@ export default function InspectionDetailPage() {
       </header>
 
       {/* Tabs */}
-      <div className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white/60 dark:bg-[var(--surface-primary)]/60 backdrop-blur-sm'>
+      <div className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-primary)]/60 backdrop-blur-sm'>
         <div className='px-4 sm:px-8 flex gap-1 overflow-x-auto'>
           {tabs.map(tab => (
             <AppleButton
@@ -338,8 +338,8 @@ export default function InspectionDetailPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`rounded-none border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-apple-blue text-apple-blue'
-                  : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                  ? 'border-[var(--brand)] text-[var(--brand)]'
+                  : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
               }`}
             >
               {tab.label}
@@ -357,21 +357,21 @@ export default function InspectionDetailPage() {
         {/* Vehicle Info Cards */}
         <motion.div className='grid grid-cols-2 sm:grid-cols-4 gap-4' variants={containerVariants}>
           {[
-            { label: 'Veicolo', value: inspection.vehicle, icon: Car, color: 'bg-apple-blue' },
-            { label: 'Targa', value: inspection.plate, icon: Shield, color: 'bg-apple-green' },
-            { label: 'Tecnico', value: inspection.inspector, icon: User, color: 'bg-apple-purple' },
-            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : 'N/D', icon: Clock, color: 'bg-apple-orange' },
+            { label: 'Veicolo', value: inspection.vehicle, icon: Car, color: 'bg-[var(--brand)]' },
+            { label: 'Targa', value: inspection.plate, icon: Shield, color: 'bg-[var(--status-success)]' },
+            { label: 'Tecnico', value: inspection.inspector, icon: User, color: 'bg-[var(--brand)]' },
+            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : 'N/D', icon: Clock, color: 'bg-[var(--status-warning)]' },
           ].map(info => (
             <motion.div key={info.label} variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className='flex items-center gap-3'>
                     <div className={`w-10 h-10 rounded-xl ${info.color} flex items-center justify-center flex-shrink-0`}>
-                      <info.icon className='h-5 w-5 text-white' />
+                      <info.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{info.label}</p>
-                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{info.value}</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{info.label}</p>
+                      <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{info.value}</p>
                     </div>
                   </div>
                 </AppleCardContent>
@@ -388,8 +388,8 @@ export default function InspectionDetailPage() {
                 <AppleCard hover={false}>
                   <AppleCardContent>
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <FileText className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <FileText className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessun elemento registrato
                       </p>
                     </div>
@@ -401,7 +401,7 @@ export default function InspectionDetailPage() {
                 <motion.div key={category} variants={cardVariants}>
                   <AppleCard hover={false}>
                     <AppleCardHeader>
-                      <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {categoryLabels[category] || category}
                       </h2>
                     </AppleCardHeader>
@@ -413,14 +413,14 @@ export default function InspectionDetailPage() {
                             <div
                               key={item.id}
                               className={`flex items-start gap-3 p-3 rounded-xl ${
-                                item.severity === 'CRITICO' ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30' :
-                                item.severity === 'ALTO' ? 'bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/30' :
-                                'bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                                item.severity === 'CRITICO' ? 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error)]/40/10 border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/30' :
+                                item.severity === 'ALTO' ? 'bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/10 border border-[var(--status-warning)]/20 dark:border-[var(--status-warning)]/30' :
+                                'bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                               }`}
                             >
                               <div className='flex-1'>
                                 <div className='flex items-center gap-2 mb-1'>
-                                  <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                                  <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                     {item.name}
                                   </span>
                                   <span className={`text-footnote font-semibold px-2 py-0.5 rounded-full ${sev.bg} ${sev.color}`}>
@@ -428,18 +428,18 @@ export default function InspectionDetailPage() {
                                   </span>
                                 </div>
                                 {item.notes && (
-                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{item.notes}</p>
+                                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{item.notes}</p>
                                 )}
                               </div>
                               {item.photos.length > 0 && (
                                 <div className='flex gap-1'>
                                   {item.photos.slice(0, 3).map((photo, i) => (
-                                    <div key={i} className='w-10 h-10 rounded-lg bg-apple-light-gray dark:bg-[var(--surface-active)] overflow-hidden flex items-center justify-center'>
-                                      <Camera className='w-4 h-4 text-apple-gray' />
+                                    <div key={i} className='w-10 h-10 rounded-lg bg-[var(--surface-secondary)] dark:bg-[var(--surface-active)] overflow-hidden flex items-center justify-center'>
+                                      <Camera className='w-4 h-4 text-[var(--text-tertiary)]' />
                                     </div>
                                   ))}
                                   {item.photos.length > 3 && (
-                                    <div className='w-10 h-10 rounded-lg bg-apple-light-gray dark:bg-[var(--surface-active)] flex items-center justify-center text-xs font-medium text-apple-gray'>
+                                    <div className='w-10 h-10 rounded-lg bg-[var(--surface-secondary)] dark:bg-[var(--surface-active)] flex items-center justify-center text-xs font-medium text-[var(--text-tertiary)]'>
                                       +{item.photos.length - 3}
                                     </div>
                                   )}
@@ -462,15 +462,15 @@ export default function InspectionDetailPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Foto
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 {allPhotos.length === 0 ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <Camera className='h-12 w-12 text-apple-gray/40 mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <Camera className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessuna foto registrata
                     </p>
                   </div>
@@ -479,9 +479,9 @@ export default function InspectionDetailPage() {
                     {allPhotos.map((photo, i) => (
                       <div
                         key={i}
-                        className='aspect-square rounded-xl bg-apple-light-gray dark:bg-[var(--surface-hover)] overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
+                        className='aspect-square rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
                       >
-                        <Camera className='w-8 h-8 text-apple-gray' />
+                        <Camera className='w-8 h-8 text-[var(--text-tertiary)]' />
                       </div>
                     ))}
                   </div>
@@ -498,7 +498,7 @@ export default function InspectionDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Riepilogo per Gravita
                   </h2>
                 </AppleCardHeader>
@@ -513,7 +513,7 @@ export default function InspectionDetailPage() {
                               {severityCounts[sev]}
                             </span>
                           </div>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{cfg.label}</p>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{cfg.label}</p>
                         </div>
                       );
                     })}
@@ -527,8 +527,8 @@ export default function InspectionDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center gap-2'>
-                    <FileText className='h-4 w-4 text-apple-gray' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <FileText className='h-4 w-4 text-[var(--text-tertiary)]' />
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Riepilogo Ispezione
                     </h2>
                   </div>
@@ -536,36 +536,36 @@ export default function InspectionDetailPage() {
                 <AppleCardContent className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Veicolo:</span>{' '}
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.vehicle} ({inspection.plate})</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Veicolo:</span>{' '}
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.vehicle} ({inspection.plate})</span>
                     </div>
                     <div className='text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Data:</span>{' '}
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.date}</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Data:</span>{' '}
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.date}</span>
                     </div>
                     <div className='text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Tecnico:</span>{' '}
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.inspector}</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Tecnico:</span>{' '}
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.inspector}</span>
                     </div>
                     <div className='text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Tipo:</span>{' '}
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{typeLabels[inspection.type] || inspection.type}</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Tipo:</span>{' '}
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{typeLabels[inspection.type] || inspection.type}</span>
                     </div>
                     <div className='text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Km:</span>{' '}
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : 'N/D'}</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Km:</span>{' '}
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : 'N/D'}</span>
                     </div>
                     <div className='text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Elementi totali:</span>{' '}
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{inspection.items.length}</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Elementi totali:</span>{' '}
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.items.length}</span>
                     </div>
                   </div>
 
                   {(severityCounts.CRITICO > 0 || severityCounts.ALTO > 0) && (
-                    <div className='mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30'>
+                    <div className='mt-4 p-3 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error)]/40/10 border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/30'>
                       <div className='flex items-center gap-2 mb-2'>
-                        <AlertTriangle className='w-4 h-4 text-red-500' />
-                        <span className='text-body font-semibold text-red-700 dark:text-red-300'>
+                        <AlertTriangle className='w-4 h-4 text-[var(--status-error)]' />
+                        <span className='text-body font-semibold text-[var(--status-error)] dark:text-[var(--status-error)]'>
                           Elementi che richiedono intervento
                         </span>
                       </div>
@@ -573,7 +573,7 @@ export default function InspectionDetailPage() {
                         {inspection.items
                           .filter(i => i.severity === 'CRITICO' || i.severity === 'ALTO')
                           .map(item => (
-                            <li key={item.id} className='text-footnote text-red-600 dark:text-red-400'>
+                            <li key={item.id} className='text-footnote text-[var(--status-error)] dark:text-[var(--status-error)]'>
                               {item.name} ({severityConfig[item.severity]?.label})
                               {item.notes && ` — ${item.notes}`}
                             </li>
@@ -584,8 +584,8 @@ export default function InspectionDetailPage() {
 
                   {inspection.notes && (
                     <div className='mt-4'>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-1'>Note generali:</p>
-                      <p className='text-body text-apple-dark dark:text-[var(--text-primary)] whitespace-pre-wrap'>{inspection.notes}</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>Note generali:</p>
+                      <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] whitespace-pre-wrap'>{inspection.notes}</p>
                     </div>
                   )}
                 </AppleCardContent>

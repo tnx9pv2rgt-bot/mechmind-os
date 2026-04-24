@@ -59,7 +59,7 @@ export function SortableHeader({ column, children }: { column: { getIsSorted: ()
   const sorted = column.getIsSorted();
   return (
     <button
-      className="flex items-center gap-1.5 hover:text-[var(--text-primary)] dark:hover:text-gray-100 transition-colors -ml-1 px-1 py-0.5 rounded"
+      className="flex items-center gap-1.5 hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors -ml-1 px-1 py-0.5 rounded"
       onClick={() => column.toggleSorting(sorted === 'asc')}
     >
       {children}
@@ -82,7 +82,7 @@ function SkeletonRows({ columns, rows = 5 }: { columns: number; rows?: number })
         <tr key={i} className="border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
           {Array.from({ length: columns }).map((__, j) => (
             <td key={j} className="px-4 py-3.5">
-              <div className="h-4 bg-gray-200 dark:bg-[var(--surface-hover)] rounded animate-pulse" style={{ width: `${60 + Math.random() * 30}%` }} />
+              <div className="h-4 bg-[var(--border-default)] dark:bg-[var(--surface-hover)] rounded animate-pulse" style={{ width: `${60 + Math.random() * 30}%` }} />
             </td>
           ))}
         </tr>
@@ -193,7 +193,7 @@ export function DataTable<TData, TValue>({
               placeholder={searchPlaceholder}
               value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
               onChange={(e) => table.getColumn(searchKey)?.setFilterValue(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--brand)]/20 focus:border-[var(--brand)] transition-all"
+              className="w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--brand)]/20 focus:border-[var(--brand)] transition-all"
             />
             {(table.getColumn(searchKey)?.getFilterValue() as string) && (
               <button
@@ -222,13 +222,13 @@ export function DataTable<TData, TValue>({
               {showColumnMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowColumnMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-[var(--surface-primary)] border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-lg shadow-lg py-1">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-lg shadow-lg py-1">
                     {table.getAllColumns()
                       .filter((c) => c.getCanHide() && c.id !== 'select' && c.id !== 'actions')
                       .map((column) => (
                         <label
                           key={column.id}
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-white dark:hover:bg-[var(--surface-hover)] cursor-pointer"
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] cursor-pointer"
                         >
                           <input
                             type="checkbox"
@@ -259,11 +259,11 @@ export function DataTable<TData, TValue>({
 
       {/* Bulk Actions Bar */}
       {selectedCount > 0 && bulkActions && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-[var(--brand)]/5 dark:bg-[var(--brand)]/10/30 border border-[var(--brand)]/20 dark:border-blue-800 rounded-lg">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-[var(--brand)]/5 dark:bg-[var(--brand)]/10/30 border border-[var(--brand)]/20 dark:border-[var(--status-info)] rounded-lg">
           <span className="text-sm font-medium text-[var(--brand)] dark:text-[var(--brand)]">
             {selectedCount} selezionat{selectedCount === 1 ? 'o' : 'i'}
           </span>
-          <div className="h-4 w-px bg-blue-200 dark:bg-blue-700" />
+          <div className="h-4 w-px bg-[var(--status-info)]/20 dark:bg-[var(--status-info)]" />
           {bulkActions}
           <button
             onClick={() => table.toggleAllRowsSelected(false)}
@@ -275,16 +275,16 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] overflow-hidden bg-white dark:bg-[var(--surface-primary)]">
+      <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] overflow-hidden bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id} className="border-b border-[var(--border-default)] dark:border-[var(--border-default)] bg-white/50 dark:bg-[var(--surface-primary)]/50">
+                <tr key={headerGroup.id} className="border-b border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/50">
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                      className="px-4 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                       style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
                     >
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
@@ -317,7 +317,7 @@ export function DataTable<TData, TValue>({
                       'border-b border-[var(--border-default)] dark:border-[var(--border-default)]/50 transition-colors',
                       row.getIsSelected()
                         ? 'bg-[var(--brand)]/5/50 dark:bg-[var(--brand)]/10/20'
-                        : 'hover:bg-white/50 dark:hover:bg-[var(--surface-hover)]/50',
+                        : 'hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50',
                       onRowClick && 'cursor-pointer'
                     )}
                     onClick={() => onRowClick?.(row.original)}

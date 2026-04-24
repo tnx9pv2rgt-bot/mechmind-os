@@ -75,7 +75,7 @@ export function QRCodeDisplay({
       <div 
         className={`
           relative flex items-center justify-center 
-          rounded-xl bg-white p-4 shadow-inner
+          rounded-xl bg-[var(--surface-secondary)] p-4 shadow-inner
           ${sizeClasses[size]}
         `}
       >
@@ -86,7 +86,7 @@ export function QRCodeDisplay({
         )}
         
         {imageError ? (
-          <div className="flex flex-col items-center justify-center text-red-500">
+          <div className="flex flex-col items-center justify-center text-[var(--status-error)]">
             <AlertCircle className="h-8 w-8" />
             <span className="mt-2 text-xs">Errore caricamento</span>
           </div>
@@ -106,8 +106,8 @@ export function QRCodeDisplay({
 
         {/* Success overlay when copied */}
         {copied && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50">
-            <div className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-green-600">
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-[var(--surface-primary)]/50">
+            <div className="rounded-lg bg-[var(--surface-secondary)] px-4 py-2 text-sm font-medium text-[var(--status-success)]">
               <Check className="mr-1 inline h-4 w-4" />
               Copiato!
             </div>
@@ -120,13 +120,13 @@ export function QRCodeDisplay({
         <div className="flex gap-2">
           <button
             onClick={handleDownload}
-            className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="rounded-lg bg-[var(--surface-secondary)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--border-default)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-hover)]"
           >
             Scarica QR
           </button>
           <button
             onClick={handleCopy}
-            className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="rounded-lg bg-[var(--surface-secondary)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--border-default)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-hover)]"
           >
             {copied ? 'Copiato!' : 'Copia'}
           </button>
@@ -134,7 +134,7 @@ export function QRCodeDisplay({
       )}
 
       {/* Help text */}
-      <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-center text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
         Scansiona con la tua app di autenticazione
       </p>
     </div>

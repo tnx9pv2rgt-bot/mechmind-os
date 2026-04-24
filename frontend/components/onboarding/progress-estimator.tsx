@@ -39,7 +39,7 @@ export function ProgressEstimator({
 
   return (
     <motion.div 
-      className={`bg-white/70 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-gray-100/50 ${className}`}
+      className={`bg-[var(--surface-secondary)]/70 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-[var(--border-default)]/50 ${className}`}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -47,24 +47,24 @@ export function ProgressEstimator({
       {/* Header with step info and time estimate */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-[var(--text-secondary)]">
             Step {currentStep} di {totalSteps}
           </span>
           {isNearComplete && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full"
+              className="px-2 py-0.5 bg-[var(--status-success-subtle)] text-[var(--status-success)] text-xs font-medium rounded-full"
             >
               Quasi fatto!
             </motion.span>
           )}
         </div>
         
-        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+        <div className="flex items-center gap-1.5 text-sm text-[var(--text-tertiary)]">
           {isComplete ? (
             <motion.div 
-              className="flex items-center gap-1.5 text-green-600 font-medium"
+              className="flex items-center gap-1.5 text-[var(--status-success)] font-medium"
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
             >
@@ -88,15 +88,15 @@ export function ProgressEstimator({
       {/* Progress bar container */}
       <div className="relative">
         {/* Background track */}
-        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-3 bg-[var(--surface-secondary)] rounded-full overflow-hidden">
           {/* Main progress fill */}
           <motion.div 
             className={`h-full rounded-full ${
               isComplete 
-                ? "bg-gradient-to-r from-green-400 to-green-500" 
+                ? "bg-gradient-to-r from-[var(--status-success)] to-[var(--status-success)]" 
                 : isNearComplete
-                  ? "bg-gradient-to-r from-blue-400 via-blue-500 to-green-400"
-                  : "bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"
+                  ? "bg-gradient-to-r from-[var(--status-info)] via-[var(--status-info)] to-[var(--status-success)]"
+                  : "bg-gradient-to-r from-[var(--status-info)] via-[var(--status-info)] to-[var(--status-info)]"
             }`}
             initial={{ width: 0 }}
             animate={{ width: `${percentComplete}%` }}
@@ -121,10 +121,10 @@ export function ProgressEstimator({
                 key={i}
                 className={`w-2 h-2 rounded-full mt-0.5 ${
                   isPast 
-                    ? "bg-white/50" 
+                    ? "bg-[var(--surface-secondary)]" 
                     : isActive 
-                      ? "bg-white shadow-sm" 
-                      : "bg-gray-300"
+                      ? "bg-[var(--surface-secondary)] shadow-sm" 
+                      : "bg-[var(--border-strong)]"
                 }`}
                 animate={isActive ? { scale: [1, 1.3, 1] } : {}}
                 transition={{ duration: 0.5, repeat: isActive ? Infinity : 0 }}
@@ -136,11 +136,11 @@ export function ProgressEstimator({
 
       {/* Footer with completion stats */}
       <div className="flex justify-between items-center mt-3">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[var(--text-tertiary)]">
           {fieldsCompleted} di {totalFields} campi completati
           {isComplete && (
             <motion.span 
-              className="ml-2 text-green-600 font-medium"
+              className="ml-2 text-[var(--status-success)] font-medium"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -153,8 +153,8 @@ export function ProgressEstimator({
         <motion.span 
           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
             isComplete 
-              ? "bg-green-100 text-green-700" 
-              : "bg-blue-50 text-blue-600"
+              ? "bg-[var(--status-success-subtle)] text-[var(--status-success)]" 
+              : "bg-[var(--status-info-subtle)] text-[var(--status-info)]"
           }`}
           key={percentComplete}
           initial={{ scale: 1.2 }}
@@ -172,7 +172,7 @@ export function ProgressEstimator({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-3 text-xs text-center text-gray-400 italic"
+            className="mt-3 text-xs text-center text-[var(--text-tertiary)] italic"
           >
             {percentComplete < 30 && "Ottimo inizio! Continua così 💪"}
             {percentComplete >= 30 && percentComplete < 60 && "Stai andando alla grande! 🚀"}
@@ -193,9 +193,9 @@ interface CompactProgressProps {
 
 export function CompactProgress({ value, className = "" }: CompactProgressProps) {
   return (
-    <div className={`h-1.5 bg-gray-100 rounded-full overflow-hidden ${className}`}>
+    <div className={`h-1.5 bg-[var(--surface-secondary)] rounded-full overflow-hidden ${className}`}>
       <motion.div 
-        className="h-full bg-blue-500 rounded-full"
+        className="h-full bg-[var(--status-info-subtle)]0 rounded-full"
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}

@@ -13,7 +13,7 @@ export default function NewCustomerRedirect() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+      <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
     </div>
   );
 }

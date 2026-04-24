@@ -75,12 +75,12 @@ function AnimatedStat({ stat }: { stat: StatConfig }): React.ReactElement {
 
   return (
     <div className="text-center">
-      <div className="text-3xl font-bold text-white lg:text-4xl">
+      <div className="text-3xl font-bold text-[var(--text-on-brand)] lg:text-4xl">
         {stat.prefix ?? ''}
         {displayValue}
         {stat.suffix}
       </div>
-      <div className="mt-1 text-sm text-blue-200">{stat.label}</div>
+      <div className="mt-1 text-sm text-[var(--status-info)]">{stat.label}</div>
     </div>
   );
 }
@@ -91,7 +91,7 @@ function StarRating({ count }: { count: number }): React.ReactElement {
       {Array.from({ length: count }).map((_, i) => (
         <svg
           key={i}
-          className="h-4 w-4 fill-yellow-400 text-yellow-400"
+          className="h-4 w-4 fill-yellow-400 text-[var(--status-warning)]"
           viewBox="0 0 20 20"
           aria-hidden="true"
         >
@@ -128,7 +128,7 @@ export function AuthLeftPanel(): React.ReactElement {
         {Array.from({ length: 30 }).map((_, i) => (
           <span
             key={i}
-            className="absolute rounded-full bg-white/10"
+            className="absolute rounded-full bg-[var(--surface-secondary)]/10"
             style={{
               width: `${2 + (i % 4)}px`,
               height: `${2 + (i % 4)}px`,
@@ -159,10 +159,10 @@ export function AuthLeftPanel(): React.ReactElement {
       <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-12 px-8 py-12">
         {/* Logo / Brand */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white lg:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-on-brand)] lg:text-4xl">
             MechMind OS
           </h1>
-          <p className="mt-2 text-sm text-blue-200">
+          <p className="mt-2 text-sm text-[var(--status-info)]">
             Il gestionale per officine meccaniche
           </p>
         </div>
@@ -183,15 +183,15 @@ export function AuthLeftPanel(): React.ReactElement {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.5 }}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+              className="rounded-2xl border border-[var(--border-default)]/10 bg-[var(--surface-secondary)]/5 p-6 backdrop-blur-sm"
             >
               <StarRating count={current.rating} />
-              <p className="mt-3 text-sm leading-relaxed text-blue-100 italic">
+              <p className="mt-3 text-sm leading-relaxed text-[var(--status-info)] italic">
                 &ldquo;{current.quote}&rdquo;
               </p>
               <div className="mt-4">
-                <p className="text-sm font-semibold text-white">{current.author}</p>
-                <p className="text-xs text-blue-300">{current.shop}</p>
+                <p className="text-sm font-semibold text-[var(--text-on-brand)]">{current.author}</p>
+                <p className="text-xs text-[var(--status-info)]">{current.shop}</p>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -209,8 +209,8 @@ export function AuthLeftPanel(): React.ReactElement {
                 <span
                   className={`block h-2 rounded-full transition-all ${
                     i === testimonialIndex
-                      ? 'w-6 bg-white'
-                      : 'w-2 bg-white/30 hover:bg-white/50'
+                      ? 'w-6 bg-[var(--surface-secondary)]'
+                      : 'w-2 bg-[var(--surface-secondary)]/30 hover:bg-[var(--surface-secondary)]'
                   }`}
                 />
               </button>

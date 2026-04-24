@@ -99,7 +99,7 @@ export function RoiCalculator(): React.ReactElement {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-white shadow-xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface-secondary)] shadow-xl dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]">
             <div className="grid grid-cols-1 lg:grid-cols-2">
               {/* Left: Inputs */}
               <div className="border-b border-[var(--border-default)] p-6 dark:border-[var(--border-default)] sm:p-8 lg:border-b-0 lg:border-r">
@@ -117,11 +117,11 @@ export function RoiCalculator(): React.ReactElement {
                       value={vehicles}
                       onChange={(e) => setVehicles(Number(e.target.value))}
                       aria-label="Numero di veicoli al mese"
-                      className="min-h-[44px] h-2 w-full cursor-pointer appearance-none rounded-full bg-[var(--border-default)] accent-[#0d0d0d] dark:accent-white dark:bg-[var(--border-default)] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#0d0d0d] dark:[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md"
+                      className="min-h-[44px] h-2 w-full cursor-pointer appearance-none rounded-full bg-[var(--border-default)] accent-[#0d0d0d] dark:accent-white dark:bg-[var(--border-default)] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#0d0d0d] dark:[&::-webkit-slider-thumb]:bg-[var(--surface-secondary)] [&::-webkit-slider-thumb]:shadow-md"
                     />
                     <div className="mt-2 flex justify-between text-xs text-[var(--text-secondary)]">
                       <span>10</span>
-                      <span className="text-base font-bold text-[var(--text-primary)] dark:text-white">{vehicles}</span>
+                      <span className="text-base font-bold text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">{vehicles}</span>
                       <span>200</span>
                     </div>
                   </div>
@@ -140,7 +140,7 @@ export function RoiCalculator(): React.ReactElement {
                         onClick={() => setSelectedTechIdx(i)}
                         className={`min-h-[44px] rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                           i === selectedTechIdx
-                            ? 'border-[#0d0d0d] dark:border-white bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white'
+                            ? 'border-[#0d0d0d] dark:border-[var(--border-default)] bg-[#0d0d0d]/5 dark:bg-[var(--surface-secondary)]/10 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]'
                             : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:border-[var(--border-default)] dark:border-[var(--border-default)] dark:text-[var(--text-secondary)] dark:hover:border-[var(--text-tertiary)]'
                         }`}
                       >
@@ -163,7 +163,7 @@ export function RoiCalculator(): React.ReactElement {
                         onClick={() => setMethod(opt.id)}
                         className={`min-h-[44px] rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                           method === opt.id
-                            ? 'border-[#0d0d0d] dark:border-white bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white'
+                            ? 'border-[#0d0d0d] dark:border-[var(--border-default)] bg-[#0d0d0d]/5 dark:bg-[var(--surface-secondary)]/10 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]'
                             : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:border-[var(--border-default)] dark:border-[var(--border-default)] dark:text-[var(--text-secondary)] dark:hover:border-[var(--text-tertiary)]'
                         }`}
                       >
@@ -206,7 +206,7 @@ export function RoiCalculator(): React.ReactElement {
                 {/* CTA */}
                 <Link
                   href="/auth/register"
-                  className="mt-8 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--border-default)] bg-white px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
+                  className="mt-8 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
                 >
                   Inizia a risparmiare — Prova gratis &rarr;
                 </Link>

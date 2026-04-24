@@ -108,10 +108,10 @@ export function PasskeyButton({
 
   // Stili in base alla variante
   const variantStyles = {
-    primary: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25',
-    secondary: 'bg-white/80 text-gray-800 border border-gray-200/50 shadow-md',
-    glass: 'bg-white/20 backdrop-blur-xl text-white border border-white/30 shadow-lg',
-    minimal: 'bg-transparent text-gray-600 hover:bg-gray-100/50',
+    primary: 'bg-gradient-to-r from-[var(--status-info)] to-[var(--status-info)] text-[var(--text-on-brand)] shadow-lg shadow-blue-500/25',
+    secondary: 'bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border-default)]/50 shadow-md',
+    glass: 'bg-[var(--surface-secondary)]/20 backdrop-blur-xl text-[var(--text-on-brand)] border border-[var(--border-default)]/30 shadow-lg',
+    minimal: 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50',
   }
 
   const sizeStyles = {
@@ -162,7 +162,7 @@ export function PasskeyButton({
       {/* Background shimmer effect */}
       {variant === 'primary' && (
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--surface-secondary)]/20 to-transparent"
           initial={{ x: '-100%' }}
           animate={{ x: isHovered ? '100%' : '-100%' }}
           transition={{ duration: 0.6, ease: 'easeInOut' }}
@@ -211,7 +211,7 @@ export function PasskeyButton({
           >
             <div className={cn(
               'flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap',
-              'bg-red-500 text-white shadow-lg'
+              'bg-[var(--status-error-subtle)]0 text-[var(--text-on-brand)] shadow-lg'
             )}>
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
@@ -275,7 +275,7 @@ export function PasskeyRegistrationButton({
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200 }}
-        className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25"
+        className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center shadow-lg shadow-blue-500/25"
       >
         <AnimatePresence mode="wait">
           {showSuccess ? (
@@ -285,7 +285,7 @@ export function PasskeyRegistrationButton({
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
             >
-              <Check className="w-10 h-10 text-white" strokeWidth={3} />
+              <Check className="w-10 h-10 text-[var(--text-on-brand)]" strokeWidth={3} />
             </motion.div>
           ) : (
             <motion.div
@@ -294,7 +294,7 @@ export function PasskeyRegistrationButton({
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
             >
-              <Shield className="w-10 h-10 text-white" />
+              <Shield className="w-10 h-10 text-[var(--text-on-brand)]" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -320,7 +320,7 @@ export function PasskeyRegistrationButton({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm"
+            className="flex items-center gap-2 p-3 rounded-xl bg-[var(--status-error-subtle)] text-[var(--status-error)] text-sm"
           >
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{error}</span>
@@ -344,7 +344,7 @@ export function PasskeyRegistrationButton({
             whileTap={{ scale: 0.98 }}
             className={cn(
               'w-full h-14 flex items-center justify-center gap-3',
-              'bg-gradient-to-r from-blue-500 to-blue-600 text-white',
+              'bg-gradient-to-r from-[var(--status-info)] to-[var(--status-info)] text-[var(--text-on-brand)]',
               'rounded-2xl font-medium shadow-lg shadow-blue-500/25',
               'disabled:opacity-60'
             )}
@@ -367,7 +367,7 @@ export function PasskeyRegistrationButton({
               onClick={onSkip}
               disabled={isRegistering}
               className={cn(
-                'w-full h-12 text-gray-500 hover:text-gray-700',
+                'w-full h-12 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]',
                 'text-sm font-medium transition-colors',
                 'disabled:opacity-50'
               )}
@@ -430,35 +430,35 @@ export function AuthMethodSelector({
             whileTap={{ scale: 0.98 }}
             className={cn(
               'w-full p-5 flex items-center gap-4',
-              'bg-gradient-to-br from-blue-500/5 to-purple-500/5',
-              'border-2 border-blue-200 hover:border-blue-400',
+              'bg-gradient-to-br from-[var(--status-info)]/5 to-[var(--brand)]/5',
+              'border-2 border-[var(--status-info)]/30 hover:border-[var(--status-info)]/40',
               'rounded-2xl transition-all duration-300',
               'group'
             )}
           >
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-shadow">
-              <Fingerprint className="w-7 h-7 text-white" />
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--status-info)] to-[var(--status-info)] flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-shadow">
+              <Fingerprint className="w-7 h-7 text-[var(--text-on-brand)]" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-semibold text-gray-900 flex items-center gap-2">
+              <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
                 {getPasskeyTitle()}
-                <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                <span className="px-2 py-0.5 text-xs bg-[var(--status-success-subtle)] text-[var(--status-success)] rounded-full font-medium">
                   Consigliato
                 </span>
               </div>
-              <div className="text-sm text-gray-500">{getPasskeyDescription()}</div>
+              <div className="text-sm text-[var(--text-tertiary)]">{getPasskeyDescription()}</div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+            <ChevronRight className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--status-info)] transition-colors" />
           </motion.button>
         )}
 
         {/* Divider */}
         <div className="relative py-2">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
+            <div className="w-full border-t border-[var(--border-default)]" />
           </div>
           <div className="relative flex justify-center">
-            <span className="px-3 bg-white text-sm text-gray-500">oppure</span>
+            <span className="px-3 bg-[var(--surface-secondary)] text-sm text-[var(--text-tertiary)]">oppure</span>
           </div>
         </div>
 
@@ -469,25 +469,25 @@ export function AuthMethodSelector({
           whileTap={{ scale: 0.98 }}
           className={cn(
             'w-full p-5 flex items-center gap-4',
-            'bg-gray-50 hover:bg-gray-100',
-            'border border-gray-200 hover:border-gray-300',
+            'bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)]',
+            'border border-[var(--border-default)] hover:border-[var(--border-strong)]',
             'rounded-2xl transition-all duration-300',
             'group'
           )}
         >
-          <div className="w-14 h-14 rounded-xl bg-white border border-gray-200 flex items-center justify-center group-hover:border-gray-300 transition-colors">
-            <Key className="w-7 h-7 text-gray-500" />
+          <div className="w-14 h-14 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-default)] flex items-center justify-center group-hover:border-[var(--border-default)] transition-colors">
+            <Key className="w-7 h-7 text-[var(--text-tertiary)]" />
           </div>
           <div className="flex-1 text-left">
-            <div className="font-semibold text-gray-900">Password</div>
-            <div className="text-sm text-gray-500">Tradizionale ma sicuro</div>
+            <div className="font-semibold text-[var(--text-primary)]">Password</div>
+            <div className="text-sm text-[var(--text-tertiary)]">Tradizionale ma sicuro</div>
           </div>
-          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          <ChevronRight className="w-5 h-5 text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors" />
         </motion.button>
       </div>
 
       {/* Info */}
-      <p className="text-center text-xs text-gray-400 px-4">
+      <p className="text-center text-xs text-[var(--text-tertiary)] px-4">
         I passkey sono protetti dalla crittografia del tuo dispositivo e non vengono mai condivisi con i server.
       </p>
     </div>
@@ -514,8 +514,8 @@ export function PasskeyStatusBadge({
       className={cn(
         'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium',
         count > 0 
-          ? 'bg-green-100 text-green-700' 
-          : 'bg-gray-100 text-gray-600'
+          ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)]' 
+          : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]'
       )}
     >
       <Shield className="w-3.5 h-3.5" />
@@ -543,15 +543,15 @@ export function PasskeyList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--text-tertiary)]" />
       </div>
     )
   }
 
   if (userPasskeys.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <Smartphone className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+      <div className="text-center py-8 text-[var(--text-tertiary)]">
+        <Smartphone className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
         <p className="text-sm">Nessun passkey configurato</p>
       </div>
     )
@@ -567,22 +567,22 @@ export function PasskeyList() {
           transition={{ delay: index * 0.1 }}
           className={cn(
             'flex items-center gap-4 p-4',
-            'bg-white rounded-xl border border-gray-200',
+            'bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-default)]',
             'shadow-sm'
           )}
         >
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-blue-500" />
+          <div className="w-10 h-10 rounded-lg bg-[var(--status-info-subtle)] flex items-center justify-center">
+            <Smartphone className="w-5 h-5 text-[var(--status-info)]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 truncate">{passkey.deviceName}</p>
-            <p className="text-xs text-gray-500">
+            <p className="font-medium text-[var(--text-primary)] truncate">{passkey.deviceName}</p>
+            <p className="text-xs text-[var(--text-tertiary)]">
               Aggiunto il {new Date(passkey.createdAt).toLocaleDateString('it-IT')}
             </p>
           </div>
           <button
             onClick={() => deletePasskey(passkey.credentialId)}
-            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-2 text-[var(--text-tertiary)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] rounded-lg transition-colors"
             title="Rimuovi"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -183,7 +183,7 @@ export function WorkflowBuilder(): React.ReactElement {
       {/* Trigger */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-amber-500" />
+          <Zap className="h-4 w-4 text-[var(--status-warning)]" />
           <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] uppercase tracking-wider">
             Quando
           </h3>
@@ -191,11 +191,11 @@ export function WorkflowBuilder(): React.ReactElement {
 
         <button
           onClick={() => setShowTriggerSelect(!showTriggerSelect)}
-          className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10 hover:border-amber-400 dark:hover:border-amber-600 transition-colors text-left"
+          className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-[var(--status-warning)]/30 dark:border-[var(--status-warning)] bg-[var(--status-warning)]/5/50 dark:bg-[var(--status-warning)]/40/10 hover:border-[var(--status-warning)]/40 dark:hover:border-[var(--status-warning)] transition-colors text-left"
         >
           {currentTrigger && (
             <>
-              <currentTrigger.icon className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <currentTrigger.icon className="h-5 w-5 text-[var(--status-warning)] dark:text-[var(--status-warning)] shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{currentTrigger.label}</p>
                 <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{currentTrigger.description}</p>
@@ -219,8 +219,8 @@ export function WorkflowBuilder(): React.ReactElement {
                   key={trigger.type}
                   onClick={() => setTrigger(trigger.type)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white dark:hover:bg-[var(--surface-hover)] transition-colors',
-                    workflow.trigger.type === trigger.type && 'bg-amber-50 dark:bg-amber-900/20'
+                    'w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors',
+                    workflow.trigger.type === trigger.type && 'bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20'
                   )}
                 >
                   <trigger.icon className="h-4 w-4 text-[var(--text-secondary)] shrink-0" />
@@ -261,12 +261,12 @@ export function WorkflowBuilder(): React.ReactElement {
               >
                 {/* Connector line */}
                 {index > 0 && (
-                  <div className="absolute -mt-2 ml-5 w-px h-2 bg-gray-300 dark:bg-gray-600" />
+                  <div className="absolute -mt-2 ml-5 w-px h-2 bg-[var(--border-strong)] dark:bg-[var(--surface-active)]" />
                 )}
-                <div className="flex-1 p-4 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] hover:shadow-sm transition-shadow">
+                <div className="flex-1 p-4 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] hover:shadow-sm transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-1.5 rounded-lg bg-[var(--brand)]/10 dark:bg-blue-900/30">
+                      <div className="p-1.5 rounded-lg bg-[var(--brand)]/10 dark:bg-[var(--status-info)]/40/30">
                         <actionDef.icon className="h-4 w-4 text-[var(--brand)] dark:text-[var(--brand)]" />
                       </div>
                       <div>
@@ -278,7 +278,7 @@ export function WorkflowBuilder(): React.ReactElement {
                     </div>
                     <button
                       onClick={() => removeAction(action.id)}
-                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+                      className="p-1 rounded hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)] text-[var(--text-tertiary)] hover:text-[var(--status-error)] transition-colors"
                       aria-label="Rimuovi azione"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -292,7 +292,7 @@ export function WorkflowBuilder(): React.ReactElement {
                         value={(action.config.message as string) ?? ''}
                         onChange={(e) => updateActionConfig(action.id, 'message', e.target.value)}
                         placeholder="Messaggio SMS... Usa {nome}, {targa}, {data} come variabili"
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] resize-none"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] resize-none"
                         rows={2}
                       />
                     )}
@@ -303,13 +303,13 @@ export function WorkflowBuilder(): React.ReactElement {
                           value={(action.config.subject as string) ?? ''}
                           onChange={(e) => updateActionConfig(action.id, 'subject', e.target.value)}
                           placeholder="Oggetto email..."
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)]"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]"
                         />
                         <textarea
                           value={(action.config.body as string) ?? ''}
                           onChange={(e) => updateActionConfig(action.id, 'body', e.target.value)}
                           placeholder="Corpo email..."
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] resize-none"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] resize-none"
                           rows={3}
                         />
                       </>
@@ -321,7 +321,7 @@ export function WorkflowBuilder(): React.ReactElement {
                           value={(action.config.days as number) ?? 1}
                           onChange={(e) => updateActionConfig(action.id, 'days', parseInt(e.target.value) || 1)}
                           min={1}
-                          className="w-20 px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)]"
+                          className="w-20 px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]"
                         />
                         <span className="text-sm text-[var(--text-secondary)]">giorni</span>
                       </div>
@@ -332,14 +332,14 @@ export function WorkflowBuilder(): React.ReactElement {
                         value={(action.config.url as string) ?? ''}
                         onChange={(e) => updateActionConfig(action.id, 'url', e.target.value)}
                         placeholder="https://..."
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)]"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]"
                       />
                     )}
                     {action.type === 'change_status' && (
                       <select
                         value={(action.config.newStatus as string) ?? ''}
                         onChange={(e) => updateActionConfig(action.id, 'newStatus', e.target.value)}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)]"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]"
                       >
                         <option value="">Seleziona nuovo stato...</option>
                         <option value="completed">Completato</option>
@@ -359,7 +359,7 @@ export function WorkflowBuilder(): React.ReactElement {
         <div className="relative">
           <button
             onClick={() => setShowActionSelect(!showActionSelect)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:border-blue-400 hover:text-[var(--brand)] dark:hover:border-[var(--brand)] dark:hover:text-[var(--brand)] transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:border-[var(--status-info)]/40 hover:text-[var(--brand)] dark:hover:border-[var(--brand)] dark:hover:text-[var(--brand)] transition-colors"
           >
             <Plus className="h-4 w-4" />
             <span className="text-sm font-medium">Aggiungi azione</span>
@@ -371,13 +371,13 @@ export function WorkflowBuilder(): React.ReactElement {
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="absolute top-full left-0 right-0 mt-1 z-20 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] shadow-lg overflow-hidden"
+                className="absolute top-full left-0 right-0 mt-1 z-20 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] shadow-lg overflow-hidden"
               >
                 {ACTIONS.map((action) => (
                   <button
                     key={action.type}
                     onClick={() => addAction(action.type)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white dark:hover:bg-[var(--surface-hover)] transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
                   >
                     <action.icon className="h-4 w-4 text-[var(--text-secondary)] shrink-0" />
                     <div>

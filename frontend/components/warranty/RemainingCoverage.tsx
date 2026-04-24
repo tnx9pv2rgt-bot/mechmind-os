@@ -48,7 +48,7 @@ export function RemainingCoverage({
       <Card className={className}>
         <CardHeader className='pb-3'>
           <CardTitle className='text-lg flex items-center gap-2'>
-            <Gauge className='h-5 w-5 text-blue-600' />
+            <Gauge className='h-5 w-5 text-[var(--status-info)]' />
             Copertura Residua
           </CardTitle>
         </CardHeader>
@@ -57,12 +57,12 @@ export function RemainingCoverage({
           <div className='space-y-3'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
-                <Euro className='h-4 w-4 text-gray-500' />
-                <span className='text-sm font-medium text-gray-700'>Copertura Finanziaria</span>
+                <Euro className='h-4 w-4 text-[var(--text-tertiary)]' />
+                <span className='text-sm font-medium text-[var(--text-secondary)]'>Copertura Finanziaria</span>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className='h-4 w-4 text-gray-400 cursor-help' />
+                  <Info className='h-4 w-4 text-[var(--text-tertiary)] cursor-help' />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Importo copertura totale meno reclami approvati</p>
@@ -70,17 +70,17 @@ export function RemainingCoverage({
               </Tooltip>
             </div>
 
-            <div className='bg-gray-50 rounded-lg p-4'>
+            <div className='bg-[var(--surface-secondary)] rounded-lg p-4'>
               <div className='flex items-end justify-between mb-2'>
                 <div>
-                  <div className='text-2xl font-bold text-gray-900'>
+                  <div className='text-2xl font-bold text-[var(--text-primary)]'>
                     {formatCurrency(remainingAmount)}
                   </div>
-                  <div className='text-sm text-gray-500'>
+                  <div className='text-sm text-[var(--text-tertiary)]'>
                     di {formatCurrency(maxCoverage)} totali
                   </div>
                 </div>
-                <div className={cn('text-right', isLowAmount ? 'text-red-600' : 'text-green-600')}>
+                <div className={cn('text-right', isLowAmount ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]')}>
                   <div className='text-lg font-semibold'>{remainingPercentage.toFixed(0)}%</div>
                   <div className='text-xs'>residuo</div>
                 </div>
@@ -88,13 +88,13 @@ export function RemainingCoverage({
 
               <Progress value={usedPercentage} className='h-2' />
 
-              <div className='flex items-center justify-between mt-2 text-xs text-gray-500'>
+              <div className='flex items-center justify-between mt-2 text-xs text-[var(--text-tertiary)]'>
                 <span>Utilizzato: {formatCurrency(usedCoverage)}</span>
                 <span>Residuo: {formatCurrency(remainingAmount)}</span>
               </div>
 
               {isLowAmount && (
-                <div className='mt-3 p-2 bg-red-50 text-red-700 text-sm rounded flex items-center gap-2'>
+                <div className='mt-3 p-2 bg-[var(--status-error-subtle)] text-[var(--status-error)] text-sm rounded flex items-center gap-2'>
                   <TrendingDown className='h-4 w-4' />
                   <span>Copertura residua bassa</span>
                 </div>
@@ -106,21 +106,21 @@ export function RemainingCoverage({
           {coverageKm !== null && coverageKm !== undefined && currentKm !== undefined && (
             <div className='space-y-3'>
               <div className='flex items-center gap-2'>
-                <Gauge className='h-4 w-4 text-gray-500' />
-                <span className='text-sm font-medium text-gray-700'>Copertura Chilometrica</span>
+                <Gauge className='h-4 w-4 text-[var(--text-tertiary)]' />
+                <span className='text-sm font-medium text-[var(--text-secondary)]'>Copertura Chilometrica</span>
               </div>
 
-              <div className='bg-gray-50 rounded-lg p-4'>
+              <div className='bg-[var(--surface-secondary)] rounded-lg p-4'>
                 <div className='flex items-end justify-between mb-2'>
                   <div>
-                    <div className='text-2xl font-bold text-gray-900'>
+                    <div className='text-2xl font-bold text-[var(--text-primary)]'>
                       {kmRemaining?.toLocaleString()} km
                     </div>
-                    <div className='text-sm text-gray-500'>
+                    <div className='text-sm text-[var(--text-tertiary)]'>
                       di {coverageKm.toLocaleString()} km totali
                     </div>
                   </div>
-                  <div className={cn('text-right', isLowKm ? 'text-red-600' : 'text-green-600')}>
+                  <div className={cn('text-right', isLowKm ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]')}>
                     <div className='text-lg font-semibold'>
                       {Math.max(0, 100 - kmPercentage).toFixed(0)}%
                     </div>
@@ -130,13 +130,13 @@ export function RemainingCoverage({
 
                 <Progress value={kmPercentage} className='h-2' />
 
-                <div className='flex items-center justify-between mt-2 text-xs text-gray-500'>
+                <div className='flex items-center justify-between mt-2 text-xs text-[var(--text-tertiary)]'>
                   <span>Utilizzati: {kmUsed.toLocaleString()} km</span>
                   <span>Residui: {kmRemaining?.toLocaleString()} km</span>
                 </div>
 
                 {isLowKm && (
-                  <div className='mt-3 p-2 bg-red-50 text-red-700 text-sm rounded flex items-center gap-2'>
+                  <div className='mt-3 p-2 bg-[var(--status-error-subtle)] text-[var(--status-error)] text-sm rounded flex items-center gap-2'>
                     <TrendingDown className='h-4 w-4' />
                     <span>Chilometraggio residuo basso</span>
                   </div>
@@ -147,7 +147,7 @@ export function RemainingCoverage({
 
           {/* Unlimited Mileage Note */}
           {(coverageKm === null || coverageKm === undefined) && (
-            <div className='flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg text-sm'>
+            <div className='flex items-center gap-2 p-3 bg-[var(--status-success-subtle)] text-[var(--status-success)] rounded-lg text-sm'>
               <Gauge className='h-4 w-4' />
               <span>Copertura chilometrica illimitata</span>
             </div>

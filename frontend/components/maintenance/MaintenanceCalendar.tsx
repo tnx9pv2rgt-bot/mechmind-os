@@ -172,14 +172,14 @@ export function MaintenanceCalendar({ className, onEventClick }: MaintenanceCale
         {loading ? (
           <div className='grid grid-cols-7 gap-1'>
             {weekDays.map(day => (
-              <div key={day} className='p-2 text-center text-sm font-medium text-gray-500'>
+              <div key={day} className='p-2 text-center text-sm font-medium text-[var(--text-tertiary)]'>
                 {day}
               </div>
             ))}
             {[...Array(35)].map((_, i) => (
               <div
                 key={i}
-                className='aspect-square animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800'
+                className='aspect-square animate-pulse rounded-lg bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]'
               />
             ))}
           </div>
@@ -188,7 +188,7 @@ export function MaintenanceCalendar({ className, onEventClick }: MaintenanceCale
             {/* Weekday headers */}
             <div className='grid grid-cols-7 gap-1'>
               {weekDays.map(day => (
-                <div key={day} className='p-2 text-center text-sm font-medium text-gray-500'>
+                <div key={day} className='p-2 text-center text-sm font-medium text-[var(--text-tertiary)]'>
                   {day}
                 </div>
               ))}
@@ -216,16 +216,16 @@ export function MaintenanceCalendar({ className, onEventClick }: MaintenanceCale
                     className={cn(
                       'relative aspect-square rounded-lg border p-1 text-left transition-colors',
                       isToday
-                        ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950/30'
-                        : 'border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50',
+                        ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)] dark:border-[var(--status-info)]/40 dark:bg-[var(--status-info)]/40/30'
+                        : 'border-[var(--border-default)] hover:bg-[var(--surface-secondary)] dark:border-[var(--border-strong)] dark:hover:bg-[var(--surface-hover)]/50',
                       dayEvents.length > 0 && 'cursor-pointer',
-                      isPast && !isToday && 'bg-gray-50/50 text-gray-400 dark:bg-gray-900/50'
+                      isPast && !isToday && 'bg-[var(--surface-secondary)]/50 text-[var(--text-tertiary)] dark:bg-[var(--surface-primary)]/50'
                     )}
                   >
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isToday && 'text-blue-600 dark:text-blue-400'
+                        isToday && 'text-[var(--status-info)] dark:text-[var(--status-info)]'
                       )}
                     >
                       {date.getDate()}
@@ -234,13 +234,13 @@ export function MaintenanceCalendar({ className, onEventClick }: MaintenanceCale
                     {/* Event indicators */}
                     {dayEvents.length > 0 && (
                       <div className='absolute bottom-1 left-1 right-1 flex flex-wrap gap-0.5'>
-                        {hasOverdue && <div className='h-1.5 w-1.5 rounded-full bg-red-500' />}
-                        {hasDueSoon && <div className='h-1.5 w-1.5 rounded-full bg-yellow-500' />}
+                        {hasOverdue && <div className='h-1.5 w-1.5 rounded-full bg-[var(--status-error-subtle)]0' />}
+                        {hasDueSoon && <div className='h-1.5 w-1.5 rounded-full bg-[var(--status-warning)]/100' />}
                         {!hasOverdue && !hasDueSoon && (
-                          <div className='h-1.5 w-1.5 rounded-full bg-blue-500' />
+                          <div className='h-1.5 w-1.5 rounded-full bg-[var(--status-info-subtle)]0' />
                         )}
                         {dayEvents.length > 1 && (
-                          <span className='ml-auto text-[10px] leading-none text-gray-400'>
+                          <span className='ml-auto text-[10px] leading-none text-[var(--text-tertiary)]'>
                             +{dayEvents.length - 1}
                           </span>
                         )}
@@ -253,24 +253,24 @@ export function MaintenanceCalendar({ className, onEventClick }: MaintenanceCale
 
             {/* Legend */}
             <div className='mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-sm'>
-              <span className='text-gray-500'>Legenda:</span>
+              <span className='text-[var(--text-secondary)]'>Legenda:</span>
               <div className='flex items-center gap-1.5'>
-                <div className='h-2 w-2 rounded-full bg-red-500' />
+                <div className='h-2 w-2 rounded-full bg-[var(--status-error-subtle)]0' />
                 <span>In ritardo</span>
               </div>
               <div className='flex items-center gap-1.5'>
-                <div className='h-2 w-2 rounded-full bg-yellow-500' />
+                <div className='h-2 w-2 rounded-full bg-[var(--status-warning)]/100' />
                 <span>A breve</span>
               </div>
               <div className='flex items-center gap-1.5'>
-                <div className='h-2 w-2 rounded-full bg-blue-500' />
+                <div className='h-2 w-2 rounded-full bg-[var(--status-info-subtle)]0' />
                 <span>In programma</span>
               </div>
             </div>
 
             {/* Selected date events preview (could be expanded) */}
             {Object.keys(events).length === 0 && (
-              <div className='mt-8 text-center text-sm text-gray-500'>
+              <div className='mt-8 text-center text-sm text-[var(--text-tertiary)]'>
                 Nessuna manutenzione programmata per questo periodo
               </div>
             )}

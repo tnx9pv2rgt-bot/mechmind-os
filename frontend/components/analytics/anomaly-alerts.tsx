@@ -26,21 +26,21 @@ const SEVERITY_CONFIG: Record<
   { color: string; bgColor: string; borderColor: string; icon: LucideIcon }
 > = {
   critical: {
-    color: 'text-[#f87171]',
-    bgColor: 'bg-[#f87171]/10',
-    borderColor: 'border-[#f87171]/20',
+    color: 'text-[var(--status-error)]',
+    bgColor: 'bg-[var(--status-error)]/10',
+    borderColor: 'border-[var(--status-error)]/20',
     icon: AlertOctagon,
   },
   warning: {
-    color: 'text-[#fbbf24]',
-    bgColor: 'bg-[#fbbf24]/10',
-    borderColor: 'border-[#fbbf24]/20',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/10',
+    borderColor: 'border-[var(--status-warning)]/20',
     icon: AlertTriangle,
   },
   info: {
-    color: 'text-[#60a5fa]',
-    bgColor: 'bg-[#60a5fa]/10',
-    borderColor: 'border-[#60a5fa]/20',
+    color: 'text-[var(--status-info)]',
+    bgColor: 'bg-[var(--status-info)]/10',
+    borderColor: 'border-[var(--status-info)]/20',
     icon: Info,
   },
 } as const;
@@ -175,7 +175,7 @@ export function AnomalyAlerts(): React.ReactElement {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-white truncate">
+                    <h4 className="text-sm font-semibold text-[var(--text-on-brand)] truncate">
                       {alert.title}
                     </h4>
                     <span className="flex-shrink-0 text-[10px] text-[var(--text-secondary)]">
@@ -188,7 +188,7 @@ export function AnomalyAlerts(): React.ReactElement {
                 </div>
                 <button
                   onClick={() => handleDismiss(alert.id)}
-                  className="flex-shrink-0 rounded-full p-1.5 transition-colors hover:bg-white/10 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                  className="flex-shrink-0 rounded-full p-1.5 transition-colors hover:bg-[var(--surface-secondary)]/10 min-w-[36px] min-h-[36px] flex items-center justify-center"
                   aria-label={`Chiudi avviso: ${alert.title}`}
                 >
                   <X className="h-3.5 w-3.5 text-[var(--text-secondary)]" />

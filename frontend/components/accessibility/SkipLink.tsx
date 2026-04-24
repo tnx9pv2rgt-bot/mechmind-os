@@ -49,11 +49,11 @@ export function SkipLink({
         sr-only focus:not-sr-only
         fixed top-4 left-4 z-50
         px-4 py-3
-        bg-primary text-primary-foreground
+        bg-[var(--brand)] text-[var(--text-on-brand)]
         font-medium
         rounded-md
         shadow-lg
-        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
         transition-all
         ${className}
       `}
@@ -127,11 +127,11 @@ export function SkipToNavigation({
         sr-only focus:not-sr-only
         fixed top-4 left-48 z-50
         px-4 py-3
-        bg-secondary text-secondary-foreground
+        bg-[var(--surface-secondary)] text-[var(--text-secondary)]-foreground
         font-medium
         rounded-md
         shadow-lg
-        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
         transition-all
         ${className}
       `}

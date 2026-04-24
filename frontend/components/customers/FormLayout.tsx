@@ -54,14 +54,14 @@ export function FormLayout({
           <div className='px-10 pt-8 pb-4'>
             <div className='flex items-center justify-between mb-6'>
               <div>
-                <h1 className='text-3xl font-semibold text-white tracking-tight'>
+                <h1 className='text-3xl font-semibold text-[var(--text-primary)] tracking-tight'>
                   {title}
                 </h1>
                 <p className='text-[var(--text-tertiary)] mt-1'>{subtitle}</p>
               </div>
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-[var(--text-tertiary)]'>Step</span>
-                <span className='text-2xl font-bold text-white'>{step}</span>
+                <span className='text-2xl font-bold text-[var(--text-primary)]'>{step}</span>
                 <span className='text-[var(--text-tertiary)]'>/</span>
                 <span className='text-[var(--text-tertiary)]'>{totalSteps}</span>
               </div>
@@ -70,7 +70,7 @@ export function FormLayout({
             {/* Progress Bar */}
             <div className='h-2 bg-[var(--border-strong)] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-white'
+                className='h-full bg-[var(--brand)]'
                 initial={{ width: 0 }}
                 animate={{ width: `${(step / totalSteps) * 100}%` }}
                 transition={{ duration: 0.5 }}
@@ -85,9 +85,9 @@ export function FormLayout({
                   href={s.href}
                   className={`flex items-center gap-2 transition-all ${
                     s.num === step
-                      ? 'text-white cursor-default'
+                      ? 'text-[var(--text-primary)] cursor-default'
                       : s.num < step
-                        ? 'text-white hover:opacity-70 cursor-pointer hover:scale-105'
+                        ? 'text-[var(--text-primary)] hover:opacity-70 cursor-pointer hover:scale-105'
                         : 'text-[var(--text-tertiary)] cursor-not-allowed'
                   }`}
                   onClick={e => s.num > step && e.preventDefault()}
@@ -95,7 +95,7 @@ export function FormLayout({
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                       s.num <= step
-                        ? 'bg-white text-[var(--text-primary)]'
+                        ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
                         : 'bg-[var(--border-strong)] text-[var(--text-tertiary)]'
                     }`}
                   >
@@ -119,7 +119,7 @@ export function FormLayout({
                     type='button'
                     onClick={onBack}
                     disabled={isSubmitting}
-                    className='rounded-full px-6 h-[52px] border border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5 transition-all'
+                    className='rounded-full px-6 h-[52px] border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all'
                   >
                     <ChevronLeft className='w-5 h-5 mr-2' />
                     Indietro
@@ -137,11 +137,7 @@ export function FormLayout({
                       onNext();
                     }}
                     disabled={isSubmitting}
-                    className={`rounded-full px-8 h-[52px] transition-all ${
-                      isLastStep
-                        ? 'bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
-                        : 'bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
-                    }`}
+                    className={`rounded-full px-8 h-[52px] transition-all bg-[var(--brand)] text-[var(--text-on-brand)] hover:bg-[var(--brand-hover)]`}
                   >
                     {isSubmitting ? (
                       <>

@@ -77,7 +77,7 @@ const QRCodeSVG = ({ value, size = 200, className }: QRCodeSVGProps) => {
   return (
     <div
       className={cn(
-        'bg-white p-4 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden',
+        'bg-[var(--surface-secondary)] p-4 rounded-lg border border-[var(--border-default)] flex items-center justify-center overflow-hidden',
         className
       )}
       style={{ width: size, height: size }}
@@ -216,9 +216,9 @@ export function BlockchainVerification({
           title: 'Certificato Verificato su Blockchain',
           description:
             'Questo certificato di ispezione è autentico e verificato sulla blockchain Polygon.',
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
+          color: 'text-[var(--status-success)]',
+          bgColor: 'bg-[var(--status-success-subtle)]',
+          borderColor: 'border-[var(--status-success-subtle)]',
           badgeVariant: 'success' as const,
         };
       case 'not_found':
@@ -226,9 +226,9 @@ export function BlockchainVerification({
           icon: XCircle,
           title: 'Non Trovato',
           description: 'Questo certificato di ispezione non è stato trovato sulla blockchain.',
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
+          color: 'text-[var(--status-error)]',
+          bgColor: 'bg-[var(--status-error-subtle)]',
+          borderColor: 'border-[var(--status-error-subtle)]',
           badgeVariant: 'destructive' as const,
         };
       case 'tampered':
@@ -237,9 +237,9 @@ export function BlockchainVerification({
           title: 'Dati Manomessi',
           description:
             "Attenzione: i dati dell'ispezione non corrispondono al record sulla blockchain.",
-          color: 'text-orange-600',
-          bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
+          color: 'text-[var(--status-warning)]',
+          bgColor: 'bg-[var(--status-warning)]/5',
+          borderColor: 'border-[var(--status-warning)]/20',
           badgeVariant: 'warning' as const,
         };
       case 'loading':
@@ -247,9 +247,9 @@ export function BlockchainVerification({
           icon: Loader2,
           title: 'Verifica in corso...',
           description: 'Attendere durante la verifica del certificato sulla blockchain.',
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
+          color: 'text-[var(--status-info)]',
+          bgColor: 'bg-[var(--status-info-subtle)]',
+          borderColor: 'border-[var(--status-info-subtle)]',
           badgeVariant: 'default' as const,
         };
       default:
@@ -258,9 +258,9 @@ export function BlockchainVerification({
           title: 'Pronto per la Verifica',
           description:
             'Clicca il pulsante qui sotto per verificare questa ispezione sulla blockchain.',
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
+          color: 'text-[var(--text-secondary)]',
+          bgColor: 'bg-[var(--surface-secondary)]',
+          borderColor: 'border-[var(--border-default)]',
           badgeVariant: 'secondary' as const,
         };
     }
@@ -284,8 +284,8 @@ export function BlockchainVerification({
     link?: string;
     icon?: React.ComponentType<{ className?: string }>;
   }) => (
-    <div className='flex items-center justify-between py-2 border-b border-gray-100 last:border-0'>
-      <div className='flex items-center gap-2 text-sm text-gray-500'>
+    <div className='flex items-center justify-between py-2 border-b border-[var(--border-default)] last:border-0'>
+      <div className='flex items-center gap-2 text-sm text-[var(--text-tertiary)]'>
         {Icon && <Icon className='h-4 w-4' />}
         <span>{label}</span>
       </div>
@@ -295,13 +295,13 @@ export function BlockchainVerification({
             href={link}
             target='_blank'
             rel='noopener noreferrer'
-            className='text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1'
+            className='text-sm font-medium text-[var(--status-info)] hover:text-[var(--status-info)] flex items-center gap-1'
           >
             {truncate ? truncateAddress(value) : value}
             <ExternalLink className='h-3 w-3' />
           </a>
         ) : (
-          <span className='text-sm font-medium text-gray-900'>
+          <span className='text-sm font-medium text-[var(--text-primary)]'>
             {truncate ? truncateAddress(value) : value}
           </span>
         )}
@@ -314,9 +314,9 @@ export function BlockchainVerification({
             aria-label={`Copia ${label}`}
           >
             {copiedField === label ? (
-              <CheckCircle className='h-3 w-3 text-green-600' />
+              <CheckCircle className='h-3 w-3 text-[var(--status-success)]' />
             ) : (
-              <Copy className='h-3 w-3 text-gray-400' />
+              <Copy className='h-3 w-3 text-[var(--text-tertiary)]' />
             )}
           </Button>
         )}
@@ -335,11 +335,11 @@ export function BlockchainVerification({
             <div
               className={cn(
                 'w-20 h-20 rounded-full flex items-center justify-center',
-                status === 'verified' && 'bg-green-100',
-                status === 'not_found' && 'bg-red-100',
-                status === 'tampered' && 'bg-orange-100',
-                status === 'loading' && 'bg-blue-100',
-                status === 'idle' && 'bg-gray-100'
+                status === 'verified' && 'bg-[var(--status-success-subtle)]',
+                status === 'not_found' && 'bg-[var(--status-error-subtle)]',
+                status === 'tampered' && 'bg-[var(--status-warning)]/10',
+                status === 'loading' && 'bg-[var(--status-info-subtle)]',
+                status === 'idle' && 'bg-[var(--surface-secondary)]'
               )}
             >
               <StatusIcon
@@ -356,7 +356,7 @@ export function BlockchainVerification({
                 {status === 'not_found' && '⚠ '}
                 {statusConfig.title}
               </h3>
-              <p className='text-sm text-gray-600 mt-1 max-w-md'>{statusConfig.description}</p>
+              <p className='text-sm text-[var(--text-secondary)] mt-1 max-w-md'>{statusConfig.description}</p>
             </div>
             <Badge
               variant={
@@ -395,11 +395,11 @@ export function BlockchainVerification({
           <CardContent>
             {isLoading && !certificateDetails ? (
               <div className='space-y-3'>
-                <div className='h-4 bg-gray-200 rounded animate-pulse' />
-                <div className='h-4 bg-gray-200 rounded animate-pulse w-3/4' />
-                <div className='h-4 bg-gray-200 rounded animate-pulse w-1/2' />
-                <div className='h-4 bg-gray-200 rounded animate-pulse w-5/6' />
-                <div className='h-4 bg-gray-200 rounded animate-pulse w-2/3' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse w-3/4' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse w-1/2' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse w-5/6' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse w-2/3' />
               </div>
             ) : certificateDetails ? (
               <div className='space-y-1'>
@@ -449,8 +449,8 @@ export function BlockchainVerification({
                 )}
               </div>
             ) : (
-              <div className='text-center py-8 text-gray-500'>
-                <Database className='h-12 w-12 mx-auto mb-3 text-gray-300' />
+              <div className='text-center py-8 text-[var(--text-tertiary)]'>
+                <Database className='h-12 w-12 mx-auto mb-3 text-[var(--text-tertiary)]' />
                 <p>Nessun dettaglio certificato disponibile</p>
                 <p className='text-sm mt-1'>
                   Pubblica l&apos;ispezione sulla blockchain per visualizzare i dettagli
@@ -484,17 +484,17 @@ export function BlockchainVerification({
                       size={200}
                       className='mb-4'
                     />
-                    <p className='text-xs text-gray-500 text-center'>
+                    <p className='text-xs text-[var(--text-tertiary)] text-center'>
                       Scansiona questo codice QR per verificare l&apos;autenticità del certificato
                       <br />
                       sulla blockchain Polygon
                     </p>
                   </>
                 ) : (
-                  <div className='w-[200px] h-[200px] bg-gray-100 rounded-lg flex items-center justify-center mb-4'>
+                  <div className='w-[200px] h-[200px] bg-[var(--surface-secondary)] rounded-lg flex items-center justify-center mb-4'>
                     <div className='text-center'>
-                      <QrCode className='h-12 w-12 mx-auto text-gray-300 mb-2' />
-                      <p className='text-sm text-gray-400'>Nessun contratto pubblicato</p>
+                      <QrCode className='h-12 w-12 mx-auto text-[var(--text-tertiary)] mb-2' />
+                      <p className='text-sm text-[var(--text-tertiary)]'>Nessun contratto pubblicato</p>
                     </div>
                   </div>
                 )}
@@ -514,20 +514,20 @@ export function BlockchainVerification({
                   className={cn(
                     'p-4 rounded-lg border',
                     verificationResult.match
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-red-50 border-red-200'
+                      ? 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30'
+                      : 'bg-[var(--status-error-subtle)] border-[var(--status-error)]/30'
                   )}
                 >
                   <div className='flex items-center gap-2 mb-3'>
                     {verificationResult.match ? (
-                      <CheckCircle className='h-5 w-5 text-green-600' />
+                      <CheckCircle className='h-5 w-5 text-[var(--status-success)]' />
                     ) : (
-                      <XCircle className='h-5 w-5 text-red-600' />
+                      <XCircle className='h-5 w-5 text-[var(--status-error)]' />
                     )}
                     <span
                       className={cn(
                         'font-medium',
-                        verificationResult.match ? 'text-green-700' : 'text-red-700'
+                        verificationResult.match ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'
                       )}
                     >
                       {verificationResult.match ? 'Hash Corrispondente' : 'Dati Manomessi'}
@@ -535,14 +535,14 @@ export function BlockchainVerification({
                   </div>
                   <div className='space-y-2 text-sm'>
                     <div>
-                      <span className='text-gray-500'>Hash Blockchain:</span>
-                      <code className='block bg-white px-2 py-1 rounded mt-1 text-xs break-all font-mono'>
+                      <span className='text-[var(--text-secondary)]'>Hash Blockchain:</span>
+                      <code className='block bg-[var(--surface-secondary)] px-2 py-1 rounded mt-1 text-xs break-all font-mono'>
                         {verificationResult.blockchainHash}
                       </code>
                     </div>
                     <div>
-                      <span className='text-gray-500'>Hash Calcolato:</span>
-                      <code className='block bg-white px-2 py-1 rounded mt-1 text-xs break-all font-mono'>
+                      <span className='text-[var(--text-secondary)]'>Hash Calcolato:</span>
+                      <code className='block bg-[var(--surface-secondary)] px-2 py-1 rounded mt-1 text-xs break-all font-mono'>
                         {verificationResult.calculatedHash}
                       </code>
                     </div>
@@ -569,12 +569,12 @@ export function BlockchainVerification({
               </Button>
 
               {!initialContractAddress && (
-                <p className='text-xs text-amber-600 text-center'>
+                <p className='text-xs text-[var(--status-warning)] text-center'>
                   Pubblica prima l&apos;ispezione sulla blockchain per abilitare la verifica
                 </p>
               )}
               {!inspectionData && initialContractAddress && (
-                <p className='text-xs text-amber-600 text-center'>
+                <p className='text-xs text-[var(--status-warning)] text-center'>
                   Dati ispezione necessari per la verifica hash
                 </p>
               )}
@@ -585,13 +585,13 @@ export function BlockchainVerification({
 
       {/* NFT Certificate Section */}
       {nftData && (
-        <Card className='border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50'>
+        <Card className='border-[var(--brand)]/20 bg-gradient-to-br from-[var(--brand)]/5 to-[var(--status-warning)]/5'>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2 text-purple-800'>
+            <CardTitle className='flex items-center gap-2 text-[var(--brand)]'>
               <ImageIcon className='h-5 w-5' />
               Certificato NFT
             </CardTitle>
-            <CardDescription className='text-purple-600'>
+            <CardDescription className='text-[var(--brand)]'>
               Questa ispezione è stata coniata come certificato NFT
             </CardDescription>
           </CardHeader>
@@ -599,8 +599,8 @@ export function BlockchainVerification({
             <div className='flex flex-col sm:flex-row gap-6'>
               {/* NFT Image Preview */}
               <div className='flex-shrink-0'>
-                <div className='w-48 h-48 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl shadow-lg flex items-center justify-center'>
-                  <div className='text-center text-white'>
+                <div className='w-48 h-48 bg-gradient-to-br from-[var(--brand)] to-[var(--status-warning)] rounded-xl shadow-lg flex items-center justify-center'>
+                  <div className='text-center text-[var(--text-on-brand)]'>
                     <Shield className='h-16 w-16 mx-auto mb-2' />
                     <p className='font-bold'>Certificato NFT</p>
                     <p className='text-sm opacity-90'>#{nftData.tokenId.toString()}</p>
@@ -611,28 +611,28 @@ export function BlockchainVerification({
               {/* NFT Details */}
               <div className='flex-1 space-y-4'>
                 <div className='grid grid-cols-2 gap-4'>
-                  <div className='p-3 bg-white/60 rounded-lg'>
-                    <p className='text-xs text-purple-600'>Token ID</p>
-                    <p className='font-medium text-purple-900'>#{nftData.tokenId.toString()}</p>
+                  <div className='p-3 bg-[var(--surface-secondary)]/60 rounded-lg'>
+                    <p className='text-xs text-[var(--brand)]'>Token ID</p>
+                    <p className='font-medium text-[var(--brand)]'>#{nftData.tokenId.toString()}</p>
                   </div>
-                  <div className='p-3 bg-white/60 rounded-lg'>
-                    <p className='text-xs text-purple-600'>Rete</p>
-                    <p className='font-medium text-purple-900'>Polygon</p>
+                  <div className='p-3 bg-[var(--surface-secondary)]/60 rounded-lg'>
+                    <p className='text-xs text-[var(--brand)]'>Rete</p>
+                    <p className='font-medium text-[var(--brand)]'>Polygon</p>
                   </div>
-                  <div className='p-3 bg-white/60 rounded-lg'>
-                    <p className='text-xs text-purple-600'>Proprietario</p>
-                    <p className='font-medium text-purple-900'>{truncateAddress(nftData.owner)}</p>
+                  <div className='p-3 bg-[var(--surface-secondary)]/60 rounded-lg'>
+                    <p className='text-xs text-[var(--brand)]'>Proprietario</p>
+                    <p className='font-medium text-[var(--brand)]'>{truncateAddress(nftData.owner)}</p>
                   </div>
-                  <div className='p-3 bg-white/60 rounded-lg'>
-                    <p className='text-xs text-purple-600'>Blocco</p>
-                    <p className='font-medium text-purple-900'>{nftData.blockNumber.toString()}</p>
+                  <div className='p-3 bg-[var(--surface-secondary)]/60 rounded-lg'>
+                    <p className='text-xs text-[var(--brand)]'>Blocco</p>
+                    <p className='font-medium text-[var(--brand)]'>{nftData.blockNumber.toString()}</p>
                   </div>
                 </div>
 
                 <div className='flex flex-wrap gap-3'>
                   <Button
                     variant='outline'
-                    className='bg-white/80 border-purple-300 hover:bg-purple-100'
+                    className='bg-[var(--surface-secondary)] border-[var(--brand)]/30 hover:bg-[var(--brand)]/10'
                     asChild
                   >
                     <a
@@ -646,7 +646,7 @@ export function BlockchainVerification({
                   </Button>
                   <Button
                     variant='outline'
-                    className='bg-white/80 border-purple-300 hover:bg-purple-100'
+                    className='bg-[var(--surface-secondary)] border-[var(--brand)]/30 hover:bg-[var(--brand)]/10'
                     asChild
                   >
                     <a
@@ -667,11 +667,11 @@ export function BlockchainVerification({
 
       {/* Error Message */}
       {error && (
-        <div className='p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3'>
-          <AlertTriangle className='h-5 w-5 text-red-600 flex-shrink-0 mt-0.5' />
+        <div className='p-4 bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 rounded-lg flex items-start gap-3'>
+          <AlertTriangle className='h-5 w-5 text-[var(--status-error)] flex-shrink-0 mt-0.5' />
           <div>
-            <p className='font-medium text-red-800'>Errore di Verifica</p>
-            <p className='text-sm text-red-600'>{error}</p>
+            <p className='font-medium text-[var(--status-error)]'>Errore di Verifica</p>
+            <p className='text-sm text-[var(--status-error)]'>{error}</p>
           </div>
         </div>
       )}

@@ -22,7 +22,7 @@ const MobileBanner = dynamic(() => import('@/components/marketing/mobile-banner'
 
 export function LandingPage(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-white dark:bg-[var(--surface-tertiary)]">
+    <div className="min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]">
       {/* Above the fold — caricati immediatamente */}
       <Navbar />
       <Hero />

@@ -73,7 +73,7 @@ export default function MarketingNavbar(): React.ReactElement {
         className={`
           fixed top-0 left-0 right-0 z-50 h-16
           transition-all duration-200
-          bg-[#0d0d0d] border-b border-white/10
+          bg-[#0d0d0d] border-b border-[var(--border-default)]/10
         `}
       >
         <nav className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-6 lg:px-8">
@@ -114,7 +114,7 @@ export default function MarketingNavbar(): React.ReactElement {
             </Link>
             <Link
               href="/auth/register"
-              className="rounded-full border border-[var(--border-default)] bg-white px-5 py-2.5 min-h-[44px] flex items-center text-[14px] font-semibold text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
+              className="rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] px-5 py-2.5 min-h-[44px] flex items-center text-[14px] font-semibold text-[var(--text-primary)] transition-all duration-200 hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
             >
               Prova gratis &rarr;
             </Link>
@@ -124,7 +124,7 @@ export default function MarketingNavbar(): React.ReactElement {
           <div className="flex items-center gap-2 md:hidden">
             <Link
               href="/auth/register"
-              className="rounded-full border border-[var(--border-default)] bg-white px-4 py-2 min-h-[44px] flex items-center text-[13px] font-semibold text-[var(--text-primary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)]"
+              className="rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-2 min-h-[44px] flex items-center text-[13px] font-semibold text-[var(--text-primary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)]"
             >
               Prova gratis
             </Link>
@@ -156,7 +156,7 @@ export default function MarketingNavbar(): React.ReactElement {
         {isMobileMenuOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-40 bg-[var(--surface-primary)]/30 backdrop-blur-sm md:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -165,7 +165,7 @@ export default function MarketingNavbar(): React.ReactElement {
               aria-hidden="true"
             />
             <motion.div
-              className="fixed right-0 top-0 z-50 flex h-full w-[300px] flex-col bg-white dark:bg-[var(--surface-primary)] shadow-2xl md:hidden"
+              className="fixed right-0 top-0 z-50 flex h-full w-[300px] flex-col bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] shadow-2xl md:hidden"
               variants={menuVariants}
               initial="closed"
               animate="open"
@@ -222,7 +222,7 @@ export default function MarketingNavbar(): React.ReactElement {
                   <Link
                     href="/auth/register"
                     onClick={closeMobileMenu}
-                    className="flex h-[48px] items-center justify-center rounded-xl bg-[#0d0d0d] text-[15px] font-semibold text-white dark:bg-white dark:text-[var(--text-primary)]"
+                    className="flex h-[48px] items-center justify-center rounded-xl bg-[#0d0d0d] text-[15px] font-semibold text-[var(--text-on-brand)] dark:bg-[var(--surface-secondary)] dark:text-[var(--text-primary)]"
                   >
                     Prova gratis &rarr;
                   </Link>

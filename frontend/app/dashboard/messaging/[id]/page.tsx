@@ -95,7 +95,7 @@ export default function MessagingThreadPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -103,8 +103,8 @@ export default function MessagingThreadPage() {
   if (error) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center'>
-        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>Conversazione non trovata</p>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>Conversazione non trovata</p>
         <Link href='/dashboard/messaging'>
           <AppleButton variant='secondary'>Torna ai messaggi</AppleButton>
         </Link>
@@ -123,18 +123,18 @@ export default function MessagingThreadPage() {
           ]}
         />
         <div className='flex items-center gap-3'>
-          <div className='w-10 h-10 rounded-full bg-apple-blue/10 flex items-center justify-center'>
-            <User className='h-5 w-5 text-apple-blue' />
+          <div className='w-10 h-10 rounded-full bg-[var(--brand)]/10 flex items-center justify-center'>
+            <User className='h-5 w-5 text-[var(--brand)]' />
           </div>
           <div>
-            <h1 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <h1 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               {conversation?.customerName || 'Conversazione'}
             </h1>
-            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'>
+            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] flex items-center gap-1'>
               <Phone className='h-3 w-3' />
               {conversation?.customerPhone}
               {conversation?.channel && (
-                <span className='ml-2 text-footnote px-1.5 py-0.5 rounded-full bg-apple-blue/10 text-apple-blue'>
+                <span className='ml-2 text-footnote px-1.5 py-0.5 rounded-full bg-[var(--brand)]/10 text-[var(--brand)]'>
                   {conversation.channel}
                 </span>
               )}
@@ -146,7 +146,7 @@ export default function MessagingThreadPage() {
       <div className='flex-1 overflow-y-auto p-8 space-y-4'>
         {messages.length === 0 ? (
           <div className='text-center py-12'>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Nessun messaggio. Invia il primo messaggio.</p>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun messaggio. Invia il primo messaggio.</p>
           </div>
         ) : (
           messages.map(msg => {
@@ -160,16 +160,16 @@ export default function MessagingThreadPage() {
               >
                 <div className={`max-w-[70%] px-4 py-3 rounded-2xl ${
                   msg.direction === 'OUTBOUND'
-                    ? 'bg-apple-blue text-white rounded-br-md'
-                    : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)] rounded-bl-md'
+                    ? 'bg-[var(--brand)] text-[var(--text-on-brand)] rounded-br-md'
+                    : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)] rounded-bl-md'
                 }`}>
                   <p className='text-body'>{msg.body}</p>
                   <div className={`flex items-center gap-1 mt-1 ${msg.direction === 'OUTBOUND' ? 'justify-end' : ''}`}>
-                    <p className={`text-footnote ${msg.direction === 'OUTBOUND' ? 'text-white/60' : 'text-apple-gray dark:text-[var(--text-secondary)]'}`}>
+                    <p className={`text-footnote ${msg.direction === 'OUTBOUND' ? 'text-[var(--text-on-brand)]/60' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'}`}>
                       {new Date(msg.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     {msg.direction === 'OUTBOUND' && StatusIcon && (
-                      <StatusIcon className='h-3 w-3 text-white/60' />
+                      <StatusIcon className='h-3 w-3 text-[var(--text-on-brand)]/60' />
                     )}
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export default function MessagingThreadPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className='border-t border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white dark:bg-[var(--surface-primary)] px-8 py-4'>
+      <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] px-8 py-4'>
         <div className='flex gap-3'>
           <Input
             value={newMessage}

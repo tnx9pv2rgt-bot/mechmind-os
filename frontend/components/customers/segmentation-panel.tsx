@@ -194,18 +194,18 @@ const operatorOptions = [
 ];
 
 const colorOptions = [
-  { value: 'amber', label: 'Ambra', bg: 'bg-amber-100 text-amber-800', border: 'border-amber-200' },
-  { value: 'red', label: 'Rosso', bg: 'bg-red-100 text-red-800', border: 'border-red-200' },
-  { value: 'blue', label: 'Blu', bg: 'bg-blue-100 text-blue-800', border: 'border-blue-200' },
-  { value: 'green', label: 'Verde', bg: 'bg-green-100 text-green-800', border: 'border-green-200' },
+  { value: 'amber', label: 'Ambra', bg: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]', border: 'border-[var(--status-warning-subtle)]' },
+  { value: 'red', label: 'Rosso', bg: 'bg-[var(--status-error-subtle)] text-[var(--status-error)]', border: 'border-[var(--status-error-subtle)]' },
+  { value: 'blue', label: 'Blu', bg: 'bg-[var(--status-info-subtle)] text-[var(--status-info)]', border: 'border-[var(--status-info-subtle)]' },
+  { value: 'green', label: 'Verde', bg: 'bg-[var(--status-success-subtle)] text-[var(--status-success)]', border: 'border-[var(--status-success-subtle)]' },
   {
     value: 'purple',
     label: 'Viola',
-    bg: 'bg-purple-100 text-purple-800',
-    border: 'border-purple-200',
+    bg: 'bg-[var(--brand)]/10 text-[var(--brand)]',
+    border: 'border-[var(--brand-subtle)]',
   },
-  { value: 'pink', label: 'Rosa', bg: 'bg-pink-100 text-pink-800', border: 'border-pink-200' },
-  { value: 'cyan', label: 'Ciano', bg: 'bg-cyan-100 text-cyan-800', border: 'border-cyan-200' },
+  { value: 'pink', label: 'Rosa', bg: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]', border: 'border-[var(--status-warning)]/20' },
+  { value: 'cyan', label: 'Ciano', bg: 'bg-[var(--status-info)]/10 text-[var(--status-info)]', border: 'border-[var(--status-info)]/20' },
 ];
 
 // Components
@@ -218,7 +218,7 @@ function SegmentBadge({ color, name, count }: { color: string; name: string; cou
     >
       <Tag className='h-3.5 w-3.5' />
       {name}
-      <span className={`ml-1 rounded-full bg-white/50 px-2 py-0.5 text-xs`}>{count}</span>
+      <span className={`ml-1 rounded-full bg-[var(--surface-secondary)] px-2 py-0.5 text-xs`}>{count}</span>
     </span>
   );
 }
@@ -238,11 +238,11 @@ function RuleRow({
   );
 
   return (
-    <div className='flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800'>
+    <div className='flex items-center gap-3 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]'>
       <select
         value={rule.field}
         onChange={e => onUpdate({ ...rule, field: e.target.value })}
-        className='rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700'
+        className='rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)] px-3 py-2 text-sm dark:border-[var(--border-default)] dark:bg-[var(--border-default)]'
       >
         {fieldOptions.map(field => (
           <option key={field.value} value={field.value}>
@@ -254,7 +254,7 @@ function RuleRow({
       <select
         value={rule.operator}
         onChange={e => onUpdate({ ...rule, operator: e.target.value as SegmentRule['operator'] })}
-        className='rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700'
+        className='rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)] px-3 py-2 text-sm dark:border-[var(--border-default)] dark:bg-[var(--border-default)]'
       >
         {availableOperators.map(op => (
           <option key={op.value} value={op.value}>
@@ -268,7 +268,7 @@ function RuleRow({
         <select
           value={rule.value as string}
           onChange={e => onUpdate({ ...rule, value: e.target.value })}
-          className='flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700'
+          className='flex-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)] px-3 py-2 text-sm dark:border-[var(--border-default)] dark:bg-[var(--border-default)]'
         >
           <option value='2025-02-28'>12 mesi fa</option>
           <option value='2025-08-28'>6 mesi fa</option>
@@ -294,7 +294,7 @@ function RuleRow({
         variant='ghost'
         size='icon'
         onClick={onDelete}
-        className='text-status-urgent hover:text-status-urgent'
+        className='text-[var(--status-error)] hover:text-[var(--status-error)]'
         aria-label='Elimina regola'
       >
         <Trash2 className='h-4 w-4' />
@@ -415,10 +415,10 @@ export function SegmentationPanel() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-xl font-bold text-gray-900 dark:text-white'>
+          <h2 className='text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             Segmentazione Pubblico
           </h2>
-          <p className='text-sm text-gray-600 dark:text-gray-400'>
+          <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
             Crea e gestisci segmenti clienti per marketing mirato
           </p>
         </div>
@@ -444,10 +444,10 @@ export function SegmentationPanel() {
                     count={segment.customerCount}
                   />
                 </div>
-                <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+                <p className='mt-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                   {segment.description}
                 </p>
-                <p className='mt-2 text-xs text-gray-500'>
+                <p className='mt-2 text-xs text-[var(--text-tertiary)]'>
                   Ultimo aggiornamento: {segment.lastUpdated}
                 </p>
               </div>
@@ -475,7 +475,7 @@ export function SegmentationPanel() {
                   variant='ghost'
                   size='icon'
                   onClick={() => handleDeleteSegment(segment.id)}
-                  className='text-status-urgent hover:text-status-urgent'
+                  className='text-[var(--status-error)] hover:text-[var(--status-error)]'
                   aria-label='Elimina segmento'
                 >
                   <Trash2 className='h-4 w-4' />
@@ -491,11 +491,11 @@ export function SegmentationPanel() {
                 return (
                   <div
                     key={rule.id}
-                    className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'
+                    className='flex items-center gap-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'
                   >
                     <Filter className='h-3.5 w-3.5' />
                     <span>{field?.label}</span>
-                    <span className='text-gray-400'>{operator?.label.toLowerCase()}</span>
+                    <span className='text-[var(--text-tertiary)]'>{operator?.label.toLowerCase()}</span>
                     <span className='font-medium'>{rule.value}</span>
                   </div>
                 );
@@ -519,10 +519,10 @@ export function SegmentationPanel() {
 
       {/* Create/Edit Modal */}
       {(isCreating || editingSegment) && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <div className='max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 p-4'>
+          <div className='max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-[var(--surface-secondary)] p-6 shadow-xl dark:bg-[var(--surface-primary)]'>
             <div className='mb-6 flex items-center justify-between'>
-              <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
+              <h3 className='text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {isCreating ? 'Crea Nuovo Segmento' : 'Modifica Segmento'}
               </h3>
               <Button
@@ -543,7 +543,7 @@ export function SegmentationPanel() {
                 {/* Basic Info */}
                 <div className='space-y-4'>
                   <div>
-                    <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='mb-2 block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Nome Segmento
                     </label>
                     <Input
@@ -553,7 +553,7 @@ export function SegmentationPanel() {
                     />
                   </div>
                   <div>
-                    <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='mb-2 block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Descrizione
                     </label>
                     <Input
@@ -565,7 +565,7 @@ export function SegmentationPanel() {
                     />
                   </div>
                   <div>
-                    <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='mb-2 block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Colore
                     </label>
                     <div className='flex flex-wrap gap-2'>
@@ -577,7 +577,7 @@ export function SegmentationPanel() {
                           }
                           className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${color.bg} ${
                             editingSegment.color === color.value
-                              ? 'ring-2 ring-offset-2 ring-gray-400'
+                              ? 'ring-2 ring-offset-2 ring-[var(--border-strong)]'
                               : ''
                           }`}
                         >
@@ -591,7 +591,7 @@ export function SegmentationPanel() {
                 {/* Rules Builder */}
                 <div>
                   <div className='mb-3 flex items-center justify-between'>
-                    <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Regole Segmento
                     </label>
                     <Button
@@ -641,9 +641,9 @@ export function SegmentationPanel() {
                 </div>
 
                 {/* Live Preview */}
-                <div className='rounded-lg border border-brand-200 bg-brand-50 p-4 dark:border-brand-800 dark:bg-brand-900/20'>
+                <div className='rounded-lg border border-brand-200 bg-[var(--brand)]/5 p-4 dark:border-brand-800 dark:bg-[var(--brand)]/40/20'>
                   <div className='flex items-center gap-2'>
-                    <Play className='h-5 w-5 text-brand-600' />
+                    <Play className='h-5 w-5 text-[var(--brand)]' />
                     <span className='font-semibold text-brand-900 dark:text-brand-100'>
                       Anteprima: {calculateSegmentCount(editingSegment.rules)} clienti
                       corrispondenti
@@ -675,8 +675,8 @@ export function SegmentationPanel() {
 
       {/* Preview Modal */}
       {previewSegment && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <div className='max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 p-4'>
+          <div className='max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-[var(--surface-secondary)] p-6 shadow-xl dark:bg-[var(--surface-primary)]'>
             <div className='mb-6 flex items-center justify-between'>
               <div className='flex items-center gap-3'>
                 <SegmentBadge
@@ -721,7 +721,7 @@ export function SegmentationPanel() {
                 </tbody>
               </table>
               {previewCustomers.length === 0 && (
-                <p className='py-8 text-center text-gray-500'>
+                <p className='py-8 text-center text-[var(--text-tertiary)]'>
                   Nessun cliente corrisponde a questo segmento
                 </p>
               )}

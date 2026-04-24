@@ -60,43 +60,43 @@ const DAMAGE_TYPE_COLORS: Record<
   { bg: string; border: string; text: string; label: string }
 > = {
   dent: {
-    bg: 'bg-yellow-500/20',
-    border: 'border-yellow-500',
-    text: 'text-yellow-600',
+    bg: 'bg-[var(--status-warning)]/100/20',
+    border: 'border-[var(--status-warning)]',
+    text: 'text-[var(--status-warning)]',
     label: 'Ammaccatura',
   },
   scratch: {
-    bg: 'bg-orange-500/20',
-    border: 'border-orange-500',
-    text: 'text-orange-600',
+    bg: 'bg-[var(--status-warning)]/50/20',
+    border: 'border-[var(--status-warning)]',
+    text: 'text-[var(--status-warning)]',
     label: 'Graffio',
   },
   rust: {
-    bg: 'bg-red-500/20',
-    border: 'border-red-500',
-    text: 'text-red-600',
+    bg: 'bg-[var(--status-error-subtle)]0/20',
+    border: 'border-[var(--status-error)]',
+    text: 'text-[var(--status-error)]',
     label: 'Ruggine',
   },
   crack: {
-    bg: 'bg-purple-500/20',
-    border: 'border-purple-500',
-    text: 'text-purple-600',
+    bg: 'bg-[var(--brand)]/50/20',
+    border: 'border-[var(--brand)]',
+    text: 'text-[var(--brand)]',
     label: 'Crepa',
   },
 };
 
 const SEVERITY_CONFIG = {
-  minor: { label: 'Minore', color: 'bg-green-500', textColor: 'text-green-700' },
-  moderate: { label: 'Moderata', color: 'bg-yellow-500', textColor: 'text-yellow-700' },
-  severe: { label: 'Grave', color: 'bg-red-500', textColor: 'text-red-700' },
+  minor: { label: 'Minore', color: 'bg-[var(--status-success)]', textColor: 'text-[var(--status-success)]' },
+  moderate: { label: 'Moderata', color: 'bg-[var(--status-warning)]', textColor: 'text-[var(--status-warning)]' },
+  severe: { label: 'Grave', color: 'bg-[var(--status-error)]', textColor: 'text-[var(--status-error)]' },
 };
 
 const TIRE_CONDITION_COLORS = {
-  excellent: 'bg-green-500',
-  good: 'bg-green-400',
-  fair: 'bg-yellow-500',
-  poor: 'bg-orange-500',
-  critical: 'bg-red-500',
+  excellent: 'bg-[var(--status-success)]',
+  good: 'bg-[var(--status-success)]',
+  fair: 'bg-[var(--status-warning)]',
+  poor: 'bg-[var(--status-warning)]',
+  critical: 'bg-[var(--status-error)]',
 };
 
 // ==================== Helper Functions ====================
@@ -168,7 +168,7 @@ function DamageBoundingBox({
       className={cn(
         'absolute cursor-pointer transition-all duration-200',
         colors.border,
-        isSelected ? 'ring-2 ring-white shadow-lg z-10' : 'hover:ring-2 hover:ring-white/50'
+        isSelected ? 'ring-2 ring-[var(--border-default)] shadow-lg z-10' : 'hover:ring-2 hover:ring-[var(--border-default)]/50'
       )}
       style={{
         left: `${x * scale}%`,
@@ -198,7 +198,7 @@ function DamageBoundingBox({
 
       {/* Selection indicator */}
       {isSelected && (
-        <div className='absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md'>
+        <div className='absolute -top-2 -right-2 w-4 h-4 bg-[var(--surface-secondary)] rounded-full flex items-center justify-center shadow-md'>
           <div className={cn('w-2 h-2 rounded-full', colors.border.replace('border-', 'bg-'))} />
         </div>
       )}
@@ -225,10 +225,10 @@ function TireWearVisualization({ tireAnalysis }: { tireAnalysis: TireWearResult 
             className={cn(
               'font-medium',
               tireAnalysis.condition === 'excellent' || tireAnalysis.condition === 'good'
-                ? 'text-green-600'
+                ? 'text-[var(--status-success)]'
                 : tireAnalysis.condition === 'fair'
-                  ? 'text-yellow-600'
-                  : 'text-red-600'
+                  ? 'text-[var(--status-warning)]'
+                  : 'text-[var(--status-error)]'
             )}
           >
             {tireAnalysis.condition === 'excellent' && 'Eccellente'}
@@ -248,17 +248,17 @@ function TireWearVisualization({ tireAnalysis }: { tireAnalysis: TireWearResult 
 
             return (
               <div key={section.section} className='flex-1 flex flex-col items-center gap-2'>
-                <div className='relative w-full h-16 bg-gray-200 rounded-t-lg overflow-hidden'>
+                <div className='relative w-full h-16 bg-[var(--border-default)] rounded-t-lg overflow-hidden'>
                   <div
                     className={cn(
                       'absolute bottom-0 w-full transition-all duration-500',
                       section.wearPercent > 70
-                        ? 'bg-red-500'
+                        ? 'bg-[var(--status-error)]'
                         : section.wearPercent > 50
-                          ? 'bg-orange-500'
+                          ? 'bg-[var(--status-warning)]'
                           : section.wearPercent > 30
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
+                            ? 'bg-[var(--status-warning)]'
+                            : 'bg-[var(--status-success)]'
                     )}
                     style={{ height: `${height}%` }}
                   />
@@ -271,8 +271,8 @@ function TireWearVisualization({ tireAnalysis }: { tireAnalysis: TireWearResult 
                         ? 'Centro'
                         : 'Esterno'}
                   </div>
-                  <div className='text-xs text-gray-500'>{section.wearPercent}% usura</div>
-                  <div className='text-xs font-medium text-gray-700'>{depth.toFixed(1)}mm</div>
+                  <div className='text-xs text-[var(--text-tertiary)]'>{section.wearPercent}% usura</div>
+                  <div className='text-xs font-medium text-[var(--text-secondary)]'>{depth.toFixed(1)}mm</div>
                 </div>
               </div>
             );
@@ -281,17 +281,17 @@ function TireWearVisualization({ tireAnalysis }: { tireAnalysis: TireWearResult 
 
         {/* Average wear */}
         <div className='flex items-center justify-between pt-2 border-t'>
-          <span className='text-sm text-gray-600'>Usura media</span>
+          <span className='text-sm text-[var(--text-secondary)]'>Usura media</span>
           <span
             className={cn(
               'text-sm font-medium',
               tireAnalysis.averageWearPercent > 70
-                ? 'text-red-600'
+                ? 'text-[var(--status-error)]'
                 : tireAnalysis.averageWearPercent > 50
-                  ? 'text-orange-600'
+                  ? 'text-[var(--status-warning)]'
                   : tireAnalysis.averageWearPercent > 30
-                    ? 'text-yellow-600'
-                    : 'text-green-600'
+                    ? 'text-[var(--status-warning)]'
+                    : 'text-[var(--status-success)]'
             )}
           >
             {tireAnalysis.averageWearPercent}%
@@ -303,10 +303,10 @@ function TireWearVisualization({ tireAnalysis }: { tireAnalysis: TireWearResult 
           className={cn(
             'flex items-start gap-2 p-3 rounded-lg text-sm',
             tireAnalysis.condition === 'critical'
-              ? 'bg-red-50 text-red-700'
+              ? 'bg-[var(--status-error-subtle)] text-[var(--status-error)]'
               : tireAnalysis.condition === 'poor'
-                ? 'bg-orange-50 text-orange-700'
-                : 'bg-blue-50 text-blue-700'
+                ? 'bg-[var(--status-warning)]/5 text-[var(--status-warning)]'
+                : 'bg-[var(--status-info-subtle)] text-[var(--status-info)]'
           )}
         >
           <Info className='h-4 w-4 mt-0.5 flex-shrink-0' />
@@ -421,7 +421,7 @@ export function DamageAnalyzer({
         <Card className='flex-1 flex flex-col overflow-hidden'>
           <CardHeader className='py-3 px-4 flex flex-row items-center justify-between space-y-0'>
             <div className='flex items-center gap-2'>
-              <Scan className='h-4 w-4 text-blue-600' />
+              <Scan className='h-4 w-4 text-[var(--status-info)]' />
               <CardTitle className='text-base font-medium'>Analisi AI</CardTitle>
             </div>
 
@@ -437,7 +437,7 @@ export function DamageAnalyzer({
               >
                 <ZoomOut className='h-4 w-4' />
               </Button>
-              <span className='text-xs text-gray-500 w-12 text-center'>
+              <span className='text-xs text-[var(--text-tertiary)] w-12 text-center'>
                 {Math.round(zoom * 100)}%
               </span>
               <Button
@@ -451,7 +451,7 @@ export function DamageAnalyzer({
                 <ZoomIn className='h-4 w-4' />
               </Button>
 
-              <div className='w-px h-6 bg-gray-200 mx-1' />
+              <div className='w-px h-6 bg-[var(--border-default)] mx-1' />
 
               <Button
                 variant='outline'
@@ -483,16 +483,16 @@ export function DamageAnalyzer({
           </CardHeader>
 
           {/* Image Container */}
-          <div ref={imageContainerRef} className='relative flex-1 bg-gray-900 overflow-auto'>
+          <div ref={imageContainerRef} className='relative flex-1 bg-[var(--surface-primary)] overflow-auto'>
             {isLoading ? (
-              <div className='absolute inset-0 flex flex-col items-center justify-center text-white'>
-                <div className='w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4' />
+              <div className='absolute inset-0 flex flex-col items-center justify-center text-[var(--text-on-brand)]'>
+                <div className='w-12 h-12 border-4 border-[var(--status-info)] border-t-transparent rounded-full animate-spin mb-4' />
                 <p className='text-sm'>Analisi in corso...</p>
-                <p className='text-xs text-gray-400 mt-1'>L&apos;AI sta rilevando i danni</p>
+                <p className='text-xs text-[var(--text-tertiary)] mt-1'>L&apos;AI sta rilevando i danni</p>
               </div>
             ) : error ? (
-              <div className='absolute inset-0 flex flex-col items-center justify-center text-white'>
-                <AlertCircle className='h-12 w-12 text-red-500 mb-4' />
+              <div className='absolute inset-0 flex flex-col items-center justify-center text-[var(--text-on-brand)]'>
+                <AlertCircle className='h-12 w-12 text-[var(--status-error)] mb-4' />
                 <p className='text-sm'>{error}</p>
                 <Button variant='outline' size='sm' className='mt-4' onClick={handleAnalyze}>
                   Riprova
@@ -533,9 +533,9 @@ export function DamageAnalyzer({
           </div>
 
           {/* Legend */}
-          <CardFooter className='py-2 px-4 bg-gray-50 border-t flex-wrap gap-4'>
+          <CardFooter className='py-2 px-4 bg-[var(--surface-secondary)] border-t flex-wrap gap-4'>
             <div className='flex items-center gap-3 text-xs'>
-              <span className='text-gray-500'>Legenda:</span>
+              <span className='text-[var(--text-secondary)]'>Legenda:</span>
               {(Object.keys(DAMAGE_TYPE_COLORS) as DamageType[]).map(type => (
                 <div key={type} className='flex items-center gap-1'>
                   <div
@@ -544,7 +544,7 @@ export function DamageAnalyzer({
                       backgroundColor: DAMAGE_TYPE_COLORS[type].border.replace('border-', ''),
                     }}
                   />
-                  <span className='text-gray-600'>{DAMAGE_TYPE_COLORS[type].label}</span>
+                  <span className='text-[var(--text-secondary)]'>{DAMAGE_TYPE_COLORS[type].label}</span>
                 </div>
               ))}
             </div>
@@ -558,43 +558,43 @@ export function DamageAnalyzer({
         <Card>
           <CardHeader className='pb-3'>
             <CardTitle className='text-sm flex items-center gap-2'>
-              <CheckCircle2 className='h-4 w-4 text-green-600' />
+              <CheckCircle2 className='h-4 w-4 text-[var(--status-success)]' />
               Riepilogo Analisi
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-3'>
             {isLoading ? (
               <div className='space-y-2'>
-                <div className='h-4 bg-gray-200 rounded animate-pulse' />
-                <div className='h-4 bg-gray-200 rounded animate-pulse w-3/4' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse' />
+                <div className='h-4 bg-[var(--border-default)] rounded animate-pulse w-3/4' />
               </div>
             ) : result ? (
               <>
                 <div className='grid grid-cols-2 gap-3'>
-                  <div className='bg-gray-50 rounded-lg p-3'>
-                    <div className='text-xs text-gray-500 mb-1'>Danni rilevati</div>
-                    <div className='text-2xl font-semibold text-gray-900'>
+                  <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+                    <div className='text-xs text-[var(--text-tertiary)] mb-1'>Danni rilevati</div>
+                    <div className='text-2xl font-semibold text-[var(--text-primary)]'>
                       {filteredDamages.length}
                     </div>
                   </div>
-                  <div className='bg-gray-50 rounded-lg p-3'>
-                    <div className='text-xs text-gray-500 mb-1'>Confidenza media</div>
-                    <div className='text-2xl font-semibold text-blue-600'>
+                  <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+                    <div className='text-xs text-[var(--text-tertiary)] mb-1'>Confidenza media</div>
+                    <div className='text-2xl font-semibold text-[var(--status-info)]'>
                       {Math.round(result.overallConfidence * 100)}%
                     </div>
                   </div>
                 </div>
 
                 <div className='flex items-center justify-between py-2 border-t'>
-                  <span className='text-sm text-gray-600 flex items-center gap-1.5'>
+                  <span className='text-sm text-[var(--text-secondary)] flex items-center gap-1.5'>
                     <CircleDollarSign className='h-4 w-4' />
                     Costo stimato
                   </span>
-                  <span className='font-semibold text-gray-900'>{formatCurrency(totalCost)}</span>
+                  <span className='font-semibold text-[var(--text-primary)]'>{formatCurrency(totalCost)}</span>
                 </div>
 
                 <div className='flex items-center justify-between py-2 border-t'>
-                  <span className='text-sm text-gray-600 flex items-center gap-1.5'>
+                  <span className='text-sm text-[var(--text-secondary)] flex items-center gap-1.5'>
                     <AlertTriangle className='h-4 w-4' />
                     Urgenza
                   </span>
@@ -607,11 +607,11 @@ export function DamageAnalyzer({
                             'w-2 h-4 rounded-sm mx-px',
                             i < urgencyScore
                               ? urgencyScore > 7
-                                ? 'bg-red-500'
+                                ? 'bg-[var(--status-error)]'
                                 : urgencyScore > 4
-                                  ? 'bg-yellow-500'
-                                  : 'bg-green-500'
-                              : 'bg-gray-200'
+                                  ? 'bg-[var(--status-warning)]'
+                                  : 'bg-[var(--status-success)]'
+                              : 'bg-[var(--border-default)]'
                           )}
                         />
                       ))}
@@ -620,10 +620,10 @@ export function DamageAnalyzer({
                       className={cn(
                         'text-sm font-medium',
                         urgencyScore > 7
-                          ? 'text-red-600'
+                          ? 'text-[var(--status-error)]'
                           : urgencyScore > 4
-                            ? 'text-yellow-600'
-                            : 'text-green-600'
+                            ? 'text-[var(--status-warning)]'
+                            : 'text-[var(--status-success)]'
                       )}
                     >
                       {urgencyScore}/10
@@ -632,7 +632,7 @@ export function DamageAnalyzer({
                 </div>
               </>
             ) : (
-              <p className='text-sm text-gray-500 text-center py-4'>Nessuna analisi disponibile</p>
+              <p className='text-sm text-[var(--text-tertiary)] text-center py-4'>Nessuna analisi disponibile</p>
             )}
           </CardContent>
         </Card>
@@ -653,11 +653,11 @@ export function DamageAnalyzer({
               disabled={isLoading}
             />
             <div className='flex justify-between mt-2'>
-              <span className='text-xs text-gray-500'>30%</span>
-              <span className='text-xs font-medium text-blue-600'>
+              <span className='text-xs text-[var(--text-tertiary)]'>30%</span>
+              <span className='text-xs font-medium text-[var(--status-info)]'>
                 {Math.round(confidenceThreshold[0] * 100)}%
               </span>
-              <span className='text-xs text-gray-500'>95%</span>
+              <span className='text-xs text-[var(--text-tertiary)]'>95%</span>
             </div>
           </CardContent>
         </Card>
@@ -674,7 +674,7 @@ export function DamageAnalyzer({
             {isLoading ? (
               <div className='space-y-2'>
                 {[1, 2, 3].map(i => (
-                  <div key={i} className='h-16 bg-gray-100 rounded animate-pulse' />
+                  <div key={i} className='h-16 bg-[var(--surface-secondary)] rounded animate-pulse' />
                 ))}
               </div>
             ) : filteredDamages.length > 0 ? (
@@ -697,8 +697,8 @@ export function DamageAnalyzer({
                     className={cn(
                       'w-full text-left p-3 rounded-lg border transition-all duration-200',
                       isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)] shadow-sm'
+                        : 'border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-secondary)]'
                     )}
                     onClick={() => handleDamageSelect(damage.id)}
                   >
@@ -715,24 +715,24 @@ export function DamageAnalyzer({
                             className={cn(
                               'text-xs px-1.5 py-0.5 rounded-full',
                               damage.severity === 'severe'
-                                ? 'bg-red-100 text-red-700'
+                                ? 'bg-[var(--status-error-subtle)] text-[var(--status-error)]'
                                 : damage.severity === 'moderate'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-green-100 text-green-700'
+                                  ? 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)]'
+                                  : 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
                             )}
                           >
                             {SEVERITY_CONFIG[damage.severity].label}
                           </span>
                         </div>
-                        <p className='text-xs text-gray-600 truncate'>
+                        <p className='text-xs text-[var(--text-secondary)] truncate'>
                           {damage.description || `${colors.label} rilevata`}
                         </p>
                       </div>
                       <div className='text-right'>
-                        <div className='text-sm font-medium text-gray-900'>
+                        <div className='text-sm font-medium text-[var(--text-primary)]'>
                           {Math.round(damage.confidence * 100)}%
                         </div>
-                        <div className='text-xs text-gray-500'>{formatCurrency(estimatedCost)}</div>
+                        <div className='text-xs text-[var(--text-tertiary)]'>{formatCurrency(estimatedCost)}</div>
                       </div>
                     </div>
                   </button>
@@ -740,14 +740,14 @@ export function DamageAnalyzer({
               })
             ) : result ? (
               <div className='text-center py-6'>
-                <CheckCircle2 className='h-10 w-10 text-green-500 mx-auto mb-2' />
-                <p className='text-sm text-gray-600'>Nessun danno rilevato</p>
-                <p className='text-xs text-gray-400 mt-1'>
+                <CheckCircle2 className='h-10 w-10 text-[var(--status-success)] mx-auto mb-2' />
+                <p className='text-sm text-[var(--text-secondary)]'>Nessun danno rilevato</p>
+                <p className='text-xs text-[var(--text-tertiary)] mt-1'>
                   Prova a abbassare la soglia di confidenza
                 </p>
               </div>
             ) : (
-              <p className='text-sm text-gray-500 text-center py-4'>
+              <p className='text-sm text-[var(--text-tertiary)] text-center py-4'>
                 Avvia l&apos;analisi per vedere i risultati
               </p>
             )}

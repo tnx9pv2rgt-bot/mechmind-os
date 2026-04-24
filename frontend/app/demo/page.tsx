@@ -33,9 +33,9 @@ export default function DemoPage(): React.ReactElement {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--surface-primary)]">
         <div className="text-center">
-          <p className="text-lg text-white">Server non disponibile</p>
+          <p className="text-lg text-[var(--text-on-brand)]">Server non disponibile</p>
           <p className="mt-2 text-sm text-[var(--text-tertiary)]">Riprova tra qualche istante.</p>
-          <a href="/" className="mt-4 inline-block text-sm text-white underline">
+          <a href="/" className="mt-4 inline-block text-sm text-[var(--text-on-brand)] underline">
             Torna alla home
           </a>
         </div>
@@ -46,8 +46,8 @@ export default function DemoPage(): React.ReactElement {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--surface-primary)]">
       <div className="flex flex-col items-center gap-3">
-        <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-white/20 border-t-white" />
-        <p className="text-base text-white">Avvio demo in corso...</p>
+        <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-[var(--border-default)]/20 border-t-white" />
+        <p className="text-base text-[var(--text-on-brand)]">Avvio demo in corso...</p>
       </div>
     </div>
   );

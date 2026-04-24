@@ -34,7 +34,7 @@ export default function PrivacyPage() {
 
         <Section title='1. Titolare del trattamento'>
           <p>Il Titolare del trattamento dei dati personali &egrave;:</p>
-          <div className='rounded-xl bg-white/60 dark:bg-white/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-1'>
+          <div className='rounded-xl bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-secondary)]/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-1'>
             <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nexo S.r.l.</p>
             <p>Sede legale: Via Example 10, 00100 Roma (RM), Italia</p>
             <p>P.IVA: 00000000000</p>
@@ -168,7 +168,7 @@ export default function PrivacyPage() {
             I dati personali possono essere comunicati ai seguenti soggetti terzi, nominati
             responsabili del trattamento ai sensi dell&apos;art. 28 GDPR:
           </p>
-          <div className='rounded-xl bg-white/60 dark:bg-white/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-3'>
+          <div className='rounded-xl bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-secondary)]/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-3'>
             <div>
               <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Amazon Web Services (AWS)
@@ -198,7 +198,7 @@ export default function PrivacyPage() {
 
         <Section title='6. Conservazione dei dati'>
           <p>I dati personali sono conservati per i seguenti periodi:</p>
-          <div className='rounded-xl bg-white/60 dark:bg-white/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px]'>
+          <div className='rounded-xl bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-secondary)]/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px]'>
             <table className='w-full'>
               <thead>
                 <tr className='text-left border-b border-[var(--border-default)] dark:border-[var(--border-default)]'>
@@ -352,7 +352,7 @@ export default function PrivacyPage() {
             Per qualsiasi domanda relativa al trattamento dei dati personali o alla presente
             informativa, &egrave; possibile contattarci ai seguenti recapiti:
           </p>
-          <div className='rounded-xl bg-white/60 dark:bg-white/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-1'>
+          <div className='rounded-xl bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-secondary)]/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-1'>
             <p>
               Email DPO:{' '}
               <a

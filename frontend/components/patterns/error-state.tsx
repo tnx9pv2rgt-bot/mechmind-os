@@ -69,19 +69,19 @@ export function ErrorState({
       )}
       role="alert"
     >
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/40">
-        <Icon className="h-10 w-10 text-destructive" strokeWidth={1.5} />
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]">
+        <Icon className="h-10 w-10 text-[var(--status-error)]" strokeWidth={1.5} />
       </div>
 
-      <h3 className="mt-6 text-title-3 font-semibold text-gray-900 dark:text-gray-100">
+      <h3 className="mt-6 text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
         {displayTitle}
       </h3>
-      <p className="mt-2 max-w-md text-body text-gray-500 dark:text-gray-400">
+      <p className="mt-2 max-w-md text-body text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
         {displayDescription}
       </p>
 
       {errorCode && (
-        <p className="mt-3 font-mono text-footnote text-gray-400 dark:text-gray-500">
+        <p className="mt-3 font-mono text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
           Codice: {errorCode}
         </p>
       )}

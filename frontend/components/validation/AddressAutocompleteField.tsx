@@ -216,16 +216,16 @@ export function AddressAutocompleteField({
     <div ref={containerRef} className={cn('relative', className)}>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-[var(--status-error)] ml-1">*</span>}
         </label>
       )}
 
       {/* Input Container */}
       <div className="relative">
         {/* Icona sinistra */}
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
           <MapPin className={iconSizes[size]} />
         </div>
 
@@ -241,17 +241,17 @@ export function AddressAutocompleteField({
           placeholder={placeholder}
           autoComplete="off"
           className={cn(
-            'w-full rounded-lg border bg-white dark:bg-gray-900',
+            'w-full rounded-lg border bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]',
             'pl-10 pr-10',
             'transition-all duration-200',
             'focus:outline-none focus:ring-2',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             sizeClasses[size],
             error
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+              ? 'border-[var(--status-error)]/30 focus:border-[var(--status-error)] focus:ring-[var(--status-error)]/20'
               : selectedDetails
-                ? 'border-green-300 focus:border-green-500 focus:ring-green-500/20'
-                : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20'
+                ? 'border-[var(--status-success)]/30 focus:border-[var(--status-success)] focus:ring-[var(--status-success)]/20'
+                : 'border-[var(--border-default)] dark:border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
           )}
           whileFocus={{ scale: 1.005 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -264,23 +264,23 @@ export function AddressAutocompleteField({
             <motion.button
               type="button"
               onClick={clearField}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
             >
-              <X className={cn('text-gray-400', iconSizes[size === 'lg' ? 'md' : 'sm'])} />
+              <X className={cn('text-[var(--text-tertiary)]', iconSizes[size === 'lg' ? 'md' : 'sm'])} />
             </motion.button>
           )}
 
           {/* Loading indicator */}
           {isLoading && (
-            <Loader2 className={cn('animate-spin text-blue-500', iconSizes[size])} />
+            <Loader2 className={cn('animate-spin text-[var(--status-info)]', iconSizes[size])} />
           )}
 
           {/* Success indicator */}
           {selectedDetails && !isLoading && (
-            <Check className={cn('text-green-500', iconSizes[size])} />
+            <Check className={cn('text-[var(--status-success)]', iconSizes[size])} />
           )}
         </div>
       </div>
@@ -293,7 +293,7 @@ export function AddressAutocompleteField({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg max-h-72 overflow-auto"
+            className="absolute z-50 w-full mt-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] shadow-lg max-h-72 overflow-auto"
           >
             {predictions.map((prediction, index) => (
               <button
@@ -303,16 +303,16 @@ export function AddressAutocompleteField({
                 className={cn(
                   'w-full px-4 py-3 text-left transition-colors flex items-start gap-3',
                   index === highlightedIndex
-                    ? 'bg-blue-50 dark:bg-blue-900/20'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                    ? 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]'
+                    : 'hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
                 )}
               >
-                <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 text-[var(--text-tertiary)] mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <p className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate">
                     {prediction.mainText}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)] truncate">
                     {prediction.secondaryText}
                   </p>
                 </div>
@@ -330,7 +330,7 @@ export function AddressAutocompleteField({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-red-600 flex items-center gap-1.5"
+            className="mt-2 text-sm text-[var(--status-error)] flex items-center gap-1.5"
           >
             <Navigation className="w-4 h-4 flex-shrink-0" />
             {error}
@@ -343,20 +343,20 @@ export function AddressAutocompleteField({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+            className="mt-3 p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/50 rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)]"
           >
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Building className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+              <div className="p-2 bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30 rounded-lg">
+                <Building className="w-5 h-5 text-[var(--status-info)] dark:text-[var(--status-info)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   {selectedDetails.street} {selectedDetails.number}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-primary)]">
                   {selectedDetails.postalCode} {selectedDetails.city}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[var(--text-tertiary)]">
                   {selectedDetails.province && `${selectedDetails.province} - `}
                   {selectedDetails.country}
                 </p>
@@ -367,7 +367,7 @@ export function AddressAutocompleteField({
                     href={mapLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm text-[var(--status-info)] hover:text-[var(--status-info)]"
                   >
                     <Navigation className="w-4 h-4" />
                     Visualizza su Google Maps
@@ -376,7 +376,7 @@ export function AddressAutocompleteField({
 
                 {/* Coordinates */}
                 {(selectedDetails.latitude !== 0 || selectedDetails.longitude !== 0) && (
-                  <p className="mt-2 text-xs text-gray-400 font-mono">
+                  <p className="mt-2 text-xs text-[var(--text-tertiary)] font-mono">
                     {selectedDetails.latitude.toFixed(6)}, {selectedDetails.longitude.toFixed(6)}
                   </p>
                 )}

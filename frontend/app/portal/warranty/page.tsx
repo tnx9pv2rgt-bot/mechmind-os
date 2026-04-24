@@ -49,7 +49,7 @@ export default function PortalWarrantyPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
@@ -60,10 +60,10 @@ export default function PortalWarrantyPage() {
     return (
       <PortalPageWrapper title='Garanzia' customer={customer || undefined}>
         <div className='text-center py-16'>
-          <p className='text-apple-red mb-4'>{error}</p>
+          <p className='text-[var(--status-error)] mb-4'>{error}</p>
           <button
             onClick={() => mutate()}
-            className='text-apple-blue hover:underline'
+            className='text-[var(--brand)] hover:underline'
           >
             Riprova
           </button>
@@ -87,17 +87,17 @@ export default function PortalWarrantyPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='mb-6 p-5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50'
+        className='mb-6 p-5 bg-gradient-to-r from-[var(--status-info)]/5 to-[var(--brand)]/5 dark:from-[var(--status-info)]/40/20 dark:to-[var(--brand)]/40/20 rounded-2xl border border-[var(--status-info)]/10 dark:border-[var(--status-info)]/50'
       >
         <div className='flex items-start gap-4'>
-          <div className='w-12 h-12 rounded-xl bg-white dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
-            <Shield className='h-6 w-6 text-apple-blue' />
+          <div className='w-12 h-12 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
+            <Shield className='h-6 w-6 text-[var(--brand)]' />
           </div>
           <div className='flex-1'>
-            <h3 className='font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+            <h3 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
               Copertura Garanzia
             </h3>
-            <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Le garanzie coprono i difetti di fabbricazione e i guasti meccanici. Per i reclami,
               contattaci con il numero di polizza.
             </p>

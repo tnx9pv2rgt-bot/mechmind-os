@@ -82,16 +82,16 @@ interface DeclinedServicesResponse {
 // Severity Config
 // =============================================================================
 const severityConfig: Record<string, { label: string; colorClass: string; icon: React.ComponentType<{ className?: string }> }> = {
-  CRITICAL: { label: 'Critico', colorClass: 'text-apple-red bg-red-100 dark:bg-red-900/40', icon: AlertCircle },
-  WARNING: { label: 'Attenzione', colorClass: 'text-apple-orange bg-orange-100 dark:bg-orange-900/40', icon: AlertTriangle },
-  INFO: { label: 'Info', colorClass: 'text-apple-blue bg-blue-100 dark:bg-blue-900/40', icon: Info },
+  CRITICAL: { label: 'Critico', colorClass: 'text-[var(--status-error)] bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', icon: AlertCircle },
+  WARNING: { label: 'Attenzione', colorClass: 'text-[var(--status-warning)] bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', icon: AlertTriangle },
+  INFO: { label: 'Info', colorClass: 'text-[var(--brand)] bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', icon: Info },
 };
 
 const followUpStatusConfig: Record<string, { label: string; colorClass: string }> = {
-  PENDING: { label: 'In attesa', colorClass: 'text-apple-orange bg-orange-100 dark:bg-orange-900/40' },
-  SENT: { label: 'Inviato', colorClass: 'text-apple-blue bg-blue-100 dark:bg-blue-900/40' },
-  CONVERTED: { label: 'Convertito', colorClass: 'text-apple-green bg-green-100 dark:bg-green-900/40' },
-  EXPIRED: { label: 'Scaduto', colorClass: 'text-apple-gray bg-apple-light-gray dark:bg-[var(--surface-elevated)]' },
+  PENDING: { label: 'In attesa', colorClass: 'text-[var(--status-warning)] bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]' },
+  SENT: { label: 'Inviato', colorClass: 'text-[var(--brand)] bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' },
+  CONVERTED: { label: 'Convertito', colorClass: 'text-[var(--status-success)] bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]' },
+  EXPIRED: { label: 'Scaduto', colorClass: 'text-[var(--text-tertiary)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]' },
 };
 
 // =============================================================================
@@ -183,13 +183,13 @@ export default function FollowUpsPage(): React.ReactElement {
     }
   }, [items, selectedIds.size]);
 
-  const inputClassName = 'w-full rounded-xl border border-apple-border/20 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 py-2.5 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue min-h-[44px]';
+  const inputClassName = 'w-full rounded-xl border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 py-2.5 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue min-h-[44px]';
 
   const statCards = [
-    { label: 'Servizi rifiutati', value: stats.totalDeclined, icon: Wrench, color: 'bg-apple-red' },
-    { label: 'In attesa follow-up', value: stats.pendingFollowUp, icon: Clock, color: 'bg-apple-orange' },
-    { label: 'Follow-up inviati', value: stats.followUpsSent, icon: Send, color: 'bg-apple-blue' },
-    { label: 'Tasso conversione', value: `${stats.conversionRate}%`, icon: TrendingUp, color: 'bg-apple-green' },
+    { label: 'Servizi rifiutati', value: stats.totalDeclined, icon: Wrench, color: 'bg-[var(--status-error)]' },
+    { label: 'In attesa follow-up', value: stats.pendingFollowUp, icon: Clock, color: 'bg-[var(--status-warning)]' },
+    { label: 'Follow-up inviati', value: stats.followUpsSent, icon: Send, color: 'bg-[var(--brand)]' },
+    { label: 'Tasso conversione', value: `${stats.conversionRate}%`, icon: TrendingUp, color: 'bg-[var(--status-success)]' },
   ];
 
   return (
@@ -207,8 +207,8 @@ export default function FollowUpsPage(): React.ReactElement {
               Marketing
             </AppleButton>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Follow-up Servizi Rifiutati</h1>
-              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1">Gestisci i follow-up per i servizi declinati dai clienti</p>
+              <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Follow-up Servizi Rifiutati</h1>
+              <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">Gestisci i follow-up per i servizi declinati dai clienti</p>
             </div>
           </div>
           {selectedIds.size > 0 && (
@@ -231,13 +231,13 @@ export default function FollowUpsPage(): React.ReactElement {
                 <AppleCardContent>
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className="h-5 w-5 text-white" />
+                      <stat.icon className="h-5 w-5 text-[var(--text-on-brand)]" />
                     </div>
                   </div>
-                  <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+                  <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{stat.label}</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -250,7 +250,7 @@ export default function FollowUpsPage(): React.ReactElement {
             <AppleCardContent>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-apple-gray" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
                   <Input
                     type="text"
                     placeholder="Cerca cliente o veicolo..."
@@ -274,10 +274,10 @@ export default function FollowUpsPage(): React.ReactElement {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex flex-col sm:flex-row gap-3 mt-4 p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]"
+                  className="flex flex-col sm:flex-row gap-3 mt-4 p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]"
                 >
                   <div className="flex-1">
-                    <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Severita</label>
+                    <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Severita</label>
                     <select
                       value={severityFilter}
                       onChange={e => setSeverityFilter(e.target.value)}
@@ -290,11 +290,11 @@ export default function FollowUpsPage(): React.ReactElement {
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Data da</label>
+                    <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Data da</label>
                     <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={inputClassName} />
                   </div>
                   <div className="flex-1">
-                    <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Data a</label>
+                    <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Data a</label>
                     <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={inputClassName} />
                   </div>
                   <div className="flex items-end">
@@ -317,14 +317,14 @@ export default function FollowUpsPage(): React.ReactElement {
         <motion.div variants={itemVariants}>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
             </div>
           ) : error ? (
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Errore nel caricamento dei dati</p>
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Errore nel caricamento dei dati</p>
                   <AppleButton
                     variant="ghost"
                     onClick={() => mutate(`/api/declined-services${qs ? `?${qs}` : ''}`)}
@@ -339,9 +339,9 @@ export default function FollowUpsPage(): React.ReactElement {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <CheckCircle2 className="h-12 w-12 text-apple-green/40" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessun servizio rifiutato trovato</p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Tutti i servizi sono stati accettati o gestiti</p>
+                  <CheckCircle2 className="h-12 w-12 text-[var(--status-success)]/40" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Nessun servizio rifiutato trovato</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Tutti i servizi sono stati accettati o gestiti</p>
                 </div>
               </AppleCardContent>
             </AppleCard>
@@ -352,7 +352,7 @@ export default function FollowUpsPage(): React.ReactElement {
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]">
+                      <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
                         <th className="px-4 py-3 text-left">
                           <input
                             type="checkbox"
@@ -361,14 +361,14 @@ export default function FollowUpsPage(): React.ReactElement {
                             className="w-4 h-4 rounded"
                           />
                         </th>
-                        <th className="px-4 py-3 text-left text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Cliente</th>
-                        <th className="px-4 py-3 text-left text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Veicolo</th>
-                        <th className="px-4 py-3 text-left text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Servizio</th>
-                        <th className="px-4 py-3 text-right text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Costo stimato</th>
-                        <th className="px-4 py-3 text-center text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Severita</th>
-                        <th className="px-4 py-3 text-left text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Data rifiuto</th>
-                        <th className="px-4 py-3 text-center text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Stato</th>
-                        <th className="px-4 py-3 text-right text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">Azioni</th>
+                        <th className="px-4 py-3 text-left text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Cliente</th>
+                        <th className="px-4 py-3 text-left text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Veicolo</th>
+                        <th className="px-4 py-3 text-left text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Servizio</th>
+                        <th className="px-4 py-3 text-right text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Costo stimato</th>
+                        <th className="px-4 py-3 text-center text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Severita</th>
+                        <th className="px-4 py-3 text-left text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Data rifiuto</th>
+                        <th className="px-4 py-3 text-center text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Stato</th>
+                        <th className="px-4 py-3 text-right text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Azioni</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -379,7 +379,7 @@ export default function FollowUpsPage(): React.ReactElement {
                         return (
                           <tr
                             key={item.id}
-                            className="border-b border-apple-border/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
+                            className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
                           >
                             <td className="px-4 py-3">
                               <input
@@ -391,31 +391,31 @@ export default function FollowUpsPage(): React.ReactElement {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <Phone className="w-3.5 h-3.5 flex-shrink-0 text-apple-gray" />
+                                <Phone className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-tertiary)]" />
                                 <div>
-                                  <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{item.customerName}</p>
+                                  <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{item.customerName}</p>
                                   {item.customerPhone && (
-                                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{item.customerPhone}</p>
+                                    <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{item.customerPhone}</p>
                                   )}
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <Car className="w-3.5 h-3.5 flex-shrink-0 text-apple-gray" />
+                                <Car className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-tertiary)]" />
                                 <div>
-                                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{item.vehiclePlate}</p>
+                                  <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{item.vehiclePlate}</p>
                                   {(item.vehicleBrand || item.vehicleModel) && (
-                                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{[item.vehicleBrand, item.vehicleModel].filter(Boolean).join(' ')}</p>
+                                    <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{[item.vehicleBrand, item.vehicleModel].filter(Boolean).join(' ')}</p>
                                   )}
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{item.serviceName}</p>
+                              <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{item.serviceName}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                              <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                 {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(item.estimatedCost)}
                               </span>
                             </td>
@@ -426,7 +426,7 @@ export default function FollowUpsPage(): React.ReactElement {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                              <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                 {new Date(item.declinedAt).toLocaleDateString('it-IT')}
                               </span>
                             </td>
@@ -473,7 +473,7 @@ export default function FollowUpsPage(): React.ReactElement {
                     const SevIcon = sev.icon;
                     const fStatus = followUpStatusConfig[item.followUpStatus] ?? followUpStatusConfig.PENDING;
                     return (
-                      <div key={item.id} className="p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-3">
+                      <div key={item.id} className="p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] space-y-3">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
                             <input
@@ -483,8 +483,8 @@ export default function FollowUpsPage(): React.ReactElement {
                               className="w-4 h-4 rounded mt-0.5"
                             />
                             <div>
-                              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{item.customerName}</p>
-                              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{item.vehiclePlate} - {item.serviceName}</p>
+                              <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{item.customerName}</p>
+                              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{item.vehiclePlate} - {item.serviceName}</p>
                             </div>
                           </div>
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-footnote font-semibold ${sev.colorClass}`}>
@@ -493,7 +493,7 @@ export default function FollowUpsPage(): React.ReactElement {
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-4 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             <span className="flex items-center gap-1">
                               <Euro className="w-3 h-3" />
                               {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(item.estimatedCost)}

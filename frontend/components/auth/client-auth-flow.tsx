@@ -147,7 +147,7 @@ export function ClientAuthFlow({ onSuccess, onError }: ClientAuthFlowProps) {
             <button
               type='button'
               onClick={() => setStep('method')}
-              className='text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4'
+              className='text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] flex items-center gap-1 mb-4'
             >
               ← Torna indietro
             </button>
@@ -199,7 +199,7 @@ export function ClientAuthFlow({ onSuccess, onError }: ClientAuthFlowProps) {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className='p-3 rounded-xl bg-red-50 text-red-600 text-sm text-center'
+                  className='p-3 rounded-xl bg-[var(--status-error-subtle)] text-[var(--status-error)] text-sm text-center'
                 >
                   {error}
                 </motion.div>
@@ -277,9 +277,9 @@ export function ClientAuthFlow({ onSuccess, onError }: ClientAuthFlowProps) {
     <div className={styles.authContainer}>
       {/* Animated background */}
       <div className='absolute inset-0 overflow-hidden'>
-        <div className='absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse' />
+        <div className='absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-[var(--status-info)]/20 to-[var(--brand)]/20 rounded-full blur-3xl animate-pulse' />
         <div
-          className='absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse'
+          className='absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-[var(--status-info)]/20 to-[var(--status-info)]/20 rounded-full blur-3xl animate-pulse'
           style={{ animationDelay: '1s' }}
         />
       </div>
@@ -292,11 +292,11 @@ export function ClientAuthFlow({ onSuccess, onError }: ClientAuthFlowProps) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-            className='w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25'
+            className='w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center shadow-lg shadow-blue-500/25'
           >
             <svg
               viewBox='0 0 24 24'
-              className='w-8 h-8 text-white'
+              className='w-8 h-8 text-[var(--text-on-brand)]'
               fill='none'
               stroke='currentColor'
               strokeWidth='2'
@@ -323,7 +323,7 @@ export function ClientAuthFlow({ onSuccess, onError }: ClientAuthFlowProps) {
 
         {/* Footer */}
         <div className='mt-8 text-center'>
-          <p className='text-xs text-gray-400'>Protetto da crittografia end-to-end</p>
+          <p className='text-xs text-[var(--text-tertiary)]'>Protetto da crittografia end-to-end</p>
         </div>
       </AuthCard>
     </div>
@@ -359,7 +359,7 @@ export function ClientLoginForm({ onSuccess }: { onSuccess?: (user: unknown) => 
 
             <button
               onClick={() => setIsPasskeyFallback(true)}
-              className='w-full text-sm text-gray-500 hover:text-gray-700 py-2'
+              className='w-full text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] py-2'
             >
               Usa email e password
             </button>
@@ -367,12 +367,12 @@ export function ClientLoginForm({ onSuccess }: { onSuccess?: (user: unknown) => 
         ) : (
           <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='space-y-4'>
             {/* Email/Password form qui */}
-            <p className='text-sm text-gray-600 text-center'>Inserisci le tue credenziali</p>
+            <p className='text-sm text-[var(--text-secondary)] text-center'>Inserisci le tue credenziali</p>
 
             <button
               type='button'
               onClick={() => setIsPasskeyFallback(false)}
-              className='w-full text-sm text-blue-500 hover:text-blue-700'
+              className='w-full text-sm text-[var(--status-info)] hover:text-[var(--status-info)]'
             >
               ← Torna ai passkey
             </button>

@@ -90,10 +90,10 @@ export default function MaintenancePage() {
       <header className=''>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Manutenzione Preventiva
             </h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci le programmazioni di manutenzione per tutti i veicoli
             </p>
           </div>
@@ -158,10 +158,10 @@ export default function MaintenancePage() {
 
               <AppleCard hover={false}>
                 <AppleCardContent>
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Prossime Scadenze
                   </h3>
-                  <p className='mt-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='mt-2 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Visualizza le prossime scadenze di manutenzione per i tuoi veicoli
                   </p>
                   <AppleButton
@@ -177,10 +177,10 @@ export default function MaintenancePage() {
 
               <AppleCard hover={false}>
                 <AppleCardContent>
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Storico Manutenzioni
                   </h3>
-                  <p className='mt-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='mt-2 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Visualizza lo storico delle manutenzioni completate
                   </p>
                   <AppleButton

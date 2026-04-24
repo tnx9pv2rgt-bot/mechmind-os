@@ -163,9 +163,9 @@ export default function TeamPage() {
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, { bg: string; text: string; label: string; icon: typeof CheckCircle }> = {
-      ACTIVE: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', label: 'Attivo', icon: CheckCircle },
-      INVITED: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-300', label: 'Invitato', icon: Mail },
-      DEACTIVATED: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-300', label: 'Disattivato', icon: XCircle },
+      ACTIVE: { bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30', text: 'text-[var(--status-success)] dark:text-[var(--status-success)]', label: 'Attivo', icon: CheckCircle },
+      INVITED: { bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30', text: 'text-[var(--status-info)] dark:text-[var(--status-info)]', label: 'Invitato', icon: Mail },
+      DEACTIVATED: { bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]', text: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]', label: 'Disattivato', icon: XCircle },
     };
     const c = map[status] || map.ACTIVE;
     const Icon = c.icon;
@@ -185,7 +185,7 @@ export default function TeamPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -196,11 +196,11 @@ export default function TeamPage() {
       <div className='min-h-screen flex items-center justify-center p-8'>
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
-            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <AlertTriangle className='w-12 h-12 text-[var(--status-error)] mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Impossibile caricare i membri del team.
             </p>
           </AppleCardContent>
@@ -215,8 +215,8 @@ export default function TeamPage() {
         <div className='px-4 sm:px-8 py-5'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Team</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Team</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Gestisci i membri del tuo team
               </p>
             </div>
@@ -232,8 +232,8 @@ export default function TeamPage() {
         <AppleCard>
           <AppleCardHeader>
             <div className='flex items-center gap-3'>
-              <Users className='h-5 w-5 text-apple-blue' />
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <Users className='h-5 w-5 text-[var(--brand)]' />
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Membri ({members?.length || 0})
               </h2>
             </div>
@@ -243,13 +243,13 @@ export default function TeamPage() {
               <div className='overflow-x-auto'>
                 <table className='w-full'>
                   <thead>
-                    <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Nome</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Email</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Ruolo</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Stato</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Ultimo accesso</th>
-                      <th className='text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Azioni</th>
+                    <tr className='border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)]'>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nome</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Email</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ruolo</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ultimo accesso</th>
+                      <th className='text-right py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -259,23 +259,23 @@ export default function TeamPage() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.03 }}
-                        className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
+                        className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                       >
                         <td className='py-3 px-4'>
                           <div className='flex items-center gap-3'>
-                            <div className='w-9 h-9 rounded-full bg-apple-blue flex items-center justify-center text-white text-sm font-medium flex-shrink-0'>
+                            <div className='w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-[var(--text-on-brand)] text-sm font-medium flex-shrink-0'>
                               {member.name
                                 .split(' ')
                                 .map((n) => n[0])
                                 .join('')
                                 .slice(0, 2)}
                             </div>
-                            <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {member.name}
                             </span>
                           </div>
                         </td>
-                        <td className='py-3 px-4 text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <td className='py-3 px-4 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {member.email}
                         </td>
                         <td className='py-3 px-4'>
@@ -285,7 +285,7 @@ export default function TeamPage() {
                           </Badge>
                         </td>
                         <td className='py-3 px-4'>{getStatusBadge(member.status)}</td>
-                        <td className='py-3 px-4 text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <td className='py-3 px-4 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {member.lastLogin ? (
                             <span className='flex items-center gap-1'>
                               <Clock className='w-3 h-3' />
@@ -318,11 +318,11 @@ export default function TeamPage() {
               </div>
             ) : (
               <div className='text-center py-12'>
-                <Users className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+                <Users className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                <h3 className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                   Nessun membro nel team
                 </h3>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Invita il primo membro del tuo team.
                 </p>
               </div>
@@ -342,7 +342,7 @@ export default function TeamPage() {
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleInvite)} className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <label htmlFor='invite-email' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='invite-email' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Email
               </label>
               <Input
@@ -353,11 +353,11 @@ export default function TeamPage() {
                 className='h-11 rounded-xl'
               />
               {form.formState.errors.email && (
-                <p className='text-footnote text-apple-red'>{form.formState.errors.email.message}</p>
+                <p className='text-footnote text-[var(--status-error)]'>{form.formState.errors.email.message}</p>
               )}
             </div>
             <div className='space-y-2'>
-              <label htmlFor='invite-role' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='invite-role' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Ruolo
               </label>
               <Select
@@ -374,7 +374,7 @@ export default function TeamPage() {
                 </SelectContent>
               </Select>
               {form.formState.errors.role && (
-                <p className='text-footnote text-apple-red'>{form.formState.errors.role.message}</p>
+                <p className='text-footnote text-[var(--status-error)]'>{form.formState.errors.role.message}</p>
               )}
             </div>
             <DialogFooter>
@@ -399,7 +399,7 @@ export default function TeamPage() {
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <label htmlFor='edit-role' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='edit-role' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Ruolo
               </label>
               <Select value={editRole} onValueChange={setEditRole}>
@@ -416,13 +416,13 @@ export default function TeamPage() {
             <div className='flex gap-2'>
               <AppleButton
                 variant='ghost'
-                className={selectedMember?.status === 'ACTIVE' ? 'text-orange-600' : 'text-green-600'}
+                className={selectedMember?.status === 'ACTIVE' ? 'text-[var(--status-warning)]' : 'text-[var(--status-success)]'}
                 onClick={() => selectedMember && handleDeactivate(selectedMember)}
                 disabled={processing}
               >
                 {selectedMember?.status === 'ACTIVE' ? 'Disattiva' : 'Riattiva'}
               </AppleButton>
-              <AppleButton variant='ghost' className='text-red-600'>
+              <AppleButton variant='ghost' className='text-[var(--status-error)]'>
                 <Trash2 className='w-4 h-4 mr-2' />
                 Rimuovi
               </AppleButton>

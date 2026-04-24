@@ -129,7 +129,7 @@ export function NotificationCenter({
       </PopoverTrigger>
       <PopoverContent className='w-96 p-0' align='end' sideOffset={8}>
         <div className='flex items-center justify-between px-4 py-3 border-b'>
-          <h3 className='font-semibold text-gray-900'>Notifiche</h3>
+          <h3 className='font-semibold text-[var(--text-primary)]'>Notifiche</h3>
           <div className='flex items-center gap-1'>
             {unreadCount > 0 && (
               <Button
@@ -164,7 +164,7 @@ export function NotificationCenter({
         <ScrollArea className='h-[400px]'>
           {isLoading ? (
             <div className='flex items-center justify-center h-32'>
-              <Loader2 className='w-6 h-6 animate-spin text-gray-400' />
+              <Loader2 className='w-6 h-6 animate-spin text-[var(--text-tertiary)]' />
             </div>
           ) : recentNotifications.length > 0 ? (
             <div className='divide-y'>
@@ -175,8 +175,8 @@ export function NotificationCenter({
                   className={cn(
                     'cursor-pointer transition-colors',
                     notification.status === NotificationStatus.PENDING
-                      ? 'bg-blue-50/50'
-                      : 'hover:bg-gray-50'
+                      ? 'bg-[var(--status-info-subtle)]/50'
+                      : 'hover:bg-[var(--surface-secondary)]'
                   )}
                 >
                   <NotificationItem notification={notification} compact showActions={false} />
@@ -185,8 +185,8 @@ export function NotificationCenter({
             </div>
           ) : (
             <div className='flex flex-col items-center justify-center h-32 text-center px-4'>
-              <Inbox className='w-10 h-10 text-gray-300 mb-2' />
-              <p className='text-sm text-gray-500'>Non ci sono notifiche recenti</p>
+              <Inbox className='w-10 h-10 text-[var(--text-tertiary)] mb-2' />
+              <p className='text-sm text-[var(--text-tertiary)]'>Non ci sono notifiche recenti</p>
             </div>
           )}
         </ScrollArea>

@@ -66,8 +66,8 @@ export function MaintenanceWidget({ className }: MaintenanceWidgetProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="h-16 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
-            <div className="h-16 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
+            <div className="h-16 animate-pulse rounded-lg bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]" />
+            <div className="h-16 animate-pulse rounded-lg bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]" />
           </div>
         </CardContent>
       </Card>
@@ -84,7 +84,7 @@ export function MaintenanceWidget({ className }: MaintenanceWidgetProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Impossibile caricare i dati di manutenzione.
           </p>
         </CardContent>
@@ -139,23 +139,23 @@ export function MaintenanceWidget({ className }: MaintenanceWidgetProps) {
         {/* Vehicle List */}
         {vehicleEntries.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h4 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
               Per Veicolo
             </h4>
             {vehicleEntries.map(([vehicleId, vehicle]) => (
               <a
                 key={vehicleId}
                 href={`/dashboard/maintenance?vehicleId=${vehicleId}`}
-                className="flex items-center gap-3 rounded-lg border border-gray-100 p-2 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
+                className="flex items-center gap-3 rounded-lg border border-[var(--border-default)] p-2 transition-colors hover:bg-[var(--surface-secondary)] dark:border-[var(--border-strong)] dark:hover:bg-[var(--surface-hover)]/50"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                  <Car className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]">
+                  <Car className="h-4 w-4 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="truncate text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {vehicle.vehicleInfo}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                     {vehicle.total} manutenzioni
                   </p>
                 </div>
@@ -164,7 +164,7 @@ export function MaintenanceWidget({ className }: MaintenanceWidgetProps) {
                     {vehicle.overdue}
                   </Badge>
                 )}
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="h-4 w-4 text-[var(--text-tertiary)]" />
               </a>
             ))}
           </div>
@@ -173,7 +173,7 @@ export function MaintenanceWidget({ className }: MaintenanceWidgetProps) {
         {/* View All Link */}
         <a
           href="/dashboard/maintenance"
-          className="mt-4 flex items-center justify-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          className="mt-4 flex items-center justify-center gap-1 text-sm font-medium text-[var(--status-info)] hover:text-[var(--status-info)] dark:text-[var(--status-info)] dark:hover:text-[var(--status-info)]"
         >
           Gestisci manutenzioni
           <ChevronRight className="h-4 w-4" />
@@ -192,11 +192,11 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, value, label, color }: StatCardProps) {
   const colorClasses = {
-    red: 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400',
-    yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/50 dark:text-yellow-400',
-    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400',
-    green: 'bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400',
-    gray: 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+    red: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error)]/40/50 dark:text-[var(--status-error)]',
+    yellow: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/50 dark:text-[var(--status-warning)]',
+    blue: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40/50 dark:text-[var(--status-info)]',
+    green: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success)]/40/50 dark:text-[var(--status-success)]',
+    gray: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-secondary)]'
   }
 
   return (

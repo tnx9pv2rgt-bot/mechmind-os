@@ -39,7 +39,7 @@ export function FeaturePillars(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="funzionalita" className="bg-white py-20 dark:bg-[var(--surface-primary)] lg:py-28">
+    <section id="funzionalita" className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-primary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -81,14 +81,14 @@ export function FeaturePillars(): React.ReactElement {
                 </p>
 
                 {/* Screenshot placeholder */}
-                <div className="overflow-hidden rounded-xl border border-[var(--border-default)]/50 bg-white/60 dark:border-[var(--border-default)]/30 dark:bg-[var(--surface-primary)]/50">
+                <div className="overflow-hidden rounded-xl border border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/60 dark:border-[var(--border-default)]/30 dark:bg-[var(--surface-primary)]/50">
                   <div className="aspect-[4/3] w-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-secondary)]" />
                 </div>
 
                 {/* Link */}
                 <a
                   href="#demo"
-                  className="mt-5 inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--text-primary)] dark:text-white dark:hover:text-white"
+                  className="mt-5 inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--text-primary)] dark:text-[var(--text-on-brand)] dark:hover:text-[var(--text-on-brand)]"
                 >
                   Scopri &rarr;
                 </a>

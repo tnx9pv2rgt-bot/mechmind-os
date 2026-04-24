@@ -29,11 +29,11 @@ const DOC_TYPE_LABELS: Record<DocType, string> = {
 };
 
 const DOC_TYPE_COLORS: Record<DocType, string> = {
-  LIBRETTO: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  ASSICURAZIONE: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  REVISIONE: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  BOLLO: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  ALTRO: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  LIBRETTO: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40/30 dark:text-[var(--status-info)]',
+  ASSICURAZIONE: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success)]/40/30 dark:text-[var(--status-success)]',
+  REVISIONE: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand)]/40/30 dark:text-[var(--brand)]',
+  BOLLO: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]',
+  ALTRO: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)]',
 };
 
 interface VehicleDoc {
@@ -107,8 +107,8 @@ function DocCard({
       <AppleCard hover={false}>
         <AppleCardContent>
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-apple-blue/10 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-apple-blue" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-[var(--brand)]" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -118,20 +118,20 @@ function DocCard({
                   {DOC_TYPE_LABELS[doc.docType]}
                 </span>
                 {isExpired && (
-                  <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                  <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error)]/40/30 dark:text-[var(--status-error)]">
                     Scaduto
                   </span>
                 )}
                 {!isExpired && expiringIn != null && expiringIn <= 60 && (
-                  <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]">
                     Scade in {expiringIn} giorni
                   </span>
                 )}
               </div>
-              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] truncate">
+              <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate">
                 {doc.name}
               </p>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5">
                 {formatBytes(doc.sizeBytes)} • {formatDate(doc.createdAt)}
                 {doc.expiryDate && ` • Scadenza: ${formatDate(doc.expiryDate)}`}
               </p>
@@ -233,19 +233,19 @@ function UploadForm({ vehicleId, onUploaded }: UploadFormProps) {
   return (
     <AppleCard hover={false}>
       <AppleCardContent>
-        <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">
+        <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">
           Nuovo documento
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
+              <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Tipo *
               </label>
               <select
                 value={docType}
                 onChange={(e) => setDocType(e.target.value as DocType)}
-                className="w-full h-10 px-3 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none"
+                className="w-full h-10 px-3 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none"
               >
                 {(Object.entries(DOC_TYPE_LABELS) as [DocType, string][]).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
@@ -253,7 +253,7 @@ function UploadForm({ vehicleId, onUploaded }: UploadFormProps) {
               </select>
             </div>
             <div>
-              <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
+              <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Nome *
               </label>
               <input
@@ -261,32 +261,32 @@ function UploadForm({ vehicleId, onUploaded }: UploadFormProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="es. Assicurazione 2025"
-                className="w-full h-10 px-3 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none"
+                className="w-full h-10 px-3 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
+              <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Data scadenza
               </label>
               <input
                 type="date"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full h-10 px-3 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none"
+                className="w-full h-10 px-3 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
+              <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 File * (PDF, JPEG, PNG — max 10MB)
               </label>
               <input
                 ref={fileRef}
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png,.webp"
-                className="w-full text-footnote text-apple-gray dark:text-[var(--text-secondary)] file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-footnote file:font-medium file:bg-apple-blue/10 file:text-apple-blue cursor-pointer"
+                className="w-full text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-footnote file:font-medium file:bg-[var(--brand)]/10 file:text-[var(--brand)] cursor-pointer"
               />
             </div>
           </div>
@@ -328,7 +328,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
       </div>
     );
   }
@@ -336,8 +336,8 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <AlertCircle className="h-10 w-10 text-apple-red/40 mb-3" />
-        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Impossibile caricare i documenti</p>
+        <AlertCircle className="h-10 w-10 text-[var(--status-error)]/40 mb-3" />
+        <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Impossibile caricare i documenti</p>
         <AppleButton variant="ghost" className="mt-3" onClick={() => mutate()}>Riprova</AppleButton>
       </div>
     );
@@ -347,8 +347,8 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Documenti</h2>
-          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">
+          <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Documenti</h2>
+          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5">
             Libretto, assicurazione, revisione, bollo e altri documenti del veicolo
           </p>
         </div>
@@ -357,9 +357,9 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
 
       {docs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FolderOpen className="h-12 w-12 text-apple-gray/40 mb-4" />
-          <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">Nessun documento</p>
-          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+          <FolderOpen className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+          <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Nessun documento</p>
+          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
             Carica libretto, assicurazione, revisione o bollo del veicolo.
           </p>
         </div>

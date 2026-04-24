@@ -66,24 +66,24 @@ export function DataRestoreModal({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className='bg-white rounded-2xl overflow-hidden'
+          className='bg-[var(--surface-secondary)] rounded-2xl overflow-hidden'
         >
           {/* Header */}
-          <div className='bg-gradient-to-br from-green-500 to-emerald-500 p-6 text-white'>
+          <div className='bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] p-6 text-[var(--text-on-brand)]'>
             <div className='flex items-start justify-between'>
               <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center'>
+                <div className='w-12 h-12 rounded-xl bg-[var(--surface-secondary)]/20 backdrop-blur-sm flex items-center justify-center'>
                   <Save className='w-6 h-6' />
                 </div>
                 <DialogHeader className='space-y-1'>
-                  <DialogTitle className='text-xl font-semibold text-white'>{title}</DialogTitle>
+                  <DialogTitle className='text-xl font-semibold text-[var(--text-on-brand)]'>{title}</DialogTitle>
                 </DialogHeader>
               </div>
               <Button
                 variant='ghost'
                 size='icon'
                 onClick={handleClose}
-                className='text-white/80 hover:text-white hover:bg-white/20'
+                className='text-[var(--text-on-brand)]/80 hover:text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/20'
                 aria-label='Chiudi'
               >
                 <X className='w-5 h-5' />
@@ -93,28 +93,28 @@ export function DataRestoreModal({
 
           {/* Content */}
           <div className='p-6 space-y-6'>
-            <DialogDescription className='text-gray-600 text-base'>
+            <DialogDescription className='text-[var(--text-secondary)] text-base'>
               Abbiamo trovato una registrazione iniziata in precedenza. Vuoi recuperare i dati e
               continuare da dove avevi lasciato?
             </DialogDescription>
 
             {/* Info salvataggio */}
-            <div className='bg-gray-50 rounded-xl p-4'>
+            <div className='bg-[var(--surface-secondary)] rounded-xl p-4'>
               <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 rounded-full bg-green-100 flex items-center justify-center'>
-                  <Clock className='w-6 h-6 text-green-600' />
+                <div className='w-12 h-12 rounded-full bg-[var(--status-success-subtle)] flex items-center justify-center'>
+                  <Clock className='w-6 h-6 text-[var(--status-success)]' />
                 </div>
                 <div>
-                  <p className='font-medium text-gray-900'>Ultimo salvataggio</p>
-                  <p className='text-2xl font-bold text-green-600'>{getTimeMessage()}</p>
-                  {lastSavedText && <p className='text-sm text-gray-500'>{lastSavedText}</p>}
+                  <p className='font-medium text-[var(--text-primary)]'>Ultimo salvataggio</p>
+                  <p className='text-2xl font-bold text-[var(--status-success)]'>{getTimeMessage()}</p>
+                  {lastSavedText && <p className='text-sm text-[var(--text-tertiary)]'>{lastSavedText}</p>}
                 </div>
               </div>
             </div>
 
             {/* Info scadenza */}
-            <div className='flex items-start gap-3 p-3 bg-amber-50 rounded-xl text-sm text-amber-700'>
-              <div className='w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5'>
+            <div className='flex items-start gap-3 p-3 bg-[var(--status-warning)]/5 rounded-xl text-sm text-[var(--status-warning)]'>
+              <div className='w-5 h-5 rounded-full bg-[var(--status-warning)]/20 flex items-center justify-center flex-shrink-0 mt-0.5'>
                 <span className='text-xs font-bold'>i</span>
               </div>
               <span>
@@ -127,7 +127,7 @@ export function DataRestoreModal({
             <div className='space-y-3'>
               <Button
                 onClick={handleRestore}
-                className='w-full h-12 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-medium'
+                className='w-full h-12 bg-gradient-to-r from-[var(--status-success)] to-[var(--status-success)] hover:from-[var(--status-success)] hover:to-[var(--status-success)] text-[var(--text-on-brand)] font-medium'
               >
                 <RotateCcw className='w-4 h-4 mr-2' />
                 Sì, recupera i miei dati
@@ -137,7 +137,7 @@ export function DataRestoreModal({
                 <Button
                   variant='outline'
                   onClick={handleClear}
-                  className='flex-1 h-11 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700'
+                  className='flex-1 h-11 border-[var(--status-error)]/30 text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] hover:text-[var(--status-error)]'
                 >
                   <Trash2 className='w-4 h-4 mr-2' />
                   No, cancella tutto
@@ -181,14 +181,14 @@ export function DataRestorePrompt({
       exit={{ opacity: 0, y: 20 }}
       className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-2rem)]'
     >
-      <div className='bg-white rounded-2xl shadow-2xl border border-gray-200 p-5'>
+      <div className='bg-[var(--surface-secondary)] rounded-2xl shadow-2xl border border-[var(--border-default)] p-5'>
         <div className='flex items-start gap-4'>
-          <div className='w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0'>
-            <RotateCcw className='w-6 h-6 text-green-600' />
+          <div className='w-12 h-12 rounded-full bg-[var(--status-success-subtle)] flex items-center justify-center flex-shrink-0'>
+            <RotateCcw className='w-6 h-6 text-[var(--status-success)]' />
           </div>
           <div className='flex-1'>
-            <h4 className='font-semibold text-gray-900'>Recupera i tuoi dati?</h4>
-            <p className='text-sm text-gray-500 mt-1'>
+            <h4 className='font-semibold text-[var(--text-primary)]'>Recupera i tuoi dati?</h4>
+            <p className='text-sm text-[var(--text-tertiary)] mt-1'>
               Trovata registrazione iniziata{' '}
               {daysSinceSave > 0 ? `${daysSinceSave} giorni fa` : 'oggi'}.
             </p>
@@ -196,7 +196,7 @@ export function DataRestorePrompt({
               <Button
                 size='sm'
                 onClick={onRestore}
-                className='flex-1 bg-green-500 hover:bg-green-600'
+                className='flex-1 bg-[var(--status-success-subtle)]0 hover:bg-[var(--status-success)]'
               >
                 Recupera
               </Button>
@@ -207,7 +207,7 @@ export function DataRestorePrompt({
                 size='sm'
                 variant='ghost'
                 onClick={onClear}
-                className='text-red-600 hover:text-red-700 hover:bg-red-50'
+                className='text-[var(--status-error)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-subtle)]'
               >
                 <Trash2 className='w-4 h-4' />
               </Button>

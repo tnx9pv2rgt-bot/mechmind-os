@@ -89,7 +89,7 @@ const clvData: CLVData[] = [
     customers: 45,
     avgCLV: 4500,
     totalRevenue: 202500,
-    color: "#8b5cf6", // purple
+    color: "var(--brand)", // purple
   },
   {
     segment: "Fedeli",
@@ -132,8 +132,8 @@ function CustomTooltip({
 }) {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <p className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
+        <p className="mb-2 text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {label}
         </p>
         <div className="space-y-1">
@@ -144,7 +144,7 @@ function CustomTooltip({
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                   {entry.dataKey === "newCustomers"
                     ? "Nuovi"
                     : entry.dataKey === "returningCustomers"
@@ -154,7 +154,7 @@ function CustomTooltip({
                     : "Churn"}
                 </span>
               </div>
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 {entry.value}
               </span>
             </div>
@@ -201,14 +201,14 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Metriche Clienti
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Analisi acquisizione, retention e lifetime value
           </p>
         </div>
-        <div className="flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+        <div className="flex rounded-lg bg-[var(--surface-secondary)] p-1 dark:bg-[var(--surface-primary)]">
           {[
             { key: "acquisition", label: "Acquisizione" },
             { key: "clv", label: "CLV" },
@@ -220,8 +220,8 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 activeTab === tab.key
-                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                  ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm dark:bg-[var(--border-default)] dark:text-[var(--text-on-brand)]"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:text-[var(--text-secondary)]"
               )}
             >
               {tab.label}
@@ -232,18 +232,18 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
 
       {/* KPI Cards */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+        <div className="rounded-lg bg-[var(--status-info-subtle)] p-3 dark:bg-[var(--status-info-subtle)]">
+          <div className="flex items-center gap-2 text-[var(--status-info)] dark:text-[var(--status-info)]">
             <Users className="h-4 w-4" />
             <span className="text-xs font-medium">Clienti Totali</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">
+          <p className="mt-1 text-xl font-bold text-[var(--status-info)] dark:text-[var(--status-info)]">
             {metrics.currentTotal}
           </p>
           <div
             className={cn(
               "mt-1 flex items-center gap-1 text-xs",
-              metrics.growthRate >= 0 ? "text-status-ready" : "text-status-urgent"
+              metrics.growthRate >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-error)]"
             )}
           >
             {metrics.growthRate >= 0 ? (
@@ -254,39 +254,39 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
             {Math.abs(metrics.growthRate).toFixed(1)}%
           </div>
         </div>
-        <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+        <div className="rounded-lg bg-[var(--status-success-subtle)] p-3 dark:bg-[var(--status-success-subtle)]">
+          <div className="flex items-center gap-2 text-[var(--status-success)] dark:text-[var(--status-success)]">
             <Repeat className="h-4 w-4" />
             <span className="text-xs font-medium">Tasso Recurrenti</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-green-700 dark:text-green-300">
+          <p className="mt-1 text-xl font-bold text-[var(--status-success)] dark:text-[var(--status-success)]">
             {repeatRate.toFixed(1)}%
           </p>
-          <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+          <p className="mt-1 text-xs text-[var(--status-success)] dark:text-[var(--status-success)]">
             {metrics.totalReturning} clienti
           </p>
         </div>
-        <div className="rounded-lg bg-orange-50 p-3 dark:bg-orange-900/20">
-          <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+        <div className="rounded-lg bg-[var(--status-warning)]/5 p-3 dark:bg-[var(--status-warning)]/40/20">
+          <div className="flex items-center gap-2 text-[var(--status-warning)] dark:text-[var(--status-warning)]">
             <UserPlus className="h-4 w-4" />
             <span className="text-xs font-medium">Nuovi Clienti</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-orange-700 dark:text-orange-300">
+          <p className="mt-1 text-xl font-bold text-[var(--status-warning)] dark:text-[var(--status-warning)]">
             {metrics.totalNew}
           </p>
-          <p className="mt-1 text-xs text-orange-600 dark:text-orange-400">
+          <p className="mt-1 text-xs text-[var(--status-warning)] dark:text-[var(--status-warning)]">
             nel periodo
           </p>
         </div>
-        <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+        <div className="rounded-lg bg-[var(--status-error-subtle)] p-3 dark:bg-[var(--status-error-subtle)]">
+          <div className="flex items-center gap-2 text-[var(--status-error)] dark:text-[var(--status-error)]">
             <UserMinus className="h-4 w-4" />
             <span className="text-xs font-medium">Churn Rate</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-red-700 dark:text-red-300">
+          <p className="mt-1 text-xl font-bold text-[var(--status-error)] dark:text-[var(--status-error)]">
             {metrics.churnRate.toFixed(1)}%
           </p>
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+          <p className="mt-1 text-xs text-[var(--status-error)] dark:text-[var(--status-error)]">
             {metrics.totalChurned} persi
           </p>
         </div>
@@ -296,7 +296,7 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
       {activeTab === "acquisition" && (
         <>
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <h4 className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               Nuovi vs Recurrenti
             </h4>
           </div>
@@ -324,7 +324,7 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
                 <Legend
                   wrapperStyle={{ paddingTop: "1rem" }}
                   formatter={(value) => (
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                       {value === "newCustomers"
                         ? "Nuovi Clienti"
                         : "Clienti Recurrenti"}
@@ -350,12 +350,12 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
           </div>
 
           {/* Acquisition Insight */}
-          <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+          <div className="mt-4 rounded-lg bg-[var(--status-info-subtle)] p-3 text-sm text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]">
             <div className="flex items-start gap-2">
               <TrendingUp className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <div>
                 <p className="font-medium">Trend Acquisizione</p>
-                <p className="mt-1 text-blue-700 dark:text-blue-300">
+                <p className="mt-1 text-[var(--status-info)] dark:text-[var(--status-info)]">
                   Rapporto recurrenti/nuovi di {(metrics.totalReturning / metrics.totalNew).toFixed(1)}:1.
                   {" "}
                   {repeatRate > 70
@@ -371,7 +371,7 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
       {activeTab === "clv" && (
         <>
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <h4 className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               Customer Lifetime Value per Segmento
             </h4>
           </div>
@@ -393,7 +393,7 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
               return (
                 <div
                   key={segment.segment}
-                  className="rounded-lg border p-3 transition-colors hover:shadow-sm dark:border-gray-700"
+                  className="rounded-lg border p-3 transition-colors hover:shadow-sm dark:border-[var(--border-default)]"
                   style={{ borderColor: segment.color + "40" }}
                 >
                   <div className="flex items-center gap-2">
@@ -403,14 +403,14 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
                     >
                       <Icon className="h-3.5 w-3.5" style={{ color: segment.color }} />
                     </div>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                       {segment.segment}
                     </span>
                   </div>
-                  <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
+                  <p className="mt-2 text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {formatCurrency(segment.avgCLV)}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                     {segment.customers} clienti
                   </p>
                 </div>
@@ -448,23 +448,23 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload as CLVData;
                       return (
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                          <p className="font-medium text-gray-900 dark:text-white">
+                        <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
+                          <p className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {data.segment}
                           </p>
                           <div className="mt-2 space-y-1 text-sm">
                             <div className="flex justify-between gap-4">
-                              <span className="text-gray-500">CLV Medio:</span>
+                              <span className="text-[var(--text-tertiary)]">CLV Medio:</span>
                               <span className="font-medium">
                                 {formatCurrency(data.avgCLV)}
                               </span>
                             </div>
                             <div className="flex justify-between gap-4">
-                              <span className="text-gray-500">Clienti:</span>
+                              <span className="text-[var(--text-tertiary)]">Clienti:</span>
                               <span className="font-medium">{data.customers}</span>
                             </div>
                             <div className="flex justify-between gap-4">
-                              <span className="text-gray-500">Fatturato:</span>
+                              <span className="text-[var(--text-tertiary)]">Fatturato:</span>
                               <span className="font-medium">
                                 {formatCurrency(data.totalRevenue)}
                               </span>
@@ -486,12 +486,12 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
           </div>
 
           {/* CLV Insight */}
-          <div className="mt-4 rounded-lg bg-purple-50 p-3 text-sm text-purple-800 dark:bg-purple-900/20 dark:text-purple-200">
+          <div className="mt-4 rounded-lg bg-[var(--brand)]/5 p-3 text-sm text-[var(--brand)] dark:bg-[var(--brand)]/40/20 dark:text-[var(--brand)]">
             <div className="flex items-start gap-2">
               <Crown className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <div>
                 <p className="font-medium">Analisi CLV</p>
-                <p className="mt-1 text-purple-700 dark:text-purple-300">
+                <p className="mt-1 text-[var(--brand)] dark:text-[var(--brand)]">
                   I clienti VIP (top {((45 / metrics.currentTotal) * 100).toFixed(1)}%) generano{" "}
                   {((202500 / (202500 + 504000 + 357000 + 38400 + 12750)) * 100).toFixed(1)}%
                   del fatturato totale. Investire nel programma fedeltà per spostare
@@ -506,39 +506,39 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
       {activeTab === "churn" && (
         <>
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <h4 className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               Analisi Churn e Retention
             </h4>
           </div>
 
           {/* Churn Metrics */}
           <div className="mb-6 grid grid-cols-3 gap-4">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center dark:border-red-800 dark:bg-red-900/20">
-              <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+            <div className="rounded-lg border border-[var(--status-error)]/30 bg-[var(--status-error-subtle)] p-4 text-center dark:border-[var(--status-error)] dark:bg-[var(--status-error-subtle)]">
+              <p className="text-3xl font-bold text-[var(--status-error)] dark:text-[var(--status-error)]">
                 {metrics.churnRate.toFixed(1)}%
               </p>
-              <p className="text-sm text-red-700 dark:text-red-300">Churn Rate</p>
-              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+              <p className="text-sm text-[var(--status-error)] dark:text-[var(--status-error)]">Churn Rate</p>
+              <p className="mt-1 text-xs text-[var(--status-error)] dark:text-[var(--status-error)]">
                 {metrics.totalChurned} clienti persi
               </p>
             </div>
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-900/20">
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+            <div className="rounded-lg border border-[var(--status-success)]/30 bg-[var(--status-success-subtle)] p-4 text-center dark:border-[var(--status-success)] dark:bg-[var(--status-success-subtle)]">
+              <p className="text-3xl font-bold text-[var(--status-success)] dark:text-[var(--status-success)]">
                 {metrics.retentionRate.toFixed(1)}%
               </p>
-              <p className="text-sm text-green-700 dark:text-green-300">Retention Rate</p>
-              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+              <p className="text-sm text-[var(--status-success)] dark:text-[var(--status-success)]">Retention Rate</p>
+              <p className="mt-1 text-xs text-[var(--status-success)] dark:text-[var(--status-success)]">
                 Clienti retained
               </p>
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-900/20">
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="rounded-lg border border-[var(--status-info)]/30 bg-[var(--status-info-subtle)] p-4 text-center dark:border-[var(--status-info)] dark:bg-[var(--status-info-subtle)]">
+              <p className="text-3xl font-bold text-[var(--status-info)] dark:text-[var(--status-info)]">
                 {metrics.totalNew > 0
                   ? ((metrics.totalNew - metrics.totalChurned) / metrics.totalNew * 100).toFixed(1)
                   : 0}%
               </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Net Growth</p>
-              <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+              <p className="text-sm text-[var(--status-info)] dark:text-[var(--status-info)]">Net Growth</p>
+              <p className="mt-1 text-xs text-[var(--status-info)] dark:text-[var(--status-info)]">
                 Nuovi - Churn
               </p>
             </div>
@@ -571,9 +571,9 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
                   type="monotone"
                   dataKey="churnedCustomers"
                   name="Churn"
-                  stroke="#ef4444"
+                  stroke="var(--status-error)"
                   strokeWidth={2}
-                  dot={{ fill: "#ef4444", r: 3 }}
+                  dot={{ fill: "var(--status-error)", r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -581,11 +581,11 @@ export function CustomerMetrics({ dateRange }: CustomerMetricsProps) {
 
           {/* Churn Alert */}
           {metrics.churnRate > 5 && (
-            <div className="mt-4 flex items-center gap-3 rounded-lg bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+            <div className="mt-4 flex items-center gap-3 rounded-lg bg-[var(--status-warning)]/10 p-3 text-sm text-[var(--status-warning)] dark:bg-[var(--status-warning)]/20 dark:text-[var(--status-warning)]">
               <AlertTriangle className="h-5 w-5 flex-shrink-0" />
               <div>
                 <p className="font-medium">Churn Rate Elevato</p>
-                <p className="mt-1 text-yellow-700 dark:text-yellow-300">
+                <p className="mt-1 text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                   Il churn rate del {metrics.churnRate.toFixed(1)}% è superiore al benchmark
                   del settore (3-5%). Considera un programma di win-back per i clienti
                   dormienti.

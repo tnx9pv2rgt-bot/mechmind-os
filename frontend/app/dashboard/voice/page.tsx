@@ -116,10 +116,10 @@ export default function VoicePage() {
 
   const getOutcomeBadge = (outcome: string) => {
     const configs: Record<string, { bg: string; text: string; label: string; icon: typeof CheckCircle }> = {
-      BOOKING_CREATED: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', label: 'Prenotazione creata', icon: CheckCircle },
-      INFO_PROVIDED: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-300', label: 'Info fornite', icon: Phone },
-      TRANSFERRED: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', label: 'Trasferito a operatore', icon: ArrowRight },
-      MISSED: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', label: 'Persa', icon: PhoneOff },
+      BOOKING_CREATED: { bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30', text: 'text-[var(--status-success)] dark:text-[var(--status-success)]', label: 'Prenotazione creata', icon: CheckCircle },
+      INFO_PROVIDED: { bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30', text: 'text-[var(--status-info)] dark:text-[var(--status-info)]', label: 'Info fornite', icon: Phone },
+      TRANSFERRED: { bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/40/30', text: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', label: 'Trasferito a operatore', icon: ArrowRight },
+      MISSED: { bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', text: 'text-[var(--status-error)] dark:text-[var(--status-error)]', label: 'Persa', icon: PhoneOff },
     };
     const c = configs[outcome] || configs.INFO_PROVIDED;
     const Icon = c.icon;
@@ -136,25 +136,25 @@ export default function VoicePage() {
       label: 'Chiamate oggi',
       value: String(stats?.callsToday ?? 0),
       icon: PhoneCall,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Durata media',
       value: stats ? formatDuration(stats.avgDuration) : '0:00',
       icon: Clock,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Tasso risoluzione',
       value: stats ? `${stats.resolutionRate.toFixed(0)}%` : '0%',
       icon: BarChart3,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Totale chiamate',
       value: String(stats?.totalCalls ?? 0),
       icon: Mic,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
   ];
 
@@ -164,13 +164,13 @@ export default function VoicePage() {
       <header className=''>
         <div className='px-4 sm:px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Assistente Vocale AI</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Assistente Vocale AI</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci le chiamate automatiche della tua officina
             </p>
           </div>
           <div className='flex items-center gap-3'>
-            <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               {enabled ? 'Attivo' : 'Disattivato'}
             </span>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
@@ -197,13 +197,13 @@ export default function VoicePage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -214,15 +214,15 @@ export default function VoicePage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Chiamate Recenti
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {statsError ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare i dati dell&apos;assistente vocale
                   </p>
                   <AppleButton
@@ -238,7 +238,7 @@ export default function VoicePage() {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : calls && calls.length > 0 ? (
                 <motion.div
@@ -250,25 +250,25 @@ export default function VoicePage() {
                   {calls.map((call, index) => (
                     <motion.div
                       key={call.id}
-                      className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                      className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                       variants={listItemVariants}
                       custom={index}
                       whileHover={{ scale: 1.005, x: 4 }}
                       transition={{ duration: 0.2 }}
                     >
                       <div className='flex items-center gap-4'>
-                        <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center flex-shrink-0'>
-                          <PhoneCall className='h-6 w-6 text-apple-blue' />
+                        <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center flex-shrink-0'>
+                          <PhoneCall className='h-6 w-6 text-[var(--brand)]' />
                         </div>
                         <div>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                          <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {call.callerNumber}
                           </p>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {new Date(call.timestamp).toLocaleString('it-IT')} - {formatDuration(call.duration)}
                           </p>
                           {call.transcriptSummary && (
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1 line-clamp-1'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1 line-clamp-1'>
                               {call.transcriptSummary}
                             </p>
                           )}
@@ -280,11 +280,11 @@ export default function VoicePage() {
                 </motion.div>
               ) : (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessuna chiamata recente
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                     Le chiamate gestite dall&apos;assistente vocale appariranno qui.
                   </p>
                 </div>
@@ -297,20 +297,20 @@ export default function VoicePage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Configurazione
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               <div className='space-y-3'>
-                <div className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                <div className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
                   <div className='flex items-center gap-3'>
-                    <Power className='w-5 h-5 text-apple-gray' />
+                    <Power className='w-5 h-5 text-[var(--text-tertiary)]' />
                     <div>
-                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Assistente vocale
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Attiva o disattiva l&apos;assistente per le chiamate in entrata
                       </p>
                     </div>
@@ -318,14 +318,14 @@ export default function VoicePage() {
                   <Switch checked={enabled} onCheckedChange={setEnabled} />
                 </div>
 
-                <div className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                <div className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
                   <div className='flex items-center gap-3'>
-                    <Mic className='w-5 h-5 text-apple-gray' />
+                    <Mic className='w-5 h-5 text-[var(--text-tertiary)]' />
                     <div>
-                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Messaggio di benvenuto
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Personalizza il messaggio iniziale dell&apos;assistente
                       </p>
                     </div>
@@ -335,14 +335,14 @@ export default function VoicePage() {
                   </AppleButton>
                 </div>
 
-                <div className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
+                <div className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
                   <div className='flex items-center gap-3'>
-                    <Clock className='w-5 h-5 text-apple-gray' />
+                    <Clock className='w-5 h-5 text-[var(--text-tertiary)]' />
                     <div>
-                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Orari di attivit&agrave;
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Configura quando l&apos;assistente &egrave; attivo
                       </p>
                     </div>

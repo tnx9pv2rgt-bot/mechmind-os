@@ -111,43 +111,43 @@ interface InvoiceDetail {
 
 const statusConfig: Record<string, { color: string; bg: string; label: string; icon: typeof CheckCircle }> = {
   DRAFT: {
-    color: 'text-apple-gray dark:text-[var(--text-secondary)]',
-    bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]',
+    color: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
     label: 'Bozza',
     icon: FileText,
   },
   SENT: {
-    color: 'text-apple-blue',
-    bg: 'bg-apple-blue/10',
+    color: 'text-[var(--brand)]',
+    bg: 'bg-[var(--brand)]/10',
     label: 'Inviata',
     icon: Send,
   },
   PAID: {
-    color: 'text-apple-green',
-    bg: 'bg-apple-green/10',
+    color: 'text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success)]/10',
     label: 'Pagata',
     icon: CheckCircle,
   },
   OVERDUE: {
-    color: 'text-apple-red',
-    bg: 'bg-apple-red/10',
+    color: 'text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error)]/10',
     label: 'Scaduta',
     icon: Clock,
   },
   CANCELLED: {
-    color: 'text-apple-gray dark:text-[var(--text-secondary)]',
-    bg: 'bg-apple-light-gray/60 dark:bg-[var(--surface-hover)]',
+    color: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]',
+    bg: 'bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-hover)]',
     label: 'Annullata',
     icon: XCircle,
   },
 };
 
 const sdiStatusMap: Record<string, { color: string; label: string }> = {
-  INVIATA: { color: 'text-apple-blue', label: 'Inviata' },
-  CONSEGNATA: { color: 'text-apple-green', label: 'Consegnata' },
-  ACCETTATA: { color: 'text-apple-green', label: 'Accettata' },
-  RIFIUTATA: { color: 'text-apple-red', label: 'Rifiutata' },
-  SCARTATA: { color: 'text-apple-orange', label: 'Scartata' },
+  INVIATA: { color: 'text-[var(--brand)]', label: 'Inviata' },
+  CONSEGNATA: { color: 'text-[var(--status-success)]', label: 'Consegnata' },
+  ACCETTATA: { color: 'text-[var(--status-success)]', label: 'Accettata' },
+  RIFIUTATA: { color: 'text-[var(--status-error)]', label: 'Rifiutata' },
+  SCARTATA: { color: 'text-[var(--status-warning)]', label: 'Scartata' },
 };
 
 const paymentMethodLabels: Record<string, string> = {
@@ -224,18 +224,18 @@ function MarkPaidDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-[var(--surface-elevated)] rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4"
+        className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4"
       >
-        <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-6">
+        <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-6">
           Registra Pagamento
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1.5">
+            <label className="block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
               Importo
             </label>
             <input
@@ -243,28 +243,28 @@ function MarkPaidDialog({
               step="0.01"
               value={amount}
               onChange={e => setAmount(Number(e.target.value))}
-              className="w-full h-12 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-4 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+              className="w-full h-12 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-4 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
             />
           </div>
           <div>
-            <label className="block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1.5">
+            <label className="block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
               Data Pagamento
             </label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="w-full h-12 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-4 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+              className="w-full h-12 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-4 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
             />
           </div>
           <div>
-            <label className="block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1.5">
+            <label className="block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
               Metodo
             </label>
             <select
               value={method}
               onChange={e => setMethod(e.target.value)}
-              className="w-full h-12 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-4 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+              className="w-full h-12 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-4 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
             >
               <option value="CASH">Contanti</option>
               <option value="BANK_TRANSFER">Bonifico</option>
@@ -384,7 +384,7 @@ export default function InvoiceDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
       </div>
     );
   }
@@ -392,8 +392,8 @@ export default function InvoiceDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-        <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4">
+        <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+        <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4">
           Impossibile caricare la fattura
         </p>
         <AppleButton
@@ -410,8 +410,8 @@ export default function InvoiceDetailPage() {
   if (!invoice) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-        <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4">Fattura non trovata</p>
+        <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+        <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4">Fattura non trovata</p>
         <AppleButton
           variant="ghost"
           icon={<ArrowLeft className="h-4 w-4" />}
@@ -448,7 +448,7 @@ export default function InvoiceDetailPage() {
   /* ------------------------------------------------------------------ */
 
   return (
-    <div className="print:bg-white">
+    <div className="print:bg-[var(--surface-secondary)]">
       {/* Header */}
       <header className="print:hidden">
         <div className="px-4 sm:px-8 py-5">
@@ -471,7 +471,7 @@ export default function InvoiceDetailPage() {
               </AppleButton>
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
+                  <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {invoice.number || `Fattura #${invoice.id.slice(0, 8)}`}
                   </h1>
                   <span
@@ -481,7 +481,7 @@ export default function InvoiceDetailPage() {
                     {status.label}
                   </span>
                 </div>
-                <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+                <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
                   {invoice.customerName} &bull; Emessa il {formatDate(invoice.createdAt)}
                 </p>
               </div>
@@ -532,7 +532,7 @@ export default function InvoiceDetailPage() {
                     icon={<Trash2 className="h-4 w-4" />}
                     loading={actionLoading}
                     onClick={() => setDeleteConfirmOpen(true)}
-                    className="text-apple-red hover:opacity-80"
+                    className="text-[var(--status-error)] hover:opacity-80"
                   >
                     Elimina
                   </AppleButton>
@@ -597,7 +597,7 @@ export default function InvoiceDetailPage() {
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white/60 dark:bg-[var(--surface-primary)]/60 backdrop-blur-sm print:hidden">
+      <div className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-primary)]/60 backdrop-blur-sm print:hidden">
         <div className="px-4 sm:px-8 flex gap-1 overflow-x-auto">
           {tabs.map(tab => {
             const TabIcon = tab.icon;
@@ -610,8 +610,8 @@ export default function InvoiceDetailPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`rounded-none border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-apple-blue text-apple-blue'
-                    : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                    ? 'border-[var(--brand)] text-[var(--brand)]'
+                    : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
                 }`}
               >
                 {tab.label}
@@ -636,43 +636,43 @@ export default function InvoiceDetailPage() {
                 <AppleCard hover={false}>
                   <AppleCardHeader>
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-apple-gray" />
-                      <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      <User className="h-4 w-4 text-[var(--text-tertiary)]" />
+                      <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Cliente
                       </h2>
                     </div>
                   </AppleCardHeader>
                   <AppleCardContent className="space-y-2">
-                    <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       {invoice.customerName}
                     </p>
                     {invoice.customerAddress && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         {invoice.customerAddress}
                       </p>
                     )}
                     {invoice.customerVat && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         P.IVA: {invoice.customerVat}
                       </p>
                     )}
                     {invoice.customerFiscalCode && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         C.F.: {invoice.customerFiscalCode}
                       </p>
                     )}
                     {invoice.customerSdi && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         SDI: {invoice.customerSdi}
                       </p>
                     )}
                     {invoice.customerPec && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         PEC: {invoice.customerPec}
                       </p>
                     )}
                     {invoice.customerEmail && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] flex items-center gap-1">
                         <Mail className="h-3 w-3" /> {invoice.customerEmail}
                       </p>
                     )}
@@ -684,43 +684,43 @@ export default function InvoiceDetailPage() {
                 <AppleCard hover={false}>
                   <AppleCardHeader>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-apple-gray" />
-                      <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      <Calendar className="h-4 w-4 text-[var(--text-tertiary)]" />
+                      <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Date e Stato
                       </h2>
                     </div>
                   </AppleCardHeader>
                   <AppleCardContent className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         Data Emissione
                       </span>
-                      <span className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         {formatDate(invoice.createdAt)}
                       </span>
                     </div>
                     {invoice.dueDate && (
                       <div className="flex justify-between">
-                        <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                        <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           Data Scadenza
                         </span>
-                        <span className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <span className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {formatDate(invoice.dueDate)}
                         </span>
                       </div>
                     )}
                     {invoice.paymentMethod && (
                       <div className="flex justify-between">
-                        <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                        <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           Metodo Pagamento
                         </span>
-                        <span className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <span className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {paymentMethodLabels[invoice.paymentMethod] || invoice.paymentMethod}
                         </span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Stato</span>
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Stato</span>
                       <span
                         className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
                       >
@@ -737,37 +737,37 @@ export default function InvoiceDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-apple-gray" />
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <FileText className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Dettaglio Voci
                     </h2>
                   </div>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {/* Table Header */}
-                  <div className="hidden sm:grid grid-cols-12 gap-3 pb-3 border-b border-apple-border/30 dark:border-[var(--border-default)] mb-3">
+                  <div className="hidden sm:grid grid-cols-12 gap-3 pb-3 border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)] mb-3">
                     <div className="col-span-5">
-                      <span className="text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Descrizione
                       </span>
                     </div>
                     <div className="col-span-1 text-right">
-                      <span className="text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Qta
                       </span>
                     </div>
                     <div className="col-span-2 text-right">
-                      <span className="text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Prezzo
                       </span>
                     </div>
                     <div className="col-span-2 text-right">
-                      <span className="text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         IVA %
                       </span>
                     </div>
                     <div className="col-span-2 text-right">
-                      <span className="text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Totale
                       </span>
                     </div>
@@ -778,34 +778,34 @@ export default function InvoiceDetailPage() {
                     {(invoice.items || []).map(item => (
                       <div
                         key={item.id}
-                        className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 py-3 rounded-xl px-3 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 py-3 rounded-xl px-3 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
                       >
                         <div className="sm:col-span-5">
-                          <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                          <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {item.description}
                           </p>
                         </div>
                         <div className="sm:col-span-1 text-right">
-                          <span className="sm:hidden text-footnote text-apple-gray">Qta: </span>
-                          <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="sm:hidden text-footnote text-[var(--text-tertiary)]">Qta: </span>
+                          <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {item.quantity}
                           </span>
                         </div>
                         <div className="sm:col-span-2 text-right">
-                          <span className="sm:hidden text-footnote text-apple-gray">Prezzo: </span>
-                          <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="sm:hidden text-footnote text-[var(--text-tertiary)]">Prezzo: </span>
+                          <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(item.unitPrice)}
                           </span>
                         </div>
                         <div className="sm:col-span-2 text-right">
-                          <span className="sm:hidden text-footnote text-apple-gray">IVA: </span>
-                          <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="sm:hidden text-footnote text-[var(--text-tertiary)]">IVA: </span>
+                          <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {item.vatRate ?? invoice.taxRate ?? 22}%
                           </span>
                         </div>
                         <div className="sm:col-span-2 text-right">
-                          <span className="sm:hidden text-footnote text-apple-gray">Totale: </span>
-                          <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="sm:hidden text-footnote text-[var(--text-tertiary)]">Totale: </span>
+                          <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(item.total || item.quantity * item.unitPrice)}
                           </span>
                         </div>
@@ -819,37 +819,37 @@ export default function InvoiceDetailPage() {
                   <div className="flex justify-end">
                     <div className="w-full max-w-sm space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Subtotale</span>
-                        <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Subtotale</span>
+                        <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {formatCurrency(invoice.subtotal)}
                         </span>
                       </div>
                       {Object.entries(ivaBreakdown).map(([rate, data]) => (
                         <div key={rate} className="flex justify-between">
-                          <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                          <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             IVA {rate}% (su {formatCurrency(data.base)})
                           </span>
-                          <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(data.tax)}
                           </span>
                         </div>
                       ))}
                       {invoice.bolloAmount && invoice.bolloAmount > 0 && (
                         <div className="flex justify-between">
-                          <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                          <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             Bollo
                           </span>
-                          <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(invoice.bolloAmount)}
                           </span>
                         </div>
                       )}
-                      <div className="border-t border-apple-border/30 dark:border-[var(--border-default)] pt-2">
+                      <div className="border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)] pt-2">
                         <div className="flex justify-between">
-                          <span className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             Totale
                           </span>
-                          <span className="text-body font-bold text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="text-body font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(invoice.total)}
                           </span>
                         </div>
@@ -865,12 +865,12 @@ export default function InvoiceDetailPage() {
               <motion.div variants={itemVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Note
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent>
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] whitespace-pre-wrap">
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] whitespace-pre-wrap">
                       {invoice.notes}
                     </p>
                   </AppleCardContent>
@@ -885,15 +885,15 @@ export default function InvoiceDetailPage() {
           <motion.div variants={itemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   Storico Pagamenti
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 {(invoice.payments || []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <CreditCard className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    <CreditCard className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Nessun pagamento registrato
                     </p>
                   </div>
@@ -902,30 +902,30 @@ export default function InvoiceDetailPage() {
                     {(invoice.payments || []).map(payment => (
                       <div
                         key={payment.id}
-                        className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]"
+                        className="flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-apple-green/10 flex items-center justify-center">
-                            <CreditCard className="h-5 w-5 text-apple-green" />
+                          <div className="w-10 h-10 rounded-xl bg-[var(--status-success)]/10 flex items-center justify-center">
+                            <CreditCard className="h-5 w-5 text-[var(--status-success)]" />
                           </div>
                           <div>
-                            <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                            <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {paymentMethodLabels[payment.method] || payment.method}
                             </p>
-                            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               {formatDate(payment.date)}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                          <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(payment.amount)}
                           </p>
                           <span
                             className={`text-footnote font-semibold px-2 py-0.5 rounded-full ${
                               payment.status === 'COMPLETED'
-                                ? 'bg-apple-green/10 text-apple-green'
-                                : 'bg-apple-orange/10 text-apple-orange'
+                                ? 'bg-[var(--status-success)]/10 text-[var(--status-success)]'
+                                : 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]'
                             }`}
                           >
                             {payment.status === 'COMPLETED' ? 'Completato' : 'In attesa'}
@@ -945,15 +945,15 @@ export default function InvoiceDetailPage() {
           <motion.div variants={itemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   Fatturazione Elettronica (SDI)
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 {(invoice.sdiEvents || []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Building2 className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    <Building2 className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Fattura non ancora inviata al Sistema di Interscambio
                     </p>
                     {invoice.status === 'DRAFT' && (
@@ -973,23 +973,23 @@ export default function InvoiceDetailPage() {
                     <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-apple-border/30 dark:bg-[var(--surface-active)]" />
                     {(invoice.sdiEvents || []).map((event, i) => {
                       const sdiStatus = sdiStatusMap[event.status] || {
-                        color: 'text-gray-600',
+                        color: 'text-[var(--text-secondary)]',
                         label: event.status,
                       };
                       return (
                         <div key={event.id || i} className="relative mb-6 last:mb-0">
-                          <div className="absolute -left-5 w-4 h-4 rounded-full bg-white dark:bg-[var(--surface-elevated)] border-2 border-apple-blue" />
-                          <div className="p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+                          <div className="absolute -left-5 w-4 h-4 rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border-2 border-[var(--brand)]" />
+                          <div className="p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]">
                             <div className="flex items-center justify-between mb-1">
                               <span className={`text-body font-semibold ${sdiStatus.color}`}>
                                 {sdiStatus.label}
                               </span>
-                              <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                              <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                 {formatDateTime(event.date)}
                               </span>
                             </div>
                             {event.detail && (
-                              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                 {event.detail}
                               </p>
                             )}
@@ -1009,15 +1009,15 @@ export default function InvoiceDetailPage() {
           <motion.div variants={itemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   Registro Modifiche
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 {(invoice.auditLog || []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <History className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    <History className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Nessuna modifica registrata
                     </p>
                   </div>
@@ -1026,21 +1026,21 @@ export default function InvoiceDetailPage() {
                     {(invoice.auditLog || []).map((entry, i) => (
                       <div
                         key={entry.id || i}
-                        className="flex items-start gap-4 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]"
+                        className="flex items-start gap-4 p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]"
                       >
-                        <div className="w-8 h-8 rounded-full bg-apple-blue/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <History className="h-4 w-4 text-apple-blue" />
+                        <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <History className="h-4 w-4 text-[var(--brand)]" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {entry.action}
                           </p>
                           {entry.detail && (
-                            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">
+                            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5">
                               {entry.detail}
                             </p>
                           )}
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                             {entry.userName && `${entry.userName} — `}
                             {formatDateTime(entry.date)}
                           </p>

@@ -25,9 +25,9 @@ export function DashboardWithProfiling() {
       />
 
       {/* Resto della dashboard... */}
-      <div className='bg-white/70 backdrop-blur-3xl rounded-[24px] p-6 shadow-apple'>
-        <h1 className='text-2xl font-semibold text-gray-900'>Dashboard</h1>
-        <p className='text-gray-600 mt-2'>Benvenuto nella tua area personale</p>
+      <div className='bg-[var(--surface-secondary)]/70 backdrop-blur-3xl rounded-[24px] p-6 shadow-apple'>
+        <h1 className='text-2xl font-semibold text-[var(--text-primary)]'>Dashboard</h1>
+        <p className='text-[var(--text-secondary)] mt-2'>Benvenuto nella tua area personale</p>
       </div>
     </div>
   );
@@ -67,16 +67,16 @@ export function CustomProfilingComponent() {
         <p>Caricamento...</p>
       ) : (
         <>
-          <p className='text-gray-600 mb-2'>
+          <p className='text-[var(--text-secondary)] mb-2'>
             Stage attuale: <span className='font-medium'>{currentStage}</span>
           </p>
-          <p className='text-gray-600 mb-2'>Campi mancanti: {missingFields.length}</p>
-          <p className='text-gray-600 mb-4'>Prossimo campo: {getNextField()}</p>
-          <p className='text-blue-600 font-medium mb-4'>Incentive: {getStageIncentive()}</p>
+          <p className='text-[var(--text-secondary)] mb-2'>Campi mancanti: {missingFields.length}</p>
+          <p className='text-[var(--text-secondary)] mb-4'>Prossimo campo: {getNextField()}</p>
+          <p className='text-[var(--status-info)] font-medium mb-4'>Incentive: {getStageIncentive()}</p>
 
           <button
             onClick={handleQuickUpdate}
-            className='px-4 py-2 bg-blue-500 text-white rounded-lg'
+            className='px-4 py-2 bg-[var(--status-info-subtle)]0 text-[var(--text-on-brand)] rounded-lg'
           >
             Aggiungi Telefono
           </button>
@@ -94,8 +94,8 @@ export function StandaloneProfilingModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className='px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 
-                   text-white rounded-2xl font-medium shadow-lg shadow-blue-500/25'
+        className='px-6 py-3 bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] 
+                   text-[var(--text-on-brand)] rounded-2xl font-medium shadow-lg shadow-blue-500/25'
       >
         Completa Profilo
       </button>
@@ -130,7 +130,7 @@ export function CustomerFormWithProfiling({
       />
 
       {/* Form esistente */}
-      <div className='bg-white/80 backdrop-blur-3xl rounded-[24px] shadow-apple overflow-hidden'>
+      <div className='bg-[var(--surface-secondary)] backdrop-blur-3xl rounded-[24px] shadow-apple overflow-hidden'>
         {children}
       </div>
     </div>

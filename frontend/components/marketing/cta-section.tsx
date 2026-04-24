@@ -33,7 +33,7 @@ export function CtaSection(): React.ReactElement {
     }
   }
   return (
-    <section className="bg-white py-20 dark:bg-[var(--surface-primary)] lg:py-28">
+    <section className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-primary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl bg-[#0d0d0d] dark:bg-[var(--surface-secondary)]"
@@ -43,13 +43,13 @@ export function CtaSection(): React.ReactElement {
         >
           {/* Decorative glows */}
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-            <div className="absolute left-1/4 top-0 h-[300px] w-[300px] rounded-full bg-white/10 blur-[100px]" />
-            <div className="absolute bottom-0 right-1/4 h-[200px] w-[200px] rounded-full bg-white/5 blur-[80px]" />
+            <div className="absolute left-1/4 top-0 h-[300px] w-[300px] rounded-full bg-[var(--surface-secondary)]/10 blur-[100px]" />
+            <div className="absolute bottom-0 right-1/4 h-[200px] w-[200px] rounded-full bg-[var(--surface-secondary)]/5 blur-[80px]" />
           </div>
 
           <div className="relative z-10 px-8 py-16 text-center sm:px-16 sm:py-20">
             <motion.h2
-              className="text-3xl font-bold tracking-tight text-white sm:text-4xl"
+              className="text-3xl font-bold tracking-tight text-[var(--text-on-brand)] sm:text-4xl"
               variants={fadeUp}
               custom={0}
             >
@@ -57,7 +57,7 @@ export function CtaSection(): React.ReactElement {
             </motion.h2>
 
             <motion.p
-              className="mt-4 text-lg text-white/60"
+              className="mt-4 text-lg text-[var(--text-on-brand)]/60"
               variants={fadeUp}
               custom={0.1}
             >
@@ -71,7 +71,7 @@ export function CtaSection(): React.ReactElement {
             >
               <Link
                 href="/auth/register"
-                className="inline-flex h-14 min-w-[240px] items-center justify-center gap-2.5 rounded-full border border-white/20 px-8 text-base font-medium text-white transition-all duration-200 hover:bg-white/10 active:scale-[0.97]"
+                className="inline-flex h-14 min-w-[240px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)]/20 px-8 text-base font-medium text-[var(--text-on-brand)] transition-all duration-200 hover:bg-[var(--surface-secondary)]/10 active:scale-[0.97]"
               >
                 Prova gratis &rarr;
               </Link>
@@ -79,7 +79,7 @@ export function CtaSection(): React.ReactElement {
                 type="button"
                 onClick={handleStartDemo}
                 disabled={isDemoLoading}
-                className="inline-flex h-14 min-w-[240px] items-center justify-center gap-2.5 rounded-full border border-white/20 px-8 text-base font-medium text-white transition-all duration-200 hover:bg-white/10 active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex h-14 min-w-[240px] items-center justify-center gap-2.5 rounded-full border border-[var(--border-default)]/20 px-8 text-base font-medium text-[var(--text-on-brand)] transition-all duration-200 hover:bg-[var(--surface-secondary)]/10 active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait"
               >
                 {isDemoLoading ? (
                   <>
@@ -96,7 +96,7 @@ export function CtaSection(): React.ReactElement {
             </motion.div>
 
             <motion.p
-              className="mt-6 text-sm text-white/40"
+              className="mt-6 text-sm text-[var(--text-on-brand)]/40"
               variants={fadeUp}
               custom={0.3}
             >

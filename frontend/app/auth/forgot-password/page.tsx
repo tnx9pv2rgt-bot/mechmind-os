@@ -62,22 +62,22 @@ export default function ForgotPasswordPage(): React.ReactElement {
           transition={{ duration: 0.2 }}
           className="text-center space-y-5"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-            <span className="text-2xl text-white">✓</span>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
+            <span className="text-2xl text-[var(--text-on-brand)]">✓</span>
           </div>
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Controlla la tua email
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto">
             Se esiste un account con l&apos;email{' '}
-            <strong className="text-white">{email}</strong>, riceverai un link di reset.
+            <strong className="text-[var(--text-on-brand)]">{email}</strong>, riceverai un link di reset.
           </p>
           <p className="text-[13px] text-[var(--text-tertiary)]">
             Se non trovi l&apos;email, controlla anche nella cartella spam.
           </p>
           <Link
             href="/auth"
-            className="inline-block text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[44px] leading-[44px]"
+            className="inline-block text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[44px] leading-[44px]"
           >
             Torna al login
           </Link>
@@ -95,7 +95,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
         className="space-y-5"
       >
         <div className="mb-4">
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Password dimenticata?
           </h1>
           <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -145,7 +145,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
             Ricordi la password?{' '}
             <Link
               href="/auth"
-              className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+              className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               Accedi
             </Link>

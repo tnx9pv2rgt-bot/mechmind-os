@@ -111,7 +111,7 @@ export function ExportMenu({
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors duration-200 hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors duration-200 hover:bg-[var(--surface-active)] hover:text-[var(--text-on-brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
         aria-label="Menu esportazione"
         aria-expanded={open}
         aria-haspopup="menu"
@@ -138,7 +138,7 @@ export function ExportMenu({
                   type="button"
                   role="menuitem"
                   onClick={() => handleAction(item.id)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:bg-[var(--surface-active)] focus-visible:text-white"
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--surface-active)] hover:text-[var(--text-on-brand)] focus:outline-none focus-visible:bg-[var(--surface-active)] focus-visible:text-[var(--text-on-brand)]"
                   aria-label={item.ariaLabel}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />

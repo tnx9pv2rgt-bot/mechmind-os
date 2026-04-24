@@ -161,7 +161,7 @@ export function KpiBulletChart(): React.ReactElement {
       </div>
 
       {/* Legenda */}
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-5 border-t border-white/10 pt-3">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-5 border-t border-[var(--border-default)]/10 pt-3">
         <div className="flex items-center gap-1.5">
           <span
             className="inline-block h-3 w-6 rounded-sm"

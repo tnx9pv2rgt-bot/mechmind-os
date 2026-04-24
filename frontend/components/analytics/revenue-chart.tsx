@@ -70,8 +70,8 @@ function CustomTooltip({
 }) {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <p className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
+        <p className="mb-2 text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {label}
         </p>
         {payload.map((entry, index) => (
@@ -80,10 +80,10 @@ function CustomTooltip({
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
               {entry.name}:
             </span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(entry.value)}
             </span>
           </div>
@@ -125,22 +125,22 @@ export function RevenueChart({ dateRange, locationId }: RevenueChartProps) {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Trend Fatturato
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Confronto periodo attuale vs precedente
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(totalCurrent)}
             </p>
             <div
               className={cn(
                 "flex items-center justify-end gap-1 text-sm",
-                percentChange >= 0 ? "text-status-ready" : "text-status-urgent"
+                percentChange >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-error)]"
               )}
             >
               {percentChange >= 0 ? (
@@ -156,27 +156,27 @@ export function RevenueChart({ dateRange, locationId }: RevenueChartProps) {
 
       {/* Metrics Grid */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Media Giornaliera</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]/50">
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Media Giornaliera</p>
+          <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {formatCurrency(avgDaily)}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Picco Giornaliero</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]/50">
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Picco Giornaliero</p>
+          <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {formatCurrency(maxDaily)}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Budget</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]/50">
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Budget</p>
+          <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {targetAchievement.toFixed(1)}%
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Periodo</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]/50">
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Periodo</p>
+          <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {dateRange === "today"
               ? "Oggi"
               : dateRange === "week"
@@ -201,8 +201,8 @@ export function RevenueChart({ dateRange, locationId }: RevenueChartProps) {
             className={cn(
               "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-all",
               hiddenSeries.has(series.key)
-                ? "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                ? "bg-[var(--surface-secondary)] text-[var(--text-tertiary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-secondary)]"
+                : "bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-hover)]"
             )}
           >
             <span

@@ -168,27 +168,27 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
     draft: {
       label: 'Bozza',
       icon: FileClock,
-      className: 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+      className: 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]',
     },
     sent: {
       label: 'Inviato',
       icon: Send,
-      className: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+      className: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]',
     },
     approved: {
       label: 'Approvato',
       icon: FileCheck,
-      className: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300',
+      className: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]',
     },
     rejected: {
       label: 'Rifiutato',
       icon: FileX,
-      className: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',
+      className: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]',
     },
     expired: {
       label: 'Scaduto',
       icon: AlertCircle,
-      className: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300',
+      className: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]',
     },
   };
 
@@ -215,19 +215,19 @@ function ExpiryBadge({ expiryDate, status }: { expiryDate: string; status: Quote
   );
 
   if (daysUntilExpiry < 0) {
-    return <span className='text-footnote text-apple-red font-medium'>Scaduto</span>;
+    return <span className='text-footnote text-[var(--status-error)] font-medium'>Scaduto</span>;
   }
 
   if (daysUntilExpiry <= 3) {
     return (
-      <span className='text-footnote text-apple-orange font-medium'>
+      <span className='text-footnote text-[var(--status-warning)] font-medium'>
         Scade tra {daysUntilExpiry} gg
       </span>
     );
   }
 
   return (
-    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
       Valido ancora {daysUntilExpiry} gg
     </span>
   );
@@ -323,11 +323,11 @@ export default function QuotesPage() {
   };
 
   const statCards = [
-    { label: 'In Bozza', value: String(stats.draftCount), icon: FileClock, color: 'bg-gray-500' },
-    { label: 'Inviati', value: stats.sentCount > 0 ? formatCurrency(stats.totalPending) : '0', icon: Send, color: 'bg-apple-blue' },
-    { label: 'Approvati', value: stats.approvedCount > 0 ? formatCurrency(stats.approved) : '0', icon: FileCheck, color: 'bg-apple-green' },
-    { label: 'Rifiutati', value: String(stats.rejectedCount), icon: FileX, color: 'bg-apple-red' },
-    { label: 'Scaduti', value: String(stats.expiredCount), icon: AlertCircle, color: 'bg-apple-orange' },
+    { label: 'In Bozza', value: String(stats.draftCount), icon: FileClock, color: 'bg-[var(--surface-secondary)]0' },
+    { label: 'Inviati', value: stats.sentCount > 0 ? formatCurrency(stats.totalPending) : '0', icon: Send, color: 'bg-[var(--brand)]' },
+    { label: 'Approvati', value: stats.approvedCount > 0 ? formatCurrency(stats.approved) : '0', icon: FileCheck, color: 'bg-[var(--status-success)]' },
+    { label: 'Rifiutati', value: String(stats.rejectedCount), icon: FileX, color: 'bg-[var(--status-error)]' },
+    { label: 'Scaduti', value: String(stats.expiredCount), icon: AlertCircle, color: 'bg-[var(--status-warning)]' },
   ];
 
   return (
@@ -346,8 +346,8 @@ export default function QuotesPage() {
                 Fatture
               </AppleButton>
             </div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Preventivi</h1>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Preventivi</h1>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
               Gestisci preventivi e trasformali in fatture
             </p>
           </div>
@@ -368,13 +368,13 @@ export default function QuotesPage() {
               <AppleCardContent>
                 <div className='flex items-center justify-between mb-3'>
                   <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                    <stat.icon className='h-5 w-5 text-white' />
+                    <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                   </div>
                 </div>
-                <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {isLoading ? '...' : stat.value}
                 </p>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
               </AppleCardContent>
             </AppleCard>
           ))}
@@ -385,7 +385,7 @@ export default function QuotesPage() {
           <AppleCardContent>
             <div className='flex flex-col sm:flex-row gap-4'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca preventivo...'
                   value={searchQuery}
@@ -394,11 +394,11 @@ export default function QuotesPage() {
                 />
               </div>
               <div className='relative'>
-                <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value as QuoteStatus | 'all')}
-                  className='h-10 pl-10 pr-4 rounded-md border border-gray-300 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                  className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                 >
                   <option value='all'>Tutti gli stati</option>
                   <option value='draft'>Bozza</option>
@@ -415,7 +415,7 @@ export default function QuotesPage() {
         {/* Loading State */}
         {isLoading && (
           <div className='flex items-center justify-center py-12'>
-            <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+            <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
           </div>
         )}
 
@@ -424,8 +424,8 @@ export default function QuotesPage() {
           <AppleCard hover={false}>
             <AppleCardContent>
               <div className='flex flex-col items-center justify-center py-12 text-center'>
-                <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                <p className='text-body text-apple-red font-medium'>{error}</p>
+                <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                <p className='text-body text-[var(--status-error)] font-medium'>{error}</p>
                 <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>
                   Riprova
                 </AppleButton>
@@ -441,34 +441,34 @@ export default function QuotesPage() {
               <div className='overflow-x-auto'>
                 <table className='w-full text-left text-body'>
                   <thead>
-                    <tr className='border-b border-apple-border/20 dark:border-[var(--border-default)]'>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Numero</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Cliente</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Veicolo</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Data</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Scadenza</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>Importo</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Stato</th>
-                      <th className='px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-center'>Azioni</th>
+                    <tr className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Numero</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Cliente</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Veicolo</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Data</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Scadenza</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>Importo</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-center'>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredQuotes.map(quote => (
                       <tr
                         key={quote.id}
-                        className='border-b border-apple-border/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
+                        className='border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                       >
                         <td className='px-4 py-3'>
-                          <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {quote.number}
                           </span>
                         </td>
                         <td className='px-4 py-3'>
                           <div>
-                            <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {quote.customer.name}
                             </p>
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {quote.customer.email}
                             </p>
                           </div>
@@ -476,24 +476,24 @@ export default function QuotesPage() {
                         <td className='px-4 py-3'>
                           {quote.vehicle ? (
                             <div>
-                              <p className='text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {quote.vehicle.make} {quote.vehicle.model}
                               </p>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {quote.vehicle.licensePlate}
                               </p>
                             </div>
                           ) : (
-                            <span className='text-apple-gray'>-</span>
+                            <span className='text-[var(--text-tertiary)]'>-</span>
                           )}
                         </td>
-                        <td className='px-4 py-3 text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <td className='px-4 py-3 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {formatDate(quote.date)}
                         </td>
                         <td className='px-4 py-3'>
                           <div className='flex flex-col gap-1'>
-                            <span className={`text-apple-gray dark:text-[var(--text-secondary)] ${
-                              quote.status === 'expired' ? 'text-apple-red' : ''
+                            <span className={`text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ${
+                              quote.status === 'expired' ? 'text-[var(--status-error)]' : ''
                             }`}>
                               {formatDate(quote.expiryDate)}
                             </span>
@@ -501,7 +501,7 @@ export default function QuotesPage() {
                           </div>
                         </td>
                         <td className='px-4 py-3 text-right'>
-                          <span className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                          <span className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {formatCurrency(quote.amount)}
                           </span>
                         </td>
@@ -562,17 +562,17 @@ export default function QuotesPage() {
 
               {filteredQuotes.length === 0 && !isLoading && (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <FileText className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun preventivo trovato</p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <FileText className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun preventivo trovato</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Prova a modificare i filtri o crea un nuovo preventivo
                   </p>
                 </div>
               )}
 
               {/* Pagination */}
-              <div className='flex items-center justify-between border-t border-apple-border/20 dark:border-[var(--border-default)] px-4 py-4 mt-4'>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+              <div className='flex items-center justify-between border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] px-4 py-4 mt-4'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Mostrando {filteredQuotes.length} di {totalQuotes} preventivi
                 </p>
               </div>

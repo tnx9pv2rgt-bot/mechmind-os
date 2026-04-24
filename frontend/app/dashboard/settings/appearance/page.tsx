@@ -68,8 +68,8 @@ function OptionButton({ selected, onClick, children, className }: { selected: bo
       className={cn(
         'relative flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px]',
         selected
-          ? 'bg-apple-dark dark:bg-white text-white dark:text-apple-dark shadow-md'
-          : 'bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray dark:hover:bg-[var(--surface-active)]',
+          ? 'bg-apple-dark dark:bg-[var(--surface-secondary)] text-[var(--text-on-brand)] dark:text-[var(--text-primary)] shadow-md'
+          : 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)]',
         className
       )}
     >
@@ -90,8 +90,8 @@ export default function AppearancePage(): React.JSX.Element {
       <header className="">
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Aspetto</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Aspetto</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Personalizza colori, font, layout e accessibilita
             </p>
           </div>
@@ -116,10 +116,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Sun className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Sun className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Modalita</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Modalita</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -137,10 +137,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Palette className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Palette className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Colore primario</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Colore primario</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -159,14 +159,14 @@ export default function AppearancePage(): React.JSX.Element {
                     title={preset.name}
                   >
                     {store.primaryColor === preset.value && (
-                      <Check className="h-4 w-4 text-white drop-shadow-md" />
+                      <Check className="h-4 w-4 text-[var(--text-on-brand)] drop-shadow-md" />
                     )}
                   </button>
                 ))}
               </div>
               <div className="flex items-center gap-3">
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Personalizzato:</label>
-                <div className="flex items-center gap-2 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl px-3 py-2">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Personalizzato:</label>
+                <div className="flex items-center gap-2 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl px-3 py-2">
                   <input
                     type="color"
                     value={store.primaryColor}
@@ -181,7 +181,7 @@ export default function AppearancePage(): React.JSX.Element {
                         store.setPrimaryColor(e.target.value);
                       }
                     }}
-                    className="w-20 bg-transparent text-sm font-mono text-apple-dark dark:text-[var(--text-primary)] outline-none"
+                    className="w-20 bg-transparent text-sm font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)] outline-none"
                     maxLength={7}
                   />
                 </div>
@@ -195,16 +195,16 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Type className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Type className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Tipografia</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Tipografia</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2 block">Font</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2 block">Font</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {FONT_OPTIONS.map((font) => (
                       <OptionButton
@@ -219,7 +219,7 @@ export default function AppearancePage(): React.JSX.Element {
                 </div>
 
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2 block">Dimensione testo</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2 block">Dimensione testo</label>
                   <div className="grid grid-cols-3 gap-3">
                     {([
                       { value: 'small', label: 'Piccolo', size: 'text-xs' },
@@ -246,10 +246,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Layout className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Layout className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Densita</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Densita</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -277,10 +277,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Layout className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Layout className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Raggio bordi</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Raggio bordi</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -298,16 +298,16 @@ export default function AppearancePage(): React.JSX.Element {
                     className={cn(
                       'flex flex-col items-center gap-2 p-3 transition-all duration-200 min-h-[44px] rounded-xl',
                       store.borderRadius === opt.value
-                        ? 'bg-apple-dark dark:bg-white text-white dark:text-apple-dark'
-                        : 'bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray dark:hover:bg-[var(--surface-active)]'
+                        ? 'bg-apple-dark dark:bg-[var(--surface-secondary)] text-[var(--text-on-brand)] dark:text-[var(--text-primary)]'
+                        : 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)]'
                     )}
                   >
                     <div
                       className={cn(
                         'w-10 h-7 border-2',
                         store.borderRadius === opt.value
-                          ? 'border-white dark:border-apple-dark'
-                          : 'border-apple-gray/30'
+                          ? 'border-[var(--border-default)] dark:border-apple-dark'
+                          : 'border-[var(--text-tertiary)]/30'
                       )}
                       style={{ borderRadius: opt.radius }}
                     />
@@ -324,17 +324,17 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <PanelLeft className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <PanelLeft className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Sidebar</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Sidebar</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               <div className="space-y-4">
                 {/* Behavior */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2 block">Comportamento</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2 block">Comportamento</label>
                   <div className="grid grid-cols-3 gap-3">
                     <OptionButton
                       selected={store.sidebarBehavior === 'expanded'}
@@ -355,7 +355,7 @@ export default function AppearancePage(): React.JSX.Element {
                       <MousePointer className="h-4 w-4" /> Auto (hover)
                     </OptionButton>
                   </div>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-2">
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-2">
                     {store.sidebarBehavior === 'auto'
                       ? 'La sidebar si nasconde e appare al passaggio del mouse sul bordo sinistro.'
                       : store.sidebarBehavior === 'collapsed'
@@ -366,7 +366,7 @@ export default function AppearancePage(): React.JSX.Element {
 
                 {/* Theme */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2 block">Tema sidebar</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2 block">Tema sidebar</label>
                   <div className="grid grid-cols-3 gap-3">
                     <OptionButton
                       selected={store.sidebarTheme === 'follow'}
@@ -391,7 +391,7 @@ export default function AppearancePage(): React.JSX.Element {
 
                 {/* Sidebar color */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2 block">Colore sidebar</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2 block">Colore sidebar</label>
                   <div className="flex items-center gap-3">
                     {['#171717', '#1e293b', '#1e1b4b', '#14532d', '#7f1d1d', '#44403c'].map((color) => (
                       <button
@@ -403,14 +403,14 @@ export default function AppearancePage(): React.JSX.Element {
                         )}
                         style={{ backgroundColor: color }}
                       >
-                        {store.sidebarColor === color && <Check className="h-4 w-4 text-white" />}
+                        {store.sidebarColor === color && <Check className="h-4 w-4 text-[var(--text-on-brand)]" />}
                       </button>
                     ))}
                     <input
                       type="color"
                       value={store.sidebarColor}
                       onChange={(e) => store.setSidebarColor(e.target.value)}
-                      className="w-10 h-10 rounded-full cursor-pointer border-2 border-apple-border/20 dark:border-[var(--border-default)] bg-transparent"
+                      className="w-10 h-10 rounded-full cursor-pointer border-2 border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-transparent"
                     />
                   </div>
                 </div>
@@ -424,10 +424,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Maximize2 className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Maximize2 className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Larghezza contenuto</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Larghezza contenuto</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -454,10 +454,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Sparkles className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Sparkles className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Animazioni</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Animazioni</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -490,10 +490,10 @@ export default function AppearancePage(): React.JSX.Element {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
-                  <Accessibility className="h-4.5 w-4.5 text-apple-gray dark:text-[var(--text-secondary)]" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center">
+                  <Accessibility className="h-4.5 w-4.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 </div>
-                <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Accessibilita</h3>
+                <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Accessibilita</h3>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
@@ -519,12 +519,12 @@ export default function AppearancePage(): React.JSX.Element {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h3 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Anteprima</h3>
+              <h3 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Anteprima</h3>
             </AppleCardHeader>
             <AppleCardContent>
               <div className="flex items-center gap-4">
                 <button
-                  className="px-5 py-2.5 rounded-full text-sm font-medium text-white min-h-[44px]"
+                  className="px-5 py-2.5 rounded-full text-sm font-medium text-[var(--text-on-brand)] min-h-[44px]"
                   style={{ backgroundColor: store.primaryColor }}
                 >
                   Bottone primario

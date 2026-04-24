@@ -86,8 +86,8 @@ export default function TvDashboardPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-[var(--surface-tertiary)] flex flex-col items-center justify-center gap-4">
-        <AlertCircle className="w-16 h-16 text-red-400" />
-        <p className="text-2xl text-white font-medium">Errore di connessione</p>
+        <AlertCircle className="w-16 h-16 text-[var(--status-error)]" />
+        <p className="text-2xl text-[var(--text-on-brand)] font-medium">Errore di connessione</p>
         <p className="text-[var(--text-tertiary)]">Il sistema si riconnettera automaticamente...</p>
       </div>
     );
@@ -99,13 +99,13 @@ export default function TvDashboardPage() {
   // Main TV Layout
   // ---------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-[var(--surface-tertiary)] text-white p-6 flex flex-col gap-6">
+    <div className="min-h-screen bg-[var(--surface-tertiary)] text-[var(--text-on-brand)] p-6 flex flex-col gap-6">
       {/* Top Bar: Branding + Time + KPIs */}
       <div className="flex items-center justify-between">
         {/* Branding */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-            <Wrench className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center">
+            <Wrench className="w-5 h-5 text-[var(--text-on-brand)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">MechMind OS</h1>
@@ -116,17 +116,17 @@ export default function TvDashboardPage() {
         {/* KPIs */}
         <div className="flex items-center gap-8">
           <TvKpi
-            icon={<CheckCircle2 className="w-5 h-5 text-green-400" />}
+            icon={<CheckCircle2 className="w-5 h-5 text-[var(--status-success)]" />}
             label="Completati"
             value={kpis.completed.toString()}
           />
           <TvKpi
-            icon={<Euro className="w-5 h-5 text-emerald-400" />}
+            icon={<Euro className="w-5 h-5 text-[var(--status-success)]" />}
             label="Revenue"
             value={formatCurrency(kpis.revenueToday)}
           />
           <TvKpi
-            icon={<Clock className="w-5 h-5 text-amber-400" />}
+            icon={<Clock className="w-5 h-5 text-[var(--status-warning)]" />}
             label="In coda"
             value={kpis.queueCount.toString()}
           />
@@ -180,7 +180,7 @@ export default function TvDashboardPage() {
                   className="rounded-xl bg-[var(--surface-primary)] border border-[var(--border-default)] p-3 space-y-1"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-white">
+                    <span className="text-lg font-bold text-[var(--text-on-brand)]">
                       {new Date(appt.time).toLocaleTimeString('it-IT', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -250,14 +250,14 @@ function TvBayCard({ bay }: { bay: TvBay }) {
     Date.now() - new Date(bay.startedAt).getTime() > bay.estimatedMinutes * 60_000;
 
   const bayColor = bay.status === 'available'
-    ? 'border-green-800/60'
+    ? 'border-[var(--status-success)]/60'
     : bay.status === 'maintenance'
-      ? 'border-gray-700'
+      ? 'border-[var(--border-strong)]'
       : isOverdue
-        ? 'border-red-800/60'
-        : 'border-blue-800/60';
+        ? 'border-[var(--status-error)]/60'
+        : 'border-[var(--status-info)]/60';
 
-  const progressColor = isOverdue ? 'bg-red-500' : 'bg-[var(--brand)]';
+  const progressColor = isOverdue ? 'bg-[var(--status-error)]' : 'bg-[var(--brand)]';
 
   return (
     <div className={`rounded-2xl bg-[var(--surface-tertiary)] border-2 ${bayColor} p-4 space-y-3 transition-colors`}>
@@ -267,12 +267,12 @@ function TvBayCard({ bay }: { bay: TvBay }) {
         <span
           className={`w-3 h-3 rounded-full ${
             bay.status === 'available'
-              ? 'bg-green-400'
+              ? 'bg-[var(--status-success)]'
               : bay.status === 'maintenance'
-                ? 'bg-white0'
+                ? 'bg-[var(--surface-secondary)]0'
                 : isOverdue
-                  ? 'bg-red-400 animate-pulse'
-                  : 'bg-blue-400'
+                  ? 'bg-[var(--status-error)] animate-pulse'
+                  : 'bg-[var(--status-info)]'
           }`}
         />
       </div>
@@ -292,7 +292,7 @@ function TvBayCard({ bay }: { bay: TvBay }) {
           {/* Vehicle */}
           <div className="flex items-center gap-2">
             <Car className="w-4 h-4 text-[var(--text-tertiary)]" />
-            <span className="text-lg font-mono font-bold text-white">{bay.vehiclePlate}</span>
+            <span className="text-lg font-mono font-bold text-[var(--text-on-brand)]">{bay.vehiclePlate}</span>
           </div>
           {(bay.vehicleBrand || bay.vehicleModel) && (
             <p className="text-xs text-[var(--text-tertiary)]">
@@ -328,7 +328,7 @@ function TvBayCard({ bay }: { bay: TvBay }) {
               </div>
             )}
             {elapsed && (
-              <div className={`flex items-center gap-1 font-medium ${isOverdue ? 'text-red-400' : 'text-[var(--brand)]'}`}>
+              <div className={`flex items-center gap-1 font-medium ${isOverdue ? 'text-[var(--status-error)]' : 'text-[var(--brand)]'}`}>
                 <Timer className="w-3 h-3" />
                 <span>{elapsed}</span>
               </div>

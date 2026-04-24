@@ -54,7 +54,7 @@ export function ConfirmDialog({
               }
             }}
             disabled={loading}
-            className={variant === 'danger' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
+            className={variant === 'danger' ? 'bg-[var(--status-error)] hover:bg-[var(--status-error)]/90 text-[var(--text-on-brand)]' : ''}
           >
             {loading ? 'Attendere...' : confirmLabel}
           </Button>

@@ -162,10 +162,10 @@ export default function WarrantyDashboardPage() {
   }, [warranties, claims]);
 
   const statCards = [
-    { label: 'Garanzie Attive', value: String(stats.active), icon: Shield, color: 'bg-apple-green' },
-    { label: 'In Scadenza', value: String(stats.expiringSoon), icon: Calendar, color: 'bg-apple-orange' },
-    { label: 'Scadute', value: String(stats.expired), icon: AlertTriangle, color: 'bg-apple-red' },
-    { label: 'Reclami in Attesa', value: String(stats.pendingClaims), icon: FileText, color: 'bg-apple-blue' },
+    { label: 'Garanzie Attive', value: String(stats.active), icon: Shield, color: 'bg-[var(--status-success)]' },
+    { label: 'In Scadenza', value: String(stats.expiringSoon), icon: Calendar, color: 'bg-[var(--status-warning)]' },
+    { label: 'Scadute', value: String(stats.expired), icon: AlertTriangle, color: 'bg-[var(--status-error)]' },
+    { label: 'Reclami in Attesa', value: String(stats.pendingClaims), icon: FileText, color: 'bg-[var(--brand)]' },
   ];
 
   const tabs = [
@@ -176,7 +176,7 @@ export default function WarrantyDashboardPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center h-full py-12'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -187,8 +187,8 @@ export default function WarrantyDashboardPage() {
       <header className=''>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Gestione Garanzie</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>Monitora le garanzie e gestisci i reclami</p>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Gestione Garanzie</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>Monitora le garanzie e gestisci i reclami</p>
           </div>
           <div className='flex items-center gap-3'>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -233,13 +233,13 @@ export default function WarrantyDashboardPage() {
                 <AppleCardContent>
                   <div className='flex items-center justify-between mb-3'>
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -266,8 +266,8 @@ export default function WarrantyDashboardPage() {
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <Shield className='h-12 w-12 text-apple-gray/40 mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <Shield className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessuna garanzia. Crea una garanzia per iniziare.
                     </p>
                     <AppleButton

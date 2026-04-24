@@ -177,7 +177,7 @@ export function CookieConsent(): React.ReactNode {
                   informazioni consulta la nostra{' '}
                   <Link
                     href="/privacy"
-                    className="font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
+                    className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
                   >
                     Informativa Privacy
                   </Link>
@@ -187,19 +187,19 @@ export function CookieConsent(): React.ReactNode {
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <button
                     onClick={() => setShowDetails(true)}
-                    className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white sm:mr-auto"
+                    className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] sm:mr-auto"
                   >
                     Personalizza
                   </button>
                   <button
                     onClick={handleNecessaryOnly}
-                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-white transition-colors hover:bg-white/5"
+                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-secondary)]/5"
                   >
                     Solo necessari
                   </button>
                   <button
                     onClick={handleAcceptAll}
-                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--surface-active)]"
+                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-active)]"
                   >
                     Accetta tutti
                   </button>
@@ -209,12 +209,12 @@ export function CookieConsent(): React.ReactNode {
               /* ---- Detail panel ---- */
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-medium text-white">
+                  <h3 className="text-base font-medium text-[var(--text-on-brand)]">
                     Impostazioni cookie
                   </h3>
                   <button
                     onClick={() => setShowDetails(false)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-secondary)]/10 hover:text-[var(--text-on-brand)]"
                     aria-label="Chiudi dettagli"
                   >
                     <span className="text-lg pointer-events-none" aria-hidden="true">✕</span>
@@ -222,22 +222,22 @@ export function CookieConsent(): React.ReactNode {
                 </div>
 
                 {/* Necessary — always on */}
-                <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                <div className="flex items-center justify-between rounded-xl bg-[var(--surface-secondary)]/5 px-4 py-3">
                   <div>
-                    <p className="text-[14px] font-medium text-white">Cookie tecnici</p>
+                    <p className="text-[14px] font-medium text-[var(--text-on-brand)]">Cookie tecnici</p>
                     <p className="text-[12px] text-[var(--text-tertiary)]">
                       Necessari per il funzionamento. Non disattivabili.
                     </p>
                   </div>
-                  <div className="ml-4 flex h-6 w-11 items-center rounded-full bg-white px-0.5">
+                  <div className="ml-4 flex h-6 w-11 items-center rounded-full bg-[var(--surface-secondary)] px-0.5">
                     <div className="h-5 w-5 translate-x-5 rounded-full bg-[var(--text-primary)] shadow-sm" />
                   </div>
                 </div>
 
                 {/* Analytics — toggleable */}
-                <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                <div className="flex items-center justify-between rounded-xl bg-[var(--surface-secondary)]/5 px-4 py-3">
                   <div>
-                    <p className="text-[14px] font-medium text-white">Cookie analitici</p>
+                    <p className="text-[14px] font-medium text-[var(--text-on-brand)]">Cookie analitici</p>
                     <p className="text-[12px] text-[var(--text-tertiary)]">
                       Ci aiutano a capire come viene utilizzato il sito.
                     </p>
@@ -245,7 +245,7 @@ export function CookieConsent(): React.ReactNode {
                   <button
                     onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
                     className={`ml-4 flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${
-                      analyticsEnabled ? 'bg-white' : 'bg-[var(--text-tertiary)]'
+                      analyticsEnabled ? 'bg-[var(--surface-primary)]' : 'bg-[var(--text-tertiary)]'
                     }`}
                     role="switch"
                     aria-checked={analyticsEnabled}
@@ -265,13 +265,13 @@ export function CookieConsent(): React.ReactNode {
                 <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
                   <button
                     onClick={handleNecessaryOnly}
-                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-white transition-colors hover:bg-white/5"
+                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-secondary)]/5"
                   >
                     Solo necessari
                   </button>
                   <button
                     onClick={handleSavePreferences}
-                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--surface-active)]"
+                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-active)]"
                   >
                     Salva preferenze
                   </button>

@@ -105,8 +105,8 @@ export function CallerIdSearch() {
 
   return (
     <div ref={containerRef} className='relative'>
-      <div className='flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1'>
-        <Phone className='h-3.5 w-3.5 text-gray-400' />
+      <div className='flex items-center gap-1.5 bg-[var(--surface-secondary)]/10 rounded-full px-2.5 py-1'>
+        <Phone className='h-3.5 w-3.5 text-[var(--text-tertiary)]' />
         <input
           type='text'
           value={query}
@@ -114,13 +114,13 @@ export function CallerIdSearch() {
           onFocus={() => results.length > 0 && setIsOpen(true)}
           placeholder='Cerca per telefono...'
           aria-label='Ricerca cliente per telefono'
-          className='bg-transparent text-white text-xs placeholder-gray-400 outline-none w-36 focus:w-48 transition-all'
+          className='bg-transparent text-[var(--text-on-brand)] text-xs placeholder-gray-400 outline-none w-36 focus:w-48 transition-all'
         />
-        {isLoading && <Loader2 className='h-3 w-3 text-gray-400 animate-spin' />}
+        {isLoading && <Loader2 className='h-3 w-3 text-[var(--text-tertiary)] animate-spin' />}
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className='absolute top-full mt-2 right-0 w-72 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-2xl border border-gray-200 dark:border-[var(--border-default)] max-h-80 overflow-y-auto z-[9999]'>
+        <div className='absolute top-full mt-2 right-0 w-72 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl shadow-2xl border border-[var(--border-default)] dark:border-[var(--border-default)] max-h-80 overflow-y-auto z-[9999]'>
           {results.map(customer => (
             <Link
               key={customer.id}
@@ -129,20 +129,20 @@ export function CallerIdSearch() {
                 setIsOpen(false);
                 setQuery('');
               }}
-              className='flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[var(--surface-hover)] transition-colors border-b border-gray-100 dark:border-[var(--border-default)] last:border-0'
+              className='flex items-start gap-3 px-4 py-3 hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-default)] dark:border-[var(--border-default)] last:border-0'
             >
-              <div className='w-8 h-8 rounded-full bg-apple-blue/10 flex items-center justify-center flex-shrink-0 mt-0.5'>
-                <User className='h-4 w-4 text-apple-blue' />
+              <div className='w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center flex-shrink-0 mt-0.5'>
+                <User className='h-4 w-4 text-[var(--brand)]' />
               </div>
               <div className='min-w-0'>
-                <p className='text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] truncate'>
+                <p className='text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate'>
                   {customer.firstName} {customer.lastName}
                 </p>
                 {customer.phone && (
-                  <p className='text-xs text-gray-500 dark:text-[var(--text-secondary)]'>{customer.phone}</p>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{customer.phone}</p>
                 )}
                 {customer.vehicles && customer.vehicles.length > 0 && (
-                  <p className='text-xs text-gray-400 dark:text-[var(--text-tertiary)] mt-0.5'>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-tertiary)] mt-0.5'>
                     {customer.vehicles[0].licensePlate} - {customer.vehicles[0].make}{' '}
                     {customer.vehicles[0].model}
                   </p>
@@ -154,8 +154,8 @@ export function CallerIdSearch() {
       )}
 
       {isOpen && query.length >= 4 && !isLoading && results.length === 0 && (
-        <div className='absolute top-full mt-2 right-0 w-72 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-2xl border border-gray-200 dark:border-[var(--border-default)] p-4 z-[9999]'>
-          <p className='text-sm text-gray-500 dark:text-[var(--text-secondary)] text-center'>
+        <div className='absolute top-full mt-2 right-0 w-72 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl shadow-2xl border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 z-[9999]'>
+          <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center'>
             Nessun cliente trovato
           </p>
         </div>

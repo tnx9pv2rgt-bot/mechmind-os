@@ -180,11 +180,11 @@ const segments = [
 // Components
 function StatusBadge({ status }: { status: Campaign['status'] }) {
   const config = {
-    draft: { bg: 'bg-gray-100 text-gray-700', icon: Edit, label: 'Bozza' },
-    scheduled: { bg: 'bg-blue-100 text-blue-700', icon: Clock3, label: 'Programmata' },
-    sending: { bg: 'bg-amber-100 text-amber-700', icon: Send, label: 'In Invio' },
-    sent: { bg: 'bg-green-100 text-green-700', icon: CheckCircle, label: 'Inviata' },
-    paused: { bg: 'bg-red-100 text-red-700', icon: Pause, label: 'In Pausa' },
+    draft: { bg: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]', icon: Edit, label: 'Bozza' },
+    scheduled: { bg: 'bg-[var(--brand-subtle)] text-[var(--brand)]', icon: Clock3, label: 'Programmata' },
+    sending: { bg: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]', icon: Send, label: 'In Invio' },
+    sent: { bg: 'bg-[var(--status-success)]/10 text-[var(--status-success)]', icon: CheckCircle, label: 'Inviata' },
+    paused: { bg: 'bg-[var(--status-error)]/10 text-[var(--status-error)]', icon: Pause, label: 'In Pausa' },
   };
 
   const { bg, icon: Icon, label } = config[status];
@@ -201,8 +201,8 @@ function StatusBadge({ status }: { status: Campaign['status'] }) {
 
 function TypeBadge({ type }: { type: Campaign['type'] }) {
   const config = {
-    email: { bg: 'bg-purple-100 text-purple-700', icon: Mail, label: 'Email' },
-    sms: { bg: 'bg-cyan-100 text-cyan-700', icon: MessageSquare, label: 'SMS' },
+    email: { bg: 'bg-[var(--brand-subtle)] text-[var(--brand)]', icon: Mail, label: 'Email' },
+    sms: { bg: 'bg-[var(--status-info)]/10 text-[var(--status-info)]', icon: MessageSquare, label: 'SMS' },
   };
 
   const { bg, icon: Icon, label } = config[type];
@@ -231,15 +231,15 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className='rounded-lg bg-gray-50 p-4 dark:bg-gray-800'>
+    <div className='rounded-lg bg-[var(--surface-secondary)] p-4'>
       <div className='flex items-center gap-3'>
         <div className={`rounded-lg p-2 ${color}`}>
-          <Icon className='h-5 w-5 text-white' />
+          <Icon className='h-5 w-5 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <p className='text-sm text-gray-500'>{label}</p>
-          <p className='text-xl font-bold text-gray-900 dark:text-white'>{value}</p>
-          {subtext && <p className='text-xs text-gray-500'>{subtext}</p>}
+          <p className='text-sm text-[var(--text-secondary)]'>{label}</p>
+          <p className='text-xl font-bold text-[var(--text-primary)]'>{value}</p>
+          {subtext && <p className='text-xs text-[var(--text-secondary)]'>{subtext}</p>}
         </div>
       </div>
     </div>
@@ -343,8 +343,8 @@ export function MarketingCampaigns() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-xl font-bold text-gray-900 dark:text-white'>Campagne Marketing</h2>
-          <p className='text-sm text-gray-600 dark:text-gray-400'>
+          <h2 className='text-xl font-bold text-[var(--text-primary)]'>Campagne Marketing</h2>
+          <p className='text-sm text-[var(--text-secondary)]'>
             Crea e gestisci campagne email e SMS
           </p>
         </div>
@@ -360,20 +360,20 @@ export function MarketingCampaigns() {
           label='Campagne Totali'
           value={stats.total.toString()}
           icon={Megaphone}
-          color='bg-brand-600'
+          color='bg-[var(--brand)]'
         />
-        <StatCard label='Attive' value={stats.active.toString()} icon={Send} color='bg-amber-500' />
+        <StatCard label='Attive' value={stats.active.toString()} icon={Send} color='bg-[var(--status-warning)]' />
         <StatCard
           label='Inviate'
           value={stats.sent.toString()}
           icon={CheckCircle}
-          color='bg-status-ready'
+          color='bg-[var(--status-success)]'
         />
         <StatCard
           label='Tasso Apertura Medio'
           value={`${stats.avgOpenRate.toFixed(1)}%`}
           icon={Eye}
-          color='bg-purple-500'
+          color='bg-[var(--status-info)]'
         />
       </div>
 
@@ -393,12 +393,12 @@ export function MarketingCampaigns() {
             </thead>
             <tbody>
               {campaigns.map(campaign => (
-                <tr key={campaign.id} className='hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                <tr key={campaign.id} className='hover:bg-[var(--surface-secondary)]'>
                   <td>
                     <div>
-                      <p className='font-medium text-gray-900 dark:text-white'>{campaign.name}</p>
+                      <p className='font-medium text-[var(--text-primary)]'>{campaign.name}</p>
                       {campaign.type === 'email' && (
-                        <p className='text-sm text-gray-500 truncate max-w-[250px]'>
+                        <p className='text-sm text-[var(--text-secondary)] truncate max-w-[250px]'>
                           {campaign.subject}
                         </p>
                       )}
@@ -409,9 +409,9 @@ export function MarketingCampaigns() {
                   </td>
                   <td>
                     <div className='flex items-center gap-2'>
-                      <Users className='h-4 w-4 text-gray-400' />
+                      <Users className='h-4 w-4 text-[var(--text-tertiary)]' />
                       <span className='text-sm'>{campaign.segment}</span>
-                      <span className='text-xs text-gray-500'>({campaign.segmentCount})</span>
+                      <span className='text-xs text-[var(--text-tertiary)]'>({campaign.segmentCount})</span>
                     </div>
                   </td>
                   <td>
@@ -419,11 +419,11 @@ export function MarketingCampaigns() {
                   </td>
                   <td>
                     {campaign.scheduledFor ? (
-                      <span className='text-sm text-gray-600 dark:text-gray-400'>
+                      <span className='text-sm text-[var(--text-secondary)]'>
                         {formatDateTime(campaign.scheduledFor)}
                       </span>
                     ) : (
-                      <span className='text-sm text-gray-400'>Non programmata</span>
+                      <span className='text-sm text-[var(--text-tertiary)]'>Non programmata</span>
                     )}
                   </td>
                   <td>
@@ -462,7 +462,7 @@ export function MarketingCampaigns() {
                         variant='ghost'
                         size='icon'
                         onClick={() => handleDeleteCampaign(campaign.id)}
-                        className='text-status-urgent hover:text-status-urgent'
+                        className='text-[var(--status-error)] hover:text-[var(--status-error)]'
                         aria-label='Elimina campagna'
                       >
                         <Trash2 className='h-4 w-4' />
@@ -476,8 +476,8 @@ export function MarketingCampaigns() {
         </div>
         {campaigns.length === 0 && (
           <div className='py-12 text-center'>
-            <Megaphone className='mx-auto h-12 w-12 text-gray-300' />
-            <p className='mt-4 text-gray-500'>Nessuna campagna</p>
+            <Megaphone className='mx-auto h-12 w-12 text-[var(--text-tertiary)]' />
+            <p className='mt-4 text-[var(--text-secondary)]'>Nessuna campagna</p>
             <Button className='mt-4' onClick={handleCreateCampaign}>
               Crea la tua prima campagna
             </Button>
@@ -487,10 +487,10 @@ export function MarketingCampaigns() {
 
       {/* Create/Edit Modal */}
       {(isCreating || editingCampaign) && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <div className='max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 p-4'>
+          <div className='max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-[var(--surface-elevated)] p-6 shadow-xl'>
             <div className='mb-6 flex items-center justify-between'>
-              <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
+              <h3 className='text-lg font-bold text-[var(--text-primary)]'>
                 {editingCampaign ? 'Modifica Campagna' : 'Crea Campagna'}
               </h3>
               <Button
@@ -517,7 +517,7 @@ export function MarketingCampaigns() {
                 />
 
                 <div>
-                  <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='mb-2 block text-sm font-medium text-[var(--text-primary)]'>
                     Tipo Campagna
                   </label>
                   <div className='flex gap-3'>
@@ -525,22 +525,22 @@ export function MarketingCampaigns() {
                       onClick={() => setFormData({ ...formData, type: 'email' })}
                       className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
                         formData.type === 'email'
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                          : 'border-gray-200 dark:border-gray-700'
+                          ? 'border-[var(--brand)] bg-[var(--brand-subtle)]'
+                          : 'border-[var(--border-default)]'
                       }`}
                     >
-                      <Mail className='h-5 w-5 text-purple-600' />
+                      <Mail className='h-5 w-5 text-[var(--brand)]' />
                       <span className='font-medium'>Email</span>
                     </button>
                     <button
                       onClick={() => setFormData({ ...formData, type: 'sms' })}
                       className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
                         formData.type === 'sms'
-                          ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
-                          : 'border-gray-200 dark:border-gray-700'
+                          ? 'border-[var(--status-info)] bg-[var(--status-info)]/10'
+                          : 'border-[var(--border-default)]'
                       }`}
                     >
-                      <MessageSquare className='h-5 w-5 text-cyan-600' />
+                      <MessageSquare className='h-5 w-5 text-[var(--status-info)]' />
                       <span className='font-medium'>SMS</span>
                     </button>
                   </div>
@@ -556,14 +556,14 @@ export function MarketingCampaigns() {
                 )}
 
                 <div>
-                  <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='mb-2 block text-sm font-medium text-[var(--text-primary)]'>
                     Contenuto
                   </label>
                   <textarea
                     value={formData.content}
                     onChange={e => setFormData({ ...formData, content: e.target.value })}
                     rows={8}
-                    className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700'
+                    className='w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]'
                     placeholder={
                       formData.type === 'email'
                         ? 'Scrivi il contenuto della email...'
@@ -571,7 +571,7 @@ export function MarketingCampaigns() {
                     }
                   />
                   {formData.type === 'sms' && formData.content && (
-                    <p className='mt-1 text-xs text-gray-500'>
+                    <p className='mt-1 text-xs text-[var(--text-secondary)]'>
                       {formData.content.length} caratteri /{' '}
                       {Math.ceil(formData.content.length / 160)} SMS
                     </p>
@@ -580,13 +580,13 @@ export function MarketingCampaigns() {
 
                 <div className='grid gap-4 sm:grid-cols-2'>
                   <div>
-                    <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='mb-2 block text-sm font-medium text-[var(--text-primary)]'>
                       Segmento Target
                     </label>
                     <select
                       value={formData.segment}
                       onChange={e => setFormData({ ...formData, segment: e.target.value })}
-                      className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700'
+                      className='w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)]'
                     >
                       {segments.map(s => (
                         <option key={s.value} value={s.value}>
@@ -596,14 +596,14 @@ export function MarketingCampaigns() {
                     </select>
                   </div>
                   <div>
-                    <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='mb-2 block text-sm font-medium text-[var(--text-primary)]'>
                       Programmazione
                     </label>
                     <input
                       type='datetime-local'
                       value={formData.scheduledFor}
                       onChange={e => setFormData({ ...formData, scheduledFor: e.target.value })}
-                      className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700'
+                      className='w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-primary)]'
                     />
                   </div>
                 </div>
@@ -611,7 +611,7 @@ export function MarketingCampaigns() {
 
               {/* Right Column - Templates */}
               <div className='space-y-4'>
-                <h4 className='font-medium text-gray-900 dark:text-white'>Modelli</h4>
+                <h4 className='font-medium text-[var(--text-primary)]'>Modelli</h4>
                 <div className='space-y-2'>
                   {templates.map(template => (
                     <button
@@ -619,36 +619,36 @@ export function MarketingCampaigns() {
                       onClick={() => handleApplyTemplate(template)}
                       className={`w-full rounded-lg border p-3 text-left transition-all ${
                         selectedTemplate?.id === template.id
-                          ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
+                          ? 'border-[var(--brand)] bg-[var(--brand-subtle)]'
+                          : 'border-[var(--border-default)] hover:border-[var(--border-strong)]'
                       }`}
                     >
                       <div className='flex items-center justify-between'>
-                        <span className='font-medium text-sm'>{template.name}</span>
+                        <span className='font-medium text-sm text-[var(--text-primary)]'>{template.name}</span>
                         <TypeBadge type={template.type} />
                       </div>
-                      <p className='mt-1 text-xs text-gray-500'>{template.category}</p>
+                      <p className='mt-1 text-xs text-[var(--text-secondary)]'>{template.category}</p>
                     </button>
                   ))}
                 </div>
 
                 {/* Preview */}
-                <div className='rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
-                  <h4 className='mb-3 font-medium text-gray-900 dark:text-white'>Anteprima</h4>
-                  <div className='rounded-lg bg-white p-4 shadow-sm dark:bg-gray-700'>
+                <div className='rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-4'>
+                  <h4 className='mb-3 font-medium text-[var(--text-primary)]'>Anteprima</h4>
+                  <div className='rounded-lg bg-[var(--surface-primary)] p-4 shadow-sm'>
                     {formData.type === 'email' ? (
                       <div className='space-y-2'>
-                        <p className='text-sm font-semibold text-gray-500'>Oggetto:</p>
-                        <p className='text-sm'>{formData.subject || '(Nessun oggetto)'}</p>
-                        <hr className='border-gray-200 dark:border-gray-600' />
-                        <p className='text-sm font-semibold text-gray-500'>Corpo:</p>
-                        <p className='text-sm whitespace-pre-wrap'>
+                        <p className='text-sm font-semibold text-[var(--text-secondary)]'>Oggetto:</p>
+                        <p className='text-sm text-[var(--text-primary)]'>{formData.subject || '(Nessun oggetto)'}</p>
+                        <hr className='border-[var(--border-default)]' />
+                        <p className='text-sm font-semibold text-[var(--text-secondary)]'>Corpo:</p>
+                        <p className='text-sm whitespace-pre-wrap text-[var(--text-primary)]'>
                           {formData.content || '(Nessun contenuto)'}
                         </p>
                       </div>
                     ) : (
-                      <div className='rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
-                        <p className='text-sm'>{formData.content || '(Nessun contenuto)'}</p>
+                      <div className='rounded-lg bg-[var(--surface-secondary)] p-3'>
+                        <p className='text-sm text-[var(--text-primary)]'>{formData.content || '(Nessun contenuto)'}</p>
                       </div>
                     )}
                   </div>
@@ -682,14 +682,14 @@ export function MarketingCampaigns() {
 
       {/* Stats Modal */}
       {viewingStats && viewingStats.stats && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <div className='w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 p-4'>
+          <div className='w-full max-w-2xl rounded-xl bg-[var(--surface-elevated)] p-6 shadow-xl'>
             <div className='mb-6 flex items-center justify-between'>
               <div>
-                <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
+                <h3 className='text-lg font-bold text-[var(--text-primary)]'>
                   Statistiche Campagna
                 </h3>
-                <p className='text-sm text-gray-500'>{viewingStats.name}</p>
+                <p className='text-sm text-[var(--text-secondary)]'>{viewingStats.name}</p>
               </div>
               <Button
                 variant='ghost'
@@ -702,49 +702,49 @@ export function MarketingCampaigns() {
             </div>
 
             <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-              <div className='rounded-lg bg-brand-50 p-4 text-center dark:bg-brand-900/20'>
-                <p className='text-2xl font-bold text-brand-600'>{viewingStats.stats.sent}</p>
-                <p className='text-sm text-gray-600'>Inviate</p>
+              <div className='rounded-lg bg-[var(--brand-subtle)] p-4 text-center'>
+                <p className='text-2xl font-bold text-[var(--brand)]'>{viewingStats.stats.sent}</p>
+                <p className='text-sm text-[var(--text-secondary)]'>Inviate</p>
               </div>
-              <div className='rounded-lg bg-green-50 p-4 text-center dark:bg-green-900/20'>
-                <p className='text-2xl font-bold text-green-600'>{viewingStats.stats.opened}</p>
-                <p className='text-sm text-gray-600'>Aperte</p>
+              <div className='rounded-lg bg-[var(--status-success)]/10 p-4 text-center'>
+                <p className='text-2xl font-bold text-[var(--status-success)]'>{viewingStats.stats.opened}</p>
+                <p className='text-sm text-[var(--text-secondary)]'>Aperte</p>
               </div>
-              <div className='rounded-lg bg-purple-50 p-4 text-center dark:bg-purple-900/20'>
-                <p className='text-2xl font-bold text-purple-600'>{viewingStats.stats.clicked}</p>
-                <p className='text-sm text-gray-600'>Cliccate</p>
+              <div className='rounded-lg bg-[var(--status-info)]/10 p-4 text-center'>
+                <p className='text-2xl font-bold text-[var(--status-info)]'>{viewingStats.stats.clicked}</p>
+                <p className='text-sm text-[var(--text-secondary)]'>Cliccate</p>
               </div>
-              <div className='rounded-lg bg-red-50 p-4 text-center dark:bg-red-900/20'>
-                <p className='text-2xl font-bold text-red-600'>{viewingStats.stats.bounced}</p>
-                <p className='text-sm text-gray-600'>Respinte</p>
+              <div className='rounded-lg bg-[var(--status-error)]/10 p-4 text-center'>
+                <p className='text-2xl font-bold text-[var(--status-error)]'>{viewingStats.stats.bounced}</p>
+                <p className='text-sm text-[var(--text-secondary)]'>Respinte</p>
               </div>
             </div>
 
             <div className='mt-6 grid gap-4 sm:grid-cols-2'>
-              <div className='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+              <div className='rounded-lg border border-[var(--border-default)] p-4'>
                 <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>Tasso Apertura</span>
-                  <span className='text-xl font-bold text-gray-900 dark:text-white'>
+                  <span className='text-[var(--text-secondary)]'>Tasso Apertura</span>
+                  <span className='text-xl font-bold text-[var(--text-primary)]'>
                     {viewingStats.stats.openRate}%
                   </span>
                 </div>
-                <div className='mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700'>
+                <div className='mt-2 h-2 rounded-full bg-[var(--border-default)]'>
                   <div
-                    className='h-full rounded-full bg-green-500'
+                    className='h-full rounded-full bg-[var(--status-success)]'
                     style={{ width: `${Math.min(viewingStats.stats.openRate, 100)}%` }}
                   />
                 </div>
               </div>
-              <div className='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+              <div className='rounded-lg border border-[var(--border-default)] p-4'>
                 <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>Tasso Click</span>
-                  <span className='text-xl font-bold text-gray-900 dark:text-white'>
+                  <span className='text-[var(--text-secondary)]'>Tasso Click</span>
+                  <span className='text-xl font-bold text-[var(--text-primary)]'>
                     {viewingStats.stats.clickRate}%
                   </span>
                 </div>
-                <div className='mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700'>
+                <div className='mt-2 h-2 rounded-full bg-[var(--border-default)]'>
                   <div
-                    className='h-full rounded-full bg-purple-500'
+                    className='h-full rounded-full bg-[var(--status-info)]'
                     style={{ width: `${Math.min(viewingStats.stats.clickRate, 100)}%` }}
                   />
                 </div>

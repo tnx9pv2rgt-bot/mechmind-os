@@ -59,24 +59,24 @@ function formatRelativeTime(iso: string): string {
 type StepState = 'completed' | 'current' | 'future' | 'error';
 
 const DOT_STYLES: Record<StepState, string> = {
-  completed: 'bg-green-500 text-white',
-  current: 'bg-blue-500 text-white ring-4 ring-blue-500/20 dark:ring-blue-500/30',
-  future: 'bg-gray-200 dark:bg-[var(--surface-active)] text-gray-400 dark:text-[var(--text-secondary)]',
-  error: 'bg-red-500 text-white',
+  completed: 'bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)]',
+  current: 'bg-[var(--status-info-subtle)]0 text-[var(--text-on-brand)] ring-4 ring-[var(--status-info)]/20 dark:ring-[var(--status-info)]/30',
+  future: 'bg-[var(--border-default)] dark:bg-[var(--surface-active)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]',
+  error: 'bg-[var(--status-error-subtle)]0 text-[var(--text-on-brand)]',
 };
 
 const LINE_STYLES: Record<StepState, string> = {
-  completed: 'bg-green-500',
-  current: 'bg-gray-200 dark:bg-[var(--surface-active)]',
-  future: 'bg-gray-200 dark:bg-[var(--surface-active)]',
-  error: 'bg-red-300 dark:bg-red-800',
+  completed: 'bg-[var(--status-success)]',
+  current: 'bg-[var(--border-default)] dark:bg-[var(--surface-active)]',
+  future: 'bg-[var(--border-default)] dark:bg-[var(--surface-active)]',
+  error: 'bg-[var(--status-error)]/30 dark:bg-[var(--status-error)]',
 };
 
 const TEXT_STYLES: Record<StepState, string> = {
-  completed: 'text-apple-dark dark:text-[var(--text-primary)]',
-  current: 'text-apple-dark dark:text-[var(--text-primary)] font-semibold',
-  future: 'text-gray-400 dark:text-[var(--text-secondary)]',
-  error: 'text-red-600 dark:text-red-400',
+  completed: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+  current: 'text-[var(--text-primary)] dark:text-[var(--text-primary)] font-semibold',
+  future: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]',
+  error: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
 };
 
 const TERMINAL_STATUSES = new Set(['CANCELLED', 'cancelled', 'NO_SHOW']);
@@ -164,7 +164,7 @@ export function StatusTimeline({
               <p className={cn('text-sm', TEXT_STYLES[state])}>{step.label}</p>
 
               {event && (
-                <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] mt-0.5'>
+                <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5'>
                   <span title={formatTimestamp(event.timestamp)}>
                     {formatRelativeTime(event.timestamp)}
                   </span>
@@ -172,14 +172,14 @@ export function StatusTimeline({
               )}
 
               {showActor && event?.actor && (
-                <p className='flex items-center gap-1 text-xs text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                <p className='flex items-center gap-1 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                   <User className='h-3 w-3' />
                   {event.actor}
                 </p>
               )}
 
               {showNotes && event?.note && (
-                <p className='text-xs text-apple-dark dark:text-[var(--text-primary)] mt-1 bg-gray-50 dark:bg-[var(--surface-hover)] rounded-md px-2 py-1 border-l-2 border-blue-400'>
+                <p className='text-xs text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-md px-2 py-1 border-l-2 border-[var(--status-info)]/40'>
                   {event.note}
                 </p>
               )}

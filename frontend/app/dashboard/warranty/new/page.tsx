@@ -112,7 +112,7 @@ export default function NewWarrantyPage() {
     }
   };
 
-  const selectClass = 'w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer';
+  const selectClass = 'w-full h-10 px-3 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer';
 
   return (
     <div>
@@ -136,8 +136,8 @@ export default function NewWarrantyPage() {
               className='min-w-[44px]'
             />
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuova Garanzia</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuova Garanzia</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Crea una nuova garanzia per un veicolo
               </p>
             </div>
@@ -156,19 +156,19 @@ export default function NewWarrantyPage() {
           <motion.div variants={cardVariants} className='mb-6'>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                  <Shield className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                  <Shield className='h-5 w-5 text-[var(--brand)]' />
                   Dettagli Garanzia
                 </h2>
               </AppleCardHeader>
               <AppleCardContent className='space-y-5'>
                 {/* Vehicle */}
                 <div>
-                  <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Veicolo *</label>
+                  <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Veicolo *</label>
                   {vehiclesLoading ? (
                     <div className='flex items-center gap-2 mt-1'>
-                      <Loader2 className='h-4 w-4 animate-spin text-apple-blue' />
-                      <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Caricamento veicoli...</span>
+                      <Loader2 className='h-4 w-4 animate-spin text-[var(--brand)]' />
+                      <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Caricamento veicoli...</span>
                     </div>
                   ) : (
                     <select
@@ -184,14 +184,14 @@ export default function NewWarrantyPage() {
                     </select>
                   )}
                   {errors.vehicleId && (
-                    <p className='text-footnote text-apple-red mt-1'>{errors.vehicleId.message}</p>
+                    <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.vehicleId.message}</p>
                   )}
                 </div>
 
                 {/* Type + Provider */}
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Tipo Garanzia *</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Tipo Garanzia *</label>
                     <select
                       {...register('type')}
                       className={selectClass}
@@ -202,13 +202,13 @@ export default function NewWarrantyPage() {
                         </option>
                       ))}
                     </select>
-                    {errors.type && <p className='text-footnote text-apple-red mt-1'>{errors.type.message}</p>}
+                    {errors.type && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.type.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Fornitore *</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Fornitore *</label>
                     <Input {...register('provider')} />
                     {errors.provider && (
-                      <p className='text-footnote text-apple-red mt-1'>{errors.provider.message}</p>
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.provider.message}</p>
                     )}
                   </div>
                 </div>
@@ -216,17 +216,17 @@ export default function NewWarrantyPage() {
                 {/* Dates */}
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Data Inizio *</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Data Inizio *</label>
                     <Input type='date' {...register('startDate')} />
                     {errors.startDate && (
-                      <p className='text-footnote text-apple-red mt-1'>{errors.startDate.message}</p>
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.startDate.message}</p>
                     )}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Data Fine *</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Data Fine *</label>
                     <Input type='date' {...register('expirationDate')} />
                     {errors.expirationDate && (
-                      <p className='text-footnote text-apple-red mt-1'>{errors.expirationDate.message}</p>
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.expirationDate.message}</p>
                     )}
                   </div>
                 </div>
@@ -234,31 +234,31 @@ export default function NewWarrantyPage() {
                 {/* Coverage */}
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Copertura Massima (EUR) *</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Copertura Massima (EUR) *</label>
                     <Input type='number' step='0.01' min={0} {...register('maxCoverage')} />
                     {errors.maxCoverage && (
-                      <p className='text-footnote text-apple-red mt-1'>{errors.maxCoverage.message}</p>
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.maxCoverage.message}</p>
                     )}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Franchigia (EUR)</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Franchigia (EUR)</label>
                     <Input type='number' step='0.01' min={0} {...register('deductible')} />
                     {errors.deductible && (
-                      <p className='text-footnote text-apple-red mt-1'>{errors.deductible.message}</p>
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.deductible.message}</p>
                     )}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Km Copertura</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Km Copertura</label>
                     <Input type='number' min={0} {...register('coverageKm')} placeholder='Illimitata' />
                   </div>
                 </div>
 
                 {/* Current Km */}
                 <div>
-                  <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>Km Attuali *</label>
+                  <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>Km Attuali *</label>
                   <Input type='number' min={0} {...register('currentKm')} />
                   {errors.currentKm && (
-                    <p className='text-footnote text-apple-red mt-1'>{errors.currentKm.message}</p>
+                    <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.currentKm.message}</p>
                   )}
                 </div>
               </AppleCardContent>
@@ -269,7 +269,7 @@ export default function NewWarrantyPage() {
           <motion.div variants={cardVariants} className='mb-6'>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Termini e Condizioni
                 </h2>
               </AppleCardHeader>
@@ -278,7 +278,7 @@ export default function NewWarrantyPage() {
                   {...register('terms')}
                   placeholder='Descrivi i termini della garanzia...'
                   rows={4}
-                  className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
+                  className='w-full rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                 />
               </AppleCardContent>
             </AppleCard>
@@ -288,7 +288,7 @@ export default function NewWarrantyPage() {
           <motion.div variants={cardVariants} className='mb-6'>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Descrizione Copertura
                 </h2>
               </AppleCardHeader>
@@ -297,7 +297,7 @@ export default function NewWarrantyPage() {
                   {...register('description')}
                   placeholder='Descrivi cosa copre la garanzia...'
                   rows={3}
-                  className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
+                  className='w-full rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                 />
               </AppleCardContent>
             </AppleCard>

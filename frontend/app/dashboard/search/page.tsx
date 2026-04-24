@@ -42,12 +42,12 @@ interface SearchResponse {
 }
 
 const TYPE_CONFIG: Record<string, { icon: typeof Users; label: string; color: string }> = {
-  customer: { icon: Users, label: 'Clienti', color: 'bg-apple-blue/10 text-apple-blue dark:bg-blue-900/30' },
-  vehicle: { icon: Car, label: 'Veicoli', color: 'bg-apple-green/10 text-apple-green dark:bg-green-900/30' },
-  'work-order': { icon: Wrench, label: 'Ordini di Lavoro', color: 'bg-apple-orange/10 text-apple-orange dark:bg-orange-900/30' },
-  invoice: { icon: Receipt, label: 'Fatture', color: 'bg-apple-purple/10 text-apple-purple dark:bg-purple-900/30' },
-  booking: { icon: CalendarDays, label: 'Prenotazioni', color: 'bg-apple-blue/10 text-apple-blue dark:bg-teal-900/30' },
-  estimate: { icon: FileText, label: 'Preventivi', color: 'bg-apple-orange/10 text-apple-orange dark:bg-yellow-900/30' },
+  customer: { icon: Users, label: 'Clienti', color: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--status-info)]/40/30' },
+  vehicle: { icon: Car, label: 'Veicoli', color: 'bg-[var(--status-success)]/10 text-[var(--status-success)] dark:bg-[var(--status-success)]/40/30' },
+  'work-order': { icon: Wrench, label: 'Ordini di Lavoro', color: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30' },
+  invoice: { icon: Receipt, label: 'Fatture', color: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand)]/40/30' },
+  booking: { icon: CalendarDays, label: 'Prenotazioni', color: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--status-success)]/30/30' },
+  estimate: { icon: FileText, label: 'Preventivi', color: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30' },
 };
 
 const fetcher = (url: string): Promise<SearchResponse> =>
@@ -108,8 +108,8 @@ export default function SearchPage() {
     <div className='min-h-screen'>
       <header>
         <div className='px-4 sm:px-8 py-5'>
-          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ricerca</h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+          <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ricerca</h1>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
             Cerca in tutto il sistema
           </p>
         </div>
@@ -118,18 +118,18 @@ export default function SearchPage() {
       <div className='p-4 sm:p-8 max-w-4xl mx-auto space-y-6'>
         {/* Search Input */}
         <div className='relative'>
-          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray' />
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
           <Input
             type='search'
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder='Cerca clienti, veicoli, ordini, fatture...'
-            className='pl-12 h-14 rounded-2xl text-title-3 border-apple-border/50 dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)]'
+            className='pl-12 h-14 rounded-2xl text-title-3 border-[var(--border-default)]/50 dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)]'
             aria-label='Ricerca globale'
             autoFocus
           />
           {isLoading && (
-            <Loader2 className='absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-apple-blue' />
+            <Loader2 className='absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-[var(--brand)]' />
           )}
         </div>
 
@@ -137,8 +137,8 @@ export default function SearchPage() {
         {error && debouncedQuery.length >= 2 && (
           <AppleCard>
             <AppleCardContent className='text-center py-8'>
-              <AlertTriangle className='w-10 h-10 text-apple-red/60 mx-auto mb-3' />
-              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+              <AlertTriangle className='w-10 h-10 text-[var(--status-error)]/60 mx-auto mb-3' />
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Errore durante la ricerca. Riprova.
               </p>
             </AppleCardContent>
@@ -151,7 +151,7 @@ export default function SearchPage() {
             {results.length > 0 ? (
               <div className='space-y-6'>
                 {Object.entries(groupedResults).map(([type, items]) => {
-                  const config = TYPE_CONFIG[type] || { icon: FileText, label: type, color: 'bg-apple-light-gray text-apple-gray' };
+                  const config = TYPE_CONFIG[type] || { icon: FileText, label: type, color: 'bg-[var(--surface-secondary)] text-[var(--text-tertiary)]' };
                   const Icon = config.icon;
 
                   return (
@@ -160,7 +160,7 @@ export default function SearchPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                     >
-                      <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3 flex items-center gap-2'>
+                      <h3 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3 flex items-center gap-2'>
                         <Icon className='w-5 h-5' />
                         {config.label}
                         <Badge variant='outline' className='ml-2'>{items.length}</Badge>
@@ -174,22 +174,22 @@ export default function SearchPage() {
                               animate={{ opacity: 1 }}
                               transition={{ delay: index * 0.03 }}
                               onClick={() => router.push(result.url)}
-                              className='w-full flex items-center justify-between p-4 hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)] transition-colors text-left border-b border-apple-border/10 dark:border-[var(--border-default)]/30 last:border-b-0 min-h-[44px]'
+                              className='w-full flex items-center justify-between p-4 hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)] transition-colors text-left border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/30 last:border-b-0 min-h-[44px]'
                             >
                               <div className='flex items-center gap-3 min-w-0'>
                                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${config.color}`}>
                                   <Icon className='w-4 h-4' />
                                 </div>
                                 <div className='min-w-0'>
-                                  <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] truncate'>
+                                  <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate'>
                                     {result.title}
                                   </p>
-                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] truncate'>
+                                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] truncate'>
                                     {result.subtitle}
                                   </p>
                                 </div>
                               </div>
-                              <ArrowRight className='w-4 h-4 text-apple-gray flex-shrink-0 ml-2' />
+                              <ArrowRight className='w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0 ml-2' />
                             </motion.button>
                           ))}
                         </AppleCardContent>
@@ -201,11 +201,11 @@ export default function SearchPage() {
             ) : (
               <AppleCard>
                 <AppleCardContent className='text-center py-12'>
-                  <Search className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+                  <Search className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                  <h3 className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                     Nessun risultato per &ldquo;{debouncedQuery}&rdquo;
                   </h3>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Prova con termini di ricerca diversi.
                   </p>
                 </AppleCardContent>
@@ -218,11 +218,11 @@ export default function SearchPage() {
         {debouncedQuery.length < 2 && !isLoading && (
           <AppleCard>
             <AppleCardContent className='text-center py-12'>
-              <Search className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-              <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+              <Search className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+              <h3 className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                 Inizia a digitare per cercare
               </h3>
-              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Cerca clienti, veicoli, ordini di lavoro, fatture e prenotazioni.
               </p>
             </AppleCardContent>

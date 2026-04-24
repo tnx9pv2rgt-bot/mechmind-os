@@ -154,12 +154,12 @@ function PaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
-      <div className='rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800'>
+      <div className='rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-4 dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]'>
         <CardElement options={cardElementOptions} />
       </div>
 
       {error && (
-        <div className='flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400'>
+        <div className='flex items-center gap-2 rounded-lg bg-[var(--status-error-subtle)] p-3 text-sm text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]'>
           <AlertCircle className='h-4 w-4' />
           {error}
         </div>
@@ -184,7 +184,7 @@ function PaymentForm({
         </Button>
       </div>
 
-      <div className='flex items-center justify-center gap-2 text-xs text-gray-500'>
+      <div className='flex items-center justify-center gap-2 text-xs text-[var(--text-tertiary)]'>
         <Shield className='h-3 w-3' />
         Pagamento sicuro con Stripe
       </div>
@@ -204,13 +204,13 @@ function PaymentSuccess({
 }) {
   return (
     <div className='text-center py-8'>
-      <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30'>
-        <CheckCircle2 className='h-8 w-8 text-green-600 dark:text-green-400' />
+      <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30'>
+        <CheckCircle2 className='h-8 w-8 text-[var(--status-success)] dark:text-[var(--status-success)]' />
       </div>
-      <h3 className='mt-4 text-lg font-semibold text-gray-900 dark:text-white'>
+      <h3 className='mt-4 text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
         Pagamento Completato!
       </h3>
-      <p className='mt-2 text-gray-600 dark:text-gray-400'>Hai pagato {formatCurrency(amount)}</p>
+      <p className='mt-2 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Hai pagato {formatCurrency(amount)}</p>
       <div className='mt-6 flex justify-center gap-3'>
         <Button variant='outline' onClick={onClose}>
           <ArrowLeft className='mr-2 h-4 w-4' />
@@ -230,22 +230,22 @@ function PaymentStatusBadge({ status }: { status: PaymentHistory['status'] }) {
   const config = {
     succeeded: {
       label: 'Completato',
-      className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      className: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success)]/40/30 dark:text-[var(--status-success)]',
       icon: CheckCircle2,
     },
     failed: {
       label: 'Fallito',
-      className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+      className: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error)]/40/30 dark:text-[var(--status-error)]',
       icon: AlertCircle,
     },
     refunded: {
       label: 'Rimborsato',
-      className: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+      className: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] dark:bg-[var(--border-default)] dark:text-[var(--text-primary)]',
       icon: Undo2,
     },
     partially_refunded: {
       label: 'Rimborso Parziale',
-      className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+      className: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]',
       icon: Undo2,
     },
   };
@@ -291,7 +291,7 @@ function RefundDialog({
           <DialogTitle>Effettua Rimborso</DialogTitle>
         </DialogHeader>
         <div className='space-y-4 py-4'>
-          <p className='text-sm text-gray-600 dark:text-gray-400'>
+          <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
             Importo originale: {formatCurrency(payment.amount)}
           </p>
           <div className='space-y-2'>
@@ -299,7 +299,7 @@ function RefundDialog({
               Importo da rimborsare
             </label>
             <div className='relative'>
-              <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500'>€</span>
+              <span className='absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]'>€</span>
               <Input
                 id='refundAmount'
                 type='number'
@@ -428,10 +428,10 @@ export function StripePayment({
               </CardDescription>
             </div>
             <div className='text-right'>
-              <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+              <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formatCurrency(invoicePayment.amount)}
               </p>
-              <p className='text-xs text-gray-500'>Totale da pagare</p>
+              <p className='text-xs text-[var(--text-tertiary)]'>Totale da pagare</p>
             </div>
           </div>
         </CardHeader>
@@ -439,30 +439,30 @@ export function StripePayment({
           {!showPaymentForm ? (
             <div className='space-y-4'>
               {invoicePayment.status === 'paid' ? (
-                <div className='flex items-center gap-3 rounded-lg bg-green-50 p-4 dark:bg-green-900/20'>
-                  <CheckCircle2 className='h-5 w-5 text-green-600 dark:text-green-400' />
+                <div className='flex items-center gap-3 rounded-lg bg-[var(--status-success-subtle)] p-4 dark:bg-[var(--status-success-subtle)]'>
+                  <CheckCircle2 className='h-5 w-5 text-[var(--status-success)] dark:text-[var(--status-success)]' />
                   <div>
-                    <p className='font-medium text-green-800 dark:text-green-300'>
+                    <p className='font-medium text-[var(--status-success)] dark:text-[var(--status-success)]'>
                       Fattura già pagata
                     </p>
-                    <p className='text-sm text-green-600 dark:text-green-400'>
+                    <p className='text-sm text-[var(--status-success)] dark:text-[var(--status-success)]'>
                       Pagata il {invoicePayment.paidAt && formatDateTime(invoicePayment.paidAt)}
                     </p>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                  <div className='rounded-lg border border-[var(--border-default)] p-4 dark:border-[var(--border-default)]'>
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-3'>
-                        <div className='rounded-full bg-brand-100 p-2 dark:bg-brand-900/30'>
-                          <CreditCard className='h-5 w-5 text-brand-600' />
+                        <div className='rounded-full bg-[var(--brand)]/10 p-2 dark:bg-[var(--brand)]/40/30'>
+                          <CreditCard className='h-5 w-5 text-[var(--brand)]' />
                         </div>
                         <div>
-                          <p className='font-medium text-gray-900 dark:text-white'>
+                          <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             Carta di credito/debito
                           </p>
-                          <p className='text-sm text-gray-500'>
+                          <p className='text-sm text-[var(--text-tertiary)]'>
                             Visa, Mastercard, American Express
                           </p>
                         </div>
@@ -471,7 +471,7 @@ export function StripePayment({
                     </div>
                   </div>
 
-                  <div className='flex items-center justify-center gap-2 text-xs text-gray-500'>
+                  <div className='flex items-center justify-center gap-2 text-xs text-[var(--text-tertiary)]'>
                     <Lock className='h-3 w-3' />
                     Pagamento sicuro con crittografia SSL
                   </div>
@@ -505,38 +505,38 @@ export function StripePayment({
         <CardContent>
           {paymentHistory.length === 0 ? (
             <div className='py-8 text-center'>
-              <Clock className='mx-auto h-10 w-10 text-gray-300' />
-              <p className='mt-2 text-sm text-gray-500'>Nessun pagamento effettuato</p>
+              <Clock className='mx-auto h-10 w-10 text-[var(--text-tertiary)]' />
+              <p className='mt-2 text-sm text-[var(--text-tertiary)]'>Nessun pagamento effettuato</p>
             </div>
           ) : (
             <div className='space-y-3'>
               {paymentHistory.map(payment => (
                 <div
                   key={payment.id}
-                  className='flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700'
+                  className='flex items-center justify-between rounded-lg border border-[var(--border-default)] p-4 dark:border-[var(--border-default)]'
                 >
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-full bg-gray-100 p-2 dark:bg-gray-800'>
+                    <div className='rounded-full bg-[var(--surface-secondary)] p-2 dark:bg-[var(--surface-primary)]'>
                       {getCardIcon(payment.paymentMethod.brand)}
                     </div>
                     <div>
                       <div className='flex items-center gap-2'>
-                        <span className='font-medium capitalize text-gray-900 dark:text-white'>
+                        <span className='font-medium capitalize text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {payment.paymentMethod.brand}
                         </span>
-                        <span className='text-sm text-gray-500'>
+                        <span className='text-sm text-[var(--text-tertiary)]'>
                           •••• {payment.paymentMethod.last4}
                         </span>
                       </div>
-                      <p className='text-xs text-gray-500'>
+                      <p className='text-xs text-[var(--text-tertiary)]'>
                         Scadenza {payment.paymentMethod.expMonth}/{payment.paymentMethod.expYear}
                       </p>
-                      <p className='text-xs text-gray-400'>{formatDateTime(payment.createdAt)}</p>
+                      <p className='text-xs text-[var(--text-tertiary)]'>{formatDateTime(payment.createdAt)}</p>
                     </div>
                   </div>
 
                   <div className='text-right'>
-                    <p className='font-semibold text-gray-900 dark:text-white'>
+                    <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(payment.amount)}
                     </p>
                     <div className='flex items-center gap-2'>
@@ -549,7 +549,7 @@ export function StripePayment({
                       )}
                     </div>
                     {payment.refundedAt && (
-                      <p className='text-xs text-gray-500'>
+                      <p className='text-xs text-[var(--text-tertiary)]'>
                         Rimborsato il {formatDateTime(payment.refundedAt)}
                         {payment.refundAmount && payment.refundAmount < payment.amount && (
                           <span> ({formatCurrency(payment.refundAmount)})</span>

@@ -72,15 +72,15 @@ export function BulkActionsBar({
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(95vw,700px)]"
         >
-          <div className="bg-white/95 dark:bg-[var(--surface-elevated)]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-apple-border/30 dark:border-[var(--border-default)] px-5 py-4">
+          <div className="bg-[var(--surface-secondary)]/95 dark:bg-[var(--surface-elevated)]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] px-5 py-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                <span className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   {count} {entityName} selezionat{count === 1 ? 'o' : 'i'}
                 </span>
                 <button
                   onClick={onDeselectAll}
-                  className="text-xs text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors underline"
+                  className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors underline"
                 >
                   Deseleziona tutto
                 </button>
@@ -97,7 +97,7 @@ export function BulkActionsBar({
                     onClick={() => handleAction(action)}
                     className={
                       action.variant === 'danger'
-                        ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                        ? 'text-[var(--status-error)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)]'
                         : ''
                     }
                   >
@@ -106,7 +106,7 @@ export function BulkActionsBar({
                 ))}
                 <button
                   onClick={onDeselectAll}
-                  className="p-2 rounded-xl text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-[var(--surface-active)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-2 rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label="Chiudi barra azioni"
                 >
                   <X className="h-4 w-4" />

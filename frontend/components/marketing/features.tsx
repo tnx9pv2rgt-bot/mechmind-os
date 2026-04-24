@@ -62,7 +62,7 @@ const pillars: Pillar[] = [
   {
     id: 'gestione',
     icon: Wrench,
-    iconGradient: 'from-blue-500 to-cyan-400',
+    iconGradient: 'from-[var(--status-info)] to-[var(--status-info)]',
     title: 'Gestisci ogni lavoro con sicurezza',
     description:
       'Ordini di lavoro digitali, ispezioni con foto, preventivi automatici e gestione ricambi. Tutto in tempo reale, da qualsiasi dispositivo.',
@@ -73,24 +73,24 @@ const pillars: Pillar[] = [
       { label: 'Gestione ricambi e inventario integrato', icon: Package },
     ],
     mockup: {
-      gradient: 'from-blue-600/90 to-cyan-500/90',
+      gradient: 'from-[var(--status-info)]/90 to-[var(--status-info)]/90',
       rows: [
-        { type: 'header', width: '60%', color: 'bg-white/30' },
-        { type: 'badge', width: '25%', color: 'bg-emerald-400/60' },
-        { type: 'line', width: '90%', color: 'bg-white/15' },
-        { type: 'line', width: '75%', color: 'bg-white/15' },
-        { type: 'progress', width: '70%', color: 'bg-cyan-300/50' },
-        { type: 'bar', width: '100%', color: 'bg-white/10' },
-        { type: 'avatar-line', width: '55%', color: 'bg-white/20' },
+        { type: 'header', width: '60%', color: 'bg-[var(--surface-secondary)]/30' },
+        { type: 'badge', width: '25%', color: 'bg-[var(--status-success)]/60' },
+        { type: 'line', width: '90%', color: 'bg-[var(--surface-secondary)]/15' },
+        { type: 'line', width: '75%', color: 'bg-[var(--surface-secondary)]/15' },
+        { type: 'progress', width: '70%', color: 'bg-[var(--status-info)]/50' },
+        { type: 'bar', width: '100%', color: 'bg-[var(--surface-secondary)]/10' },
+        { type: 'avatar-line', width: '55%', color: 'bg-[var(--surface-secondary)]/20' },
       ],
     },
     reversed: false,
-    bg: 'bg-white dark:bg-neutral-950',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]',
   },
   {
     id: 'fatturazione',
     icon: CreditCard,
-    iconGradient: 'from-violet-500 to-purple-400',
+    iconGradient: 'from-[var(--brand)] to-[var(--brand)]',
     title: 'Incassa più velocemente',
     description:
       'Fatturazione elettronica, pagamenti integrati, promemoria automatici. Proteggi il tuo fatturato.',
@@ -101,24 +101,24 @@ const pillars: Pillar[] = [
       { label: 'Report finanziari in tempo reale', icon: BarChart3 },
     ],
     mockup: {
-      gradient: 'from-violet-600/90 to-purple-500/90',
+      gradient: 'from-[var(--brand)]/90 to-[var(--brand)]/90',
       rows: [
-        { type: 'header', width: '50%', color: 'bg-white/30' },
-        { type: 'bar', width: '100%', color: 'bg-white/10' },
-        { type: 'line', width: '85%', color: 'bg-white/15' },
-        { type: 'badge', width: '30%', color: 'bg-violet-300/50' },
-        { type: 'progress', width: '60%', color: 'bg-purple-300/50' },
-        { type: 'line', width: '70%', color: 'bg-white/15' },
-        { type: 'avatar-line', width: '45%', color: 'bg-white/20' },
+        { type: 'header', width: '50%', color: 'bg-[var(--surface-secondary)]/30' },
+        { type: 'bar', width: '100%', color: 'bg-[var(--surface-secondary)]/10' },
+        { type: 'line', width: '85%', color: 'bg-[var(--surface-secondary)]/15' },
+        { type: 'badge', width: '30%', color: 'bg-[var(--brand)]/50' },
+        { type: 'progress', width: '60%', color: 'bg-[var(--brand)]/50' },
+        { type: 'line', width: '70%', color: 'bg-[var(--surface-secondary)]/15' },
+        { type: 'avatar-line', width: '45%', color: 'bg-[var(--surface-secondary)]/20' },
       ],
     },
     reversed: true,
-    bg: 'bg-neutral-50 dark:bg-neutral-900/50',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/50',
   },
   {
     id: 'clienti',
     icon: Users,
-    iconGradient: 'from-amber-500 to-orange-400',
+    iconGradient: 'from-[var(--status-warning)] to-[var(--status-warning)]',
     title: 'Trasforma il servizio in clienti fedeli',
     description:
       'CRM integrato, promemoria manutenzione, campagne marketing, recensioni Google. Fai tornare i clienti.',
@@ -129,19 +129,19 @@ const pillars: Pillar[] = [
       { label: 'Portale clienti self-service', icon: Globe },
     ],
     mockup: {
-      gradient: 'from-amber-500/90 to-orange-500/90',
+      gradient: 'from-[var(--status-warning)]/90 to-[var(--status-warning)]/50/90',
       rows: [
-        { type: 'header', width: '55%', color: 'bg-white/30' },
-        { type: 'avatar-line', width: '65%', color: 'bg-white/20' },
-        { type: 'avatar-line', width: '50%', color: 'bg-white/20' },
-        { type: 'badge', width: '20%', color: 'bg-amber-300/50' },
-        { type: 'line', width: '80%', color: 'bg-white/15' },
-        { type: 'progress', width: '85%', color: 'bg-orange-300/50' },
-        { type: 'bar', width: '100%', color: 'bg-white/10' },
+        { type: 'header', width: '55%', color: 'bg-[var(--surface-secondary)]/30' },
+        { type: 'avatar-line', width: '65%', color: 'bg-[var(--surface-secondary)]/20' },
+        { type: 'avatar-line', width: '50%', color: 'bg-[var(--surface-secondary)]/20' },
+        { type: 'badge', width: '20%', color: 'bg-[var(--status-warning)]/50' },
+        { type: 'line', width: '80%', color: 'bg-[var(--surface-secondary)]/15' },
+        { type: 'progress', width: '85%', color: 'bg-[var(--status-warning)]/50' },
+        { type: 'bar', width: '100%', color: 'bg-[var(--surface-secondary)]/10' },
       ],
     },
     reversed: false,
-    bg: 'bg-white dark:bg-neutral-950',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]',
   },
 ];
 
@@ -196,14 +196,14 @@ function MockupCardComponent({ mockup }: { mockup: MockupCard }): ReactNode {
       )}
     >
       {/* Gloss effect */}
-      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-white/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-[var(--surface-secondary)]/10 to-transparent" />
 
       {/* Fake window chrome */}
       <div className="mb-5 flex items-center gap-2">
-        <span className="h-3 w-3 rounded-full bg-white/30" />
-        <span className="h-3 w-3 rounded-full bg-white/20" />
-        <span className="h-3 w-3 rounded-full bg-white/20" />
-        <div className="ml-3 h-3 w-24 rounded-full bg-white/10" />
+        <span className="h-3 w-3 rounded-full bg-[var(--surface-secondary)]/30" />
+        <span className="h-3 w-3 rounded-full bg-[var(--surface-secondary)]/20" />
+        <span className="h-3 w-3 rounded-full bg-[var(--surface-secondary)]/20" />
+        <div className="ml-3 h-3 w-24 rounded-full bg-[var(--surface-secondary)]/10" />
       </div>
 
       {/* Content rows */}
@@ -248,7 +248,7 @@ function MockupRow({ row }: { row: MockupRow }): ReactNode {
       );
     case 'progress':
       return (
-        <div className="h-2 w-full rounded-full bg-white/10">
+        <div className="h-2 w-full rounded-full bg-[var(--surface-secondary)]/10">
           <div
             className={cn('h-2 rounded-full', row.color)}
             style={{ width: row.width }}
@@ -258,7 +258,7 @@ function MockupRow({ row }: { row: MockupRow }): ReactNode {
     case 'avatar-line':
       return (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 shrink-0 rounded-full bg-white/25" />
+          <div className="h-8 w-8 shrink-0 rounded-full bg-[var(--surface-secondary)]/25" />
           <div
             className={cn('h-3 rounded', row.color)}
             style={{ width: row.width }}
@@ -288,16 +288,16 @@ function PillarSection({ pillar }: { pillar: Pillar }): ReactNode {
           pillar.iconGradient,
         )}
       >
-        <Icon className="h-7 w-7 text-white" strokeWidth={1.8} />
+        <Icon className="h-7 w-7 text-[var(--text-on-brand)]" strokeWidth={1.8} />
       </div>
 
       {/* Title */}
-      <h3 className="mb-4 text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
+      <h3 className="mb-4 text-3xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-on-brand)] sm:text-4xl">
         {pillar.title}
       </h3>
 
       {/* Description */}
-      <p className="mb-8 max-w-lg text-lg leading-relaxed text-neutral-600 dark:text-neutral-400">
+      <p className="mb-8 max-w-lg text-lg leading-relaxed text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
         {pillar.description}
       </p>
 
@@ -322,10 +322,10 @@ function PillarSection({ pillar }: { pillar: Pillar }): ReactNode {
                   pillar.iconGradient,
                 )}
               >
-                <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                <Check className="h-3.5 w-3.5 text-[var(--text-on-brand)]" strokeWidth={3} />
               </span>
-              <span className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-300">
-                <BulletIcon className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" strokeWidth={1.8} />
+              <span className="flex items-center gap-2 text-base text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
+                <BulletIcon className="h-4 w-4 shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-tertiary)]" strokeWidth={1.8} />
                 {bullet.label}
               </span>
             </motion.li>
@@ -387,7 +387,7 @@ function SectionHeader(): ReactNode {
   return (
     <div
       ref={ref}
-      className="bg-white pb-4 pt-20 dark:bg-neutral-950 lg:pb-8 lg:pt-32"
+      className="bg-[var(--surface-secondary)] pb-4 pt-20 dark:bg-[var(--surface-primary)] lg:pb-8 lg:pt-32"
     >
       <motion.div
         className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8"
@@ -395,13 +395,13 @@ function SectionHeader(): ReactNode {
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 32 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+        <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-[var(--status-info)] dark:text-[var(--status-info)]">
           Funzionalit&agrave;
         </p>
-        <h2 className="mb-6 text-4xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-5xl lg:text-6xl">
+        <h2 className="mb-6 text-4xl font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-on-brand)] sm:text-5xl lg:text-6xl">
           Tutto ci&ograve; che serve alla tua officina
         </h2>
-        <p className="mx-auto max-w-2xl text-lg leading-relaxed text-neutral-600 dark:text-neutral-400 sm:text-xl">
+        <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] sm:text-xl">
           Dalla prenotazione alla fattura, in un&rsquo;unica piattaforma cloud.
         </p>
       </motion.div>

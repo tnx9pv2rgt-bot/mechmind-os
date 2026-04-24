@@ -170,15 +170,15 @@ export function ClaimForm({
           <div className='bg-[var(--surface-active)] border border-[var(--border-strong)] rounded-2xl p-4 space-y-2'>
             <div className='flex items-center justify-between text-sm'>
               <span className='text-[var(--text-tertiary)]'>Costo Stimato:</span>
-              <span className='font-medium text-white'>€{estimatedCost.toFixed(2)}</span>
+              <span className='font-medium text-[var(--text-on-brand)]'>€{estimatedCost.toFixed(2)}</span>
             </div>
             <div className='flex items-center justify-between text-sm'>
               <span className='text-[var(--text-tertiary)]'>Franchigia:</span>
-              <span className='font-medium text-amber-400'>-€{deductible.toFixed(2)}</span>
+              <span className='font-medium text-[var(--status-warning)]'>-€{deductible.toFixed(2)}</span>
             </div>
             <div className='border-t border-[var(--border-strong)] pt-2 flex items-center justify-between'>
-              <span className='font-medium text-white'>Importo Netto:</span>
-              <span className='font-semibold text-green-400'>€{netAmount.toFixed(2)}</span>
+              <span className='font-medium text-[var(--text-on-brand)]'>Importo Netto:</span>
+              <span className='font-semibold text-[var(--status-success)]'>€{netAmount.toFixed(2)}</span>
             </div>
           </div>
         )}
@@ -214,7 +214,7 @@ export function ClaimForm({
                       size='sm'
                       disabled={isUploading}
                       onClick={() => document.getElementById('evidence-upload')?.click()}
-                      className='rounded-full border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'
+                      className='rounded-full border-[var(--border-strong)] bg-transparent text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
                     >
                       {isUploading ? 'Caricamento...' : 'Seleziona File'}
                     </Button>
@@ -223,7 +223,7 @@ export function ClaimForm({
                   {/* Uploaded Files */}
                   {uploadedFiles.length > 0 && (
                     <div className='space-y-2'>
-                      <p className='text-sm font-medium text-white'>
+                      <p className='text-sm font-medium text-[var(--text-on-brand)]'>
                         {uploadedFiles.length} file caricati
                       </p>
                       <div className='grid grid-cols-2 gap-2'>
@@ -240,7 +240,7 @@ export function ClaimForm({
                             <button
                               type='button'
                               onClick={() => removeFile(index)}
-                              className='absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity'
+                              className='absolute top-1 right-1 p-1 bg-[var(--status-error-subtle)]0 text-[var(--text-on-brand)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity'
                             >
                               <X className='h-3 w-3' />
                             </button>
@@ -262,11 +262,11 @@ export function ClaimForm({
         {/* Actions */}
         <div className='flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-strong)]'>
           {onCancel && (
-            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'>
+            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[var(--border-strong)] bg-transparent text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'>
               Annulla
             </Button>
           )}
-          <Button type='submit' disabled={isLoading || isUploading} className='rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'>
+          <Button type='submit' disabled={isLoading || isUploading} className='rounded-full h-[52px] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-active)]'>
             <Send className='h-4 w-4 mr-2' />
             {isLoading ? 'Invio...' : 'Invia Reclamo'}
           </Button>

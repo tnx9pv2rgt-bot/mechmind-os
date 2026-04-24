@@ -265,10 +265,10 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
   // Calculate stock status
   const getStockStatus = (quantity: number, minLevel: number) => {
     if (quantity <= minLevel * 0.5)
-      return { label: 'Critico', color: 'bg-status-urgent', textColor: 'text-status-urgent' };
+      return { label: 'Critico', color: 'bg-[var(--status-error)]', textColor: 'text-[var(--status-error)]' };
     if (quantity <= minLevel)
-      return { label: 'Basso', color: 'bg-status-warning', textColor: 'text-status-warning' };
-    return { label: 'OK', color: 'bg-status-ready', textColor: 'text-status-ready' };
+      return { label: 'Basso', color: 'bg-[var(--status-warning)]', textColor: 'text-[var(--status-warning)]' };
+    return { label: 'OK', color: 'bg-[var(--status-success)]', textColor: 'text-[var(--status-success)]' };
   };
 
   // Calculate totals
@@ -292,15 +292,15 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
   const getTransferStatusColor = (status: TransferRequest['status']) => {
     switch (status) {
       case 'pending':
-        return 'bg-status-pending text-black';
+        return 'bg-status-pending text-[var(--text-primary)]';
       case 'approved':
-        return 'bg-status-info text-white';
+        return 'bg-[var(--status-info)] text-[var(--text-on-brand)]';
       case 'shipped':
-        return 'bg-brand-600 text-white';
+        return 'bg-brand-600 text-[var(--text-on-brand)]';
       case 'received':
-        return 'bg-status-ready text-white';
+        return 'bg-[var(--status-success)] text-[var(--text-on-brand)]';
       case 'cancelled':
-        return 'bg-status-urgent text-white';
+        return 'bg-[var(--status-error)] text-[var(--text-on-brand)]';
     }
   };
 
@@ -337,38 +337,38 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
     <div className='space-y-6'>
       {/* Stats Overview */}
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        <div className='workshop-card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20'>
+        <div className='workshop-card bg-gradient-to-br from-[var(--status-info)]/5 to-[var(--status-info)]/10 dark:from-[var(--status-info)]/40/20 dark:to-[var(--status-info)]/20'>
           <div className='flex items-center gap-3'>
-            <div className='h-12 w-12 rounded-lg bg-blue-500/20 flex items-center justify-center'>
-              <Package className='h-6 w-6 text-blue-600 dark:text-blue-400' />
+            <div className='h-12 w-12 rounded-lg bg-[var(--status-info-subtle)]0/20 flex items-center justify-center'>
+              <Package className='h-6 w-6 text-[var(--status-info)] dark:text-[var(--status-info)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Valore Totale Stock</p>
-              <p className='text-xl font-bold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Valore Totale Stock</p>
+              <p className='text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formatCurrency(calculateTotalValue())}
               </p>
             </div>
           </div>
         </div>
-        <div className='workshop-card bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20'>
+        <div className='workshop-card bg-gradient-to-br from-[var(--status-error)]/5 to-[var(--status-error)]/10 dark:from-[var(--status-error)]/40/20 dark:to-[var(--status-error)]/20'>
           <div className='flex items-center gap-3'>
-            <div className='h-12 w-12 rounded-lg bg-red-500/20 flex items-center justify-center'>
-              <AlertTriangle className='h-6 w-6 text-red-600 dark:text-red-400' />
+            <div className='h-12 w-12 rounded-lg bg-[var(--status-error-subtle)]0/20 flex items-center justify-center'>
+              <AlertTriangle className='h-6 w-6 text-[var(--status-error)] dark:text-[var(--status-error)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Stock Critici/Bassi</p>
-              <p className='text-xl font-bold text-status-urgent'>{getLowStockCount()}</p>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Stock Critici/Bassi</p>
+              <p className='text-xl font-bold text-[var(--status-error)]'>{getLowStockCount()}</p>
             </div>
           </div>
         </div>
-        <div className='workshop-card bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20'>
+        <div className='workshop-card bg-gradient-to-br from-[var(--status-warning)]/5 to-[var(--status-warning)]/10 dark:from-[var(--status-warning)]/40/20 dark:to-[var(--status-warning)]/20'>
           <div className='flex items-center gap-3'>
-            <div className='h-12 w-12 rounded-lg bg-yellow-500/20 flex items-center justify-center'>
-              <ArrowRightLeft className='h-6 w-6 text-yellow-600 dark:text-yellow-400' />
+            <div className='h-12 w-12 rounded-lg bg-[var(--status-warning)]/100/20 flex items-center justify-center'>
+              <ArrowRightLeft className='h-6 w-6 text-[var(--status-warning)] dark:text-[var(--status-warning)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Trasferimenti Attivi</p>
-              <p className='text-xl font-bold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Trasferimenti Attivi</p>
+              <p className='text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {
                   mockTransfers.filter(t => ['pending', 'approved', 'shipped'].includes(t.status))
                     .length
@@ -377,14 +377,14 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
             </div>
           </div>
         </div>
-        <div className='workshop-card bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20'>
+        <div className='workshop-card bg-gradient-to-br from-[var(--status-success)]/5 to-[var(--status-success)]/10 dark:from-[var(--status-success)]/40/20 dark:to-[var(--status-success)]/20'>
           <div className='flex items-center gap-3'>
-            <div className='h-12 w-12 rounded-lg bg-green-500/20 flex items-center justify-center'>
-              <Truck className='h-6 w-6 text-green-600 dark:text-green-400' />
+            <div className='h-12 w-12 rounded-lg bg-[var(--status-success-subtle)]0/20 flex items-center justify-center'>
+              <Truck className='h-6 w-6 text-[var(--status-success)] dark:text-[var(--status-success)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Fornitori Attivi</p>
-              <p className='text-xl font-bold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Fornitori Attivi</p>
+              <p className='text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {mockSuppliers.filter(s => s.isActive).length}
               </p>
             </div>
@@ -393,14 +393,14 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
       </div>
 
       {/* Tabs */}
-      <div className='flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 w-fit'>
+      <div className='flex items-center gap-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] p-1 w-fit'>
         <button
           onClick={() => setActiveTab('inventory')}
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'inventory'
-              ? 'bg-brand-600 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-brand-600 text-[var(--text-on-brand)]'
+              : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
           )}
         >
           <Package className='h-4 w-4' />
@@ -411,8 +411,8 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'transfers'
-              ? 'bg-brand-600 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-brand-600 text-[var(--text-on-brand)]'
+              : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
           )}
         >
           <ArrowRightLeft className='h-4 w-4' />
@@ -423,8 +423,8 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'suppliers'
-              ? 'bg-brand-600 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-brand-600 text-[var(--text-on-brand)]'
+              : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
           )}
         >
           <Truck className='h-4 w-4' />
@@ -439,7 +439,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
           <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
             <div className='flex items-center gap-4'>
               <div className='relative'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca prodotto...'
                   value={searchQuery}
@@ -450,7 +450,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
               <select
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
-                className='px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>
@@ -479,46 +479,46 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
           <div className='workshop-card overflow-hidden p-0'>
             <div className='overflow-x-auto'>
               <table className='w-full'>
-                <thead className='bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700'>
+                <thead className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border-b border-[var(--border-default)] dark:border-[var(--border-default)]'>
                   <tr>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Prodotto
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Categoria
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Fornitore
                     </th>
                     {locations.map(loc => (
                       <th
                         key={loc.id}
-                        className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'
+                        className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         <div className='flex flex-col items-center'>
                           <span>{loc.city}</span>
-                          <span className='text-xs font-normal text-gray-500'>Stock/Min</span>
+                          <span className='text-xs font-normal text-[var(--text-tertiary)]'>Stock/Min</span>
                         </div>
                       </th>
                     ))}
-                    <th className='px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Azioni
                     </th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                <tbody className='divide-y divide-[var(--border-default)] dark:divide-gray-700'>
                   {filteredInventory.map(item => (
-                    <tr key={item.id} className='hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                    <tr key={item.id} className='hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50'>
                       <td className='px-4 py-3'>
                         <div>
-                          <p className='font-medium text-gray-900 dark:text-white'>{item.name}</p>
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>{item.sku}</p>
+                          <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{item.name}</p>
+                          <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>{item.sku}</p>
                         </div>
                       </td>
-                      <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400'>
+                      <td className='px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                         {item.category}
                       </td>
-                      <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400'>
+                      <td className='px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                         {item.supplier}
                       </td>
                       {locations.map(loc => {
@@ -533,10 +533,10 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                                 <span className={cn('font-medium', status?.textColor)}>
                                   {locData.quantity}
                                 </span>
-                                <span className='text-xs text-gray-400'>/ {locData.minLevel}</span>
+                                <span className='text-xs text-[var(--text-tertiary)]'>/ {locData.minLevel}</span>
                               </div>
                             ) : (
-                              <span className='text-gray-400'>-</span>
+                              <span className='text-[var(--text-tertiary)]'>-</span>
                             )}
                           </td>
                         );
@@ -560,7 +560,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
       {activeTab === 'transfers' && (
         <div className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+            <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Richieste di Trasferimento
             </h3>
             <Button size='sm'>
@@ -572,60 +572,60 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
           <div className='workshop-card overflow-hidden p-0'>
             <div className='overflow-x-auto'>
               <table className='w-full'>
-                <thead className='bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700'>
+                <thead className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border-b border-[var(--border-default)] dark:border-[var(--border-default)]'>
                   <tr>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       ID
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Prodotto
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Da
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       A
                     </th>
-                    <th className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Quantità
                     </th>
-                    <th className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Stato
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Richiesto da
                     </th>
-                    <th className='px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Azioni
                     </th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                <tbody className='divide-y divide-[var(--border-default)] dark:divide-gray-700'>
                   {mockTransfers.map(transfer => (
-                    <tr key={transfer.id} className='hover:bg-gray-50 dark:hover:bg-gray-800/50'>
-                      <td className='px-4 py-3 text-sm font-medium text-gray-900 dark:text-white'>
+                    <tr key={transfer.id} className='hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50'>
+                      <td className='px-4 py-3 text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {transfer.id}
                       </td>
-                      <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400'>
+                      <td className='px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                         {transfer.itemName}
                       </td>
                       <td className='px-4 py-3'>
                         <div className='flex items-center gap-2'>
-                          <Building2 className='h-4 w-4 text-gray-400' />
-                          <span className='text-sm text-gray-600 dark:text-gray-400'>
+                          <Building2 className='h-4 w-4 text-[var(--text-tertiary)]' />
+                          <span className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                             {locations.find(l => l.id === transfer.fromLocation)?.city}
                           </span>
                         </div>
                       </td>
                       <td className='px-4 py-3'>
                         <div className='flex items-center gap-2'>
-                          <Building2 className='h-4 w-4 text-gray-400' />
-                          <span className='text-sm text-gray-600 dark:text-gray-400'>
+                          <Building2 className='h-4 w-4 text-[var(--text-tertiary)]' />
+                          <span className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                             {locations.find(l => l.id === transfer.toLocation)?.city}
                           </span>
                         </div>
                       </td>
-                      <td className='px-4 py-3 text-center font-medium text-gray-900 dark:text-white'>
+                      <td className='px-4 py-3 text-center font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {transfer.quantity}
                       </td>
                       <td className='px-4 py-3 text-center'>
@@ -638,7 +638,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                           {getTransferStatusLabel(transfer.status)}
                         </span>
                       </td>
-                      <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400'>
+                      <td className='px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                         {transfer.requestedBy}
                       </td>
                       <td className='px-4 py-3 text-right'>
@@ -651,7 +651,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                                 className='h-8 w-8 p-0'
                                 aria-label='Approva trasferimento'
                               >
-                                <CheckCircle2 className='h-4 w-4 text-status-ready' />
+                                <CheckCircle2 className='h-4 w-4 text-[var(--status-success)]' />
                               </Button>
                               <Button
                                 variant='ghost'
@@ -659,7 +659,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                                 className='h-8 w-8 p-0'
                                 aria-label='Rifiuta trasferimento'
                               >
-                                <XCircle className='h-4 w-4 text-status-urgent' />
+                                <XCircle className='h-4 w-4 text-[var(--status-error)]' />
                               </Button>
                             </>
                           )}
@@ -681,7 +681,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
       {activeTab === 'suppliers' && (
         <div className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+            <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Fornitori Centralizzati
             </h3>
             <Button size='sm'>
@@ -694,53 +694,53 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
             {mockSuppliers.map(supplier => (
               <div key={supplier.id} className='workshop-card'>
                 <div className='flex items-start justify-between mb-4'>
-                  <div className='h-12 w-12 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center'>
-                    <Truck className='h-6 w-6 text-brand-600' />
+                  <div className='h-12 w-12 rounded-lg bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+                    <Truck className='h-6 w-6 text-[var(--brand)]' />
                   </div>
                   <span
                     className={cn(
                       'px-2 py-1 text-xs font-medium rounded-full',
                       supplier.isActive
-                        ? 'bg-status-ready/10 text-status-ready'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-[var(--status-success)]/10 text-[var(--status-success)]'
+                        : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]'
                     )}
                   >
                     {supplier.isActive ? 'Attivo' : 'Inattivo'}
                   </span>
                 </div>
-                <h4 className='font-semibold text-gray-900 dark:text-white mb-1'>
+                <h4 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                   {supplier.name}
                 </h4>
                 <div className='space-y-2 text-sm'>
-                  <div className='flex items-center gap-2 text-gray-600 dark:text-gray-400'>
+                  <div className='flex items-center gap-2 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                     <Mail className='h-4 w-4' />
                     <a
                       href={`mailto:${supplier.email}`}
-                      className='text-brand-600 hover:underline truncate'
+                      className='text-[var(--brand)] hover:underline truncate'
                     >
                       {supplier.email}
                     </a>
                   </div>
-                  <div className='flex items-center gap-2 text-gray-600 dark:text-gray-400'>
+                  <div className='flex items-center gap-2 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                     <Phone className='h-4 w-4' />
-                    <a href={`tel:${supplier.phone}`} className='text-brand-600 hover:underline'>
+                    <a href={`tel:${supplier.phone}`} className='text-[var(--brand)] hover:underline'>
                       {supplier.phone}
                     </a>
                   </div>
                 </div>
-                <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                <div className='mt-4 pt-4 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
                   <div className='flex items-center justify-between text-sm'>
-                    <span className='text-gray-600 dark:text-gray-400'>Rating</span>
+                    <span className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Rating</span>
                     <div className='flex items-center gap-1'>
-                      <Star className='h-4 w-4 text-yellow-500 fill-yellow-500' />
-                      <span className='font-medium text-gray-900 dark:text-white'>
+                      <Star className='h-4 w-4 text-[var(--status-warning)] fill-yellow-500' />
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {supplier.rating}
                       </span>
                     </div>
                   </div>
                   <div className='flex items-center justify-between text-sm mt-2'>
-                    <span className='text-gray-600 dark:text-gray-400'>Lead Time</span>
-                    <span className='font-medium text-gray-900 dark:text-white'>
+                    <span className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Lead Time</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {supplier.leadTime} giorni
                     </span>
                   </div>
@@ -762,23 +762,23 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
 
       {/* Transfer Modal (simplified) */}
       {showTransferModal && selectedItem && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2'>
-              <ArrowRightLeft className='h-5 w-5 text-brand-600' />
+        <div className='fixed inset-0 bg-[var(--surface-primary)]/50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg shadow-xl max-w-md w-full p-6'>
+            <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+              <ArrowRightLeft className='h-5 w-5 text-[var(--brand)]' />
               Trasferisci Stock
             </h3>
             <div className='space-y-4'>
               <div>
-                <p className='text-sm text-gray-600 dark:text-gray-400 mb-1'>Prodotto</p>
-                <p className='font-medium text-gray-900 dark:text-white'>{selectedItem.name}</p>
-                <p className='text-xs text-gray-500'>{selectedItem.sku}</p>
+                <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] mb-1'>Prodotto</p>
+                <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{selectedItem.name}</p>
+                <p className='text-xs text-[var(--text-tertiary)]'>{selectedItem.sku}</p>
               </div>
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <label
                     htmlFor='transferFromLocation'
-                    className='text-sm text-gray-600 dark:text-gray-400 block mb-2'
+                    className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] block mb-2'
                   >
                     Da
                   </label>
@@ -786,7 +786,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                     id='transferFromLocation'
                     value={fromLocation}
                     onChange={e => setFromLocation(e.target.value)}
-                    className='w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                    className='w-full px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                   >
                     {locations.map(loc => (
                       <option key={loc.id} value={loc.id}>
@@ -798,7 +798,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                 <div>
                   <label
                     htmlFor='transferToLocation'
-                    className='text-sm text-gray-600 dark:text-gray-400 block mb-2'
+                    className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] block mb-2'
                   >
                     A
                   </label>
@@ -806,7 +806,7 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
                     id='transferToLocation'
                     value={toLocation}
                     onChange={e => setToLocation(e.target.value)}
-                    className='w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                    className='w-full px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                   >
                     <option value=''>Seleziona...</option>
                     {locations
@@ -822,27 +822,27 @@ export function CrossLocationInventory({ locations }: CrossLocationInventoryProp
               <div>
                 <label
                   htmlFor='transferQuantity'
-                  className='text-sm text-gray-600 dark:text-gray-400 block mb-2'
+                  className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] block mb-2'
                 >
                   Quantità
                 </label>
                 <div className='flex items-center gap-3'>
                   <button
                     onClick={() => setTransferQuantity(Math.max(1, transferQuantity - 1))}
-                    className='h-8 w-8 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700'
+                    className='h-8 w-8 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] flex items-center justify-center hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
                     aria-label='Diminuisci quantità'
                   >
                     <Minus className='h-4 w-4' />
                   </button>
                   <span
                     id='transferQuantity'
-                    className='font-medium text-gray-900 dark:text-white w-12 text-center'
+                    className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] w-12 text-center'
                   >
                     {transferQuantity}
                   </span>
                   <button
                     onClick={() => setTransferQuantity(transferQuantity + 1)}
-                    className='h-8 w-8 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700'
+                    className='h-8 w-8 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] flex items-center justify-center hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
                     aria-label='Aumenta quantità'
                   >
                     <PlusIcon className='h-4 w-4' />

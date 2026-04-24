@@ -71,7 +71,7 @@ export function VehicleDialog({ onSuccess, trigger, className }: VehicleDialogPr
       <DialogContent
         className={cn(
           'max-w-2xl max-h-[90vh] overflow-y-auto p-0',
-          'border-0 bg-white/80 dark:bg-gray-900/90',
+          'border-0 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/90',
           'backdrop-blur-2xl shadow-apple-xl',
           'rounded-[28px]'
         )}
@@ -131,7 +131,7 @@ export function VehicleDialogInline({
       <DialogContent
         className={cn(
           'max-w-2xl max-h-[90vh] overflow-y-auto p-0',
-          'border-0 bg-white/80 dark:bg-gray-900/90',
+          'border-0 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/90',
           'backdrop-blur-2xl shadow-apple-xl',
           'rounded-[28px]'
         )}
@@ -193,7 +193,7 @@ export function VehicleQuickAddDialog({
       <DialogContent
         className={cn(
           'max-w-2xl max-h-[90vh] overflow-y-auto p-0',
-          'border-0 bg-white/80 dark:bg-gray-900/90',
+          'border-0 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/90',
           'backdrop-blur-2xl shadow-apple-xl',
           'rounded-[28px]'
         )}
@@ -227,25 +227,25 @@ export function VehicleSuccessToast({
       <div
         className={cn(
           'flex items-center gap-4 rounded-2xl p-4 pr-6',
-          'bg-white/90 dark:bg-gray-900/90',
+          'bg-[var(--surface-secondary)]/90 dark:bg-[var(--surface-primary)]/90',
           'backdrop-blur-xl shadow-apple-xl',
-          'border border-green-200 dark:border-green-800'
+          'border border-[var(--status-success)]/30 dark:border-[var(--status-success)]'
         )}
       >
-        <div className='flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-white'>
+        <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)]'>
           <Car className='h-5 w-5' />
         </div>
         <div>
-          <p className='font-semibold text-gray-900 dark:text-white'>Veicolo aggiunto!</p>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>
+          <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Veicolo aggiunto!</p>
+          <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
             {vehicle.marca} {vehicle.modello} ({vehicle.targa.toUpperCase()})
           </p>
         </div>
         <button
           onClick={onClose}
-          className='ml-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800'
+          className='ml-2 rounded-full p-1 hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
         >
-          <X className='h-4 w-4 text-gray-400' />
+          <X className='h-4 w-4 text-[var(--text-tertiary)]' />
         </button>
       </div>
     </div>

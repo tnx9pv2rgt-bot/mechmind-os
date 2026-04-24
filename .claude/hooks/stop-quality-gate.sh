@@ -2,6 +2,13 @@
 INPUT=$(cat)
 if [ "$(echo "$INPUT" | jq -r '.stop_hook_active // false')" = "true" ]; then exit 0; fi
 
+# Skip expensive checks if no TS/JS source files were touched in this turn.
+# tsc on a large monorepo takes 30-90s — running it on every Claude response
+# (e.g., "explain this file") is unusable. Only gate when code actually changed.
+TOUCHED=$(git diff --name-only 2>/dev/null | grep -cE '\.(ts|tsx|js|jsx)$' || echo 0)
+STAGED=$(git diff --cached --name-only 2>/dev/null | grep -cE '\.(ts|tsx|js|jsx)$' || echo 0)
+if [ "$((TOUCHED + STAGED))" -eq 0 ]; then exit 0; fi
+
 FAILED=0
 
 # TypeScript backend

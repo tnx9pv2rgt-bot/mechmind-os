@@ -40,28 +40,28 @@ interface InspectionItem {
 
 const severityConfig: Record<string, { color: string; bg: string; label: string }> = {
   CRITICO: {
-    color: 'text-red-700 dark:text-red-300',
-    bg: 'bg-red-100 dark:bg-red-900/40',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
     label: 'Critico',
   },
   ALTO: {
-    color: 'text-orange-700 dark:text-orange-300',
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
     label: 'Alto',
   },
   MEDIO: {
-    color: 'text-yellow-700 dark:text-yellow-300',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
     label: 'Medio',
   },
   BASSO: {
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
     label: 'Basso',
   },
   OK: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
     label: 'OK',
   },
 };
@@ -175,25 +175,25 @@ export default function InspectionsPage() {
       label: 'Totale Ispezioni',
       value: String(statCounts.total),
       icon: ClipboardCheck,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Critiche',
       value: String(statCounts.critico),
       icon: ShieldAlert,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'Gravità Alta',
       value: String(statCounts.alto),
       icon: AlertTriangle,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Tutto OK',
       value: String(statCounts.ok),
       icon: ShieldCheck,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
@@ -203,8 +203,8 @@ export default function InspectionsPage() {
       <header>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ispezioni</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ispezioni</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestione ispezioni veicoli
             </p>
           </div>
@@ -236,13 +236,13 @@ export default function InspectionsPage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -255,7 +255,7 @@ export default function InspectionsPage() {
             <AppleCardContent>
               <div className='flex flex-col sm:flex-row gap-4'>
                 <div className='relative flex-1'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <Input
                     placeholder='Cerca per targa, veicolo, cliente o tecnico...'
                     aria-label='Cerca ispezioni'
@@ -265,11 +265,11 @@ export default function InspectionsPage() {
                   />
                 </div>
                 <div className='relative'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                   <select
                     value={severityFilter}
                     onChange={e => { setSeverityFilter(e.target.value as SeverityFilter); setPage(1); }}
-                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {severityFilterOptions.map(opt => (
                       <option key={opt.value} value={opt.value}>
@@ -287,15 +287,15 @@ export default function InspectionsPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Ispezioni
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {inspectionsError ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare le ispezioni
                   </p>
                   <AppleButton
@@ -308,12 +308,12 @@ export default function InspectionsPage() {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : filteredInspections.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessuna ispezione trovata. Crea la prima ispezione.
                   </p>
                   <AppleButton
@@ -336,21 +336,21 @@ export default function InspectionsPage() {
                     return (
                       <motion.div
                         key={inspection.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
                         transition={{ duration: 0.2 }}
                       >
                         <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                            <ClipboardCheck className='h-6 w-6 text-apple-blue' />
+                          <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                            <ClipboardCheck className='h-6 w-6 text-[var(--brand)]' />
                           </div>
                           <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {inspection.vehicle || inspection.plate}
                             </p>
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               #{inspection.id.slice(0, 8)} &bull; {inspection.plate} &bull; {inspection.customer}
                               {inspection.technician && ` &bull; ${inspection.technician}`}
                             </p>
@@ -362,10 +362,10 @@ export default function InspectionsPage() {
                           >
                             {sev.label}
                           </span>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[80px] text-right'>
+                          <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] min-w-[80px] text-right'>
                             {inspection.itemCount} elementi
                           </p>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] min-w-[80px] text-right'>
                             {inspection.date}
                           </p>
                           <div className='flex items-center gap-2'>

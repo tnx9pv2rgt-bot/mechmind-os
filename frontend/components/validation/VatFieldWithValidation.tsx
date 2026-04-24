@@ -198,16 +198,16 @@ export function VatFieldWithValidation({
     <div className={cn('relative', className)}>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-[var(--status-error)] ml-1">*</span>}
         </label>
       )}
 
       {/* Input Container */}
       <div className="relative">
         {/* Icona sinistra */}
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
           <Building2 className={iconSizes[size]} />
         </div>
 
@@ -221,7 +221,7 @@ export function VatFieldWithValidation({
           disabled={disabled || isValidating}
           placeholder={placeholder}
           className={cn(
-            'w-full rounded-lg border bg-white dark:bg-gray-900',
+            'w-full rounded-lg border bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]',
             'pl-10 pr-10 font-mono tracking-wide',
             'transition-all duration-200',
             'focus:outline-none focus:ring-2',
@@ -229,10 +229,10 @@ export function VatFieldWithValidation({
             'uppercase',
             sizeClasses[size],
             showError
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+              ? 'border-[var(--status-error)]/30 focus:border-[var(--status-error)] focus:ring-[var(--status-error)]/20'
               : showSuccess
-                ? 'border-green-300 focus:border-green-500 focus:ring-green-500/20'
-                : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20'
+                ? 'border-[var(--status-success)]/30 focus:border-[var(--status-success)] focus:ring-[var(--status-success)]/20'
+                : 'border-[var(--border-default)] dark:border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
           )}
           whileFocus={{ scale: 1.005 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -245,12 +245,12 @@ export function VatFieldWithValidation({
             <motion.button
               type="button"
               onClick={clearField}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
             >
-              <X className={cn('text-gray-400', iconSizes[size === 'lg' ? 'md' : 'sm'])} />
+              <X className={cn('text-[var(--text-tertiary)]', iconSizes[size === 'lg' ? 'md' : 'sm'])} />
             </motion.button>
           )}
 
@@ -264,7 +264,7 @@ export function VatFieldWithValidation({
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: 180 }}
                 >
-                  <Loader2 className={cn('animate-spin text-blue-500', iconSizes[size])} />
+                  <Loader2 className={cn('animate-spin text-[var(--status-info)]', iconSizes[size])} />
                 </motion.div>
               ) : showError ? (
                 <motion.div
@@ -273,7 +273,7 @@ export function VatFieldWithValidation({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <AlertCircle className={cn('text-red-500', iconSizes[size])} />
+                  <AlertCircle className={cn('text-[var(--status-error)]', iconSizes[size])} />
                 </motion.div>
               ) : showSuccess ? (
                 <motion.div
@@ -282,7 +282,7 @@ export function VatFieldWithValidation({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <FileCheck className={cn('text-green-500', iconSizes[size])} />
+                  <FileCheck className={cn('text-[var(--status-success)]', iconSizes[size])} />
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -292,7 +292,7 @@ export function VatFieldWithValidation({
 
       {/* Helper text */}
       {!error && !showSuccess && (
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-[var(--text-tertiary)]">
           Inserisci la Partita IVA completa di prefisso nazionale (es: IT12345678901)
         </p>
       )}
@@ -305,7 +305,7 @@ export function VatFieldWithValidation({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-red-600 flex items-center gap-1.5"
+            className="mt-2 text-sm text-[var(--status-error)] flex items-center gap-1.5"
           >
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
@@ -318,27 +318,27 @@ export function VatFieldWithValidation({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+            className="mt-3 p-4 bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] border border-[var(--status-success)]/30 dark:border-[var(--status-success)] rounded-lg"
           >
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg">
-                <Building2 className="w-5 h-5 text-green-600 dark:text-green-300" />
+              <div className="p-2 bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)] rounded-lg">
+                <Building2 className="w-5 h-5 text-[var(--status-success)] dark:text-[var(--status-success)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                <h4 className="text-sm font-semibold text-[var(--status-success)] dark:text-[var(--status-success)]">
                   {validation.companyName || 'Azienda verificata'}
                 </h4>
                 {validation.address && (
-                  <p className="mt-1 text-sm text-green-700 dark:text-green-300 flex items-center gap-1.5">
+                  <p className="mt-1 text-sm text-[var(--status-success)] dark:text-[var(--status-success)] flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="truncate">{validation.address}</span>
                   </p>
                 )}
-                <p className="mt-2 text-xs text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                <p className="mt-2 text-xs text-[var(--status-success)] dark:text-[var(--status-success)] flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5" />
                   Verificato su VIES (Agenzia delle Entrate)
                   {validation._fallback && (
-                    <span className="text-amber-600">- Modalità offline</span>
+                    <span className="text-[var(--status-warning)]">- Modalità offline</span>
                   )}
                 </p>
               </div>
@@ -352,7 +352,7 @@ export function VatFieldWithValidation({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-green-600 flex items-center gap-1.5"
+            className="mt-2 text-sm text-[var(--status-success)] flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 flex-shrink-0" />
             Partita IVA valida

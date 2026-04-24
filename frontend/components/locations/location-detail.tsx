@@ -191,13 +191,13 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-status-ready text-white';
+        return 'bg-[var(--status-success)] text-[var(--text-on-brand)]';
       case 'break':
-        return 'bg-status-warning text-white';
+        return 'bg-[var(--status-warning)] text-[var(--text-on-brand)]';
       case 'off':
-        return 'bg-gray-400 text-white';
+        return 'bg-[var(--surface-hover)] text-[var(--text-on-brand)]';
       default:
-        return 'bg-gray-400 text-white';
+        return 'bg-[var(--surface-hover)] text-[var(--text-on-brand)]';
     }
   };
 
@@ -217,30 +217,30 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
   const getInventoryStatus = (status: string) => {
     switch (status) {
       case 'ok':
-        return { color: 'bg-status-ready', label: 'OK' };
+        return { color: 'bg-[var(--status-success)]', label: 'OK' };
       case 'low':
-        return { color: 'bg-status-warning', label: 'Basso' };
+        return { color: 'bg-[var(--status-warning)]', label: 'Basso' };
       case 'critical':
-        return { color: 'bg-status-urgent', label: 'Critico' };
+        return { color: 'bg-[var(--status-error)]', label: 'Critico' };
       default:
-        return { color: 'bg-gray-400', label: 'N/A' };
+        return { color: 'bg-[var(--surface-hover)]', label: 'N/A' };
     }
   };
 
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'order':
-        return <CheckCircle2 className='h-4 w-4 text-status-ready' />;
+        return <CheckCircle2 className='h-4 w-4 text-[var(--status-success)]' />;
       case 'inventory':
-        return <Package className='h-4 w-4 text-status-info' />;
+        return <Package className='h-4 w-4 text-[var(--status-info)]' />;
       case 'customer':
-        return <User className='h-4 w-4 text-brand-600' />;
+        return <User className='h-4 w-4 text-[var(--brand)]' />;
       case 'appointment':
-        return <Calendar className='h-4 w-4 text-status-pending' />;
+        return <Calendar className='h-4 w-4 text-[var(--status-warning)]' />;
       case 'alert':
-        return <AlertCircle className='h-4 w-4 text-status-urgent' />;
+        return <AlertCircle className='h-4 w-4 text-[var(--status-error)]' />;
       default:
-        return <Activity className='h-4 w-4 text-gray-400' />;
+        return <Activity className='h-4 w-4 text-[var(--text-tertiary)]' />;
     }
   };
 
@@ -261,38 +261,38 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
       <div className='workshop-card'>
         <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6'>
           <div className='flex items-start gap-4'>
-            <div className='h-16 w-16 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center'>
-              <Building2 className='h-8 w-8 text-brand-600' />
+            <div className='h-16 w-16 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+              <Building2 className='h-8 w-8 text-[var(--brand)]' />
             </div>
             <div>
               <div className='flex items-center gap-3'>
-                <h2 className='text-xl font-bold text-gray-900 dark:text-white'>{location.name}</h2>
+                <h2 className='text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{location.name}</h2>
                 <span
                   className={cn(
                     'px-2 py-0.5 text-xs font-medium rounded-full',
                     location.isActive
-                      ? 'bg-status-ready/10 text-status-ready'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-[var(--status-success)]/10 text-[var(--status-success)]'
+                      : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]'
                   )}
                 >
                   {location.isActive ? 'Attiva' : 'Inattiva'}
                 </span>
               </div>
-              <p className='text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1'>
+              <p className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)] flex items-center gap-2 mt-1'>
                 <MapPin className='h-4 w-4' />
                 {location.address}, {location.city}, {location.region}
               </p>
               <div className='flex items-center gap-4 mt-3 text-sm'>
                 <a
                   href={`tel:${location.phone}`}
-                  className='flex items-center gap-1 text-brand-600 hover:underline'
+                  className='flex items-center gap-1 text-[var(--brand)] hover:underline'
                 >
                   <Phone className='h-4 w-4' />
                   {location.phone}
                 </a>
                 <a
                   href={`mailto:${location.email}`}
-                  className='flex items-center gap-1 text-brand-600 hover:underline'
+                  className='flex items-center gap-1 text-[var(--brand)] hover:underline'
                 >
                   <Mail className='h-4 w-4' />
                   {location.email}
@@ -313,47 +313,47 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
         </div>
 
         {/* Quick Stats */}
-        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700'>
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6 pt-6 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
           <div className='flex items-center gap-3'>
-            <div className='h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center'>
-              <TrendingUp className='h-5 w-5 text-status-ready' />
+            <div className='h-10 w-10 rounded-lg bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 flex items-center justify-center'>
+              <TrendingUp className='h-5 w-5 text-[var(--status-success)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Fatturato Mese</p>
-              <p className='font-semibold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Fatturato Mese</p>
+              <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formatCurrency(metrics.revenue.month)}
               </p>
             </div>
           </div>
           <div className='flex items-center gap-3'>
-            <div className='h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
-              <Car className='h-5 w-5 text-status-info' />
+            <div className='h-10 w-10 rounded-lg bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30 flex items-center justify-center'>
+              <Car className='h-5 w-5 text-[var(--status-info)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Veicoli Totali</p>
-              <p className='font-semibold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Veicoli Totali</p>
+              <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {metrics.carCount.inService + metrics.carCount.waiting + metrics.carCount.ready}
               </p>
             </div>
           </div>
           <div className='flex items-center gap-3'>
-            <div className='h-10 w-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center'>
-              <Wrench className='h-5 w-5 text-status-warning' />
+            <div className='h-10 w-10 rounded-lg bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/40/30 flex items-center justify-center'>
+              <Wrench className='h-5 w-5 text-[var(--status-warning)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>ARO Medio</p>
-              <p className='font-semibold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>ARO Medio</p>
+              <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formatCurrency(metrics.aro)}
               </p>
             </div>
           </div>
           <div className='flex items-center gap-3'>
-            <div className='h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center'>
-              <Star className='h-5 w-5 text-purple-600' />
+            <div className='h-10 w-10 rounded-lg bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+              <Star className='h-5 w-5 text-[var(--brand)]' />
             </div>
             <div>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>Rating Clienti</p>
-              <p className='font-semibold text-gray-900 dark:text-white'>
+              <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Rating Clienti</p>
+              <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {metrics.satisfaction} / 5.0
               </p>
             </div>
@@ -363,7 +363,7 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-4'>
-        <TabsList className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
+        <TabsList className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] border border-[var(--border-default)] dark:border-[var(--border-default)]'>
           <TabsTrigger value='overview' className='flex items-center gap-2'>
             <Activity className='h-4 w-4' />
             Panoramica
@@ -386,37 +386,37 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
           <div className='grid gap-6 lg:grid-cols-3'>
             {/* Manager Info */}
             <div className='workshop-card lg:col-span-1'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2'>
-                <User className='h-5 w-5 text-brand-600' />
+              <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                <User className='h-5 w-5 text-[var(--brand)]' />
                 Responsabile Sede
               </h3>
               <div className='space-y-4'>
                 <div className='flex items-center gap-3'>
-                  <div className='h-12 w-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center'>
-                    <User className='h-6 w-6 text-brand-600' />
+                  <div className='h-12 w-12 rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+                    <User className='h-6 w-6 text-[var(--brand)]' />
                   </div>
                   <div>
-                    <p className='font-medium text-gray-900 dark:text-white'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {location.manager.name}
                     </p>
-                    <p className='text-sm text-gray-500 dark:text-gray-400'>Responsabile</p>
+                    <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Responsabile</p>
                   </div>
                 </div>
-                <div className='space-y-2 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                <div className='space-y-2 pt-4 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
                   <div className='flex items-center gap-2 text-sm'>
-                    <Phone className='h-4 w-4 text-gray-400' />
+                    <Phone className='h-4 w-4 text-[var(--text-tertiary)]' />
                     <a
                       href={`tel:${location.manager.phone}`}
-                      className='text-brand-600 hover:underline'
+                      className='text-[var(--brand)] hover:underline'
                     >
                       {location.manager.phone}
                     </a>
                   </div>
                   <div className='flex items-center gap-2 text-sm'>
-                    <Mail className='h-4 w-4 text-gray-400' />
+                    <Mail className='h-4 w-4 text-[var(--text-tertiary)]' />
                     <a
                       href={`mailto:${location.manager.email}`}
-                      className='text-brand-600 hover:underline'
+                      className='text-[var(--brand)] hover:underline'
                     >
                       {location.manager.email}
                     </a>
@@ -425,21 +425,21 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
               </div>
 
               {/* Operating Hours */}
-              <div className='mt-6 pt-6 border-t border-gray-200 dark:border-gray-700'>
-                <h4 className='font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
-                  <Clock3 className='h-4 w-4 text-brand-600' />
+              <div className='mt-6 pt-6 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
+                <h4 className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3 flex items-center gap-2'>
+                  <Clock3 className='h-4 w-4 text-[var(--brand)]' />
                   Orari di Apertura
                 </h4>
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between text-sm'>
-                    <span className='text-gray-600 dark:text-gray-400'>Giorni</span>
-                    <span className='font-medium text-gray-900 dark:text-white'>
+                    <span className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Giorni</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {location.operatingHours.days}
                     </span>
                   </div>
                   <div className='flex items-center justify-between text-sm'>
-                    <span className='text-gray-600 dark:text-gray-400'>Orario</span>
-                    <span className='font-medium text-gray-900 dark:text-white'>
+                    <span className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Orario</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {location.operatingHours.open} - {location.operatingHours.close}
                     </span>
                   </div>
@@ -449,24 +449,24 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
 
             {/* Car Count Status */}
             <div className='workshop-card lg:col-span-2'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2'>
-                <Car className='h-5 w-5 text-brand-600' />
+              <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                <Car className='h-5 w-5 text-[var(--brand)]' />
                 Stato Veicoli
               </h3>
               <div className='grid gap-4 sm:grid-cols-3'>
-                <div className='p-4 bg-status-info/10 rounded-lg border border-status-info/20'>
+                <div className='p-4 bg-[var(--status-info)]/10 rounded-lg border border-status-info/20'>
                   <div className='flex items-center gap-3 mb-2'>
-                    <div className='h-10 w-10 rounded-lg bg-status-info/20 flex items-center justify-center'>
-                      <Wrench className='h-5 w-5 text-status-info' />
+                    <div className='h-10 w-10 rounded-lg bg-[var(--status-info)]/20 flex items-center justify-center'>
+                      <Wrench className='h-5 w-5 text-[var(--status-info)]' />
                     </div>
                     <div>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                      <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {metrics.carCount.inService}
                       </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>In Servizio</p>
+                      <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>In Servizio</p>
                     </div>
                   </div>
-                  <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                     {Math.round(
                       (metrics.carCount.inService /
                         (metrics.carCount.inService +
@@ -477,19 +477,19 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
                     % del totale
                   </p>
                 </div>
-                <div className='p-4 bg-status-warning/10 rounded-lg border border-status-warning/20'>
+                <div className='p-4 bg-[var(--status-warning)]/10 rounded-lg border border-status-warning/20'>
                   <div className='flex items-center gap-3 mb-2'>
-                    <div className='h-10 w-10 rounded-lg bg-status-warning/20 flex items-center justify-center'>
-                      <Clock3 className='h-5 w-5 text-status-warning' />
+                    <div className='h-10 w-10 rounded-lg bg-[var(--status-warning)]/20 flex items-center justify-center'>
+                      <Clock3 className='h-5 w-5 text-[var(--status-warning)]' />
                     </div>
                     <div>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                      <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {metrics.carCount.waiting}
                       </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>In Attesa</p>
+                      <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>In Attesa</p>
                     </div>
                   </div>
-                  <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                     {Math.round(
                       (metrics.carCount.waiting /
                         (metrics.carCount.inService +
@@ -500,19 +500,19 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
                     % del totale
                   </p>
                 </div>
-                <div className='p-4 bg-status-ready/10 rounded-lg border border-status-ready/20'>
+                <div className='p-4 bg-[var(--status-success)]/10 rounded-lg border border-status-ready/20'>
                   <div className='flex items-center gap-3 mb-2'>
-                    <div className='h-10 w-10 rounded-lg bg-status-ready/20 flex items-center justify-center'>
-                      <CheckCircle2 className='h-5 w-5 text-status-ready' />
+                    <div className='h-10 w-10 rounded-lg bg-[var(--status-success)]/20 flex items-center justify-center'>
+                      <CheckCircle2 className='h-5 w-5 text-[var(--status-success)]' />
                     </div>
                     <div>
-                      <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                      <p className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {metrics.carCount.ready}
                       </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>Pronti</p>
+                      <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>Pronti</p>
                     </div>
                   </div>
-                  <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                     {Math.round(
                       (metrics.carCount.ready /
                         (metrics.carCount.inService +
@@ -528,36 +528,36 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
               {/* Utilization */}
               <div className='mt-6'>
                 <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <span className='text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Utilizzo Officina
                   </span>
                   <span
                     className={cn(
                       'text-sm font-semibold',
                       metrics.utilization >= 80
-                        ? 'text-status-ready'
+                        ? 'text-[var(--status-success)]'
                         : metrics.utilization >= 60
-                          ? 'text-status-warning'
-                          : 'text-status-urgent'
+                          ? 'text-[var(--status-warning)]'
+                          : 'text-[var(--status-error)]'
                     )}
                   >
                     {metrics.utilization}%
                   </span>
                 </div>
-                <div className='h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden'>
+                <div className='h-3 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded-full overflow-hidden'>
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-500',
                       metrics.utilization >= 80
-                        ? 'bg-status-ready'
+                        ? 'bg-[var(--status-success)]'
                         : metrics.utilization >= 60
-                          ? 'bg-status-warning'
-                          : 'bg-status-urgent'
+                          ? 'bg-[var(--status-warning)]'
+                          : 'bg-[var(--status-error)]'
                     )}
                     style={{ width: `${metrics.utilization}%` }}
                   />
                 </div>
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+                <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)] mt-2'>
                   {metrics.utilization >= 80
                     ? 'Ottima efficienza'
                     : metrics.utilization >= 60
@@ -572,8 +572,8 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
         <TabsContent value='staff' className='space-y-4'>
           <div className='workshop-card'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
-                <Wrench className='h-5 w-5 text-brand-600' />
+              <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <Wrench className='h-5 w-5 text-[var(--brand)]' />
                 Meccanici ({mechanics.length})
               </h3>
               <Button variant='outline' size='sm'>
@@ -583,39 +583,39 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
             </div>
             <div className='overflow-x-auto'>
               <table className='w-full'>
-                <thead className='bg-gray-50 dark:bg-gray-800'>
+                <thead className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]'>
                   <tr>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Nome
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Specializzazione
                     </th>
-                    <th className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Stato
                     </th>
-                    <th className='px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Efficienza
                     </th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                <tbody className='divide-y divide-[var(--border-default)] dark:divide-gray-700'>
                   {mechanics.map(staff => (
-                    <tr key={staff.id} className='hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                    <tr key={staff.id} className='hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50'>
                       <td className='px-4 py-3'>
                         <div className='flex items-center gap-3'>
-                          <div className='h-8 w-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center'>
-                            <User className='h-4 w-4 text-brand-600' />
+                          <div className='h-8 w-8 rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+                            <User className='h-4 w-4 text-[var(--brand)]' />
                           </div>
                           <div>
-                            <p className='font-medium text-gray-900 dark:text-white'>
+                            <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {staff.name}
                             </p>
-                            <p className='text-xs text-gray-500 dark:text-gray-400'>{staff.id}</p>
+                            <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>{staff.id}</p>
                           </div>
                         </div>
                       </td>
-                      <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400'>
+                      <td className='px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                         {staff.specialization}
                       </td>
                       <td className='px-4 py-3 text-center'>
@@ -630,20 +630,20 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
                       </td>
                       <td className='px-4 py-3 text-right'>
                         <div className='flex items-center justify-end gap-2'>
-                          <div className='w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden'>
+                          <div className='w-20 h-2 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded-full overflow-hidden'>
                             <div
                               className={cn(
                                 'h-full rounded-full',
                                 staff.efficiency >= 90
-                                  ? 'bg-status-ready'
+                                  ? 'bg-[var(--status-success)]'
                                   : staff.efficiency >= 75
-                                    ? 'bg-status-warning'
-                                    : 'bg-status-urgent'
+                                    ? 'bg-[var(--status-warning)]'
+                                    : 'bg-[var(--status-error)]'
                               )}
                               style={{ width: `${staff.efficiency}%` }}
                             />
                           </div>
-                          <span className='text-sm font-medium text-gray-900 dark:text-white'>
+                          <span className='text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {staff.efficiency}%
                           </span>
                         </div>
@@ -657,8 +657,8 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
 
           <div className='workshop-card'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
-                <User className='h-5 w-5 text-brand-600' />
+              <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <User className='h-5 w-5 text-[var(--brand)]' />
                 Reception ({receptionists.length})
               </h3>
             </div>
@@ -666,14 +666,14 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
               {receptionists.map(staff => (
                 <div
                   key={staff.id}
-                  className='flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                  className='flex items-center gap-3 p-3 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg'
                 >
-                  <div className='h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center'>
-                    <User className='h-5 w-5 text-brand-600' />
+                  <div className='h-10 w-10 rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+                    <User className='h-5 w-5 text-[var(--brand)]' />
                   </div>
                   <div className='flex-1'>
-                    <p className='font-medium text-gray-900 dark:text-white'>{staff.name}</p>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{staff.name}</p>
+                    <p className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                       {staff.specialization}
                     </p>
                   </div>
@@ -694,13 +694,13 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
         <TabsContent value='inventory' className='space-y-4'>
           <div className='workshop-card'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
-                <Package className='h-5 w-5 text-brand-600' />
+              <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <Package className='h-5 w-5 text-[var(--brand)]' />
                 Stato Magazzino
               </h3>
               <div className='flex items-center gap-2'>
                 <Button variant='outline' size='sm'>
-                  <AlertCircle className='mr-2 h-4 w-4 text-status-urgent' />
+                  <AlertCircle className='mr-2 h-4 w-4 text-[var(--status-error)]' />
                   {inventoryItems.filter(i => i.status === 'critical').length} Critici
                 </Button>
                 <Button variant='outline' size='sm'>
@@ -711,34 +711,34 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
             </div>
             <div className='overflow-x-auto'>
               <table className='w-full'>
-                <thead className='bg-gray-50 dark:bg-gray-800'>
+                <thead className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]'>
                   <tr>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Prodotto
                     </th>
-                    <th className='px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       SKU
                     </th>
-                    <th className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Quantità
                     </th>
-                    <th className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Minimo
                     </th>
-                    <th className='px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white'>
+                    <th className='px-4 py-3 text-center text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Stato
                     </th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                <tbody className='divide-y divide-[var(--border-default)] dark:divide-gray-700'>
                   {inventoryItems.map(item => {
                     const status = getInventoryStatus(item.status);
                     return (
-                      <tr key={item.id} className='hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                      <tr key={item.id} className='hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50'>
                         <td className='px-4 py-3'>
-                          <p className='font-medium text-gray-900 dark:text-white'>{item.name}</p>
+                          <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{item.name}</p>
                         </td>
-                        <td className='px-4 py-3 text-sm text-gray-500 dark:text-gray-400'>
+                        <td className='px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                           {item.sku}
                         </td>
                         <td className='px-4 py-3 text-center'>
@@ -746,20 +746,20 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
                             className={cn(
                               'font-medium',
                               item.quantity < item.minLevel
-                                ? 'text-status-urgent'
-                                : 'text-gray-900 dark:text-white'
+                                ? 'text-[var(--status-error)]'
+                                : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                             )}
                           >
                             {item.quantity}
                           </span>
                         </td>
-                        <td className='px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400'>
+                        <td className='px-4 py-3 text-center text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                           {item.minLevel}
                         </td>
                         <td className='px-4 py-3 text-center'>
                           <span
                             className={cn(
-                              'px-2 py-1 text-xs font-medium rounded-full text-white',
+                              'px-2 py-1 text-xs font-medium rounded-full text-[var(--text-on-brand)]',
                               status.color
                             )}
                           >
@@ -778,8 +778,8 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
         <TabsContent value='activity' className='space-y-4'>
           <div className='workshop-card'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
-                <Activity className='h-5 w-5 text-brand-600' />
+              <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <Activity className='h-5 w-5 text-[var(--brand)]' />
                 Attività Recenti
               </h3>
               <Button variant='outline' size='sm'>
@@ -791,16 +791,16 @@ export function LocationDetail({ location, metrics }: LocationDetailProps) {
               {recentActivity.map(activity => (
                 <div
                   key={activity.id}
-                  className='flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                  className='flex items-start gap-4 p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg'
                 >
-                  <div className='h-10 w-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm'>
+                  <div className='h-10 w-10 rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--border-default)] flex items-center justify-center shadow-sm'>
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <p className='font-medium text-gray-900 dark:text-white'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {activity.description}
                     </p>
-                    <div className='flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400'>
+                    <div className='flex items-center gap-4 mt-1 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                       <span className='flex items-center gap-1'>
                         <User className='h-3 w-3' />
                         {activity.user}

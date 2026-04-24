@@ -1,7 +1,5 @@
 /**
- * Tests for MFA Setup Page (app/auth/mfa/setup/client.tsx)
- *
- * @module __tests__/app/auth/mfa-setup.test
+ * Tests for MFA Setup Client (app/auth/mfa/setup/client.tsx)
  */
 
 import React from 'react'
@@ -14,366 +12,412 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 const mockPush = jest.fn()
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-    replace: jest.fn(),
-    back: jest.fn(),
-    prefetch: jest.fn(),
-    refresh: jest.fn(),
-  }),
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: mockPush }),
 }))
 
 jest.mock('framer-motion', () => {
-  const React = require('react')
+  const R = require('react')
   return {
     motion: new Proxy(
       {},
       {
-        get: (_target: unknown, prop: string) => {
-          return React.forwardRef(
-            ({ children, ...rest }: { children?: React.ReactNode; [key: string]: unknown }, ref: React.Ref<HTMLElement>) => {
-              const validProps: Record<string, unknown> = {}
-              const htmlProps = [
-                'className', 'style', 'onClick', 'onSubmit', 'type', 'disabled',
-                'id', 'role', 'tabIndex', 'href', 'target', 'rel', 'value',
-                'onChange', 'placeholder', 'name', 'autoFocus', 'autoComplete',
-                'maxLength', 'checked', 'aria-label', 'htmlFor', 'variant',
-              ]
-              for (const key of Object.keys(rest)) {
-                if (htmlProps.includes(key) || key.startsWith('data-') || key.startsWith('aria-')) {
-                  validProps[key] = rest[key]
+        get: (_: unknown, prop: string) =>
+          R.forwardRef(
+            ({ children, ...rest }: { children?: React.ReactNode; [k: string]: unknown }, ref: React.Ref<HTMLElement>) => {
+              const safe: Record<string, unknown> = {}
+              for (const k of Object.keys(rest)) {
+                if (['className', 'style', 'onClick', 'disabled', 'role', 'id'].includes(k) || k.startsWith('data-') || k.startsWith('aria-')) {
+                  safe[k] = rest[k]
                 }
               }
-              return React.createElement(prop, { ...validProps, ref }, children)
+              return R.createElement(prop, { ...safe, ref }, children)
             }
-          )
-        },
+          ),
       }
     ),
     AnimatePresence: ({ children }: { children: React.ReactNode }) =>
-      React.createElement(React.Fragment, null, children),
+      R.createElement(R.Fragment, null, children),
   }
 })
 
-// Mock @/lib/utils
-jest.mock('@/lib/utils', () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
-}))
+jest.mock('next/image', () => {
+  return ({ src, alt }: { src: string; alt: string }) =>
+    require('react').createElement('img', { src, alt })
+})
 
-// Mock @/components/ui/button
-jest.mock('@/components/ui/button', () => ({
-  Button: ({
+jest.mock('@/components/auth/auth-split-layout', () => ({
+  AuthSplitLayout: ({
     children,
-    onClick,
-    disabled,
-    className,
-    variant,
-    type,
+    onBack,
+    showBack,
   }: {
     children: React.ReactNode
-    onClick?: () => void
-    disabled?: boolean
-    className?: string
-    variant?: string
-    type?: string
+    onBack?: () => void
+    showBack?: boolean
   }) => {
-    return React.createElement(
-      'button',
-      { onClick, disabled, className, type: type || 'button', 'data-variant': variant },
+    const R = require('react')
+    return R.createElement(
+      'div',
+      null,
+      showBack && onBack
+        ? R.createElement('button', { onClick: onBack, 'aria-label': 'Indietro' }, '←')
+        : null,
       children
     )
   },
 }))
 
-// Mock @/components/ui/input
-jest.mock('@/components/ui/input', () => {
-  const R = require('react')
-  return {
-    Input: R.forwardRef(
-      (props: Record<string, unknown>, ref: unknown) => {
-        return R.createElement('input', { ...props, ref })
-      }
-    ),
-  }
+jest.mock('@/components/auth/auth-styles', () => ({
+  btnPrimary: 'btn-primary',
+  btnSpinner: 'btn-spinner',
+}))
+
+jest.mock('@/components/auth/otp-input', () => ({
+  OTPInput: ({
+    onChange,
+    value,
+    disabled,
+  }: {
+    onChange: (val: string) => void
+    value: string
+    disabled?: boolean
+  }) => {
+    return require('react').createElement('input', {
+      'data-testid': 'otp-input',
+      value,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+      disabled,
+      role: 'group',
+      'aria-label': 'Codice OTP',
+    })
+  },
+}))
+
+const mockClipboardWriteText = jest.fn().mockResolvedValue(undefined)
+Object.assign(navigator, {
+  clipboard: { writeText: mockClipboardWriteText },
 })
+
+const mockCreateObjectURL = jest.fn(() => 'blob:mock-url')
+const mockRevokeObjectURL = jest.fn()
+global.URL.createObjectURL = mockCreateObjectURL
+global.URL.revokeObjectURL = mockRevokeObjectURL
 
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 
-// Mock clipboard
-Object.assign(navigator, {
-  clipboard: {
-    writeText: jest.fn().mockResolvedValue(undefined),
-  },
-})
-
-// Mock URL.createObjectURL & revokeObjectURL
-global.URL.createObjectURL = jest.fn(() => 'blob:mock-url')
-
 import { MFASetupPageClient } from '@/app/auth/mfa/setup/client'
+
+// =========================================================================
+// Helpers
+// =========================================================================
+
+async function goToStep2(): Promise<void> {
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    json: jest.fn().mockResolvedValueOnce({
+      qrCode: 'data:image/png;base64,qr-data',
+      secret: 'SECRET123',
+    }),
+  })
+  render(<MFASetupPageClient />)
+  await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+  await waitFor(() => { expect(screen.getByText('Scansiona il QR Code')).toBeInTheDocument() })
+}
+
+async function goToStep3(backupCodes = ['CODE1', 'CODE2']): Promise<void> {
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', secret: 'SEC' }),
+  })
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    json: jest.fn().mockResolvedValueOnce({ verified: true, backupCodes }),
+  })
+  render(<MFASetupPageClient />)
+  await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+  await waitFor(() => { expect(screen.getByTestId('otp-input')).toBeInTheDocument() })
+  await act(async () => {
+    fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '123456' } })
+  })
+  await waitFor(() => { expect(screen.getByText('2FA attivato!')).toBeInTheDocument() })
+}
+
+// =========================================================================
+// Tests
+// =========================================================================
 
 describe('MFASetupPageClient', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockFetch.mockReset()
+    jest.useFakeTimers()
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
   })
 
   // =========================================================================
   // Step 1 - Intro
   // =========================================================================
-  describe('Step 1 - Intro', () => {
-    it('should render the setup intro with title', () => {
+  describe('Step 1 — Intro', () => {
+    it('renders the title and description', () => {
       render(<MFASetupPageClient />)
       expect(screen.getByText('Configura 2FA')).toBeInTheDocument()
-      expect(
-        screen.getByText(/Aggiungi un livello di sicurezza/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Aggiungi un livello di sicurezza/i)).toBeInTheDocument()
     })
 
-    it('should display authenticator app info', () => {
+    it('renders authenticator app info', () => {
       render(<MFASetupPageClient />)
       expect(screen.getByText('App Authenticator')).toBeInTheDocument()
-      expect(
-        screen.getByText(/Google Authenticator, Authy, o 1Password/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Google Authenticator, Authy o 1Password/i)).toBeInTheDocument()
     })
 
-    it('should render the start configuration button', () => {
+    it('renders the start configuration button', () => {
       render(<MFASetupPageClient />)
-      expect(screen.getByText('Inizia Configurazione')).toBeInTheDocument()
+      expect(screen.getByText('Inizia configurazione')).toBeInTheDocument()
     })
 
-    it('should call enroll API and advance to step 2 on success', async () => {
+    it('advances to step 2 on successful enroll', async () => {
       mockFetch.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValueOnce({
-          qrCode: 'data:image/png;base64,qrcode-data',
-          secret: 'ABCDEF123456',
-        }),
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', secret: 'SEC' }),
       })
-
       render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => { expect(screen.getByText('Scansiona il QR Code')).toBeInTheDocument() })
+      expect(mockFetch).toHaveBeenCalledWith('/api/auth/mfa/enroll', { method: 'POST' })
+    })
 
-      await act(async () => {
-        fireEvent.click(screen.getByText('Inizia Configurazione'))
+    it('uses manualEntryKey as secret when no secret field', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', manualEntryKey: 'MANUAL_KEY' }),
       })
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => { expect(screen.getByText('MANUAL_KEY')).toBeInTheDocument() })
+    })
 
+    it('shows error from API when enroll returns non-ok', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValueOnce({ error: 'Configurazione non disponibile' }),
+      })
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/auth/mfa/enroll', {
-          method: 'POST',
-        })
-        expect(screen.getByText('Scansiona il QR Code')).toBeInTheDocument()
+        expect(screen.getByRole('alert')).toHaveTextContent('Configurazione non disponibile')
       })
     })
 
-    it('should show error on enroll failure', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Failed'))
-
+    it('shows fallback error when enroll returns non-ok without error message', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValueOnce({}),
+      })
       render(<MFASetupPageClient />)
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Inizia Configurazione'))
-      })
-
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
       await waitFor(() => {
-        expect(
-          screen.getByText('Errore durante la configurazione')
-        ).toBeInTheDocument()
+        expect(screen.getByRole('alert')).toHaveTextContent('Errore durante la configurazione')
       })
+    })
+
+    it('shows network error when enroll throws', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network fail'))
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Errore di rete. Riprova.')
+      })
+    })
+
+    it('navigates to /dashboard on back from step 1', () => {
+      render(<MFASetupPageClient />)
+      fireEvent.click(screen.getByRole('button', { name: 'Indietro' }))
+      expect(mockPush).toHaveBeenCalledWith('/dashboard')
     })
   })
 
   // =========================================================================
-  // Step 2 - QR Code & Verification
+  // Step 2 — QR & Verify
   // =========================================================================
-  describe('Step 2 - QR Code & Verification', () => {
-    async function goToStep2(): Promise<void> {
-      mockFetch.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValueOnce({
-          qrCode: 'data:image/png;base64,qr-data',
-          secret: 'SECRET123',
-        }),
-      })
-
-      render(<MFASetupPageClient />)
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Inizia Configurazione'))
-      })
-
-      await waitFor(() => {
-        expect(screen.getByText('Scansiona il QR Code')).toBeInTheDocument()
-      })
-    }
-
-    it('should display QR code image', async () => {
+  describe('Step 2 — QR Code & Verification', () => {
+    it('displays QR code image', async () => {
       await goToStep2()
-      const img = screen.getByAltText('QR Code')
-      expect(img).toBeInTheDocument()
+      const img = screen.getByAltText('QR Code per configurazione MFA')
       expect(img).toHaveAttribute('src', 'data:image/png;base64,qr-data')
     })
 
-    it('should display the secret key', async () => {
+    it('displays secret key', async () => {
       await goToStep2()
       expect(screen.getByText('SECRET123')).toBeInTheDocument()
     })
 
-    it('should copy secret to clipboard', async () => {
+    it('shows Copia button initially', async () => {
       await goToStep2()
+      expect(screen.getByLabelText('Copia codice segreto')).toHaveTextContent('Copia')
+    })
 
-      // Find the copy button (it's next to the secret)
-      const copyButtons = screen.getAllByRole('button')
-      const copyButton = copyButtons.find(
-        (btn) =>
-          !btn.textContent?.includes('Verifica') &&
-          !btn.textContent?.includes('Inizia')
-      )
-      expect(copyButton).toBeTruthy()
-
+    it('copies secret to clipboard and shows ✓', async () => {
+      await goToStep2()
       await act(async () => {
-        fireEvent.click(copyButton!)
+        fireEvent.click(screen.getByLabelText('Copia codice segreto'))
       })
-
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('SECRET123')
+      expect(mockClipboardWriteText).toHaveBeenCalledWith('SECRET123')
+      expect(screen.getByLabelText('Copia codice segreto')).toHaveTextContent('✓')
     })
 
-    it('should have verify button disabled when code is not 6 digits', async () => {
+    it('reverts copy button after 2 seconds', async () => {
       await goToStep2()
-      const verifyButton = screen.getByText('Verifica')
-      expect(verifyButton.closest('button')).toBeDisabled()
+      await act(async () => {
+        fireEvent.click(screen.getByLabelText('Copia codice segreto'))
+      })
+      expect(screen.getByLabelText('Copia codice segreto')).toHaveTextContent('✓')
+      act(() => { jest.advanceTimersByTime(2000) })
+      await waitFor(() => {
+        expect(screen.getByLabelText('Copia codice segreto')).toHaveTextContent('Copia')
+      })
     })
 
-    it('should verify code and advance to step 3 on success', async () => {
+    it('verify button is disabled when code < 6 digits', async () => {
       await goToStep2()
+      const verifyBtn = screen.getByRole('button', { name: 'Verifica' })
+      expect(verifyBtn).toBeDisabled()
+    })
 
+    it('auto-verifies when 6 digits entered', async () => {
       mockFetch.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValueOnce({
-          verified: true,
-          backupCodes: ['CODE1', 'CODE2', 'CODE3', 'CODE4'],
-        }),
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', secret: 'SEC' }),
       })
-
-      const codeInput = screen.getByPlaceholderText('Codice a 6 cifre')
-      fireEvent.change(codeInput, { target: { value: '123456' } })
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Verifica'))
-      })
-
-      await waitFor(() => {
-        expect(screen.getByText('2FA Attivato!')).toBeInTheDocument()
-      })
-    })
-
-    it('should show error on invalid verification code', async () => {
-      await goToStep2()
-
       mockFetch.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValueOnce({ verified: false }),
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ verified: true, backupCodes: ['BC1'] }),
       })
-
-      const codeInput = screen.getByPlaceholderText('Codice a 6 cifre')
-      fireEvent.change(codeInput, { target: { value: '000000' } })
-
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => { expect(screen.getByTestId('otp-input')).toBeInTheDocument() })
       await act(async () => {
-        fireEvent.click(screen.getByText('Verifica'))
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '123456' } })
       })
-
       await waitFor(() => {
-        expect(screen.getByText('Codice non valido')).toBeInTheDocument()
+        expect(mockFetch).toHaveBeenCalledWith('/api/auth/mfa/verify', expect.any(Object))
       })
     })
 
-    it('should show error on verification API failure', async () => {
-      await goToStep2()
-
-      mockFetch.mockRejectedValueOnce(new Error('Server error'))
-
-      const codeInput = screen.getByPlaceholderText('Codice a 6 cifre')
-      fireEvent.change(codeInput, { target: { value: '123456' } })
-
+    it('shows error when verify fails with API error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', secret: 'SEC' }),
+      })
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValueOnce({ error: 'Codice non valido' }),
+      })
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => { expect(screen.getByTestId('otp-input')).toBeInTheDocument() })
       await act(async () => {
-        fireEvent.click(screen.getByText('Verifica'))
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '999999' } })
       })
-
       await waitFor(() => {
-        expect(screen.getByText('Errore di verifica')).toBeInTheDocument()
+        expect(screen.getByRole('alert')).toHaveTextContent('Codice non valido')
       })
+    })
+
+    it('shows fallback error when verify fails without error message', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', secret: 'SEC' }),
+      })
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValueOnce({}),
+      })
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => { expect(screen.getByTestId('otp-input')).toBeInTheDocument() })
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '999999' } })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Codice non valido. Riprova.')
+      })
+    })
+
+    it('shows network error when verify throws', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ qrCode: 'data:image/png;base64,qr', secret: 'SEC' }),
+      })
+      mockFetch.mockRejectedValueOnce(new Error('Network'))
+      render(<MFASetupPageClient />)
+      await act(async () => { fireEvent.click(screen.getByText('Inizia configurazione')) })
+      await waitFor(() => { expect(screen.getByTestId('otp-input')).toBeInTheDocument() })
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '123456' } })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Errore di rete. Riprova.')
+      })
+    })
+
+    it('navigates back to step 1 on back from step 2', async () => {
+      await goToStep2()
+      fireEvent.click(screen.getByRole('button', { name: 'Indietro' }))
+      await waitFor(() => { expect(screen.getByText('Configura 2FA')).toBeInTheDocument() })
     })
   })
 
   // =========================================================================
-  // Step 3 - Backup Codes
+  // Step 3 — Backup Codes
   // =========================================================================
-  describe('Step 3 - Backup Codes', () => {
-    async function goToStep3(): Promise<void> {
-      // Step 1 -> Step 2
-      mockFetch.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValueOnce({
-          qrCode: 'data:image/png;base64,qr',
-          secret: 'SECRET',
-        }),
-      })
-
-      render(<MFASetupPageClient />)
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Inizia Configurazione'))
-      })
-
-      await waitFor(() => {
-        expect(screen.getByText('Scansiona il QR Code')).toBeInTheDocument()
-      })
-
-      // Step 2 -> Step 3
-      mockFetch.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValueOnce({
-          verified: true,
-          backupCodes: ['AAAA-BBBB', 'CCCC-DDDD', 'EEEE-FFFF', 'GGGG-HHHH'],
-        }),
-      })
-
-      const codeInput = screen.getByPlaceholderText('Codice a 6 cifre')
-      fireEvent.change(codeInput, { target: { value: '123456' } })
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Verifica'))
-      })
-
-      await waitFor(() => {
-        expect(screen.getByText('2FA Attivato!')).toBeInTheDocument()
-      })
-    }
-
-    it('should display backup codes', async () => {
-      await goToStep3()
-      expect(screen.getByText('AAAA-BBBB')).toBeInTheDocument()
-      expect(screen.getByText('CCCC-DDDD')).toBeInTheDocument()
-      expect(screen.getByText('EEEE-FFFF')).toBeInTheDocument()
-      expect(screen.getByText('GGGG-HHHH')).toBeInTheDocument()
+  describe('Step 3 — Backup Codes', () => {
+    it('shows 2FA attivato! on step 3', async () => {
+      await goToStep3(['CODE-A', 'CODE-B', 'CODE-C'])
+      expect(screen.getByText('2FA attivato!')).toBeInTheDocument()
     })
 
-    it('should show download button for backup codes', async () => {
-      await goToStep3()
-      expect(screen.getByText('Scarica codici')).toBeInTheDocument()
+    it('shows backup codes list', async () => {
+      await goToStep3(['ALPHA1', 'BRAVO2'])
+      expect(screen.getByText('ALPHA1')).toBeInTheDocument()
+      expect(screen.getByText('BRAVO2')).toBeInTheDocument()
     })
 
-    it('should show warning about saving backup codes', async () => {
+    it('shows download button', async () => {
       await goToStep3()
-      expect(screen.getByText('Codici di backup')).toBeInTheDocument()
-      expect(
-        screen.getByText(/Salva questi codici in un posto sicuro/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText('Scarica codici di backup')).toBeInTheDocument()
     })
 
-    it('should navigate to dashboard on "Vai alla Dashboard" click', async () => {
-      await goToStep3()
+    it('triggers download on click', async () => {
+      await goToStep3(['BACKUP1'])
+
+      const mockClick = jest.fn()
+      const mockA = { href: '', download: '', click: mockClick } as unknown as HTMLAnchorElement
+      jest.spyOn(document, 'createElement').mockReturnValueOnce(mockA as HTMLAnchorElement)
 
       await act(async () => {
-        fireEvent.click(screen.getByText('Vai alla Dashboard'))
+        fireEvent.click(screen.getByText('Scarica codici di backup'))
       })
 
+      expect(mockCreateObjectURL).toHaveBeenCalled()
+      expect(mockClick).toHaveBeenCalled()
+      expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+    })
+
+    it('navigates to /dashboard via go to dashboard button', async () => {
+      await goToStep3()
+      await act(async () => {
+        fireEvent.click(screen.getByText('Vai alla dashboard'))
+      })
       expect(mockPush).toHaveBeenCalledWith('/dashboard')
+    })
+
+    it('does not show back button on step 3', async () => {
+      await goToStep3()
+      expect(screen.queryByRole('button', { name: 'Indietro' })).not.toBeInTheDocument()
     })
   })
 })

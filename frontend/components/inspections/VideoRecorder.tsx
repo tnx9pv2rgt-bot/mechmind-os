@@ -555,13 +555,13 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
   // Render Helpers
   // ---------------------------------------------------------------------------
   const renderWalkaroundGuide = () => (
-    <div className='absolute top-4 left-4 right-4 bg-black/70 backdrop-blur-sm rounded-xl p-4'>
+    <div className='absolute top-4 left-4 right-4 bg-[var(--surface-primary)]/70 backdrop-blur-sm rounded-xl p-4'>
       <div className='flex items-center justify-between mb-3'>
         <div className='flex items-center gap-2'>
-          <RotateCw className='h-4 w-4 text-blue-400' />
-          <span className='text-white text-sm font-medium'>Guida 360° Walkaround</span>
+          <RotateCw className='h-4 w-4 text-[var(--status-info)]' />
+          <span className='text-[var(--text-on-brand)] text-sm font-medium'>Guida 360° Walkaround</span>
         </div>
-        <span className='text-white/80 text-xs'>{currentPosition?.labelIt || 'Completato'}</span>
+        <span className='text-[var(--text-on-brand)]/80 text-xs'>{currentPosition?.labelIt || 'Completato'}</span>
       </div>
 
       {/* Position indicators */}
@@ -575,9 +575,9 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
               <div
                 className={cn(
                   'h-full transition-all duration-300',
-                  isActive && 'bg-blue-500',
-                  isCompleted && 'bg-green-500',
-                  !isActive && !isCompleted && 'bg-white/20'
+                  isActive && 'bg-[var(--status-info)]',
+                  isCompleted && 'bg-[var(--status-success)]',
+                  !isActive && !isCompleted && 'bg-[var(--surface-secondary)]/20'
                 )}
                 style={{
                   width: isActive ? `${positionProgress}%` : '100%',
@@ -590,19 +590,19 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
 
       {/* Current position info */}
       {currentPosition && (
-        <div className='flex items-center gap-3 text-white'>
-          <div className='w-10 h-10 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center text-lg'>
+        <div className='flex items-center gap-3 text-[var(--text-on-brand)]'>
+          <div className='w-10 h-10 rounded-full bg-[var(--status-info-subtle)]0/20 border-2 border-[var(--status-info)] flex items-center justify-center text-lg'>
             {currentPosition.icon}
           </div>
           <div className='flex-1'>
             <p className='text-sm font-medium'>{currentPosition.labelIt}</p>
-            <p className='text-xs text-white/60'>{currentPosition.prompt}</p>
+            <p className='text-xs text-[var(--text-on-brand)]/60'>{currentPosition.prompt}</p>
           </div>
           <div className='text-right'>
             <p className='text-lg font-mono font-bold'>
               {formatTime(MAX_RECORDING_DURATION - recordingTime)}
             </p>
-            <p className='text-xs text-white/60'>rimanente</p>
+            <p className='text-xs text-[var(--text-on-brand)]/60'>rimanente</p>
           </div>
         </div>
       )}
@@ -616,7 +616,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
         onClick={toggleFlashlight}
         className={cn(
           'w-12 h-12 rounded-full flex items-center justify-center transition-colors',
-          flashlightOn ? 'bg-yellow-500 text-black' : 'bg-white/20 text-white hover:bg-white/30'
+          flashlightOn ? 'bg-[var(--status-warning)]/100 text-[var(--text-primary)]' : 'bg-[var(--surface-secondary)]/20 text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/30'
         )}
         disabled={state === 'recording'}
         aria-label={flashlightOn ? 'Disattiva torcia' : 'Attiva torcia'}
@@ -630,22 +630,22 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
         className={cn(
           'w-20 h-20 rounded-full flex items-center justify-center transition-transform active:scale-95',
           state === 'recording'
-            ? 'bg-red-500 hover:bg-red-600'
-            : 'bg-red-500 hover:bg-red-600 border-4 border-white'
+            ? 'bg-[var(--status-error-subtle)]0 hover:bg-[var(--status-error)]'
+            : 'bg-[var(--status-error-subtle)]0 hover:bg-[var(--status-error)] border-4 border-[var(--border-default)]'
         )}
         aria-label={state === 'recording' ? 'Ferma registrazione' : 'Avvia registrazione'}
       >
         {state === 'recording' ? (
-          <Square className='h-8 w-8 text-white fill-white' />
+          <Square className='h-8 w-8 text-[var(--text-on-brand)] fill-white' />
         ) : (
-          <Circle className='h-10 w-10 text-white fill-white' />
+          <Circle className='h-10 w-10 text-[var(--text-on-brand)] fill-white' />
         )}
       </button>
 
       {/* Camera Toggle */}
       <button
         onClick={toggleFacingMode}
-        className='w-12 h-12 rounded-full bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition-colors'
+        className='w-12 h-12 rounded-full bg-[var(--surface-secondary)]/20 text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/30 flex items-center justify-center transition-colors'
         disabled={state === 'recording'}
         aria-label='Cambia fotocamera'
       >
@@ -655,24 +655,24 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
   );
 
   const renderPreviewControls = () => (
-    <div className='bg-gray-900 p-4 space-y-4'>
+    <div className='bg-[var(--surface-primary)] p-4 space-y-4'>
       {/* Playback controls */}
       <div className='flex items-center gap-4'>
         <Button
           variant='ghost'
           size='icon'
           onClick={togglePlayPause}
-          className='text-white hover:bg-white/10'
+          className='text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/10'
           aria-label={isPlaying ? 'Pausa' : 'Riproduci'}
         >
           {isPlaying ? <Pause className='h-6 w-6' /> : <Play className='h-6 w-6' />}
         </Button>
 
         <div className='flex-1'>
-          <div className='flex items-center gap-2 text-white text-sm mb-1'>
+          <div className='flex items-center gap-2 text-[var(--text-on-brand)] text-sm mb-1'>
             <span>{formatTime(currentTime)}</span>
-            <span className='text-white/50'>/</span>
-            <span className='text-white/50'>{formatTime(duration)}</span>
+            <span className='text-[var(--text-on-brand)]/50'>/</span>
+            <span className='text-[var(--text-on-brand)]/50'>{formatTime(duration)}</span>
           </div>
           <input
             type='range'
@@ -681,7 +681,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
             step={0.1}
             value={currentTime}
             onChange={e => handleSeek(parseFloat(e.target.value))}
-            className='w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500'
+            className='w-full h-1.5 bg-[var(--surface-secondary)]/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--status-info-subtle)]0'
           />
         </div>
       </div>
@@ -695,8 +695,8 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
           className={cn(
             'gap-2',
             annotationMode
-              ? 'bg-blue-600 hover:bg-blue-700'
-              : 'border-white/20 text-white hover:bg-white/10'
+              ? 'bg-[var(--status-info)] hover:bg-[var(--status-info)]'
+              : 'border-[var(--border-default)]/20 text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/10'
           )}
         >
           <MousePointer2 className='h-4 w-4' />
@@ -704,7 +704,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
         </Button>
 
         {annotationMode && (
-          <span className='text-xs text-white/60'>Clicca sul video per aggiungere note</span>
+          <span className='text-xs text-[var(--text-on-brand)]/60'>Clicca sul video per aggiungere note</span>
         )}
       </div>
 
@@ -713,7 +713,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
         <Button
           variant='outline'
           onClick={() => setShowCancelDialog(true)}
-          className='flex-1 border-white/20 text-white hover:bg-white/10'
+          className='flex-1 border-[var(--border-default)]/20 text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/10'
         >
           <X className='h-4 w-4 mr-2' />
           Annulla
@@ -721,12 +721,12 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
         <Button
           variant='outline'
           onClick={handleRetake}
-          className='flex-1 border-white/20 text-white hover:bg-white/10'
+          className='flex-1 border-[var(--border-default)]/20 text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/10'
         >
           <RotateCcw className='h-4 w-4 mr-2' />
           Riprendi
         </Button>
-        <Button onClick={handleUpload} className='flex-1 bg-blue-600 hover:bg-blue-700 text-white'>
+        <Button onClick={handleUpload} className='flex-1 bg-[var(--status-info)] hover:bg-[var(--status-info)] text-[var(--text-on-brand)]'>
           <Upload className='h-4 w-4 mr-2' />
           Salva Video
         </Button>
@@ -735,19 +735,19 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
   );
 
   const renderUploadProgress = () => (
-    <div className='absolute inset-0 bg-black/90 flex items-center justify-center z-50'>
+    <div className='absolute inset-0 bg-[var(--surface-primary)]/90 flex items-center justify-center z-50'>
       <div className='w-full max-w-md p-8'>
         <div className='text-center mb-8'>
-          <div className='w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4'>
-            <Upload className='h-8 w-8 text-blue-500 animate-bounce' />
+          <div className='w-16 h-16 rounded-full bg-[var(--status-info-subtle)]0/20 flex items-center justify-center mx-auto mb-4'>
+            <Upload className='h-8 w-8 text-[var(--status-info)] animate-bounce' />
           </div>
-          <h3 className='text-xl font-semibold text-white mb-2'>Caricamento Video</h3>
-          <p className='text-white/60'>{uploadProgress?.phase.replace(/_/g, ' ')}</p>
+          <h3 className='text-xl font-semibold text-[var(--text-on-brand)] mb-2'>Caricamento Video</h3>
+          <p className='text-[var(--text-on-brand)]/60'>{uploadProgress?.phase.replace(/_/g, ' ')}</p>
         </div>
 
         <Progress value={uploadProgress?.percentage || 0} className='h-3 mb-4' />
 
-        <div className='flex justify-between text-sm text-white/60'>
+        <div className='flex justify-between text-sm text-[var(--text-on-brand)]/60'>
           <span>{uploadProgress?.percentage || 0}%</span>
           <span>
             {uploadProgress ? formatDuration(uploadProgress.bytesProcessed) : '0 MB'}
@@ -763,10 +763,10 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
   // Main Render
   // ---------------------------------------------------------------------------
   return (
-    <div className='relative w-full h-full min-h-[600px] bg-black rounded-xl overflow-hidden'>
+    <div className='relative w-full h-full min-h-[600px] bg-[var(--surface-primary)] rounded-xl overflow-hidden'>
       {/* Error Display */}
       {error && (
-        <div className='absolute top-4 left-4 right-4 bg-red-500/90 text-white p-4 rounded-lg flex items-center gap-3 z-50'>
+        <div className='absolute top-4 left-4 right-4 bg-[var(--status-error-subtle)]0/90 text-[var(--text-on-brand)] p-4 rounded-lg flex items-center gap-3 z-50'>
           <AlertCircle className='h-5 w-5' />
           <p className='text-sm'>{error}</p>
           <button onClick={() => setError(null)} className='ml-auto'>
@@ -782,9 +782,9 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
 
           {/* Recording indicator */}
           {state === 'recording' && (
-            <div className='absolute top-4 right-4 flex items-center gap-2 bg-black/50 px-3 py-1.5 rounded-full'>
-              <div className='w-3 h-3 rounded-full bg-red-500 animate-pulse' />
-              <span className='text-white text-sm font-mono'>{formatTime(recordingTime)}</span>
+            <div className='absolute top-4 right-4 flex items-center gap-2 bg-[var(--surface-primary)]/50 px-3 py-1.5 rounded-full'>
+              <div className='w-3 h-3 rounded-full bg-[var(--status-error-subtle)]0 animate-pulse' />
+              <span className='text-[var(--text-on-brand)] text-sm font-mono'>{formatTime(recordingTime)}</span>
             </div>
           )}
 
@@ -792,9 +792,9 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
           {renderWalkaroundGuide()}
 
           {/* Total progress bar */}
-          <div className='absolute bottom-0 left-0 right-0 h-1 bg-white/10'>
+          <div className='absolute bottom-0 left-0 right-0 h-1 bg-[var(--surface-secondary)]/10'>
             <div
-              className='h-full bg-blue-500 transition-all duration-100'
+              className='h-full bg-[var(--status-info-subtle)]0 transition-all duration-100'
               style={{ width: `${totalProgress}%` }}
             />
           </div>
@@ -808,7 +808,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
       {state === 'preview' && recordedBlob && (
         <div className='flex flex-col h-full'>
           {/* Video container with hotspots */}
-          <div className='relative flex-1 bg-black'>
+          <div className='relative flex-1 bg-[var(--surface-primary)]'>
             <video
               ref={previewVideoRef}
               className={cn('w-full h-full object-contain', annotationMode && 'cursor-crosshair')}
@@ -824,13 +824,13 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
                 className='absolute transform -translate-x-1/2 -translate-y-1/2'
                 style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
               >
-                <div className='w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center'>
-                  <span className='text-white text-xs font-bold'>
+                <div className='w-6 h-6 rounded-full bg-[var(--status-error-subtle)]0 border-2 border-[var(--border-default)] shadow-lg flex items-center justify-center'>
+                  <span className='text-[var(--text-on-brand)] text-xs font-bold'>
                     {hotspots.indexOf(hotspot) + 1}
                   </span>
                 </div>
                 <div className='absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap'>
-                  <span className='px-2 py-1 bg-black/80 text-white text-xs rounded'>
+                  <span className='px-2 py-1 bg-[var(--surface-primary)]/80 text-[var(--text-on-brand)] text-xs rounded'>
                     {formatTime(hotspot.timestamp)} - {hotspot.note}
                   </span>
                 </div>
@@ -839,7 +839,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
 
             {/* Annotation instruction overlay */}
             {annotationMode && (
-              <div className='absolute top-4 left-1/2 -translate-x-1/2 bg-blue-500/90 text-white px-4 py-2 rounded-full text-sm'>
+              <div className='absolute top-4 left-1/2 -translate-x-1/2 bg-[var(--status-info-subtle)]0/90 text-[var(--text-on-brand)] px-4 py-2 rounded-full text-sm'>
                 Clicca sul video per aggiungere un hotspot
               </div>
             )}
@@ -855,10 +855,10 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
 
       {/* Cancel Confirmation Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent className='bg-gray-900 border-gray-700 text-white'>
+        <DialogContent className='bg-[var(--surface-primary)] border-[var(--border-strong)] text-[var(--text-on-brand)]'>
           <DialogHeader>
             <DialogTitle>Eliminare il Video?</DialogTitle>
-            <DialogDescription className='text-gray-400'>
+            <DialogDescription className='text-[var(--text-tertiary)]'>
               Sei sicuro di voler annullare? Il video registrato andrà perso.
             </DialogDescription>
           </DialogHeader>
@@ -866,7 +866,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
             <Button
               variant='outline'
               onClick={() => setShowCancelDialog(false)}
-              className='border-gray-600 text-white hover:bg-gray-800'
+              className='border-[var(--border-default)] text-[var(--text-on-brand)] hover:bg-[var(--surface-primary)]'
             >
               Mantieni Video
             </Button>
@@ -885,10 +885,10 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
 
       {/* Hotspot Annotation Dialog */}
       <Dialog open={showHotspotDialog} onOpenChange={setShowHotspotDialog}>
-        <DialogContent className='bg-gray-900 border-gray-700 text-white'>
+        <DialogContent className='bg-[var(--surface-primary)] border-[var(--border-strong)] text-[var(--text-on-brand)]'>
           <DialogHeader>
             <DialogTitle>Aggiungi Hotspot</DialogTitle>
-            <DialogDescription className='text-gray-400'>
+            <DialogDescription className='text-[var(--text-tertiary)]'>
               Aggiungi una nota a {formatTime(currentTime)}
             </DialogDescription>
           </DialogHeader>
@@ -896,7 +896,7 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
             value={newHotspotNote}
             onChange={e => setNewHotspotNote(e.target.value)}
             placeholder='Inserisci la tua nota...'
-            className='w-full h-24 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none'
+            className='w-full h-24 px-3 py-2 bg-[var(--surface-primary)] border border-[var(--border-strong)] rounded-lg text-[var(--text-on-brand)] placeholder-gray-500 focus:outline-none focus:border-[var(--status-info)] resize-none'
             autoFocus
           />
           <DialogFooter className='gap-3'>
@@ -907,14 +907,14 @@ export function VideoRecorder({ inspectionId, onUploadComplete }: VideoRecorderP
                 setNewHotspotNote('');
                 setPendingHotspot(null);
               }}
-              className='border-gray-600 text-white hover:bg-gray-800'
+              className='border-[var(--border-default)] text-[var(--text-on-brand)] hover:bg-[var(--surface-primary)]'
             >
               Annulla
             </Button>
             <Button
               onClick={saveHotspot}
               disabled={!newHotspotNote.trim()}
-              className='bg-blue-600 hover:bg-blue-700'
+              className='bg-[var(--status-info)] hover:bg-[var(--status-info)]'
             >
               <Check className='h-4 w-4 mr-2' />
               Aggiungi Hotspot

@@ -61,14 +61,14 @@ export function MetricComparison({
   const deltaColor = delta.isNeutral
     ? 'text-[var(--text-tertiary)]'
     : delta.isPositive
-      ? 'text-[#34d399]'
-      : 'text-[#f87171]';
+      ? 'text-[var(--status-success)]'
+      : 'text-[var(--status-error)]';
 
   const sparklineColor = delta.isNeutral
     ? '#888888'
     : delta.isPositive
-      ? '#34d399'
-      : '#f87171';
+      ? 'var(--status-success)'
+      : 'var(--status-error)';
 
   // Generate synthetic trend data if none provided
   const sparkData = useMemo(() => {
@@ -91,7 +91,7 @@ export function MetricComparison({
             prefix={formatProps.prefix}
             suffix={formatProps.suffix}
             decimals={formatProps.decimals}
-            className="text-2xl font-bold text-white sm:text-3xl"
+            className="text-2xl font-bold text-[var(--text-on-brand)] sm:text-3xl"
           />
           <div className={`mt-1 flex items-center gap-1.5 text-sm font-medium ${deltaColor}`}>
             {!delta.isNeutral && (

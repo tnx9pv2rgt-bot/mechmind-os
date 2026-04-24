@@ -189,7 +189,7 @@ export function AiChatPanel(): React.ReactElement {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-[9000] w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center group"
+            className="fixed bottom-6 right-6 z-[9000] w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] text-[var(--text-on-brand)] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center group"
             aria-label="Apri assistente AI"
           >
             <Sparkles className="h-6 w-6 group-hover:scale-110 transition-transform" />
@@ -206,27 +206,27 @@ export function AiChatPanel(): React.ReactElement {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className={cn(
-              'fixed z-[9000] bg-white dark:bg-[var(--surface-primary)] rounded-2xl shadow-2xl border border-[var(--border-default)] dark:border-[var(--border-default)] flex flex-col overflow-hidden',
+              'fixed z-[9000] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-2xl shadow-2xl border border-[var(--border-default)] dark:border-[var(--border-default)] flex flex-col overflow-hidden',
               isExpanded
                 ? 'bottom-4 right-4 left-4 top-4 sm:left-auto sm:top-4 sm:w-[560px]'
                 : 'bottom-6 right-6 w-[400px] h-[560px]'
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-default)] bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-default)] bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] text-[var(--text-on-brand)] rounded-t-2xl">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[var(--surface-secondary)]/20 flex items-center justify-center">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold">MechMind AI</h3>
-                  <p className="text-[11px] text-white/70">Assistente intelligente</p>
+                  <p className="text-[11px] text-[var(--text-on-brand)]/70">Assistente intelligente</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={clearChat}
-                  className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-secondary)]/20 transition-colors"
                   aria-label="Pulisci chat"
                   title="Pulisci chat"
                 >
@@ -234,14 +234,14 @@ export function AiChatPanel(): React.ReactElement {
                 </button>
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-secondary)]/20 transition-colors"
                   aria-label={isExpanded ? 'Riduci' : 'Espandi'}
                 >
                   {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-secondary)]/20 transition-colors"
                   aria-label="Chiudi"
                 >
                   <X className="h-4 w-4" />
@@ -253,7 +253,7 @@ export function AiChatPanel(): React.ReactElement {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full gap-4 px-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--status-info)]/10 to-[var(--brand)]/10 dark:from-[var(--status-info)]/40/30 dark:to-[var(--brand)]/40/30 flex items-center justify-center">
                     <Sparkles className="h-8 w-8 text-[var(--brand)] dark:text-[var(--brand)]" />
                   </div>
                   <div className="text-center">
@@ -271,7 +271,7 @@ export function AiChatPanel(): React.ReactElement {
                       <button
                         key={action.label}
                         onClick={() => sendMessage(action.prompt)}
-                        className="text-left px-3 py-2.5 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] hover:bg-white dark:hover:bg-[var(--surface-hover)] transition-colors"
+                        className="text-left px-3 py-2.5 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
                       >
                         <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
                           {action.label}
@@ -291,15 +291,15 @@ export function AiChatPanel(): React.ReactElement {
                   )}
                 >
                   {message.role === 'assistant' && (
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shrink-0 mt-0.5">
-                      <Bot className="h-3.5 w-3.5 text-white" />
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center shrink-0 mt-0.5">
+                      <Bot className="h-3.5 w-3.5 text-[var(--text-on-brand)]" />
                     </div>
                   )}
                   <div
                     className={cn(
                       'max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                       message.role === 'user'
-                        ? 'bg-[var(--brand)] text-white rounded-br-md'
+                        ? 'bg-[var(--brand)] text-[var(--text-on-brand)] rounded-br-md'
                         : 'bg-[var(--surface-hover)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] rounded-bl-md'
                     )}
                   >
@@ -311,7 +311,7 @@ export function AiChatPanel(): React.ReactElement {
                     )}
                   </div>
                   {message.role === 'user' && (
-                    <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-[var(--surface-hover)] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--border-default)] dark:bg-[var(--surface-hover)] flex items-center justify-center shrink-0 mt-0.5">
                       <User className="h-3.5 w-3.5 text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]" />
                     </div>
                   )}
@@ -333,13 +333,13 @@ export function AiChatPanel(): React.ReactElement {
                   onKeyDown={handleKeyDown}
                   placeholder="Scrivi un messaggio..."
                   rows={1}
-                  className="flex-1 resize-none rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 focus:border-[var(--brand)] transition-all"
+                  className="flex-1 resize-none rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 focus:border-[var(--brand)] transition-all"
                   style={{ maxHeight: '120px' }}
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="shrink-0 w-10 h-10 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="shrink-0 w-10 h-10 rounded-xl bg-[var(--brand)] text-[var(--text-on-brand)] flex items-center justify-center hover:bg-[var(--brand)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   aria-label="Invia messaggio"
                 >
                   {isLoading ? (

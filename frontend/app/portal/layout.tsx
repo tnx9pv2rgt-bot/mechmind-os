@@ -60,14 +60,14 @@ function LoadingScreen(): React.ReactElement {
         animate={{ opacity: 1, scale: 1 }}
         className='text-center'
       >
-        <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
+        <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center mx-auto mb-4'>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-white border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--border-default)] border-t-transparent rounded-full'
           />
         </div>
-        <p className='text-apple-gray dark:text-[var(--text-secondary)]'>Caricamento...</p>
+        <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Caricamento...</p>
       </motion.div>
     </div>
   );
@@ -148,7 +148,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
       <SkipLink targetId='main-content' />
       <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)]'>
         {/* ===== HEADER ===== */}
-        <header className='sticky top-0 z-50 bg-white/80 dark:bg-[var(--surface-tertiary)]/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-[var(--border-default)]/50'>
+        <header className='sticky top-0 z-50 bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]/80 backdrop-blur-xl border-b border-[var(--border-default)]/50 dark:border-[var(--border-default)]/50'>
           <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
             <div className='flex items-center justify-between h-16'>
               {/* Logo */}
@@ -156,10 +156,10 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                 href='/portal/dashboard'
                 className='flex items-center gap-3 group'
               >
-                <div className='w-9 h-9 rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center'>
-                  <Car className='h-5 w-5 text-white' />
+                <div className='w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center'>
+                  <Car className='h-5 w-5 text-[var(--text-on-brand)]' />
                 </div>
-                <span className='text-base font-semibold text-apple-dark dark:text-[var(--text-primary)] hidden sm:block'>
+                <span className='text-base font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] hidden sm:block'>
                   Portale Clienti
                 </span>
               </Link>
@@ -174,8 +174,8 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                       href={item.href}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                         isActive
-                          ? 'bg-apple-blue/10 text-apple-blue'
-                          : 'text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-[var(--surface-elevated)]'
+                          ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
+                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-elevated)]'
                       }`}
                     >
                       <item.icon className='h-4 w-4' />
@@ -189,7 +189,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
               <div className='flex items-center gap-2'>
                 <button
                   onClick={handleLogout}
-                  className='hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-apple-gray hover:text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors min-h-[44px]'
+                  className='hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[var(--text-tertiary)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)] transition-colors min-h-[44px]'
                 >
                   <LogOut className='h-4 w-4' />
                   <span className='hidden lg:inline'>Esci</span>
@@ -198,7 +198,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                 {/* Mobile menu button */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className='md:hidden p-2 rounded-lg text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] min-w-[44px] min-h-[44px] flex items-center justify-center'
+                  className='md:hidden p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] min-w-[44px] min-h-[44px] flex items-center justify-center'
                   aria-label={mobileMenuOpen ? 'Chiudi menu' : 'Apri menu'}
                 >
                   {mobileMenuOpen ? <X className='h-5 w-5' /> : <Menu className='h-5 w-5' />}
@@ -214,7 +214,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className='md:hidden border-t border-gray-200/50 dark:border-[var(--border-default)]/50 bg-white dark:bg-[var(--surface-tertiary)]'
+                className='md:hidden border-t border-[var(--border-default)]/50 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]'
               >
                 <nav className='px-4 py-3 space-y-1'>
                   {navItems.map(item => {
@@ -225,8 +225,8 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                         href={item.href}
                         className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
                           isActive
-                            ? 'bg-apple-blue/10 text-apple-blue'
-                            : 'text-apple-gray hover:text-apple-dark dark:hover:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-[var(--surface-elevated)]'
+                            ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
+                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-elevated)]'
                         }`}
                       >
                         <item.icon className='h-5 w-5' />
@@ -236,7 +236,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                   })}
                   <button
                     onClick={handleLogout}
-                    className='flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full min-h-[44px]'
+                    className='flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)] transition-colors w-full min-h-[44px]'
                   >
                     <LogOut className='h-5 w-5' />
                     <span>Esci</span>
@@ -263,13 +263,13 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
         </AnimatePresence>
 
         {/* ===== FOOTER ===== */}
-        <footer className='border-t border-gray-200/50 dark:border-[var(--border-default)]/50 mt-auto'>
+        <footer className='border-t border-[var(--border-default)]/50 dark:border-[var(--border-default)]/50 mt-auto'>
           <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-            <div className='flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-apple-gray dark:text-[var(--text-secondary)]'>
+            <div className='flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               <p>Portale Clienti MechMind OS</p>
               <a
                 href='mailto:supporto@mechmind.it'
-                className='text-apple-blue hover:underline min-h-[44px] flex items-center'
+                className='text-[var(--brand)] hover:underline min-h-[44px] flex items-center'
               >
                 Hai bisogno di aiuto? Contattaci
               </a>
@@ -278,7 +278,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
         </footer>
 
         {/* ===== MOBILE BOTTOM NAV ===== */}
-        <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[var(--surface-tertiary)]/90 backdrop-blur-xl border-t border-gray-200/50 dark:border-[var(--border-default)]/50 z-40 safe-area-bottom'>
+        <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-[var(--surface-secondary)]/90 dark:bg-[var(--surface-tertiary)]/90 backdrop-blur-xl border-t border-[var(--border-default)]/50 dark:border-[var(--border-default)]/50 z-40 safe-area-bottom'>
           <div className='flex items-center justify-around py-2'>
             {navItems.slice(0, 5).map(item => {
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
@@ -287,7 +287,7 @@ export default function PortalRootLayout({ children }: { children: React.ReactNo
                   key={item.href}
                   href={item.href}
                   className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg min-w-[44px] min-h-[44px] justify-center ${
-                    isActive ? 'text-apple-blue' : 'text-apple-gray'
+                    isActive ? 'text-[var(--brand)]' : 'text-[var(--text-tertiary)]'
                   }`}
                 >
                   <item.icon className='h-5 w-5' />

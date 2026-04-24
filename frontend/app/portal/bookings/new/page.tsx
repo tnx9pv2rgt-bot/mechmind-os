@@ -213,15 +213,15 @@ export default function NewBookingPage() {
         >
           <Link
             href='/portal/bookings'
-            className='inline-flex items-center gap-2 text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors mb-4'
+            className='inline-flex items-center gap-2 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors mb-4'
           >
             <ArrowLeft className='h-4 w-4' />
             Torna alle prenotazioni
           </Link>
-          <h1 className='text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+          <h1 className='text-2xl sm:text-3xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             Nuova Prenotazione
           </h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
             Prenota un appuntamento in officina
           </p>
         </motion.div>
@@ -235,8 +235,8 @@ export default function NewBookingPage() {
                 w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all
                 ${
                   step >= s
-                    ? 'bg-apple-blue text-white'
-                    : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-500 dark:text-[var(--text-secondary)]'
+                    ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                    : 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                 }
               `}
               >
@@ -244,7 +244,7 @@ export default function NewBookingPage() {
               </div>
               {s < 4 && (
                 <div
-                  className={`w-12 h-0.5 mx-1 ${step > s ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[var(--border-default)]'}`}
+                  className={`w-12 h-0.5 mx-1 ${step > s ? 'bg-[var(--brand)]' : 'bg-[var(--border-default)] dark:bg-[var(--border-default)]'}`}
                 />
               )}
             </div>
@@ -261,8 +261,8 @@ export default function NewBookingPage() {
           {step === 1 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-                  <Car className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                  <Car className='h-5 w-5 text-[var(--brand)]' />
                   Seleziona il veicolo
                 </h2>
 
@@ -275,35 +275,35 @@ export default function NewBookingPage() {
                         w-full p-4 rounded-xl border-2 text-left transition-all
                         ${
                           formData.vehicleId === vehicle.id
-                            ? 'border-apple-blue bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-[var(--border-default)] hover:border-apple-blue/50'
+                            ? 'border-[var(--brand)] bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]'
+                            : 'border-[var(--border-default)] dark:border-[var(--border-default)] hover:border-[var(--brand)]/50'
                         }
                       `}
                     >
                       <div className='flex items-center gap-4'>
-                        <div className='w-12 h-12 rounded-xl bg-gray-100 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
-                          <Car className='h-6 w-6 text-apple-gray' />
+                        <div className='w-12 h-12 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] flex items-center justify-center'>
+                          <Car className='h-6 w-6 text-[var(--text-tertiary)]' />
                         </div>
                         <div className='flex-1'>
-                          <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {vehicle.make} {vehicle.model}
                           </p>
-                          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {vehicle.licensePlate} • {vehicle.year}
                           </p>
                         </div>
                         {formData.vehicleId === vehicle.id && (
-                          <CheckCircle className='h-5 w-5 text-apple-blue' />
+                          <CheckCircle className='h-5 w-5 text-[var(--brand)]' />
                         )}
                       </div>
                     </button>
                   ))}
                 </div>
 
-                <div className='mt-4 p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-center'>
-                  <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                <div className='mt-4 p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl text-center'>
+                  <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Vuoi aggiungere un nuovo veicolo?{' '}
-                    <Link href='/portal/settings' className='text-apple-blue hover:underline'>
+                    <Link href='/portal/settings' className='text-[var(--brand)] hover:underline'>
                       Vai alle impostazioni
                     </Link>
                   </p>
@@ -315,8 +315,8 @@ export default function NewBookingPage() {
           {step === 2 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-                  <FileText className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                  <FileText className='h-5 w-5 text-[var(--brand)]' />
                   Tipo di servizio
                 </h2>
 
@@ -329,23 +329,23 @@ export default function NewBookingPage() {
                         p-4 rounded-xl border-2 text-left transition-all
                         ${
                           formData.type === service.type
-                            ? 'border-apple-blue bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-[var(--border-default)] hover:border-apple-blue/50'
+                            ? 'border-[var(--brand)] bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]'
+                            : 'border-[var(--border-default)] dark:border-[var(--border-default)] hover:border-[var(--brand)]/50'
                         }
                       `}
                     >
                       <div className='flex items-start justify-between'>
                         <div>
-                          <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {service.label}
                           </p>
-                          <p className='text-sm text-apple-gray mt-1'>{service.description}</p>
-                          <p className='text-xs text-apple-blue mt-2'>
+                          <p className='text-sm text-[var(--text-tertiary)] mt-1'>{service.description}</p>
+                          <p className='text-xs text-[var(--brand)] mt-2'>
                             Durata: ~{service.duration} min
                           </p>
                         </div>
                         {formData.type === service.type && (
-                          <CheckCircle className='h-5 w-5 text-apple-blue flex-shrink-0' />
+                          <CheckCircle className='h-5 w-5 text-[var(--brand)] flex-shrink-0' />
                         )}
                       </div>
                     </button>
@@ -358,15 +358,15 @@ export default function NewBookingPage() {
           {step === 3 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-                  <Calendar className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                  <Calendar className='h-5 w-5 text-[var(--brand)]' />
                   Data e ora
                 </h2>
 
                 <div className='space-y-6'>
                   {/* Date Picker */}
                   <div>
-                    <Label className='text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>Data</Label>
+                    <Label className='text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'>Data</Label>
                     <Input
                       type='date'
                       value={formData.date}
@@ -379,7 +379,7 @@ export default function NewBookingPage() {
                   {/* Time Slots */}
                   {formData.date && (
                     <div>
-                      <Label className='text-apple-dark dark:text-[var(--text-primary)] mb-3 block'>
+                      <Label className='text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3 block'>
                         Orario
                       </Label>
                       <div className='grid grid-cols-3 sm:grid-cols-6 gap-2'>
@@ -391,8 +391,8 @@ export default function NewBookingPage() {
                               p-2 rounded-lg text-sm font-medium transition-all
                               ${
                                 formData.time === time
-                                  ? 'bg-apple-blue text-white'
-                                  : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)] hover:bg-gray-200 dark:hover:bg-[var(--surface-active)]'
+                                  ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                                  : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)] hover:bg-[var(--border-default)] dark:hover:bg-[var(--surface-active)]'
                               }
                             `}
                           >
@@ -410,14 +410,14 @@ export default function NewBookingPage() {
           {step === 4 && (
             <AppleCard>
               <AppleCardContent className='p-6'>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-                  <FileText className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                  <FileText className='h-5 w-5 text-[var(--brand)]' />
                   Note aggiuntive
                 </h2>
 
                 <div className='space-y-6'>
                   <div>
-                    <Label className='text-apple-dark dark:text-[var(--text-primary)] mb-2 block'>
+                    <Label className='text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2 block'>
                       Descrivi il problema o le esigenze (opzionale)
                     </Label>
                     <Textarea
@@ -430,23 +430,23 @@ export default function NewBookingPage() {
                   </div>
 
                   {/* Summary */}
-                  <div className='p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl space-y-2'>
-                    <h3 className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>Riepilogo</h3>
-                    <div className='text-sm text-apple-gray dark:text-[var(--text-secondary)] space-y-1'>
+                  <div className='p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl space-y-2'>
+                    <h3 className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Riepilogo</h3>
+                    <div className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] space-y-1'>
                       <p>
-                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Veicolo:</span>{' '}
+                        <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Veicolo:</span>{' '}
                         {selectedVehicle?.make} {selectedVehicle?.model}
                       </p>
                       <p>
-                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Servizio:</span>{' '}
+                        <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Servizio:</span>{' '}
                         {selectedService?.label}
                       </p>
                       <p>
-                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Data:</span>{' '}
+                        <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Data:</span>{' '}
                         {formData.date ? new Date(formData.date).toLocaleDateString('it-IT') : '-'}
                       </p>
                       <p>
-                        <span className='text-apple-dark dark:text-[var(--text-primary)]'>Ora:</span>{' '}
+                        <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ora:</span>{' '}
                         {formData.time || '-'}
                       </p>
                     </div>
@@ -459,13 +459,13 @@ export default function NewBookingPage() {
           {step === 5 && (
             <AppleCard>
               <AppleCardContent className='p-8 text-center'>
-                <div className='w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mx-auto mb-6'>
-                  <CheckCircle className='h-10 w-10 text-apple-green' />
+                <div className='w-20 h-20 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] flex items-center justify-center mx-auto mb-6'>
+                  <CheckCircle className='h-10 w-10 text-[var(--status-success)]' />
                 </div>
-                <h2 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+                <h2 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                   Prenotazione Confermata!
                 </h2>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-6'>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-6'>
                   Ti abbiamo inviato un&apos;email di conferma con tutti i dettagli.
                 </p>
                 <div className='flex flex-col sm:flex-row gap-3 justify-center'>
@@ -483,13 +483,13 @@ export default function NewBookingPage() {
 
         {/* Validation / Submit Errors */}
         {(Object.keys(errors).length > 0 || submitError) && (
-          <div className='mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl space-y-1'>
+          <div className='mt-4 p-4 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/50 rounded-xl space-y-1'>
             {Object.values(errors).map((msg, i) => (
-              <p key={i} className='text-sm text-apple-red'>
+              <p key={i} className='text-sm text-[var(--status-error)]'>
                 {msg}
               </p>
             ))}
-            {submitError && <p className='text-sm text-apple-red'>{submitError}</p>}
+            {submitError && <p className='text-sm text-[var(--status-error)]'>{submitError}</p>}
           </div>
         )}
 

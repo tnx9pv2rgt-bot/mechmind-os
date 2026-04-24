@@ -639,21 +639,21 @@ export function CustomerFormComplete() {
   }
 
   return (
-    <div className='fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 overflow-hidden'>
+    <div className='fixed inset-0 bg-[var(--surface-tertiary)] flex items-center justify-center p-4 overflow-hidden'>
       <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
         <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-purple-100/40 via-blue-100/30 to-green-100/40 blur-3xl' />
+          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-[var(--brand)]/10 via-[var(--brand)]/5 to-[var(--brand)]/5 blur-3xl' />
           <motion.div
             className='absolute'
             animate={{ scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <Users className='w-[45%] h-[45%] text-purple-200/30' strokeWidth={0.5} />
+            <Users className='w-[45%] h-[45%] text-[var(--brand)]/20' strokeWidth={0.5} />
           </motion.div>
         </div>
 
         <motion.div
-          className='relative z-10 w-full h-full bg-white/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 overflow-hidden'
+          className='relative z-10 w-full h-full bg-[var(--surface-elevated)] backdrop-blur-2xl rounded-[40px] shadow-2xl border border-[var(--border-strong)] overflow-hidden'
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -661,22 +661,22 @@ export function CustomerFormComplete() {
           <div className='px-10 pt-8 pb-4'>
             <div className='flex items-center justify-between mb-6'>
               <div>
-                <h1 className='text-3xl font-semibold text-gray-900 tracking-tight'>
+                <h1 className='text-3xl font-semibold text-[var(--text-primary)] tracking-tight'>
                   Nuovo Cliente
                 </h1>
-                <p className='text-gray-500 mt-1'>Registra un nuovo cliente nel sistema</p>
+                <p className='text-[var(--text-secondary)] mt-1'>Registra un nuovo cliente nel sistema</p>
               </div>
               <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-400'>Step</span>
-                <span className='text-2xl font-bold text-purple-600'>{currentStep + 1}</span>
-                <span className='text-gray-400'>/</span>
-                <span className='text-gray-400'>{totalSteps}</span>
+                <span className='text-sm text-[var(--text-tertiary)]'>Step</span>
+                <span className='text-2xl font-bold text-[var(--brand)]'>{currentStep + 1}</span>
+                <span className='text-[var(--text-tertiary)]'>/</span>
+                <span className='text-[var(--text-tertiary)]'>{totalSteps}</span>
               </div>
             </div>
 
-            <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+            <div className='h-2 bg-[var(--border-strong)] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-gradient-to-r from-purple-500 to-blue-500'
+                className='h-full bg-[var(--brand)]'
                 initial={{ width: 0 }}
                 animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
                 transition={{ duration: 0.5 }}
@@ -696,18 +696,18 @@ export function CustomerFormComplete() {
                   onClick={() => idx < currentStep && goToStep(idx)}
                   className={`flex items-center gap-2 transition-all ${
                     idx <= currentStep
-                      ? 'text-purple-600 cursor-pointer hover:text-purple-700'
-                      : 'text-gray-400'
+                      ? 'text-[var(--brand)] cursor-pointer hover:opacity-70'
+                      : 'text-[var(--text-tertiary)]'
                   } ${idx < currentStep ? 'hover:scale-105' : ''}`}
                   disabled={idx > currentStep}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                       idx < currentStep
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-[var(--status-success)] text-[var(--text-on-brand)]'
                         : idx === currentStep
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-200 text-gray-500'
+                          ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                          : 'bg-[var(--border-strong)] text-[var(--text-tertiary)]'
                     }`}
                   >
                     {idx < currentStep ? <Check className='w-4 h-4' /> : idx + 1}
@@ -763,13 +763,13 @@ export function CustomerFormComplete() {
             </AnimatePresence>
           </div>
 
-          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 backdrop-blur-xl border-t border-gray-200/50'>
+          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-[var(--surface-elevated)] backdrop-blur-xl border-t border-[var(--border-strong)]'>
             <div className='flex items-center justify-between'>
               <Button
                 variant='outline'
                 onClick={prevStep}
                 disabled={currentStep === 0}
-                className='rounded-full px-6 h-12 border-gray-300 hover:bg-gray-100'
+                className='rounded-full px-6 h-12 border-[var(--border-default)] hover:bg-[var(--surface-hover)]'
               >
                 <ChevronLeft className='w-5 h-5 mr-2' />
                 Indietro
@@ -778,7 +778,7 @@ export function CustomerFormComplete() {
               {currentStep < totalSteps - 1 ? (
                 <Button
                   onClick={nextStep}
-                  className='rounded-full px-8 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all'
+                  className='rounded-full px-8 h-12 bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)] shadow-lg hover:shadow-xl transition-all'
                 >
                   Avanti
                   <ChevronRight className='w-5 h-5 ml-2' />
@@ -787,7 +787,7 @@ export function CustomerFormComplete() {
                 <Button
                   onClick={handleSubmit(onSubmit)}
                   disabled={isSubmitting}
-                  className='rounded-full px-8 h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all'
+                  className='rounded-full px-8 h-12 bg-[var(--status-success)] hover:opacity-90 text-[var(--text-on-brand)] shadow-lg hover:shadow-xl transition-all'
                 >
                   {isSubmitting ? (
                     <>
@@ -827,12 +827,12 @@ function Step0CustomerType(props: Record<string, unknown>) {
       className='space-y-8'
     >
       <div className='flex items-center gap-3 mb-6'>
-        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center'>
-          <Users className='w-6 h-6 text-white' />
+        <div className='w-12 h-12 rounded-2xl bg-[var(--brand)] flex items-center justify-center'>
+          <Users className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-gray-900'>Tipo di Cliente</h2>
-          <p className='text-gray-500 text-sm'>Seleziona la tipologia di account da creare</p>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Tipo di Cliente</h2>
+          <p className='text-[var(--text-secondary)] text-sm'>Seleziona la tipologia di account da creare</p>
         </div>
       </div>
 
@@ -843,30 +843,30 @@ function Step0CustomerType(props: Record<string, unknown>) {
           onClick={() => setValue('customerType', 'private')}
           className={`p-8 rounded-3xl border-2 transition-all text-center ${
             customerType === 'private'
-              ? 'border-purple-500 bg-purple-50 shadow-lg shadow-purple-200'
-              : 'border-gray-200 hover:border-gray-300 bg-white/80'
+              ? 'border-[var(--brand)] bg-[var(--brand-subtle)] shadow-lg shadow-[var(--brand)]/20'
+              : 'border-[var(--border-default)] hover:border-[var(--border-strong)] bg-[var(--surface-secondary)]'
           }`}
         >
           <motion.div
             className={`w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center ${
               customerType === 'private'
-                ? 'bg-gradient-to-br from-purple-500 to-pink-500'
-                : 'bg-gray-100'
+                ? 'bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)]'
+                : 'bg-[var(--surface-secondary)]'
             }`}
             animate={customerType === 'private' ? { rotate: [0, -5, 5, 0] } : {}}
             transition={{ duration: 0.5 }}
           >
             <User
-              className={`w-10 h-10 ${customerType === 'private' ? 'text-white' : 'text-gray-400'}`}
+              className={`w-10 h-10 ${customerType === 'private' ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-tertiary)]'}`}
             />
           </motion.div>
-          <h3 className='text-xl font-semibold text-gray-900 mb-2'>Privato</h3>
-          <p className='text-gray-500 text-sm mb-4'>Persona fisica</p>
+          <h3 className='text-xl font-semibold text-[var(--text-primary)] mb-2'>Privato</h3>
+          <p className='text-[var(--text-tertiary)] text-sm mb-4'>Persona fisica</p>
           {customerType === 'private' && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className='inline-flex items-center gap-1 text-purple-600 text-sm font-medium px-4 py-1.5 bg-purple-100 rounded-full'
+              className='inline-flex items-center gap-1 text-[var(--brand)] text-sm font-medium px-4 py-1.5 bg-[var(--brand)]/10 rounded-full'
             >
               <Check className='w-4 h-4' />
               Selezionato
@@ -880,30 +880,30 @@ function Step0CustomerType(props: Record<string, unknown>) {
           onClick={() => setValue('customerType', 'business')}
           className={`p-8 rounded-3xl border-2 transition-all text-center ${
             customerType === 'business'
-              ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-200'
-              : 'border-gray-200 hover:border-gray-300 bg-white/80'
+              ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)] shadow-lg shadow-blue-200'
+              : 'border-[var(--border-default)] hover:border-[var(--border-strong)] bg-[var(--surface-secondary)]'
           }`}
         >
           <motion.div
             className={`w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center ${
               customerType === 'business'
-                ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
-                : 'bg-gray-100'
+                ? 'bg-gradient-to-br from-[var(--status-info)] to-[var(--status-info)]'
+                : 'bg-[var(--surface-secondary)]'
             }`}
             animate={customerType === 'business' ? { rotate: [0, -5, 5, 0] } : {}}
             transition={{ duration: 0.5 }}
           >
             <Building2
-              className={`w-10 h-10 ${customerType === 'business' ? 'text-white' : 'text-gray-400'}`}
+              className={`w-10 h-10 ${customerType === 'business' ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-tertiary)]'}`}
             />
           </motion.div>
-          <h3 className='text-xl font-semibold text-gray-900 mb-2'>Partita IVA</h3>
-          <p className='text-gray-500 text-sm mb-4'>Azienda o professionista</p>
+          <h3 className='text-xl font-semibold text-[var(--text-primary)] mb-2'>Partita IVA</h3>
+          <p className='text-[var(--text-tertiary)] text-sm mb-4'>Azienda o professionista</p>
           {customerType === 'business' && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className='inline-flex items-center gap-1 text-blue-600 text-sm font-medium px-4 py-1.5 bg-blue-100 rounded-full'
+              className='inline-flex items-center gap-1 text-[var(--status-info)] text-sm font-medium px-4 py-1.5 bg-[var(--status-info-subtle)] rounded-full'
             >
               <Check className='w-4 h-4' />
               Selezionato
@@ -912,32 +912,32 @@ function Step0CustomerType(props: Record<string, unknown>) {
         </motion.button>
       </div>
 
-      <div className='flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500'>
+      <div className='flex flex-wrap items-center justify-center gap-4 text-sm text-[var(--text-tertiary)]'>
         <motion.div
-          className='flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] rounded-full'
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <ShieldCheck className='w-4 h-4 text-green-500' />
+          <ShieldCheck className='w-4 h-4 text-[var(--status-success)]' />
           <span>15,000+ clienti soddisfatti</span>
         </motion.div>
         <motion.div
-          className='flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] rounded-full'
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Star className='w-4 h-4 text-amber-500 fill-amber-500' />
+          <Star className='w-4 h-4 text-[var(--status-warning)] fill-amber-500' />
           <span>4.8/5 stelle (2,340 recensioni)</span>
         </motion.div>
         <motion.div
-          className='flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] rounded-full'
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Award className='w-4 h-4 text-purple-500' />
+          <Award className='w-4 h-4 text-[var(--brand)]' />
           <span>Garantito al 100%</span>
         </motion.div>
       </div>
@@ -997,11 +997,11 @@ function Step1Credentials({
   };
 
   const strengthColors = [
-    'bg-red-500',
-    'bg-orange-500',
-    'bg-yellow-500',
-    'bg-green-500',
-    'bg-emerald-500',
+    'bg-[var(--status-error)]',
+    'bg-[var(--status-warning)]',
+    'bg-[var(--status-warning)]',
+    'bg-[var(--status-success)]',
+    'bg-[var(--status-success)]',
   ];
   const strengthLabels = ['Molto debole', 'Debole', 'Media', 'Forte', 'Eccellente'];
 
@@ -1013,28 +1013,28 @@ function Step1Credentials({
       className='space-y-6'
     >
       <div className='flex items-center gap-3 mb-6'>
-        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center'>
-          <LockKeyhole className='w-6 h-6 text-white' />
+        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center'>
+          <LockKeyhole className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-gray-900'>Credenziali di Accesso</h2>
-          <p className='text-gray-500 text-sm'>Inserisci i dati per l&apos;account</p>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Credenziali di Accesso</h2>
+          <p className='text-[var(--text-tertiary)] text-sm'>Inserisci i dati per l&apos;account</p>
         </div>
       </div>
 
       {/* Email */}
-      <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
+      <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
         <Controller
           name='email'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
                 Email *{' '}
-                <span className='text-gray-400 font-normal'>(Ti invieremo link di verifica)</span>
+                <span className='text-[var(--text-tertiary)] font-normal'>(Ti invieremo link di verifica)</span>
               </Label>
               <div className='relative'>
-                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   type='email'
@@ -1042,21 +1042,21 @@ function Step1Credentials({
                   onBlur={() => trigger('email')}
                   className={`pl-12 h-14 rounded-xl transition-all ${
                     emailStatus === 'available'
-                      ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20'
+                      ? 'border-[var(--status-success)] focus:border-[var(--status-success)] focus:ring-[var(--status-success)]/20'
                       : emailStatus === 'taken'
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                        : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500/20'
+                        ? 'border-[var(--status-error)] focus:border-[var(--status-error)] focus:ring-[var(--status-error)]/20'
+                        : 'border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-[var(--brand)]/20'
                   }`}
                   placeholder='nome@example.com'
                 />
                 <div className='absolute right-4 top-1/2 -translate-y-1/2'>
                   {emailStatus === 'checking' && (
-                    <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
+                    <Loader2 className='w-5 h-5 text-[var(--text-tertiary)] animate-spin' />
                   )}
                   {emailStatus === 'available' && (
-                    <CheckCircle2 className='w-5 h-5 text-green-500' />
+                    <CheckCircle2 className='w-5 h-5 text-[var(--status-success)]' />
                   )}
-                  {emailStatus === 'taken' && <XCircle className='w-5 h-5 text-red-500' />}
+                  {emailStatus === 'taken' && <XCircle className='w-5 h-5 text-[var(--status-error)]' />}
                 </div>
               </div>
               <AnimatePresence>
@@ -1065,7 +1065,7 @@ function Step1Credentials({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className='text-green-600 text-sm mt-2 flex items-center gap-1'
+                    className='text-[var(--status-success)] text-sm mt-2 flex items-center gap-1'
                   >
                     <Check className='w-4 h-4' />
                     Email disponibile
@@ -1076,18 +1076,18 @@ function Step1Credentials({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className='text-red-600 text-sm mt-2 flex items-center gap-1'
+                    className='text-[var(--status-error)] text-sm mt-2 flex items-center gap-1'
                   >
                     <AlertCircle className='w-4 h-4' />
                     Email già registrata.{' '}
-                    <a href='/auth' className='underline hover:text-red-700'>
+                    <a href='/auth' className='underline hover:text-[var(--status-error)]'>
                       Accedi
                     </a>
                   </motion.p>
                 )}
               </AnimatePresence>
               {errors.email && (
-                <p className='text-red-500 text-sm mt-2'>{errors.email.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.email.message as string}</p>
               )}
             </div>
           )}
@@ -1095,25 +1095,25 @@ function Step1Credentials({
       </div>
 
       {/* Password */}
-      <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
+      <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
         <Controller
           name='password'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>Password *</Label>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Password *</Label>
               <div className='relative'>
-                <Lock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                <Lock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   type={showPassword ? 'text' : 'password'}
-                  className='pl-12 pr-12 h-14 rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500/20'
+                  className='pl-12 pr-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-[var(--brand)]/20'
                   placeholder='Minimo 8 caratteri'
                 />
                 <button
                   type='button'
                   onClick={() => setShowPassword(!showPassword)}
-                  className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'
+                  className='absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors'
                 >
                   {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
                 </button>
@@ -1129,22 +1129,22 @@ function Step1Credentials({
                   >
                     <div>
                       <div className='flex items-center justify-between mb-1'>
-                        <span className='text-xs text-gray-500'>Sicurezza password:</span>
+                        <span className='text-xs text-[var(--text-tertiary)]'>Sicurezza password:</span>
                         <span
                           className={`text-xs font-medium ${
                             passwordStrength.score <= 1
-                              ? 'text-red-500'
+                              ? 'text-[var(--status-error)]'
                               : passwordStrength.score === 2
-                                ? 'text-orange-500'
+                                ? 'text-[var(--status-warning)]'
                                 : passwordStrength.score === 3
-                                  ? 'text-yellow-500'
-                                  : 'text-green-500'
+                                  ? 'text-[var(--status-warning)]'
+                                  : 'text-[var(--status-success)]'
                           }`}
                         >
                           {strengthLabels[passwordStrength.score]}
                         </span>
                       </div>
-                      <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+                      <div className='h-2 bg-[var(--border-default)] rounded-full overflow-hidden'>
                         <motion.div
                           className={`h-full transition-all duration-500 ${strengthColors[passwordStrength.score]}`}
                           initial={{ width: 0 }}
@@ -1153,11 +1153,11 @@ function Step1Credentials({
                       </div>
                     </div>
 
-                    <div className='flex items-center gap-2 p-3 bg-gray-50 rounded-xl'>
-                      <Clock className='w-4 h-4 text-gray-500' />
-                      <span className='text-sm text-gray-600'>
+                    <div className='flex items-center gap-2 p-3 bg-[var(--surface-secondary)] rounded-xl'>
+                      <Clock className='w-4 h-4 text-[var(--text-tertiary)]' />
+                      <span className='text-sm text-[var(--text-secondary)]'>
                         Tempo stimato per crackare:{' '}
-                        <strong className='text-gray-900'>
+                        <strong className='text-[var(--text-primary)]'>
                           {passwordStrength.crackTimesDisplay.onlineThrottling100PerHour}
                         </strong>{' '}
                         (attacco online)
@@ -1165,9 +1165,9 @@ function Step1Credentials({
                     </div>
 
                     {passwordStrength.feedback.warning && (
-                      <div className='flex items-start gap-2 p-3 bg-amber-50 rounded-xl'>
-                        <AlertCircle className='w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5' />
-                        <span className='text-sm text-amber-700'>
+                      <div className='flex items-start gap-2 p-3 bg-[var(--status-warning)]/5 rounded-xl'>
+                        <AlertCircle className='w-4 h-4 text-[var(--status-warning)] flex-shrink-0 mt-0.5' />
+                        <span className='text-sm text-[var(--status-warning)]'>
                           {passwordStrength.feedback.warning}
                         </span>
                       </div>
@@ -1179,7 +1179,7 @@ function Step1Credentials({
                           (suggestion: string, idx: number) => (
                             <div
                               key={idx}
-                              className='flex items-center gap-2 text-sm text-gray-500'
+                              className='flex items-center gap-2 text-sm text-[var(--text-tertiary)]'
                             >
                               <Sparkles className='w-3 h-3' />
                               {suggestion}
@@ -1189,7 +1189,7 @@ function Step1Credentials({
                       </div>
                     )}
 
-                    <div className='grid grid-cols-2 gap-2 pt-2 border-t border-gray-100'>
+                    <div className='grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border-default)]'>
                       <RequirementCheck met={password.length >= 8} label='Minimo 8 caratteri' />
                       <RequirementCheck met={/[a-z]/.test(password)} label='Lettera minuscola' />
                       <RequirementCheck met={/[A-Z]/.test(password)} label='Lettera maiuscola' />
@@ -1204,7 +1204,7 @@ function Step1Credentials({
                 )}
               </AnimatePresence>
               {errors.password && (
-                <p className='text-red-500 text-sm mt-2'>{errors.password.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.password.message as string}</p>
               )}
             </div>
           )}
@@ -1212,27 +1212,27 @@ function Step1Credentials({
       </div>
 
       {/* Confirm Password */}
-      <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
+      <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
         <Controller
           name='confirmPassword'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
                 Conferma Password *
               </Label>
               <div className='relative'>
-                <Lock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                <Lock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   type={showConfirmPassword ? 'text' : 'password'}
-                  className='pl-12 pr-12 h-14 rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500/20'
+                  className='pl-12 pr-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-[var(--brand)]/20'
                   placeholder='Ripeti la password'
                 />
                 <button
                   type='button'
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'
+                  className='absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors'
                 >
                   {showConfirmPassword ? (
                     <EyeOff className='w-5 h-5' />
@@ -1241,11 +1241,11 @@ function Step1Credentials({
                   )}
                 </button>
                 {confirmPassword && confirmPassword === password && (
-                  <CheckCircle2 className='absolute right-12 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500' />
+                  <CheckCircle2 className='absolute right-12 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--status-success)]' />
                 )}
               </div>
               {errors.confirmPassword && (
-                <p className='text-red-500 text-sm mt-2'>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
                   {errors.confirmPassword.message as string}
                 </p>
               )}
@@ -1255,14 +1255,14 @@ function Step1Credentials({
       </div>
 
       {/* Phone */}
-      <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
+      <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
         <Controller
           name='phone'
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-                Telefono * <span className='text-gray-400 font-normal'>(Per notifiche e 2FA)</span>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                Telefono * <span className='text-[var(--text-tertiary)] font-normal'>(Per notifiche e 2FA)</span>
               </Label>
               <div className='flex gap-2'>
                 <Select
@@ -1272,7 +1272,7 @@ function Step1Credentials({
                     if (country) setSelectedCountry(country);
                   }}
                 >
-                  <SelectTrigger className='w-[100px] h-14 rounded-xl bg-white border-gray-200'>
+                  <SelectTrigger className='w-[100px] h-14 rounded-xl bg-[var(--surface-secondary)] border-[var(--border-default)]'>
                     <span className='text-lg'>{selectedCountry.flag}</span>
                     <span className='text-sm ml-2'>{selectedCountry.dialCode}</span>
                   </SelectTrigger>
@@ -1282,24 +1282,24 @@ function Step1Credentials({
                         <span className='flex items-center gap-2'>
                           <span className='text-lg'>{country.flag}</span>
                           <span className='text-sm'>{country.name}</span>
-                          <span className='text-sm text-gray-400'>{country.dialCode}</span>
+                          <span className='text-sm text-[var(--text-tertiary)]'>{country.dialCode}</span>
                         </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <div className='relative flex-1'>
-                  <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                  <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                   <Input
                     {...field}
                     type='tel'
-                    className='pl-12 h-14 rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500/20'
+                    className='pl-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-[var(--brand)]/20'
                     placeholder={selectedCountry.placeholder}
                   />
                 </div>
               </div>
               {errors.phone && (
-                <p className='text-red-500 text-sm mt-2'>{errors.phone.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.phone.message as string}</p>
               )}
             </div>
           )}
@@ -1317,18 +1317,18 @@ function Step1Credentials({
             name='firstName'
             control={control}
             render={({ field }) => (
-              <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-                <Label className='text-sm font-medium text-gray-700 mb-2 block'>Nome *</Label>
+              <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+                <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Nome *</Label>
                 <div className='relative'>
-                  <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                  <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                   <Input
                     {...field}
-                    className='pl-12 h-14 rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500/20'
+                    className='pl-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-[var(--brand)]/20'
                     placeholder='Giovanni'
                   />
                 </div>
                 {errors.firstName && (
-                  <p className='text-red-500 text-sm mt-2'>{errors.firstName.message as string}</p>
+                  <p className='text-[var(--status-error)] text-sm mt-2'>{errors.firstName.message as string}</p>
                 )}
               </div>
             )}
@@ -1337,18 +1337,18 @@ function Step1Credentials({
             name='lastName'
             control={control}
             render={({ field }) => (
-              <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-                <Label className='text-sm font-medium text-gray-700 mb-2 block'>Cognome *</Label>
+              <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+                <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Cognome *</Label>
                 <div className='relative'>
-                  <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                  <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                   <Input
                     {...field}
-                    className='pl-12 h-14 rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500/20'
+                    className='pl-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--brand)] focus:ring-[var(--brand)]/20'
                     placeholder='Rossi'
                   />
                 </div>
                 {errors.lastName && (
-                  <p className='text-red-500 text-sm mt-2'>{errors.lastName.message as string}</p>
+                  <p className='text-[var(--status-error)] text-sm mt-2'>{errors.lastName.message as string}</p>
                 )}
               </div>
             )}
@@ -1371,11 +1371,11 @@ function RequirementCheck({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {met ? (
-        <Check className='w-4 h-4 text-green-500' />
+        <Check className='w-4 h-4 text-[var(--status-success)]' />
       ) : (
-        <div className='w-4 h-4 rounded-full border border-gray-300' />
+        <div className='w-4 h-4 rounded-full border border-[var(--border-default)]' />
       )}
-      <span className={`text-xs ${met ? 'text-green-600' : 'text-gray-400'}`}>{label}</span>
+      <span className={`text-xs ${met ? 'text-[var(--status-success)]' : 'text-[var(--text-tertiary)]'}`}>{label}</span>
     </div>
   );
 }
@@ -1427,12 +1427,12 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
       className='space-y-6'
     >
       <div className='flex items-center gap-3 mb-6'>
-        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center'>
-          <Building2 className='w-6 h-6 text-white' />
+        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--status-info)] flex items-center justify-center'>
+          <Building2 className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-gray-900'>Dati Azienda</h2>
-          <p className='text-gray-500 text-sm'>Inserisci i dati della Partita IVA</p>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Dati Azienda</h2>
+          <p className='text-[var(--text-tertiary)] text-sm'>Inserisci i dati della Partita IVA</p>
         </div>
       </div>
 
@@ -1441,20 +1441,20 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         name='businessName'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
               Ragione Sociale *
             </Label>
             <div className='relative'>
-              <Building2 className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+              <Building2 className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
               <Input
                 {...field}
-                className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                className='pl-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                 placeholder='Es. Rossi & C. S.R.L.'
               />
             </div>
             {errors.businessName && (
-              <p className='text-red-500 text-sm mt-2'>{errors.businessName.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.businessName.message as string}</p>
             )}
           </div>
         )}
@@ -1465,10 +1465,10 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         name='businessType'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>Tipo Azienda *</Label>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Tipo Azienda *</Label>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <SelectTrigger className='h-14 rounded-xl bg-white border-gray-200'>
+              <SelectTrigger className='h-14 rounded-xl bg-[var(--surface-secondary)] border-[var(--border-default)]'>
                 <SelectValue placeholder='Seleziona tipo' />
               </SelectTrigger>
               <SelectContent>
@@ -1480,7 +1480,7 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
               </SelectContent>
             </Select>
             {errors.businessType && (
-              <p className='text-red-500 text-sm mt-2'>{errors.businessType.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.businessType.message as string}</p>
             )}
           </div>
         )}
@@ -1491,19 +1491,19 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         name='vatNumber'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Partita IVA * <span className='text-xs text-gray-400'>(Formato: IT12345678901)</span>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+              Partita IVA * <span className='text-xs text-[var(--text-tertiary)]'>(Formato: IT12345678901)</span>
             </Label>
             <div className='flex gap-3'>
               <div className='relative flex-1'>
                 <div className='absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1'>
                   <span className='text-lg'>🇮🇹</span>
-                  <span className='text-gray-400 text-sm font-mono'>IT</span>
+                  <span className='text-[var(--text-tertiary)] text-sm font-mono'>IT</span>
                 </div>
                 <Input
                   {...field}
-                  className='pl-14 h-14 rounded-xl font-mono tracking-wider border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                  className='pl-14 h-14 rounded-xl font-mono tracking-wider border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                   placeholder='12345678901'
                   maxLength={13}
                   onChange={e => {
@@ -1521,7 +1521,7 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
                 type='button'
                 onClick={verifyVat}
                 disabled={isCheckingVat || !field.value || field.value.length < 13}
-                className='h-14 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white'
+                className='h-14 rounded-xl bg-gradient-to-r from-[var(--status-info)] to-[var(--status-info)] hover:from-[var(--status-info)] hover:to-[var(--status-info)] text-[var(--text-on-brand)]'
               >
                 {isCheckingVat ? (
                   <Loader2 className='w-5 h-5 animate-spin' />
@@ -1540,7 +1540,7 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className='mt-3 p-3 bg-green-50 rounded-xl flex items-center gap-2 text-green-700 text-sm border border-green-200'
+                  className='mt-3 p-3 bg-[var(--status-success-subtle)] rounded-xl flex items-center gap-2 text-[var(--status-success)] text-sm border border-[var(--status-success)]/30'
                 >
                   <BadgeCheck className='w-5 h-5' />
                   <span className='font-medium'>Verificata con Agenzia delle Entrate</span>
@@ -1551,7 +1551,7 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className='mt-3 p-3 bg-red-50 rounded-xl flex items-center gap-2 text-red-700 text-sm border border-red-200'
+                  className='mt-3 p-3 bg-[var(--status-error-subtle)] rounded-xl flex items-center gap-2 text-[var(--status-error)] text-sm border border-[var(--status-error)]/30'
                 >
                   <AlertCircle className='w-5 h-5' />
                   <span>{vatError}</span>
@@ -1560,7 +1560,7 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
             </AnimatePresence>
 
             {errors.vatNumber && !vatError && (
-              <p className='text-red-500 text-sm mt-2'>{errors.vatNumber.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.vatNumber.message as string}</p>
             )}
           </div>
         )}
@@ -1571,18 +1571,18 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         name='address'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>Indirizzo *</Label>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Indirizzo *</Label>
             <div className='relative'>
-              <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+              <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
               <Input
                 {...field}
-                className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                className='pl-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                 placeholder='Via Roma 123'
               />
             </div>
             {errors.address && (
-              <p className='text-red-500 text-sm mt-2'>{errors.address.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.address.message as string}</p>
             )}
           </div>
         )}
@@ -1594,16 +1594,16 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           name='postalCode'
           control={control}
           render={({ field }) => (
-            <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>CAP *</Label>
+            <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>CAP *</Label>
               <Input
                 {...field}
-                className='h-14 rounded-xl text-center font-mono border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                className='h-14 rounded-xl text-center font-mono border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                 placeholder='20100'
                 maxLength={5}
               />
               {errors.postalCode && (
-                <p className='text-red-500 text-sm mt-2'>{errors.postalCode.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.postalCode.message as string}</p>
               )}
             </div>
           )}
@@ -1612,15 +1612,15 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           name='city'
           control={control}
           render={({ field }) => (
-            <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 sm:col-span-2'>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>Città *</Label>
+            <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)] sm:col-span-2'>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Città *</Label>
               <Input
                 {...field}
-                className='h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                className='h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                 placeholder='Milano'
               />
               {errors.city && (
-                <p className='text-red-500 text-sm mt-2'>{errors.city.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.city.message as string}</p>
               )}
             </div>
           )}
@@ -1632,10 +1632,10 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         name='province'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>Provincia *</Label>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Provincia *</Label>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <SelectTrigger className='h-14 rounded-xl bg-white border-gray-200'>
+              <SelectTrigger className='h-14 rounded-xl bg-[var(--surface-secondary)] border-[var(--border-default)]'>
                 <SelectValue placeholder='Seleziona provincia' />
               </SelectTrigger>
               <SelectContent className='max-h-[200px]'>
@@ -1647,7 +1647,7 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
               </SelectContent>
             </Select>
             {errors.province && (
-              <p className='text-red-500 text-sm mt-2'>{errors.province.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.province.message as string}</p>
             )}
           </div>
         )}
@@ -1659,19 +1659,19 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           name='pecEmail'
           control={control}
           render={({ field }) => (
-            <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>Email PEC *</Label>
+            <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Email PEC *</Label>
               <div className='relative'>
-                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   type='email'
-                  className='pl-12 h-14 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                  className='pl-12 h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                   placeholder='azienda@pec.it'
                 />
               </div>
               {errors.pecEmail && (
-                <p className='text-red-500 text-sm mt-2'>{errors.pecEmail.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.pecEmail.message as string}</p>
               )}
             </div>
           )}
@@ -1680,19 +1680,19 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           name='sdiCode'
           control={control}
           render={({ field }) => (
-            <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
-              <Label className='text-sm font-medium text-gray-700 mb-2 block'>Codice SDI *</Label>
+            <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Codice SDI *</Label>
               <div className='relative'>
-                <Briefcase className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                <Briefcase className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
-                  className='pl-12 h-14 rounded-xl text-center font-mono border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                  className='pl-12 h-14 rounded-xl text-center font-mono border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                   placeholder='0000000'
                   maxLength={7}
                 />
               </div>
               {errors.sdiCode && (
-                <p className='text-red-500 text-sm mt-2'>{errors.sdiCode.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.sdiCode.message as string}</p>
               )}
             </div>
           )}
@@ -1715,41 +1715,41 @@ function Step2PrivateExtra() {
       className='space-y-8'
     >
       <div className='flex items-center gap-3 mb-6'>
-        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center'>
-          <User className='w-6 h-6 text-white' />
+        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] flex items-center justify-center'>
+          <User className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-gray-900'>Dati Aggiuntivi</h2>
-          <p className='text-gray-500 text-sm'>Informazioni opzionali per cliente privato</p>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Dati Aggiuntivi</h2>
+          <p className='text-[var(--text-tertiary)] text-sm'>Informazioni opzionali per cliente privato</p>
         </div>
       </div>
 
-      <div className='bg-gradient-to-br from-green-50 to-teal-50 rounded-3xl p-8 border border-green-200 text-center'>
+      <div className='bg-gradient-to-br from-[var(--status-success-subtle)] to-[var(--status-success-subtle)] rounded-3xl p-8 border border-[var(--status-success)]/30 text-center'>
         <motion.div
-          className='w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6'
+          className='w-20 h-20 rounded-full bg-[var(--status-success-subtle)] flex items-center justify-center mx-auto mb-6'
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200 }}
         >
-          <CheckCircle2 className='w-10 h-10 text-green-600' />
+          <CheckCircle2 className='w-10 h-10 text-[var(--status-success)]' />
         </motion.div>
-        <h3 className='text-xl font-semibold text-gray-900 mb-3'>
+        <h3 className='text-xl font-semibold text-[var(--text-primary)] mb-3'>
           Tutti i dati necessari sono stati inseriti!
         </h3>
-        <p className='text-gray-600 max-w-md mx-auto mb-6'>
+        <p className='text-[var(--text-secondary)] max-w-md mx-auto mb-6'>
           Per i clienti privati non sono richiesti ulteriori dati. Procedi al passaggio successivo
           per completare la registrazione.
         </p>
         <div className='flex flex-wrap items-center justify-center gap-3'>
-          <Badge variant='secondary' className='bg-white text-green-700 border-green-200'>
+          <Badge variant='secondary' className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'>
             <Check className='w-3 h-3 mr-1' />
             Email verificata
           </Badge>
-          <Badge variant='secondary' className='bg-white text-green-700 border-green-200'>
+          <Badge variant='secondary' className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'>
             <Check className='w-3 h-3 mr-1' />
             Password sicura
           </Badge>
-          <Badge variant='secondary' className='bg-white text-green-700 border-green-200'>
+          <Badge variant='secondary' className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'>
             <Check className='w-3 h-3 mr-1' />
             Telefono valido
           </Badge>
@@ -1792,43 +1792,43 @@ function Step3Privacy({
       className='space-y-6'
     >
       <div className='flex items-center gap-3 mb-6'>
-        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center'>
-          <Shield className='w-6 h-6 text-white' />
+        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--status-warning)] to-[var(--status-warning)] flex items-center justify-center'>
+          <Shield className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-gray-900'>Privacy e Consensi</h2>
-          <p className='text-gray-500 text-sm'>Gestisci le tue preferenze privacy</p>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Privacy e Consensi</h2>
+          <p className='text-[var(--text-tertiary)] text-sm'>Gestisci le tue preferenze privacy</p>
         </div>
       </div>
 
       {/* Trust Badges */}
       <div className='flex flex-wrap items-center justify-center gap-3 text-sm mb-6'>
         <motion.div
-          className='flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full border border-gray-200'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] rounded-full border border-[var(--border-default)]'
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <LockKeyhole className='w-4 h-4 text-green-500' />
-          <span className='text-gray-700'>Crittografia AES-256</span>
+          <LockKeyhole className='w-4 h-4 text-[var(--status-success)]' />
+          <span className='text-[var(--text-primary)]'>Crittografia AES-256</span>
         </motion.div>
         <motion.div
-          className='flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full border border-gray-200'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] rounded-full border border-[var(--border-default)]'
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <ShieldCheck className='w-4 h-4 text-blue-500' />
-          <span className='text-gray-700'>GDPR Compliant</span>
+          <ShieldCheck className='w-4 h-4 text-[var(--status-info)]' />
+          <span className='text-[var(--text-primary)]'>GDPR Compliant</span>
         </motion.div>
         <motion.div
-          className='flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full border border-gray-200'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] rounded-full border border-[var(--border-default)]'
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <Award className='w-4 h-4 text-amber-500' />
-          <span className='text-gray-700'>SSL/TLS</span>
+          <Award className='w-4 h-4 text-[var(--status-warning)]' />
+          <span className='text-[var(--text-primary)]'>SSL/TLS</span>
         </motion.div>
       </div>
 
@@ -1838,30 +1838,30 @@ function Step3Privacy({
         control={control}
         render={({ field }) => (
           <div
-            className={`rounded-3xl p-6 border-2 transition-all ${field.value ? 'bg-green-50 border-green-200' : 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200'}`}
+            className={`rounded-3xl p-6 border-2 transition-all ${field.value ? 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30' : 'bg-gradient-to-r from-[var(--status-error-subtle)] to-[var(--status-error-subtle)] border-[var(--status-error)]/30'}`}
           >
             <div className='flex items-start gap-4'>
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
-                className='mt-1 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600'
+                className='mt-1 data-[state=checked]:bg-[var(--status-success)] data-[state=checked]:border-[var(--status-success)]'
               />
               <div className='flex-1'>
-                <Label className='font-semibold text-gray-900 cursor-pointer flex items-center gap-2'>
+                <Label className='font-semibold text-[var(--text-primary)] cursor-pointer flex items-center gap-2'>
                   Accetto il trattamento dei dati secondo GDPR *
-                  {field.value && <CheckCircle2 className='w-4 h-4 text-green-600' />}
+                  {field.value && <CheckCircle2 className='w-4 h-4 text-[var(--status-success)]' />}
                 </Label>
-                <p className='text-sm text-gray-600 mt-1'>
+                <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Autorizzo il trattamento dei miei dati personali per la gestione del mio account e
                   dei servizi richiesti.
-                  <a href='/gdpr' className='text-blue-600 hover:underline ml-1 font-medium'>
+                  <a href='/gdpr' className='text-[var(--status-info)] hover:underline ml-1 font-medium'>
                     Leggi l&apos;informativa completa
                   </a>
                 </p>
               </div>
             </div>
             {errors.gdpr && (
-              <p className='text-red-500 text-sm mt-2 ml-8'>{errors.gdpr.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2 ml-8'>{errors.gdpr.message as string}</p>
             )}
           </div>
         )}
@@ -1873,33 +1873,33 @@ function Step3Privacy({
         control={control}
         render={({ field }) => (
           <div
-            className={`rounded-3xl p-6 border-2 transition-all ${field.value ? 'bg-green-50 border-green-200' : 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200'}`}
+            className={`rounded-3xl p-6 border-2 transition-all ${field.value ? 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30' : 'bg-gradient-to-r from-[var(--status-error-subtle)] to-[var(--status-error-subtle)] border-[var(--status-error)]/30'}`}
           >
             <div className='flex items-start gap-4'>
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
-                className='mt-1 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600'
+                className='mt-1 data-[state=checked]:bg-[var(--status-success)] data-[state=checked]:border-[var(--status-success)]'
               />
               <div className='flex-1'>
-                <Label className='font-semibold text-gray-900 cursor-pointer flex items-center gap-2'>
+                <Label className='font-semibold text-[var(--text-primary)] cursor-pointer flex items-center gap-2'>
                   Accetto Privacy Policy e Termini di Servizio *
-                  {field.value && <CheckCircle2 className='w-4 h-4 text-green-600' />}
+                  {field.value && <CheckCircle2 className='w-4 h-4 text-[var(--status-success)]' />}
                 </Label>
-                <p className='text-sm text-gray-600 mt-1'>
+                <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Ho letto e accetto i
-                  <a href='/termini' className='text-blue-600 hover:underline mx-1 font-medium'>
+                  <a href='/termini' className='text-[var(--status-info)] hover:underline mx-1 font-medium'>
                     Termini di Servizio
                   </a>
                   e la
-                  <a href='/privacy' className='text-blue-600 hover:underline ml-1 font-medium'>
+                  <a href='/privacy' className='text-[var(--status-info)] hover:underline ml-1 font-medium'>
                     Privacy Policy
                   </a>
                 </p>
               </div>
             </div>
             {errors.privacy && (
-              <p className='text-red-500 text-sm mt-2 ml-8'>{errors.privacy.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2 ml-8'>{errors.privacy.message as string}</p>
             )}
           </div>
         )}
@@ -1910,22 +1910,22 @@ function Step3Privacy({
         name='newsletter'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-purple-200 transition-colors'>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)] hover:border-[var(--brand)]/20 transition-colors'>
             <div className='flex items-start gap-4'>
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
-                className='mt-1 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600'
+                className='mt-1 data-[state=checked]:bg-[var(--brand)] data-[state=checked]:border-[var(--brand)]'
               />
               <div className='flex-1'>
-                <Label className='font-semibold text-gray-900 cursor-pointer flex items-center gap-2'>
-                  <Bell className='w-4 h-4 text-purple-500' />
+                <Label className='font-semibold text-[var(--text-primary)] cursor-pointer flex items-center gap-2'>
+                  <Bell className='w-4 h-4 text-[var(--brand)]' />
                   Iscrivimi alla newsletter
                 </Label>
-                <p className='text-sm text-gray-600 mt-1'>
+                <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Ricevi tips, promozioni esclusive, aggiornamenti servizi. Puoi disiscriverti
                   sempre.{' '}
-                  <span className='text-green-600 font-medium'>10,000+ clienti iscritti</span>
+                  <span className='text-[var(--status-success)] font-medium'>10,000+ clienti iscritti</span>
                 </p>
               </div>
             </div>
@@ -1938,19 +1938,19 @@ function Step3Privacy({
         name='marketing'
         control={control}
         render={({ field }) => (
-          <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-amber-200 transition-colors'>
+          <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)] hover:border-[var(--status-warning)]/30 transition-colors'>
             <div className='flex items-start gap-4'>
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
-                className='mt-1 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500'
+                className='mt-1 data-[state=checked]:bg-[var(--status-warning)] data-[state=checked]:border-[var(--status-warning)]'
               />
               <div className='flex-1'>
-                <Label className='font-semibold text-gray-900 cursor-pointer flex items-center gap-2'>
-                  <Star className='w-4 h-4 text-amber-500' />
+                <Label className='font-semibold text-[var(--text-primary)] cursor-pointer flex items-center gap-2'>
+                  <Star className='w-4 h-4 text-[var(--status-warning)]' />
                   Voglio offerte speciali e promozioni personalizzate
                 </Label>
-                <p className='text-sm text-gray-600 mt-1'>
+                <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Ricevi sconti su manutenzione, prodotti consigliati e offerte personalizzate
                 </p>
               </div>
@@ -1965,14 +1965,14 @@ function Step3Privacy({
                   exit={{ opacity: 0, height: 0 }}
                   className='mt-4 ml-8'
                 >
-                  <p className='text-sm text-gray-500 mb-3'>
+                  <p className='text-sm text-[var(--text-tertiary)] mb-3'>
                     Su quali canali preferisci ricevere le comunicazioni?
                   </p>
                   <div className='flex flex-wrap gap-2'>
                     <button
                       type='button'
                       onClick={() => toggleChannel('email')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${marketingChannels.includes('email') ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${marketingChannels.includes('email') ? 'bg-[var(--status-info-subtle)] text-[var(--status-info)] border border-[var(--status-info)]/30' : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:bg-[var(--border-default)]'}`}
                     >
                       <Mail className='w-4 h-4' />
                       Email{marketingChannels.includes('email') && <Check className='w-3 h-3' />}
@@ -1980,7 +1980,7 @@ function Step3Privacy({
                     <button
                       type='button'
                       onClick={() => toggleChannel('sms')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${marketingChannels.includes('sms') ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${marketingChannels.includes('sms') ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:bg-[var(--border-default)]'}`}
                     >
                       <Smartphone className='w-4 h-4' />
                       SMS{marketingChannels.includes('sms') && <Check className='w-3 h-3' />}
@@ -1988,7 +1988,7 @@ function Step3Privacy({
                     <button
                       type='button'
                       onClick={() => toggleChannel('whatsapp')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${marketingChannels.includes('whatsapp') ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${marketingChannels.includes('whatsapp') ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:bg-[var(--border-default)]'}`}
                     >
                       <MessageSquare className='w-4 h-4' />
                       WhatsApp
@@ -2048,12 +2048,12 @@ function Step4Review({
       className='space-y-6'
     >
       <div className='flex items-center gap-3 mb-6'>
-        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center'>
-          <FileText className='w-6 h-6 text-white' />
+        <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] flex items-center justify-center'>
+          <FileText className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-gray-900'>Riepilogo</h2>
-          <p className='text-gray-500 text-sm'>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Riepilogo</h2>
+          <p className='text-[var(--text-tertiary)] text-sm'>
             Verifica i dati inseriti prima di creare l&apos;account
           </p>
         </div>
@@ -2063,19 +2063,19 @@ function Step4Review({
       <ReviewSection title='Tipo Account' onEdit={() => onEdit(0)}>
         <div className='flex items-center gap-3'>
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${customerType === 'private' ? 'bg-purple-100' : 'bg-blue-100'}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${customerType === 'private' ? 'bg-[var(--brand-subtle)]' : 'bg-[var(--status-info-subtle)]'}`}
           >
             {customerType === 'private' ? (
-              <User className='w-5 h-5 text-purple-600' />
+              <User className='w-5 h-5 text-[var(--brand)]' />
             ) : (
-              <Building2 className='w-5 h-5 text-blue-600' />
+              <Building2 className='w-5 h-5 text-[var(--status-info)]' />
             )}
           </div>
           <div>
-            <p className='font-medium text-gray-900'>
+            <p className='font-medium text-[var(--text-primary)]'>
               {customerType === 'private' ? 'Cliente Privato' : 'Azienda / Partita IVA'}
             </p>
-            <p className='text-sm text-gray-500'>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               {customerType === 'private' ? 'Persona fisica' : 'Professionista o società'}
             </p>
           </div>
@@ -2093,9 +2093,9 @@ function Step4Review({
               <ReviewItem icon={<User className='w-4 h-4' />} label='Cognome' value={lastName} />
             </>
           )}
-          <div className='flex items-center gap-2 p-3 bg-green-50 rounded-xl'>
-            <LockKeyhole className='w-4 h-4 text-green-600' />
-            <span className='text-sm text-green-700'>Password impostata e verificata</span>
+          <div className='flex items-center gap-2 p-3 bg-[var(--status-success-subtle)] rounded-xl'>
+            <LockKeyhole className='w-4 h-4 text-[var(--status-success)]' />
+            <span className='text-sm text-[var(--status-success)]'>Password impostata e verificata</span>
           </div>
         </div>
       </ReviewSection>
@@ -2116,8 +2116,8 @@ function Step4Review({
             />
             <div className='flex items-center gap-2'>
               <span className='text-lg'>🇮🇹</span>
-              <span className='text-sm text-gray-500'>P.IVA:</span>
-              <Badge variant='secondary' className='bg-green-100 text-green-700 border-green-200'>
+              <span className='text-sm text-[var(--text-tertiary)]'>P.IVA:</span>
+              <Badge variant='secondary' className='bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30'>
                 <BadgeCheck className='w-3 h-3 mr-1' />
                 {vatNumber}
               </Badge>
@@ -2140,24 +2140,24 @@ function Step4Review({
       {/* Privacy & Consent */}
       <ReviewSection title='Privacy e Consensi' onEdit={() => onEdit(3)}>
         <div className='space-y-2'>
-          <div className='flex items-center gap-2 p-3 bg-green-50 rounded-xl'>
-            <CheckCircle2 className='w-4 h-4 text-green-600' />
-            <span className='text-sm text-green-700'>GDPR accettato</span>
+          <div className='flex items-center gap-2 p-3 bg-[var(--status-success-subtle)] rounded-xl'>
+            <CheckCircle2 className='w-4 h-4 text-[var(--status-success)]' />
+            <span className='text-sm text-[var(--status-success)]'>GDPR accettato</span>
           </div>
-          <div className='flex items-center gap-2 p-3 bg-green-50 rounded-xl'>
-            <CheckCircle2 className='w-4 h-4 text-green-600' />
-            <span className='text-sm text-green-700'>Privacy Policy accettata</span>
+          <div className='flex items-center gap-2 p-3 bg-[var(--status-success-subtle)] rounded-xl'>
+            <CheckCircle2 className='w-4 h-4 text-[var(--status-success)]' />
+            <span className='text-sm text-[var(--status-success)]'>Privacy Policy accettata</span>
           </div>
           {newsletter && (
-            <div className='flex items-center gap-2 p-3 bg-purple-50 rounded-xl'>
-              <Bell className='w-4 h-4 text-purple-600' />
-              <span className='text-sm text-purple-700'>Iscritto alla newsletter</span>
+            <div className='flex items-center gap-2 p-3 bg-[var(--brand)]/5 rounded-xl'>
+              <Bell className='w-4 h-4 text-[var(--brand)]' />
+              <span className='text-sm text-[var(--brand)]'>Iscritto alla newsletter</span>
             </div>
           )}
           {marketing && (
-            <div className='flex items-center gap-2 p-3 bg-amber-50 rounded-xl'>
-              <Star className='w-4 h-4 text-amber-600' />
-              <span className='text-sm text-amber-700'>
+            <div className='flex items-center gap-2 p-3 bg-[var(--status-warning)]/5 rounded-xl'>
+              <Star className='w-4 h-4 text-[var(--status-warning)]' />
+              <span className='text-sm text-[var(--status-warning)]'>
                 Marketing abilitato ({marketingChannels.join(', ')})
               </span>
             </div>
@@ -2166,14 +2166,14 @@ function Step4Review({
       </ReviewSection>
 
       {/* Final Notice */}
-      <div className='p-4 bg-blue-50 rounded-2xl border border-blue-200'>
+      <div className='p-4 bg-[var(--status-info-subtle)] rounded-2xl border border-[var(--status-info)]/30'>
         <div className='flex items-start gap-3'>
-          <Zap className='w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5' />
+          <Zap className='w-5 h-5 text-[var(--status-info)] flex-shrink-0 mt-0.5' />
           <div>
-            <p className='text-sm font-medium text-blue-900'>
+            <p className='text-sm font-medium text-[var(--status-info)]'>
               Clicca &quot;Crea Account&quot; per completare la registrazione
             </p>
-            <p className='text-sm text-blue-700 mt-1'>
+            <p className='text-sm text-[var(--status-info)] mt-1'>
               Riceverai un&apos;email di conferma all&apos;indirizzo {email} con il link per
               attivare il tuo account.
             </p>
@@ -2194,12 +2194,12 @@ function ReviewSection({
   onEdit: () => void;
 }) {
   return (
-    <div className='bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-gray-100'>
+    <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
       <div className='flex items-center justify-between mb-4'>
-        <h3 className='font-semibold text-gray-900'>{title}</h3>
+        <h3 className='font-semibold text-[var(--text-primary)]'>{title}</h3>
         <button
           onClick={onEdit}
-          className='flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors'
+          className='flex items-center gap-1 text-sm text-[var(--brand)] hover:text-[var(--brand)] font-medium transition-colors'
         >
           <Edit3 className='w-4 h-4' />
           Modifica
@@ -2222,12 +2222,12 @@ function ReviewItem({
   if (!value) return null;
   return (
     <div className='flex items-center gap-3'>
-      <div className='w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500'>
+      <div className='w-8 h-8 rounded-lg bg-[var(--surface-secondary)] flex items-center justify-center text-[var(--text-tertiary)]'>
         {icon}
       </div>
       <div>
-        <p className='text-xs text-gray-500'>{label}</p>
-        <p className='text-sm font-medium text-gray-900'>{value}</p>
+        <p className='text-xs text-[var(--text-tertiary)]'>{label}</p>
+        <p className='text-sm font-medium text-[var(--text-primary)]'>{value}</p>
       </div>
     </div>
   );
@@ -2242,21 +2242,21 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className='fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 overflow-hidden z-50'
+      className='fixed inset-0 bg-gradient-to-br from-[var(--surface-tertiary)] to-[var(--surface-tertiary)] flex items-center justify-center p-4 overflow-hidden z-50'
     >
-      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-white/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 flex flex-col items-center justify-center p-10 text-center'>
+      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-[var(--surface-secondary)]/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-[var(--border-default)]/50 flex flex-col items-center justify-center p-10 text-center'>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className='w-32 h-32 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-8 shadow-lg shadow-green-200'
+          className='w-32 h-32 rounded-full bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] flex items-center justify-center mb-8 shadow-lg shadow-[var(--status-success)]/20'
         >
           <motion.div
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <Check className='w-16 h-16 text-white' strokeWidth={3} />
+            <Check className='w-16 h-16 text-[var(--text-on-brand)]' strokeWidth={3} />
           </motion.div>
         </motion.div>
 
@@ -2264,7 +2264,7 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className='text-3xl font-bold text-gray-900 mb-4'
+          className='text-3xl font-bold text-[var(--text-primary)] mb-4'
         >
           Account Creato con Successo!
         </motion.h2>
@@ -2273,7 +2273,7 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className='text-gray-600 mb-8 max-w-md'
+          className='text-[var(--text-secondary)] mb-8 max-w-md'
         >
           Il cliente è stato registrato correttamente nel sistema. È stata inviata un&apos;email di
           verifica all&apos;indirizzo fornito.
@@ -2283,12 +2283,12 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
-          className='bg-gradient-to-r from-purple-50 via-blue-50 to-green-50 rounded-2xl p-8 mb-8 border border-gray-200 w-full max-w-sm'
+          className='bg-gradient-to-r from-[var(--brand-subtle)] via-[var(--status-info-subtle)] to-[var(--status-success-subtle)] rounded-2xl p-8 mb-8 border border-[var(--border-default)] w-full max-w-sm'
         >
-          <p className='text-sm text-gray-500 mb-2 uppercase tracking-wider font-medium'>
+          <p className='text-sm text-[var(--text-tertiary)] mb-2 uppercase tracking-wider font-medium'>
             Codice Cliente
           </p>
-          <p className='text-4xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600'>
+          <p className='text-4xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand)] to-[var(--status-info)]'>
             {customerNumber}
           </p>
         </motion.div>
@@ -2301,7 +2301,7 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
         >
           <Button
             onClick={onClose}
-            className='rounded-full px-8 h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all'
+            className='rounded-full px-8 h-14 bg-gradient-to-r from-[var(--brand)] to-[var(--status-info)] hover:from-[var(--brand)] hover:to-[var(--status-info)] text-[var(--text-on-brand)] shadow-lg hover:shadow-xl transition-all'
           >
             <Users className='w-5 h-5 mr-2' />
             Crea Nuovo Cliente
@@ -2309,7 +2309,7 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
           <Button
             variant='outline'
             onClick={() => (window.location.href = '/dashboard/customers')}
-            className='rounded-full px-8 h-14 border-gray-300 hover:bg-gray-100'
+            className='rounded-full px-8 h-14 border-[var(--border-default)] hover:bg-[var(--surface-secondary)]'
           >
             <ArrowRight className='w-5 h-5 mr-2' />
             Vai alla lista clienti
@@ -2320,7 +2320,7 @@ function SuccessView({ customerNumber, onClose }: { customerNumber: string; onCl
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className='mt-8 flex items-center gap-2 text-sm text-gray-400'
+          className='mt-8 flex items-center gap-2 text-sm text-[var(--text-tertiary)]'
         >
           <ShieldCheck className='w-4 h-4' />
           <span>Dati protetti con crittografia AES-256</span>

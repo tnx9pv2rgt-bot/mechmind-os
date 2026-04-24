@@ -180,7 +180,7 @@ function BillingToggle({
       <span
         className={cn(
           'text-body font-medium transition-colors duration-apple',
-          period === 'monthly' ? 'text-apple-dark dark:text-white' : 'text-apple-gray'
+          period === 'monthly' ? 'text-[var(--text-primary)] dark:text-[var(--text-on-brand)]' : 'text-[var(--text-tertiary)]'
         )}
       >
         Mensile
@@ -195,12 +195,12 @@ function BillingToggle({
         className={cn(
           'relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full',
           'transition-colors duration-apple ease-apple',
-          period === 'annual' ? 'bg-apple-blue' : 'bg-apple-border dark:bg-neutral-600'
+          period === 'annual' ? 'bg-[var(--brand)]' : 'bg-apple-border dark:bg-[var(--surface-active)]'
         )}
       >
         <span
           className={cn(
-            'pointer-events-none block h-6 w-6 rounded-full bg-white shadow-apple',
+            'pointer-events-none block h-6 w-6 rounded-full bg-[var(--surface-secondary)] shadow-apple',
             'transition-transform duration-apple ease-apple',
             period === 'annual' ? 'translate-x-7' : 'translate-x-1'
           )}
@@ -210,7 +210,7 @@ function BillingToggle({
       <span
         className={cn(
           'text-body font-medium transition-colors duration-apple',
-          period === 'annual' ? 'text-apple-dark dark:text-white' : 'text-apple-gray'
+          period === 'annual' ? 'text-[var(--text-primary)] dark:text-[var(--text-on-brand)]' : 'text-[var(--text-tertiary)]'
         )}
       >
         Annuale
@@ -219,7 +219,7 @@ function BillingToggle({
       <span
         className={cn(
           'ml-2 inline-flex items-center rounded-full px-3 py-1 text-footnote font-semibold',
-          'bg-apple-green/10 text-apple-green',
+          'bg-[var(--status-success)]/10 text-[var(--status-success)]',
           'transition-opacity duration-apple',
           period === 'annual' ? 'opacity-100' : 'opacity-0'
         )}
@@ -240,7 +240,7 @@ function PriceDisplay({
   if (plan.monthlyPrice === null) {
     return (
       <div className="mb-6">
-        <span className="text-title-1 font-bold text-apple-dark dark:text-white">Contattaci</span>
+        <span className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">Contattaci</span>
       </div>
     );
   }
@@ -251,13 +251,13 @@ function PriceDisplay({
   return (
     <div className="mb-6">
       <div className="flex items-baseline gap-1">
-        <span className="text-[40px] font-bold leading-none tracking-tight text-apple-dark dark:text-white">
+        <span className="text-[40px] font-bold leading-none tracking-tight text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
           {'\u20AC'}{currentPrice}
         </span>
-        <span className="text-callout text-apple-gray">/mese</span>
+        <span className="text-callout text-[var(--text-tertiary)]">/mese</span>
       </div>
       {showStrikethrough && (
-        <p className="mt-1 text-footnote text-apple-gray">
+        <p className="mt-1 text-footnote text-[var(--text-tertiary)]">
           <span className="line-through">{'\u20AC'}{plan.monthlyPrice}/mese</span>
           {' '}fatturato annualmente
         </p>
@@ -278,23 +278,23 @@ function PlanCard({
       variants={cardVariants}
       className={cn(
         'relative flex flex-col rounded-2xl p-8',
-        'bg-white dark:bg-neutral-800',
+        'bg-[var(--surface-secondary)] dark:bg-[var(--surface-active)]',
         'shadow-apple transition-shadow duration-apple ease-apple hover:shadow-apple-lg',
-        plan.highlighted && 'z-10 border-2 border-apple-blue lg:scale-105',
-        !plan.highlighted && 'border border-apple-border dark:border-neutral-700'
+        plan.highlighted && 'z-10 border-2 border-[var(--brand)] lg:scale-105',
+        !plan.highlighted && 'border border-[var(--border-default)] dark:border-[var(--border-strong)]'
       )}
     >
       {plan.highlighted && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center rounded-full bg-apple-blue px-4 py-1.5 text-footnote font-semibold text-white shadow-apple">
+          <span className="inline-flex items-center rounded-full bg-[var(--brand)] px-4 py-1.5 text-footnote font-semibold text-[var(--text-on-brand)] shadow-apple">
             Piu popolare
           </span>
         </div>
       )}
 
       <div className="mb-4">
-        <h3 className="text-title-2 font-bold text-apple-dark dark:text-white">{plan.name}</h3>
-        <p className="mt-1 text-callout text-apple-gray">{plan.tagline}</p>
+        <h3 className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">{plan.name}</h3>
+        <p className="mt-1 text-callout text-[var(--text-tertiary)]">{plan.tagline}</p>
       </div>
 
       <PriceDisplay plan={plan} period={period} />
@@ -302,8 +302,8 @@ function PlanCard({
       <ul className="mb-8 flex-1 space-y-3">
         {plan.features.map((feature) => (
           <li key={feature.label} className="flex items-start gap-3">
-            <Check className="mt-0.5 h-5 w-5 shrink-0 text-apple-green" strokeWidth={2.5} />
-            <span className="text-callout text-apple-dark dark:text-neutral-200">
+            <Check className="mt-0.5 h-5 w-5 shrink-0 text-[var(--status-success)]" strokeWidth={2.5} />
+            <span className="text-callout text-[var(--text-primary)] dark:text-[var(--text-secondary)]">
               {feature.label}
             </span>
           </li>
@@ -317,8 +317,8 @@ function PlanCard({
           'text-callout font-semibold transition-all duration-apple ease-apple',
           'min-h-[44px]',
           plan.highlighted
-            ? 'bg-apple-blue text-white hover:bg-apple-blue-hover hover:shadow-apple'
-            : 'border border-apple-border bg-white text-apple-blue hover:bg-apple-light-gray dark:border-neutral-600 dark:bg-neutral-700 dark:text-apple-blue dark:hover:bg-neutral-600'
+            ? 'bg-[var(--brand)] text-[var(--text-on-brand)] hover:bg-[var(--brand)]-hover hover:shadow-apple'
+            : 'border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[var(--brand)] hover:bg-[var(--surface-secondary)] dark:border-[var(--border-strong)] dark:bg-[var(--surface-active)] dark:text-[var(--brand)] dark:hover:bg-[var(--surface-active)]'
         )}
       >
         {plan.cta}
@@ -331,18 +331,18 @@ function FaqAccordionItem({ item }: { item: FaqItem }): ReactNode {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-apple-border dark:border-neutral-700">
+    <div className="border-b border-[var(--border-default)] dark:border-[var(--border-strong)]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
           'flex w-full items-center justify-between py-5 text-left',
           'min-h-[44px] transition-colors duration-apple ease-apple',
-          'hover:text-apple-blue'
+          'hover:text-[var(--brand)]'
         )}
         aria-expanded={open}
       >
-        <span className="text-body font-medium text-apple-dark dark:text-white">
+        <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
           {item.question}
         </span>
         <motion.span
@@ -350,7 +350,7 @@ function FaqAccordionItem({ item }: { item: FaqItem }): ReactNode {
           transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
           className="ml-4 shrink-0"
         >
-          <ChevronDown className="h-5 w-5 text-apple-gray" />
+          <ChevronDown className="h-5 w-5 text-[var(--text-tertiary)]" />
         </motion.span>
       </button>
 
@@ -364,7 +364,7 @@ function FaqAccordionItem({ item }: { item: FaqItem }): ReactNode {
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-callout leading-relaxed text-apple-gray">
+            <p className="pb-5 text-callout leading-relaxed text-[var(--text-tertiary)]">
               {item.answer}
             </p>
           </motion.div>
@@ -387,7 +387,7 @@ export function Pricing(): ReactNode {
     <section
       id="prezzi"
       ref={sectionRef}
-      className="relative overflow-hidden bg-apple-light-gray py-24 dark:bg-neutral-900 sm:py-32"
+      className="relative overflow-hidden bg-[var(--surface-secondary)] py-24 dark:bg-[var(--surface-primary)] sm:py-32"
     >
       <div className="mx-auto max-w-apple-wide px-6 lg:px-8">
         {/* ---- Header ---- */}
@@ -397,10 +397,10 @@ export function Pricing(): ReactNode {
           variants={fadeInUp}
           className="mx-auto max-w-apple-narrow text-center"
         >
-          <h2 className="text-headline font-bold tracking-tight text-apple-dark dark:text-white">
+          <h2 className="text-headline font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
             Prezzi semplici e trasparenti
           </h2>
-          <p className="mt-4 text-body-large text-apple-gray">
+          <p className="mt-4 text-body-large text-[var(--text-tertiary)]">
             Utenti illimitati. Ordini illimitati. Nessun costo nascosto.
           </p>
 
@@ -428,50 +428,50 @@ export function Pricing(): ReactNode {
           variants={fadeInUp}
           className="mx-auto mt-12 max-w-apple"
         >
-          <div className="rounded-2xl border border-apple-blue/20 bg-gradient-to-r from-apple-blue/5 to-purple-500/5 p-8 dark:from-apple-blue/10 dark:to-purple-500/10">
+          <div className="rounded-2xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--brand)]/5 to-[var(--brand)]/5 p-8 dark:from-[var(--brand)]/10 dark:to-[var(--brand)]/10">
             <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
               <div className="text-center sm:text-left">
                 <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <span className="text-title-2 font-bold text-apple-dark dark:text-white">
+                  <span className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
                     Assistente Vocale AI
                   </span>
-                  <span className="rounded-full bg-apple-blue/10 px-3 py-1 text-footnote font-semibold text-apple-blue">
+                  <span className="rounded-full bg-[var(--brand)]/10 px-3 py-1 text-footnote font-semibold text-[var(--brand)]">
                     Add-on
                   </span>
                 </div>
-                <p className="mt-2 max-w-lg text-callout text-apple-gray">
+                <p className="mt-2 max-w-lg text-callout text-[var(--text-tertiary)]">
                   Rispondi alle chiamate con un assistente AI che parla italiano.
                   Prenota appuntamenti, verifica disponibilita, invia conferme SMS — tutto automatico.
                   Powered by ElevenLabs.
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-footnote text-apple-gray">
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-footnote text-[var(--text-tertiary)]">
                   <span className="flex items-center gap-1">
-                    <Check className="h-4 w-4 text-apple-green" strokeWidth={2.5} />
+                    <Check className="h-4 w-4 text-[var(--status-success)]" strokeWidth={2.5} />
                     100 minuti inclusi
                   </span>
                   <span className="flex items-center gap-1">
-                    <Check className="h-4 w-4 text-apple-green" strokeWidth={2.5} />
+                    <Check className="h-4 w-4 text-[var(--status-success)]" strokeWidth={2.5} />
                     Voce italiana naturale
                   </span>
                   <span className="flex items-center gap-1">
-                    <Check className="h-4 w-4 text-apple-green" strokeWidth={2.5} />
+                    <Check className="h-4 w-4 text-[var(--status-success)]" strokeWidth={2.5} />
                     Prenotazione automatica
                   </span>
                 </div>
               </div>
               <div className="text-center">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-[36px] font-bold leading-none tracking-tight text-apple-dark dark:text-white">
+                  <span className="text-[36px] font-bold leading-none tracking-tight text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
                     {'\u20AC'}49
                   </span>
-                  <span className="text-callout text-apple-gray">/mese</span>
+                  <span className="text-callout text-[var(--text-tertiary)]">/mese</span>
                 </div>
-                <p className="mt-1 text-footnote text-apple-gray">
+                <p className="mt-1 text-footnote text-[var(--text-tertiary)]">
                   poi {'\u20AC'}0,40/min extra
                 </p>
                 <a
                   href="#prova-gratuita"
-                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-apple-blue px-6 py-3 text-callout font-semibold text-white transition-all duration-apple ease-apple hover:bg-apple-blue-hover hover:shadow-apple min-h-[44px]"
+                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-[var(--brand)] px-6 py-3 text-callout font-semibold text-[var(--text-on-brand)] transition-all duration-apple ease-apple hover:bg-[var(--brand)]-hover hover:shadow-apple min-h-[44px]"
                 >
                   Aggiungi al piano
                 </a>
@@ -491,10 +491,10 @@ export function Pricing(): ReactNode {
             const Icon = perk.icon;
             return (
               <div key={perk.label} className="flex flex-col items-center gap-2 text-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-apple-blue/10">
-                  <Icon className="h-5 w-5 text-apple-blue" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)]/10">
+                  <Icon className="h-5 w-5 text-[var(--brand)]" />
                 </div>
-                <span className="text-subhead font-medium text-apple-dark dark:text-neutral-200">
+                <span className="text-subhead font-medium text-[var(--text-primary)] dark:text-[var(--text-secondary)]">
                   {perk.label}
                 </span>
               </div>
@@ -509,10 +509,10 @@ export function Pricing(): ReactNode {
           variants={fadeInUp}
           className="mx-auto mt-24 max-w-apple-narrow"
         >
-          <h3 className="mb-8 text-center text-title-1 font-bold text-apple-dark dark:text-white">
+          <h3 className="mb-8 text-center text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
             Domande frequenti
           </h3>
-          <div className="rounded-2xl bg-white p-6 shadow-apple dark:bg-neutral-800 sm:p-8">
+          <div className="rounded-2xl bg-[var(--surface-secondary)] p-6 shadow-apple dark:bg-[var(--surface-active)] sm:p-8">
             {FAQ_ITEMS.map((item) => (
               <FaqAccordionItem key={item.question} item={item} />
             ))}

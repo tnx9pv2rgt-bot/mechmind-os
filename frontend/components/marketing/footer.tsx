@@ -61,7 +61,7 @@ export function Footer(): React.ReactElement {
         {/* Logo + description */}
         <div className="mb-12">
           <Link href="/" className="min-h-[44px] inline-flex items-center gap-2.5">
-            <span className="text-xl font-bold text-white">MechMind OS</span>
+            <span className="text-xl font-bold text-[var(--text-on-brand)]">MechMind OS</span>
           </Link>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-[var(--text-tertiary)]">
             Il gestionale cloud per officine meccaniche. Made in Italy.
@@ -82,14 +82,14 @@ export function Footer(): React.ReactElement {
                       <button
                         type="button"
                         onClick={link.onClick}
-                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[var(--text-secondary)] transition-colors duration-200 hover:text-white"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-on-brand)]"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <Link
                         href={link.href}
-                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[var(--text-secondary)] transition-colors duration-200 hover:text-white"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center text-sm text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-on-brand)]"
                       >
                         {link.label}
                       </Link>

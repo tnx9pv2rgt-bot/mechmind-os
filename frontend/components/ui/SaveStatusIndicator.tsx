@@ -88,8 +88,8 @@ const getStatusConfig = (
       return {
         icon: <Loader2 className='w-3 h-3 animate-spin' />,
         text: 'Salvataggio...',
-        className: 'text-blue-600',
-        iconClassName: 'text-blue-500',
+        className: 'text-[var(--status-info)]',
+        iconClassName: 'text-[var(--status-info)]',
         show: true,
       };
 
@@ -97,8 +97,8 @@ const getStatusConfig = (
       return {
         icon: <Check className='w-3 h-3' />,
         text: lastSavedText || 'Salvato',
-        className: 'text-green-600',
-        iconClassName: 'text-green-500',
+        className: 'text-[var(--status-success)]',
+        iconClassName: 'text-[var(--status-success)]',
         show: true,
       };
 
@@ -106,8 +106,8 @@ const getStatusConfig = (
       return {
         icon: <AlertCircle className='w-3 h-3' />,
         text: 'Errore di salvataggio',
-        className: 'text-red-600',
-        iconClassName: 'text-red-500',
+        className: 'text-[var(--status-error)]',
+        iconClassName: 'text-[var(--status-error)]',
         show: true,
       };
 
@@ -115,8 +115,8 @@ const getStatusConfig = (
       return {
         icon: <WifiOff className='w-3 h-3' />,
         text: pendingChanges > 0 ? `Offline · ${pendingChanges} in attesa` : 'Offline',
-        className: 'text-amber-600',
-        iconClassName: 'text-amber-500',
+        className: 'text-[var(--status-warning)]',
+        iconClassName: 'text-[var(--status-warning)]',
         show: true,
       };
 
@@ -124,8 +124,8 @@ const getStatusConfig = (
       return {
         icon: <GitMerge className='w-3 h-3' />,
         text: 'Conflitto rilevato',
-        className: 'text-orange-600',
-        iconClassName: 'text-orange-500',
+        className: 'text-[var(--status-warning)]',
+        iconClassName: 'text-[var(--status-warning)]',
         show: true,
       };
 
@@ -134,8 +134,8 @@ const getStatusConfig = (
       return {
         icon: <Cloud className='w-3 h-3' />,
         text: '',
-        className: 'text-gray-400',
-        iconClassName: 'text-gray-300',
+        className: 'text-[var(--text-tertiary)]',
+        iconClassName: 'text-[var(--text-tertiary)]',
         show: false,
       };
   }
@@ -236,12 +236,12 @@ export function SaveStatusIndicator({
           className={cn(
             'flex items-center justify-center',
             'w-6 h-6 rounded-full',
-            'bg-white shadow-sm border',
-            status === 'saving' && 'border-blue-200',
-            status === 'saved' && 'border-green-200',
-            status === 'error' && 'border-red-200',
-            status === 'offline' && 'border-amber-200',
-            status === 'conflict' && 'border-orange-200',
+            'bg-[var(--surface-secondary)] shadow-sm border',
+            status === 'saving' && 'border-[var(--status-info-subtle)]',
+            status === 'saved' && 'border-[var(--status-success-subtle)]',
+            status === 'error' && 'border-[var(--status-error-subtle)]',
+            status === 'offline' && 'border-[var(--status-warning-subtle)]',
+            status === 'conflict' && 'border-[var(--status-warning)]/20',
             className
           )}
           title={config.text}
@@ -266,11 +266,11 @@ export function SaveStatusIndicator({
           'text-xs font-medium',
           'px-2 py-1 rounded-md',
           'transition-colors duration-200',
-          status === 'saving' && 'bg-blue-50',
-          status === 'saved' && 'bg-green-50',
-          status === 'error' && 'bg-red-50',
-          status === 'offline' && 'bg-amber-50',
-          status === 'conflict' && 'bg-orange-50',
+          status === 'saving' && 'bg-[var(--status-info-subtle)]',
+          status === 'saved' && 'bg-[var(--status-success-subtle)]',
+          status === 'error' && 'bg-[var(--status-error-subtle)]',
+          status === 'offline' && 'bg-[var(--status-warning-subtle)]',
+          status === 'conflict' && 'bg-[var(--status-warning)]/5',
           className
         )}
       >
@@ -294,13 +294,13 @@ export function SaveStatusIndicator({
             onClick={onRetry}
             className={cn(
               'ml-1 p-0.5 rounded',
-              'hover:bg-red-100',
+              'hover:bg-[var(--status-error-subtle)]',
               'transition-colors duration-150'
             )}
             title='Riprova'
             aria-label='Riprova salvataggio'
           >
-            <RotateCcw className='w-3 h-3 text-red-600' />
+            <RotateCcw className='w-3 h-3 text-[var(--status-error)]' />
           </motion.button>
         )}
 
@@ -312,8 +312,8 @@ export function SaveStatusIndicator({
             onClick={onResolve}
             className={cn(
               'ml-1 px-1.5 py-0.5 rounded text-[10px]',
-              'bg-orange-100 hover:bg-orange-200',
-              'text-orange-700',
+              'bg-[var(--status-warning)]/10 hover:bg-[var(--status-warning)]/20',
+              'text-[var(--status-warning)]',
               'transition-colors duration-150'
             )}
           >
@@ -352,7 +352,7 @@ export function FixedSaveStatusIndicator({
     <div
       className={cn(
         'fixed z-50',
-        showBackground && 'bg-white/90 backdrop-blur-sm shadow-lg border rounded-lg px-3 py-2'
+        showBackground && 'bg-[var(--surface-secondary)]/90 backdrop-blur-sm shadow-lg border rounded-lg px-3 py-2'
       )}
       style={{ bottom, left }}
     >
@@ -383,7 +383,7 @@ export function FormHeaderSaveIndicator({
 }: FormHeaderSaveIndicatorProps) {
   return (
     <div className={cn('flex items-center justify-between', 'px-4 py-3', showBorder && 'border-b')}>
-      {title && <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>}
+      {title && <h2 className='text-lg font-semibold text-[var(--text-primary)]'>{title}</h2>}
       <SaveStatusIndicator {...props} />
     </div>
   );

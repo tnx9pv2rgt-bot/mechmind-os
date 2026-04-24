@@ -102,11 +102,11 @@ export const A11yFormField = forwardRef<
   // Input classes
   const inputClasses = `
     w-full px-3 py-2 rounded-md border
-    bg-background text-foreground
-    focus:outline-none focus:ring-2 focus:ring-ring focus:border-input
+    bg-[var(--surface-primary)] text-[var(--text-primary)]
+    focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:border-input
     disabled:opacity-50 disabled:cursor-not-allowed
     ${hasError 
-      ? 'border-destructive focus:ring-destructive' 
+      ? 'border-[var(--status-error)] focus:ring-destructive' 
       : 'border-input'
     }
     ${className}
@@ -121,7 +121,7 @@ export const A11yFormField = forwardRef<
       >
         {label}
         {required && showRequiredIndicator && (
-          <span className="text-destructive ml-1" aria-hidden="true">*</span>
+          <span className="text-[var(--status-error)] ml-1" aria-hidden="true">*</span>
         )}
         {required && (
           <span className="sr-only"> ({t('a11y:screenReader.help.required')})</span>
@@ -191,7 +191,7 @@ export const A11yFormField = forwardRef<
       {hint && (
         <p 
           id={hintId}
-          className="text-sm text-muted-foreground"
+          className="text-sm text-[var(--text-tertiary)]"
         >
           {hint}
         </p>
@@ -201,7 +201,7 @@ export const A11yFormField = forwardRef<
       {hasError && (
         <p 
           id={errorId}
-          className="text-sm text-destructive font-medium"
+          className="text-sm text-[var(--status-error)] font-medium"
           role="alert"
           aria-live="polite"
         >

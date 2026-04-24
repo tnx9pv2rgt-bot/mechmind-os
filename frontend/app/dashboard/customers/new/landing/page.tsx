@@ -81,11 +81,11 @@ function BenefitCard({
       <AppleCard hover={false}>
         <AppleCardContent>
           <div className='group'>
-            <div className='w-12 h-12 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
+            <div className='w-12 h-12 bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
               {icon}
             </div>
-            <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-1'>{title}</h3>
-            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{description}</p>
+            <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>{title}</h3>
+            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{description}</p>
           </div>
         </AppleCardContent>
       </AppleCard>
@@ -96,7 +96,7 @@ function BenefitCard({
 function TrustBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <motion.span
-      className='flex items-center gap-1.5 text-xs text-apple-gray dark:text-[var(--text-secondary)] bg-white dark:bg-[var(--surface-elevated)] px-3 py-1.5 rounded-full border border-apple-border/20 dark:border-[var(--border-default)]'
+      className='flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 py-1.5 rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)]'
       whileHover={{ scale: 1.05 }}
     >
       {icon}
@@ -111,9 +111,9 @@ function Avatar({ src, alt, delay = 0 }: { src: string; alt: string; delay?: num
       initial={{ scale: 0, x: -20 }}
       animate={{ scale: 1, x: 0 }}
       transition={{ delay, type: 'spring', stiffness: 300 }}
-      className='w-10 h-10 rounded-full border-2 border-white dark:border-[var(--border-default)] overflow-hidden shadow-sm'
+      className='w-10 h-10 rounded-full border-2 border-[var(--border-default)] dark:border-[var(--border-default)] overflow-hidden shadow-sm'
     >
-      <div className='w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium'>
+      <div className='w-full h-full bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center text-[var(--text-on-brand)] text-sm font-medium'>
         {alt.charAt(0)}
       </div>
     </motion.div>
@@ -128,11 +128,11 @@ export default function LandingPage() {
   };
 
   return (
-    <div className='min-h-screen bg-apple-light-gray dark:bg-[var(--surface-tertiary)] flex items-center justify-center p-4 sm:p-6 lg:p-8'>
+    <div className='min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] flex items-center justify-center p-4 sm:p-6 lg:p-8'>
       {/* Background decorations */}
       <div className='fixed inset-0 overflow-hidden pointer-events-none'>
         <motion.div
-          className='absolute top-20 left-10 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl'
+          className='absolute top-20 left-10 w-72 h-72 bg-[var(--status-info)]/20/20 rounded-full blur-3xl'
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -140,7 +140,7 @@ export default function LandingPage() {
           transition={{ duration: 8, repeat: Infinity }}
         />
         <motion.div
-          className='absolute bottom-20 right-10 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl'
+          className='absolute bottom-20 right-10 w-96 h-96 bg-[var(--brand)]/20/20 rounded-full blur-3xl'
           animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.3, 0.5, 0.3],
@@ -158,11 +158,11 @@ export default function LandingPage() {
       >
         {/* Logo/Brand */}
         <motion.div variants={itemVariants} className='text-center mb-8'>
-          <div className='inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[var(--surface-elevated)] rounded-full border border-apple-border/20 dark:border-[var(--border-default)]'>
-            <div className='w-6 h-6 bg-apple-blue rounded-lg flex items-center justify-center'>
-              <Zap className='w-3.5 h-3.5 text-white' />
+          <div className='inline-flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
+            <div className='w-6 h-6 bg-[var(--brand)] rounded-lg flex items-center justify-center'>
+              <Zap className='w-3.5 h-3.5 text-[var(--text-on-brand)]' />
             </div>
-            <span className='text-sm font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+            <span className='text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               MechMind OS
             </span>
           </div>
@@ -175,9 +175,9 @@ export default function LandingPage() {
 
         {/* Headline */}
         <motion.div variants={itemVariants} className='text-center mb-6'>
-          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)] mb-4 leading-tight'>
+          <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 leading-tight'>
             Iniziamo il tuo percorso con{' '}
-            <span className='bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent'>
+            <span className='bg-gradient-to-r from-[var(--status-info)] to-[var(--status-info)] bg-clip-text text-transparent'>
               MechMind
             </span>
           </h1>
@@ -186,31 +186,31 @@ export default function LandingPage() {
         {/* Subtitle with time estimate */}
         <motion.p
           variants={itemVariants}
-          className='text-body text-apple-gray dark:text-[var(--text-secondary)] text-center mb-10 max-w-xl mx-auto'
+          className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center mb-10 max-w-xl mx-auto'
         >
           Solo{' '}
-          <span className='font-semibold text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] px-2 py-0.5 rounded-lg'>
+          <span className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] px-2 py-0.5 rounded-lg'>
             2 minuti
           </span>{' '}
           per configurare il tuo account.
           <br className='hidden sm:block' />
-          <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Nessuna carta di credito richiesta.</span>
+          <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessuna carta di credito richiesta.</span>
         </motion.p>
 
         {/* Benefits Grid */}
         <motion.div variants={itemVariants} className='grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10'>
           <BenefitCard
-            icon={<Zap className='w-6 h-6 text-apple-blue' />}
+            icon={<Zap className='w-6 h-6 text-[var(--brand)]' />}
             title='Setup rapido'
             description='60 secondi e sei operativo'
           />
           <BenefitCard
-            icon={<Shield className='w-6 h-6 text-apple-green' />}
+            icon={<Shield className='w-6 h-6 text-[var(--status-success)]' />}
             title='Sicuro'
             description='Crittografia AES-256'
           />
           <BenefitCard
-            icon={<BadgeCheck className='w-6 h-6 text-apple-purple' />}
+            icon={<BadgeCheck className='w-6 h-6 text-[var(--brand)]' />}
             title='Verificato'
             description='P.IVA verificata in tempo reale'
           />
@@ -228,31 +228,31 @@ export default function LandingPage() {
                       <Avatar key={i} src='' alt={letter} delay={0.5 + i * 0.1} />
                     ))}
                   </div>
-                  <div className='w-10 h-10 rounded-full border-2 border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center text-xs text-apple-gray dark:text-[var(--text-secondary)] font-medium'>
+                  <div className='w-10 h-10 rounded-full border-2 border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] font-medium'>
                     +10k
                   </div>
                 </div>
 
                 <div className='text-center sm:text-left'>
-                  <p className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     <strong>10.000+</strong> officine già iscritte
                   </p>
                   <div className='flex items-center justify-center sm:justify-start gap-1 mt-1'>
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className='w-3.5 h-3.5 fill-amber-400 text-amber-400' />
+                      <Star key={i} className='w-3.5 h-3.5 fill-amber-400 text-[var(--status-warning)]' />
                     ))}
-                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] ml-1'>4.9/5</span>
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ml-1'>4.9/5</span>
                   </div>
                 </div>
               </div>
 
               {/* Testimonial */}
-              <div className='text-center border-t border-apple-border/20 dark:border-[var(--border-default)] pt-4'>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] italic'>
+              <div className='text-center border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] pt-4'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] italic'>
                   &ldquo;Ho configurato tutto in 3 minuti. Il sistema è intuitivo e il supporto
                   fantastico!&rdquo;
                 </p>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-2'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-2'>
                   — Marco R., Officina Rossi srl
                 </p>
               </div>
@@ -266,16 +266,16 @@ export default function LandingPage() {
           className='flex flex-wrap items-center justify-center gap-3 mb-10'
         >
           <TrustBadge
-            icon={<Shield className='w-3.5 h-3.5 text-apple-green' />}
+            icon={<Shield className='w-3.5 h-3.5 text-[var(--status-success)]' />}
             label='Conforme GDPR'
           />
-          <TrustBadge icon={<Lock className='w-3.5 h-3.5 text-apple-blue' />} label='Certificazione ISO 27001' />
+          <TrustBadge icon={<Lock className='w-3.5 h-3.5 text-[var(--brand)]' />} label='Certificazione ISO 27001' />
           <TrustBadge
-            icon={<CheckCircle className='w-3.5 h-3.5 text-apple-purple' />}
+            icon={<CheckCircle className='w-3.5 h-3.5 text-[var(--brand)]' />}
             label='Google Partner'
           />
           <TrustBadge
-            icon={<Users className='w-3.5 h-3.5 text-apple-orange' />}
+            icon={<Users className='w-3.5 h-3.5 text-[var(--status-warning)]' />}
             label='+10k utenti'
           />
         </motion.div>
@@ -305,11 +305,11 @@ export default function LandingPage() {
           </div>
 
           {/* Login link */}
-          <p className='mt-6 text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+          <p className='mt-6 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
             Hai già un account?{' '}
             <Link
               href='/auth'
-              className='text-apple-blue hover:underline font-medium transition-colors'
+              className='text-[var(--brand)] hover:underline font-medium transition-colors'
             >
               Accedi
             </Link>
@@ -319,14 +319,14 @@ export default function LandingPage() {
         {/* Footer note */}
         <motion.p
           variants={itemVariants}
-          className='mt-12 text-footnote text-center text-apple-gray dark:text-[var(--text-secondary)]'
+          className='mt-12 text-footnote text-center text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
         >
           Cliccando su &ldquo;Crea account&rdquo; accetti i{' '}
-          <Link href='#' className='underline hover:text-apple-blue'>
+          <Link href='#' className='underline hover:text-[var(--brand)]'>
             Termini di Servizio
           </Link>{' '}
           e la{' '}
-          <Link href='#' className='underline hover:text-apple-blue'>
+          <Link href='#' className='underline hover:text-[var(--brand)]'>
             Privacy Policy
           </Link>
         </motion.p>

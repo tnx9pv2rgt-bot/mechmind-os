@@ -73,27 +73,27 @@ const statusConfig: Record<
     textColor: string;
   }
 > = {
-  pending: { label: 'In attesa', color: 'bg-amber-500', icon: Clock3, textColor: 'text-amber-600' },
+  pending: { label: 'In attesa', color: 'bg-[var(--status-warning)]', icon: Clock3, textColor: 'text-[var(--status-warning)]' },
   confirmed: {
     label: 'Confermato',
-    color: 'bg-green-500',
+    color: 'bg-[var(--status-success)]',
     icon: CheckCircle,
-    textColor: 'text-green-600',
+    textColor: 'text-[var(--status-success)]',
   },
   in_progress: {
     label: 'In lavorazione',
-    color: 'bg-blue-500',
+    color: 'bg-[var(--status-info)]',
     icon: Wrench,
-    textColor: 'text-blue-600',
+    textColor: 'text-[var(--status-info)]',
   },
   completed: {
     label: 'Completato',
-    color: 'bg-blue-600',
+    color: 'bg-[var(--status-info)]',
     icon: CheckCircle2,
-    textColor: 'text-blue-600',
+    textColor: 'text-[var(--status-info)]',
   },
-  cancelled: { label: 'Annullato', color: 'bg-red-500', icon: X, textColor: 'text-red-600' },
-  no_show: { label: 'Non presentato', color: 'bg-gray-400', icon: UserX, textColor: 'text-gray-600' },
+  cancelled: { label: 'Annullato', color: 'bg-[var(--status-error)]', icon: X, textColor: 'text-[var(--status-error)]' },
+  no_show: { label: 'Non presentato', color: 'bg-[var(--surface-hover)]', icon: UserX, textColor: 'text-[var(--text-secondary)]' },
 };
 
 const BOOKING_TIMELINE_STEPS: TimelineStepConfig[] = [
@@ -327,7 +327,7 @@ export default function BookingDetailPage(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -335,8 +335,8 @@ export default function BookingDetailPage(): React.JSX.Element {
   if (error || !booking) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
-        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
           Prenotazione non trovata
         </p>
         <AppleButton
@@ -360,7 +360,7 @@ export default function BookingDetailPage(): React.JSX.Element {
   }
 
   return (
-    <div className='min-h-screen bg-apple-light-gray dark:bg-[var(--surface-hover)]'>
+    <div className='min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]'>
       <header>
         <div className='px-4 sm:px-6 py-4'>
           <Breadcrumb
@@ -372,22 +372,22 @@ export default function BookingDetailPage(): React.JSX.Element {
           />
           <Link
             href='/dashboard/bookings'
-            className='flex items-center gap-2 text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark transition-colors mb-3'
+            className='flex items-center gap-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-3'
           >
             <ArrowLeft className='h-4 w-4' />
             <span className='text-footnote'>Torna alle prenotazioni</span>
           </Link>
           <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {booking.serviceName || booking.serviceCategory}
               </h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-0.5'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-0.5'>
                 {booking.id.slice(0, 8)} &bull; {booking.vehiclePlate} {booking.vehicleBrand || ''}
               </p>
             </div>
             <div
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${status.color} text-white font-medium`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${status.color} text-[var(--text-on-brand)] font-medium`}
             >
               <StatusIcon className='h-4 w-4' />
               <span>{status.label}</span>
@@ -408,29 +408,29 @@ export default function BookingDetailPage(): React.JSX.Element {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                     Cliente
                   </h2>
                   <div className='space-y-4'>
-                    <p className='text-title-2 text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='text-title-2 text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {booking.customerName}
                     </p>
                     {booking.customerPhone && (
-                      <div className='space-y-2 pt-2 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+                      <div className='space-y-2 pt-2 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                         <a
                           href={`tel:${booking.customerPhone}`}
-                          className='flex items-center gap-3 text-body text-apple-dark dark:text-[var(--text-primary)] hover:text-apple-blue transition-colors min-h-[44px]'
+                          className='flex items-center gap-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] hover:text-[var(--brand)] transition-colors min-h-[44px]'
                         >
-                          <Phone className='h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]' />
+                          <Phone className='h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
                           {booking.customerPhone}
                         </a>
                         <a
                           href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`}
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='flex items-center gap-3 text-body text-apple-dark dark:text-[var(--text-primary)] hover:text-apple-green transition-colors min-h-[44px]'
+                          className='flex items-center gap-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] hover:text-[var(--status-success)] transition-colors min-h-[44px]'
                         >
-                          <MessageCircle className='h-4 w-4 text-apple-green' />
+                          <MessageCircle className='h-4 w-4 text-[var(--status-success)]' />
                           WhatsApp
                         </a>
                       </div>
@@ -443,22 +443,22 @@ export default function BookingDetailPage(): React.JSX.Element {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-                    <Car className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                    <Car className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
                     Veicolo
                   </h2>
                   <div className='space-y-4'>
                     <div>
-                      <p className='text-title-2 text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-title-2 text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {booking.vehicleBrand || ''} {booking.vehicleModel || ''}
                       </p>
                     </div>
-                    <div className='grid grid-cols-2 gap-3 pt-2 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
+                    <div className='grid grid-cols-2 gap-3 pt-2 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                       <div>
-                        <p className='text-caption text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <p className='text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           Targa
                         </p>
-                        <p className='text-body font-mono text-apple-dark dark:text-[var(--text-primary)]'>
+                        <p className='text-body font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {booking.vehiclePlate}
                         </p>
                       </div>
@@ -474,17 +474,17 @@ export default function BookingDetailPage(): React.JSX.Element {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                     Dettagli Appuntamento
                   </h2>
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6'>
-                    <div className='flex items-center gap-3 p-3 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl'>
-                      <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                        <Calendar className='h-5 w-5 text-apple-blue' />
+                    <div className='flex items-center gap-3 p-3 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl'>
+                      <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                        <Calendar className='h-5 w-5 text-[var(--brand)]' />
                       </div>
                       <div>
-                        <p className='text-caption text-apple-gray dark:text-[var(--text-secondary)]'>Data</p>
-                        <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <p className='text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Data</p>
+                        <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {scheduledDate.toLocaleDateString('it-IT', {
                             day: 'numeric',
                             month: 'long',
@@ -493,13 +493,13 @@ export default function BookingDetailPage(): React.JSX.Element {
                         </p>
                       </div>
                     </div>
-                    <div className='flex items-center gap-3 p-3 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl'>
-                      <div className='w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
-                        <Clock className='h-5 w-5 text-apple-purple' />
+                    <div className='flex items-center gap-3 p-3 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl'>
+                      <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                        <Clock className='h-5 w-5 text-[var(--brand)]' />
                       </div>
                       <div>
-                        <p className='text-caption text-apple-gray dark:text-[var(--text-secondary)]'>Orario</p>
-                        <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <p className='text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Orario</p>
+                        <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {scheduledDate.toLocaleTimeString('it-IT', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -510,19 +510,19 @@ export default function BookingDetailPage(): React.JSX.Element {
                   </div>
                   <div className='space-y-4'>
                     <div>
-                      <p className='text-caption text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                      <p className='text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                         Servizio
                       </p>
-                      <p className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {booking.serviceName || booking.serviceCategory}
                       </p>
                     </div>
                     {booking.notes && (
                       <div>
-                        <p className='text-caption text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                        <p className='text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                           Note
                         </p>
-                        <p className='text-body text-apple-dark dark:text-[var(--text-primary)] bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 p-3 rounded-xl'>
+                        <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20 border border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]/30 p-3 rounded-xl'>
                           {booking.notes}
                         </p>
                       </div>
@@ -535,8 +535,8 @@ export default function BookingDetailPage(): React.JSX.Element {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-                    <History className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+                    <History className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
                     Cronologia
                   </h2>
                   <StatusTimeline
@@ -557,7 +557,7 @@ export default function BookingDetailPage(): React.JSX.Element {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                     Azioni
                   </h2>
                   <div className='space-y-3'>
@@ -600,7 +600,7 @@ export default function BookingDetailPage(): React.JSX.Element {
                       Stampa
                     </AppleButton>
                   </div>
-                  <div className='pt-4 mt-4 border-t border-apple-border/20 dark:border-[var(--border-default)] space-y-2'>
+                  <div className='pt-4 mt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] space-y-2'>
                     {canTransitionTo(booking.status, 'confirmed') && (
                       <AppleButton
                         className='w-full min-h-[44px]'
@@ -634,7 +634,7 @@ export default function BookingDetailPage(): React.JSX.Element {
                     {canTransitionTo(booking.status, 'no_show') && (
                       <AppleButton
                         variant='ghost'
-                        className='w-full min-h-[44px] text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)]'
+                        className='w-full min-h-[44px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
                         onClick={() => setNoShowConfirmOpen(true)}
                         disabled={updateBooking.isPending}
                       >
@@ -645,7 +645,7 @@ export default function BookingDetailPage(): React.JSX.Element {
                     {canTransitionTo(booking.status, 'cancelled') && (
                       <AppleButton
                         variant='ghost'
-                        className='w-full min-h-[44px] text-apple-red hover:text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20'
+                        className='w-full min-h-[44px] text-[var(--status-error)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)]'
                         onClick={() => setCancelDialogOpen(true)}
                         disabled={updateBooking.isPending}
                       >
@@ -661,15 +661,15 @@ export default function BookingDetailPage(): React.JSX.Element {
             <motion.div variants={cardVariants}>
               <AppleCard>
                 <AppleCardContent>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                     Preventivo
                   </h2>
                   <div className='space-y-3'>
                     <div className='pt-3 flex items-center justify-between'>
-                      <span className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Costo Stimato
                       </span>
-                      <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {booking.estimatedCost
                           ? new Intl.NumberFormat('it-IT', {
                               style: 'currency',
@@ -699,7 +699,7 @@ export default function BookingDetailPage(): React.JSX.Element {
             <div className='py-4'>
               <label
                 htmlFor='cancel-reason'
-                className='block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'
+                className='block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'
               >
                 Motivo
               </label>
@@ -708,10 +708,10 @@ export default function BookingDetailPage(): React.JSX.Element {
                 rows={3}
                 {...cancelForm.register('reason')}
                 placeholder='Inserisci il motivo della cancellazione...'
-                className='w-full rounded-lg border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none'
+                className='w-full rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none'
               />
               {cancelForm.formState.errors.reason && (
-                <p className='text-footnote text-apple-red mt-1'>{cancelForm.formState.errors.reason.message}</p>
+                <p className='text-footnote text-[var(--status-error)] mt-1'>{cancelForm.formState.errors.reason.message}</p>
               )}
             </div>
             <DialogFooter>
@@ -726,7 +726,7 @@ export default function BookingDetailPage(): React.JSX.Element {
               <AppleButton
                 type='submit'
                 disabled={updateBooking.isPending}
-                className='bg-apple-red hover:opacity-90 text-white'
+                className='bg-[var(--status-error)] hover:opacity-90 text-[var(--text-on-brand)]'
               >
                 {updateBooking.isPending ? 'Annullamento...' : 'Annulla Prenotazione'}
               </AppleButton>
@@ -748,7 +748,7 @@ export default function BookingDetailPage(): React.JSX.Element {
             <div className='py-4'>
               <label
                 htmlFor='reschedule-date'
-                className='block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'
+                className='block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'
               >
                 Nuova data e orario
               </label>
@@ -756,10 +756,10 @@ export default function BookingDetailPage(): React.JSX.Element {
                 id='reschedule-date'
                 type='datetime-local'
                 {...rescheduleForm.register('scheduledDate')}
-                className='w-full rounded-lg border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+                className='w-full rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
               />
               {rescheduleForm.formState.errors.scheduledDate && (
-                <p className='text-footnote text-apple-red mt-1'>{rescheduleForm.formState.errors.scheduledDate.message}</p>
+                <p className='text-footnote text-[var(--status-error)] mt-1'>{rescheduleForm.formState.errors.scheduledDate.message}</p>
               )}
             </div>
             <DialogFooter>
@@ -796,7 +796,7 @@ export default function BookingDetailPage(): React.JSX.Element {
               <div>
                 <label
                   htmlFor='edit-scheduled-date'
-                  className='block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'
+                  className='block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'
                 >
                   Data e Orario
                 </label>
@@ -804,16 +804,16 @@ export default function BookingDetailPage(): React.JSX.Element {
                   id='edit-scheduled-date'
                   type='datetime-local'
                   {...editForm.register('scheduledDate')}
-                  className='w-full rounded-lg border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+                  className='w-full rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
                 />
                 {editForm.formState.errors.scheduledDate && (
-                  <p className='text-footnote text-apple-red mt-1'>{editForm.formState.errors.scheduledDate.message}</p>
+                  <p className='text-footnote text-[var(--status-error)] mt-1'>{editForm.formState.errors.scheduledDate.message}</p>
                 )}
               </div>
               <div>
                 <label
                   htmlFor='edit-notes'
-                  className='block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'
+                  className='block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'
                 >
                   Note
                 </label>
@@ -822,10 +822,10 @@ export default function BookingDetailPage(): React.JSX.Element {
                   rows={4}
                   {...editForm.register('notes')}
                   placeholder='Aggiungi note alla prenotazione...'
-                  className='w-full rounded-lg border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none'
+                  className='w-full rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-3 py-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none'
                 />
                 {editForm.formState.errors.notes && (
-                  <p className='text-footnote text-apple-red mt-1'>{editForm.formState.errors.notes.message}</p>
+                  <p className='text-footnote text-[var(--status-error)] mt-1'>{editForm.formState.errors.notes.message}</p>
                 )}
               </div>
             </div>

@@ -205,8 +205,8 @@ export default function NewSupplierOrderPage() {
               className='min-w-[44px]'
             />
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ordine Fornitore</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ordine Fornitore</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Crea un nuovo ordine di acquisto ricambi
               </p>
             </div>
@@ -224,7 +224,7 @@ export default function NewSupplierOrderPage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Fornitore
               </h2>
             </AppleCardHeader>
@@ -232,7 +232,7 @@ export default function NewSupplierOrderPage() {
               <select
                 value={selectedSupplierId}
                 onChange={e => setSelectedSupplierId(e.target.value)}
-                className='w-full h-10 px-3 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                className='w-full h-10 px-3 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
               >
                 <option value=''>Seleziona fornitore...</option>
                 {suppliers.map(s => (
@@ -247,15 +247,15 @@ export default function NewSupplierOrderPage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                <Package className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <Package className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
                 Ricambi da Ordinare
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {/* Search */}
               <div className='relative mb-4'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca ricambio per nome o SKU...'
                   aria-label='Cerca ricambio'
@@ -265,20 +265,20 @@ export default function NewSupplierOrderPage() {
                   className='pl-10'
                 />
                 {showPartDropdown && partResults.length > 0 && (
-                  <div className='absolute z-10 top-full mt-1 w-full bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple dark:shadow-[var(--shadow-xl)] border border-apple-border/30 dark:border-[var(--border-default)] max-h-60 overflow-y-auto'>
+                  <div className='absolute z-10 top-full mt-1 w-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl shadow-apple dark:shadow-[var(--shadow-xl)] border border-[var(--border-default)]/30 dark:border-[var(--border-default)] max-h-60 overflow-y-auto'>
                     {partResults.map(p => (
                       <button
                         key={p.id}
-                        className='w-full text-left px-4 py-3 hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)] transition-colors text-sm flex items-center justify-between'
+                        className='w-full text-left px-4 py-3 hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)] transition-colors text-sm flex items-center justify-between'
                         onClick={() => addPart(p)}
                       >
                         <div>
-                          <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{p.name}</span>
-                          <span className='ml-2 text-apple-gray dark:text-[var(--text-secondary)] font-mono text-xs'>{p.sku}</span>
+                          <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{p.name}</span>
+                          <span className='ml-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] font-mono text-xs'>{p.sku}</span>
                         </div>
                         <div className='text-right'>
-                          <span className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Stock: {p.currentStock}</span>
-                          <span className='ml-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>{formatCurrency(p.costPrice)}</span>
+                          <span className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Stock: {p.currentStock}</span>
+                          <span className='ml-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formatCurrency(p.costPrice)}</span>
                         </div>
                       </button>
                     ))}
@@ -288,20 +288,20 @@ export default function NewSupplierOrderPage() {
 
               {/* Header */}
               {lines.length > 0 && (
-                <div className='hidden md:grid grid-cols-12 gap-2 pb-2 border-b border-apple-border/30 dark:border-[var(--border-default)] mb-3'>
-                  <div className='col-span-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Ricambio</div>
-                  <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>Stock</div>
-                  <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>Quantità</div>
-                  <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>Prezzo Unit.</div>
-                  <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>Totale</div>
+                <div className='hidden md:grid grid-cols-12 gap-2 pb-2 border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)] mb-3'>
+                  <div className='col-span-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ricambio</div>
+                  <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>Stock</div>
+                  <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>Quantità</div>
+                  <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>Prezzo Unit.</div>
+                  <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>Totale</div>
                   <div className='col-span-1' />
                 </div>
               )}
 
               {lines.length === 0 ? (
                 <div className='text-center py-8'>
-                  <Package className='h-12 w-12 text-apple-gray/40 dark:text-[var(--text-secondary)]/40 mx-auto mb-3' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <Package className='h-12 w-12 text-[var(--text-tertiary)]/40 dark:text-[var(--text-secondary)]/40 mx-auto mb-3' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Cerca e aggiungi ricambi da ordinare
                   </p>
                 </div>
@@ -310,14 +310,14 @@ export default function NewSupplierOrderPage() {
                   {lines.map(line => (
                     <div
                       key={line.localId}
-                      className='grid grid-cols-12 gap-2 items-center p-3 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                      className='grid grid-cols-12 gap-2 items-center p-3 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                     >
                       <div className='col-span-12 md:col-span-4'>
-                        <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{line.partName}</p>
-                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] font-mono'>{line.partSku}</p>
+                        <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{line.partName}</p>
+                        <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] font-mono'>{line.partSku}</p>
                       </div>
                       <div className='col-span-4 md:col-span-2 text-right'>
-                        <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>{line.currentStock}</span>
+                        <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{line.currentStock}</span>
                       </div>
                       <div className='col-span-4 md:col-span-2'>
                         <Input
@@ -339,7 +339,7 @@ export default function NewSupplierOrderPage() {
                         />
                       </div>
                       <div className='col-span-6 md:col-span-1 text-right'>
-                        <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {formatCurrency(line.quantity * line.unitPrice)}
                         </span>
                       </div>
@@ -350,7 +350,7 @@ export default function NewSupplierOrderPage() {
                           onClick={() => removeLine(line.localId)}
                           icon={<Trash2 className='h-4 w-4' />}
                           aria-label='Rimuovi'
-                          className='text-apple-gray hover:text-apple-red dark:text-[var(--text-secondary)]'
+                          className='text-[var(--text-tertiary)] hover:text-[var(--status-error)] dark:text-[var(--text-secondary)]'
                         />
                       </div>
                     </div>
@@ -359,14 +359,14 @@ export default function NewSupplierOrderPage() {
               )}
             </AppleCardContent>
             {lines.length > 0 && (
-              <div className='px-6 py-4 border-t border-apple-border/30 dark:border-[var(--border-default)] bg-apple-light-gray/20 dark:bg-[var(--surface-hover)] rounded-b-2xl'>
+              <div className='px-6 py-4 border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/20 dark:bg-[var(--surface-hover)] rounded-b-2xl'>
                 <div className='flex justify-end'>
                   <div className='space-y-2 w-full max-w-xs'>
-                    <div className='flex justify-between border-t border-apple-border/30 dark:border-[var(--border-default)] pt-2'>
-                      <span className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='flex justify-between border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)] pt-2'>
+                      <span className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Totale Ordine
                       </span>
-                      <span className='text-body font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-body font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(orderTotal)}
                       </span>
                     </div>
@@ -381,7 +381,7 @@ export default function NewSupplierOrderPage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Note Ordine
               </h2>
             </AppleCardHeader>
@@ -391,7 +391,7 @@ export default function NewSupplierOrderPage() {
                 onChange={e => setNotes(e.target.value)}
                 rows={3}
                 placeholder='Note per il fornitore...'
-                className='w-full rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
+                className='w-full rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
               />
             </AppleCardContent>
           </AppleCard>
@@ -399,9 +399,9 @@ export default function NewSupplierOrderPage() {
 
         {/* Error */}
         {submitError && (
-          <div className='flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30'>
-            <AlertCircle className='h-4 w-4 text-apple-red flex-shrink-0' />
-            <p className='text-footnote text-apple-red dark:text-red-300'>{submitError}</p>
+          <div className='flex items-center gap-2 p-3 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/30'>
+            <AlertCircle className='h-4 w-4 text-[var(--status-error)] flex-shrink-0' />
+            <p className='text-footnote text-[var(--status-error)] dark:text-[var(--status-error)]'>{submitError}</p>
           </div>
         )}
 

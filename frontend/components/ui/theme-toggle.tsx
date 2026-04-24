@@ -24,14 +24,14 @@ export function ThemeToggle() {
       aria-label="Toggle theme"
     >
       <motion.span
-        className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-white shadow-sm"
+        className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[var(--surface-secondary)] shadow-sm"
         animate={{ x: isDark ? 22 : 2 }}
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       >
         {isDark ? (
           <Moon className="h-3 w-3 text-[var(--text-primary)]" />
         ) : (
-          <Sun className="h-3 w-3 text-amber-500" />
+          <Sun className="h-3 w-3 text-[var(--status-warning)]" />
         )}
       </motion.span>
     </button>

@@ -47,9 +47,9 @@ interface Message {
 }
 
 const CHANNEL_CONFIG: Record<string, { label: string; icon: typeof MessageSquare; color: string }> = {
-  SMS: { label: 'SMS', icon: MessageSquare, color: '#60a5fa' },
-  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: '#34d399' },
-  EMAIL: { label: 'Email', icon: Mail, color: '#fbbf24' },
+  SMS: { label: 'SMS', icon: MessageSquare, color: 'var(--status-info)' },
+  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'var(--status-success)' },
+  EMAIL: { label: 'Email', icon: Mail, color: 'var(--status-warning)' },
 };
 
 const STATUS_ICONS: Record<string, typeof Check> = {
@@ -177,8 +177,8 @@ export default function MessagingPage() {
       <header>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Messaggistica</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Messaggistica</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci le conversazioni con i clienti
             </p>
           </div>
@@ -204,14 +204,14 @@ export default function MessagingPage() {
                     aria-label='Cerca conversazioni'
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className='w-full pl-10 pr-4 h-10 rounded-xl border border-[var(--border-default)] bg-white/5 text-body text-[var(--text-primary)] outline-none transition-colors focus:border-white/30'
+                    className='w-full pl-10 pr-4 h-10 rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)]/5 text-body text-[var(--text-primary)] outline-none transition-colors focus:border-[var(--border-default)]/30'
                   />
                 </div>
                 <div className='flex items-center gap-2'>
                   <select
                     value={channelFilter}
                     onChange={e => setChannelFilter(e.target.value)}
-                    className='text-footnote h-8 px-3 rounded-full border border-[var(--border-default)] bg-white/5 text-[var(--text-primary)] outline-none'
+                    className='text-footnote h-8 px-3 rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)]/5 text-[var(--text-primary)] outline-none'
                   >
                     <option value=''>Tutti i canali</option>
                     <option value='SMS'>SMS</option>
@@ -232,8 +232,8 @@ export default function MessagingPage() {
               <div className='flex-1 overflow-y-auto'>
                 {convsError ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center px-4'>
-                    <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Impossibile caricare le conversazioni</p>
+                    <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Impossibile caricare le conversazioni</p>
                     <AppleButton
                       variant='ghost'
                       className='mt-4'
@@ -244,12 +244,12 @@ export default function MessagingPage() {
                   </div>
                 ) : convsLoading ? (
                   <div className='flex items-center justify-center py-12'>
-                    <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                    <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                   </div>
                 ) : filteredConvs.length === 0 ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center px-4'>
-                    <MessageSquare className='h-12 w-12 text-apple-gray/40 mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <MessageSquare className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessuna conversazione. I messaggi appariranno qui.
                     </p>
                   </div>
@@ -267,15 +267,15 @@ export default function MessagingPage() {
                           whileHover={{ scale: 1.005, x: 4 }}
                           transition={{ duration: 0.2 }}
                           className={`flex items-center gap-3 p-4 cursor-pointer transition-all duration-300 rounded-2xl mx-2 my-1 ${
-                            isSelected ? 'bg-apple-light-gray/50 dark:bg-[var(--surface-active)]' : 'bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple'
+                            isSelected ? 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-active)]' : 'bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple'
                           }`}
                         >
-                          <div className='w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-400/10'>
-                            <User className='h-5 w-5 text-blue-400' />
+                          <div className='w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-[var(--status-info)]/10'>
+                            <User className='h-5 w-5 text-[var(--status-info)]' />
                           </div>
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-center justify-between'>
-                              <p className='text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body font-semibold truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {conv.customerName}
                               </p>
                               <div className='flex items-center gap-1.5'>
@@ -287,10 +287,10 @@ export default function MessagingPage() {
                                 )}
                               </div>
                             </div>
-                            <p className='text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {conv.lastMessage}
                             </p>
-                            <p className='text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)] opacity-70'>
+                            <p className='text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] opacity-70'>
                               {new Date(conv.lastMessageAt).toLocaleDateString('it-IT', {
                                 day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
                               })}
@@ -322,8 +322,8 @@ export default function MessagingPage() {
                     >
                       {''}
                     </AppleButton>
-                    <div className='w-10 h-10 rounded-full flex items-center justify-center bg-blue-400/10'>
-                      <User className='h-5 w-5 text-blue-400' />
+                    <div className='w-10 h-10 rounded-full flex items-center justify-center bg-[var(--status-info)]/10'>
+                      <User className='h-5 w-5 text-[var(--status-info)]' />
                     </div>
                     <div className='flex-1'>
                       <p className='text-body font-medium text-[var(--text-primary)]'>
@@ -335,8 +335,8 @@ export default function MessagingPage() {
                         <span
                           className='text-footnote px-1.5 py-0.5 rounded-full font-medium'
                           style={{
-                            backgroundColor: `${CHANNEL_CONFIG[selectedConv.channel]?.color || '#60a5fa'}18`,
-                            color: CHANNEL_CONFIG[selectedConv.channel]?.color || '#60a5fa',
+                            backgroundColor: `${CHANNEL_CONFIG[selectedConv.channel]?.color || 'var(--status-info)'}18`,
+                            color: CHANNEL_CONFIG[selectedConv.channel]?.color || 'var(--status-info)',
                           }}
                         >
                           {selectedConv.channel}
@@ -349,7 +349,7 @@ export default function MessagingPage() {
                   <div className='flex-1 overflow-y-auto p-4 space-y-3'>
                     {msgsLoading ? (
                       <div className='flex items-center justify-center py-12'>
-                        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                       </div>
                     ) : messages.length === 0 ? (
                       <div className='flex items-center justify-center py-12'>
@@ -399,7 +399,7 @@ export default function MessagingPage() {
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className='flex-1 h-10 px-4 rounded-xl border border-[var(--border-default)] bg-white/5 text-body text-[var(--text-primary)] outline-none transition-colors focus:border-white/30'
+                        className='flex-1 h-10 px-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)]/5 text-body text-[var(--text-primary)] outline-none transition-colors focus:border-[var(--border-default)]/30'
                       />
                       <AppleButton
                         variant='primary'
@@ -415,11 +415,11 @@ export default function MessagingPage() {
                 </>
               ) : (
                 <div className='flex-1 flex flex-col items-center justify-center text-center'>
-                  <MessageSquare className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <MessageSquare className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Seleziona una conversazione
                   </p>
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                     Scegli una conversazione dalla lista per visualizzare i messaggi
                   </p>
                 </div>

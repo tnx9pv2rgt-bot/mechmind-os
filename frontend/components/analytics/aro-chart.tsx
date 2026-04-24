@@ -74,8 +74,8 @@ function CustomTooltip({
     const gap = aroValue - targetValue;
 
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <p className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
+        <p className="mb-2 text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {label}
         </p>
         {payload.map((entry, index) => (
@@ -85,7 +85,7 @@ function CustomTooltip({
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                 {entry.dataKey === "aro"
                   ? "ARO"
                   : entry.dataKey === "target"
@@ -93,17 +93,17 @@ function CustomTooltip({
                   : "Anno Scorso"}
               </span>
             </div>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(entry.value)}
             </span>
           </div>
         ))}
         {gap !== 0 && (
-          <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-700">
+          <div className="mt-2 border-t border-[var(--border-default)] pt-2 dark:border-[var(--border-default)]">
             <div
               className={cn(
                 "flex items-center justify-between text-sm",
-                gap >= 0 ? "text-status-ready" : "text-status-urgent"
+                gap >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-error)]"
               )}
             >
               <span>Gap obiettivo</span>
@@ -165,22 +165,22 @@ export function AROChart({ dateRange }: AROChartProps) {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Average Repair Order (ARO)
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Trend ARO con analisi obiettivi
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(metrics.currentARO)}
             </p>
             <div
               className={cn(
                 "flex items-center justify-end gap-1 text-sm",
-                metrics.yoyChange >= 0 ? "text-status-ready" : "text-status-urgent"
+                metrics.yoyChange >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-error)]"
               )}
             >
               {metrics.yoyChange >= 0 ? (
@@ -195,10 +195,10 @@ export function AROChart({ dateRange }: AROChartProps) {
       </div>
 
       {/* Target Setting */}
-      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg bg-[var(--surface-secondary)] p-4 dark:bg-[var(--surface-primary)]/50">
         <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-brand-600" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Target className="h-4 w-4 text-[var(--brand)]" />
+          <span className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Obiettivo ARO:
           </span>
         </div>
@@ -209,9 +209,9 @@ export function AROChart({ dateRange }: AROChartProps) {
             max="500"
             value={targetARO}
             onChange={(e) => setTargetARO(Number(e.target.value))}
-            className="h-2 w-32 cursor-pointer appearance-none rounded-lg bg-gray-200 accent-brand-600 dark:bg-gray-700"
+            className="h-2 w-32 cursor-pointer appearance-none rounded-lg bg-[var(--border-default)] accent-brand-600 dark:bg-[var(--border-default)]"
           />
-          <span className="w-20 text-sm font-semibold text-gray-900 dark:text-white">
+          <span className="w-20 text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {formatCurrency(targetARO)}
           </span>
         </div>
@@ -221,12 +221,12 @@ export function AROChart({ dateRange }: AROChartProps) {
             className={cn(
               "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
               showTarget
-                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
-                : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                ? "bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]"
+                : "bg-[var(--surface-secondary)] text-[var(--text-tertiary)] dark:bg-[var(--border-default)] dark:text-[var(--text-secondary)]"
             )}
           >
             <span
-              className={cn("h-2 w-2 rounded-full", showTarget && "bg-orange-500")}
+              className={cn("h-2 w-2 rounded-full", showTarget && "bg-[var(--status-warning)]/50")}
             />
             Obiettivo
           </button>
@@ -235,12 +235,12 @@ export function AROChart({ dateRange }: AROChartProps) {
             className={cn(
               "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
               showLastYear
-                ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300"
-                : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                ? "bg-[var(--border-default)] text-[var(--text-secondary)] dark:bg-[var(--surface-active)] dark:text-[var(--text-primary)]"
+                : "bg-[var(--surface-secondary)] text-[var(--text-tertiary)] dark:bg-[var(--border-default)] dark:text-[var(--text-secondary)]"
             )}
           >
             <span
-              className={cn("h-2 w-2 rounded-full", showLastYear && "bg-gray-400")}
+              className={cn("h-2 w-2 rounded-full", showLastYear && "bg-[var(--surface-hover)]")}
             />
             Anno Scorso
           </button>
@@ -249,34 +249,34 @@ export function AROChart({ dateRange }: AROChartProps) {
 
       {/* Metrics Grid */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-          <p className="text-xs text-green-600 dark:text-green-400">Raggiungimento</p>
+        <div className="rounded-lg bg-[var(--status-success-subtle)] p-3 dark:bg-[var(--status-success-subtle)]">
+          <p className="text-xs text-[var(--status-success)] dark:text-[var(--status-success)]">Raggiungimento</p>
           <p
             className={cn(
               "text-lg font-semibold",
               metrics.targetAchievement >= 100
-                ? "text-status-ready"
-                : "text-status-urgent"
+                ? "text-[var(--status-success)]"
+                : "text-[var(--status-error)]"
             )}
           >
             {metrics.targetAchievement.toFixed(1)}%
           </p>
         </div>
-        <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-          <p className="text-xs text-blue-600 dark:text-blue-400">Giorni sopra target</p>
-          <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+        <div className="rounded-lg bg-[var(--status-info-subtle)] p-3 dark:bg-[var(--status-info-subtle)]">
+          <p className="text-xs text-[var(--status-info)] dark:text-[var(--status-info)]">Giorni sopra target</p>
+          <p className="text-lg font-semibold text-[var(--status-info)] dark:text-[var(--status-info)]">
             {metrics.daysAboveTarget}/{data.length}
           </p>
         </div>
-        <div className="rounded-lg bg-purple-50 p-3 dark:bg-purple-900/20">
-          <p className="text-xs text-purple-600 dark:text-purple-400">ARO Massimo</p>
-          <p className="text-lg font-semibold text-purple-700 dark:text-purple-300">
+        <div className="rounded-lg bg-[var(--brand)]/5 p-3 dark:bg-[var(--brand)]/40/20">
+          <p className="text-xs text-[var(--brand)] dark:text-[var(--brand)]">ARO Massimo</p>
+          <p className="text-lg font-semibold text-[var(--brand)] dark:text-[var(--brand)]">
             {formatCurrency(metrics.maxARO)}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-          <p className="text-xs text-gray-500 dark:text-gray-400">ARO Minimo</p>
-          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]">
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">ARO Minimo</p>
+          <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {formatCurrency(metrics.minARO)}
           </p>
         </div>
@@ -287,8 +287,8 @@ export function AROChart({ dateRange }: AROChartProps) {
         className={cn(
           "mb-4 flex items-center gap-3 rounded-lg p-3",
           trend.direction === "up"
-            ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200"
-            : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200"
+            ? "bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]"
+            : "bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]"
         )}
       >
         {trend.direction === "up" ? (
@@ -383,12 +383,12 @@ export function AROChart({ dateRange }: AROChartProps) {
       </div>
 
       {/* Insights */}
-      <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+      <div className="mt-4 rounded-lg bg-[var(--status-info-subtle)] p-3 text-sm text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]">
         <div className="flex items-start gap-2">
           <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <div>
             <p className="font-medium">Analisi ARO</p>
-            <p className="mt-1 text-blue-700 dark:text-blue-300">
+            <p className="mt-1 text-[var(--status-info)] dark:text-[var(--status-info)]">
               {metrics.targetAchievement >= 100
                 ? `Ottimo! Stai superando l'obiettivo del ${(
                     metrics.targetAchievement - 100

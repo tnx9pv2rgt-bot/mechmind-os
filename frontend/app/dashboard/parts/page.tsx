@@ -78,10 +78,10 @@ type SupplierFormData = z.infer<typeof supplierSchema>;
 // Part Type Config (EU Right to Repair 2024/1799)
 // =============================================================================
 const partTypeConfig: Record<string, { color: string; bg: string; label: string }> = {
-  GENUINE: { color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/40', label: 'OEM' },
-  AFTERMARKET: { color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-100 dark:bg-orange-900/40', label: 'Aftermarket' },
-  REGENERATED: { color: 'text-green-700 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/40', label: 'Rigenerato' },
-  USED: { color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-100 dark:bg-purple-900/40', label: 'Usato' },
+  GENUINE: { color: 'text-[var(--status-info)] dark:text-[var(--status-info)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', label: 'OEM' },
+  AFTERMARKET: { color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', label: 'Aftermarket' },
+  REGENERATED: { color: 'text-[var(--status-success)] dark:text-[var(--status-success)]', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', label: 'Rigenerato' },
+  USED: { color: 'text-[var(--brand)] dark:text-[var(--brand)]', bg: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]', label: 'Usato' },
 };
 
 // =============================================================================
@@ -89,23 +89,23 @@ const partTypeConfig: Record<string, { color: string; bg: string; label: string 
 // =============================================================================
 const stockConfig: Record<string, { color: string; bg: string; label: string }> = {
   available: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
     label: 'Disponibile',
   },
   low: {
-    color: 'text-orange-700 dark:text-orange-300',
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
     label: 'Pochi rimasti',
   },
   out: {
-    color: 'text-red-700 dark:text-red-300',
-    bg: 'bg-red-100 dark:bg-red-900/40',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
     label: 'Esaurito',
   },
   unknown: {
-    color: 'text-gray-700 dark:text-gray-300',
-    bg: 'bg-gray-200 dark:bg-gray-700',
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+    bg: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]',
     label: 'N/D',
   },
 };
@@ -187,7 +187,7 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
   return (
     <AnimatePresence>
       <motion.div
-        className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
+        className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 backdrop-blur-sm'
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -200,39 +200,39 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
         }}
       >
         <motion.div
-          className='rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-apple-border/20 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)]'
+          className='rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]'
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={e => e.stopPropagation()}
         >
           <div className='flex items-center justify-between mb-6'>
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Nuovo Fornitore
             </h2>
             <button
               onClick={onClose}
-              className='p-2 rounded-xl transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-white/5'
+              className='p-2 rounded-xl transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-secondary)]/5'
               aria-label='Chiudi'
             >
-              <X className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
+              <X className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
             </button>
           </div>
 
           <form onSubmit={rhfHandleSubmit(onSubmit)}>
             <div className='space-y-4'>
               <div>
-                <label className='text-footnote mb-1.5 block text-apple-gray dark:text-[var(--text-secondary)]'>
+                <label className='text-footnote mb-1.5 block text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Nome fornitore *
                 </label>
                 <Input
                   {...register('name')}
                   placeholder='Es. Autodoc Italia'
                 />
-                {errors.name && <p className='text-footnote mt-1 text-apple-red'>{errors.name.message}</p>}
+                {errors.name && <p className='text-footnote mt-1 text-[var(--status-error)]'>{errors.name.message}</p>}
               </div>
               <div>
-                <label className='text-footnote mb-1.5 block text-apple-gray dark:text-[var(--text-secondary)]'>
+                <label className='text-footnote mb-1.5 block text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Codice *
                 </label>
                 <Input
@@ -242,13 +242,13 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
                   placeholder='AUTO_GEN'
                   className='font-mono'
                 />
-                {errors.code && <p className='text-footnote mt-1 text-apple-red'>{errors.code.message}</p>}
+                {errors.code && <p className='text-footnote mt-1 text-[var(--status-error)]'>{errors.code.message}</p>}
               </div>
 
               <button
                 type='button'
                 onClick={() => setShowDetails(!showDetails)}
-                className='flex items-center gap-2 text-footnote transition-colors hover:opacity-80 text-apple-gray dark:text-[var(--text-secondary)]'
+                className='flex items-center gap-2 text-footnote transition-colors hover:opacity-80 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
               >
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${showDetails ? 'rotate-180' : ''}`}
@@ -274,7 +274,7 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
                         placeholder='Email'
                         type='email'
                       />
-                      {errors.email && <p className='text-footnote mt-1 text-apple-red'>{errors.email.message}</p>}
+                      {errors.email && <p className='text-footnote mt-1 text-[var(--status-error)]'>{errors.email.message}</p>}
                     </div>
                     <div>
                       <Input
@@ -282,7 +282,7 @@ function AddSupplierDialog({ open, onClose }: { open: boolean; onClose: () => vo
                         placeholder='Telefono'
                         type='tel'
                       />
-                      {errors.phone && <p className='text-footnote mt-1 text-apple-red'>{errors.phone.message}</p>}
+                      {errors.phone && <p className='text-footnote mt-1 text-[var(--status-error)]'>{errors.phone.message}</p>}
                     </div>
                   </motion.div>
                 )}
@@ -351,19 +351,19 @@ export default function PartsPage() {
       label: 'Ricambi Totali',
       value: String(totalParts),
       icon: Package,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Fornitori',
       value: String(suppliers.length),
       icon: Truck,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Stock Basso',
       value: String(lowStockCount),
       icon: AlertCircle,
-      color: lowStockCount > 0 ? 'bg-apple-orange' : 'bg-apple-green',
+      color: lowStockCount > 0 ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-success)]',
     },
   ];
 
@@ -373,8 +373,8 @@ export default function PartsPage() {
       <header className=''>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ricambi</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ricambi</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestione ricambi e fornitori
             </p>
           </div>
@@ -415,13 +415,13 @@ export default function PartsPage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -434,7 +434,7 @@ export default function PartsPage() {
             <AppleCardContent>
               <div className='flex flex-col sm:flex-row gap-4'>
                 <div className='relative flex-1'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <Input
                     placeholder='Cerca per codice OEM, marca o nome ricambio...'
                     aria-label='Cerca ricambi'
@@ -444,11 +444,11 @@ export default function PartsPage() {
                   />
                 </div>
                 <div className='relative'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                   <select
                     value={selectedSupplierId || ''}
                     onChange={e => setSelectedSupplierId(e.target.value || null)}
-                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-sm text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     <option value=''>Tutti i fornitori</option>
                     {suppliers.map(supplier => (
@@ -474,17 +474,17 @@ export default function PartsPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Ricambi
                 {debouncedSearch && ` — "${debouncedSearch}"`}
-                {!isLoading && <span className='text-apple-gray dark:text-[var(--text-secondary)] font-normal ml-2'>({totalParts})</span>}
+                {!isLoading && <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] font-normal ml-2'>({totalParts})</span>}
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {partsQuery.isError || suppliersQuery.isError ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare i ricambi
                   </p>
                   <AppleButton
@@ -500,12 +500,12 @@ export default function PartsPage() {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : parts.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <Package className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <Package className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     {debouncedSearch
                       ? `Nessun risultato per "${debouncedSearch}"`
                       : 'Nessun ricambio trovato. Aggiungi il primo ricambio.'}
@@ -531,19 +531,19 @@ export default function PartsPage() {
                     return (
                       <motion.div
                         key={part.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
                         transition={{ duration: 0.2 }}
                       >
                         <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                            <Package className='h-6 w-6 text-apple-blue' />
+                          <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                            <Package className='h-6 w-6 text-[var(--brand)]' />
                           </div>
                           <div>
                             <div className='flex items-center gap-2 flex-wrap'>
-                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {part.name}
                               </p>
                               <span
@@ -559,7 +559,7 @@ export default function PartsPage() {
                                 </span>
                               )}
                             </div>
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {part.brand && `${part.brand} \u2022 `}
                               Fornitore: {part.supplier?.name || part.supplierName || '\u2014'}
                               {part.partNumber && ` \u2022 OEM: ${part.partNumber}`}
@@ -568,12 +568,12 @@ export default function PartsPage() {
                         </div>
                         <div className='flex items-center gap-4'>
                           {part.retailPrice !== undefined && part.retailPrice !== null && (
-                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[100px] text-right'>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] min-w-[100px] text-right'>
                               {formatCurrency(Number(part.retailPrice))}
                             </p>
                           )}
                           {part.currentStock !== undefined && part.currentStock !== null && (
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[60px] text-right'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] min-w-[60px] text-right'>
                               {part.currentStock} in stock
                             </p>
                           )}

@@ -170,9 +170,9 @@ export function CommandPalette(): React.ReactElement {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[var(--surface-primary)]/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[20%] z-50 w-full max-w-lg translate-x-[-50%] rounded-2xl border border-gray-200 bg-white shadow-apple-lg dark:border-gray-700 dark:bg-[var(--surface-elevated)]"
+          className="fixed left-[50%] top-[20%] z-50 w-full max-w-lg translate-x-[-50%] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-secondary)] shadow-apple-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]"
           aria-label="Ricerca globale"
         >
           <DialogPrimitive.Title className="sr-only">Ricerca globale</DialogPrimitive.Title>
@@ -180,8 +180,8 @@ export function CommandPalette(): React.ReactElement {
             Cerca tra clienti, veicoli, ordini di lavoro e fatture
           </DialogPrimitive.Description>
           {/* Search input */}
-          <div className="flex items-center gap-3 border-b border-gray-200 px-4 dark:border-gray-700">
-            <Search className="h-5 w-5 text-gray-400" />
+          <div className="flex items-center gap-3 border-b border-[var(--border-default)] px-4 dark:border-[var(--border-default)]">
+            <Search className="h-5 w-5 text-[var(--text-tertiary)]" />
             <input
               ref={inputRef}
               type="text"
@@ -189,9 +189,9 @@ export function CommandPalette(): React.ReactElement {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Cerca clienti, veicoli, ordini..."
-              className="flex-1 bg-transparent py-4 text-body text-gray-900 outline-none placeholder:text-gray-400 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="flex-1 bg-transparent py-4 text-body text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] dark:text-[var(--text-primary)] dark:placeholder:text-[var(--text-tertiary)]"
             />
-            <kbd className="hidden rounded-md border border-gray-200 px-2 py-0.5 text-caption text-gray-400 sm:inline-block dark:border-gray-600">
+            <kbd className="hidden rounded-md border border-[var(--border-default)] px-2 py-0.5 text-caption text-[var(--text-tertiary)] sm:inline-block dark:border-[var(--border-default)]">
               Esc
             </kbd>
           </div>
@@ -201,16 +201,16 @@ export function CommandPalette(): React.ReactElement {
             {/* Recent searches (when no query) */}
             {!query.trim() && recentSearches.length > 0 && (
               <div className="px-2 py-2">
-                <p className="mb-2 text-caption font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                <p className="mb-2 text-caption font-medium uppercase tracking-wider text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   Ricerche recenti
                 </p>
                 {recentSearches.map((term) => (
                   <button
                     key={term}
                     onClick={() => setQuery(term)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-subhead text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-subhead text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-hover)]"
                   >
-                    <Clock className="h-4 w-4 text-gray-400" />
+                    <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
                     {term}
                   </button>
                 ))}
@@ -219,15 +219,15 @@ export function CommandPalette(): React.ReactElement {
 
             {/* Loading */}
             {loading && query.trim() && (
-              <div className="flex items-center justify-center py-8 text-subhead text-gray-400">
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-apple-blue" />
+              <div className="flex items-center justify-center py-8 text-subhead text-[var(--text-tertiary)]">
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-apple-blue" />
                 Ricerca in corso...
               </div>
             )}
 
             {/* No results */}
             {!loading && query.trim() && results.length === 0 && (
-              <div className="py-8 text-center text-subhead text-gray-400 dark:text-gray-500">
+              <div className="py-8 text-center text-subhead text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                 Nessun risultato per &ldquo;{query}&rdquo;
               </div>
             )}
@@ -238,7 +238,7 @@ export function CommandPalette(): React.ReactElement {
                 const config = GROUP_CONFIG[groupKey];
                 return (
                   <div key={groupKey} className="mb-2">
-                    <p className="mb-1 px-3 text-caption font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    <p className="mb-1 px-3 text-caption font-medium uppercase tracking-wider text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       {config?.label ?? groupKey}
                     </p>
                     {items.map((result) => {
@@ -256,25 +256,25 @@ export function CommandPalette(): React.ReactElement {
                           className={cn(
                             'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
                             isActive
-                              ? 'bg-apple-blue/10 text-apple-blue dark:bg-apple-blue/20'
-                              : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                              ? 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand)]/20'
+                              : 'text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-hover)]'
                           )}
                         >
                           <Icon className="h-4 w-4 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-subhead font-medium">{result.title}</p>
                             {result.subtitle && (
-                              <p className="truncate text-caption text-gray-400 dark:text-gray-500">
+                              <p className="truncate text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                 {result.subtitle}
                               </p>
                             )}
                           </div>
                           {result.badge && (
-                            <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-caption text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                            <span className="flex-shrink-0 rounded-full bg-[var(--surface-secondary)] px-2 py-0.5 text-caption text-[var(--text-tertiary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-secondary)]">
                               {result.badge}
                             </span>
                           )}
-                          <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-gray-300 dark:text-gray-600" />
+                          <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                         </button>
                       );
                     })}
@@ -284,15 +284,15 @@ export function CommandPalette(): React.ReactElement {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 text-caption text-gray-400 dark:border-gray-700 dark:text-gray-500">
+          <div className="flex items-center justify-between border-t border-[var(--border-default)] px-4 py-2 text-caption text-[var(--text-tertiary)] dark:border-[var(--border-default)] dark:text-[var(--text-secondary)]">
             <span>
-              <kbd className="rounded border border-gray-200 px-1.5 py-0.5 dark:border-gray-600">↑↓</kbd>{' '}
+              <kbd className="rounded border border-[var(--border-default)] px-1.5 py-0.5 dark:border-[var(--border-default)]">↑↓</kbd>{' '}
               Naviga{' '}
-              <kbd className="rounded border border-gray-200 px-1.5 py-0.5 dark:border-gray-600">↵</kbd>{' '}
+              <kbd className="rounded border border-[var(--border-default)] px-1.5 py-0.5 dark:border-[var(--border-default)]">↵</kbd>{' '}
               Seleziona
             </span>
             <span>
-              <kbd className="rounded border border-gray-200 px-1.5 py-0.5 dark:border-gray-600">⌘K</kbd>{' '}
+              <kbd className="rounded border border-[var(--border-default)] px-1.5 py-0.5 dark:border-[var(--border-default)]">⌘K</kbd>{' '}
               Apri/Chiudi
             </span>
           </div>

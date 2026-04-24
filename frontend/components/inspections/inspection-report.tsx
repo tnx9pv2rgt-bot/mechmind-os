@@ -69,13 +69,13 @@ export function InspectionReport({
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return <XCircle className='h-4 w-4 text-red-600' />;
+        return <XCircle className='h-4 w-4 text-[var(--status-error)]' />;
       case 'high':
-        return <AlertTriangle className='h-4 w-4 text-orange-500' />;
+        return <AlertTriangle className='h-4 w-4 text-[var(--status-warning)]' />;
       case 'medium':
-        return <Clock className='h-4 w-4 text-yellow-500' />;
+        return <Clock className='h-4 w-4 text-[var(--status-warning)]' />;
       default:
-        return <CheckCircle className='h-4 w-4 text-green-500' />;
+        return <CheckCircle className='h-4 w-4 text-[var(--status-success)]' />;
     }
   };
 
@@ -83,8 +83,8 @@ export function InspectionReport({
     <div className='max-w-4xl mx-auto space-y-6'>
       {/* Header */}
       <div className='text-center space-y-2'>
-        <h1 className='text-2xl font-bold text-gray-900'>Rapporto di Ispezione Digitale</h1>
-        <p className='text-gray-500'>
+        <h1 className='text-2xl font-bold text-[var(--text-primary)]'>Rapporto di Ispezione Digitale</h1>
+        <p className='text-[var(--text-secondary)]'>
           Generato il{' '}
           {new Date(inspection.completedAt || inspection.startedAt).toLocaleDateString('it-IT')} da{' '}
           {inspection.technicianName}
@@ -97,42 +97,42 @@ export function InspectionReport({
           className={cn(
             'border-l-4',
             inspection.summary.urgentCount > 0
-              ? 'border-l-red-500 bg-red-50'
-              : 'border-l-green-500 bg-green-50'
+              ? 'border-l-red-500 bg-[var(--status-error-subtle)]'
+              : 'border-l-green-500 bg-[var(--status-success-subtle)]'
           )}
         >
           <CardContent className='p-4'>
             <div className='text-3xl font-bold'>{inspection.summary.urgentCount}</div>
-            <div className='text-sm text-gray-600'>Interventi urgenti</div>
+            <div className='text-sm text-[var(--text-secondary)]'>Interventi urgenti</div>
           </CardContent>
         </Card>
-        <Card className='border-l-4 border-l-yellow-500 bg-yellow-50'>
+        <Card className='border-l-4 border-l-yellow-500 bg-[var(--status-warning)]/10'>
           <CardContent className='p-4'>
             <div className='text-3xl font-bold'>{inspection.summary.needsAttentionCount}</div>
-            <div className='text-sm text-gray-600'>Da monitorare</div>
+            <div className='text-sm text-[var(--text-secondary)]'>Da monitorare</div>
           </CardContent>
         </Card>
-        <Card className='border-l-4 border-l-green-500 bg-green-50'>
+        <Card className='border-l-4 border-l-green-500 bg-[var(--status-success-subtle)]'>
           <CardContent className='p-4'>
             <div className='text-3xl font-bold'>{inspection.summary.goodCount}</div>
-            <div className='text-sm text-gray-600'>In ordine</div>
+            <div className='text-sm text-[var(--text-secondary)]'>In ordine</div>
           </CardContent>
         </Card>
-        <Card className='border-l-4 border-l-blue-500 bg-blue-50'>
+        <Card className='border-l-4 border-l-blue-500 bg-[var(--status-info-subtle)]'>
           <CardContent className='p-4'>
             <div className='text-3xl font-bold'>
               €{inspection.summary.estimatedTotal.toFixed(0)}
             </div>
-            <div className='text-sm text-gray-600'>Stima totale</div>
+            <div className='text-sm text-[var(--text-secondary)]'>Stima totale</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Urgent Items Alert */}
       {needsAttentionItems.length > 0 && (
-        <Card className='border-red-200 bg-red-50'>
+        <Card className='border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]'>
           <CardHeader className='pb-3'>
-            <CardTitle className='text-lg flex items-center gap-2 text-red-800'>
+            <CardTitle className='text-lg flex items-center gap-2 text-[var(--status-error)]'>
               <AlertTriangle className='h-5 w-5' />
               Richiede attenzione
             </CardTitle>
@@ -140,8 +140,8 @@ export function InspectionReport({
           <CardContent>
             <ul className='space-y-2'>
               {needsAttentionItems.slice(0, 5).map(item => (
-                <li key={item.id} className='flex items-center gap-2 text-red-700'>
-                  <span className='w-2 h-2 rounded-full bg-red-500' />
+                <li key={item.id} className='flex items-center gap-2 text-[var(--status-error)]'>
+                  <span className='w-2 h-2 rounded-full bg-[var(--status-error-subtle)]0' />
                   {item.name} - {item.description || 'Necessita intervento'}
                   {item.estimatedCost && (
                     <Badge variant='outline' className='ml-2'>
@@ -151,7 +151,7 @@ export function InspectionReport({
                 </li>
               ))}
               {needsAttentionItems.length > 5 && (
-                <li className='text-sm text-red-600'>
+                <li className='text-sm text-[var(--status-error)]'>
                   ...e altri {needsAttentionItems.length - 5} elementi
                 </li>
               )}
@@ -179,18 +179,18 @@ export function InspectionReport({
                 className={cn(
                   'border rounded-lg overflow-hidden transition-all',
                   colors.border,
-                  item.status === 'urgent' && 'bg-red-50/50',
-                  item.status === 'needs_attention' && 'bg-yellow-50/50'
+                  item.status === 'urgent' && 'bg-[var(--status-error-subtle)]/50',
+                  item.status === 'needs_attention' && 'bg-[var(--status-warning)]/10/50'
                 )}
               >
                 <button
                   onClick={() => toggleItem(item.id)}
-                  className='w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50'
+                  className='w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--surface-secondary)]/50'
                 >
                   <div className='flex items-center gap-3'>
                     <Badge className={cn(colors.bg, colors.text)}>{colors.label}</Badge>
                     <span className='font-medium'>{item.name}</span>
-                    <span className='text-sm text-gray-500'>
+                    <span className='text-sm text-[var(--text-tertiary)]'>
                       • {CATEGORY_LABELS[item.category]}
                     </span>
                   </div>
@@ -208,10 +208,10 @@ export function InspectionReport({
                 </button>
 
                 {isExpanded && (
-                  <div className='px-4 pb-4 border-t border-gray-100'>
-                    {item.description && <p className='mt-3 text-gray-700'>{item.description}</p>}
+                  <div className='px-4 pb-4 border-t border-[var(--border-default)]'>
+                    {item.description && <p className='mt-3 text-[var(--text-secondary)]'>{item.description}</p>}
                     {item.technicianNotes && (
-                      <div className='mt-3 p-3 bg-gray-50 rounded text-sm'>
+                      <div className='mt-3 p-3 bg-[var(--surface-secondary)] rounded text-sm'>
                         <span className='font-medium'>Note tecnico:</span> {item.technicianNotes}
                       </div>
                     )}
@@ -235,7 +235,7 @@ export function InspectionReport({
                       </div>
                     )}
                     {item.laborHours && (
-                      <div className='mt-2 text-sm text-gray-500'>
+                      <div className='mt-2 text-sm text-[var(--text-tertiary)]'>
                         Tempo stimato: {item.laborHours} ore
                       </div>
                     )}
@@ -249,7 +249,7 @@ export function InspectionReport({
 
       {/* Customer Actions */}
       {isCustomerView && inspection.status === 'completed' && (
-        <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'>
+        <Card className='bg-gradient-to-r from-[var(--status-info)]/5 to-[var(--brand)]/5 border-[var(--status-info)]/30'>
           <CardHeader>
             <CardTitle>Azioni Richieste</CardTitle>
             <CardDescription>
@@ -281,7 +281,7 @@ export function InspectionReport({
               </div>
             ) : (
               <div className='flex flex-wrap gap-3'>
-                <Button size='lg' className='bg-green-600 hover:bg-green-700' onClick={onApprove}>
+                <Button size='lg' className='bg-[var(--status-success)] hover:bg-[var(--status-success)]' onClick={onApprove}>
                   <CheckCircle className='h-5 w-5 mr-2' />
                   Approva Tutti gli Interventi
                 </Button>

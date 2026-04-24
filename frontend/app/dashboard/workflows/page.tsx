@@ -102,8 +102,8 @@ export default function WorkflowsPage(): React.ReactElement {
       <header className=''>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Automazioni</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Automazioni</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Crea workflow automatici per la tua officina
             </p>
           </div>
@@ -126,19 +126,19 @@ export default function WorkflowsPage(): React.ReactElement {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Workflow
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : workflows.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessun workflow. Crea il tuo primo workflow per automatizzare le operazioni.
                   </p>
                   <AppleButton
@@ -159,7 +159,7 @@ export default function WorkflowsPage(): React.ReactElement {
                   {workflows.map((workflow, index) => (
                     <motion.div
                       key={workflow.id}
-                      className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                      className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                       variants={listItemVariants}
                       custom={index}
                       whileHover={{ scale: 1.005, x: 4 }}
@@ -168,25 +168,25 @@ export default function WorkflowsPage(): React.ReactElement {
                       <div className='flex items-center gap-4'>
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                           workflow.enabled
-                            ? 'bg-apple-green/10'
-                            : 'bg-apple-light-gray/50 dark:bg-[var(--surface-active)]'
+                            ? 'bg-[var(--status-success)]/10'
+                            : 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-active)]'
                         }`}>
                           <Zap className={`h-6 w-6 ${
                             workflow.enabled
-                              ? 'text-apple-green'
-                              : 'text-apple-gray'
+                              ? 'text-[var(--status-success)]'
+                              : 'text-[var(--text-tertiary)]'
                           }`} />
                         </div>
                         <div>
                           <div className='flex items-center gap-2'>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {workflow.name}
                             </p>
                             {workflow.status === 'error' && (
-                              <AlertCircle className='h-4 w-4 text-apple-red' />
+                              <AlertCircle className='h-4 w-4 text-[var(--status-error)]' />
                             )}
                           </div>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {TRIGGER_LABELS[workflow.triggerType] ?? workflow.triggerType} &rarr; {workflow.actionsCount} azioni
                           </p>
                         </div>
@@ -194,12 +194,12 @@ export default function WorkflowsPage(): React.ReactElement {
 
                       <div className='flex items-center gap-4'>
                         <div className='text-right hidden sm:block'>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             <CheckCircle2 className='h-3 w-3 inline mr-1' />
                             {workflow.runCount} esecuzioni
                           </p>
                           {workflow.lastRun && (
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               <Clock className='h-3 w-3 inline mr-1' />
                               Ultimo: {new Date(workflow.lastRun).toLocaleDateString('it-IT')}
                             </p>
@@ -212,8 +212,8 @@ export default function WorkflowsPage(): React.ReactElement {
                           onClick={() => toggleWorkflow(workflow.id, workflow.enabled)}
                           aria-label={workflow.enabled ? 'Disattiva' : 'Attiva'}
                           icon={workflow.enabled
-                            ? <ToggleRight className='h-5 w-5 text-apple-green' />
-                            : <ToggleLeft className='h-5 w-5 text-apple-gray' />
+                            ? <ToggleRight className='h-5 w-5 text-[var(--status-success)]' />
+                            : <ToggleLeft className='h-5 w-5 text-[var(--text-tertiary)]' />
                           }
                         />
 

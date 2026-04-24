@@ -113,8 +113,8 @@ function ToggleSwitch({ checked, onChange, label, id }: ToggleSwitchProps): Reac
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative h-7 w-12 flex-shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-elevated)] ${
-          checked ? 'bg-white' : 'bg-[var(--surface-active)]'
+        className={`relative h-7 w-12 flex-shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-elevated)] ${
+          checked ? 'bg-[var(--surface-primary)]' : 'bg-[var(--surface-active)]'
         }`}
         style={{ minWidth: 48, minHeight: 28 }}
       >
@@ -181,7 +181,7 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors duration-200 hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors duration-200 hover:bg-[var(--surface-active)] hover:text-[var(--text-on-brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
         aria-label="Personalizza dashboard"
         aria-expanded={open}
       >
@@ -197,7 +197,7 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-black/40"
+              className="fixed inset-0 z-40 bg-[var(--surface-primary)]/40"
               aria-hidden="true"
               onClick={() => setOpen(false)}
             />
@@ -216,11 +216,11 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[var(--border-strong)] px-5 py-4">
-                <h2 className="text-base font-semibold text-white">Personalizza</h2>
+                <h2 className="text-base font-semibold text-[var(--text-on-brand)]">Personalizza</h2>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-active)] hover:text-[var(--text-on-brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)]/40"
                   aria-label="Chiudi pannello personalizzazione"
                 >
                   <X className="h-4 w-4" />
@@ -250,7 +250,7 @@ export function DashboardCustomizer({ className = '' }: DashboardCustomizerProps
                 <button
                   type="button"
                   onClick={resetDefaults}
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--border-strong)] text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-active)] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--border-strong)] text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-active)] hover:text-[var(--text-on-brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)]/40"
                   aria-label="Ripristina impostazioni predefinite"
                 >
                   <RotateCcw className="h-4 w-4" />

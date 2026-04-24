@@ -174,7 +174,7 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6"
+      className="bg-[var(--surface-secondary)] backdrop-blur-xl rounded-2xl shadow-xl border border-[var(--border-default)]/50 p-6"
     >
       <AnimatePresence mode="wait">
         {state === "checking" && (
@@ -185,8 +185,8 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
             exit={{ opacity: 0 }}
             className="flex flex-col items-center py-8"
           >
-            <Loader2 className="w-12 h-12 text-apple-blue animate-spin mb-4" />
-            <p className="text-gray-600">Verifica del dispositivo...</p>
+            <Loader2 className="w-12 h-12 text-[var(--brand)] animate-spin mb-4" />
+            <p className="text-[var(--text-secondary)]">Verifica del dispositivo...</p>
           </motion.div>
         )}
 
@@ -198,13 +198,13 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
             exit={{ opacity: 0 }}
             className="text-center py-4"
           >
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Smartphone className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-[var(--surface-secondary)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Smartphone className="w-8 h-8 text-[var(--text-tertiary)]" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
               Dispositivo non supportato
             </h3>
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-[var(--text-tertiary)] text-sm mb-4">
               Il tuo dispositivo non supporta l&apos;autenticazione senza password.
               Puoi comunque usare email e password.
             </p>
@@ -222,14 +222,14 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
             exit={{ opacity: 0 }}
           >
             <div className="flex items-start gap-4 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Icon className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] rounded-2xl flex items-center justify-center shadow-lg">
+                <Icon className="w-8 h-8 text-[var(--text-on-brand)]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">
                   Attiva l&apos;accesso senza password
                 </h3>
-                <p className="text-gray-500 text-sm">
+                <p className="text-[var(--text-tertiary)] text-sm">
                   Usa {passkeyInfo?.deviceName} per accedere in modo sicuro e
                   veloce al tuo account.
                 </p>
@@ -237,21 +237,21 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
             </div>
 
             <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-green-600" />
+              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                <div className="w-8 h-8 bg-[var(--status-success-subtle)] rounded-full flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-[var(--status-success)]" />
                 </div>
                 <span>Più sicuro della password</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Fingerprint className="w-4 h-4 text-blue-600" />
+              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                <div className="w-8 h-8 bg-[var(--status-info-subtle)] rounded-full flex items-center justify-center">
+                  <Fingerprint className="w-4 h-4 text-[var(--status-info)]" />
                 </div>
                 <span>Accesso istantaneo con biometria</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
+              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                <div className="w-8 h-8 bg-[var(--brand)]/10 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-[var(--brand)]" />
                 </div>
                 <span>Niente più password da ricordare</span>
               </div>
@@ -260,7 +260,7 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
             <div className="flex flex-col gap-3">
               <Button
                 onClick={handleRegister}
-                className="h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-medium"
+                className="h-12 bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] hover:from-[var(--status-info)] hover:to-[var(--brand)] text-[var(--text-on-brand)] rounded-xl font-medium"
               >
                 Attiva {passkeyInfo?.deviceName}
                 <ChevronRight className="w-5 h-5 ml-2" />
@@ -282,18 +282,18 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
           >
             <div className="relative mb-6">
               <motion.div
-                className="w-20 h-20 rounded-full border-4 border-blue-200"
+                className="w-20 h-20 rounded-full border-4 border-[var(--status-info)]/30"
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Icon className="w-10 h-10 text-blue-600" />
+                <Icon className="w-10 h-10 text-[var(--status-info)]" />
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
               Configurazione in corso...
             </h3>
-            <p className="text-gray-500 text-center text-sm">
+            <p className="text-[var(--text-tertiary)] text-center text-sm">
               Segui le istruzioni sul tuo dispositivo per completare la
               configurazione
             </p>
@@ -312,14 +312,14 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"
+              className="w-20 h-20 bg-[var(--status-success-subtle)] rounded-full flex items-center justify-center mb-4"
             >
-              <CheckCircle className="w-10 h-10 text-green-600" />
+              <CheckCircle className="w-10 h-10 text-[var(--status-success)]" />
             </motion.div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
               Passkey attivato!
             </h3>
-            <p className="text-gray-500 text-center text-sm mb-4">
+            <p className="text-[var(--text-tertiary)] text-center text-sm mb-4">
               Da ora puoi accedere a MechMind usando {passkeyInfo?.deviceName}
             </p>
             <Button onClick={onSuccess} className="w-full">
@@ -336,13 +336,13 @@ export const PasskeyRegistration = memo(function PasskeyRegistration({
             exit={{ opacity: 0 }}
             className="flex flex-col items-center py-6"
           >
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-red-600" />
+            <div className="w-16 h-16 bg-[var(--status-error-subtle)] rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-[var(--status-error)]" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
               Attivazione fallita
             </h3>
-            <p className="text-red-500 text-center text-sm mb-4">{error}</p>
+            <p className="text-[var(--status-error)] text-center text-sm mb-4">{error}</p>
             <div className="flex gap-3 w-full">
               <Button onClick={handleRegister} variant="outline" className="flex-1">
                 Riprova
@@ -388,25 +388,25 @@ export const PasskeyToggle = memo(function PasskeyToggle({
       className={cn(
         "w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left",
         checked
-          ? "border-green-500 bg-green-50"
-          : "border-gray-200 hover:border-gray-300 bg-white/50"
+          ? "border-[var(--status-success)] bg-[var(--status-success-subtle)]"
+          : "border-[var(--border-default)] hover:border-[var(--border-strong)] bg-[var(--surface-secondary)]"
       )}
     >
       <div
         className={cn(
           "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
-          checked ? "bg-green-500" : "bg-gray-100"
+          checked ? "bg-[var(--status-success-subtle)]0" : "bg-[var(--surface-secondary)]"
         )}
       >
         {checked ? (
-          <CheckCircle className="w-6 h-6 text-white" />
+          <CheckCircle className="w-6 h-6 text-[var(--text-on-brand)]" />
         ) : (
-          <Fingerprint className="w-6 h-6 text-gray-500" />
+          <Fingerprint className="w-6 h-6 text-[var(--text-tertiary)]" />
         )}
       </div>
       <div className="flex-1">
-        <p className="font-medium text-gray-900">Accesso senza password</p>
-        <p className="text-sm text-gray-500">
+        <p className="font-medium text-[var(--text-primary)]">Accesso senza password</p>
+        <p className="text-sm text-[var(--text-tertiary)]">
           {checked
             ? "Passkey verrà attivato dopo la registrazione"
             : "Attiva per usare Face ID o impronta digitale"}

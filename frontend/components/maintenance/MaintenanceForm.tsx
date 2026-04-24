@@ -285,7 +285,7 @@ export function MaintenanceForm({
                     <FormLabel>Note (opzionale)</FormLabel>
                     <FormControl>
                       <textarea
-                        className="w-full min-h-[80px] rounded-md border border-gray-300 p-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+                        className="w-full min-h-[80px] rounded-md border border-[var(--border-default)] p-2 text-sm dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]"
                         {...field}
                       />
                     </FormControl>
@@ -301,7 +301,7 @@ export function MaintenanceForm({
                 <Button 
                   type="submit" 
                   disabled={submitting}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-[var(--status-success)] hover:bg-[var(--status-success)]"
                 >
                   {submitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -413,7 +413,7 @@ export function MaintenanceForm({
                     <FormControl>
                       <div className="relative">
                         <Input type="date" {...field} />
-                        <CalendarIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <CalendarIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                       </div>
                     </FormControl>
                     <FormMessage />

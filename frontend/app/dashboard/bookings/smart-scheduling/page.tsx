@@ -197,7 +197,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
     }
   }, [optimizeDate]);
 
-  const inputClassName = 'w-full rounded-xl border border-apple-border/20 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 py-2.5 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue min-h-[44px]';
+  const inputClassName = 'w-full rounded-xl border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 py-2.5 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue min-h-[44px]';
 
   return (
     <div>
@@ -212,14 +212,14 @@ export default function SmartSchedulingPage(): React.ReactElement {
             ]}
           />
           <div className="flex items-center gap-3 mt-2">
-            <div className="w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-apple-purple" />
+            <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-[var(--brand)]" />
             </div>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
+              <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 Schedulazione Smart AI
               </h1>
-              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+              <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                 Ottimizza la pianificazione dell&apos;officina con suggerimenti intelligenti basati su AI.
               </p>
             </div>
@@ -231,15 +231,15 @@ export default function SmartSchedulingPage(): React.ReactElement {
         {/* Slot Suggestion Form */}
         <AppleCard hover={false}>
           <AppleCardHeader>
-            <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-apple-blue" />
+            <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[var(--brand)]" />
               Trova slot ottimali
             </h2>
           </AppleCardHeader>
           <AppleCardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
-                <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1.5">
+                <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1.5">
                   Tipo di servizio
                 </label>
                 <select
@@ -257,7 +257,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
               </div>
 
               <div>
-                <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1.5">
+                <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1.5">
                   Durata stimata (min)
                 </label>
                 <input
@@ -271,7 +271,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
               </div>
 
               <div>
-                <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1.5">
+                <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1.5">
                   Competenze richieste
                 </label>
                 <input
@@ -284,7 +284,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
               </div>
 
               <div>
-                <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1.5">
+                <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1.5">
                   Data preferita
                 </label>
                 <input
@@ -310,13 +310,13 @@ export default function SmartSchedulingPage(): React.ReactElement {
         {/* Suggested Slots */}
         {isSuggesting && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
           </div>
         )}
 
         {suggestedSlots.length > 0 && !isSuggesting && (
           <div>
-            <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">
+            <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">
               Slot suggeriti
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -329,7 +329,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
                   <AppleCardContent>
                     <div className="relative">
                       {i === 0 && (
-                        <span className="absolute -top-8 left-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-footnote font-semibold bg-apple-blue text-white">
+                        <span className="absolute -top-8 left-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-footnote font-semibold bg-[var(--brand)] text-[var(--text-on-brand)]">
                           <Zap className="h-3 w-3" />
                           Migliore
                         </span>
@@ -337,15 +337,15 @@ export default function SmartSchedulingPage(): React.ReactElement {
 
                       <div className="space-y-4 pt-1">
                         <div>
-                          <div className="flex items-center gap-2 text-body text-apple-gray dark:text-[var(--text-secondary)] mb-1">
+                          <div className="flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1">
                             <Calendar className="h-4 w-4" />
                             {formatDateTime(slot.dateTime)}
                           </div>
-                          <div className="flex items-center gap-2 text-body text-apple-gray dark:text-[var(--text-secondary)] mb-1">
+                          <div className="flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1">
                             <Wrench className="h-4 w-4" />
                             {slot.bayName}
                           </div>
-                          <div className="flex items-center gap-2 text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             <Users className="h-4 w-4" />
                             {slot.technicianName}
                           </div>
@@ -354,28 +354,28 @@ export default function SmartSchedulingPage(): React.ReactElement {
                         {/* AI Score */}
                         <div>
                           <div className="flex items-center justify-between text-footnote mb-1">
-                            <span className="text-apple-gray dark:text-[var(--text-secondary)]">
+                            <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               Punteggio AI
                             </span>
-                            <span className="font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {slot.aiScore}%
                             </span>
                           </div>
-                          <div className="h-2 rounded-full bg-apple-light-gray dark:bg-[var(--surface-hover)] overflow-hidden">
+                          <div className="h-2 rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${
                                 slot.aiScore >= 80
-                                  ? 'bg-apple-green'
+                                  ? 'bg-[var(--status-success)]'
                                   : slot.aiScore >= 60
-                                    ? 'bg-apple-orange'
-                                    : 'bg-apple-red'
+                                    ? 'bg-[var(--status-warning)]'
+                                    : 'bg-[var(--status-error)]'
                               }`}
                               style={{ width: `${slot.aiScore}%` }}
                             />
                           </div>
                         </div>
 
-                        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] italic">
+                        <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] italic">
                           {slot.reasoning}
                         </p>
 
@@ -401,15 +401,15 @@ export default function SmartSchedulingPage(): React.ReactElement {
         {/* Day Optimizer */}
         <AppleCard hover={false}>
           <AppleCardHeader>
-            <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-              <Zap className="h-5 w-5 text-apple-orange" />
+            <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+              <Zap className="h-5 w-5 text-[var(--status-warning)]" />
               Ottimizzazione giornata
             </h2>
           </AppleCardHeader>
           <AppleCardContent>
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="flex-1">
-                <label className="block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1.5">
+                <label className="block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1.5">
                   Data da ottimizzare
                 </label>
                 <input
@@ -434,7 +434,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
 
             {isOptimizing && (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
               </div>
             )}
 
@@ -442,55 +442,55 @@ export default function SmartSchedulingPage(): React.ReactElement {
               <div className="space-y-4">
                 {/* Before / After Comparison */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 text-center">
-                    <p className="text-footnote text-apple-red mb-1">
+                  <div className="rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]/30 border border-[var(--status-error)]/30 dark:border-[var(--status-error)] p-4 text-center">
+                    <p className="text-footnote text-[var(--status-error)] mb-1">
                       Utilizzo attuale
                     </p>
-                    <p className="text-title-1 font-bold text-apple-red">
+                    <p className="text-title-1 font-bold text-[var(--status-error)]">
                       {optimization.currentUtilization}%
                     </p>
                   </div>
                   <div className="flex items-center justify-center">
-                    <ArrowRight className="h-6 w-6 text-apple-gray" />
+                    <ArrowRight className="h-6 w-6 text-[var(--text-tertiary)]" />
                   </div>
-                  <div className="rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4 text-center">
-                    <p className="text-footnote text-apple-green mb-1">
+                  <div className="rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 border border-[var(--status-success)]/30 dark:border-[var(--status-success)] p-4 text-center">
+                    <p className="text-footnote text-[var(--status-success)] mb-1">
                       Utilizzo ottimizzato
                     </p>
-                    <p className="text-title-1 font-bold text-apple-green">
+                    <p className="text-title-1 font-bold text-[var(--status-success)]">
                       {optimization.optimizedUtilization}%
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-apple-blue/5 dark:bg-blue-950/30 border border-apple-blue/20 dark:border-blue-800">
-                  <Timer className="h-5 w-5 text-apple-blue" />
-                  <p className="text-body font-medium text-apple-blue">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--brand)]/5 dark:bg-[var(--status-info)]/40/30 border border-[var(--brand)]/20 dark:border-[var(--status-info)]">
+                  <Timer className="h-5 w-5 text-[var(--brand)]" />
+                  <p className="text-body font-medium text-[var(--brand)]">
                     Tempo risparmiato: {optimization.timeSavedMinutes} minuti
                   </p>
                 </div>
 
                 {optimization.changes.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-body font-medium text-apple-gray dark:text-[var(--text-secondary)]">
+                    <p className="text-body font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Modifiche suggerite:
                     </p>
                     {optimization.changes.map((change, i) => (
                       <div
                         key={i}
-                        className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] text-body"
+                        className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] text-body"
                       >
-                        <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {change.serviceName}
                         </span>
-                        <span className="text-apple-gray hidden sm:inline">
+                        <span className="text-[var(--text-tertiary)] hidden sm:inline">
                           |
                         </span>
-                        <span className="text-apple-red line-through text-footnote">
+                        <span className="text-[var(--status-error)] line-through text-footnote">
                           {change.currentSlot}
                         </span>
-                        <ArrowRight className="h-3 w-3 text-apple-gray hidden sm:inline" />
-                        <span className="text-apple-green text-footnote">
+                        <ArrowRight className="h-3 w-3 text-[var(--text-tertiary)] hidden sm:inline" />
+                        <span className="text-[var(--status-success)] text-footnote">
                           {change.suggestedSlot}
                         </span>
                       </div>
@@ -505,8 +505,8 @@ export default function SmartSchedulingPage(): React.ReactElement {
         {/* Capacity Forecast */}
         <AppleCard hover={false}>
           <AppleCardHeader>
-            <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-apple-green" />
+            <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-[var(--status-success)]" />
               Previsione capacita — prossime 2 settimane
             </h2>
           </AppleCardHeader>
@@ -522,13 +522,13 @@ export default function SmartSchedulingPage(): React.ReactElement {
                 {Array.from({ length: 14 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex-1 animate-pulse rounded-t bg-apple-light-gray dark:bg-[var(--surface-hover)]"
+                    className="flex-1 animate-pulse rounded-t bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]"
                     style={{ height: `${30 + Math.random() * 70}%` }}
                   />
                 ))}
               </div>
             ) : capacity.length === 0 ? (
-              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] text-center py-8">
+              <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center py-8">
                 Nessun dato di capacita disponibile
               </p>
             ) : (
@@ -536,10 +536,10 @@ export default function SmartSchedulingPage(): React.ReactElement {
                 {capacity.map((day) => {
                   const barColor =
                     day.utilization >= 90
-                      ? 'bg-apple-red'
+                      ? 'bg-[var(--status-error)]'
                       : day.utilization >= 70
-                        ? 'bg-apple-orange'
-                        : 'bg-apple-green';
+                        ? 'bg-[var(--status-warning)]'
+                        : 'bg-[var(--status-success)]';
 
                   const dateLabel = new Date(day.date).toLocaleDateString(
                     'it-IT',
@@ -551,7 +551,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
                       key={day.date}
                       className="flex-1 flex flex-col items-center gap-1"
                     >
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         {day.utilization}%
                       </span>
                       <div className="w-full flex-1 flex items-end">
@@ -561,7 +561,7 @@ export default function SmartSchedulingPage(): React.ReactElement {
                           title={`${dateLabel}: ${day.utilization}%`}
                         />
                       </div>
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         {dateLabel}
                       </span>
                     </div>
@@ -570,17 +570,17 @@ export default function SmartSchedulingPage(): React.ReactElement {
               </div>
             )}
 
-            <div className="flex items-center gap-4 mt-4 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+            <div className="flex items-center gap-4 mt-4 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
               <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-sm bg-apple-green" />
+                <div className="h-2.5 w-2.5 rounded-sm bg-[var(--status-success)]" />
                 &lt;70%
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-sm bg-apple-orange" />
+                <div className="h-2.5 w-2.5 rounded-sm bg-[var(--status-warning)]" />
                 70-90%
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-sm bg-apple-red" />
+                <div className="h-2.5 w-2.5 rounded-sm bg-[var(--status-error)]" />
                 &gt;90%
               </div>
             </div>

@@ -66,16 +66,16 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
           },
         }}
       >
-        <Body className="bg-gray-100 font-sans py-8">
-          <Container className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
+        <Body className="bg-[var(--surface-secondary)] font-sans py-8">
+          <Container className="bg-[var(--surface-secondary)] rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
             {/* Header */}
             <Section className="bg-brand px-8 py-6">
               <Row>
                 <Column>
-                  <Heading className="text-white text-2xl font-bold m-0">
+                  <Heading className="text-[var(--text-on-brand)] text-2xl font-bold m-0">
                     🔧 MechMind
                   </Heading>
-                  <Text className="text-white/80 text-sm m-0 mt-1">
+                  <Text className="text-[var(--text-on-brand)]/80 text-sm m-0 mt-1">
                     Gestione officine intelligente
                   </Text>
                 </Column>
@@ -84,26 +84,26 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
 
             {/* Content */}
             <Section className="px-8 py-8">
-              <Heading className="text-gray-900 text-2xl font-bold mb-4">
+              <Heading className="text-[var(--text-primary)] text-2xl font-bold mb-4">
                 ✅ Prenotazione Confermata
               </Heading>
 
-              <Text className="text-gray-800 text-base mb-6">
+              <Text className="text-[var(--text-primary)] text-base mb-6">
                 Gentile <strong>{customerName}</strong>,
               </Text>
 
-              <Text className="text-gray-600 text-base mb-6">
+              <Text className="text-[var(--text-[var(--text-secondary)])] text-base mb-6">
                 La tua prenotazione è stata confermata con successo. Ecco i dettagli:
               </Text>
 
               {/* Booking Details */}
-              <Section className="bg-gray-50 rounded-lg p-6 mb-6">
+              <Section className="bg-[var(--surface-secondary)] rounded-lg p-6 mb-6">
                 <Row className="mb-4">
                   <Column>
-                    <Text className="text-gray-500 text-xs uppercase tracking-wide m-0 mb-1">
+                    <Text className="text-[var(--text-tertiary)] text-xs uppercase tracking-wide m-0 mb-1">
                       Servizio
                     </Text>
-                    <Text className="text-gray-900 text-lg font-semibold m-0">
+                    <Text className="text-[var(--text-primary)] text-lg font-semibold m-0">
                       {service}
                     </Text>
                   </Column>
@@ -111,10 +111,10 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
 
                 <Row className="mb-4">
                   <Column>
-                    <Text className="text-gray-500 text-xs uppercase tracking-wide m-0 mb-1">
+                    <Text className="text-[var(--text-tertiary)] text-xs uppercase tracking-wide m-0 mb-1">
                       Data e Ora
                     </Text>
-                    <Text className="text-gray-900 text-lg font-semibold m-0">
+                    <Text className="text-[var(--text-primary)] text-lg font-semibold m-0">
                       📅 {date} alle {time}
                     </Text>
                   </Column>
@@ -122,10 +122,10 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
 
                 <Row className="mb-4">
                   <Column>
-                    <Text className="text-gray-500 text-xs uppercase tracking-wide m-0 mb-1">
+                    <Text className="text-[var(--text-tertiary)] text-xs uppercase tracking-wide m-0 mb-1">
                       Veicolo
                     </Text>
-                    <Text className="text-gray-900 text-lg font-semibold m-0">
+                    <Text className="text-[var(--text-primary)] text-lg font-semibold m-0">
                       🚗 {vehicle}
                     </Text>
                   </Column>
@@ -133,7 +133,7 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
 
                 <Row>
                   <Column>
-                    <Text className="text-gray-500 text-xs uppercase tracking-wide m-0 mb-1">
+                    <Text className="text-[var(--text-tertiary)] text-xs uppercase tracking-wide m-0 mb-1">
                       Codice Prenotazione
                     </Text>
                     <Text className="text-brand text-2xl font-bold m-0 tracking-wide">
@@ -145,26 +145,26 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
 
               {/* Workshop Info */}
               <Section className="bg-brand/5 border border-brand/20 rounded-lg p-6 mb-6">
-                <Text className="text-gray-900 text-lg font-semibold m-0 mb-3">
+                <Text className="text-[var(--text-primary)] text-lg font-semibold m-0 mb-3">
                   📍 {workshopName}
                 </Text>
-                <Text className="text-gray-600 text-sm m-0 mb-1">
+                <Text className="text-[var(--text-[var(--text-secondary)])] text-sm m-0 mb-1">
                   {workshopAddress}
                 </Text>
-                <Text className="text-gray-600 text-sm m-0">
+                <Text className="text-[var(--text-[var(--text-secondary)])] text-sm m-0">
                   📞 {workshopPhone}
                 </Text>
               </Section>
 
               {notes && (
-                <Section className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                  <Text className="text-yellow-800 text-sm m-0">
+                <Section className="bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/30 rounded-lg p-4 mb-6">
+                  <Text className="text-[var(--status-warning)] text-sm m-0">
                     <strong>📝 Note:</strong> {notes}
                   </Text>
                 </Section>
               )}
 
-              <Text className="text-gray-600 text-sm mb-6">
+              <Text className="text-[var(--text-[var(--text-secondary)])] text-sm mb-6">
                 Ti ricordiamo di presentarti qualche minuto prima dell&apos;appuntamento.
                 Se hai bisogno di modificare o cancellare la prenotazione, ti preghiamo di contattarci almeno 24 ore prima.
               </Text>
@@ -172,13 +172,13 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
               <Section className="text-center mb-6">
                 <Button
                   href={`https://mechmind.it/booking/${bookingCode}`}
-                  className="bg-brand text-white font-semibold py-3 px-8 rounded-lg text-base no-underline inline-block"
+                  className="bg-brand text-[var(--text-on-brand)] font-semibold py-3 px-8 rounded-lg text-base no-underline inline-block"
                 >
                   Gestisci Prenotazione
                 </Button>
               </Section>
 
-              <Text className="text-gray-800 text-base">
+              <Text className="text-[var(--text-primary)] text-base">
                 Grazie per averci scelto!
                 <br />
                 <strong>Il team di {workshopName}</strong>
@@ -186,14 +186,14 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
             </Section>
 
             {/* Footer */}
-            <Section className="bg-gray-50 px-8 py-6 border-t border-gray-200">
-              <Text className="text-gray-600 text-xs text-center m-0">
+            <Section className="bg-[var(--surface-secondary)] px-8 py-6 border-t border-[var(--border-default)]">
+              <Text className="text-[var(--text-[var(--text-secondary)])] text-xs text-center m-0">
                 Questa email è stata inviata automaticamente da MechMind OS.
               </Text>
-              <Text className="text-gray-600 text-xs text-center m-0 mt-2">
+              <Text className="text-[var(--text-[var(--text-secondary)])] text-xs text-center m-0 mt-2">
                 Per assistenza, contatta il tuo officina di fiducia.
               </Text>
-              <Text className="text-gray-500 text-xs text-center m-0 mt-4">
+              <Text className="text-[var(--text-tertiary)] text-xs text-center m-0 mt-4">
                 © {new Date().getFullYear()} MechMind. Tutti i diritti riservati.
               </Text>
             </Section>

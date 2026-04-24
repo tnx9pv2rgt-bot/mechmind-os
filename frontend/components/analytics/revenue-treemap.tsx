@@ -21,7 +21,7 @@ const FALLBACK_DATA: TreemapNode = {
   children: [
     {
       name: 'Manodopera',
-      color: '#60a5fa',
+      color: 'var(--status-info)',
       children: [
         { name: 'Riparazione Motore', value: 42000 },
         { name: 'Impianto Frenante', value: 28500 },
@@ -33,7 +33,7 @@ const FALLBACK_DATA: TreemapNode = {
     },
     {
       name: 'Ricambi',
-      color: '#34d399',
+      color: 'var(--status-success)',
       children: [
         { name: 'OEM', value: 48000 },
         { name: 'Aftermarket', value: 32000 },
@@ -52,7 +52,7 @@ const FALLBACK_DATA: TreemapNode = {
     },
     {
       name: 'Flotta',
-      color: '#fbbf24',
+      color: 'var(--status-warning)',
       children: [
         { name: 'Contratti', value: 55000 },
         { name: 'Interventi Spot', value: 18000 },
@@ -62,10 +62,10 @@ const FALLBACK_DATA: TreemapNode = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Manodopera: '#60a5fa',
-  Ricambi: '#34d399',
+  Manodopera: 'var(--status-info)',
+  Ricambi: 'var(--status-success)',
   Servizi: '#a78bfa',
-  Flotta: '#fbbf24',
+  Flotta: 'var(--status-warning)',
 };
 
 function getNodeColor(node: { id: string; pathComponents: string[] }): string {

@@ -104,10 +104,10 @@ const CHART_COLORS = {
   border: 'var(--border-default)',
   surface: 'var(--surface-elevated)',
   textTertiary: '#888888',
-  success: '#34d399',
-  warning: '#fbbf24',
-  error: '#f87171',
-  info: '#60a5fa',
+  success: 'var(--status-success)',
+  warning: 'var(--status-warning)',
+  error: 'var(--status-error)',
+  info: 'var(--status-info)',
   purple: '#a78bfa',
 };
 
@@ -192,11 +192,11 @@ export default function AnalyticsPage() {
   const revenueByTechnician = analytics?.revenueByTechnician || [];
 
   const kpiCards = [
-    { label: 'Fatturato', value: formatCurrency(kpis.revenue), icon: Euro, color: 'bg-apple-green' },
-    { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList, color: 'bg-apple-blue' },
-    { label: 'Clienti Nuovi', value: String(kpis.newCustomers), icon: Users, color: 'bg-apple-purple' },
-    { label: 'Ticket Medio', value: formatCurrency(kpis.avgTicket), icon: TrendingUp, color: 'bg-apple-orange' },
-    { label: 'Tasso Conversione', value: `${kpis.conversionRate.toFixed(1)}%`, icon: Percent, color: 'bg-apple-red' },
+    { label: 'Fatturato', value: formatCurrency(kpis.revenue), icon: Euro, color: 'bg-[var(--status-success)]' },
+    { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList, color: 'bg-[var(--brand)]' },
+    { label: 'Clienti Nuovi', value: String(kpis.newCustomers), icon: Users, color: 'bg-[var(--brand)]' },
+    { label: 'Ticket Medio', value: formatCurrency(kpis.avgTicket), icon: TrendingUp, color: 'bg-[var(--status-warning)]' },
+    { label: 'Tasso Conversione', value: `${kpis.conversionRate.toFixed(1)}%`, icon: Percent, color: 'bg-[var(--status-error)]' },
   ];
 
   return (
@@ -205,8 +205,8 @@ export default function AnalyticsPage() {
       <header>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Analytics</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Analytics</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Analisi complete dell&apos;attivita della tua officina
             </p>
           </div>
@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
           <AppleCard hover={false}>
             <AppleCardContent>
               <div className='flex flex-wrap items-center justify-center gap-2'>
-                <Calendar className='h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]' />
+                <Calendar className='h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
                 {PERIOD_OPTIONS.map(p => (
                   <AppleButton
                     key={p.value}
@@ -252,14 +252,14 @@ export default function AnalyticsPage() {
                       type='date'
                       value={customFrom}
                       onChange={e => setCustomFrom(e.target.value)}
-                      className='h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]'
+                      className='h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                     />
-                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>-</span>
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>-</span>
                     <input
                       type='date'
                       value={customTo}
                       onChange={e => setCustomTo(e.target.value)}
-                      className='h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]'
+                      className='h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                     />
                   </div>
                 )}
@@ -274,8 +274,8 @@ export default function AnalyticsPage() {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare i dati analytics. Verifica la connessione e riprova.
                   </p>
                   <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>
@@ -290,7 +290,7 @@ export default function AnalyticsPage() {
         {/* Loading */}
         {isLoading && (
           <div className='flex items-center justify-center py-12'>
-            <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+            <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
           </div>
         )}
 
@@ -305,13 +305,13 @@ export default function AnalyticsPage() {
                       <div
                         className={`w-10 h-10 rounded-xl ${kpi.color} flex items-center justify-center`}
                       >
-                        <kpi.icon className='h-5 w-5 text-white' />
+                        <kpi.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                       </div>
                     </div>
-                    <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {kpi.value}
                     </p>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{kpi.label}</p>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{kpi.label}</p>
                   </AppleCardContent>
                 </AppleCard>
               </motion.div>
@@ -326,14 +326,14 @@ export default function AnalyticsPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center gap-2'>
-                  <BarChart3 className='h-5 w-5 text-apple-green' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Fatturato</h3>
+                  <BarChart3 className='h-5 w-5 text-[var(--status-success)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Fatturato</h3>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {revenueChart.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <BarChart3 className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
+                      <BarChart3 className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -360,14 +360,14 @@ export default function AnalyticsPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center gap-2'>
-                  <PieChartIcon className='h-5 w-5 text-apple-blue' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>OdL per Stato</h3>
+                  <PieChartIcon className='h-5 w-5 text-[var(--brand)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>OdL per Stato</h3>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {workOrdersByStatus.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <PieChartIcon className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
+                      <PieChartIcon className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -403,14 +403,14 @@ export default function AnalyticsPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center gap-2'>
-                  <Wrench className='h-5 w-5 text-apple-orange' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Top Servizi</h3>
+                  <Wrench className='h-5 w-5 text-[var(--status-warning)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Top Servizi</h3>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {topServices.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <Wrench className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
+                      <Wrench className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -435,14 +435,14 @@ export default function AnalyticsPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center gap-2'>
-                  <Users className='h-5 w-5 text-apple-purple' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Andamento Clienti</h3>
+                  <Users className='h-5 w-5 text-[var(--brand)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Andamento Clienti</h3>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {customerTrends.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <Users className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
+                      <Users className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -469,14 +469,14 @@ export default function AnalyticsPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center gap-2'>
-                  <TrendingUp className='h-5 w-5 text-apple-green' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Tasso Occupazione</h3>
+                  <TrendingUp className='h-5 w-5 text-[var(--status-success)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Tasso Occupazione</h3>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {capacityUtilization.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <TrendingUp className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
+                      <TrendingUp className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -502,14 +502,14 @@ export default function AnalyticsPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center gap-2'>
-                  <Wrench className='h-5 w-5 text-apple-blue' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Fatturato per Tecnico</h3>
+                  <Wrench className='h-5 w-5 text-[var(--brand)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Fatturato per Tecnico</h3>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {revenueByTechnician.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <Wrench className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
+                      <Wrench className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun dato disponibile</p>
                     </div>
                   ) : (
                     <div className='h-72'>
@@ -553,8 +553,8 @@ export default function AnalyticsPage() {
         {!isLoading && (
           <div className='mt-8 space-y-6'>
             <motion.div variants={listItemVariants}>
-              <h2 className='text-title-2 font-semibold flex items-center gap-2 text-apple-dark dark:text-[var(--text-primary)]'>
-                <span className='inline-block h-2 w-2 rounded-full animate-pulse bg-apple-green' />
+              <h2 className='text-title-2 font-semibold flex items-center gap-2 text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                <span className='inline-block h-2 w-2 rounded-full animate-pulse bg-[var(--status-success)]' />
                 Centro Controllo
               </h2>
             </motion.div>

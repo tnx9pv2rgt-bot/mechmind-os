@@ -152,18 +152,18 @@ export function UpgradePrompt({
     <>
       <Card className={cn(
         "border-l-4",
-        isExceeded ? "border-l-red-500 bg-red-50" : 
-        isCritical ? "border-l-orange-500 bg-orange-50" : 
-        "border-l-yellow-500 bg-yellow-50",
+        isExceeded ? "border-l-red-500 bg-[var(--status-error-subtle)]" : 
+        isCritical ? "border-l-orange-500 bg-[var(--status-warning)]/5" : 
+        "border-l-yellow-500 bg-[var(--status-warning)]/10",
         className
       )}>
         <CardContent className="p-4">
           <div className="flex items-start space-x-4">
             <div className={cn(
               "p-2 rounded-full",
-              isExceeded ? "bg-red-100 text-red-600" : 
-              isCritical ? "bg-orange-100 text-orange-600" : 
-              "bg-yellow-100 text-yellow-600"
+              isExceeded ? "bg-[var(--status-error-subtle)] text-[var(--status-error)]" : 
+              isCritical ? "bg-[var(--status-warning)]/10 text-[var(--status-warning)]" : 
+              "bg-[var(--status-warning)]/20 text-[var(--status-warning)]"
             )}>
               <AlertTriangle className="w-5 h-5" />
             </div>
@@ -172,9 +172,9 @@ export function UpgradePrompt({
               <div className="flex items-center justify-between">
                 <h4 className={cn(
                   "font-semibold",
-                  isExceeded ? "text-red-900" : 
-                  isCritical ? "text-orange-900" : 
-                  "text-yellow-900"
+                  isExceeded ? "text-[var(--status-error)]" : 
+                  isCritical ? "text-[var(--status-warning)]" : 
+                  "text-[var(--status-warning)]"
                 )}>
                   {isExceeded ? `${config.name} Limit Reached` : 
                    `Approaching ${config.name} Limit`}
@@ -193,9 +193,9 @@ export function UpgradePrompt({
 
               <p className={cn(
                 "text-sm mt-1",
-                isExceeded ? "text-red-700" : 
-                isCritical ? "text-orange-700" : 
-                "text-yellow-700"
+                isExceeded ? "text-[var(--status-error)]" : 
+                isCritical ? "text-[var(--status-warning)]" : 
+                "text-[var(--status-warning)]"
               )}>
                 {isExceeded 
                   ? `You've reached your ${config.name.toLowerCase()} limit. Upgrade your plan to continue.`
@@ -207,16 +207,16 @@ export function UpgradePrompt({
               <div className="mt-3">
                 <div className="flex justify-between text-xs mb-1">
                   <span className={cn(
-                    isExceeded ? "text-red-600" : 
-                    isCritical ? "text-orange-600" : 
-                    "text-yellow-600"
+                    isExceeded ? "text-[var(--status-error)]" : 
+                    isCritical ? "text-[var(--status-warning)]" : 
+                    "text-[var(--status-warning)]"
                   )}>
                     {limit.current.toLocaleString()} / {limit.limit?.toLocaleString()}
                   </span>
                   <span className={cn(
-                    isExceeded ? "text-red-600" : 
-                    isCritical ? "text-orange-600" : 
-                    "text-yellow-600"
+                    isExceeded ? "text-[var(--status-error)]" : 
+                    isCritical ? "text-[var(--status-warning)]" : 
+                    "text-[var(--status-warning)]"
                   )}>
                     {Math.round(limit.percentageUsed)}%
                   </span>
@@ -225,16 +225,16 @@ export function UpgradePrompt({
                   value={Math.min(limit.percentageUsed, 100)} 
                   className={cn(
                     "h-2",
-                    isExceeded ? "bg-red-200 [&>div]:bg-red-500" : 
-                    isCritical ? "bg-orange-200 [&>div]:bg-orange-500" : 
-                    "bg-yellow-200 [&>div]:bg-yellow-500"
+                    isExceeded ? "bg-[var(--status-error)]/20 [&>div]:bg-[var(--status-error-subtle)]0" : 
+                    isCritical ? "bg-[var(--status-warning)]/20 [&>div]:bg-[var(--status-warning)]/50" : 
+                    "bg-[var(--status-warning)]/20 [&>div]:bg-[var(--status-warning)]/100"
                   )}
                 />
               </div>
 
               {/* Upgrade CTA */}
               <div className="flex items-center justify-between mt-4">
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-[var(--text-secondary)]">
                   Next plan: <span className="font-medium">{config.nextPlanLimit[currentPlan]}</span>
                 </div>
                 <div className="flex space-x-2">
@@ -248,9 +248,9 @@ export function UpgradePrompt({
                   <Button 
                     size="sm"
                     className={cn(
-                      isExceeded ? "bg-red-600 hover:bg-red-700" : 
-                      isCritical ? "bg-orange-600 hover:bg-orange-700" : 
-                      "bg-yellow-600 hover:bg-yellow-700"
+                      isExceeded ? "bg-[var(--status-error)] hover:bg-[var(--status-error)]" : 
+                      isCritical ? "bg-[var(--status-warning)] hover:bg-[var(--status-warning)]" : 
+                      "bg-[var(--status-warning)] hover:bg-[var(--status-warning)]"
                     )}
                     onClick={onUpgrade}
                   >
@@ -278,28 +278,28 @@ export function UpgradePrompt({
 
           <div className="space-y-6 py-4">
             {/* Current Usage */}
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-[var(--surface-secondary)] p-4 rounded-lg">
               <h4 className="font-medium mb-4">Current Usage</h4>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Used</span>
+                  <span className="text-[var(--text-secondary)]">Used</span>
                   <span className="font-medium">{limit.current.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Limit</span>
+                  <span className="text-[var(--text-secondary)]">Limit</span>
                   <span className="font-medium">{limit.limit?.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Remaining</span>
+                  <span className="text-[var(--text-secondary)]">Remaining</span>
                   <span className={cn(
                     "font-medium",
-                    limit.remaining < 10 ? "text-red-600" : "text-green-600"
+                    limit.remaining < 10 ? "text-[var(--status-error)]" : "text-[var(--status-success)]"
                   )}>
                     {limit.remaining.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Percentage Used</span>
+                  <span className="text-[var(--text-secondary)]">Percentage Used</span>
                   <span className="font-medium">{Math.round(limit.percentageUsed)}%</span>
                 </div>
               </div>
@@ -313,24 +313,24 @@ export function UpgradePrompt({
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Piccole Plan</p>
-                      <p className="text-sm text-gray-500">3 users, 1 location</p>
+                      <p className="text-sm text-[var(--text-tertiary)]">3 users, 1 location</p>
                     </div>
                     <Badge>€100/mo</Badge>
                   </div>
                 )}
                 {(currentPlan === 'TRIAL' || currentPlan === 'STARTER') && (
-                  <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-50 border-blue-200">
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-[var(--status-info-subtle)] border-[var(--status-info)]/30">
                     <div>
                       <p className="font-medium">Medie Plan</p>
-                      <p className="text-sm text-gray-500">10 users, 2 locations</p>
+                      <p className="text-sm text-[var(--text-tertiary)]">10 users, 2 locations</p>
                     </div>
-                    <Badge className="bg-blue-500">€390.90/mo</Badge>
+                    <Badge className="bg-[var(--status-info-subtle)]0">€390.90/mo</Badge>
                   </div>
                 )}
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <p className="font-medium">Grandi Plan</p>
-                    <p className="text-sm text-gray-500">Unlimited everything</p>
+                    <p className="text-sm text-[var(--text-tertiary)]">Unlimited everything</p>
                   </div>
                   <Badge variant="outline">Custom pricing</Badge>
                 </div>

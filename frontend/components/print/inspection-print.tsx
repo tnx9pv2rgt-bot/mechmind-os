@@ -104,22 +104,22 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
         }
       `}</style>
 
-      <div className="inspection-print-container bg-white text-black print:block hidden">
+      <div className="inspection-print-container bg-[var(--surface-secondary)] text-[var(--text-primary)] print:block hidden">
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-3 mb-4">
+        <div className="flex justify-between items-start border-b-2 border-[var(--border-strong)] pb-3 mb-4">
           <div>
             {tenant.logoUrl && (
               <img src={tenant.logoUrl} alt="Logo" className="mb-2" style={{ maxHeight: '40px' }} />
             )}
             <h2 className="text-base font-bold">{tenant.ragioneSociale}</h2>
             {tenant.address && (
-              <p className="text-[8pt] text-gray-600">
+              <p className="text-[8pt] text-[var(--text-secondary)]">
                 {tenant.address}
                 {tenant.city && `, ${tenant.city}`}
               </p>
             )}
             {tenant.phone && (
-              <p className="text-[8pt] text-gray-600">Tel: {tenant.phone}</p>
+              <p className="text-[8pt] text-[var(--text-secondary)]">Tel: {tenant.phone}</p>
             )}
           </div>
           <div className="text-right">
@@ -131,8 +131,8 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
 
         {/* Vehicle + Customer Info */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="p-2 border border-gray-300 rounded">
-            <p className="text-[8pt] font-semibold text-gray-500 uppercase mb-1">Veicolo</p>
+          <div className="p-2 border border-[var(--border-default)] rounded">
+            <p className="text-[8pt] font-semibold text-[var(--text-tertiary)] uppercase mb-1">Veicolo</p>
             <p className="font-bold text-sm">{inspection.vehiclePlate}</p>
             {(inspection.vehicleMake || inspection.vehicleModel) && (
               <p className="text-sm">
@@ -141,18 +141,18 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
               </p>
             )}
             {inspection.vehicleVin && (
-              <p className="text-[8pt] text-gray-600">VIN: {inspection.vehicleVin}</p>
+              <p className="text-[8pt] text-[var(--text-secondary)]">VIN: {inspection.vehicleVin}</p>
             )}
             {inspection.mileage && (
               <p className="text-sm">Km: {inspection.mileage.toLocaleString('it-IT')}</p>
             )}
           </div>
-          <div className="p-2 border border-gray-300 rounded">
-            <p className="text-[8pt] font-semibold text-gray-500 uppercase mb-1">Cliente</p>
+          <div className="p-2 border border-[var(--border-default)] rounded">
+            <p className="text-[8pt] font-semibold text-[var(--text-tertiary)] uppercase mb-1">Cliente</p>
             <p className="font-bold text-sm">{inspection.customerName}</p>
             {inspection.technicianName && (
               <p className="text-sm mt-2">
-                <span className="text-[8pt] text-gray-500 uppercase">Tecnico: </span>
+                <span className="text-[8pt] text-[var(--text-tertiary)] uppercase">Tecnico: </span>
                 {inspection.technicianName}
               </p>
             )}
@@ -160,7 +160,7 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
         </div>
 
         {/* Summary */}
-        <div className="flex gap-4 mb-4 p-2 bg-gray-50 rounded border border-gray-200">
+        <div className="flex gap-4 mb-4 p-2 bg-[var(--surface-secondary)] rounded border border-[var(--border-default)]">
           <div className="flex items-center gap-1">
             <span
               className="inline-block w-3 h-3 rounded-full"
@@ -187,7 +187,7 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
         {/* Checklist by Category */}
         {Object.entries(grouped).map(([category, items]) => (
           <div key={category} className="mb-4 break-inside-avoid">
-            <h3 className="text-sm font-bold bg-gray-100 px-2 py-1 border border-gray-300 rounded-t">
+            <h3 className="text-sm font-bold bg-[var(--surface-secondary)] px-2 py-1 border border-[var(--border-default)] rounded-t">
               {category}
             </h3>
             <table className="w-full border-collapse">
@@ -196,16 +196,16 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
                   const sev = severityConfig[item.severity] || severityConfig.OK;
                   return (
                     <tr key={item.id} className="break-inside-avoid">
-                      <td className="border border-gray-300 px-2 py-1.5 text-sm w-2/5">
+                      <td className="border border-[var(--border-default)] px-2 py-1.5 text-sm w-2/5">
                         {item.name}
                       </td>
                       <td
-                        className="border border-gray-300 px-2 py-1.5 text-sm text-center w-24 font-semibold"
+                        className="border border-[var(--border-default)] px-2 py-1.5 text-sm text-center w-24 font-semibold"
                         style={{ color: sev.color, backgroundColor: sev.bg }}
                       >
                         {sev.label}
                       </td>
-                      <td className="border border-gray-300 px-2 py-1.5 text-[8pt] text-gray-600">
+                      <td className="border border-[var(--border-default)] px-2 py-1.5 text-[8pt] text-[var(--text-secondary)]">
                         {item.notes || '-'}
                       </td>
                     </tr>
@@ -226,10 +226,10 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
                   <img
                     src={photo.url}
                     alt={photo.caption || 'Foto ispezione'}
-                    className="w-full h-32 object-cover rounded border border-gray-300"
+                    className="w-full h-32 object-cover rounded border border-[var(--border-default)]"
                   />
                   {photo.caption && (
-                    <p className="text-[7pt] text-gray-600 mt-0.5 text-center">{photo.caption}</p>
+                    <p className="text-[7pt] text-[var(--text-secondary)] mt-0.5 text-center">{photo.caption}</p>
                   )}
                 </div>
               ))}
@@ -240,7 +240,7 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
         {/* Notes */}
         {inspection.overallNotes && (
           <div className="mb-6">
-            <p className="text-[8pt] font-semibold text-gray-500 uppercase mb-1">Note Generali</p>
+            <p className="text-[8pt] font-semibold text-[var(--text-tertiary)] uppercase mb-1">Note Generali</p>
             <p className="text-sm whitespace-pre-wrap">{inspection.overallNotes}</p>
           </div>
         )}
@@ -248,21 +248,21 @@ export function InspectionPrint({ inspection, tenant }: InspectionPrintProps) {
         {/* Signature */}
         <div className="mt-8 grid grid-cols-2 gap-8">
           <div>
-            <p className="text-[8pt] text-gray-500 uppercase mb-8">Firma Tecnico</p>
-            <div className="border-b border-gray-400 w-48" />
+            <p className="text-[8pt] text-[var(--text-tertiary)] uppercase mb-8">Firma Tecnico</p>
+            <div className="border-b border-[var(--border-default)] w-48" />
             <p className="text-sm mt-1">{inspection.technicianName || ''}</p>
           </div>
           <div>
-            <p className="text-[8pt] text-gray-500 uppercase mb-8">Firma Cliente</p>
-            <div className="border-b border-gray-400 w-48" />
+            <p className="text-[8pt] text-[var(--text-tertiary)] uppercase mb-8">Firma Cliente</p>
+            <div className="border-b border-[var(--border-default)] w-48" />
             <p className="text-sm mt-1">{inspection.customerName}</p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 px-[18mm] pb-[8mm]">
-          <div className="border-t border-gray-300 pt-2 text-center">
-            <p className="text-[7pt] text-gray-500">
+          <div className="border-t border-[var(--border-default)] pt-2 text-center">
+            <p className="text-[7pt] text-[var(--text-tertiary)]">
               {tenant.ragioneSociale}
               {tenant.partitaIva && ` - P.IVA ${tenant.partitaIva}`}
               {tenant.address && ` - ${tenant.address}, ${tenant.city}`}

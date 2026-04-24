@@ -130,19 +130,19 @@ function getWarrantyStatus(
   color: string;
 } {
   if (warrantyStatus === 'VOID') {
-    return { label: 'Annullata', variant: 'destructive', color: 'text-red-600 bg-red-50' };
+    return { label: 'Annullata', variant: 'destructive', color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]' };
   }
   if (daysRemaining <= 0) {
-    return { label: 'Scaduta', variant: 'destructive', color: 'text-red-600 bg-red-50' };
+    return { label: 'Scaduta', variant: 'destructive', color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]' };
   }
   if (daysRemaining <= 30) {
     return {
       label: 'In Scadenza',
       variant: 'outline',
-      color: 'text-orange-600 bg-orange-50 border-orange-200',
+      color: 'text-[var(--status-warning)] bg-[var(--status-warning)]/5 border-[var(--status-warning)]/20',
     };
   }
-  return { label: 'Attiva', variant: 'default', color: 'text-green-600 bg-green-50' };
+  return { label: 'Attiva', variant: 'default', color: 'text-[var(--status-success)] bg-[var(--status-success-subtle)]' };
 }
 
 /**
@@ -161,32 +161,32 @@ function getClaimStatusConfig(status: ClaimStatus): {
     SUBMITTED: {
       label: 'Submitted',
       icon: <FileText className='h-4 w-4' />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50 border-blue-200',
+      color: 'text-[var(--status-info)]',
+      bgColor: 'bg-[var(--status-info-subtle)] border-[var(--status-info)]/30',
     },
     UNDER_REVIEW: {
       label: 'Under Review',
       icon: <Clock className='h-4 w-4' />,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50 border-amber-200',
+      color: 'text-[var(--status-warning)]',
+      bgColor: 'bg-[var(--status-warning)]/5 border-[var(--status-warning)]/30',
     },
     APPROVED: {
       label: 'Approved',
       icon: <CheckCircle2 className='h-4 w-4' />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50 border-green-200',
+      color: 'text-[var(--status-success)]',
+      bgColor: 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30',
     },
     REJECTED: {
       label: 'Rejected',
       icon: <XCircle className='h-4 w-4' />,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50 border-red-200',
+      color: 'text-[var(--status-error)]',
+      bgColor: 'bg-[var(--status-error-subtle)] border-[var(--status-error)]/30',
     },
     PAID: {
       label: 'Paid',
       icon: <DollarSign className='h-4 w-4' />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50 border-blue-200',
+      color: 'text-[var(--status-info)]',
+      bgColor: 'bg-[var(--status-info-subtle)] border-[var(--status-info)]/30',
     },
   };
   return configs[status] || configs.SUBMITTED;
@@ -200,22 +200,22 @@ function getWarrantyTypeInfo(type: string): { label: string; description: string
     MANUFACTURER: {
       label: 'Manufacturer',
       description: 'Original equipment manufacturer warranty',
-      color: 'bg-purple-100 text-purple-700',
+      color: 'bg-[var(--brand)]/10 text-[var(--brand)]',
     },
     EXTENDED: {
       label: 'Extended',
       description: 'Extended coverage beyond manufacturer warranty',
-      color: 'bg-blue-100 text-blue-700',
+      color: 'bg-[var(--status-info-subtle)] text-[var(--status-info)]',
     },
     DEALER: {
       label: 'Dealer',
       description: 'Dealer-provided warranty coverage',
-      color: 'bg-teal-100 text-teal-700',
+      color: 'bg-[var(--status-success)]/10 text-[var(--status-success)]',
     },
     AS_IS: {
       label: 'As-Is',
       description: 'No warranty - vehicle sold as-is',
-      color: 'bg-gray-100 text-gray-700',
+      color: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]',
     },
   };
   return types[type] || types.AS_IS;
@@ -247,35 +247,35 @@ function CountdownTimer({ expirationDate }: { expirationDate: string }) {
   if (isExpired) {
     return (
       <div className='text-center'>
-        <div className='text-4xl font-bold text-red-600'>Scaduta</div>
-        <p className='text-sm text-gray-500 mt-1'>La copertura della garanzia &egrave; terminata</p>
+        <div className='text-4xl font-bold text-[var(--status-error)]'>Scaduta</div>
+        <p className='text-sm text-[var(--text-tertiary)] mt-1'>La copertura della garanzia &egrave; terminata</p>
       </div>
     );
   }
 
   return (
     <div className='grid grid-cols-4 gap-2 text-center'>
-      <div className='bg-gray-50 rounded-lg p-3'>
-        <div className='text-2xl font-bold text-gray-900'>{timeLeft.days}</div>
-        <div className='text-xs text-gray-500 uppercase tracking-wide'>Days</div>
+      <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+        <div className='text-2xl font-bold text-[var(--text-primary)]'>{timeLeft.days}</div>
+        <div className='text-xs text-[var(--text-tertiary)] uppercase tracking-wide'>Days</div>
       </div>
-      <div className='bg-gray-50 rounded-lg p-3'>
-        <div className='text-2xl font-bold text-gray-900'>
+      <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+        <div className='text-2xl font-bold text-[var(--text-primary)]'>
           {String(timeLeft.hours).padStart(2, '0')}
         </div>
-        <div className='text-xs text-gray-500 uppercase tracking-wide'>Hours</div>
+        <div className='text-xs text-[var(--text-tertiary)] uppercase tracking-wide'>Hours</div>
       </div>
-      <div className='bg-gray-50 rounded-lg p-3'>
-        <div className='text-2xl font-bold text-gray-900'>
+      <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+        <div className='text-2xl font-bold text-[var(--text-primary)]'>
           {String(timeLeft.minutes).padStart(2, '0')}
         </div>
-        <div className='text-xs text-gray-500 uppercase tracking-wide'>Mins</div>
+        <div className='text-xs text-[var(--text-tertiary)] uppercase tracking-wide'>Mins</div>
       </div>
-      <div className='bg-gray-50 rounded-lg p-3'>
-        <div className='text-2xl font-bold text-gray-900'>
+      <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+        <div className='text-2xl font-bold text-[var(--text-primary)]'>
           {String(timeLeft.seconds).padStart(2, '0')}
         </div>
-        <div className='text-xs text-gray-500 uppercase tracking-wide'>Secs</div>
+        <div className='text-xs text-[var(--text-tertiary)] uppercase tracking-wide'>Secs</div>
       </div>
     </div>
   );
@@ -345,11 +345,11 @@ function NewClaimForm({
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
       <div className='space-y-2'>
-        <label htmlFor='claimAmount' className='text-sm font-medium text-gray-900'>
+        <label htmlFor='claimAmount' className='text-sm font-medium text-[var(--text-primary)]'>
           Importo Reclamo
         </label>
         <div className='relative'>
-          <DollarSign className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+          <DollarSign className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
           <Input
             id='claimAmount'
             type='number'
@@ -367,7 +367,7 @@ function NewClaimForm({
       </div>
 
       <div className='space-y-2'>
-        <label htmlFor='issueDescription' className='text-sm font-medium text-gray-900'>
+        <label htmlFor='issueDescription' className='text-sm font-medium text-[var(--text-primary)]'>
           Descrizione Problema
         </label>
         <Textarea
@@ -381,12 +381,12 @@ function NewClaimForm({
       </div>
 
       <div className='space-y-2'>
-        <label htmlFor='photo-upload' className='text-sm font-medium text-gray-900'>
+        <label htmlFor='photo-upload' className='text-sm font-medium text-[var(--text-primary)]'>
           Foto Evidenza
         </label>
-        <div className='border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-gray-300 transition-colors'>
-          <Upload className='mx-auto h-8 w-8 text-gray-400 mb-2' />
-          <p className='text-sm text-gray-600 mb-2'>Carica foto del problema</p>
+        <div className='border-2 border-dashed border-[var(--border-default)] rounded-lg p-6 text-center hover:border-[var(--border-default)] transition-colors'>
+          <Upload className='mx-auto h-8 w-8 text-[var(--text-tertiary)] mb-2' />
+          <p className='text-sm text-[var(--text-secondary)] mb-2'>Carica foto del problema</p>
           <Input
             type='file'
             accept='image/*'
@@ -405,7 +405,7 @@ function NewClaimForm({
           </Button>
         </div>
         {uploadedFiles.length > 0 && (
-          <p className='text-sm text-green-600'>{uploadedFiles.length} file selezionati</p>
+          <p className='text-sm text-[var(--status-success)]'>{uploadedFiles.length} file selezionati</p>
         )}
       </div>
 
@@ -449,8 +449,8 @@ function ClaimDetailDialog({
         </DialogHeader>
 
         <div className='space-y-4'>
-          <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-            <span className='text-sm font-medium text-gray-600'>Stato</span>
+          <div className='flex items-center justify-between p-3 bg-[var(--surface-secondary)] rounded-lg'>
+            <span className='text-sm font-medium text-[var(--text-secondary)]'>Stato</span>
             <Badge
               variant='outline'
               className={cn('flex items-center gap-1', statusConfig.bgColor, statusConfig.color)}
@@ -460,26 +460,26 @@ function ClaimDetailDialog({
             </Badge>
           </div>
 
-          <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-            <span className='text-sm font-medium text-gray-600'>Importo</span>
-            <span className='text-lg font-semibold text-gray-900'>
+          <div className='flex items-center justify-between p-3 bg-[var(--surface-secondary)] rounded-lg'>
+            <span className='text-sm font-medium text-[var(--text-secondary)]'>Importo</span>
+            <span className='text-lg font-semibold text-[var(--text-primary)]'>
               {formatCurrency(claim.amount)}
             </span>
           </div>
 
           <div className='space-y-2'>
-            <span className='text-sm font-medium text-gray-600'>Descrizione</span>
-            <p className='text-sm text-gray-800 bg-gray-50 p-3 rounded-lg'>{claim.description}</p>
+            <span className='text-sm font-medium text-[var(--text-secondary)]'>Descrizione</span>
+            <p className='text-sm text-[var(--text-primary)] bg-[var(--surface-secondary)] p-3 rounded-lg'>{claim.description}</p>
           </div>
 
           {claim.documents.length > 0 && (
             <div className='space-y-2'>
-              <span className='text-sm font-medium text-gray-600'>Foto Evidenza</span>
+              <span className='text-sm font-medium text-[var(--text-secondary)]'>Foto Evidenza</span>
               <div className='grid grid-cols-3 gap-2'>
                 {claim.documents.map((url, index) => (
                   <div
                     key={index}
-                    className='aspect-square rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden'
+                    className='aspect-square rounded-lg bg-[var(--surface-secondary)] flex items-center justify-center overflow-hidden'
                   >
                     <img
                       src={url}
@@ -493,7 +493,7 @@ function ClaimDetailDialog({
           )}
 
           {claim.reviewedDate && (
-            <div className='text-sm text-gray-500'>
+            <div className='text-sm text-[var(--text-tertiary)]'>
               Revisionato il {formatDate(claim.reviewedDate)}
             </div>
           )}
@@ -541,7 +541,7 @@ function BlockchainVerificationCard({
     <Card>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-lg'>
-          <Shield className='h-5 w-5 text-blue-600' />
+          <Shield className='h-5 w-5 text-[var(--status-info)]' />
           Verifica Blockchain
         </CardTitle>
         <CardDescription>Verifica l'autenticità della garanzia su blockchain</CardDescription>
@@ -549,18 +549,18 @@ function BlockchainVerificationCard({
       <CardContent className='space-y-4'>
         {/* QR Code Placeholder */}
         <div className='flex justify-center'>
-          <div className='w-32 h-32 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center'>
-            <QrCode className='h-20 w-20 text-gray-800' />
+          <div className='w-32 h-32 bg-[var(--surface-secondary)] border-2 border-[var(--border-default)] rounded-lg flex items-center justify-center'>
+            <QrCode className='h-20 w-20 text-[var(--text-primary)]' />
           </div>
         </div>
 
         {/* Contract Address */}
         <div className='space-y-1'>
-          <label htmlFor='contractAddress' className='text-xs font-medium text-gray-500 uppercase'>
+          <label htmlFor='contractAddress' className='text-xs font-medium text-[var(--text-tertiary)] uppercase'>
             Indirizzo Contratto
           </label>
-          <div className='flex items-center gap-2 p-2 bg-gray-50 rounded-lg'>
-            <code id='contractAddress' className='text-xs text-gray-600 flex-1 truncate'>
+          <div className='flex items-center gap-2 p-2 bg-[var(--surface-secondary)] rounded-lg'>
+            <code id='contractAddress' className='text-xs text-[var(--text-secondary)] flex-1 truncate'>
               {contractAddress}
             </code>
             <Button
@@ -579,7 +579,7 @@ function BlockchainVerificationCard({
 
         {/* Verification Status */}
         {isVerified && (
-          <div className='flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg'>
+          <div className='flex items-center gap-2 p-3 bg-[var(--status-success-subtle)] text-[var(--status-success)] rounded-lg'>
             <CheckCircle2 className='h-5 w-5' />
             <span className='text-sm font-medium'>Verificato su Blockchain</span>
           </div>
@@ -684,7 +684,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
   if (isLoading) {
     return (
       <div className='w-full h-96 flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' />
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--status-info)]' />
       </div>
     );
   }
@@ -693,9 +693,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
     return (
       <Card className='w-full'>
         <CardContent className='flex flex-col items-center justify-center py-12'>
-          <AlertTriangle className='h-12 w-12 text-amber-500 mb-4' />
-          <h3 className='text-lg font-semibold text-gray-900'>Garanzia Non Trovata</h3>
-          <p className='text-sm text-gray-500 mt-1'>La garanzia richiesta non è stata trovata</p>
+          <AlertTriangle className='h-12 w-12 text-[var(--status-warning)] mb-4' />
+          <h3 className='text-lg font-semibold text-[var(--text-primary)]'>Garanzia Non Trovata</h3>
+          <p className='text-sm text-[var(--text-tertiary)] mt-1'>La garanzia richiesta non è stata trovata</p>
         </CardContent>
       </Card>
     );
@@ -715,8 +715,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Pannello Garanzie</h1>
-          <p className='text-sm text-gray-500 mt-1'>Gestisci coperture e reclami in garanzia</p>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)]'>Pannello Garanzie</h1>
+          <p className='text-sm text-[var(--text-tertiary)] mt-1'>Gestisci coperture e reclami in garanzia</p>
         </div>
         <Dialog open={isNewClaimModalOpen} onOpenChange={setIsNewClaimModalOpen}>
           <DialogTrigger asChild>
@@ -754,7 +754,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               <div className='flex items-start justify-between'>
                 <div>
                   <CardTitle className='text-xl flex items-center gap-2'>
-                    <Shield className='h-6 w-6 text-blue-600' />
+                    <Shield className='h-6 w-6 text-[var(--status-info)]' />
                     Copertura Garanzia
                   </CardTitle>
                   <CardDescription className='mt-1'>
@@ -769,8 +769,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             </CardHeader>
             <CardContent className='space-y-6'>
               {/* Countdown Timer */}
-              <div className='bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6'>
-                <h3 className='text-sm font-medium text-gray-600 text-center mb-4'>
+              <div className='bg-gradient-to-br from-[var(--status-info)]/5 to-[var(--brand)]/5 rounded-xl p-6'>
+                <h3 className='text-sm font-medium text-[var(--text-secondary)] text-center mb-4'>
                   Tempo Rimanente
                 </h3>
                 <CountdownTimer expirationDate={String(warranty.expirationDate)} />
@@ -779,11 +779,11 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               {/* Progress Bar */}
               <div className='space-y-2'>
                 <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600'>Periodo Copertura</span>
-                  <span className='font-medium text-gray-900'>{progress}% trascorso</span>
+                  <span className='text-[var(--text-secondary)]'>Periodo Copertura</span>
+                  <span className='font-medium text-[var(--text-primary)]'>{progress}% trascorso</span>
                 </div>
                 <Progress value={progress} className='h-2' />
-                <div className='flex items-center justify-between text-xs text-gray-500'>
+                <div className='flex items-center justify-between text-xs text-[var(--text-tertiary)]'>
                   <span>{formatDate(String(warranty.startDate))}</span>
                   <span>{formatDate(String(warranty.expirationDate))}</span>
                 </div>
@@ -791,20 +791,20 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
 
               {/* Coverage Info */}
               <div className='grid grid-cols-2 gap-4'>
-                <div className='bg-gray-50 rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 mb-1'>
+                <div className='bg-[var(--surface-secondary)] rounded-lg p-4'>
+                  <div className='flex items-center gap-2 text-sm text-[var(--text-secondary)] mb-1'>
                     <Wallet className='h-4 w-4' />
                     <span>Copertura Residua</span>
                   </div>
-                  <div className='text-2xl font-bold text-gray-900'>
+                  <div className='text-2xl font-bold text-[var(--text-primary)]'>
                     {formatCurrency(remainingCoverage)}
                   </div>
-                  <div className='text-xs text-gray-500'>
+                  <div className='text-xs text-[var(--text-tertiary)]'>
                     di {formatCurrency(maxCoverage)} totale
                   </div>
                 </div>
-                <div className='bg-gray-50 rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 mb-1'>
+                <div className='bg-[var(--surface-secondary)] rounded-lg p-4'>
+                  <div className='flex items-center gap-2 text-sm text-[var(--text-secondary)] mb-1'>
                     <Activity className='h-4 w-4' />
                     <span>Tipo Garanzia</span>
                   </div>
@@ -816,7 +816,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                   >
                     {warrantyType.label}
                   </div>
-                  <div className='text-xs text-gray-500 mt-1'>{warrantyType.description}</div>
+                  <div className='text-xs text-[var(--text-tertiary)] mt-1'>{warrantyType.description}</div>
                 </div>
               </div>
             </CardContent>
@@ -838,8 +838,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             <CardContent>
               {claims.length === 0 ? (
                 <div className='text-center py-8'>
-                  <CheckCircle2 className='h-12 w-12 text-green-500 mx-auto mb-3' />
-                  <p className='text-sm text-gray-500'>
+                  <CheckCircle2 className='h-12 w-12 text-[var(--status-success)] mx-auto mb-3' />
+                  <p className='text-sm text-[var(--text-tertiary)]'>
                     Nessun reclamo presentato per questa garanzia
                   </p>
                 </div>
@@ -854,12 +854,12 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                           setSelectedClaim(claim);
                           setIsClaimDialogOpen(true);
                         }}
-                        className='w-full text-left p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group'
+                        className='w-full text-left p-4 bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] rounded-lg transition-colors group'
                       >
                         <div className='flex items-start justify-between'>
                           <div className='flex-1'>
                             <div className='flex items-center gap-2 mb-1'>
-                              <span className='font-medium text-gray-900'>
+                              <span className='font-medium text-[var(--text-primary)]'>
                                 {formatCurrency(claim.amount)}
                               </span>
                               <Badge
@@ -874,14 +874,14 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                                 {statusConfig.label}
                               </Badge>
                             </div>
-                            <p className='text-sm text-gray-600 line-clamp-2'>
+                            <p className='text-sm text-[var(--text-secondary)] line-clamp-2'>
                               {claim.description}
                             </p>
-                            <p className='text-xs text-gray-400 mt-1'>
+                            <p className='text-xs text-[var(--text-tertiary)] mt-1'>
                               {formatDate(claim.submittedDate)}
                             </p>
                           </div>
-                          <ChevronRight className='h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors' />
+                          <ChevronRight className='h-5 w-5 text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors' />
                         </div>
                       </button>
                     );
@@ -901,7 +901,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-lg'>
-                <Calendar className='h-5 w-5 text-orange-500' />
+                <Calendar className='h-5 w-5 text-[var(--status-warning)]' />
                 Scadenze in Arrivo
               </CardTitle>
               <CardDescription>Garanzie in scadenza</CardDescription>
@@ -924,9 +924,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                         .map(ew => (
                           <div
                             key={ew.id}
-                            className='flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm'
+                            className='flex items-center justify-between p-2 bg-[var(--surface-secondary)] rounded-lg text-sm'
                           >
-                            <span className='text-gray-600 truncate flex-1'>
+                            <span className='text-[var(--text-secondary)] truncate flex-1'>
                               {ew.id.slice(0, 8)}...
                             </span>
                             <Badge variant='outline' className='text-xs ml-2'>
@@ -938,7 +938,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                         const daysLeft = calculateCountdown(String(ew.expirationDate)).days;
                         return daysLeft <= parseInt(days) && daysLeft > parseInt(days) - 30;
                       }).length === 0 && (
-                        <p className='text-sm text-gray-500 text-center py-4'>
+                        <p className='text-sm text-[var(--text-tertiary)] text-center py-4'>
                           Nessuna garanzia in scadenza in questo periodo
                         </p>
                       )}
@@ -953,7 +953,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-lg'>
-                <Bell className='h-5 w-5 text-purple-500' />
+                <Bell className='h-5 w-5 text-[var(--brand)]' />
                 Impostazioni Avvisi
               </CardTitle>
               <CardDescription>Configura promemoria scadenze</CardDescription>
@@ -961,8 +961,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
             <CardContent className='space-y-4'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Settings className='h-4 w-4 text-gray-500' />
-                  <span className='text-sm text-gray-700'>Avvisi Email</span>
+                  <Settings className='h-4 w-4 text-[var(--text-tertiary)]' />
+                  <span className='text-sm text-[var(--text-secondary)]'>Avvisi Email</span>
                 </div>
                 <Switch
                   checked={alertSettings.email}
@@ -974,8 +974,8 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               <Separator />
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Settings className='h-4 w-4 text-gray-500' />
-                  <span className='text-sm text-gray-700'>Avvisi SMS</span>
+                  <Settings className='h-4 w-4 text-[var(--text-tertiary)]' />
+                  <span className='text-sm text-[var(--text-secondary)]'>Avvisi SMS</span>
                 </div>
                 <Switch
                   checked={alertSettings.sms}
@@ -984,7 +984,7 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               </div>
               <Separator />
               <div className='space-y-2'>
-                <label htmlFor='daysBeforeExpiry' className='text-sm text-gray-700'>
+                <label htmlFor='daysBeforeExpiry' className='text-sm text-[var(--text-secondary)]'>
                   Giorni Prima della Scadenza
                 </label>
                 <Input

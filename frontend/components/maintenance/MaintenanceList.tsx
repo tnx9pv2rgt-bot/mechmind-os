@@ -129,7 +129,7 @@ export function MaintenanceList({
         <CardContent className='p-6'>
           <div className='space-y-4'>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className='h-20 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800' />
+              <div key={i} className='h-20 animate-pulse rounded-lg bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]' />
             ))}
           </div>
         </CardContent>
@@ -154,7 +154,7 @@ export function MaintenanceList({
           {showFilters && (
             <div className='flex flex-wrap items-center gap-2'>
               <div className='relative'>
-                <Search className='absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                <Search className='absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca veicolo...'
                   value={searchQuery}
@@ -228,7 +228,7 @@ export function MaintenanceList({
             {/* Pagination */}
             {totalPages > 1 && (
               <div className='mt-6 flex items-center justify-between'>
-                <p className='text-sm text-gray-500 dark:text-gray-400'>
+                <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                   Pagina {page} di {totalPages}
                 </p>
                 <div className='flex gap-2'>
@@ -271,10 +271,10 @@ function MaintenanceItem({ schedule, onComplete, onEdit }: MaintenanceItemProps)
   return (
     <div
       className={cn(
-        'flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50',
-        isOverdue && 'border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20',
+        'flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50',
+        isOverdue && 'border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]/50 dark:border-[var(--status-error)] dark:bg-[var(--status-error)]/40/20',
         isDueSoon &&
-          'border-yellow-200 bg-yellow-50/50 dark:border-yellow-900 dark:bg-yellow-950/20'
+          'border-[var(--status-warning)]/30 bg-[var(--status-warning)]/10/50 dark:border-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/20'
       )}
     >
       {/* Status Indicator */}
@@ -282,10 +282,10 @@ function MaintenanceItem({ schedule, onComplete, onEdit }: MaintenanceItemProps)
         className={cn(
           'flex h-10 w-10 items-center justify-center rounded-full',
           isOverdue
-            ? 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300'
+            ? 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error)]/40 dark:text-[var(--status-error)]'
             : isDueSoon
-              ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300'
-              : 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300'
+              ? 'bg-[var(--status-warning)]/20 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40 dark:text-[var(--status-warning)]'
+              : 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40 dark:text-[var(--status-info)]'
         )}
       >
         {isOverdue ? <AlertTriangle className='h-5 w-5' /> : <Calendar className='h-5 w-5' />}
@@ -294,7 +294,7 @@ function MaintenanceItem({ schedule, onComplete, onEdit }: MaintenanceItemProps)
       {/* Main Content */}
       <div className='flex-1 min-w-0'>
         <div className='flex items-center gap-2'>
-          <h4 className='font-medium text-gray-900 dark:text-gray-100'>
+          <h4 className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             {getMaintenanceTypeLabel(schedule.type)}
           </h4>
           {isOverdue && (
@@ -303,13 +303,13 @@ function MaintenanceItem({ schedule, onComplete, onEdit }: MaintenanceItemProps)
             </Badge>
           )}
           {isDueSoon && (
-            <Badge variant='default' className='bg-yellow-500 text-xs'>
+            <Badge variant='default' className='bg-[var(--status-warning)]/100 text-xs'>
               A breve
             </Badge>
           )}
         </div>
 
-        <div className='mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400'>
+        <div className='mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
           <span className='flex items-center gap-1'>
             <Car className='h-3.5 w-3.5' />
             {schedule.vehicle.make} {schedule.vehicle.model}

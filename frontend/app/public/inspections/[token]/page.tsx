@@ -66,23 +66,23 @@ const severityConfig: Record<Severity, {
 }> = {
   critical: {
     label: 'Critico',
-    color: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    border: 'border-red-200 dark:border-red-800/40',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
+    border: 'border-[var(--status-error)]/30 dark:border-[var(--status-error)]/40',
     icon: XCircle,
   },
   warning: {
     label: 'Attenzione',
-    color: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
-    border: 'border-amber-200 dark:border-amber-800/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/40/30',
+    border: 'border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]/40',
     icon: AlertTriangle,
   },
   ok: {
     label: 'OK',
-    color: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-100 dark:bg-green-900/30',
-    border: 'border-green-200 dark:border-green-800/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30',
+    border: 'border-[var(--status-success)]/30 dark:border-[var(--status-success)]/40',
     icon: CheckCircle2,
   },
 };
@@ -186,7 +186,7 @@ export default function PublicInspectionPage() {
   if (error || !inspection) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="w-12 h-12 text-red-400" />
+        <AlertCircle className="w-12 h-12 text-[var(--status-error)]" />
         <p className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center text-lg font-medium">
           {error || 'Ispezione non trovata'}
         </p>
@@ -204,8 +204,8 @@ export default function PublicInspectionPage() {
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <CheckCircle2 className="w-10 h-10 text-green-500" />
+        <div className="w-20 h-20 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 flex items-center justify-center">
+          <CheckCircle2 className="w-10 h-10 text-[var(--status-success)]" />
         </div>
         <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Grazie!</h1>
         <p className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] max-w-md">
@@ -224,7 +224,7 @@ export default function PublicInspectionPage() {
       <Toaster richColors position="top-center" />
 
       {/* Vehicle Info Header */}
-      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
+      <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
@@ -238,7 +238,7 @@ export default function PublicInspectionPage() {
             type="button"
             onClick={() => window.print()}
             className="p-2.5 rounded-lg bg-[var(--surface-hover)] dark:bg-[var(--surface-active)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]
-                       hover:bg-gray-200 dark:hover:bg-[var(--surface-active)] transition-colors print:hidden min-w-[44px] min-h-[44px]
+                       hover:bg-[var(--border-default)] dark:hover:bg-[var(--surface-active)] transition-colors print:hidden min-w-[44px] min-h-[44px]
                        flex items-center justify-center"
             aria-label="Stampa"
           >
@@ -246,7 +246,7 @@ export default function PublicInspectionPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[var(--surface-primary)]">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]">
           <Car className="w-5 h-5 text-[var(--text-tertiary)] flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
@@ -292,7 +292,7 @@ export default function PublicInspectionPage() {
           return (
             <div key={severity} className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider px-1 mt-4 first:mt-0"
-                  style={{ color: severity === 'critical' ? '#ef4444' : severity === 'warning' ? '#f59e0b' : '#22c55e' }}>
+                  style={{ color: severity === 'critical' ? 'var(--status-error)' : severity === 'warning' ? 'var(--status-warning)' : '#22c55e' }}>
                 {severityConfig[severity].label} ({items.length})
               </h2>
               {items.map(item => (
@@ -305,7 +305,7 @@ export default function PublicInspectionPage() {
 
       {/* Approve recommended work */}
       {(counts.critical > 0 || counts.warning > 0) && (
-        <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4 print:hidden">
+        <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4 print:hidden">
           <div className="flex items-center gap-3">
             <Wrench className="w-5 h-5 text-[var(--brand)]" />
             <div>
@@ -323,8 +323,8 @@ export default function PublicInspectionPage() {
             type="button"
             onClick={handleApproveRecommended}
             disabled={submitting}
-            className="w-full py-4 rounded-xl bg-[var(--brand)] text-white font-semibold text-base
-                       hover:bg-[var(--brand)]/90 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed
+            className="w-full py-4 rounded-xl bg-[var(--brand)] text-[var(--text-on-brand)] font-semibold text-base
+                       hover:bg-[var(--brand)]/90 active:bg-[var(--status-info)] disabled:opacity-50 disabled:cursor-not-allowed
                        transition-colors min-h-[52px] flex items-center justify-center gap-2"
           >
             {submitting ? (
@@ -369,7 +369,7 @@ function InspectionCard({ item }: { item: InspectionItem }) {
   const [photoIndex, setPhotoIndex] = useState(0);
 
   return (
-    <div className={`bg-white dark:bg-[var(--surface-elevated)] rounded-xl border ${config.border} overflow-hidden`}>
+    <div className={`bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl border ${config.border} overflow-hidden`}>
       {/* Photo gallery */}
       {item.photos.length > 0 && (
         <div className="relative aspect-video bg-[var(--surface-hover)] dark:bg-[var(--surface-primary)]">
@@ -385,8 +385,8 @@ function InspectionCard({ item }: { item: InspectionItem }) {
                 type="button"
                 onClick={() => setPhotoIndex(prev => (prev > 0 ? prev - 1 : item.photos.length - 1))}
                 className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full
-                           bg-black/50 text-white flex items-center justify-center
-                           hover:bg-black/70 transition-colors"
+                           bg-[var(--surface-primary)]/50 text-[var(--text-on-brand)] flex items-center justify-center
+                           hover:bg-[var(--surface-primary)]/70 transition-colors"
                 aria-label="Foto precedente"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -395,8 +395,8 @@ function InspectionCard({ item }: { item: InspectionItem }) {
                 type="button"
                 onClick={() => setPhotoIndex(prev => (prev < item.photos.length - 1 ? prev + 1 : 0))}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full
-                           bg-black/50 text-white flex items-center justify-center
-                           hover:bg-black/70 transition-colors"
+                           bg-[var(--surface-primary)]/50 text-[var(--text-on-brand)] flex items-center justify-center
+                           hover:bg-[var(--surface-primary)]/70 transition-colors"
                 aria-label="Foto successiva"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -408,13 +408,13 @@ function InspectionCard({ item }: { item: InspectionItem }) {
                     type="button"
                     onClick={() => setPhotoIndex(idx)}
                     className={`w-2 h-2 rounded-full transition-colors ${
-                      idx === photoIndex ? 'bg-white' : 'bg-white/40'
+                      idx === photoIndex ? 'bg-[var(--surface-primary)]' : 'bg-[var(--surface-secondary)]/40'
                     }`}
                     aria-label={`Foto ${idx + 1}`}
                   />
                 ))}
               </div>
-              <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 text-white text-[10px] font-medium px-2 py-1 rounded-full">
+              <div className="absolute top-2 right-2 flex items-center gap-1 bg-[var(--surface-primary)]/50 text-[var(--text-on-brand)] text-[10px] font-medium px-2 py-1 rounded-full">
                 <Camera className="w-3 h-3" />
                 {photoIndex + 1}/{item.photos.length}
               </div>

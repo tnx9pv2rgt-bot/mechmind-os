@@ -206,7 +206,7 @@ export default function PublicEstimateApprovalPage() {
   if (error || !estimate) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="w-12 h-12 text-red-400" />
+        <AlertCircle className="w-12 h-12 text-[var(--status-error)]" />
         <p className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center text-lg font-medium">
           {error || 'Preventivo non trovato'}
         </p>
@@ -225,8 +225,8 @@ export default function PublicEstimateApprovalPage() {
     const allApproved = Object.values(decisions).every(d => d.approved);
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <CheckCircle2 className="w-10 h-10 text-green-500" />
+        <div className="w-20 h-20 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 flex items-center justify-center">
+          <CheckCircle2 className="w-10 h-10 text-[var(--status-success)]" />
         </div>
         <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Grazie!</h1>
         <p className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] max-w-md">
@@ -237,7 +237,7 @@ export default function PublicEstimateApprovalPage() {
         {estimate.workshopPhone && (
           <a
             href={`tel:${estimate.workshopPhone}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand)] text-white font-medium
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand)] text-[var(--text-on-brand)] font-medium
                        hover:bg-[var(--brand)]/90 transition-colors min-h-[44px]"
           >
             Chiama l&apos;officina
@@ -256,7 +256,7 @@ export default function PublicEstimateApprovalPage() {
       <Toaster richColors position="top-center" />
 
       {/* Estimate Header */}
-      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
+      <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
@@ -276,7 +276,7 @@ export default function PublicEstimateApprovalPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[var(--surface-primary)]">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]">
           <Car className="w-5 h-5 text-[var(--text-tertiary)] flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
@@ -290,7 +290,7 @@ export default function PublicEstimateApprovalPage() {
         </div>
 
         {estimate.expiresAt && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">
+          <p className="text-xs text-[var(--status-warning)] dark:text-[var(--status-warning)]">
             Valido fino al{' '}
             {new Date(estimate.expiresAt).toLocaleDateString('it-IT', {
               day: '2-digit',
@@ -310,8 +310,8 @@ export default function PublicEstimateApprovalPage() {
           <button
             type="button"
             onClick={approveAll}
-            className="text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700
-                       dark:hover:text-green-300 transition-colors min-h-[44px] px-3 flex items-center gap-1"
+            className="text-sm font-medium text-[var(--status-success)] dark:text-[var(--status-success)] hover:text-[var(--status-success)]
+                       dark:hover:text-[var(--status-success)] transition-colors min-h-[44px] px-3 flex items-center gap-1"
           >
             <Check className="w-4 h-4" />
             Approva tutto
@@ -326,10 +326,10 @@ export default function PublicEstimateApprovalPage() {
           return (
             <div
               key={item.id}
-              className={`bg-white dark:bg-[var(--surface-elevated)] rounded-xl border transition-colors ${
+              className={`bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl border transition-colors ${
                 isApproved
-                  ? 'border-green-200 dark:border-green-800/40'
-                  : 'border-red-200 dark:border-red-800/40'
+                  ? 'border-[var(--status-success)]/30 dark:border-[var(--status-success)]/40'
+                  : 'border-[var(--status-error)]/30 dark:border-[var(--status-error)]/40'
               }`}
             >
               <div className="p-4">
@@ -340,7 +340,7 @@ export default function PublicEstimateApprovalPage() {
                         {item.description}
                       </p>
                       {item.tier && (
-                        <span className="flex-shrink-0 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                        <span className="flex-shrink-0 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)] text-[var(--brand)] dark:text-[var(--brand)]">
                           {item.tier}
                         </span>
                       )}
@@ -364,8 +364,8 @@ export default function PublicEstimateApprovalPage() {
                       }}
                       className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${
                         isApproved
-                          ? 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 ring-2 ring-green-500/30'
-                          : 'bg-[var(--surface-hover)] dark:bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-green-50 dark:hover:bg-green-900/20'
+                          ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)] ring-2 ring-[var(--status-success)]/30'
+                          : 'bg-[var(--surface-hover)] dark:bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-[var(--status-success-subtle)] dark:hover:bg-[var(--status-success-subtle)]'
                       }`}
                       aria-label="Approva"
                     >
@@ -381,8 +381,8 @@ export default function PublicEstimateApprovalPage() {
                       }}
                       className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${
                         !isApproved
-                          ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 ring-2 ring-red-500/30'
-                          : 'bg-[var(--surface-hover)] dark:bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-red-50 dark:hover:bg-red-900/20'
+                          ? 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)] ring-2 ring-[var(--status-error)]/30'
+                          : 'bg-[var(--surface-hover)] dark:bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)]'
                       }`}
                       aria-label="Rifiuta"
                     >
@@ -414,7 +414,7 @@ export default function PublicEstimateApprovalPage() {
                         placeholder="Descrivi il motivo..."
                         rows={2}
                         className="mt-2 w-full rounded-lg border border-[var(--border-default)] dark:border-[var(--border-strong)]
-                                   bg-white dark:bg-[var(--surface-primary)] px-3 py-2 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]
+                                   bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] px-3 py-2 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]
                                    placeholder:text-[var(--text-tertiary)] dark:placeholder:text-[var(--text-secondary)]
                                    focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/30 resize-none"
                       />
@@ -429,16 +429,16 @@ export default function PublicEstimateApprovalPage() {
 
       {/* Notes */}
       {estimate.notes && (
-        <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800/30 p-4">
-          <p className="text-xs font-medium text-amber-700 dark:text-amber-400 uppercase mb-1">
+        <div className="bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/10 rounded-xl border border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]/30 p-4">
+          <p className="text-xs font-medium text-[var(--status-warning)] dark:text-[var(--status-warning)] uppercase mb-1">
             Note dell&apos;officina
           </p>
-          <p className="text-sm text-amber-800 dark:text-amber-300">{estimate.notes}</p>
+          <p className="text-sm text-[var(--status-warning)] dark:text-[var(--status-warning)]">{estimate.notes}</p>
         </div>
       )}
 
       {/* Total Summary */}
-      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5">
+      <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Totale preventivo</span>
           <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] line-through">
@@ -455,7 +455,7 @@ export default function PublicEstimateApprovalPage() {
       </div>
 
       {/* Firma digitale + Termini (D.Lgs. 206/2005) */}
-      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
+      <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-4">
         <h2 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] uppercase tracking-wider">
           Firma e Consenso
         </h2>
@@ -470,7 +470,7 @@ export default function PublicEstimateApprovalPage() {
             onChange={e => setCustomerSignature(e.target.value)}
             placeholder="es. Mario Rossi"
             className="w-full h-12 px-4 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-strong)]
-                       bg-white dark:bg-[var(--surface-primary)] text-base text-[var(--text-primary)] dark:text-[var(--text-primary)]
+                       bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-base text-[var(--text-primary)] dark:text-[var(--text-primary)]
                        placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/30"
           />
           <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">
@@ -497,8 +497,8 @@ export default function PublicEstimateApprovalPage() {
         type="button"
         onClick={handleSubmit}
         disabled={submitting || !customerSignature.trim() || !termsAccepted}
-        className="w-full py-4 rounded-xl bg-[var(--brand)] text-white font-semibold text-base
-                   hover:bg-[var(--brand)]/90 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed
+        className="w-full py-4 rounded-xl bg-[var(--brand)] text-[var(--text-on-brand)] font-semibold text-base
+                   hover:bg-[var(--brand)]/90 active:bg-[var(--status-info)] disabled:opacity-50 disabled:cursor-not-allowed
                    transition-colors min-h-[52px] flex items-center justify-center gap-2"
       >
         {submitting ? (

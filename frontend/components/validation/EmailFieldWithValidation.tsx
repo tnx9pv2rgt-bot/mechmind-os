@@ -184,16 +184,16 @@ export function EmailFieldWithValidation({
     <div className={cn('relative', className)}>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-[var(--status-error)] ml-1">*</span>}
         </label>
       )}
 
       {/* Input Container */}
       <div className="relative">
         {/* Icona sinistra */}
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
           <Mail className={iconSizes[size]} />
         </div>
 
@@ -207,19 +207,19 @@ export function EmailFieldWithValidation({
           disabled={disabled || isValidating}
           placeholder={placeholder}
           className={cn(
-            'w-full rounded-lg border bg-white dark:bg-gray-900',
+            'w-full rounded-lg border bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]',
             'pl-10 pr-10',
             'transition-all duration-200',
             'focus:outline-none focus:ring-2',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             sizeClasses[size],
             showError
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+              ? 'border-[var(--status-error)]/30 focus:border-[var(--status-error)] focus:ring-[var(--status-error)]/20'
               : showSuccess
-                ? 'border-green-300 focus:border-green-500 focus:ring-green-500/20'
+                ? 'border-[var(--status-success)]/30 focus:border-[var(--status-success)] focus:ring-[var(--status-success)]/20'
                 : showWarning
-                  ? 'border-amber-300 focus:border-amber-500 focus:ring-amber-500/20'
-                  : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20'
+                  ? 'border-[var(--status-warning)]/30 focus:border-[var(--status-warning)] focus:ring-[var(--status-warning)]/20'
+                  : 'border-[var(--border-default)] dark:border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
           )}
           whileFocus={{ scale: 1.005 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -232,12 +232,12 @@ export function EmailFieldWithValidation({
             <motion.button
               type="button"
               onClick={clearField}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
             >
-              <X className={cn('text-gray-400', iconSizes[size === 'lg' ? 'md' : 'sm'])} />
+              <X className={cn('text-[var(--text-tertiary)]', iconSizes[size === 'lg' ? 'md' : 'sm'])} />
             </motion.button>
           )}
 
@@ -251,7 +251,7 @@ export function EmailFieldWithValidation({
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: 180 }}
                 >
-                  <Loader2 className={cn('animate-spin text-blue-500', iconSizes[size])} />
+                  <Loader2 className={cn('animate-spin text-[var(--status-info)]', iconSizes[size])} />
                 </motion.div>
               ) : showError ? (
                 <motion.div
@@ -260,7 +260,7 @@ export function EmailFieldWithValidation({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <AlertCircle className={cn('text-red-500', iconSizes[size])} />
+                  <AlertCircle className={cn('text-[var(--status-error)]', iconSizes[size])} />
                 </motion.div>
               ) : showSuccess ? (
                 <motion.div
@@ -269,7 +269,7 @@ export function EmailFieldWithValidation({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <Check className={cn('text-green-500', iconSizes[size])} />
+                  <Check className={cn('text-[var(--status-success)]', iconSizes[size])} />
                 </motion.div>
               ) : showWarning ? (
                 <motion.div
@@ -278,7 +278,7 @@ export function EmailFieldWithValidation({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <AlertTriangle className={cn('text-amber-500', iconSizes[size])} />
+                  <AlertTriangle className={cn('text-[var(--status-warning)]', iconSizes[size])} />
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -299,7 +299,7 @@ export function EmailFieldWithValidation({
             <button
               type="button"
               onClick={handleSuggestionClick}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
+              className="text-sm text-[var(--status-info)] hover:text-[var(--status-info)] flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Intendevi <strong>{validation.suggestion}</strong>?
@@ -313,7 +313,7 @@ export function EmailFieldWithValidation({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-red-600 flex items-center gap-1.5"
+            className="mt-2 text-sm text-[var(--status-error)] flex items-center gap-1.5"
           >
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
@@ -326,9 +326,9 @@ export function EmailFieldWithValidation({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
+            className="mt-2 p-3 bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20 border border-[var(--status-warning)]/30 dark:border-[var(--status-warning)] rounded-lg"
           >
-            <p className="text-sm text-amber-800 dark:text-amber-200 flex items-start gap-2">
+            <p className="text-sm text-[var(--status-warning)] dark:text-[var(--status-warning)] flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>
                 <strong>Email temporanea rilevata.</strong>
@@ -345,9 +345,9 @@ export function EmailFieldWithValidation({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+            className="mt-2 p-3 bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] border border-[var(--status-info)]/30 dark:border-[var(--status-info)] rounded-lg"
           >
-            <p className="text-sm text-blue-800 dark:text-blue-200 flex items-start gap-2">
+            <p className="text-sm text-[var(--status-info)] dark:text-[var(--status-info)] flex items-start gap-2">
               <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>
                 Questo dominio accetta tutte le email (catch-all). 
@@ -363,7 +363,7 @@ export function EmailFieldWithValidation({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-2 text-sm text-green-600 flex items-center gap-1.5"
+            className="mt-2 text-sm text-[var(--status-success)] flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 flex-shrink-0" />
             Email valida e raggiungibile

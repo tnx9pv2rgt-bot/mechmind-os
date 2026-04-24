@@ -35,10 +35,10 @@ const INSIGHT_ICONS = {
 };
 
 const INSIGHT_COLORS = {
-  opportunity: 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30',
-  warning: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30',
-  trend: 'text-[var(--brand)] dark:text-[var(--brand)] bg-[var(--brand)]/10 dark:bg-blue-900/30',
-  action: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30',
+  opportunity: 'text-[var(--status-success)] dark:text-[var(--status-success)] bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30',
+  warning: 'text-[var(--status-warning)] dark:text-[var(--status-warning)] bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/40/30',
+  trend: 'text-[var(--brand)] dark:text-[var(--brand)] bg-[var(--brand)]/10 dark:bg-[var(--status-info)]/40/30',
+  action: 'text-[var(--brand)] dark:text-[var(--brand)] bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30',
 };
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -75,8 +75,8 @@ export function AiInsightsWidget({ className }: { className?: string }): React.R
     return (
       <div className={cn('rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] p-5', className)}>
         <div className="flex items-center gap-2 mb-4">
-          <div className="h-5 w-5 bg-gray-200 dark:bg-[var(--surface-hover)] rounded animate-pulse" />
-          <div className="h-4 w-32 bg-gray-200 dark:bg-[var(--surface-hover)] rounded animate-pulse" />
+          <div className="h-5 w-5 bg-[var(--border-default)] dark:bg-[var(--surface-hover)] rounded animate-pulse" />
+          <div className="h-4 w-32 bg-[var(--border-default)] dark:bg-[var(--surface-hover)] rounded animate-pulse" />
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -88,14 +88,14 @@ export function AiInsightsWidget({ className }: { className?: string }): React.R
   }
 
   return (
-    <div className={cn('rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] overflow-hidden', className)}>
+    <div className={cn('rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] overflow-hidden', className)}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-purple-500" />
+          <Sparkles className="h-4 w-4 text-[var(--brand)]" />
           <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">AI Insights</h3>
           {insights.length > 0 && (
-            <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 text-[var(--brand)] dark:text-[var(--brand)] px-1.5 py-0.5 rounded-full font-medium">
               {insights.length}
             </span>
           )}
@@ -132,7 +132,7 @@ export function AiInsightsWidget({ className }: { className?: string }): React.R
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="px-5 py-3.5 hover:bg-white/50 dark:hover:bg-[var(--surface-hover)]/50 transition-colors"
+                className="px-5 py-3.5 hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-lg shrink-0 mt-0.5', colors)}>

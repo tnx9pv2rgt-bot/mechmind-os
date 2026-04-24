@@ -52,15 +52,15 @@ function MagicLinkIcon(): React.ReactElement {
 
 function ButtonSpinner(): React.ReactElement {
   return (
-    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--border-default)]/30 border-t-white" />
   );
 }
 
 const btnSecondary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
   'border border-[var(--border-strong)] bg-transparent',
-  'text-base font-normal text-white',
-  'transition-all hover:bg-white/5',
+  'text-base font-normal text-[var(--text-on-brand)]',
+  'transition-all hover:bg-[var(--surface-secondary)]/5',
   'disabled:cursor-not-allowed disabled:opacity-50',
 ].join(' ');
 
@@ -82,7 +82,7 @@ export function SocialButtons({
         type="button"
         disabled={anyLoading}
         onClick={onGoogleClick}
-        className={`${btnSecondary} ${isGoogleLoading ? '!border-white/30 !bg-white/5' : ''}`}
+        className={`${btnSecondary} ${isGoogleLoading ? '!border-[var(--border-default)]/30 !bg-[var(--surface-secondary)]/5' : ''}`}
       >
         <div className="flex items-center justify-center gap-2">
           {isGoogleLoading ? (
@@ -108,7 +108,7 @@ export function SocialButtons({
             <span className="absolute"><AppleIcon /></span>
           </span>
           Continua con Apple
-          <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">Presto</span>
+          <span className="ml-1 rounded-full bg-[var(--surface-secondary)]/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">Presto</span>
         </div>
       </button>
 
@@ -117,7 +117,7 @@ export function SocialButtons({
         type="button"
         disabled={anyLoading}
         onClick={onMagicLinkClick}
-        className={`${btnSecondary} ${isMagicLinkLoading ? '!border-white/30 !bg-white/5' : ''} ${emailMissing ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+        className={`${btnSecondary} ${isMagicLinkLoading ? '!border-[var(--border-default)]/30 !bg-[var(--surface-secondary)]/5' : ''} ${emailMissing ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
       >
         <div className="flex items-center justify-center gap-2">
           {isMagicLinkLoading ? (

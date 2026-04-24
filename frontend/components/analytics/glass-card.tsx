@@ -21,9 +21,9 @@ const SIZE_CLASSES: Record<GlassCardSize, string> = {
 };
 
 const TITLE_CLASSES: Record<GlassCardSize, string> = {
-  compact: 'text-sm font-semibold text-white sm:text-base',
-  default: 'text-base font-semibold text-white sm:text-lg',
-  large: 'text-lg font-semibold text-white sm:text-xl',
+  compact: 'text-sm font-semibold text-[var(--text-on-brand)] sm:text-base',
+  default: 'text-base font-semibold text-[var(--text-on-brand)] sm:text-lg',
+  large: 'text-lg font-semibold text-[var(--text-on-brand)] sm:text-xl',
 };
 
 export function GlassCard({
@@ -37,7 +37,7 @@ export function GlassCard({
 }: GlassCardProps): React.ReactElement {
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-colors duration-300 hover:border-white/20 ${SIZE_CLASSES[size]} ${className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-[var(--border-default)]/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-colors duration-300 hover:border-[var(--border-default)]/20 ${SIZE_CLASSES[size]} ${className}`}
     >
       {/* Ambient radial glow */}
       <div

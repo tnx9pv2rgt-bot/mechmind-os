@@ -85,16 +85,16 @@ export function BigBoardToggle(): React.ReactElement {
 
   const boardKpis: BigBoardKpi[] = kpis
     ? [
-        { label: 'Fatturato Oggi', value: formatEuro(kpis.revenue), icon: Euro, color: '#34d399' },
-        { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList, color: '#60a5fa' },
+        { label: 'Fatturato Oggi', value: formatEuro(kpis.revenue), icon: Euro, color: 'var(--status-success)' },
+        { label: 'OdL Completati', value: String(kpis.completedOrders), icon: ClipboardList, color: 'var(--status-info)' },
         { label: 'Nuovi Clienti', value: String(kpis.newCustomers), icon: Users, color: '#a78bfa' },
-        { label: 'Ticket Medio', value: formatEuro(kpis.avgTicket), icon: TrendingUp, color: '#fbbf24' },
+        { label: 'Ticket Medio', value: formatEuro(kpis.avgTicket), icon: TrendingUp, color: 'var(--status-warning)' },
         { label: 'Tasso Conversione', value: `${kpis.conversionRate.toFixed(1)}%`, icon: Wrench, color: '#22d3ee' },
         {
           label: 'Tempo Medio',
           value: `${(2.4 + (dayOfMonth % 5) * 0.3).toFixed(1)}h`,
           icon: Clock,
-          color: '#f87171',
+          color: 'var(--status-error)',
         },
       ]
     : [];
@@ -165,13 +165,13 @@ export function BigBoardToggle(): React.ReactElement {
       {/* Floating toggle button */}
       <motion.button
         onClick={enterFullscreen}
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-[var(--surface-elevated)]/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors hover:bg-[var(--surface-active)] sm:h-14 sm:w-14"
+        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border-default)]/10 bg-[var(--surface-elevated)]/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors hover:bg-[var(--surface-active)] sm:h-14 sm:w-14"
         whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
         whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
         aria-label="Modalit\u00e0 schermo intero"
         title="Big Board - Modalit\u00e0 TV"
       >
-        <Maximize2 className="h-5 w-5 text-white" />
+        <Maximize2 className="h-5 w-5 text-[var(--text-on-brand)]" />
       </motion.button>
 
       {/* Fullscreen overlay */}
@@ -186,7 +186,7 @@ export function BigBoardToggle(): React.ReactElement {
             className="fixed inset-0 z-[9999] flex flex-col bg-[var(--surface-tertiary)] overflow-auto"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--border-default)]/5">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   {VIEW_TITLES.map((title, i) => (
@@ -195,8 +195,8 @@ export function BigBoardToggle(): React.ReactElement {
                       onClick={() => setCurrentView(i)}
                       className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors min-h-[36px] ${
                         currentView === i
-                          ? 'bg-white text-[var(--surface-tertiary)]'
-                          : 'text-[var(--text-tertiary)] hover:text-white hover:bg-white/5'
+                          ? 'bg-[var(--surface-secondary)] text-[var(--surface-tertiary)]'
+                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
                       }`}
                     >
                       {title}
@@ -210,7 +210,7 @@ export function BigBoardToggle(): React.ReactElement {
                 </span>
                 <button
                   onClick={exitFullscreen}
-                  className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-white/10 min-h-[44px] min-w-[44px]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--surface-secondary)]/10 min-h-[44px] min-w-[44px]"
                   aria-label="Esci dalla modalit\u00e0 schermo intero"
                 >
                   <X className="h-5 w-5 text-[var(--text-tertiary)]" />
@@ -229,7 +229,7 @@ export function BigBoardToggle(): React.ReactElement {
                   transition={{ duration: 0.5 }}
                   className="w-full max-w-7xl"
                 >
-                  <h2 className="text-2xl font-bold text-white mb-8 text-center sm:text-3xl">
+                  <h2 className="text-2xl font-bold text-[var(--text-on-brand)] mb-8 text-center sm:text-3xl">
                     {VIEW_TITLES[currentView]}
                   </h2>
 
@@ -238,7 +238,7 @@ export function BigBoardToggle(): React.ReactElement {
                       {Array.from({ length: 6 }).map((_, i) => (
                         <div
                           key={i}
-                          className="h-40 rounded-2xl border border-white/5 bg-[var(--surface-elevated)]/50 animate-pulse"
+                          className="h-40 rounded-2xl border border-[var(--border-default)]/5 bg-[var(--surface-elevated)]/50 animate-pulse"
                         />
                       ))}
                     </div>
@@ -249,7 +249,7 @@ export function BigBoardToggle(): React.ReactElement {
                         return (
                           <motion.div
                             key={kpi.label}
-                            className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+                            className="flex flex-col items-center justify-center rounded-2xl border border-[var(--border-default)]/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                             whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
                           >
                             <div
@@ -258,7 +258,7 @@ export function BigBoardToggle(): React.ReactElement {
                             >
                               <Icon className="h-7 w-7" style={{ color: kpi.color }} />
                             </div>
-                            <span className="text-3xl font-bold text-white sm:text-4xl lg:text-5xl tabular-nums">
+                            <span className="text-3xl font-bold text-[var(--text-on-brand)] sm:text-4xl lg:text-5xl tabular-nums">
                               {kpi.value}
                             </span>
                             <span className="mt-2 text-sm text-[var(--text-tertiary)] font-medium">

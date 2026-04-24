@@ -12,7 +12,7 @@ interface WelcomeScreenProps {
 
 const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center gap-2 rounded-full',
-  'bg-white text-base font-medium text-[var(--text-primary)]',
+  'bg-[var(--surface-secondary)] text-base font-medium text-[var(--text-primary)]',
   'transition-colors hover:bg-[var(--surface-active)]',
 ].join(' ');
 
@@ -35,8 +35,8 @@ export function WelcomeScreen({
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 15 }}
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
-                  <LayoutDashboard className="h-8 w-8 text-white" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/10">
+                  <LayoutDashboard className="h-8 w-8 text-[var(--text-on-brand)]" />
                 </div>
               </motion.div>
 
@@ -47,7 +47,7 @@ export function WelcomeScreen({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <h1 className="text-2xl font-normal text-white">
+                <h1 className="text-2xl font-normal text-[var(--text-on-brand)]">
                   Tutto pronto{userName ? `, ${displayName}` : ''}!
                 </h1>
                 <p className="mt-2 text-[14px] text-[var(--text-secondary)]">

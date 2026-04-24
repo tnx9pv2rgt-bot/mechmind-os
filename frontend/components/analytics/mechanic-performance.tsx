@@ -116,39 +116,39 @@ function CustomTooltip({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <p className="mb-2 font-semibold text-gray-900 dark:text-white">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
+        <p className="mb-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {data.name}
         </p>
         <div className="space-y-1 text-sm">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Ordini</span>
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Ordini</span>
+            <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {data.ordersCompleted}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Fatturato</span>
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Fatturato</span>
+            <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(data.revenue)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Tempo medio</span>
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Tempo medio</span>
+            <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {data.avgTime} min
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Rating</span>
-            <span className="flex items-center gap-1 font-medium text-yellow-600">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Rating</span>
+            <span className="flex items-center gap-1 font-medium text-[var(--status-warning)]">
               <Star className="h-3.5 w-3.5 fill-current" />
               {data.rating}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Efficienza</span>
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Efficienza</span>
+            <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {data.efficiency}%
             </span>
           </div>
@@ -197,25 +197,25 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
     switch (index) {
       case 0:
         return (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-yellow-700">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--status-warning-subtle)] text-[var(--status-warning)]">
             <Award className="h-3.5 w-3.5" />
           </div>
         );
       case 1:
         return (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)]">
             2
           </div>
         );
       case 2:
         return (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-orange-700">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--status-warning)]/10 text-[var(--status-warning)]">
             3
           </div>
         );
       default:
         return (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-50 text-gray-400">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-secondary)] text-[var(--text-tertiary)]">
             {index + 1}
           </div>
         );
@@ -226,7 +226,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
     if (efficiency >= 90) return "#22c55e";
     if (efficiency >= 80) return "#3b82f6";
     if (efficiency >= 70) return "#f97316";
-    return "#ef4444";
+    return "var(--status-error)";
   };
 
   return (
@@ -234,23 +234,23 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Performance Meccanici
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Analisi efficienza e produttività
           </p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+          <div className="flex rounded-lg bg-[var(--surface-secondary)] p-1 dark:bg-[var(--surface-primary)]">
             <button
               onClick={() => setViewMode("chart")}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 viewMode === "chart"
-                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                  ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm dark:bg-[var(--border-default)] dark:text-[var(--text-on-brand)]"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:text-[var(--text-secondary)]"
               )}
             >
               Grafico
@@ -260,8 +260,8 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 viewMode === "table"
-                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                  ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm dark:bg-[var(--border-default)] dark:text-[var(--text-on-brand)]"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:text-[var(--text-secondary)]"
               )}
             >
               Tabella
@@ -271,24 +271,24 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
       </div>
 
       {/* Top Performer Banner */}
-      <div className="mb-6 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 p-4 dark:from-yellow-900/20 dark:to-orange-900/20">
+      <div className="mb-6 rounded-lg bg-gradient-to-r from-[var(--status-warning)]/5 to-[var(--status-warning)]/5 p-4 dark:from-[var(--status-warning)]/40/20 dark:to-[var(--status-warning)]/40/20">
         <div className="flex items-center gap-4">
-          <div className="rounded-full bg-yellow-100 p-3 dark:bg-yellow-800">
-            <Award className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+          <div className="rounded-full bg-[var(--status-warning)]/20 p-3 dark:bg-[var(--status-warning)]">
+            <Award className="h-6 w-6 text-[var(--status-warning)] dark:text-[var(--status-warning)]" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            <p className="text-sm font-medium text-[var(--status-warning)] dark:text-[var(--status-warning)]">
               Top Performer del Periodo
             </p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
+            <p className="text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {topPerformer.name}
             </p>
             <div className="mt-1 flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
+              <span className="flex items-center gap-1 text-[var(--status-success)] dark:text-[var(--status-success)]">
                 <TrendingUp className="h-3.5 w-3.5" />
                 {topPerformer.efficiency}% efficienza
               </span>
-              <span className="flex items-center gap-1 text-yellow-700 dark:text-yellow-400">
+              <span className="flex items-center gap-1 text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                 <Star className="h-3.5 w-3.5 fill-current" />
                 {topPerformer.rating} rating
               </span>
@@ -299,27 +299,27 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
 
       {/* Summary Stats */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-          <p className="text-xs text-blue-600 dark:text-blue-400">Media Efficienza</p>
-          <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+        <div className="rounded-lg bg-[var(--status-info-subtle)] p-3 dark:bg-[var(--status-info-subtle)]">
+          <p className="text-xs text-[var(--status-info)] dark:text-[var(--status-info)]">Media Efficienza</p>
+          <p className="text-lg font-semibold text-[var(--status-info)] dark:text-[var(--status-info)]">
             {avgEfficiency.toFixed(1)}%
           </p>
         </div>
-        <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-          <p className="text-xs text-green-600 dark:text-green-400">Ordini Totali</p>
-          <p className="text-lg font-semibold text-green-700 dark:text-green-300">
+        <div className="rounded-lg bg-[var(--status-success-subtle)] p-3 dark:bg-[var(--status-success-subtle)]">
+          <p className="text-xs text-[var(--status-success)] dark:text-[var(--status-success)]">Ordini Totali</p>
+          <p className="text-lg font-semibold text-[var(--status-success)] dark:text-[var(--status-success)]">
             {mechanics.reduce((sum, m) => sum + m.ordersCompleted, 0)}
           </p>
         </div>
-        <div className="rounded-lg bg-purple-50 p-3 dark:bg-purple-900/20">
-          <p className="text-xs text-purple-600 dark:text-purple-400">Rating Medio</p>
-          <p className="text-lg font-semibold text-purple-700 dark:text-purple-300">
+        <div className="rounded-lg bg-[var(--brand)]/5 p-3 dark:bg-[var(--brand)]/40/20">
+          <p className="text-xs text-[var(--brand)] dark:text-[var(--brand)]">Rating Medio</p>
+          <p className="text-lg font-semibold text-[var(--brand)] dark:text-[var(--brand)]">
             {(mechanics.reduce((sum, m) => sum + m.rating, 0) / mechanics.length).toFixed(1)}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Tempo Medio</p>
-          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]">
+          <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Tempo Medio</p>
+          <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {Math.round(mechanics.reduce((sum, m) => sum + m.avgTime, 0) / mechanics.length)}m
           </p>
         </div>
@@ -369,20 +369,20 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
           {/* Chart Legend */}
           <div className="mb-4 flex flex-wrap items-center justify-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-              <span className="text-gray-600 dark:text-gray-400">Eccellente (≥90%)</span>
+              <div className="h-2.5 w-2.5 rounded-full bg-[var(--status-success-subtle)]0" />
+              <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Eccellente (≥90%)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-              <span className="text-gray-600 dark:text-gray-400">Buono (80-89%)</span>
+              <div className="h-2.5 w-2.5 rounded-full bg-[var(--status-info-subtle)]0" />
+              <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Buono (80-89%)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-              <span className="text-gray-600 dark:text-gray-400">Sufficiente (70-79%)</span>
+              <div className="h-2.5 w-2.5 rounded-full bg-[var(--status-warning)]/50" />
+              <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Sufficiente (70-79%)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
-              <span className="text-gray-600 dark:text-gray-400">Da Migliorare (&lt;70%)</span>
+              <div className="h-2.5 w-2.5 rounded-full bg-[var(--status-error-subtle)]0" />
+              <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Da Migliorare (&lt;70%)</span>
             </div>
           </div>
         </>
@@ -391,12 +391,12 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="pb-3 pl-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+              <tr className="border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
+                <th className="pb-3 pl-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   Rank
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                  className="cursor-pointer pb-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center gap-1">
@@ -410,7 +410,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                  className="cursor-pointer pb-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("ordersCompleted")}
                 >
                   <div className="flex items-center gap-1">
@@ -424,7 +424,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                  className="cursor-pointer pb-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("revenue")}
                 >
                   <div className="flex items-center gap-1">
@@ -438,7 +438,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                  className="cursor-pointer pb-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("avgTime")}
                 >
                   <div className="flex items-center gap-1">
@@ -453,7 +453,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                  className="cursor-pointer pb-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("rating")}
                 >
                   <div className="flex items-center gap-1">
@@ -468,7 +468,7 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer pb-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"
+                  className="cursor-pointer pb-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                   onClick={() => handleSort("efficiency")}
                 >
                   <div className="flex items-center gap-1">
@@ -487,23 +487,23 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
               {sortedMechanics.map((mechanic, index) => (
                 <tr
                   key={mechanic.id}
-                  className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
+                  className="border-b border-[var(--border-default)] transition-colors hover:bg-[var(--surface-secondary)] dark:border-[var(--border-strong)] dark:hover:bg-[var(--surface-hover)]/50"
                 >
                   <td className="py-3 pl-2">{getRankBadge(index)}</td>
-                  <td className="py-3 font-medium text-gray-900 dark:text-white">
+                  <td className="py-3 font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {mechanic.name}
                   </td>
-                  <td className="py-3 text-gray-600 dark:text-gray-400">
+                  <td className="py-3 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                     {mechanic.ordersCompleted}
                   </td>
-                  <td className="py-3 font-medium text-gray-900 dark:text-white">
+                  <td className="py-3 font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {formatCurrency(mechanic.revenue)}
                   </td>
-                  <td className="py-3 text-gray-600 dark:text-gray-400">
+                  <td className="py-3 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                     {mechanic.avgTime}m
                   </td>
                   <td className="py-3">
-                    <span className="flex items-center gap-1 font-medium text-yellow-600">
+                    <span className="flex items-center gap-1 font-medium text-[var(--status-warning)]">
                       <Star className="h-3.5 w-3.5 fill-current" />
                       {mechanic.rating}
                     </span>
@@ -513,12 +513,12 @@ export function MechanicPerformance({ dateRange }: MechanicPerformanceProps) {
                       className={cn(
                         "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
                         mechanic.efficiency >= 90
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          ? "bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success)]/40/30 dark:text-[var(--status-success)]"
                           : mechanic.efficiency >= 80
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          ? "bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40/30 dark:text-[var(--status-info)]"
                           : mechanic.efficiency >= 70
-                          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          ? "bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]"
+                          : "bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error)]/40/30 dark:text-[var(--status-error)]"
                       )}
                     >
                       {mechanic.efficiency}%

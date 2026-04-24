@@ -28,32 +28,32 @@ interface DerivedAlert {
 function severityConfig(severity: AlertSeverity) {
   const map = {
     critical: {
-      border: 'border-red-400/50 dark:border-red-500/30',
-      bg: 'bg-red-50 dark:bg-red-900/10',
-      badge: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+      border: 'border-[var(--status-error)]/40/50 dark:border-[var(--status-error)]/30',
+      bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error)]/40/10',
+      badge: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]',
       label: 'Scaduto',
-      dot: 'bg-red-500',
+      dot: 'bg-[var(--status-error)]',
     },
     high: {
-      border: 'border-orange-400/50 dark:border-orange-500/30',
-      bg: 'bg-orange-50 dark:bg-orange-900/10',
-      badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+      border: 'border-[var(--status-warning)]/40/50 dark:border-[var(--status-warning)]/30',
+      bg: 'bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/10',
+      badge: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning-subtle)] dark:text-[var(--status-warning)]',
       label: 'In scadenza',
-      dot: 'bg-orange-500',
+      dot: 'bg-[var(--status-warning)]',
     },
     medium: {
-      border: 'border-yellow-400/50 dark:border-yellow-500/30',
-      bg: 'bg-yellow-50 dark:bg-yellow-900/10',
-      badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+      border: 'border-[var(--status-warning)]/40/50 dark:border-[var(--status-warning)]/30',
+      bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/40/10',
+      badge: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:bg-[var(--status-warning-subtle)] dark:text-[var(--status-warning)]',
       label: 'Attenzione',
-      dot: 'bg-yellow-500',
+      dot: 'bg-[var(--status-warning)]',
     },
     ok: {
-      border: 'border-green-400/30 dark:border-green-500/20',
-      bg: 'bg-green-50/50 dark:bg-green-900/5',
-      badge: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+      border: 'border-[var(--status-success)]/40/30 dark:border-[var(--status-success)]/20',
+      bg: 'bg-[var(--status-success-subtle)]/50 dark:bg-[var(--status-success)]/40/5',
+      badge: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]',
       label: 'Ok',
-      dot: 'bg-green-500',
+      dot: 'bg-[var(--status-success)]',
     },
   };
   return map[severity];
@@ -69,17 +69,17 @@ function AlertCard({ alert }: { alert: DerivedAlert }) {
         <div className={cn('mt-0.5 h-2.5 w-2.5 rounded-full flex-shrink-0', config.dot)} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Icon className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
-            <span className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">{alert.title}</span>
+            <Icon className="h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+            <span className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{alert.title}</span>
             <span className={cn('text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full', config.badge)}>
               {config.label}
             </span>
           </div>
-          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">{alert.subtitle}</p>
+          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">{alert.subtitle}</p>
 
           {alert.progressPercent != null && (
             <div className="mt-2">
-              <div className="flex justify-between text-[11px] text-apple-gray dark:text-[var(--text-secondary)] mb-1">
+              <div className="flex justify-between text-[11px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1">
                 <span>Km percorsi verso prossimo tagliando</span>
                 <span>{Math.min(alert.progressPercent, 100).toFixed(0)}%</span>
               </div>
@@ -188,9 +188,9 @@ export function MaintenanceAlerts({ vehicle }: MaintenanceAlertsProps) {
   if (alerts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <CheckCircle2 className="h-12 w-12 text-apple-green/40 mb-4" />
-        <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">Tutto in ordine</p>
-        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+        <CheckCircle2 className="h-12 w-12 text-[var(--status-success)]/40 mb-4" />
+        <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Tutto in ordine</p>
+        <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
           Inserisci le date di scadenza nel veicolo per monitorarle qui.
         </p>
       </div>
@@ -204,28 +204,28 @@ export function MaintenanceAlerts({ vehicle }: MaintenanceAlertsProps) {
         <AppleCard hover={false}>
           <AppleCardContent>
             <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-apple-gray" />
-              <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Alert attivi</span>
+              <Bell className="h-4 w-4 text-[var(--text-tertiary)]" />
+              <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Alert attivi</span>
             </div>
-            <p className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)] mt-1">{stats.total}</p>
+            <p className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1">{stats.total}</p>
           </AppleCardContent>
         </AppleCard>
         <AppleCard hover={false}>
           <AppleCardContent>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Scaduti</span>
+              <AlertTriangle className="h-4 w-4 text-[var(--status-error)]" />
+              <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Scaduti</span>
             </div>
-            <p className="text-title-2 font-bold text-red-500 mt-1">{stats.critical}</p>
+            <p className="text-title-2 font-bold text-[var(--status-error)] mt-1">{stats.critical}</p>
           </AppleCardContent>
         </AppleCard>
         <AppleCard hover={false}>
           <AppleCardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-apple-green" />
-              <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">In ordine</span>
+              <CheckCircle2 className="h-4 w-4 text-[var(--status-success)]" />
+              <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">In ordine</span>
             </div>
-            <p className="text-title-2 font-bold text-apple-green mt-1">{stats.ok}</p>
+            <p className="text-title-2 font-bold text-[var(--status-success)] mt-1">{stats.ok}</p>
           </AppleCardContent>
         </AppleCard>
       </div>

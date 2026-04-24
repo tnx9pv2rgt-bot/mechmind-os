@@ -147,15 +147,15 @@ function PasskeyAuthStep({
     <div className="flex flex-col items-stretch gap-5">
       {/* User avatar + email */}
       <div className="flex flex-col items-center gap-3">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
-          <span className="text-2xl font-medium text-white">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
+          <span className="text-2xl font-medium text-[var(--text-on-brand)]">
             {email.charAt(0).toUpperCase()}
           </span>
         </div>
         <p className="text-sm text-[var(--text-secondary)]">{email}</p>
       </div>
 
-      <h2 className="text-center text-3xl font-normal text-white">
+      <h2 className="text-center text-3xl font-normal text-[var(--text-on-brand)]">
         Conferma la tua identità
       </h2>
       <p className="mb-2 px-4 text-center text-base text-[var(--text-secondary)]">
@@ -166,7 +166,7 @@ function PasskeyAuthStep({
       {isLoading && (
         <div className="flex flex-col items-center gap-3 py-4">
           <div className="relative flex h-20 w-20 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/10" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--surface-secondary)]/10" />
             <span className="relative text-4xl">🔐</span>
           </div>
           <p className="text-sm text-[var(--text-tertiary)]">In attesa della biometria...</p>
@@ -700,7 +700,7 @@ export default function AuthPage(): React.ReactElement {
           >
             <div className="flex flex-col items-stretch gap-5">
               {/* Title */}
-              <h2 className="text-center text-3xl font-normal text-white">
+              <h2 className="text-center text-3xl font-normal text-[var(--text-on-brand)]">
                 Accedi o registrati
               </h2>
 
@@ -800,7 +800,7 @@ export default function AuthPage(): React.ReactElement {
                   Non hai un account?{' '}
                   <Link
                     href="/auth/register"
-                    className="min-h-[44px] inline-flex items-center font-medium text-white underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
+                    className="min-h-[44px] inline-flex items-center font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
                   >
                     Registrati
                   </Link>
@@ -809,7 +809,7 @@ export default function AuthPage(): React.ReactElement {
                   type="button"
                   onClick={handleDemo}
                   disabled={isDemoLoading}
-                  className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px]"
+                  className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] min-h-[44px]"
                 >
                   {isDemoLoading ? 'Caricamento demo...' : 'Prova la demo gratuita'}
                 </button>
@@ -849,11 +849,11 @@ export default function AuthPage(): React.ReactElement {
             exit="exit"
           >
             <div className="flex flex-col items-stretch gap-5">
-              <h2 className="text-center text-3xl font-normal text-white">
+              <h2 className="text-center text-3xl font-normal text-[var(--text-on-brand)]">
                 Inserisci la password
               </h2>
               <p className="mb-4 px-4 text-center text-base text-[var(--text-secondary)]">
-                Per <span className="font-medium text-white">{email}</span>
+                Per <span className="font-medium text-[var(--text-on-brand)]">{email}</span>
               </p>
 
               <form
@@ -887,7 +887,7 @@ export default function AuthPage(): React.ReactElement {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[13px] text-[var(--text-tertiary)] hover:text-white transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[13px] text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                   >
@@ -937,7 +937,7 @@ export default function AuthPage(): React.ReactElement {
                 <div className="text-center">
                   <Link
                     href="/auth/forgot-password"
-                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px] inline-flex items-center"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] min-h-[44px] inline-flex items-center"
                   >
                     Password dimenticata?
                   </Link>
@@ -996,14 +996,14 @@ export default function AuthPage(): React.ReactElement {
             exit="exit"
           >
             <div className="flex flex-col items-stretch gap-5">
-              <h2 className="text-center text-3xl font-normal text-white">
+              <h2 className="text-center text-3xl font-normal text-[var(--text-on-brand)]">
                 Verifica in due passaggi
               </h2>
               {loginRiskLevel && loginRiskLevel !== 'low' && (
                 <div className={`mx-auto flex max-w-sm items-center gap-2 rounded-lg px-4 py-2.5 text-sm ${
                   loginRiskLevel === 'critical' || loginRiskLevel === 'high'
-                    ? 'bg-red-500/10 text-red-400'
-                    : 'bg-yellow-500/10 text-yellow-400'
+                    ? 'bg-[var(--status-error-subtle)]0/10 text-[var(--status-error)]'
+                    : 'bg-[var(--status-warning)]/100/10 text-[var(--status-warning)]'
                 }`}>
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -1140,7 +1140,7 @@ export default function AuthPage(): React.ReactElement {
                       setMfaCode('');
                       setBackupCode('');
                     }}
-                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px]"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] min-h-[44px]"
                   >
                     {useBackupCode ? 'Usa codice authenticator' : 'Usa codice di recupero'}
                   </button>
@@ -1154,7 +1154,7 @@ export default function AuthPage(): React.ReactElement {
                       setSmsOtpCode('');
                       setError('');
                     }}
-                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px]"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] min-h-[44px]"
                   >
                     Usa codice authenticator
                   </button>
@@ -1163,7 +1163,7 @@ export default function AuthPage(): React.ReactElement {
                     type="button"
                     onClick={handleSendSmsOtp}
                     disabled={isSendingSms}
-                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-white min-h-[44px] flex items-center gap-1.5"
+                    className="text-[14px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] min-h-[44px] flex items-center gap-1.5"
                   >
                     {isSendingSms ? (
                       <span className="inline-block h-3 w-3 animate-spin rounded-full border border-[var(--text-tertiary)] border-t-transparent" />

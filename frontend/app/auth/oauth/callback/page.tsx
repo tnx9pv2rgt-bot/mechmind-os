@@ -70,8 +70,8 @@ function OAuthCallbackContent(): React.ReactElement {
     <div className="text-center space-y-5">
       {status === 'loading' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Completamento accesso...
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -86,10 +86,10 @@ function OAuthCallbackContent(): React.ReactElement {
           animate={{ opacity: 1, scale: 1 }}
           className="space-y-5"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
             <span className="text-2xl text-[var(--text-secondary)]">✕</span>
           </div>
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Accesso non riuscito
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto" role="alert">
@@ -110,7 +110,7 @@ export default function OAuthCallbackPage(): React.ReactElement {
       <Suspense
         fallback={
           <div className="text-center space-y-4">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
             <p className="text-[15px] text-[var(--text-secondary)]">Caricamento...</p>
           </div>
         }

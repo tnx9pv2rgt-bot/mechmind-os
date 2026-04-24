@@ -6,10 +6,10 @@ import useSWR from 'swr';
 import { GlassCard } from './glass-card';
 
 const COLORS = {
-  blue: '#60a5fa',
-  green: '#34d399',
-  amber: '#fbbf24',
-  red: '#f87171',
+  blue: 'var(--status-info)',
+  green: 'var(--status-success)',
+  amber: 'var(--status-warning)',
+  red: 'var(--status-error)',
   purple: '#a78bfa',
   cyan: '#22d3ee',
 } as const;

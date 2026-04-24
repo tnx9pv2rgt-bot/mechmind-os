@@ -288,8 +288,8 @@ export default function NewEstimatePage() {
           />
           <div className='flex items-center justify-between mt-2'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuovo Preventivo</h1>
-              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuovo Preventivo</h1>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                 Crea un nuovo preventivo per il cliente
               </p>
             </div>
@@ -315,13 +315,13 @@ export default function NewEstimatePage() {
           {/* Customer */}
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Cliente
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               <div className='relative'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca per nome, targa o telefono...'
                   aria-label='Cerca cliente'
@@ -331,18 +331,18 @@ export default function NewEstimatePage() {
                   className='pl-10'
                 />
                 {showCustomerDropdown && customerResults.length > 0 && (
-                  <div className='absolute z-10 top-full mt-1 w-full bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple border border-apple-border/20 dark:border-[var(--border-default)] max-h-60 overflow-y-auto'>
+                  <div className='absolute z-10 top-full mt-1 w-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple border border-[var(--border-default)]/20 dark:border-[var(--border-default)] max-h-60 overflow-y-auto'>
                     {customerResults.map(c => (
                       <button
                         key={c.id}
-                        className='w-full text-left px-4 py-3 hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)] transition-colors text-body'
+                        className='w-full text-left px-4 py-3 hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-active)] transition-colors text-body'
                         onClick={() => selectCustomer(c)}
                       >
-                        <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {c.firstName} {c.lastName}
                         </span>
                         {c.phone && (
-                          <span className='ml-2 text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <span className='ml-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {c.phone}
                           </span>
                         )}
@@ -352,12 +352,12 @@ export default function NewEstimatePage() {
                 )}
               </div>
               {selectedCustomer && (
-                <p className='mt-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                <p className='mt-2 text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Selezionato: {selectedCustomer.firstName} {selectedCustomer.lastName}
                 </p>
               )}
               {formErrors.customerId && (
-                <p className='mt-1 text-footnote text-apple-red'>{formErrors.customerId.message}</p>
+                <p className='mt-1 text-footnote text-[var(--status-error)]'>{formErrors.customerId.message}</p>
               )}
             </AppleCardContent>
           </AppleCard>
@@ -365,7 +365,7 @@ export default function NewEstimatePage() {
           {/* Vehicle */}
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Veicolo
               </h2>
             </AppleCardHeader>
@@ -373,7 +373,7 @@ export default function NewEstimatePage() {
               <select
                 value={vehicleId}
                 onChange={e => setValue('vehicleId', e.target.value, { shouldValidate: true })}
-                className='w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                className='w-full h-10 px-3 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                 disabled={vehicles.length === 0}
               >
                 <option value=''>
@@ -387,7 +387,7 @@ export default function NewEstimatePage() {
               </select>
 
               <div className='mt-4'>
-                <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                   Validità
                 </label>
                 <Input
@@ -403,8 +403,8 @@ export default function NewEstimatePage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader className='flex items-center justify-between'>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                <FileText className='h-5 w-5 text-apple-gray' />
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <FileText className='h-5 w-5 text-[var(--text-tertiary)]' />
                 Righe Preventivo
               </h2>
               <AppleButton
@@ -418,28 +418,28 @@ export default function NewEstimatePage() {
             </AppleCardHeader>
             <AppleCardContent>
               {/* Table Header */}
-              <div className='hidden md:grid grid-cols-12 gap-2 pb-2 border-b border-apple-border/20 dark:border-[var(--border-default)] mb-3'>
-                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Tipo</div>
-                <div className='col-span-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <div className='hidden md:grid grid-cols-12 gap-2 pb-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)] mb-3'>
+                <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Tipo</div>
+                <div className='col-span-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Descrizione
                 </div>
-                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   Qta
                 </div>
-                <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   Prezzo
                 </div>
-                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   IVA %
                 </div>
-                <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   Totale
                 </div>
                 <div className='col-span-1' />
               </div>
 
               {lines.length === 0 ? (
-                <p className='text-center py-6 text-apple-gray dark:text-[var(--text-secondary)] text-body'>
+                <p className='text-center py-6 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body'>
                   Nessuna riga. Aggiungi almeno una riga.
                 </p>
               ) : (
@@ -447,13 +447,13 @@ export default function NewEstimatePage() {
                   {lines.map((line) => (
                     <div
                       key={line.localId}
-                      className='grid grid-cols-12 gap-2 items-center p-2 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                      className='grid grid-cols-12 gap-2 items-center p-2 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                     >
                       <div className='col-span-12 md:col-span-1'>
                         <select
                           value={line.type}
                           onChange={e => updateLine(line.localId, 'type', e.target.value)}
-                          className='w-full h-9 px-2 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-footnote text-apple-dark dark:text-[var(--text-primary)] focus:outline-none'
+                          className='w-full h-9 px-2 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none'
                         >
                           <option value='LABOR'>Lavoro</option>
                           <option value='PART'>Ricambio</option>
@@ -504,7 +504,7 @@ export default function NewEstimatePage() {
                         />
                       </div>
                       <div className='col-span-6 md:col-span-2 flex items-center justify-end'>
-                        <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {formatCurrency(line.quantity * line.unitPrice)}
                         </span>
                       </div>
@@ -514,7 +514,7 @@ export default function NewEstimatePage() {
                           size='sm'
                           onClick={() => removeLine(line.localId)}
                           aria-label='Rimuovi riga'
-                          className='text-apple-red hover:opacity-80'
+                          className='text-[var(--status-error)] hover:opacity-80'
                         >
                           <Trash2 className='h-4 w-4' />
                         </AppleButton>
@@ -531,7 +531,7 @@ export default function NewEstimatePage() {
         <motion.div className='grid grid-cols-1 md:grid-cols-2 gap-6' variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Sconto
               </h2>
             </AppleCardHeader>
@@ -546,21 +546,21 @@ export default function NewEstimatePage() {
                 />
                 <select
                   {...register('discountType')}
-                  className='h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none'
+                  className='h-10 px-3 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none'
                 >
                   <option value='EUR'>EUR</option>
                   <option value='PERCENT'>%</option>
                 </select>
               </div>
               {formErrors.discount && (
-                <p className='text-footnote text-apple-red mt-1'>{formErrors.discount.message}</p>
+                <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.discount.message}</p>
               )}
             </AppleCardContent>
           </AppleCard>
 
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Note
               </h2>
             </AppleCardHeader>
@@ -569,7 +569,7 @@ export default function NewEstimatePage() {
                 {...register('notes')}
                 rows={3}
                 placeholder='Note aggiuntive per il cliente...'
-                className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
+                className='w-full rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
               />
             </AppleCardContent>
           </AppleCard>
@@ -582,33 +582,33 @@ export default function NewEstimatePage() {
               <div className='flex justify-end'>
                 <div className='w-full max-w-xs space-y-2'>
                   <div className='flex justify-between text-body'>
-                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Subtotale</span>
-                    <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Subtotale</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(subtotal)}
                     </span>
                   </div>
                   {discountAmount > 0 && (
                     <div className='flex justify-between text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Sconto</span>
-                      <span className='font-medium text-apple-red'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Sconto</span>
+                      <span className='font-medium text-[var(--status-error)]'>
                         -{formatCurrency(discountAmount)}
                       </span>
                     </div>
                   )}
                   {Object.entries(taxByRate).map(([rate, amount]) => (
                     <div key={rate} className='flex justify-between text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>IVA {rate}%</span>
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>IVA {rate}%</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(amount)}
                       </span>
                     </div>
                   ))}
-                  <div className='border-t border-apple-border/20 dark:border-[var(--border-default)] pt-2'>
+                  <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] pt-2'>
                     <div className='flex justify-between'>
-                      <span className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Totale
                       </span>
-                      <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(grandTotal)}
                       </span>
                     </div>
@@ -621,9 +621,9 @@ export default function NewEstimatePage() {
 
         {/* Error */}
         {submitError && (
-          <div className='flex items-center gap-2 p-3 rounded-2xl bg-apple-red/5 dark:bg-apple-red/10 border border-apple-red/20'>
-            <AlertCircle className='h-4 w-4 text-apple-red flex-shrink-0' />
-            <p className='text-footnote text-apple-red'>{submitError}</p>
+          <div className='flex items-center gap-2 p-3 rounded-2xl bg-[var(--status-error)]/5 dark:bg-[var(--status-error)]/10 border border-[var(--status-error)]/20'>
+            <AlertCircle className='h-4 w-4 text-[var(--status-error)] flex-shrink-0' />
+            <p className='text-footnote text-[var(--status-error)]'>{submitError}</p>
           </div>
         )}
 

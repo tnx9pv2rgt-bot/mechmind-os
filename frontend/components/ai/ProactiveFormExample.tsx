@@ -81,11 +81,11 @@ export const ProactiveFormExample: React.FC = () => {
     <div className='max-w-2xl mx-auto p-6'>
       <div className='mb-6'>
         <h2 className='text-2xl font-bold mb-2'>Registrazione Azienda</h2>
-        <p className='text-gray-600'>
+        <p className='text-[var(--text-secondary)]'>
           Compila il form. L&apos;AI ti suggerirà automaticamente correzioni e ottimizzazioni.
         </p>
         {count > 0 && (
-          <p className='text-sm text-blue-600 mt-2'>
+          <p className='text-sm text-[var(--status-info)] mt-2'>
             {count} suggeriment{count === 1 ? 'o' : 'i'} disponibili
           </p>
         )}
@@ -100,8 +100,8 @@ export const ProactiveFormExample: React.FC = () => {
         />
 
         {isLoading && (
-          <div className='flex items-center gap-2 text-sm text-gray-500'>
-            <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
+          <div className='flex items-center gap-2 text-sm text-[var(--text-tertiary)]'>
+            <div className='w-4 h-4 border-2 border-[var(--status-info)] border-t-transparent rounded-full animate-spin' />
             Analizzando i dati...
           </div>
         )}

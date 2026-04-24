@@ -23,16 +23,16 @@ export function KanbanColumn({ column }: KanbanColumnProps): JSX.Element {
   const itemIds = useMemo(() => column.items.map(i => i.id), [column.items]);
 
   return (
-    <div className='flex w-72 shrink-0 flex-col rounded-2xl bg-apple-light-gray/50 dark:bg-[var(--surface-tertiary)]'>
+    <div className='flex w-72 shrink-0 flex-col rounded-2xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-tertiary)]'>
       {/* Column Header */}
       <div className='flex items-center justify-between px-4 py-3'>
         <div className='flex items-center gap-2'>
           <div className={cn('h-2.5 w-2.5 rounded-full', column.color)} />
-          <h3 className='text-sm font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+          <h3 className='text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             {column.title}
           </h3>
         </div>
-        <span className='flex h-5 min-w-[20px] items-center justify-center rounded-full bg-apple-light-gray dark:bg-[var(--surface-hover)] px-1.5 text-xs font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+        <span className='flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] px-1.5 text-xs font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
           {column.items.length}
         </span>
       </div>
@@ -43,14 +43,14 @@ export function KanbanColumn({ column }: KanbanColumnProps): JSX.Element {
           ref={setNodeRef}
           className={cn(
             'flex flex-1 flex-col gap-2 overflow-y-auto p-2 transition-colors rounded-b-2xl',
-            isOver ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+            isOver ? 'bg-[var(--status-info-subtle)]/50 dark:bg-[var(--status-info)]/40/10' : ''
           )}
           style={{ minHeight: '8rem', maxHeight: 'calc(100vh - 20rem)' }}
         >
           <AnimatePresence mode='popLayout'>
             {column.items.length === 0 ? (
-              <div className='flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-apple-border/20 dark:border-[var(--border-default)] p-4'>
-                <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Trascina qui</p>
+              <div className='flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-[var(--border-default)]/20 dark:border-[var(--border-default)] p-4'>
+                <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Trascina qui</p>
               </div>
             ) : (
               column.items.map(item => <KanbanCard key={item.id} item={item} />)

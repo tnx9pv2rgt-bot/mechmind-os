@@ -160,28 +160,28 @@ export function SubscriptionManager() {
 
   const getStatusBadge = (status: SubscriptionStatus) => {
     const colors: Record<string, string> = {
-      ACTIVE: 'bg-green-500',
-      TRIAL: 'bg-blue-500',
-      PAST_DUE: 'bg-yellow-500',
-      UNPAID: 'bg-red-500',
-      CANCELLED: 'bg-gray-500',
-      SUSPENDED: 'bg-orange-500',
-      EXPIRED: 'bg-red-700',
+      ACTIVE: 'bg-[var(--status-success)]',
+      TRIAL: 'bg-[var(--status-info)]',
+      PAST_DUE: 'bg-[var(--status-warning)]',
+      UNPAID: 'bg-[var(--status-error)]',
+      CANCELLED: 'bg-[var(--surface-secondary)]0',
+      SUSPENDED: 'bg-[var(--status-warning)]',
+      EXPIRED: 'bg-[var(--status-error)]',
     };
 
-    return <Badge className={`${colors[status]} text-white`}>{status}</Badge>;
+    return <Badge className={`${colors[status]} text-[var(--text-on-brand)]`}>{status}</Badge>;
   };
 
   const getPlanBadge = (plan: SubscriptionPlan) => {
     const colors: Record<string, string> = {
-      STARTER: 'bg-emerald-500',
-      PROFESSIONAL: 'bg-blue-500',
-      ENTERPRISE: 'bg-purple-500',
-      TRIAL: 'bg-gray-500',
-      FREE: 'bg-slate-500',
+      STARTER: 'bg-[var(--status-success)]',
+      PROFESSIONAL: 'bg-[var(--status-info)]',
+      ENTERPRISE: 'bg-[var(--brand)]',
+      TRIAL: 'bg-[var(--surface-secondary)]0',
+      FREE: 'bg-[var(--surface-secondary)]0',
     };
 
-    return <Badge className={`${colors[plan]} text-white`}>{plan}</Badge>;
+    return <Badge className={`${colors[plan]} text-[var(--text-on-brand)]`}>{plan}</Badge>;
   };
 
   const formatBytes = (bytes: string) => {
@@ -200,7 +200,7 @@ export function SubscriptionManager() {
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           <Card>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium text-gray-500'>
+              <CardTitle className='text-sm font-medium text-[var(--text-tertiary)]'>
                 Abbonamenti Totali
               </CardTitle>
             </CardHeader>
@@ -211,7 +211,7 @@ export function SubscriptionManager() {
 
           <Card>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium text-gray-500'>Conversioni Trial</CardTitle>
+              <CardTitle className='text-sm font-medium text-[var(--text-tertiary)]'>Conversioni Trial</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>{analytics.trialConversions}</div>
@@ -220,7 +220,7 @@ export function SubscriptionManager() {
 
           <Card>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium text-gray-500'>
+              <CardTitle className='text-sm font-medium text-[var(--text-tertiary)]'>
                 Abbonamenti Attivi
               </CardTitle>
             </CardHeader>
@@ -231,7 +231,7 @@ export function SubscriptionManager() {
 
           <Card>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium text-gray-500'>Ricavi AI Addon</CardTitle>
+              <CardTitle className='text-sm font-medium text-[var(--text-tertiary)]'>Ricavi AI Addon</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>€{analytics.aiAddonRevenue.toFixed(2)}</div>
@@ -317,16 +317,16 @@ export function SubscriptionManager() {
                 </thead>
                 <tbody>
                   {filteredSubscriptions.map(sub => (
-                    <tr key={sub.id} className='border-b hover:bg-gray-50'>
+                    <tr key={sub.id} className='border-b hover:bg-[var(--surface-secondary)]'>
                       <td className='py-3 px-4'>
                         <div className='font-medium'>{sub.tenant.name}</div>
-                        <div className='text-sm text-gray-500'>{sub.tenant.slug}</div>
+                        <div className='text-sm text-[var(--text-tertiary)]'>{sub.tenant.slug}</div>
                       </td>
                       <td className='py-3 px-4'>{getPlanBadge(sub.plan)}</td>
                       <td className='py-3 px-4'>{getStatusBadge(sub.status)}</td>
                       <td className='py-3 px-4'>
                         {sub.aiAddonEnabled ? (
-                          <Badge className='bg-purple-500'>Abilitato</Badge>
+                          <Badge className='bg-[var(--brand)]'>Abilitato</Badge>
                         ) : (
                           <Badge variant='outline'>Disabilitato</Badge>
                         )}
@@ -339,7 +339,7 @@ export function SubscriptionManager() {
                           {sub.apiCallsUsed.toLocaleString()} /{' '}
                           {sub.apiCallsLimit?.toLocaleString() || '∞'} API calls
                         </div>
-                        <div className='text-sm text-gray-500'>
+                        <div className='text-sm text-[var(--text-tertiary)]'>
                           {formatBytes(sub.storageUsedBytes)} storage
                         </div>
                       </td>

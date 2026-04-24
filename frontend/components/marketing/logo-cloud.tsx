@@ -59,7 +59,7 @@ export function LogoCloud(): React.ReactElement {
   return (
     <section
       ref={sectionRef}
-      className="bg-neutral-50 py-16 dark:bg-neutral-900 sm:py-20"
+      className="bg-[var(--surface-secondary)] py-16 dark:bg-[var(--surface-primary)] sm:py-20"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -67,7 +67,7 @@ export function LogoCloud(): React.ReactElement {
           initial={{ opacity: 0, y: 12 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
           transition={{ duration: 0.5 }}
-          className="mb-10 text-center text-sm font-medium uppercase tracking-widest text-neutral-500 dark:text-neutral-400"
+          className="mb-10 text-center text-sm font-medium uppercase tracking-widest text-[var(--text-tertiary)] dark:text-[var(--text-tertiary)]"
         >
           Integrato con i tuoi strumenti preferiti
         </motion.p>
@@ -80,8 +80,8 @@ export function LogoCloud(): React.ReactElement {
           className="group relative overflow-hidden"
         >
           {/* Gradient masks */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-neutral-50 to-transparent dark:from-neutral-900" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-neutral-50 to-transparent dark:from-neutral-900" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-[var(--surface-secondary)] to-transparent dark:from-[var(--surface-primary)]" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-[var(--surface-secondary)] to-transparent dark:from-[var(--surface-primary)]" />
 
           {/* Scrolling track */}
           <div className="flex w-max animate-marquee items-center group-hover:[animation-play-state:paused]">
@@ -99,10 +99,10 @@ export function LogoCloud(): React.ReactElement {
         >
           {stats.map((stat) => (
             <div key={stat.label}>
-              <p className="text-3xl font-bold text-neutral-900 dark:text-white">
+              <p className="text-3xl font-bold text-[var(--text-primary)] dark:text-[var(--text-on-brand)]">
                 {stat.value}
               </p>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="mt-1 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-tertiary)]">
                 {stat.label}
               </p>
             </div>

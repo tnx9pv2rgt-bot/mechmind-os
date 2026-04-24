@@ -53,7 +53,7 @@ export function PricingPreview(): React.ReactElement {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section id="prezzi" className="bg-white py-20 dark:bg-[var(--surface-primary)] lg:py-28">
+    <section id="prezzi" className="bg-[var(--surface-secondary)] py-20 dark:bg-[var(--surface-primary)] lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -82,13 +82,13 @@ export function PricingPreview(): React.ReactElement {
               variants={cardVariants}
               className={`relative flex flex-col rounded-2xl p-8 ${
                 plan.highlighted
-                  ? 'border-2 border-[#0d0d0d] dark:border-white bg-white shadow-xl dark:bg-[var(--surface-elevated)]'
-                  : 'border border-[var(--border-default)] bg-white dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]'
+                  ? 'border-2 border-[#0d0d0d] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] shadow-xl dark:bg-[var(--surface-elevated)]'
+                  : 'border border-[var(--border-default)] bg-[var(--surface-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)]'
               }`}
             >
               {plan.highlighted && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex rounded-full bg-[var(--text-primary)] px-4 py-1 text-xs font-semibold text-white dark:text-[#0d0d0d]">
+                  <span className="inline-flex rounded-full bg-[var(--text-primary)] px-4 py-1 text-xs font-semibold text-[var(--text-on-brand)] dark:text-[#0d0d0d]">
                     {plan.badge}
                   </span>
                 </div>
@@ -106,7 +106,7 @@ export function PricingPreview(): React.ReactElement {
               <ul className="mt-6 flex-1 space-y-3">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
-                    <span className="mt-0.5 h-5 w-5 shrink-0 text-[var(--text-primary)] dark:text-white flex items-center justify-center text-sm font-bold">✓</span>
+                    <span className="mt-0.5 h-5 w-5 shrink-0 text-[var(--text-primary)] dark:text-[var(--text-on-brand)] flex items-center justify-center text-sm font-bold">✓</span>
                     <span className="text-sm text-[var(--text-tertiary)] dark:text-[var(--text-primary)]">{feature}</span>
                   </li>
                 ))}
@@ -116,8 +116,8 @@ export function PricingPreview(): React.ReactElement {
                 href="/auth/register"
                 className={`mt-8 flex min-h-[44px] items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all active:scale-[0.97] ${
                   plan.highlighted
-                    ? 'border border-[var(--border-default)] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]'
-                    : 'border border-[var(--border-default)] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]'
+                    ? 'border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]'
+                    : 'border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]'
                 }`}
               >
                 Inizia gratis
@@ -142,7 +142,7 @@ export function PricingPreview(): React.ReactElement {
           </p>
           <p className="mt-4 text-sm text-[var(--text-tertiary)]">
             Hai più di 5 sedi?{' '}
-            <a href="mailto:info@mechmind.it" className="min-h-[44px] inline-flex items-center font-medium text-[var(--text-primary)] dark:text-white hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-secondary)]">
+            <a href="mailto:info@mechmind.it" className="min-h-[44px] inline-flex items-center font-medium text-[var(--text-primary)] dark:text-[var(--text-on-brand)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-secondary)]">
               Contattaci &rarr;
             </a>
           </p>

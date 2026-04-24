@@ -91,11 +91,11 @@ const listItemVariants = {
 function getAlertConfig(severity: string): { colorClass: string; bgClass: string } {
   switch (severity) {
     case 'error':
-      return { colorClass: 'text-red-400', bgClass: 'bg-red-400/10' };
+      return { colorClass: 'text-[var(--status-error)]', bgClass: 'bg-[var(--status-error)]/10' };
     case 'warning':
-      return { colorClass: 'text-yellow-400', bgClass: 'bg-yellow-400/10' };
+      return { colorClass: 'text-[var(--status-warning)]', bgClass: 'bg-[var(--status-warning)]/10' };
     default:
-      return { colorClass: 'text-blue-400', bgClass: 'bg-blue-400/10' };
+      return { colorClass: 'text-[var(--status-info)]', bgClass: 'bg-[var(--status-info)]/10' };
   }
 }
 
@@ -132,25 +132,25 @@ export default function RentriDashboardPage() {
       label: 'Totale Rifiuti Stoccati',
       value: dashboard?.totalStoredKg != null ? `${dashboard.totalStoredKg.toLocaleString('it-IT')} kg` : '...',
       icon: Package,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Registrazioni Mese',
       value: dashboard?.monthlyEntries != null ? dashboard.monthlyEntries.toString() : '...',
       icon: ClipboardList,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'FIR Attivi',
       value: dashboard?.activeFir != null ? dashboard.activeFir.toString() : '...',
       icon: Truck,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'Alert Attivi',
       value: dashboard?.activeAlerts != null ? dashboard.activeAlerts.toString() : '...',
       icon: AlertTriangle,
-      color: dashboard?.activeAlerts && dashboard.activeAlerts > 0 ? 'bg-apple-red' : 'bg-apple-green',
+      color: dashboard?.activeAlerts && dashboard.activeAlerts > 0 ? 'bg-[var(--status-error)]' : 'bg-[var(--status-success)]',
     },
   ];
 
@@ -166,10 +166,10 @@ export default function RentriDashboardPage() {
                 { label: 'Rifiuti (RENTRI)' },
               ]}
             />
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Gestione Rifiuti (RENTRI)
             </h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Registro carico/scarico, FIR e dichiarazione MUD
             </p>
           </div>
@@ -209,13 +209,13 @@ export default function RentriDashboardPage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -227,7 +227,7 @@ export default function RentriDashboardPage() {
           <motion.div variants={listItemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Avvisi di conformita
                 </h2>
               </AppleCardHeader>
@@ -238,14 +238,14 @@ export default function RentriDashboardPage() {
                     return (
                       <div
                         key={alert.id}
-                        className={`rounded-2xl border px-5 py-4 flex items-start gap-3 ${config.bgClass} border-apple-border/20 dark:border-[var(--border-default)]`}
+                        className={`rounded-2xl border px-5 py-4 flex items-start gap-3 ${config.bgClass} border-[var(--border-default)]/20 dark:border-[var(--border-default)]`}
                       >
                         <AlertTriangle className={`h-5 w-5 mt-0.5 flex-shrink-0 ${config.colorClass}`} />
                         <div className="flex-1">
-                          <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {alert.message}
                           </p>
-                          <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                          <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             {new Date(alert.createdAt).toLocaleDateString('it-IT', {
                               day: '2-digit',
                               month: 'short',
@@ -266,7 +266,7 @@ export default function RentriDashboardPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Azioni rapide
               </h2>
             </AppleCardHeader>
@@ -278,40 +278,40 @@ export default function RentriDashboardPage() {
                     description: 'Registra un nuovo carico rifiuti',
                     href: '/dashboard/rentri/entries/new',
                     icon: Plus,
-                    color: 'bg-apple-green',
+                    color: 'bg-[var(--status-success)]',
                   },
                   {
                     label: 'Nuovo FIR',
                     description: 'Crea un formulario di trasporto',
                     href: '/dashboard/rentri/fir',
                     icon: FileText,
-                    color: 'bg-apple-blue',
+                    color: 'bg-[var(--brand)]',
                   },
                   {
                     label: 'Registro Completo',
                     description: 'Visualizza tutte le registrazioni',
                     href: '/dashboard/rentri/entries',
                     icon: ClipboardList,
-                    color: 'bg-apple-orange',
+                    color: 'bg-[var(--status-warning)]',
                   },
                 ].map((action) => (
                   <Link
                     key={action.label}
                     href={action.href}
-                    className="rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple px-5 py-4 flex items-center gap-4 transition-all duration-300 group cursor-pointer"
+                    className="rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple px-5 py-4 flex items-center gap-4 transition-all duration-300 group cursor-pointer"
                   >
                     <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center flex-shrink-0`}>
-                      <action.icon className="h-5 w-5 text-white" />
+                      <action.icon className="h-5 w-5 text-[var(--text-on-brand)]" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                      <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         {action.label}
                       </p>
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         {action.description}
                       </p>
                     </div>
-                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-apple-gray dark:text-[var(--text-secondary)]" />
+                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                   </Link>
                 ))}
               </div>
@@ -324,12 +324,12 @@ export default function RentriDashboardPage() {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className="flex items-center justify-between">
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Ultime registrazioni
                 </h2>
                 <Link
                   href="/dashboard/rentri/entries"
-                  className="text-footnote flex items-center gap-1 transition-colors hover:opacity-80 text-apple-gray dark:text-[var(--text-secondary)]"
+                  className="text-footnote flex items-center gap-1 transition-colors hover:opacity-80 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
                 >
                   Vedi tutto
                   <ChevronRight className="h-4 w-4" />
@@ -339,8 +339,8 @@ export default function RentriDashboardPage() {
             <AppleCardContent>
               {hasError ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i dati
                   </p>
                   <AppleButton variant="ghost" className="mt-4" onClick={() => window.location.reload()}>
@@ -349,12 +349,12 @@ export default function RentriDashboardPage() {
                 </div>
               ) : isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : recentEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Recycle className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Recycle className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessuna registrazione trovata
                   </p>
                   <AppleButton
@@ -373,7 +373,7 @@ export default function RentriDashboardPage() {
                   animate="visible"
                 >
                   {/* Table Header */}
-                  <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                  <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     <div className="col-span-1">N.</div>
                     <div className="col-span-2">Data</div>
                     <div className="col-span-1">Tipo</div>
@@ -386,7 +386,7 @@ export default function RentriDashboardPage() {
                   {recentEntries.map((entry, index) => (
                     <motion.div
                       key={entry.id}
-                      className="flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer"
+                      className="flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer"
                       variants={listItemVariants}
                       custom={index}
                       whileHover={{ scale: 1.005, x: 4 }}
@@ -399,40 +399,40 @@ export default function RentriDashboardPage() {
                       }}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl ${entry.type === 'CARICO' ? 'bg-apple-green/10' : 'bg-apple-red/10'} flex items-center justify-center`}>
-                          <Recycle className={`h-6 w-6 ${entry.type === 'CARICO' ? 'text-apple-green' : 'text-apple-red'}`} />
+                        <div className={`w-12 h-12 rounded-xl ${entry.type === 'CARICO' ? 'bg-[var(--status-success)]/10' : 'bg-[var(--status-error)]/10'} flex items-center justify-center`}>
+                          <Recycle className={`h-6 w-6 ${entry.type === 'CARICO' ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                            <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {entry.cerCode}
                             </p>
                             <span
                               className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
                                 entry.type === 'CARICO'
-                                  ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                                  : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+                                  ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]'
+                                  : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]'
                               }`}
                             >
                               {entry.type}
                             </span>
                             {entry.hazardous && (
-                              <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
+                              <AlertTriangle className="h-3.5 w-3.5 text-[var(--status-warning)]" />
                             )}
                           </div>
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             {entry.cerDescription}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <p className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[80px] text-right tabular-nums">
+                        <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] min-w-[80px] text-right tabular-nums">
                           {entry.quantity.toLocaleString('it-IT')} {entry.unit || 'kg'}
                         </p>
-                        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] min-w-[80px] text-right">
+                        <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] min-w-[80px] text-right">
                           {new Date(entry.date).toLocaleDateString('it-IT')}
                         </p>
-                        <ChevronRight className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+                        <ChevronRight className="h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                       </div>
                     </motion.div>
                   ))}

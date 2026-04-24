@@ -38,11 +38,11 @@ export function FormField({
     <div className={cn('space-y-1.5', className)}>
       <label
         htmlFor={htmlFor}
-        className="block text-subhead font-medium text-gray-900 dark:text-gray-100"
+        className="block text-subhead font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"
       >
         {label}
         {required && (
-          <span className="ml-1 text-destructive" aria-hidden="true">
+          <span className="ml-1 text-[var(--status-error)]" aria-hidden="true">
             *
           </span>
         )}
@@ -62,13 +62,13 @@ export function FormField({
       })}
 
       {helperText && !hasError && (
-        <p id={helperId} className="text-footnote text-gray-500 dark:text-gray-400">
+        <p id={helperId} className="text-footnote text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
           {helperText}
         </p>
       )}
 
       {hasError && (
-        <p id={errorId} className="text-footnote text-destructive" role="alert">
+        <p id={errorId} className="text-footnote text-[var(--status-error)]" role="alert">
           {error.message}
         </p>
       )}

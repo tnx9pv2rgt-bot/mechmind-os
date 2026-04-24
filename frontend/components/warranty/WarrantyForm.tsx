@@ -189,14 +189,14 @@ export function WarrantyForm({
             name='startDate'
             render={({ field }) => (
               <FormItem className='flex flex-col'>
-                <FormLabel className='text-white'>Data Inizio</FormLabel>
+                <FormLabel className='text-[var(--text-on-brand)]'>Data Inizio</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant={'outline'}
                         className={cn(
-                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white hover:bg-[var(--surface-active)]',
+                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] hover:bg-[var(--surface-active)]',
                           !field.value && 'text-[var(--text-tertiary)]'
                         )}
                       >
@@ -226,14 +226,14 @@ export function WarrantyForm({
             name='expirationDate'
             render={({ field }) => (
               <FormItem className='flex flex-col'>
-                <FormLabel className='text-white'>Data Scadenza</FormLabel>
+                <FormLabel className='text-[var(--text-on-brand)]'>Data Scadenza</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant={'outline'}
                         className={cn(
-                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white hover:bg-[var(--surface-active)]',
+                          'w-full pl-3 text-left font-normal rounded-full h-[52px] border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] hover:bg-[var(--surface-active)]',
                           !field.value && 'text-[var(--text-tertiary)]'
                         )}
                       >
@@ -349,12 +349,12 @@ export function WarrantyForm({
         {/* Actions */}
         <div className='flex items-center justify-end gap-3'>
           {onCancel && (
-            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'>
+            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading} className='rounded-full h-[52px] border-[var(--border-strong)] bg-transparent text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'>
               <X className='h-4 w-4 mr-2' />
               Annulla
             </Button>
           )}
-          <Button type='submit' disabled={isLoading} className='rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'>
+          <Button type='submit' disabled={isLoading} className='rounded-full h-[52px] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-active)]'>
             <Save className='h-4 w-4 mr-2' />
             {isLoading ? 'Salvataggio...' : 'Salva Garanzia'}
           </Button>

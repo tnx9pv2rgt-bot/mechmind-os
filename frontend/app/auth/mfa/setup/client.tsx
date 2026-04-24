@@ -125,10 +125,10 @@ export function MFASetupPageClient(): React.ReactElement {
             className="space-y-6"
           >
             <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10 mb-4">
-                <span className="text-2xl text-white">🛡</span>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10 mb-4">
+                <span className="text-2xl text-[var(--text-on-brand)]">🛡</span>
               </div>
-              <h1 className="text-[28px] font-normal text-white tracking-tight">
+              <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
                 Configura 2FA
               </h1>
               <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -137,11 +137,11 @@ export function MFASetupPageClient(): React.ReactElement {
             </div>
 
             <div className="flex items-center gap-4 p-4 rounded-2xl border border-[var(--border-strong)]">
-              <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-[var(--surface-secondary)]/5 flex items-center justify-center shrink-0">
                 <span className="text-xl text-[var(--text-secondary)]">📱</span>
               </div>
               <div>
-                <p className="font-medium text-white text-[15px]">
+                <p className="font-medium text-[var(--text-on-brand)] text-[15px]">
                   App Authenticator
                 </p>
                 <p className="text-[13px] text-[var(--text-tertiary)]">
@@ -182,7 +182,7 @@ export function MFASetupPageClient(): React.ReactElement {
             className="space-y-6"
           >
             <div className="text-center">
-              <h1 className="text-[28px] font-normal text-white tracking-tight">
+              <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
                 Scansiona il QR Code
               </h1>
               <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -192,7 +192,7 @@ export function MFASetupPageClient(): React.ReactElement {
 
             {qrCode && (
               <div className="flex justify-center">
-                <div className="p-4 rounded-2xl bg-white">
+                <div className="p-4 rounded-2xl bg-[var(--surface-secondary)]">
                   <Image
                     src={qrCode}
                     alt="QR Code per configurazione MFA"
@@ -207,12 +207,12 @@ export function MFASetupPageClient(): React.ReactElement {
 
             {/* Manual key */}
             <div className="flex items-center gap-2 p-3 rounded-2xl border border-[var(--border-strong)]">
-              <code className="text-[13px] flex-1 font-mono text-white break-all">
+              <code className="text-[13px] flex-1 font-mono text-[var(--text-on-brand)] break-all">
                 {secret}
               </code>
               <button
                 onClick={copySecret}
-                className="p-2 rounded-lg hover:bg-white/5 transition-colors shrink-0 text-[13px] text-[var(--text-secondary)]"
+                className="p-2 rounded-lg hover:bg-[var(--surface-secondary)]/5 transition-colors shrink-0 text-[13px] text-[var(--text-secondary)]"
                 aria-label="Copia codice segreto"
               >
                 {copied ? '✓' : 'Copia'}
@@ -263,10 +263,10 @@ export function MFASetupPageClient(): React.ReactElement {
             className="space-y-6"
           >
             <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10 mb-4">
-                <span className="text-2xl text-white">✓</span>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10 mb-4">
+                <span className="text-2xl text-[var(--text-on-brand)]">✓</span>
               </div>
-              <h1 className="text-[28px] font-normal text-white tracking-tight">
+              <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
                 2FA attivato!
               </h1>
               <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -276,7 +276,7 @@ export function MFASetupPageClient(): React.ReactElement {
 
             {/* Backup codes */}
             <div className="p-5 rounded-2xl border border-[var(--border-strong)]">
-              <div className="flex items-center gap-2 text-white mb-3">
+              <div className="flex items-center gap-2 text-[var(--text-on-brand)] mb-3">
                 <span className="text-lg">⚠</span>
                 <span className="font-semibold text-[15px]">Codici di backup</span>
               </div>
@@ -288,7 +288,7 @@ export function MFASetupPageClient(): React.ReactElement {
                 {backupCodes.map((code, i) => (
                   <code
                     key={i}
-                    className="text-[13px] bg-white/5 p-2 rounded-xl font-mono text-center text-white"
+                    className="text-[13px] bg-[var(--surface-secondary)]/5 p-2 rounded-xl font-mono text-center text-[var(--text-on-brand)]"
                   >
                     {code}
                   </code>
@@ -296,7 +296,7 @@ export function MFASetupPageClient(): React.ReactElement {
               </div>
               <button
                 onClick={downloadBackupCodes}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-strong)] text-white h-[44px] text-[14px] font-medium hover:bg-white/5 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-strong)] text-[var(--text-on-brand)] h-[44px] text-[14px] font-medium hover:bg-[var(--surface-secondary)]/5 transition-colors"
               >
                 Scarica codici di backup
               </button>

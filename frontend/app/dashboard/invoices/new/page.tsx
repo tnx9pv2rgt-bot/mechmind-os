@@ -330,16 +330,16 @@ export default function NewInvoicePage() {
           />
           <div className='flex items-center justify-between mt-2'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Nuova Fattura
               </h1>
-              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                 Compila i dettagli della fattura
               </p>
             </div>
             <div className='flex items-center gap-3'>
-              <div className='w-12 h-12 rounded-2xl bg-apple-blue/10 flex items-center justify-center'>
-                <FileText className='w-6 h-6 text-apple-blue' />
+              <div className='w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                <FileText className='w-6 h-6 text-[var(--brand)]' />
               </div>
               <AppleButton
                 variant='ghost'
@@ -361,9 +361,9 @@ export default function NewInvoicePage() {
       >
         {/* Error */}
         {error && (
-          <div className='flex items-center gap-3 p-4 rounded-2xl bg-apple-red/5 dark:bg-apple-red/10 border border-apple-red/20'>
-            <AlertCircle className='h-5 w-5 text-apple-red flex-shrink-0' />
-            <p className='text-body text-apple-red'>{error}</p>
+          <div className='flex items-center gap-3 p-4 rounded-2xl bg-[var(--status-error)]/5 dark:bg-[var(--status-error)]/10 border border-[var(--status-error)]/20'>
+            <AlertCircle className='h-5 w-5 text-[var(--status-error)] flex-shrink-0' />
+            <p className='text-body text-[var(--status-error)]'>{error}</p>
           </div>
         )}
 
@@ -371,14 +371,14 @@ export default function NewInvoicePage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Dettagli Fattura
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Numero Fattura
                   </label>
                   <Input
@@ -387,28 +387,28 @@ export default function NewInvoicePage() {
                   />
                 </div>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Data Emissione
                   </label>
                   <Input type='date' {...register('issueDate')} />
                   {formErrors.issueDate && (
-                    <p className='text-footnote text-apple-red mt-1'>{formErrors.issueDate.message}</p>
+                    <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.issueDate.message}</p>
                   )}
                 </div>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Data Scadenza
                   </label>
                   <Input type='date' {...register('dueDate')} />
                 </div>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Metodo Pagamento
                   </label>
                   <select
                     value={paymentMethod}
                     onChange={e => setValue('paymentMethod', e.target.value)}
-                    className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='h-10 w-full rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     <option value='CASH'>Contanti</option>
                     <option value='BANK_TRANSFER'>Bonifico</option>
@@ -427,13 +427,13 @@ export default function NewInvoicePage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Cliente
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {loadingCustomers ? (
-                <div className='flex items-center gap-2 text-apple-gray dark:text-[var(--text-secondary)]'>
+                <div className='flex items-center gap-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   <Loader2 className='h-4 w-4 animate-spin' />
                   <span className='text-body'>Caricamento clienti...</span>
                 </div>
@@ -447,7 +447,7 @@ export default function NewInvoicePage() {
                   <select
                     value={customerId}
                     onChange={e => setValue('customerId', e.target.value, { shouldValidate: true })}
-                    className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='h-10 w-full rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     <option value=''>-- Seleziona un cliente --</option>
                     {filteredCustomers.map(c => (
@@ -457,7 +457,7 @@ export default function NewInvoicePage() {
                     ))}
                   </select>
                   {fieldErrors.customerId && (
-                    <p className='text-footnote text-apple-red'>{fieldErrors.customerId}</p>
+                    <p className='text-footnote text-[var(--status-error)]'>{fieldErrors.customerId}</p>
                   )}
                 </div>
               )}
@@ -469,12 +469,12 @@ export default function NewInvoicePage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader className='flex items-center justify-between'>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Righe Fattura
               </h2>
               <div className='flex items-center gap-2'>
                 {workOrderId && (
-                  <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] flex items-center gap-1'>
+                  <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] flex items-center gap-1'>
                     <Package className='h-3 w-3' />
                     Da OdL #{workOrderId.slice(0, 8)}
                   </span>
@@ -494,10 +494,10 @@ export default function NewInvoicePage() {
                 {lineItems.map((item) => (
                   <div
                     key={item.id}
-                    className='grid grid-cols-12 gap-2 sm:gap-3 items-end p-3 sm:p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                    className='grid grid-cols-12 gap-2 sm:gap-3 items-end p-3 sm:p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                   >
                     <div className='col-span-12 sm:col-span-4'>
-                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <label className='mb-1.5 block text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Descrizione
                       </label>
                       <Input
@@ -507,7 +507,7 @@ export default function NewInvoicePage() {
                       />
                     </div>
                     <div className='col-span-3 sm:col-span-2'>
-                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <label className='mb-1.5 block text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Quantita
                       </label>
                       <Input
@@ -518,7 +518,7 @@ export default function NewInvoicePage() {
                       />
                     </div>
                     <div className='col-span-3 sm:col-span-2'>
-                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <label className='mb-1.5 block text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Prezzo Unitario
                       </label>
                       <Input
@@ -530,13 +530,13 @@ export default function NewInvoicePage() {
                       />
                     </div>
                     <div className='col-span-3 sm:col-span-2'>
-                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <label className='mb-1.5 block text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         IVA %
                       </label>
                       <select
                         value={item.vatRate}
                         onChange={e => updateLineItem(item.id, 'vatRate', Number(e.target.value))}
-                        className='h-10 w-full rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'
+                        className='h-10 w-full rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'
                       >
                         {VAT_RATES.map(r => (
                           <option key={r.value} value={r.value}>
@@ -546,10 +546,10 @@ export default function NewInvoicePage() {
                       </select>
                     </div>
                     <div className='col-span-2 sm:col-span-1 text-right'>
-                      <label className='mb-1.5 block text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <label className='mb-1.5 block text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Totale
                       </label>
-                      <p className='h-10 flex items-center justify-end text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='h-10 flex items-center justify-end text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(item.quantity * item.unitPrice)}
                       </p>
                     </div>
@@ -560,7 +560,7 @@ export default function NewInvoicePage() {
                         disabled={lineItems.length <= 1}
                         onClick={() => removeLineItem(item.id)}
                         aria-label='Rimuovi riga fattura'
-                        className='text-apple-red hover:opacity-80'
+                        className='text-[var(--status-error)] hover:opacity-80'
                       >
                         <Trash2 className='h-4 w-4' />
                       </AppleButton>
@@ -576,54 +576,54 @@ export default function NewInvoicePage() {
         <motion.div variants={cardVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Riepilogo e Note
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Note / Condizioni
                   </label>
                   <textarea
                     {...register('notes')}
                     rows={4}
                     placeholder='Note aggiuntive, condizioni di pagamento...'
-                    className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
+                    className='w-full rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-4 py-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] dark:placeholder:text-[var(--text-secondary)] outline-none focus:ring-2 focus:ring-apple-blue resize-none'
                   />
                 </div>
 
                 <div className='flex flex-col justify-end'>
-                  <div className='p-6 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-3'>
+                  <div className='p-6 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] space-y-3'>
                     <div className='flex justify-between text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Subtotale</span>
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Subtotale</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(subtotal)}
                       </span>
                     </div>
                     {Object.entries(ivaBreakdown).map(([rate, amount]) => (
                       <div key={rate} className='flex justify-between text-body'>
-                        <span className='text-apple-gray dark:text-[var(--text-secondary)]'>IVA {rate}%</span>
-                        <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>IVA {rate}%</span>
+                        <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {formatCurrency(amount)}
                         </span>
                       </div>
                     ))}
                     {bolloAmount > 0 && (
                       <div className='flex justify-between text-body'>
-                        <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Bollo</span>
-                        <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Bollo</span>
+                        <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {formatCurrency(bolloAmount)}
                         </span>
                       </div>
                     )}
-                    <div className='border-t border-apple-border/20 dark:border-[var(--border-default)] pt-3'>
+                    <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] pt-3'>
                       <div className='flex justify-between'>
-                        <span className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Totale
                         </span>
-                        <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {formatCurrency(total)}
                         </span>
                       </div>

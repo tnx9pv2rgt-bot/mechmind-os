@@ -4,18 +4,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-brand-600 text-white hover:bg-brand-700',
-        destructive: 'bg-status-urgent text-white hover:bg-red-700',
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-brand-600 underline-offset-4 hover:underline',
-        success: 'bg-status-ready text-white hover:bg-green-600',
-        warning: 'bg-status-warning text-white hover:bg-orange-600',
+        default: 'bg-[var(--brand)] text-[var(--text-on-brand)] hover:bg-[var(--brand-hover)]',
+        destructive: 'bg-[var(--status-error)] text-[var(--text-on-brand)] hover:opacity-90',
+        outline: 'border border-[var(--border-default)] bg-[var(--surface-primary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]',
+        secondary: 'bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)]',
+        ghost: 'hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]',
+        link: 'text-[var(--brand)] underline-offset-4 hover:underline',
+        success: 'bg-[var(--status-success)] text-[var(--text-on-brand)] hover:opacity-90',
+        warning: 'bg-[var(--status-warning)] text-[var(--text-on-brand)] hover:opacity-90',
       },
       size: {
         default: 'h-10 px-4 py-2',

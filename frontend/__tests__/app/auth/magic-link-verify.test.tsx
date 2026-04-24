@@ -5,7 +5,7 @@
  */
 
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 
 // =========================================================================
 // Mocks
@@ -186,7 +186,7 @@ describe('MagicLinkVerifyPage', () => {
       })
     })
 
-    it('should show retry link on error', async () => {
+    it('should show retry button on error', async () => {
       mockSearchParamsValue = 'bad-token'
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -198,9 +198,26 @@ describe('MagicLinkVerifyPage', () => {
       render(<MagicLinkVerifyPage />)
 
       await waitFor(() => {
-        const retryLink = screen.getByText('Richiedi nuovo link')
-        expect(retryLink.closest('a')).toHaveAttribute('href', '/auth')
+        const retryButton = screen.getByText('Richiedi nuovo link')
+        expect(retryButton).toBeInTheDocument()
       })
+    })
+
+    it('should call router.push("/auth") when retry button is clicked', async () => {
+      mockSearchParamsValue = 'bad-token'
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValueOnce({ error: 'Token non valido' }),
+      })
+
+      render(<MagicLinkVerifyPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Richiedi nuovo link')).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByText('Richiedi nuovo link'))
+      expect(mockPush).toHaveBeenCalledWith('/auth')
     })
 
     it('should use default error message when API does not provide one', async () => {

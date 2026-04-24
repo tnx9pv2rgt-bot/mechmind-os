@@ -52,23 +52,23 @@ export function ExpiringAlert({
       className={cn(
         'relative',
         isCritical
-          ? 'border-red-200 bg-red-50'
+          ? 'border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]'
           : isWarning
-            ? 'border-amber-200 bg-amber-50'
-            : 'border-blue-200 bg-blue-50',
+            ? 'border-[var(--status-warning)]/30 bg-[var(--status-warning)]/5'
+            : 'border-[var(--status-info)]/30 bg-[var(--status-info-subtle)]',
         className
       )}
     >
       <Bell
         className={cn(
           'h-4 w-4',
-          isCritical ? 'text-red-600' : isWarning ? 'text-amber-600' : 'text-blue-600'
+          isCritical ? 'text-[var(--status-error)]' : isWarning ? 'text-[var(--status-warning)]' : 'text-[var(--status-info)]'
         )}
       />
       <AlertTitle
         className={cn(
           'flex items-center gap-2',
-          isCritical ? 'text-red-800' : isWarning ? 'text-amber-800' : 'text-blue-800'
+          isCritical ? 'text-[var(--status-error)]' : isWarning ? 'text-[var(--status-warning)]' : 'text-[var(--status-info)]'
         )}
       >
         <AlertTriangle className='h-4 w-4' />
@@ -79,7 +79,7 @@ export function ExpiringAlert({
       <AlertDescription
         className={cn(
           'mt-2',
-          isCritical ? 'text-red-700' : isWarning ? 'text-amber-700' : 'text-blue-700'
+          isCritical ? 'text-[var(--status-error)]' : isWarning ? 'text-[var(--status-warning)]' : 'text-[var(--status-info)]'
         )}
       >
         <div className='space-y-3'>
@@ -87,7 +87,7 @@ export function ExpiringAlert({
           {warranties.length === 1 ? (
             <p>
               La garanzia per {mostUrgent.vehicle?.make} {mostUrgent.vehicle?.model} scade tra{' '}
-              <span className={cn('font-semibold', isCritical ? 'text-red-800' : 'text-amber-800')}>
+              <span className={cn('font-semibold', isCritical ? 'text-[var(--status-error)]' : 'text-[var(--status-warning)]')}>
                 {daysRemaining} giorni
               </span>
               .
@@ -97,7 +97,7 @@ export function ExpiringAlert({
               <p>
                 La garanzia più urgente scade tra{' '}
                 <span
-                  className={cn('font-semibold', isCritical ? 'text-red-800' : 'text-amber-800')}
+                  className={cn('font-semibold', isCritical ? 'text-[var(--status-error)]' : 'text-[var(--status-warning)]')}
                 >
                   {daysRemaining} giorni
                 </span>
@@ -113,7 +113,7 @@ export function ExpiringAlert({
                       key={warranty.id}
                       className={cn(
                         'flex items-center justify-between p-2 rounded cursor-pointer transition-colors',
-                        isCritical ? 'bg-red-100 hover:bg-red-200' : 'bg-white/50 hover:bg-white/80'
+                        isCritical ? 'bg-[var(--status-error-subtle)] hover:bg-[var(--status-error)]/20' : 'bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)]'
                       )}
                       onClick={() => onViewWarranty?.(warranty.id)}
                     >
@@ -127,10 +127,10 @@ export function ExpiringAlert({
                         className={cn(
                           'text-sm font-semibold',
                           days <= 7
-                            ? 'text-red-700'
+                            ? 'text-[var(--status-error)]'
                             : days <= 30
-                              ? 'text-amber-700'
-                              : 'text-blue-700'
+                              ? 'text-[var(--status-warning)]'
+                              : 'text-[var(--status-info)]'
                         )}
                       >
                         {days}g
@@ -156,8 +156,8 @@ export function ExpiringAlert({
                 className={cn(
                   'flex-1',
                   isCritical
-                    ? 'border-red-200 hover:bg-red-100'
-                    : 'border-amber-200 hover:bg-amber-100'
+                    ? 'border-[var(--status-error)]/30 hover:bg-[var(--status-error-subtle)]'
+                    : 'border-[var(--status-warning)]/30 hover:bg-[var(--status-warning)]/10'
                 )}
                 onClick={onViewAll}
               >
@@ -170,7 +170,7 @@ export function ExpiringAlert({
                 size='sm'
                 className={cn(
                   'flex-1',
-                  isCritical ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'
+                  isCritical ? 'bg-[var(--status-error)] hover:bg-[var(--status-error)]' : 'bg-[var(--status-warning)] hover:bg-[var(--status-warning)]'
                 )}
                 onClick={() => onViewWarranty(mostUrgent.id)}
               >
@@ -187,10 +187,10 @@ export function ExpiringAlert({
         className={cn(
           'absolute top-2 right-2 p-1 rounded-full transition-colors',
           isCritical
-            ? 'hover:bg-red-200 text-red-600'
+            ? 'hover:bg-[var(--status-error)]/20 text-[var(--status-error)]'
             : isWarning
-              ? 'hover:bg-amber-200 text-amber-600'
-              : 'hover:bg-blue-200 text-blue-600'
+              ? 'hover:bg-[var(--status-warning)]/20 text-[var(--status-warning)]'
+              : 'hover:bg-[var(--status-info)]/20 text-[var(--status-info)]'
         )}
       >
         <X className='h-4 w-4' />

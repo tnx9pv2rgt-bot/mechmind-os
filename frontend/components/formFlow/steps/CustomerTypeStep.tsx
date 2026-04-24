@@ -65,10 +65,10 @@ export const CustomerTypeStep: React.FC<CustomerTypeStepProps> = ({
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
           Che tipo di account ti serve?
         </h2>
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           Seleziona l&apos;opzione più adatta alle tue esigenze
         </p>
       </div>
@@ -89,9 +89,9 @@ export const CustomerTypeStep: React.FC<CustomerTypeStepProps> = ({
                 'focus:outline-none focus:ring-4',
                 isSelected
                   ? option.id === 'private'
-                    ? 'border-blue-500 bg-blue-50 ring-blue-200'
-                    : 'border-purple-500 bg-purple-50 ring-purple-200'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)] ring-[var(--status-info)]/20'
+                    : 'border-[var(--brand)] bg-[var(--brand)]/5 ring-[var(--brand)]/20'
+                  : 'border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-secondary)]'
               )}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -104,13 +104,13 @@ export const CustomerTypeStep: React.FC<CustomerTypeStepProps> = ({
                 <motion.div
                   className={cn(
                     'absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center',
-                    option.id === 'private' ? 'bg-blue-500' : 'bg-purple-500'
+                    option.id === 'private' ? 'bg-[var(--status-info)]' : 'bg-[var(--brand)]'
                   )}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500 }}
                 >
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-[var(--text-on-brand)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 </motion.div>
@@ -122,26 +122,26 @@ export const CustomerTypeStep: React.FC<CustomerTypeStepProps> = ({
                   'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
                   isSelected
                     ? option.id === 'private'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-purple-500 text-white'
-                    : 'bg-gray-100 text-gray-600'
+                      ? 'bg-[var(--status-info-subtle)]0 text-[var(--text-on-brand)]'
+                      : 'bg-[var(--brand)]/50 text-[var(--text-on-brand)]'
+                    : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]'
                 )}
               >
                 <Icon className="w-6 h-6" />
               </div>
 
               {/* Content */}
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">{option.title}</h3>
-              <p className="text-sm text-gray-600 mb-4">{option.description}</p>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">{option.title}</h3>
+              <p className="text-sm text-[var(--text-secondary)] mb-4">{option.description}</p>
 
               {/* Features */}
               <ul className="space-y-2">
                 {option.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm text-gray-600">
+                  <li key={feature} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                     <svg
                       className={cn(
                         'w-4 h-4',
-                        option.id === 'private' ? 'text-blue-500' : 'text-purple-500'
+                        option.id === 'private' ? 'text-[var(--status-info)]' : 'text-[var(--brand)]'
                       )}
                       fill="none"
                       viewBox="0 0 24 24"
@@ -169,10 +169,10 @@ export const CustomerTypeStep: React.FC<CustomerTypeStepProps> = ({
             type="button"
             onClick={onNext}
             className={cn(
-              'flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white shadow-lg transition-all',
+              'flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-[var(--text-on-brand)] shadow-lg transition-all',
               selected === 'private'
-                ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-blue-200'
-                : 'bg-purple-600 hover:bg-purple-700 hover:shadow-purple-200'
+                ? 'bg-[var(--status-info)] hover:bg-[var(--status-info)] hover:shadow-blue-200'
+                : 'bg-[var(--brand)] hover:bg-[var(--brand)] hover:shadow-purple-200'
             )}
           >
             Continua come {selected === 'private' ? 'Privato' : 'Azienda'}

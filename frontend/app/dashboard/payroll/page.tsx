@@ -86,18 +86,18 @@ interface PayrollResponse {
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   DRAFT: {
     label: 'Bozza',
-    color: 'text-apple-dark dark:text-[var(--text-primary)]',
-    bg: 'bg-apple-light-gray dark:bg-[var(--surface-active)]',
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-active)]',
   },
   APPROVED: {
     label: 'Approvato',
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
   },
   PAID: {
     label: 'Pagato',
-    color: 'text-apple-green dark:text-apple-green',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
   },
 };
 
@@ -208,25 +208,25 @@ export default function PayrollPage(): React.ReactElement {
       label: 'Totale lordo',
       value: formatCurrency(summary.totalGross),
       icon: Euro,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Ore regolari',
       value: `${summary.totalRegularHours.toFixed(0)}h`,
       icon: Clock,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Ore straordinario',
       value: `${summary.totalOvertimeHours.toFixed(0)}h`,
       icon: Clock,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'Bonus',
       value: formatCurrency(summary.totalBonus),
       icon: Award,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
@@ -236,8 +236,8 @@ export default function PayrollPage(): React.ReactElement {
       <header className=''>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Buste Paga</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Buste Paga</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestione retribuzioni del personale
             </p>
           </div>
@@ -274,11 +274,11 @@ export default function PayrollPage(): React.ReactElement {
             <AppleCardContent>
               <div className='flex flex-col sm:flex-row gap-4'>
                 <div className='relative flex-1 sm:max-w-xs'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                   <select
                     value={selectedMonth}
                     onChange={e => setSelectedMonth(Number(e.target.value))}
-                    className='w-full h-10 pl-10 pr-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='w-full h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {months.map((m, idx) => (
                       <option key={idx} value={idx}>{m}</option>
@@ -289,7 +289,7 @@ export default function PayrollPage(): React.ReactElement {
                   <select
                     value={selectedYear}
                     onChange={e => setSelectedYear(Number(e.target.value))}
-                    className='w-full h-10 px-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='w-full h-10 px-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {[2024, 2025, 2026, 2027].map(y => (
                       <option key={y} value={y}>{y}</option>
@@ -314,13 +314,13 @@ export default function PayrollPage(): React.ReactElement {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -331,15 +331,15 @@ export default function PayrollPage(): React.ReactElement {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Buste Paga
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {error ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Errore nel caricamento dei dati
                   </p>
                   <AppleButton
@@ -352,15 +352,15 @@ export default function PayrollPage(): React.ReactElement {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : entries.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessuna busta paga per questo periodo
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                     Clicca &quot;Calcola tutto&quot; per generare le buste paga
                   </p>
                   <AppleButton
@@ -384,25 +384,25 @@ export default function PayrollPage(): React.ReactElement {
                     return (
                       <motion.div
                         key={entry.id}
-                        className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
                         transition={{ duration: 0.2 }}
                       >
                         <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-apple-purple/10 flex items-center justify-center flex-shrink-0'>
-                            <FileText className='h-6 w-6 text-apple-purple' />
+                          <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center flex-shrink-0'>
+                            <FileText className='h-6 w-6 text-[var(--brand)]' />
                           </div>
                           <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {entry.technicianName}
                             </p>
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {payTypeConfig[entry.payType] ?? entry.payType} &bull; {entry.regularHours}h reg. &bull; {entry.overtimeHours}h str.
                             </p>
                             {entry.bonus > 0 && (
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 Bonus: {formatCurrency(entry.bonus)}
                               </p>
                             )}
@@ -414,7 +414,7 @@ export default function PayrollPage(): React.ReactElement {
                           >
                             {st.label}
                           </span>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] min-w-[100px] text-right'>
+                          <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] min-w-[100px] text-right'>
                             {formatCurrency(entry.totalPay)}
                           </p>
                           <div className='flex items-center gap-2'>
@@ -430,13 +430,13 @@ export default function PayrollPage(): React.ReactElement {
                               </AppleButton>
                             )}
                             {entry.status === 'APPROVED' && (
-                              <span className='text-footnote text-apple-green flex items-center gap-1'>
+                              <span className='text-footnote text-[var(--status-success)] flex items-center gap-1'>
                                 <CheckCircle2 className='h-3.5 w-3.5' />
                                 Pronto
                               </span>
                             )}
                             {entry.status === 'PAID' && (
-                              <span className='text-footnote text-apple-green flex items-center gap-1'>
+                              <span className='text-footnote text-[var(--status-success)] flex items-center gap-1'>
                                 <CheckCircle2 className='h-3.5 w-3.5' />
                                 Pagato
                               </span>

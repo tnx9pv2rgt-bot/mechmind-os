@@ -175,7 +175,7 @@ export function LiveKpiTicker(): React.ReactElement {
 
   if (!kpis) {
     return (
-      <div className="flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+      <div className="flex items-center gap-4 overflow-hidden rounded-2xl border border-[var(--border-default)]/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
@@ -187,7 +187,7 @@ export function LiveKpiTicker(): React.ReactElement {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--border-default)]/10 bg-[var(--surface-elevated)]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
       <div className="pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full bg-[var(--brand)]/5 blur-3xl" aria-hidden="true" />
       <div
         ref={scrollRef}
@@ -207,7 +207,7 @@ export function LiveKpiTicker(): React.ReactElement {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/5">
                 <Icon className="h-4 w-4 text-[var(--text-secondary)]" />
               </div>
               <div className="flex flex-col">
@@ -217,8 +217,8 @@ export function LiveKpiTicker(): React.ReactElement {
                 <div className="flex items-center gap-1.5">
                   <motion.span
                     key={`${metric.key}-${metric.value}`}
-                    className="text-sm font-semibold text-white"
-                    initial={prefersReducedMotion ? {} : { scale: 1.1, color: '#60a5fa' }}
+                    className="text-sm font-semibold text-[var(--text-on-brand)]"
+                    initial={prefersReducedMotion ? {} : { scale: 1.1, color: 'var(--status-info)' }}
                     animate={{ scale: 1, color: '#ffffff' }}
                     transition={{ duration: 0.6 }}
                   >
@@ -228,10 +228,10 @@ export function LiveKpiTicker(): React.ReactElement {
                     <span
                       className={`flex items-center text-[10px] font-medium ${
                         isPositive
-                          ? 'text-[#34d399]'
+                          ? 'text-[var(--status-success)]'
                           : isNegative
-                            ? 'text-[#f87171]'
-                            : 'text-[#fbbf24]'
+                            ? 'text-[var(--status-error)]'
+                            : 'text-[var(--status-warning)]'
                       }`}
                     >
                       {isPositive ? '\u2191' : '\u2193'}

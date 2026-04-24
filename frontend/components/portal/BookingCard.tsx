@@ -28,38 +28,38 @@ const statusConfig: Record<BookingStatus, {
 }> = {
   pending: {
     label: 'In attesa',
-    color: 'text-apple-orange',
-    bgColor: 'bg-orange-50',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/5',
     icon: AlertCircle,
   },
   confirmed: {
     label: 'Confermata',
-    color: 'text-apple-blue',
-    bgColor: 'bg-blue-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
     icon: CheckCircle,
   },
   in_progress: {
     label: 'In corso',
-    color: 'text-apple-purple',
-    bgColor: 'bg-purple-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--brand-subtle)]',
     icon: Loader2,
   },
   completed: {
     label: 'Completata',
-    color: 'text-apple-green',
-    bgColor: 'bg-green-50',
+    color: 'text-[var(--status-success)]',
+    bgColor: 'bg-[var(--status-success-subtle)]',
     icon: CheckCircle,
   },
   cancelled: {
     label: 'Cancellata',
-    color: 'text-apple-red',
-    bgColor: 'bg-red-50',
+    color: 'text-[var(--status-error)]',
+    bgColor: 'bg-[var(--status-error-subtle)]',
     icon: XCircle,
   },
   no_show: {
     label: 'Non presentato',
-    color: 'text-apple-gray',
-    bgColor: 'bg-gray-100',
+    color: 'text-[var(--text-tertiary)]',
+    bgColor: 'bg-[var(--surface-secondary)]',
     icon: XCircle,
   },
 }
@@ -125,14 +125,14 @@ export function BookingCard({
                     <StatusIcon className="h-3 w-3" />
                     {status.label}
                   </span>
-                  <span className="text-xs text-apple-gray">
+                  <span className="text-xs text-[var(--text-tertiary)]">
                     {typeLabels[booking.type]}
                   </span>
                 </div>
-                <p className="font-medium text-apple-dark truncate">
+                <p className="font-medium text-[var(--text-primary)] truncate">
                   {booking.vehicle?.make} {booking.vehicle?.model}
                 </p>
-                <div className="flex items-center gap-3 mt-1 text-xs text-apple-gray">
+                <div className="flex items-center gap-3 mt-1 text-xs text-[var(--text-tertiary)]">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {formattedDate}
@@ -165,22 +165,22 @@ export function BookingCard({
                   <StatusIcon className={`h-3.5 w-3.5 ${booking.status === 'in_progress' ? 'animate-spin' : ''}`} />
                   {status.label}
                 </span>
-                <span className="text-sm text-apple-gray">
+                <span className="text-sm text-[var(--text-tertiary)]">
                   {typeLabels[booking.type]}
                 </span>
               </div>
-              <h3 className="font-semibold text-apple-dark text-lg">
+              <h3 className="font-semibold text-[var(--text-primary)] text-lg">
                 {booking.vehicle?.make} {booking.vehicle?.model}
               </h3>
-              <p className="text-sm text-apple-gray">
+              <p className="text-sm text-[var(--text-tertiary)]">
                 {booking.vehicle?.licensePlate}
               </p>
             </div>
 
             {booking.estimatedCost && (
               <div className="text-right">
-                <p className="text-sm text-apple-gray">Stima</p>
-                <p className="font-semibold text-apple-dark">
+                <p className="text-sm text-[var(--text-tertiary)]">Stima</p>
+                <p className="font-semibold text-[var(--text-primary)]">
                   €{booking.estimatedCost.toLocaleString('it-IT')}
                 </p>
               </div>
@@ -189,32 +189,32 @@ export function BookingCard({
 
           {/* Details */}
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="flex items-center gap-2 text-sm text-apple-dark">
-              <Calendar className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+              <Calendar className="h-4 w-4 text-[var(--brand)]" />
               <span>{formattedDate}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-apple-dark">
-              <Clock className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+              <Clock className="h-4 w-4 text-[var(--brand)]" />
               <span>{booking.scheduledTime}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-apple-dark">
-              <MapPin className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+              <MapPin className="h-4 w-4 text-[var(--brand)]" />
               <span className="truncate">{booking.location}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-apple-dark">
-              <Car className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+              <Car className="h-4 w-4 text-[var(--brand)]" />
               <span>{booking.vehicle?.year}</span>
             </div>
           </div>
 
           {booking.notes && (
-            <div className="mb-4 p-3 bg-apple-light-gray/50 rounded-xl">
-              <p className="text-sm text-apple-gray">{booking.notes}</p>
+            <div className="mb-4 p-3 bg-[var(--surface-secondary)]/50 rounded-xl">
+              <p className="text-sm text-[var(--text-tertiary)]">{booking.notes}</p>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-apple-border/30">
+          <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-[var(--border-default)]/30">
             <AppleButton
               variant="primary"
               size="sm"
@@ -270,8 +270,8 @@ export function BookingList({
   if (bookings.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-12 w-12 mx-auto text-apple-gray/30 mb-4" />
-        <p className="text-apple-gray">{emptyMessage}</p>
+        <Calendar className="h-12 w-12 mx-auto text-[var(--text-tertiary)]/30 mb-4" />
+        <p className="text-[var(--text-tertiary)]">{emptyMessage}</p>
       </div>
     )
   }

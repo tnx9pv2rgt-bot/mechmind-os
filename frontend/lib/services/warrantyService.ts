@@ -240,6 +240,25 @@ async function backendFetch<T>(
         `Backend error: ${res.status}`;
       const code =
         (body as { error?: { code?: string } })?.error?.code || 'BACKEND_ERROR';
+
+      // Throw specific error types based on code or status
+      if (code === 'WARRANTY_NOT_FOUND') {
+        throw new WarrantyNotFoundError('unknown');
+      }
+      if (code === 'CLAIM_NOT_FOUND') {
+        throw new ClaimNotFoundError('unknown');
+      }
+      // Default 404 to WarrantyNotFoundError if no specific code
+      if (res.status === 404 && code === 'BACKEND_ERROR') {
+        throw new WarrantyNotFoundError('unknown');
+      }
+      if (code === 'INVALID_WARRANTY_DATA') {
+        throw new InvalidWarrantyDataError(msg);
+      }
+      if (code === 'INVALID_CLAIM_DATA') {
+        throw new InvalidClaimDataError(msg);
+      }
+
       throw new WarrantyError(msg, code, res.status);
     }
 

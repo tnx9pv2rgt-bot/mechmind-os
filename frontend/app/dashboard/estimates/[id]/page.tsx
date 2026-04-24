@@ -80,33 +80,33 @@ interface EstimateDetail {
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
   DRAFT: {
-    color: 'text-apple-gray dark:text-[var(--text-secondary)]',
-    bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]',
+    color: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
     label: 'Bozza',
   },
   SENT: {
-    color: 'text-apple-blue',
-    bg: 'bg-apple-blue/10',
+    color: 'text-[var(--brand)]',
+    bg: 'bg-[var(--brand)]/10',
     label: 'Inviato',
   },
   ACCEPTED: {
-    color: 'text-apple-green',
-    bg: 'bg-apple-green/10',
+    color: 'text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success)]/10',
     label: 'Accettato',
   },
   REJECTED: {
-    color: 'text-apple-red',
-    bg: 'bg-apple-red/10',
+    color: 'text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error)]/10',
     label: 'Rifiutato',
   },
   EXPIRED: {
-    color: 'text-apple-orange',
-    bg: 'bg-apple-orange/10',
+    color: 'text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10',
     label: 'Scaduto',
   },
   CONVERTED: {
-    color: 'text-apple-purple',
-    bg: 'bg-apple-purple/10',
+    color: 'text-[var(--brand)]',
+    bg: 'bg-[var(--brand)]/10',
     label: 'Convertito',
   },
 };
@@ -190,7 +190,7 @@ export default function EstimateDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -198,8 +198,8 @@ export default function EstimateDetailPage() {
   if (error || !estimate) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
-        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
           {error || 'Preventivo non trovato'}
         </p>
         <AppleButton
@@ -229,7 +229,7 @@ export default function EstimateDetailPage() {
           />
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {estimate.number || `Preventivo #${id.slice(0, 8)}`}
               </h1>
               <span
@@ -266,7 +266,7 @@ export default function EstimateDetailPage() {
                   </AppleButton>
                   <AppleButton
                     variant='ghost'
-                    className='text-apple-red hover:opacity-80'
+                    className='text-[var(--status-error)] hover:opacity-80'
                     onClick={() => setDeleteConfirmOpen(true)}
                   >
                     Elimina
@@ -314,9 +314,9 @@ export default function EstimateDetailPage() {
       </header>
 
       {actionError && (
-        <div className='mx-8 mt-4 flex items-center gap-2 p-3 rounded-xl bg-apple-red/5 dark:bg-apple-red/10 border border-apple-red/20 no-print'>
-          <AlertCircle className='h-4 w-4 text-apple-red flex-shrink-0' />
-          <p className='text-footnote text-apple-red'>{actionError}</p>
+        <div className='mx-8 mt-4 flex items-center gap-2 p-3 rounded-xl bg-[var(--status-error)]/5 dark:bg-[var(--status-error)]/10 border border-[var(--status-error)]/20 no-print'>
+          <AlertCircle className='h-4 w-4 text-[var(--status-error)] flex-shrink-0' />
+          <p className='text-footnote text-[var(--status-error)]'>{actionError}</p>
         </div>
       )}
 
@@ -332,18 +332,18 @@ export default function EstimateDetailPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center gap-2'>
-                  <User className='h-4 w-4 text-apple-gray' />
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <User className='h-4 w-4 text-[var(--text-tertiary)]' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Cliente
                   </h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent>
-                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {estimate.customerName}
                 </p>
                 {estimate.customerEmail && (
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     {estimate.customerEmail}
                   </p>
                 )}
@@ -355,17 +355,17 @@ export default function EstimateDetailPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center gap-2'>
-                  <Car className='h-4 w-4 text-apple-gray' />
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Car className='h-4 w-4 text-[var(--text-tertiary)]' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Veicolo
                   </h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent>
-                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {estimate.vehicleMake} {estimate.vehicleModel}
                 </p>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   {estimate.vehiclePlate}
                 </p>
               </AppleCardContent>
@@ -376,23 +376,23 @@ export default function EstimateDetailPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center gap-2'>
-                  <Calendar className='h-4 w-4 text-apple-gray' />
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Calendar className='h-4 w-4 text-[var(--text-tertiary)]' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Date
                   </h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent className='space-y-2'>
                 <div className='flex justify-between'>
-                  <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Creato</span>
-                  <span className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                  <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Creato</span>
+                  <span className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {new Date(estimate.createdAt).toLocaleDateString('it-IT')}
                   </span>
                 </div>
                 {estimate.validUntil && (
                   <div className='flex justify-between'>
-                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Valido fino al</span>
-                    <span className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Valido fino al</span>
+                    <span className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {new Date(estimate.validUntil).toLocaleDateString('it-IT')}
                     </span>
                   </div>
@@ -407,29 +407,29 @@ export default function EstimateDetailPage() {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className='flex items-center gap-2'>
-                <FileText className='h-4 w-4 text-apple-gray' />
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <FileText className='h-4 w-4 text-[var(--text-tertiary)]' />
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Dettaglio Righe
                 </h2>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               {/* Header */}
-              <div className='grid grid-cols-12 gap-3 pb-3 border-b border-apple-border/30 dark:border-[var(--border-default)] mb-3'>
-                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Tipo</div>
-                <div className='col-span-5 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <div className='grid grid-cols-12 gap-3 pb-3 border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)] mb-3'>
+                <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Tipo</div>
+                <div className='col-span-5 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Descrizione
                 </div>
-                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   Qta
                 </div>
-                <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   Prezzo
                 </div>
-                <div className='col-span-1 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-1 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   IVA
                 </div>
-                <div className='col-span-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] text-right'>
+                <div className='col-span-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
                   Totale
                 </div>
               </div>
@@ -438,32 +438,32 @@ export default function EstimateDetailPage() {
                 {(estimate.lines || []).map(line => (
                   <div
                     key={line.id}
-                    className='grid grid-cols-12 gap-3 py-2 px-2 rounded-xl hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
+                    className='grid grid-cols-12 gap-3 py-2 px-2 rounded-xl hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                   >
                     <div className='col-span-1'>
                       <span
                         className={`text-footnote font-semibold px-1.5 py-0.5 rounded ${
                           line.type === 'LABOR'
-                            ? 'bg-apple-blue/10 text-apple-blue'
-                            : 'bg-apple-orange/10 text-apple-orange'
+                            ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
+                            : 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]'
                         }`}
                       >
                         {line.type === 'LABOR' ? 'LAV' : 'RIC'}
                       </span>
                     </div>
-                    <div className='col-span-5 text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='col-span-5 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {line.description}
                     </div>
-                    <div className='col-span-1 text-body text-right text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='col-span-1 text-body text-right text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {line.quantity}
                     </div>
-                    <div className='col-span-2 text-body text-right text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='col-span-2 text-body text-right text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(line.unitPrice)}
                     </div>
-                    <div className='col-span-1 text-body text-right text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <div className='col-span-1 text-body text-right text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       {line.taxRate}%
                     </div>
-                    <div className='col-span-2 text-body text-right font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='col-span-2 text-body text-right font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(line.total || line.quantity * line.unitPrice)}
                     </div>
                   </div>
@@ -475,31 +475,31 @@ export default function EstimateDetailPage() {
               <div className='flex justify-end'>
                 <div className='w-full max-w-xs space-y-2'>
                   <div className='flex justify-between'>
-                    <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Subtotale</span>
-                    <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Subtotale</span>
+                    <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(estimate.subtotal)}
                     </span>
                   </div>
                   {estimate.discount > 0 && (
                     <div className='flex justify-between'>
-                      <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>Sconto</span>
-                      <span className='text-body font-medium text-apple-red'>
+                      <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Sconto</span>
+                      <span className='text-body font-medium text-[var(--status-error)]'>
                         -{formatCurrency(estimate.discount)}
                       </span>
                     </div>
                   )}
                   <div className='flex justify-between'>
-                    <span className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>IVA</span>
-                    <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>IVA</span>
+                    <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(estimate.taxAmount)}
                     </span>
                   </div>
-                  <div className='border-t border-apple-border/30 dark:border-[var(--border-default)] pt-2'>
+                  <div className='border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)] pt-2'>
                     <div className='flex justify-between'>
-                      <span className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Totale
                       </span>
-                      <span className='text-body font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-body font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(estimate.total)}
                       </span>
                     </div>
@@ -515,12 +515,12 @@ export default function EstimateDetailPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Note
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
-                <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] whitespace-pre-wrap'>
+                <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] whitespace-pre-wrap'>
                   {estimate.notes}
                 </p>
               </AppleCardContent>

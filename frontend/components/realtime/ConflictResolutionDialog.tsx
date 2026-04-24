@@ -120,9 +120,9 @@ function VersionCard({
         'w-full text-left p-4 rounded-xl border-2 transition-all duration-200',
         isSelected 
           ? isLocal 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-green-500 bg-green-50'
-          : 'border-gray-200 bg-white hover:border-gray-300'
+            ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)]' 
+            : 'border-[var(--status-success)] bg-[var(--status-success-subtle)]'
+          : 'border-[var(--border-default)] bg-[var(--surface-secondary)] hover:border-[var(--border-default)]'
       )}
     >
       {/* Header */}
@@ -131,14 +131,14 @@ function VersionCard({
           <div
             className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center',
-              isLocal ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+              isLocal ? 'bg-[var(--status-info-subtle)] text-[var(--status-info)]' : 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
             )}
           >
             {isLocal ? <User className="w-4 h-4" /> : deviceIcon}
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-gray-900">{title}</h4>
-            <p className="text-xs text-gray-500">{deviceLabel}</p>
+            <h4 className="font-semibold text-sm text-[var(--text-primary)]">{title}</h4>
+            <p className="text-xs text-[var(--text-tertiary)]">{deviceLabel}</p>
           </div>
         </div>
         
@@ -146,16 +146,16 @@ function VersionCard({
           <div
             className={cn(
               'w-6 h-6 rounded-full flex items-center justify-center',
-              isLocal ? 'bg-blue-500' : 'bg-green-500'
+              isLocal ? 'bg-[var(--status-info)]' : 'bg-[var(--status-success)]'
             )}
           >
-            <Check className="w-4 h-4 text-white" />
+            <Check className="w-4 h-4 text-[var(--text-on-brand)]" />
           </div>
         )}
       </div>
       
       {/* Timestamp */}
-      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+      <div className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] mb-3">
         <Clock className="w-3 h-3" />
         <span>{format(timestamp, 'dd/MM/yyyy HH:mm:ss', { locale: it })}</span>
       </div>
@@ -163,7 +163,7 @@ function VersionCard({
       {/* Changed Fields */}
       {changedFields.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-600">
+          <p className="text-xs font-medium text-[var(--text-secondary)]">
             {changedFields.length} campo{changedFields.length > 1 ? 'i' : ''} modificato{changedFields.length > 1 ? 'i' : ''}:
           </p>
           <div className="flex flex-wrap gap-1">
@@ -172,14 +172,14 @@ function VersionCard({
                 key={field}
                 className={cn(
                   'px-2 py-0.5 rounded text-[10px] font-medium',
-                  isLocal ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                  isLocal ? 'bg-[var(--status-info-subtle)] text-[var(--status-info)]' : 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
                 )}
               >
                 {field}
               </span>
             ))}
             {changedFields.length > 5 && (
-              <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600">
+              <span className="px-2 py-0.5 rounded text-[10px] bg-[var(--surface-secondary)] text-[var(--text-secondary)]">
                 +{changedFields.length - 5}
               </span>
             )}
@@ -222,7 +222,7 @@ export function ConflictResolutionDialog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-[var(--surface-primary)]/50 backdrop-blur-sm"
             onClick={onCancel}
           />
           
@@ -232,17 +232,17 @@ export function ConflictResolutionDialog({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-2xl bg-[var(--surface-secondary)] rounded-2xl shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
+            <div className="bg-gradient-to-r from-[var(--status-warning)]/50 to-[var(--status-error)] px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 bg-[var(--surface-secondary)]/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-[var(--text-on-brand)]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Conflitto rilevato</h3>
-                  <p className="text-white/80 text-sm">
+                  <h3 className="text-lg font-bold text-[var(--text-on-brand)]">Conflitto rilevato</h3>
+                  <p className="text-[var(--text-on-brand)]/80 text-sm">
                     Lo stesso form è stato modificato su un altro dispositivo
                   </p>
                 </div>
@@ -251,7 +251,7 @@ export function ConflictResolutionDialog({
             
             {/* Content */}
             <div className="p-6">
-              <p className="text-gray-600 text-sm mb-6">
+              <p className="text-[var(--text-secondary)] text-sm mb-6">
                 Abbiamo rilevato modifiche simultanee a questo form. Scegli quale versione 
                 mantenere. L&apos;altra versione verrà sovrascritta.
               </p>
@@ -284,11 +284,11 @@ export function ConflictResolutionDialog({
             </div>
             
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-[var(--surface-secondary)] border-t">
               {onCancel && (
                 <button
                   onClick={onCancel}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   Annulla
                 </button>
@@ -297,10 +297,10 @@ export function ConflictResolutionDialog({
                 onClick={handleResolve}
                 disabled={!selectedVersion}
                 className={cn(
-                  'px-6 py-2 rounded-lg text-sm font-medium text-white transition-all',
+                  'px-6 py-2 rounded-lg text-sm font-medium text-[var(--text-on-brand)] transition-all',
                   selectedVersion
-                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
-                    : 'bg-gray-300 cursor-not-allowed'
+                    ? 'bg-[var(--status-info)] hover:bg-[var(--status-info)] shadow-lg shadow-blue-500/25'
+                    : 'bg-[var(--border-strong)] cursor-not-allowed'
                 )}
               >
                 {selectedVersion 

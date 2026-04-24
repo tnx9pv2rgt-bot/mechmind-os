@@ -103,16 +103,16 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
         }
       `}</style>
 
-      <div className="invoice-print-container bg-white text-black print:block hidden">
+      <div className="invoice-print-container bg-[var(--surface-secondary)] text-[var(--text-primary)] print:block hidden">
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-6">
+        <div className="flex justify-between items-start border-b-2 border-[var(--border-strong)] pb-4 mb-6">
           <div>
             {tenant.logoUrl && (
               <img src={tenant.logoUrl} alt="Logo" className="mb-2" style={{ maxHeight: '50px' }} />
             )}
             <h2 className="text-lg font-bold">{tenant.ragioneSociale}</h2>
             {tenant.address && (
-              <p className="text-xs text-gray-700">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {tenant.address}
                 {tenant.postalCode && `, ${tenant.postalCode}`}
                 {tenant.city && ` ${tenant.city}`}
@@ -120,19 +120,19 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
               </p>
             )}
             {tenant.partitaIva && (
-              <p className="text-xs text-gray-700">P.IVA: {tenant.partitaIva}</p>
+              <p className="text-xs text-[var(--text-secondary)]">P.IVA: {tenant.partitaIva}</p>
             )}
             {tenant.codiceFiscale && (
-              <p className="text-xs text-gray-700">C.F.: {tenant.codiceFiscale}</p>
+              <p className="text-xs text-[var(--text-secondary)]">C.F.: {tenant.codiceFiscale}</p>
             )}
             {tenant.sdiCode && (
-              <p className="text-xs text-gray-700">SDI: {tenant.sdiCode}</p>
+              <p className="text-xs text-[var(--text-secondary)]">SDI: {tenant.sdiCode}</p>
             )}
             {tenant.pecEmail && (
-              <p className="text-xs text-gray-700">PEC: {tenant.pecEmail}</p>
+              <p className="text-xs text-[var(--text-secondary)]">PEC: {tenant.pecEmail}</p>
             )}
             {tenant.phone && (
-              <p className="text-xs text-gray-700">Tel: {tenant.phone}</p>
+              <p className="text-xs text-[var(--text-secondary)]">Tel: {tenant.phone}</p>
             )}
           </div>
           <div className="text-right">
@@ -146,8 +146,8 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
         </div>
 
         {/* Customer */}
-        <div className="mb-6 p-3 border border-gray-300 rounded">
-          <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Destinatario</p>
+        <div className="mb-6 p-3 border border-[var(--border-default)] rounded">
+          <p className="text-xs font-semibold text-[var(--text-tertiary)] mb-1 uppercase">Destinatario</p>
           <p className="font-bold">{invoice.customerName}</p>
           {invoice.customerAddress && (
             <p className="text-sm">{invoice.customerAddress}</p>
@@ -169,20 +169,20 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
         {/* Line Items Table */}
         <table className="w-full border-collapse mb-6">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-left text-xs font-semibold uppercase">
+            <tr className="bg-[var(--surface-secondary)]">
+              <th className="border border-[var(--border-default)] px-3 py-2 text-left text-xs font-semibold uppercase">
                 Descrizione
               </th>
-              <th className="border border-gray-300 px-3 py-2 text-right text-xs font-semibold uppercase w-16">
+              <th className="border border-[var(--border-default)] px-3 py-2 text-right text-xs font-semibold uppercase w-16">
                 Qta
               </th>
-              <th className="border border-gray-300 px-3 py-2 text-right text-xs font-semibold uppercase w-24">
+              <th className="border border-[var(--border-default)] px-3 py-2 text-right text-xs font-semibold uppercase w-24">
                 Prezzo Unit.
               </th>
-              <th className="border border-gray-300 px-3 py-2 text-right text-xs font-semibold uppercase w-16">
+              <th className="border border-[var(--border-default)] px-3 py-2 text-right text-xs font-semibold uppercase w-16">
                 IVA %
               </th>
-              <th className="border border-gray-300 px-3 py-2 text-right text-xs font-semibold uppercase w-24">
+              <th className="border border-[var(--border-default)] px-3 py-2 text-right text-xs font-semibold uppercase w-24">
                 Totale
               </th>
             </tr>
@@ -190,19 +190,19 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
           <tbody>
             {invoice.items.map(item => (
               <tr key={item.id} className="break-inside-avoid">
-                <td className="border border-gray-300 px-3 py-2 text-sm">
+                <td className="border border-[var(--border-default)] px-3 py-2 text-sm">
                   {item.description}
                 </td>
-                <td className="border border-gray-300 px-3 py-2 text-sm text-right">
+                <td className="border border-[var(--border-default)] px-3 py-2 text-sm text-right">
                   {item.quantity}
                 </td>
-                <td className="border border-gray-300 px-3 py-2 text-sm text-right">
+                <td className="border border-[var(--border-default)] px-3 py-2 text-sm text-right">
                   {formatCurrency(item.unitPrice)}
                 </td>
-                <td className="border border-gray-300 px-3 py-2 text-sm text-right">
+                <td className="border border-[var(--border-default)] px-3 py-2 text-sm text-right">
                   {item.vatRate ?? 22}%
                 </td>
-                <td className="border border-gray-300 px-3 py-2 text-sm text-right font-medium">
+                <td className="border border-[var(--border-default)] px-3 py-2 text-sm text-right font-medium">
                   {formatCurrency(item.total || item.quantity * item.unitPrice)}
                 </td>
               </tr>
@@ -229,7 +229,7 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
                 <span>{formatCurrency(invoice.bolloAmount)}</span>
               </div>
             )}
-            <div className="flex justify-between py-2 border-t-2 border-gray-800 mt-2 font-bold text-base">
+            <div className="flex justify-between py-2 border-t-2 border-[var(--border-strong)] mt-2 font-bold text-base">
               <span>TOTALE:</span>
               <span>{formatCurrency(invoice.total)}</span>
             </div>
@@ -238,8 +238,8 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
 
         {/* Payment Info */}
         {(invoice.paymentMethod || invoice.iban) && (
-          <div className="mb-6 p-3 border border-gray-300 rounded">
-            <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">
+          <div className="mb-6 p-3 border border-[var(--border-default)] rounded">
+            <p className="text-xs font-semibold text-[var(--text-tertiary)] mb-1 uppercase">
               Modalita di Pagamento
             </p>
             {invoice.paymentMethod && (
@@ -259,18 +259,18 @@ export function InvoicePrint({ invoice, tenant }: InvoicePrintProps) {
         {/* Notes */}
         {invoice.notes && (
           <div className="mb-6">
-            <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Note</p>
+            <p className="text-xs font-semibold text-[var(--text-tertiary)] mb-1 uppercase">Note</p>
             <p className="text-sm whitespace-pre-wrap">{invoice.notes}</p>
           </div>
         )}
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 px-[20mm] pb-[10mm]">
-          <div className="border-t border-gray-300 pt-3 text-center">
+          <div className="border-t border-[var(--border-default)] pt-3 text-center">
             {invoice.fiscalNotes && (
-              <p className="text-[8pt] text-gray-600 mb-1">{invoice.fiscalNotes}</p>
+              <p className="text-[8pt] text-[var(--text-secondary)] mb-1">{invoice.fiscalNotes}</p>
             )}
-            <p className="text-[7pt] text-gray-500">
+            <p className="text-[7pt] text-[var(--text-tertiary)]">
               {tenant.ragioneSociale}
               {tenant.partitaIva && ` - P.IVA ${tenant.partitaIva}`}
               {tenant.codiceFiscale && ` - C.F. ${tenant.codiceFiscale}`}

@@ -192,8 +192,8 @@ export function ProfileCompletionModal({
             onCheckedChange={(checked) => 
               handleFieldChange(currentField, checked ? 'true' : 'false')
             }
-            className="w-5 h-5 rounded-lg border-2 data-[state=checked]:bg-blue-500 
-                       data-[state=checked]:border-blue-500"
+            className="w-5 h-5 rounded-lg border-2 data-[state=checked]:bg-[var(--status-info-subtle)]0 
+                       data-[state=checked]:border-[var(--status-info)]"
           />
           <Label htmlFor={currentField} className="text-base cursor-pointer">
             Voglio ricevere comunicazioni marketing via {subField === 'email' ? 'email' : 'SMS'}
@@ -206,7 +206,7 @@ export function ProfileCompletionModal({
     return (
       <div className="space-y-3">
         <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
             {FIELD_ICONS[currentField] || <Sparkles className="w-5 h-5" />}
           </div>
           <Input
@@ -214,14 +214,14 @@ export function ProfileCompletionModal({
             value={fieldValues[currentField] || ''}
             onChange={(e) => handleFieldChange(currentField, e.target.value)}
             placeholder={FIELD_PLACEHOLDERS[currentField] || ''}
-            className="h-14 pl-12 pr-4 rounded-2xl bg-white/60 border-0 
-                       text-gray-900 placeholder:text-gray-400
-                       focus:ring-2 focus:ring-blue-500/20 focus:bg-white/80
+            className="h-14 pl-12 pr-4 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 
+                       text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]
+                       focus:ring-2 focus:ring-[var(--status-info)]/20 focus:bg-[var(--surface-secondary)]
                        transition-all duration-300"
             autoFocus
           />
         </div>
-        <p className="text-xs text-gray-500 px-1">
+        <p className="text-xs text-[var(--text-tertiary)] px-1">
           Questo campo ci aiuterà a personalizzare la tua esperienza
         </p>
       </div>
@@ -231,35 +231,35 @@ export function ProfileCompletionModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
-        className="max-w-lg bg-white/80 backdrop-blur-3xl border border-white/50 
+        className="max-w-lg bg-[var(--surface-secondary)] backdrop-blur-3xl border border-[var(--border-default)]/50 
                    rounded-[28px] p-0 overflow-hidden shadow-apple-xl"
       >
         {/* Header gradient */}
-        <div className="relative h-24 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 
+        <div className="relative h-24 bg-gradient-to-br from-[var(--status-info)]/20 via-[var(--brand)]/20 to-[var(--status-warning)]/20 
                         flex items-center justify-center overflow-hidden">
           {/* Effetti luce */}
-          <div className="absolute top-0 left-1/4 w-32 h-32 bg-white/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-blue-400/20 rounded-full blur-2xl" />
+          <div className="absolute top-0 left-1/4 w-32 h-32 bg-[var(--surface-secondary)]/30 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-[var(--status-info)]/20 rounded-full blur-2xl" />
           
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] 
                        flex items-center justify-center shadow-lg shadow-blue-500/25 relative z-10"
           >
-            <Gift className="w-8 h-8 text-white" />
+            <Gift className="w-8 h-8 text-[var(--text-on-brand)]" />
           </motion.div>
         </div>
         
         <div className="p-6 pt-4">
           <DialogHeader className="text-center mb-6">
-            <DialogTitle className="text-xl font-semibold text-gray-900">
+            <DialogTitle className="text-xl font-semibold text-[var(--text-primary)]">
               Completa il tuo profilo
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
+            <DialogDescription className="text-sm text-[var(--text-secondary)]">
               {isSuccess ? (
-                <span className="text-green-600 font-medium">
+                <span className="text-[var(--status-success)] font-medium">
                   🎉 Profilo aggiornato con successo!
                 </span>
               ) : (
@@ -277,13 +277,13 @@ export function ProfileCompletionModal({
                 exit={{ opacity: 0, scale: 0.8 }}
                 className="py-8 flex flex-col items-center"
               >
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                  <Check className="w-10 h-10 text-green-600" />
+                <div className="w-20 h-20 rounded-full bg-[var(--status-success-subtle)] flex items-center justify-center mb-4">
+                  <Check className="w-10 h-10 text-[var(--status-success)]" />
                 </div>
-                <p className="text-center text-gray-600">
+                <p className="text-center text-[var(--text-secondary)]">
                   Hai sbloccato:<br />
                   <span className="font-semibold text-transparent bg-clip-text 
-                                   bg-gradient-to-r from-blue-600 to-purple-600">
+                                   bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)]">
                     {stage.incentive}
                   </span>
                 </p>
@@ -297,13 +297,13 @@ export function ProfileCompletionModal({
               >
                 {/* Progress bar */}
                 <div className="mb-6">
-                  <div className="flex justify-between text-xs text-gray-500 mb-2">
+                  <div className="flex justify-between text-xs text-[var(--text-tertiary)] mb-2">
                     <span>Progresso</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
-                  <div className="h-2 bg-gray-200/50 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[var(--border-default)]/50 rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 
+                      className="h-full bg-gradient-to-r from-[var(--status-info)] via-[var(--brand)] to-[var(--status-warning)] 
                                  rounded-full"
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
@@ -316,16 +316,16 @@ export function ProfileCompletionModal({
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 
-                             border border-amber-200/50"
+                  className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-[var(--status-warning)]/5 to-[var(--status-warning)]/5 
+                             border border-[var(--status-warning)]/30/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-amber-600" />
+                    <div className="w-10 h-10 rounded-xl bg-[var(--status-warning)]/10 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-[var(--status-warning)]" />
                     </div>
                     <div>
-                      <p className="text-xs text-amber-700 font-medium">Ricompensa attuale</p>
-                      <p className="text-sm font-semibold text-amber-900">{stage.incentive}</p>
+                      <p className="text-xs text-[var(--status-warning)] font-medium">Ricompensa attuale</p>
+                      <p className="text-sm font-semibold text-[var(--status-warning)]">{stage.incentive}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -342,7 +342,7 @@ export function ProfileCompletionModal({
                   >
                     <Label 
                       htmlFor={currentField}
-                      className="text-base font-medium text-gray-900 mb-3 block"
+                      className="text-base font-medium text-[var(--text-primary)] mb-3 block"
                     >
                       {FIELD_LABELS[currentField] || currentField}
                     </Label>
@@ -378,9 +378,9 @@ export function ProfileCompletionModal({
                     disabled={isSubmitting || (!fieldValues[currentField] && !isLastField)}
                     className={cn(
                       'h-12 px-6 rounded-2xl flex-1 font-medium',
-                      'bg-gradient-to-r from-blue-500 to-indigo-600',
-                      'hover:from-blue-600 hover:to-indigo-700',
-                      'text-white shadow-lg shadow-blue-500/25',
+                      'bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)]',
+                      'hover:from-[var(--status-info)] hover:to-[var(--brand)]',
+                      'text-[var(--text-on-brand)] shadow-lg shadow-blue-500/25',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >

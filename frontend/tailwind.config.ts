@@ -79,6 +79,30 @@ const config: Config = {
         border: '#e5e5e5',
         input: '#e5e5e5',
         ring: '#2e95ff',
+        // Brand color variations
+        brand: {
+          '50': 'oklch(0.97 0.04 254.1)',
+          '100': 'oklch(0.92 0.08 254.1)',
+          '200': 'oklch(0.85 0.15 254.1)',
+          '300': 'oklch(0.78 0.2 254.1)',
+          '400': 'oklch(0.71 0.23 254.1)',
+          '500': 'oklch(0.64 0.24 254.1)',
+          '600': 'oklch(0.57 0.22 254.1)',
+          '700': 'oklch(0.50 0.20 254.1)',
+          '800': 'oklch(0.43 0.18 254.1)',
+          '900': 'oklch(0.36 0.16 254.1)',
+          '950': 'oklch(0.30 0.14 254.1)',
+          DEFAULT: '#2e95ff',
+        },
+        // Status color tokens
+        'status': {
+          'ready': 'oklch(0.62 0.19 155)',
+          'urgent': 'oklch(0.58 0.22 25)',
+          'warning': 'oklch(0.72 0.19 75)',
+          'success': 'oklch(0.62 0.19 155)',
+          'error': 'oklch(0.58 0.22 25)',
+          'info': 'oklch(0.637 0.237 254.1)',
+        },
       },
       fontFamily: {
         sans: [

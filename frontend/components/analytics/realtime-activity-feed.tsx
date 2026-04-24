@@ -36,7 +36,7 @@ interface ActivityTemplate {
 const ACTIVITY_TEMPLATES: ActivityTemplate[] = [
   {
     icon: ClipboardList,
-    iconColor: '#60a5fa',
+    iconColor: 'var(--status-info)',
     iconBg: 'rgba(96,165,250,0.1)',
     descriptions: [
       'Nuovo OdL #1042 creato per tagliando completo',
@@ -46,7 +46,7 @@ const ACTIVITY_TEMPLATES: ActivityTemplate[] = [
   },
   {
     icon: FileText,
-    iconColor: '#34d399',
+    iconColor: 'var(--status-success)',
     iconBg: 'rgba(52,211,153,0.1)',
     descriptions: [
       'Fattura #F-2026-0891 emessa (\u20ac 485,00)',
@@ -76,7 +76,7 @@ const ACTIVITY_TEMPLATES: ActivityTemplate[] = [
   },
   {
     icon: CreditCard,
-    iconColor: '#34d399',
+    iconColor: 'var(--status-success)',
     iconBg: 'rgba(52,211,153,0.1)',
     descriptions: [
       'Pagamento ricevuto: \u20ac 485,00 (carta)',
@@ -86,7 +86,7 @@ const ACTIVITY_TEMPLATES: ActivityTemplate[] = [
   },
   {
     icon: Wrench,
-    iconColor: '#fbbf24',
+    iconColor: 'var(--status-warning)',
     iconBg: 'rgba(251,191,36,0.1)',
     descriptions: [
       'Lavorazione completata: sostituzione olio motore',
@@ -106,7 +106,7 @@ const ACTIVITY_TEMPLATES: ActivityTemplate[] = [
   },
   {
     icon: Package,
-    iconColor: '#f87171',
+    iconColor: 'var(--status-error)',
     iconBg: 'rgba(248,113,113,0.1)',
     descriptions: [
       'Ricambio ordinato: filtro olio (x3)',
@@ -116,7 +116,7 @@ const ACTIVITY_TEMPLATES: ActivityTemplate[] = [
   },
   {
     icon: CalendarCheck,
-    iconColor: '#60a5fa',
+    iconColor: 'var(--status-info)',
     iconBg: 'rgba(96,165,250,0.1)',
     descriptions: [
       'Appuntamento confermato per domani ore 9:00',
@@ -233,7 +233,7 @@ export function RealtimeActivityFeed(): React.ReactElement {
                   duration: 0.3,
                   delay: prefersReducedMotion ? 0 : index * 0.04,
                 }}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/5"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--surface-secondary)]/5"
               >
                 <div
                   className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
@@ -245,7 +245,7 @@ export function RealtimeActivityFeed(): React.ReactElement {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">
+                  <p className="text-sm text-[var(--text-on-brand)] truncate">
                     {activity.description}
                   </p>
                 </div>

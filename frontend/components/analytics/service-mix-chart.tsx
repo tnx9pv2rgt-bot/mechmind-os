@@ -50,7 +50,7 @@ const serviceConfig = {
   },
   elettronica: {
     label: "Elettronica",
-    color: "#8b5cf6", // purple
+    color: "var(--brand)", // purple
     icon: Zap,
   },
   carrozzeria: {
@@ -193,35 +193,35 @@ function CustomTooltip({
     const Icon = config?.icon || Wrench;
 
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
         <div className="flex items-center gap-2 mb-2">
           <div className="rounded-lg p-1.5" style={{ backgroundColor: data.color + "20" }}>
             <Icon className="h-4 w-4" style={{ color: data.color }} />
           </div>
-          <p className="font-medium text-gray-900 dark:text-white">{config?.label}</p>
+          <p className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{config?.label}</p>
         </div>
         <div className="space-y-1 text-sm">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Fatturato</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Fatturato</span>
+            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(data.revenue)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Ordini</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Ordini</span>
+            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {data.count}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">ARO medio</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">ARO medio</span>
+            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {formatCurrency(data.revenue / data.count)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-500 dark:text-gray-400">Quota</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Quota</span>
+            <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {data.value}%
             </span>
           </div>
@@ -252,21 +252,21 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Mix Servizi
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Distribuzione per tipo di intervento
           </p>
         </div>
-        <div className="flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+        <div className="flex rounded-lg bg-[var(--surface-secondary)] p-1 dark:bg-[var(--surface-primary)]">
           <button
             onClick={() => setViewMode("percent")}
             className={cn(
               "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
               viewMode === "percent"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm dark:bg-[var(--border-default)] dark:text-[var(--text-on-brand)]"
+                : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]"
             )}
           >
             <Percent className="h-3.5 w-3.5" />
@@ -277,8 +277,8 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
             className={cn(
               "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
               viewMode === "revenue"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm dark:bg-[var(--border-default)] dark:text-[var(--text-on-brand)]"
+                : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]"
             )}
           >
             <DollarSign className="h-3.5 w-3.5" />
@@ -289,8 +289,8 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
 
       {/* Total Summary */}
       <div className="mb-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg bg-brand-50 p-4 dark:bg-brand-900/20">
-          <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400">
+        <div className="rounded-lg bg-[var(--brand)]/5 p-4 dark:bg-[var(--brand)]/40/20">
+          <div className="flex items-center gap-2 text-[var(--brand)] dark:text-brand-400">
             <TrendingUp className="h-4 w-4" />
             <span className="text-sm font-medium">Fatturato Totale</span>
           </div>
@@ -298,12 +298,12 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
             {formatCurrency(totalRevenue)}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+        <div className="rounded-lg bg-[var(--surface-secondary)] p-4 dark:bg-[var(--surface-primary)]">
+          <div className="flex items-center gap-2 text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             <Wrench className="h-4 w-4" />
             <span className="text-sm font-medium">Ordini Totali</span>
           </div>
-          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+          <p className="mt-1 text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {totalOrders}
           </p>
         </div>
@@ -355,8 +355,8 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
                 className={cn(
                   "w-full rounded-lg p-3 text-left transition-all",
                   isActive
-                    ? "bg-gray-100 shadow-sm dark:bg-gray-800"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    ? "bg-[var(--surface-secondary)] shadow-sm dark:bg-[var(--surface-primary)]"
+                    : "hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -368,7 +368,7 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900 dark:text-white">
+                      <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         {config?.label}
                       </span>
                       <span className="text-sm font-semibold" style={{ color: item.color }}>
@@ -376,15 +376,15 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
                       </span>
                     </div>
                     <div className="mt-1 flex items-center justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">
+                      <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                         {item.count} ordini
                       </span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         {formatCurrency(item.revenue)}
                       </span>
                     </div>
                     {/* Progress bar */}
-                    <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--border-default)] dark:bg-[var(--border-default)]">
                       <div
                         className="h-1.5 rounded-full transition-all duration-500"
                         style={{
@@ -402,12 +402,12 @@ export function ServiceMixChart({ dateRange }: ServiceMixChartProps) {
       </div>
 
       {/* Insights */}
-      <div className="mt-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+      <div className="mt-6 rounded-lg bg-[var(--status-info-subtle)] p-4 text-sm text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]">
         <div className="flex items-start gap-3">
           <TrendingUp className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <div>
             <p className="font-medium">Analisi Mix Servizi</p>
-            <p className="mt-1 text-blue-700 dark:text-blue-300">
+            <p className="mt-1 text-[var(--status-info)] dark:text-[var(--status-info)]">
               I tagliandi rappresentano il {data[0].value}% del fatturato con un
               ARO medio di {formatCurrency(data[0].revenue / data[0].count)}.
               Considera di promuovere servizi aggiuntivi durante i tagliandi per

@@ -1,7 +1,4 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
   "permissions": {
     "deny": [
       "Bash(rm -rf *)",
@@ -142,7 +139,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\nCONTENT=$(echo \"$INPUT\" | jq -r '.tool_input.content // .tool_input.new_str // empty' 2>/dev/null)\n\n# Guard 1: Block mock/demo data in API routes\nif echo \"$FILE\" | grep -qE 'app/api/.*route\\.ts'; then\n  if echo \"$CONTENT\" | grep -qiE 'DEMO_DATA|demoData|mockData|isDemoMode|demo.mode|getDemoData|fakeDat'; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: mock/demo data nelle route API. Usa SOLO proxy diretto al backend NestJS reale.\"}}'\n    exit 0\n  fi\nfi\n\n# Guard 2: Block @ts-ignore / @ts-expect-error\nif echo \"$CONTENT\" | grep -qE '@ts-ignore|@ts-expect-error'; then\n  jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: @ts-ignore/@ts-expect-error. Fixa il tipo correttamente.\"}}'\n  exit 0\nfi\n\n# Guard 3: Block console.log in production code\nif echo \"$FILE\" | grep -qvE '\\.(spec|test)\\.ts'; then\n  if echo \"$CONTENT\" | grep -qE 'console\\.log\\('; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: console.log in production. Usa Logger del framework (this.logger.log/warn/error).\"}}'\n    exit 0\n  fi\nfi\n\nexit 0"
+            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\nCONTENT=$(echo \"$INPUT\" | jq -r '.tool_input.content // .tool_input.new_str // empty' 2>/dev/null)\n\n# Guard 1: Block mock/demo data in API routes\nif echo \"$FILE\" | grep -qE 'app/api/.*route\\.ts'; then\n  if echo \"$CONTENT\" | grep -qiE 'DEMO_DATA|demoData|mockData|isDemoMode|demo.mode|getDemoData|fakeDat'; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: mock/demo data nelle route API. Usa SOLO proxy diretto al backend NestJS reale.\"}}'\n    exit 0\n  fi\nfi\n\n# Guard 2: Block @ts-ignore / @ts-expect-error\nif echo \"$CONTENT\" | grep -qE '@ts-ignore|@ts-expect-error'; then\n  jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: @ts-ignore/@ts-expect-error. Fixa il tipo correttamente.\"}}'\n  exit 0\nfi\n\n# Guard 3: Block console.log in production code\nif echo \"$FILE\" | grep -qvE '\\.(spec|test)\\.(ts|tsx)'; then\n  if echo \"$CONTENT\" | grep -qE 'console\\.log\\('; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: console.log in production. Usa Logger del framework (this.logger.log/warn/error).\"}}'\n    exit 0\n  fi\nfi\n\nexit 0"
           }
         ],
         "description": "BLOCCA scrittura di mock data, @ts-ignore, console.log in produzione"

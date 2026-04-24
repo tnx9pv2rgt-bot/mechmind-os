@@ -127,7 +127,7 @@ export default function PublicPaymentPage() {
   if (error || !invoice) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="w-12 h-12 text-red-400" />
+        <AlertCircle className="w-12 h-12 text-[var(--status-error)]" />
         <p className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center text-lg font-medium">
           {error || 'Fattura non trovata'}
         </p>
@@ -145,8 +145,8 @@ export default function PublicPaymentPage() {
   if (invoice.status === 'PAID') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <CheckCircle2 className="w-10 h-10 text-green-500" />
+        <div className="w-20 h-20 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 flex items-center justify-center">
+          <CheckCircle2 className="w-10 h-10 text-[var(--status-success)]" />
         </div>
         <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Pagamento completato</h1>
         <p className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
@@ -165,7 +165,7 @@ export default function PublicPaymentPage() {
       <Toaster richColors position="top-center" />
 
       {/* Invoice Header */}
-      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-3">
+      <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] p-5 space-y-3">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
@@ -200,7 +200,7 @@ export default function PublicPaymentPage() {
       </div>
 
       {/* Line Items */}
-      <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] overflow-hidden">
+      <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl border border-[var(--border-default)] dark:border-[var(--border-strong)] overflow-hidden">
         <div className="px-5 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-strong)]">
           <h2 className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] uppercase tracking-wider">
             Dettaglio voci
@@ -225,7 +225,7 @@ export default function PublicPaymentPage() {
         </div>
 
         {/* Totals */}
-        <div className="px-5 py-4 bg-white dark:bg-[var(--surface-primary)] space-y-2">
+        <div className="px-5 py-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] space-y-2">
           <div className="flex justify-between text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
             <span>Imponibile</span>
             <span>{formatCurrency(invoice.subtotal)}</span>
@@ -250,8 +250,8 @@ export default function PublicPaymentPage() {
           type="button"
           onClick={() => handlePay('full')}
           disabled={redirecting !== null}
-          className="w-full py-4 rounded-xl bg-[var(--brand)] text-white font-semibold text-base
-                     hover:bg-[var(--brand)]/90 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed
+          className="w-full py-4 rounded-xl bg-[var(--brand)] text-[var(--text-on-brand)] font-semibold text-base
+                     hover:bg-[var(--brand)]/90 active:bg-[var(--status-info)] disabled:opacity-50 disabled:cursor-not-allowed
                      transition-colors min-h-[52px] flex items-center justify-center gap-2"
         >
           {redirecting === 'full' ? (
@@ -271,9 +271,9 @@ export default function PublicPaymentPage() {
           type="button"
           onClick={() => handlePay('bnpl')}
           disabled={redirecting !== null}
-          className="w-full py-4 rounded-xl bg-white dark:bg-[var(--surface-elevated)] border-2 border-[var(--border-default)]
+          className="w-full py-4 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border-2 border-[var(--border-default)]
                      dark:border-[var(--border-strong)] text-[var(--text-primary)] dark:text-[var(--text-primary)] font-semibold text-base
-                     hover:bg-white dark:hover:bg-[var(--surface-active)] active:bg-[var(--surface-hover)]
+                     hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] active:bg-[var(--surface-hover)]
                      disabled:opacity-50 disabled:cursor-not-allowed
                      transition-colors min-h-[52px] flex items-center justify-center gap-2"
         >

@@ -205,10 +205,10 @@ const WO_TYPES = [
 ] as const;
 
 const PRIORITY_OPTIONS = [
-  { value: 'LOW', label: 'Bassa', color: 'text-apple-gray' },
-  { value: 'NORMAL', label: 'Normale', color: 'text-apple-blue' },
-  { value: 'HIGH', label: 'Alta', color: 'text-apple-orange' },
-  { value: 'URGENT', label: 'Urgente', color: 'text-apple-red' },
+  { value: 'LOW', label: 'Bassa', color: 'text-[var(--text-tertiary)]' },
+  { value: 'NORMAL', label: 'Normale', color: 'text-[var(--brand)]' },
+  { value: 'HIGH', label: 'Alta', color: 'text-[var(--status-warning)]' },
+  { value: 'URGENT', label: 'Urgente', color: 'text-[var(--status-error)]' },
 ] as const;
 
 const FUEL_LEVELS = [
@@ -260,11 +260,11 @@ const MARKETING_SOURCES = [
   { value: 'OTHER', label: 'Altro' },
 ] as const;
 
-const selectClass = 'w-full h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer';
+const selectClass = 'w-full h-10 px-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer';
 
-const textareaClass = 'w-full rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue';
+const textareaClass = 'w-full rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue';
 
-const labelClass = 'text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1.5 block';
+const labelClass = 'text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1.5 block';
 
 // =============================================================================
 // Section Header Component
@@ -278,14 +278,14 @@ function SectionHeader({ icon: Icon, title, subtitle, number }: {
   return (
     <AppleCardHeader>
       <div className="flex items-center gap-3 w-full">
-        <div className="w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-apple-blue/20 flex items-center justify-center flex-shrink-0">
-          <span className="text-footnote font-bold text-apple-blue">{number}</span>
+        <div className="w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--brand)]/20 flex items-center justify-center flex-shrink-0">
+          <span className="text-footnote font-bold text-[var(--brand)]">{number}</span>
         </div>
         <div className="flex items-center gap-2 flex-1">
-          <Icon className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+          <Icon className="h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
           <div>
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>{title}</h2>
-            {subtitle && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{subtitle}</p>}
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{title}</h2>
+            {subtitle && <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{subtitle}</p>}
           </div>
         </div>
       </div>
@@ -310,19 +310,19 @@ function CollapsibleSection({ defaultOpen = true, children, icon: Icon, title, s
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-apple-light-gray/20 dark:hover:bg-[var(--surface-hover)] transition-colors rounded-t-2xl"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-[var(--surface-secondary)]/20 dark:hover:bg-[var(--surface-hover)] transition-colors rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-apple-blue/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-footnote font-bold text-apple-blue">{number}</span>
+          <div className="w-8 h-8 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--brand)]/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-footnote font-bold text-[var(--brand)]">{number}</span>
           </div>
-          <Icon className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+          <Icon className="h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
           <div className="text-left">
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>{title}</h2>
-            {subtitle && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{subtitle}</p>}
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{title}</h2>
+            {subtitle && <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{subtitle}</p>}
           </div>
         </div>
-        {open ? <ChevronUp className="h-4 w-4 text-apple-gray" /> : <ChevronDown className="h-4 w-4 text-apple-gray" />}
+        {open ? <ChevronUp className="h-4 w-4 text-[var(--text-tertiary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-tertiary)]" />}
       </button>
       {open && <AppleCardContent>{children}</AppleCardContent>}
     </AppleCard>
@@ -349,26 +349,26 @@ function LiveTotal({ lineItems }: { lineItems: FormValues['lineItems'] }): React
   }, [lineItems]);
 
   return (
-    <div className="bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-2xl p-4 space-y-2">
-      <div className="flex justify-between text-body text-apple-gray dark:text-[var(--text-secondary)]">
+    <div className="bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] rounded-2xl p-4 space-y-2">
+      <div className="flex justify-between text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         <span>Manodopera</span>
         <span className="tabular-nums">{totals.laborTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
       </div>
-      <div className="flex justify-between text-body text-apple-gray dark:text-[var(--text-secondary)]">
+      <div className="flex justify-between text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         <span>Materiali/Ricambi</span>
         <span className="tabular-nums">{totals.partsTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
       </div>
-      <div className="border-t border-apple-border/20 dark:border-[var(--border-default)] pt-2 flex justify-between text-body text-apple-dark dark:text-[var(--text-primary)]">
+      <div className="border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] pt-2 flex justify-between text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
         <span>Imponibile</span>
         <span className="font-semibold tabular-nums">{totals.subtotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
       </div>
-      <div className="flex justify-between text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+      <div className="flex justify-between text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         <span>IVA 22%</span>
         <span className="tabular-nums">{totals.iva.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
       </div>
-      <div className="border-t border-apple-border/20 dark:border-[var(--border-default)] pt-2 flex justify-between">
-        <span className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]">Totale stimato</span>
-        <span className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)] tabular-nums">{totals.total.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
+      <div className="border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] pt-2 flex justify-between">
+        <span className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Totale stimato</span>
+        <span className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] tabular-nums">{totals.total.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
       </div>
     </div>
   );
@@ -698,8 +698,8 @@ export default function NewWorkOrderPage(): React.ReactElement {
                 className='min-w-[44px]'
               />
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuovo Ordine di Lavoro</h1>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-0.5'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuovo Ordine di Lavoro</h1>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-0.5'>
                   Compila tutti i dettagli per creare un OdL professionale
                 </p>
               </div>
@@ -757,11 +757,11 @@ export default function NewWorkOrderPage(): React.ReactElement {
                           />
                           <div className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all min-h-[72px] justify-center ${
                             isSelected
-                              ? 'border-apple-blue bg-apple-blue/5 dark:bg-apple-blue/10'
-                              : 'border-apple-border/30 dark:border-[var(--border-default)] hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)]'
+                              ? 'border-[var(--brand)] bg-[var(--brand)]/5 dark:bg-[var(--brand)]/10'
+                              : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)]'
                           }`}>
-                            <Icon className={`h-5 w-5 ${isSelected ? 'text-apple-blue' : 'text-apple-gray dark:text-[var(--text-secondary)]'}`} />
-                            <span className={`text-footnote font-medium text-center ${isSelected ? 'text-apple-blue' : 'text-apple-dark dark:text-[var(--text-primary)]'}`}>
+                            <Icon className={`h-5 w-5 ${isSelected ? 'text-[var(--brand)]' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'}`} />
+                            <span className={`text-footnote font-medium text-center ${isSelected ? 'text-[var(--brand)]' : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'}`}>
                               {type.label}
                             </span>
                           </div>
@@ -783,7 +783,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                           {...register('priority')}
                           className="sr-only peer"
                         />
-                        <span className={`px-4 py-2.5 rounded-full text-footnote font-medium border transition-all min-h-[40px] flex items-center peer-checked:border-apple-blue peer-checked:bg-apple-blue/10 dark:peer-checked:bg-apple-blue/20 peer-checked:text-apple-blue border-apple-border/30 dark:border-[var(--border-default)] text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)]`}>
+                        <span className={`px-4 py-2.5 rounded-full text-footnote font-medium border transition-all min-h-[40px] flex items-center peer-checked:border-[var(--brand)] peer-checked:bg-[var(--brand)]/10 dark:peer-checked:bg-[var(--brand)]/20 peer-checked:text-[var(--brand)] border-[var(--border-default)]/30 dark:border-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)]`}>
                           {opt.label}
                         </span>
                       </label>
@@ -815,7 +815,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                 <div>
                   <label className={labelClass}>Cliente *</label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                     <input
                       type="text"
                       value={customerSearch}
@@ -829,27 +829,27 @@ export default function NewWorkOrderPage(): React.ReactElement {
                       }}
                       onFocus={() => setShowCustomerDropdown(true)}
                       placeholder="Cerca per nome, email, P.IVA..."
-                      className='w-full h-10 pl-10 pr-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+                      className='w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
                       autoComplete="off"
                     />
                     {customerSearchLoading && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-apple-blue" />
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[var(--brand)]" />
                     )}
                     {showCustomerDropdown && customerResults.length > 0 && !selectedCustomer && (
-                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[var(--surface-elevated)] border border-apple-border/30 dark:border-[var(--border-default)] rounded-xl shadow-apple dark:shadow-lg max-h-48 overflow-y-auto">
+                      <div className="absolute z-50 w-full mt-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)]/30 dark:border-[var(--border-default)] rounded-xl shadow-apple dark:shadow-lg max-h-48 overflow-y-auto">
                         {customerResults.map((c) => (
                           <button
                             key={c.id}
                             type="button"
                             onClick={() => selectCustomer(c)}
-                            className="w-full text-left px-4 py-3 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-active)] transition-colors min-h-[44px]"
+                            className="w-full text-left px-4 py-3 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-active)] transition-colors min-h-[44px]"
                           >
-                            <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                            <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {[c.firstName, c.lastName].filter(Boolean).join(' ') || c.companyName || 'Cliente'}
                             </p>
                             <div className="flex gap-3">
-                              {c.email && <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{c.email}</span>}
-                              {c.phone && <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{c.phone}</span>}
+                              {c.email && <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{c.email}</span>}
+                              {c.phone && <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{c.phone}</span>}
                             </div>
                           </button>
                         ))}
@@ -857,15 +857,15 @@ export default function NewWorkOrderPage(): React.ReactElement {
                     )}
                   </div>
                   {selectedCustomer && (
-                    <div className="mt-2 p-3 rounded-xl bg-apple-green/5 dark:bg-green-900/10 border border-apple-green/20 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-apple-green flex-shrink-0" />
-                      <p className="text-footnote text-apple-green dark:text-green-400">
+                    <div className="mt-2 p-3 rounded-xl bg-[var(--status-success)]/5 dark:bg-[var(--status-success)]/40/10 border border-apple-green/20 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-[var(--status-success)] flex-shrink-0" />
+                      <p className="text-footnote text-[var(--status-success)] dark:text-[var(--status-success)]">
                         {[selectedCustomer.firstName, selectedCustomer.lastName].filter(Boolean).join(' ')}
-                        {selectedCustomer.vatNumber && <span className="ml-2 text-apple-gray dark:text-[var(--text-secondary)]">P.IVA: {selectedCustomer.vatNumber}</span>}
+                        {selectedCustomer.vatNumber && <span className="ml-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">P.IVA: {selectedCustomer.vatNumber}</span>}
                       </p>
                     </div>
                   )}
-                  {errors.customerId && <p className="text-footnote text-apple-red mt-1">{errors.customerId.message}</p>}
+                  {errors.customerId && <p className="text-footnote text-[var(--status-error)] mt-1">{errors.customerId.message}</p>}
                 </div>
 
                 {/* Vehicle */}
@@ -886,33 +886,33 @@ export default function NewWorkOrderPage(): React.ReactElement {
                       </option>
                     ))}
                   </select>
-                  {errors.vehicleId && <p className="text-footnote text-apple-red mt-1">{errors.vehicleId.message}</p>}
+                  {errors.vehicleId && <p className="text-footnote text-[var(--status-error)] mt-1">{errors.vehicleId.message}</p>}
 
                   {/* Vehicle Info Card */}
                   {selectedVehicle && (
-                    <div className="mt-2 p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="mt-2 p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {selectedVehicle.vin && (
                         <div>
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">VIN</p>
-                          <p className="text-footnote font-mono text-apple-dark dark:text-[var(--text-primary)]">{selectedVehicle.vin}</p>
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">VIN</p>
+                          <p className="text-footnote font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]">{selectedVehicle.vin}</p>
                         </div>
                       )}
                       {selectedVehicle.color && (
                         <div>
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Colore</p>
-                          <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{selectedVehicle.color}</p>
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Colore</p>
+                          <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{selectedVehicle.color}</p>
                         </div>
                       )}
                       {selectedVehicle.year && (
                         <div>
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Anno</p>
-                          <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{selectedVehicle.year}</p>
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Anno</p>
+                          <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{selectedVehicle.year}</p>
                         </div>
                       )}
                       {selectedVehicle.mileage && (
                         <div>
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Ultimo Km</p>
-                          <p className="text-body text-apple-dark dark:text-[var(--text-primary)] tabular-nums">{selectedVehicle.mileage.toLocaleString('it-IT')} km</p>
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ultimo Km</p>
+                          <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] tabular-nums">{selectedVehicle.mileage.toLocaleString('it-IT')} km</p>
                         </div>
                       )}
                     </div>
@@ -926,7 +926,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                     {CONTACT_METHODS.map((cm) => (
                       <label key={cm.value} className="cursor-pointer">
                         <input type="radio" value={cm.value} {...register('preferredContact')} className="sr-only peer" />
-                        <span className="px-3 py-2 rounded-full text-footnote font-medium border transition-all flex items-center peer-checked:border-apple-blue peer-checked:bg-apple-blue/10 peer-checked:text-apple-blue border-apple-border/30 dark:border-[var(--border-default)] text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)]">
+                        <span className="px-3 py-2 rounded-full text-footnote font-medium border transition-all flex items-center peer-checked:border-[var(--brand)] peer-checked:bg-[var(--brand)]/10 peer-checked:text-[var(--brand)] border-[var(--border-default)]/30 dark:border-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)]">
                           {cm.label}
                         </span>
                       </label>
@@ -949,7 +949,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   <div>
                     <label className={labelClass}>Km ingresso *</label>
                     <div className="relative">
-                      <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                      <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                       <Input
                         type="number"
                         {...register('mileageIn')}
@@ -963,7 +963,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   <div>
                     <label className={labelClass}>Posto parcheggio</label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                       <Input
                         {...register('parkingSpot')}
                         placeholder="es. A-12"
@@ -976,7 +976,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   <div>
                     <label className={labelClass}>Etichetta chiave</label>
                     <div className="relative">
-                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                       <Input
                         {...register('keyTag')}
                         placeholder="es. K-042"
@@ -995,18 +995,18 @@ export default function NewWorkOrderPage(): React.ReactElement {
                         <input type="radio" value={fl.value} {...register('fuelLevelIn')} className="sr-only peer" />
                         <div className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
                           watchedFuel === fl.value
-                            ? 'border-apple-blue bg-apple-blue/5'
-                            : 'border-apple-border/30 dark:border-[var(--border-default)] hover:bg-apple-light-gray/20'
+                            ? 'border-[var(--brand)] bg-[var(--brand)]/5'
+                            : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)]/20'
                         }`}>
-                          <div className="w-full h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden">
+                          <div className="w-full h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${
-                                fl.value === 'EMPTY' ? 'bg-apple-red' : fl.value === 'QUARTER' ? 'bg-apple-orange' : 'bg-apple-green'
+                                fl.value === 'EMPTY' ? 'bg-[var(--status-error)]' : fl.value === 'QUARTER' ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-success)]'
                               }`}
                               style={{ width: fl.width }}
                             />
                           </div>
-                          <span className={`text-footnote font-medium ${watchedFuel === fl.value ? 'text-apple-blue' : 'text-apple-gray dark:text-[var(--text-secondary)]'}`}>
+                          <span className={`text-footnote font-medium ${watchedFuel === fl.value ? 'text-[var(--brand)]' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'}`}>
                             {fl.label}
                           </span>
                         </div>
@@ -1029,12 +1029,12 @@ export default function NewWorkOrderPage(): React.ReactElement {
                 {/* Checkboxes */}
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
-                    <input type="checkbox" {...register('testDriveBefore')} className="w-4 h-4 rounded border-apple-border accent-apple-blue" />
-                    <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">Test drive effettuato</span>
+                    <input type="checkbox" {...register('testDriveBefore')} className="w-4 h-4 rounded border-[var(--border-default)] accent-apple-blue" />
+                    <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">Test drive effettuato</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
-                    <input type="checkbox" {...register('recallCheckDone')} className="w-4 h-4 rounded border-apple-border accent-apple-blue" />
-                    <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">Controllo richiami MCTC</span>
+                    <input type="checkbox" {...register('recallCheckDone')} className="w-4 h-4 rounded border-[var(--border-default)] accent-apple-blue" />
+                    <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">Controllo richiami MCTC</span>
                   </label>
                 </div>
               </AppleCardContent>
@@ -1056,7 +1056,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                     placeholder="Il cliente dice: 'Sento un rumore strano quando freno e il volante vibra...'"
                     className={textareaClass}
                   />
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">Questo testo apparirà in fattura come richiesta originale del cliente</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">Questo testo apparirà in fattura come richiesta originale del cliente</p>
                 </div>
                 <div>
                   <label className={labelClass}>Diagnosi / Valutazione iniziale</label>
@@ -1116,11 +1116,11 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   <div>
                     <label className={labelClass}>Data/ora promessa al cliente</label>
                     <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                       <input
                         type="datetime-local"
                         {...register('estimatedCompletion')}
-                        className="w-full h-10 pl-10 pr-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                        className="w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                       />
                     </div>
                   </div>
@@ -1129,11 +1129,11 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   <div>
                     <label className={labelClass}>Ritiro stimato</label>
                     <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                       <input
                         type="datetime-local"
                         {...register('estimatedPickup')}
-                        className="w-full h-10 pl-10 pr-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                        className="w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                       />
                     </div>
                   </div>
@@ -1158,8 +1158,8 @@ export default function NewWorkOrderPage(): React.ReactElement {
                         <input type="radio" value={dt.value} {...register('dropOffType')} className="sr-only peer" />
                         <div className={`flex items-center justify-center p-3 rounded-xl border text-center transition-all min-h-[44px] ${
                           watchedDropOff === dt.value
-                            ? 'border-apple-blue bg-apple-blue/5 text-apple-blue'
-                            : 'border-apple-border/30 dark:border-[var(--border-default)] text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/30'
+                            ? 'border-[var(--brand)] bg-[var(--brand)]/5 text-[var(--brand)]'
+                            : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/30'
                         }`}>
                           <span className="text-footnote font-medium">{dt.label}</span>
                         </div>
@@ -1171,8 +1171,8 @@ export default function NewWorkOrderPage(): React.ReactElement {
                 {/* Courtesy Car */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
-                    <input type="checkbox" {...register('courtesyCarRequested')} className="w-4 h-4 rounded border-apple-border accent-apple-blue" />
-                    <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">Auto sostitutiva richiesta</span>
+                    <input type="checkbox" {...register('courtesyCarRequested')} className="w-4 h-4 rounded border-[var(--border-default)] accent-apple-blue" />
+                    <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">Auto sostitutiva richiesta</span>
                   </label>
                   {watchedCourtesy && (
                     <div className="flex-1">
@@ -1230,11 +1230,11 @@ export default function NewWorkOrderPage(): React.ReactElement {
 
                 {fields.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Wrench className="h-10 w-10 text-apple-gray/30 mb-3" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    <Wrench className="h-10 w-10 text-[var(--text-tertiary)]/30 mb-3" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Nessuna lavorazione aggiunta
                     </p>
-                    <p className="text-footnote text-apple-gray/60 dark:text-[var(--text-tertiary)] mt-1">
+                    <p className="text-footnote text-[var(--text-tertiary)]/60 dark:text-[var(--text-tertiary)] mt-1">
                       Usa &ldquo;Lavori Standard&rdquo; o &ldquo;Aggiungi&rdquo; per inserire voci
                     </p>
                   </div>
@@ -1248,16 +1248,16 @@ export default function NewWorkOrderPage(): React.ReactElement {
                           key={field.id}
                           className={`rounded-2xl border transition-all ${
                             !isAuthorized
-                              ? 'border-apple-red/30 bg-red-50/30 dark:bg-red-900/5'
-                              : 'border-apple-border/30 dark:border-[var(--border-default)] bg-apple-light-gray/20 dark:bg-[var(--surface-hover)]'
+                              ? 'border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]/30 dark:bg-[var(--status-error)]/40/5'
+                              : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/20 dark:bg-[var(--surface-hover)]'
                           }`}
                         >
                           {/* Main Row */}
                           <div className="p-4 space-y-3">
                             <div className="flex items-start gap-3">
                               {/* Line number */}
-                              <div className="w-7 h-7 rounded-lg bg-apple-blue/10 flex items-center justify-center flex-shrink-0 mt-1">
-                                <span className="text-footnote font-bold text-apple-blue">{index + 1}</span>
+                              <div className="w-7 h-7 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span className="text-footnote font-bold text-[var(--brand)]">{index + 1}</span>
                               </div>
 
                               {/* Description + Op Code */}
@@ -1278,7 +1278,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                 {/* Hours, Cost, Rate row */}
                                 <div className="flex flex-wrap gap-2">
                                   <div className="w-20">
-                                    <label className="text-[10px] text-apple-gray dark:text-[var(--text-secondary)]">Ore</label>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ore</label>
                                     <Input
                                       type="number"
                                       step="0.5"
@@ -1288,7 +1288,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                     />
                                   </div>
                                   <div className="w-24">
-                                    <label className="text-[10px] text-apple-gray dark:text-[var(--text-secondary)]">Tariffa/h</label>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Tariffa/h</label>
                                     <Input
                                       type="number"
                                       {...register(`lineItems.${index}.laborRate`)}
@@ -1297,7 +1297,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                     />
                                   </div>
                                   <div className="w-24">
-                                    <label className="text-[10px] text-apple-gray dark:text-[var(--text-secondary)]">Ricambi EUR</label>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ricambi EUR</label>
                                     <Input
                                       type="number"
                                       {...register(`lineItems.${index}.estimatedCost`)}
@@ -1306,16 +1306,16 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                     />
                                   </div>
                                   <div className="w-28">
-                                    <label className="text-[10px] text-apple-gray dark:text-[var(--text-secondary)]">Tipo tariffa</label>
-                                    <select {...register(`lineItems.${index}.laborType`)} className="w-full h-8 px-2 rounded-lg border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-footnote text-apple-dark dark:text-[var(--text-primary)]">
+                                    <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Tipo tariffa</label>
+                                    <select {...register(`lineItems.${index}.laborType`)} className="w-full h-8 px-2 rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                       {LABOR_TYPES.map((lt) => (
                                         <option key={lt.value} value={lt.value}>{lt.label}</option>
                                       ))}
                                     </select>
                                   </div>
                                   <div className="w-28">
-                                    <label className="text-[10px] text-apple-gray dark:text-[var(--text-secondary)]">Tecnico</label>
-                                    <select {...register(`lineItems.${index}.technicianId`)} className="w-full h-8 px-2 rounded-lg border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-footnote text-apple-dark dark:text-[var(--text-primary)]">
+                                    <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Tecnico</label>
+                                    <select {...register(`lineItems.${index}.technicianId`)} className="w-full h-8 px-2 rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                       <option value="">—</option>
                                       {technicians.map((t) => (
                                         <option key={t.id} value={t.id}>{t.firstName} {t.lastName[0]}.</option>
@@ -1330,10 +1330,10 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                 <button
                                   type="button"
                                   onClick={() => setExpandedLine(isExpanded ? null : index)}
-                                  className="p-1.5 rounded-lg hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)] transition-colors"
+                                  className="p-1.5 rounded-lg hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-active)] transition-colors"
                                   title="Dettagli 3C"
                                 >
-                                  <Pen className="h-3.5 w-3.5 text-apple-gray" />
+                                  <Pen className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
                                 </button>
                                 <button
                                   type="button"
@@ -1341,21 +1341,21 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                     const current = watch(`lineItems.${index}.authorized`);
                                     setValue(`lineItems.${index}.authorized`, !current);
                                   }}
-                                  className="p-1.5 rounded-lg hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)] transition-colors"
+                                  className="p-1.5 rounded-lg hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-active)] transition-colors"
                                   title={isAuthorized ? 'Segna come rifiutato' : 'Segna come autorizzato'}
                                 >
                                   {isAuthorized
-                                    ? <CheckCircle2 className="h-3.5 w-3.5 text-apple-green" />
-                                    : <XCircle className="h-3.5 w-3.5 text-apple-red" />
+                                    ? <CheckCircle2 className="h-3.5 w-3.5 text-[var(--status-success)]" />
+                                    : <XCircle className="h-3.5 w-3.5 text-[var(--status-error)]" />
                                   }
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => remove(index)}
-                                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                                  className="p-1.5 rounded-lg hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error)]/40/10 transition-colors"
                                   title="Rimuovi"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5 text-apple-gray hover:text-apple-red" />
+                                  <Trash2 className="h-3.5 w-3.5 text-[var(--text-tertiary)] hover:text-[var(--status-error)]" />
                                 </button>
                               </div>
                             </div>
@@ -1363,8 +1363,8 @@ export default function NewWorkOrderPage(): React.ReactElement {
                             {/* Authorization badge */}
                             {!isAuthorized && (
                               <div className="flex items-center gap-1.5 ml-10">
-                                <XCircle className="h-3.5 w-3.5 text-apple-red" />
-                                <span className="text-footnote font-medium text-apple-red">Rifiutato dal cliente</span>
+                                <XCircle className="h-3.5 w-3.5 text-[var(--status-error)]" />
+                                <span className="text-footnote font-medium text-[var(--status-error)]">Rifiutato dal cliente</span>
                               </div>
                             )}
                           </div>
@@ -1375,15 +1375,15 @@ export default function NewWorkOrderPage(): React.ReactElement {
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              className="border-t border-apple-border/20 dark:border-[var(--border-default)] p-4 space-y-3 bg-white/50 dark:bg-[var(--surface-primary)]/50 rounded-b-2xl"
+                              className="border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] p-4 space-y-3 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/50 rounded-b-2xl"
                             >
-                              <p className="text-footnote font-semibold text-apple-blue flex items-center gap-1.5">
+                              <p className="text-footnote font-semibold text-[var(--brand)] flex items-center gap-1.5">
                                 <FileText className="h-3.5 w-3.5" />
                                 Standard 3C — Problema / Causa / Correzione
                               </p>
                               <div className="grid grid-cols-1 gap-3">
                                 <div>
-                                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                                     1. Problema (parole del cliente)
                                   </label>
                                   <textarea
@@ -1394,7 +1394,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                                     2. Causa (diagnosi tecnica)
                                   </label>
                                   <textarea
@@ -1405,7 +1405,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                                     3. Correzione (lavoro eseguito)
                                   </label>
                                   <textarea
@@ -1420,7 +1420,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                               {/* Warranty + Sublet */}
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                                 <div>
-                                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">Garanzia</label>
+                                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">Garanzia</label>
                                   <select {...register(`lineItems.${index}.warrantyType`)} className={selectClass}>
                                     {WARRANTY_TYPES.map((wt) => (
                                       <option key={wt.value} value={wt.value}>{wt.label}</option>
@@ -1429,8 +1429,8 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                 </div>
                                 <div>
                                   <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
-                                    <input type="checkbox" {...register(`lineItems.${index}.isSublet`)} className="w-4 h-4 rounded border-apple-border accent-apple-blue" />
-                                    <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">Lavoro in subfornitura</span>
+                                    <input type="checkbox" {...register(`lineItems.${index}.isSublet`)} className="w-4 h-4 rounded border-[var(--border-default)] accent-apple-blue" />
+                                    <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">Lavoro in subfornitura</span>
                                   </label>
                                   {watch(`lineItems.${index}.isSublet`) && (
                                     <Input
@@ -1490,7 +1490,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   <div>
                     <label className={labelClass}>Importo pre-autorizzato</label>
                     <div className="relative">
-                      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                       <Input
                         type="number"
                         step="0.01"
@@ -1499,13 +1499,13 @@ export default function NewWorkOrderPage(): React.ReactElement {
                         className="pl-10"
                       />
                     </div>
-                    <p className="text-footnote text-apple-gray/60 dark:text-[var(--text-tertiary)] mt-1">Spesa max prima di contattare il cliente</p>
+                    <p className="text-footnote text-[var(--text-tertiary)]/60 dark:text-[var(--text-tertiary)] mt-1">Spesa max prima di contattare il cliente</p>
                   </div>
 
                   {/* Tax Exempt */}
                   <div>
                     <label className="flex items-center gap-2 cursor-pointer min-h-[44px] mb-1.5">
-                      <input type="checkbox" {...register('taxExempt')} className="w-4 h-4 rounded border-apple-border accent-apple-blue" />
+                      <input type="checkbox" {...register('taxExempt')} className="w-4 h-4 rounded border-[var(--border-default)] accent-apple-blue" />
                       <span className={labelClass + ' !mb-0'}>Esenzione IVA</span>
                     </label>
                     {watchedTaxExempt && (
@@ -1556,10 +1556,10 @@ export default function NewWorkOrderPage(): React.ReactElement {
           <div className="max-h-[400px] overflow-y-auto space-y-2 mt-2">
             {cannedJobsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-apple-blue" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--brand)]" />
               </div>
             ) : cannedJobs.length === 0 ? (
-              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] text-center py-8">
+              <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center py-8">
                 Nessun lavoro standard configurato.
               </p>
             ) : (
@@ -1568,21 +1568,21 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   key={job.id}
                   type="button"
                   onClick={() => addCannedJob(job)}
-                  className="w-full text-left p-3 rounded-2xl border border-apple-border/30 dark:border-[var(--border-default)] hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-active)] transition-colors"
+                  className="w-full text-left p-3 rounded-2xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-active)] transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{job.name}</p>
-                    {job.opCode && <span className="text-footnote font-mono text-apple-gray">{job.opCode}</span>}
+                    <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{job.name}</p>
+                    {job.opCode && <span className="text-footnote font-mono text-[var(--text-tertiary)]">{job.opCode}</span>}
                   </div>
                   {job.description && (
-                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">{job.description}</p>
+                    <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5">{job.description}</p>
                   )}
                   <div className="flex gap-3 mt-1">
                     {job.estimatedHours != null && (
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{job.estimatedHours} ore</span>
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{job.estimatedHours} ore</span>
                     )}
                     {job.estimatedCost != null && (
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{job.estimatedCost.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{job.estimatedCost.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}</span>
                     )}
                   </div>
                 </button>

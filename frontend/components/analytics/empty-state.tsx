@@ -63,9 +63,9 @@ function FloatingCircle({
 }
 
 const CIRCLES = [
-  { size: 40, color: '#60a5fa', delay: 0, x: -60, y: -30 },
+  { size: 40, color: 'var(--status-info)', delay: 0, x: -60, y: -30 },
   { size: 28, color: '#a78bfa', delay: 1.2, x: 50, y: -10 },
-  { size: 20, color: '#34d399', delay: 2.4, x: -20, y: 40 },
+  { size: 20, color: 'var(--status-success)', delay: 2.4, x: -20, y: 40 },
 ] as const;
 
 export function AnalyticsEmptyState({
@@ -99,7 +99,7 @@ export function AnalyticsEmptyState({
         </div>
       </div>
 
-      <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
+      <h3 className="mb-2 text-lg font-semibold text-[var(--text-on-brand)]">{title}</h3>
       <p className="mb-6 max-w-sm text-sm leading-relaxed text-[var(--text-tertiary)]">
         {description}
       </p>
@@ -108,7 +108,7 @@ export function AnalyticsEmptyState({
         <button
           type="button"
           onClick={action.onClick}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-medium text-[var(--text-primary)] transition-colors duration-200 hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-[var(--surface-secondary)] px-6 text-sm font-medium text-[var(--text-primary)] transition-colors duration-200 hover:bg-[var(--surface-secondary)]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-tertiary)]"
           style={{ minHeight: 44 }}
         >
           {action.label}

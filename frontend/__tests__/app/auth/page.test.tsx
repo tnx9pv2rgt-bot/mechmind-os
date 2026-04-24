@@ -1316,4 +1316,250 @@ describe('AuthPage', () => {
       expect(screen.getByText('Connessione a Google...')).toBeInTheDocument()
     })
   })
+
+  // =========================================================================
+  // Password step — additional error variants and rememberMe
+  // =========================================================================
+  describe('password step — additional behaviors', () => {
+    async function goToPasswordAndSubmit(responseBody: Record<string, unknown>, status = 403): Promise<void> {
+      render(<AuthPage />)
+      fireEvent.change(screen.getByPlaceholderText('Indirizzo e-mail'), { target: { value: 'user@test.com' } })
+      const form = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(form) })
+      await waitFor(() => { expect(screen.getByText('Inserisci la password')).toBeInTheDocument() })
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status,
+        json: jest.fn().mockResolvedValueOnce(responseBody),
+      })
+      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } })
+      const pwForm = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(pwForm) })
+    }
+
+    it('shows "Account temporaneamente bloccato" when response contains "locked" keyword', async () => {
+      await goToPasswordAndSubmit({ message: 'Account locked. Try again.' })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Account temporaneamente bloccato. Riprova più tardi.')
+      })
+    })
+
+    it('extracts error text from nested error.message object', async () => {
+      await goToPasswordAndSubmit({ error: { message: 'Credenziali non valide' } })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Credenziali non valide')
+      })
+    })
+
+    it('sends rememberMe=true in request body when remember-me checkbox is checked', async () => {
+      render(<AuthPage />)
+      fireEvent.change(screen.getByPlaceholderText('Indirizzo e-mail'), { target: { value: 'user@test.com' } })
+      const form = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(form) })
+      await waitFor(() => { expect(screen.getByText('Inserisci la password')).toBeInTheDocument() })
+      fireEvent.click(screen.getByRole('checkbox', { name: /Ricordami/i }))
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ success: true }),
+      })
+      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } })
+      const pwForm = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(pwForm) })
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/api/auth/password/login',
+          expect.objectContaining({ body: expect.stringContaining('"rememberMe":true') })
+        )
+      })
+    })
+  })
+
+  // =========================================================================
+  // Magic-sent step — resend link
+  // =========================================================================
+  describe('magic-sent step — resend link', () => {
+    it('calls magic-link/send again when Reinvia button is clicked', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true })
+      render(<AuthPage />)
+      fireEvent.change(screen.getByPlaceholderText('Indirizzo e-mail'), { target: { value: 'magic@test.com' } })
+      await act(async () => { fireEvent.click(screen.getByText('Accedi con magic link')) })
+      await waitFor(() => { expect(screen.getByText(/Controlla la tua email/)).toBeInTheDocument() })
+
+      mockFetch.mockResolvedValueOnce({ ok: true })
+      await act(async () => { fireEvent.click(screen.getByText('Reinvia')) })
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledTimes(2)
+        expect(mockFetch).toHaveBeenLastCalledWith(
+          '/api/auth/magic-link/send',
+          expect.objectContaining({ method: 'POST' })
+        )
+      })
+    })
+  })
+
+  // =========================================================================
+  // MFA step — risk level, trust device, SMS OTP paths
+  // =========================================================================
+  describe('MFA step — extended coverage', () => {
+    async function goToMfaWith(extra: Record<string, unknown> = {}): Promise<void> {
+      render(<AuthPage />)
+      fireEvent.change(screen.getByPlaceholderText('Indirizzo e-mail'), { target: { value: 'user@test.com' } })
+      const form = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(form) })
+      await waitFor(() => { expect(screen.getByText('Inserisci la password')).toBeInTheDocument() })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ success: true, requiresMFA: true, tempToken: 'mfa-tok', ...extra }),
+      })
+      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } })
+      const pwForm = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(pwForm) })
+      await waitFor(() => { expect(screen.getByText('Verifica in due passaggi')).toBeInTheDocument() })
+    }
+
+    async function activateSmsMode(): Promise<void> {
+      mockFetch.mockResolvedValueOnce({ ok: true })
+      await act(async () => { fireEvent.click(screen.getByText('Ricevi codice via SMS')) })
+      await waitFor(() => {
+        expect(screen.getByText(/Inserisci il codice a 6 cifre ricevuto via SMS/i)).toBeInTheDocument()
+      })
+    }
+
+    it('shows high-risk warning when login riskLevel is high', async () => {
+      await goToMfaWith({ riskLevel: 'high' })
+      expect(screen.getByText('Accesso da posizione o dispositivo insolito. Verifica la tua identità.')).toBeInTheDocument()
+    })
+
+    it('shows medium-risk warning when login riskLevel is medium', async () => {
+      await goToMfaWith({ riskLevel: 'medium' })
+      expect(screen.getByText('Nuovo dispositivo rilevato. Conferma la tua identità.')).toBeInTheDocument()
+    })
+
+    it('calls trust-device endpoint when checkbox checked and deviceId comes from login', async () => {
+      await goToMfaWith({ deviceId: 'dev-123' })
+      fireEvent.click(screen.getByRole('checkbox', { name: /Fidati di questo dispositivo/i }))
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ success: true }),
+      })
+      mockFetch.mockResolvedValueOnce({ ok: true })
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '123456' } })
+      })
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/auth/devices/dev-123/trust', { method: 'POST' })
+      })
+    })
+
+    it('shows connection error when MFA verify fetch throws', async () => {
+      await goToMfaWith()
+      mockFetch.mockRejectedValueOnce(new Error('Network failure'))
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '123456' } })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Errore di connessione. Riprova.')
+      })
+    })
+
+    it('shows network error when SMS send fetch throws', async () => {
+      await goToMfaWith()
+      mockFetch.mockRejectedValueOnce(new Error('Network failure'))
+      await act(async () => { fireEvent.click(screen.getByText('Ricevi codice via SMS')) })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Errore di rete. Riprova.')
+      })
+    })
+
+    it('redirects to dashboard after successful SMS OTP verification', async () => {
+      await goToMfaWith()
+      await activateSmsMode()
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ success: true }),
+      })
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '654321' } })
+      })
+      await waitFor(() => { expect(mockPush).toHaveBeenCalledWith('/dashboard') })
+    })
+
+    it('shows error and remainingAttempts when SMS OTP verification fails', async () => {
+      await goToMfaWith()
+      await activateSmsMode()
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValueOnce({ error: 'Codice SMS errato', remainingAttempts: 1 }),
+      })
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '000000' } })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Codice SMS errato')
+        expect(screen.getByText(/Tentativi rimasti: 1/i)).toBeInTheDocument()
+      })
+    })
+
+    it('shows connection error when SMS OTP verify fetch throws', async () => {
+      await goToMfaWith()
+      await activateSmsMode()
+      mockFetch.mockRejectedValueOnce(new Error('Network'))
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('otp-input'), { target: { value: '111111' } })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Errore di connessione. Riprova.')
+      })
+    })
+
+    it('returns to authenticator OTP when "Usa codice authenticator" is clicked from SMS mode', async () => {
+      await goToMfaWith()
+      await activateSmsMode()
+      await act(async () => { fireEvent.click(screen.getByText('Usa codice authenticator')) })
+      await waitFor(() => {
+        expect(screen.getByTestId('otp-input')).toBeInTheDocument()
+        expect(screen.queryByText(/Inserisci il codice a 6 cifre ricevuto via SMS/i)).not.toBeInTheDocument()
+      })
+    })
+
+    it('shows "Rinvia codice via SMS" label after first SMS has been sent', async () => {
+      await goToMfaWith()
+      await activateSmsMode()
+      await act(async () => { fireEvent.click(screen.getByText('Usa codice authenticator')) })
+      await waitFor(() => { expect(screen.getByTestId('otp-input')).toBeInTheDocument() })
+      expect(screen.getByText('Rinvia codice via SMS')).toBeInTheDocument()
+    })
+  })
+
+  // =========================================================================
+  // Passkey prompt — registration catch path
+  // =========================================================================
+  describe('passkey-prompt step — registration catch path', () => {
+    it('navigates to dashboard when startRegistration throws during setup', async () => {
+      render(<AuthPage />)
+      fireEvent.change(screen.getByPlaceholderText('Indirizzo e-mail'), { target: { value: 'user@test.com' } })
+      const form = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(form) })
+      await waitFor(() => { expect(screen.getByText('Inserisci la password')).toBeInTheDocument() })
+      mockBrowserSupportsWebAuthn.mockReturnValue(true)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ success: true }),
+      })
+      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } })
+      const pwForm = document.querySelector('form') as HTMLFormElement
+      await act(async () => { fireEvent.submit(pwForm) })
+      await waitFor(() => { expect(screen.getByText('Attiva accesso biometrico')).toBeInTheDocument() })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ options: {}, sessionId: 'sid' }),
+      })
+      mockStartRegistration.mockRejectedValueOnce(new Error('User cancelled'))
+      await act(async () => { fireEvent.click(screen.getByText('Attiva accesso biometrico')) })
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/dashboard')
+      })
+    })
+  })
 })

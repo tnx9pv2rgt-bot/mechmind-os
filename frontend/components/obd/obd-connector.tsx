@@ -88,8 +88,8 @@ export function OBDConnector({
               className={cn(
                 'flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-colors',
                 connectionMethod === id
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)] text-[var(--status-info)]'
+                  : 'border-[var(--border-default)] hover:border-[var(--border-strong)]'
               )}
             >
               <Icon className='h-6 w-6' />
@@ -100,14 +100,14 @@ export function OBDConnector({
 
         {/* Connection Status */}
         {connectionStatus === 'connected' && connectedDevice ? (
-          <div className='p-4 bg-green-50 border border-green-200 rounded-lg'>
+          <div className='p-4 bg-[var(--status-success-subtle)] border border-[var(--status-success)]/30 rounded-lg'>
             <div className='flex items-center gap-3'>
-              <div className='w-3 h-3 bg-green-500 rounded-full animate-pulse' />
+              <div className='w-3 h-3 bg-[var(--status-success-subtle)]0 rounded-full animate-pulse' />
               <div className='flex-1'>
-                <p className='font-medium text-green-800'>{connectedDevice.name}</p>
-                <p className='text-sm text-green-600'>{connectedDevice.macAddress}</p>
+                <p className='font-medium text-[var(--status-success)]'>{connectedDevice.name}</p>
+                <p className='text-sm text-[var(--status-success)]'>{connectedDevice.macAddress}</p>
               </div>
-              <Badge variant='outline' className='bg-white'>
+              <Badge variant='outline' className='bg-[var(--surface-primary)]'>
                 {connectedDevice.protocol}
               </Badge>
             </div>
@@ -145,7 +145,7 @@ export function OBDConnector({
             {/* Device List */}
             {foundDevices.length > 0 && (
               <div className='space-y-2'>
-                <p className='text-sm font-medium text-gray-600'>Dispositivi trovati:</p>
+                <p className='text-sm font-medium text-[var(--text-secondary)]'>Dispositivi trovati:</p>
                 {foundDevices.map(device => (
                   <button
                     key={device.id}
@@ -154,24 +154,24 @@ export function OBDConnector({
                     className={cn(
                       'w-full p-3 rounded-lg border text-left transition-colors',
                       selectedDevice?.id === device.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)]'
+                        : 'border-[var(--border-default)] hover:border-[var(--border-strong)]'
                     )}
                   >
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-3'>
-                        <div className='w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center'>
-                          <Smartphone className='h-5 w-5 text-gray-600' />
+                        <div className='w-10 h-10 bg-[var(--surface-secondary)] rounded-lg flex items-center justify-center'>
+                          <Smartphone className='h-5 w-5 text-[var(--text-secondary)]' />
                         </div>
                         <div>
                           <p className='font-medium'>{device.name}</p>
-                          <p className='text-sm text-gray-500'>{device.macAddress}</p>
+                          <p className='text-sm text-[var(--text-tertiary)]'>{device.macAddress}</p>
                         </div>
                       </div>
                       <Badge variant='outline'>{device.protocol}</Badge>
                     </div>
                     {device.firmwareVersion && (
-                      <p className='text-xs text-gray-400 mt-2'>
+                      <p className='text-xs text-[var(--text-tertiary)] mt-2'>
                         Firmware: {device.firmwareVersion}
                       </p>
                     )}
@@ -183,7 +183,7 @@ export function OBDConnector({
         )}
 
         {/* Instructions */}
-        <div className='text-xs text-gray-500 space-y-1'>
+        <div className='text-xs text-[var(--text-tertiary)] space-y-1'>
           <p>1. Inserisci il dongle OBD nella porta del veicolo</p>
           <p>2. Accendi il quadro (senza avviare il motore)</p>
           <p>3. Cerca e seleziona il dispositivo</p>

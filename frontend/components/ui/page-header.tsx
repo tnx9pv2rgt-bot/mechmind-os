@@ -42,7 +42,7 @@ export function PageHeader({
                 {item.href ? (
                   <button
                     onClick={() => router.push(item.href!)}
-                    className="hover:text-[var(--text-primary)] dark:hover:text-gray-200 transition-colors"
+                    className="hover:text-[var(--text-primary)] dark:hover:text-[var(--text-tertiary)] transition-colors"
                   >
                     {item.label}
                   </button>
@@ -69,7 +69,7 @@ export function PageHeader({
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-semibold text-[var(--text-primary)] dark:text-gray-50 tracking-tight truncate">
+              <h1 className="text-2xl font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] tracking-tight truncate">
                 {title}
               </h1>
               {badge}

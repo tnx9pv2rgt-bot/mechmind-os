@@ -48,12 +48,12 @@ interface FileClaimDTO {
 type ClaimWithApproved = WarrantyClaim & { approvedAmount?: number };
 
 const statusConfig: Partial<Record<WarrantyStatus, { label: string; bg: string; color: string }>> = {
-  ACTIVE: { label: 'Attiva', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
-  EXPIRING_SOON: { label: 'In Scadenza', bg: 'bg-amber-100 dark:bg-amber-900/40', color: 'text-amber-700 dark:text-amber-300' },
-  EXPIRED: { label: 'Scaduta', bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-red-700 dark:text-red-300' },
-  VOID: { label: 'Annullata', bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]', color: 'text-apple-dark dark:text-[var(--text-secondary)]' },
-  PENDING: { label: 'In Attesa', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  CLAIMED: { label: 'Reclamata', bg: 'bg-blue-100 dark:bg-blue-900/40', color: 'text-blue-700 dark:text-blue-300' },
+  ACTIVE: { label: 'Attiva', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  EXPIRING_SOON: { label: 'In Scadenza', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  EXPIRED: { label: 'Scaduta', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+  VOID: { label: 'Annullata', bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]', color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]' },
+  PENDING: { label: 'In Attesa', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  CLAIMED: { label: 'Reclamata', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]' },
 };
 
 const typeConfig: Record<WarrantyType, { label: string }> = {
@@ -173,7 +173,7 @@ export default function WarrantyDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -181,8 +181,8 @@ export default function WarrantyDetailPage() {
   if (!warranty) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center'>
-        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
           Garanzia non trovata
         </p>
         <AppleButton variant='secondary' onClick={() => router.push('/dashboard/warranty')}>
@@ -194,8 +194,8 @@ export default function WarrantyDetailPage() {
 
   const status = statusConfig[warranty.status as WarrantyStatus] || {
     label: 'Sconosciuto',
-    bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]',
-    color: 'text-apple-dark dark:text-[var(--text-secondary)]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]',
   };
   const type = typeConfig[(warranty.coverageType as WarrantyType) || WarrantyType.MANUFACTURER];
   const progress = calculateProgress(warranty.startDate, warranty.expirationDate);
@@ -248,14 +248,14 @@ export default function WarrantyDetailPage() {
           />
           <div className='flex items-center justify-between mt-1'>
             <div className='flex items-center gap-3'>
-              <div className='w-12 h-12 rounded-xl bg-apple-green/10 flex items-center justify-center'>
-                <Shield className='h-6 w-6 text-apple-green' />
+              <div className='w-12 h-12 rounded-xl bg-[var(--status-success)]/10 flex items-center justify-center'>
+                <Shield className='h-6 w-6 text-[var(--status-success)]' />
               </div>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Garanzia {warranty.vehicle?.make} {warranty.vehicle?.model}
                 </h1>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   {type?.label || 'Garanzia'} &bull; {warranty.warrantyNumber}
                 </p>
               </div>
@@ -270,7 +270,7 @@ export default function WarrantyDetailPage() {
               <AppleButton
                 variant='ghost'
                 size='sm'
-                className='text-apple-red hover:opacity-80'
+                className='text-[var(--status-error)] hover:opacity-80'
                 icon={<Trash2 className='h-4 w-4' />}
                 onClick={() => setDeleteConfirmOpen(true)}
               >
@@ -282,7 +282,7 @@ export default function WarrantyDetailPage() {
       </header>
 
       {/* Tabs */}
-      <div className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white/60 dark:bg-[var(--surface-primary)]/60'>
+      <div className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-primary)]/60'>
         <div className='px-8 flex gap-1'>
           {tabs.map(tab => (
             <button
@@ -290,8 +290,8 @@ export default function WarrantyDetailPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-3 text-body font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-apple-blue text-apple-blue'
-                  : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                  ? 'border-[var(--brand)] text-[var(--brand)]'
+                  : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
               }`}
             >
               {tab.label}
@@ -307,19 +307,19 @@ export default function WarrantyDetailPage() {
             {/* Stat Cards */}
             <motion.div className='grid grid-cols-2 lg:grid-cols-4 gap-4' variants={containerVariants}>
               {[
-                { label: 'Copertura Max', value: formatCurrency(warranty.maxClaimAmount || 0), icon: Euro, color: 'bg-apple-blue' },
-                { label: 'Franchigia', value: formatCurrency(warranty.deductibleAmount || 0), icon: Euro, color: 'bg-apple-orange' },
-                { label: 'Copertura Km', value: warranty.mileageLimit ? `${warranty.mileageLimit.toLocaleString()} km` : 'Illimitata', icon: Gauge, color: 'bg-apple-green' },
-                { label: 'Reclami', value: String(warranty.claims?.length || 0), icon: FileText, color: 'bg-apple-purple' },
+                { label: 'Copertura Max', value: formatCurrency(warranty.maxClaimAmount || 0), icon: Euro, color: 'bg-[var(--brand)]' },
+                { label: 'Franchigia', value: formatCurrency(warranty.deductibleAmount || 0), icon: Euro, color: 'bg-[var(--status-warning)]' },
+                { label: 'Copertura Km', value: warranty.mileageLimit ? `${warranty.mileageLimit.toLocaleString()} km` : 'Illimitata', icon: Gauge, color: 'bg-[var(--status-success)]' },
+                { label: 'Reclami', value: String(warranty.claims?.length || 0), icon: FileText, color: 'bg-[var(--brand)]' },
               ].map(stat => (
                 <motion.div key={stat.label} variants={cardVariants}>
                   <AppleCard hover={false}>
                     <AppleCardContent>
                       <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-                        <stat.icon className='h-5 w-5 text-white' />
+                        <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                       </div>
-                      <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>{stat.value}</p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{stat.value}</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                     </AppleCardContent>
                   </AppleCard>
                 </motion.div>
@@ -330,26 +330,26 @@ export default function WarrantyDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Shield className='h-5 w-5 text-apple-gray' /> Stato Garanzia
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Shield className='h-5 w-5 text-[var(--text-tertiary)]' /> Stato Garanzia
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-6'>
                   {/* Progress Bar */}
                   <div className='space-y-2'>
                     <div className='flex items-center justify-between text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Periodo di Copertura</span>
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Periodo di Copertura</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {progress}% trascorso
                       </span>
                     </div>
-                    <div className='w-full h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
+                    <div className='w-full h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
                       <div
-                        className='h-full bg-apple-blue rounded-full transition-all duration-500'
+                        className='h-full bg-[var(--brand)] rounded-full transition-all duration-500'
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <div className='flex items-center justify-between text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <div className='flex items-center justify-between text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       <span>{formatDate(warranty.startDate)}</span>
                       <span>{formatDate(warranty.expirationDate)}</span>
                     </div>
@@ -361,34 +361,34 @@ export default function WarrantyDetailPage() {
                       <div
                         className={`flex items-center gap-3 p-4 rounded-xl ${
                           daysRemaining <= 30
-                            ? 'bg-red-100/60 dark:bg-red-900/20'
+                            ? 'bg-[var(--status-error-subtle)]/60 dark:bg-[var(--status-error-subtle)]'
                             : daysRemaining <= 60
-                              ? 'bg-amber-100/60 dark:bg-amber-900/20'
-                              : 'bg-green-100/60 dark:bg-green-900/20'
+                              ? 'bg-[var(--status-warning)]/10/60 dark:bg-[var(--status-warning)]/40/20'
+                              : 'bg-[var(--status-success-subtle)]/60 dark:bg-[var(--status-success-subtle)]'
                         }`}
                       >
                         <Calendar
                           className={`h-5 w-5 ${
                             daysRemaining <= 30
-                              ? 'text-apple-red'
+                              ? 'text-[var(--status-error)]'
                               : daysRemaining <= 60
-                                ? 'text-apple-orange'
-                                : 'text-apple-green'
+                                ? 'text-[var(--status-warning)]'
+                                : 'text-[var(--status-success)]'
                           }`}
                         />
                         <div>
                           <p
                             className={`font-medium ${
                               daysRemaining <= 30
-                                ? 'text-red-800 dark:text-red-300'
+                                ? 'text-[var(--status-error)] dark:text-[var(--status-error)]'
                                 : daysRemaining <= 60
-                                  ? 'text-amber-800 dark:text-amber-300'
-                                  : 'text-green-800 dark:text-green-300'
+                                  ? 'text-[var(--status-warning)] dark:text-[var(--status-warning)]'
+                                  : 'text-[var(--status-success)] dark:text-[var(--status-success)]'
                             }`}
                           >
                             {daysRemaining > 0 ? `${daysRemaining} giorni rimanenti` : 'Scade oggi'}
                           </p>
-                          <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             Scade il {formatDate(warranty.expirationDate)}
                           </p>
                         </div>
@@ -397,27 +397,27 @@ export default function WarrantyDetailPage() {
 
                   {/* Coverage Details */}
                   <div className='grid grid-cols-2 gap-4'>
-                    <div className='p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
-                      <div className='flex items-center gap-2 text-body text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                    <div className='p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
+                      <div className='flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                         <Euro className='h-4 w-4' />
                         <span>Copertura Residua</span>
                       </div>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(remainingCoverage > 0 ? remainingCoverage : 0)}
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         di {formatCurrency(warranty.maxClaimAmount || 0)} totali
                       </p>
                     </div>
-                    <div className='p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
-                      <div className='flex items-center gap-2 text-body text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                    <div className='p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
+                      <div className='flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                         <TrendingDown className='h-4 w-4' />
                         <span>Utilizzato</span>
                       </div>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(totalClaimed)}
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         in {warranty.claims?.length || 0} reclami
                       </p>
                     </div>
@@ -435,8 +435,8 @@ export default function WarrantyDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center justify-between'>
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                      <FileText className='h-5 w-5 text-apple-gray' /> Storico Reclami
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <FileText className='h-5 w-5 text-[var(--text-tertiary)]' /> Storico Reclami
                     </h2>
                     {canFileClaim && (
                       <AppleButton size='sm' icon={<Plus className='h-4 w-4' />} onClick={() => setClaimDialogOpen(true)}>
@@ -459,8 +459,8 @@ export default function WarrantyDetailPage() {
                         onClick={() => setClaimFilter(f.key)}
                         className={`px-3 py-1.5 rounded-lg text-body font-medium transition-colors ${
                           claimFilter === f.key
-                            ? 'bg-apple-blue text-white'
-                            : 'text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+                            ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                            : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                         }`}
                       >
                         {f.label}
@@ -470,8 +470,8 @@ export default function WarrantyDetailPage() {
 
                   {filteredClaims.length === 0 ? (
                     <div className='text-center py-12'>
-                      <FileText className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <FileText className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessun reclamo trovato
                       </p>
                     </div>
@@ -511,8 +511,8 @@ export default function WarrantyDetailPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                      <Car className='h-5 w-5 text-apple-gray' /> Informazioni Veicolo
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <Car className='h-5 w-5 text-[var(--text-tertiary)]' /> Informazioni Veicolo
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent>
@@ -523,9 +523,9 @@ export default function WarrantyDetailPage() {
                         { label: 'Anno', value: String(warranty.vehicle.year) },
                         { label: 'VIN', value: warranty.vehicle.vin },
                       ].map(row => (
-                        <div key={row.label} className='flex items-center justify-between py-2 border-b border-apple-border/20 dark:border-[var(--border-default)]/50'>
-                          <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{row.label}</span>
-                          <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{row.value}</span>
+                        <div key={row.label} className='flex items-center justify-between py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'>
+                          <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{row.label}</span>
+                          <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{row.value}</span>
                         </div>
                       ))}
                     </div>
@@ -539,25 +539,25 @@ export default function WarrantyDetailPage() {
 
       {/* File Claim Dialog */}
       {claimDialogOpen && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 backdrop-blur-sm'>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className='w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl p-6 m-4'
+            className='w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl p-6 m-4'
           >
             <div className='flex items-center justify-between mb-6'>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Invia un Reclamo
               </h2>
               <button
                 onClick={() => setClaimDialogOpen(false)}
-                className='p-2 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[var(--surface-active)]'
+                className='p-2 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)]'
                 aria-label='Chiudi'
               >
-                <XCircle className='h-5 w-5 text-apple-gray' />
+                <XCircle className='h-5 w-5 text-[var(--text-tertiary)]' />
               </button>
             </div>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
               Invia un nuovo reclamo per questa garanzia
             </p>
             <ClaimForm

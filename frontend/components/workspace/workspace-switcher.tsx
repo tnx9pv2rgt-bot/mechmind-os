@@ -86,24 +86,24 @@ export function WorkspaceSwitcher({
       {/* Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors w-full text-left"
+        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[var(--surface-secondary)]/10 transition-colors w-full text-left"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label="Cambia sede"
       >
         {/* Workspace Avatar */}
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center shrink-0">
           {current?.logo ? (
             <img src={current.logo} alt="" className="w-full h-full rounded-lg object-cover" />
           ) : (
-            <span className="text-white text-xs font-bold">
+            <span className="text-[var(--text-on-brand)] text-xs font-bold">
               {current?.name?.charAt(0)?.toUpperCase() ?? 'M'}
             </span>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-white truncate">
+          <p className="text-sm font-semibold text-[var(--text-on-brand)] truncate">
             {current?.name ?? 'MechMind'}
           </p>
           <p className="text-[10px] text-[var(--text-tertiary)] truncate">
@@ -125,7 +125,7 @@ export function WorkspaceSwitcher({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -5, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-[var(--surface-primary)] rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] shadow-xl overflow-hidden min-w-[240px]"
+            className="absolute top-full left-0 right-0 mt-1 z-50 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] shadow-xl overflow-hidden min-w-[240px]"
             role="listbox"
           >
             {/* Workspaces */}
@@ -138,17 +138,17 @@ export function WorkspaceSwitcher({
                   key={workspace.id}
                   onClick={() => handleSwitch(workspace.id)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white dark:hover:bg-[var(--surface-hover)] transition-colors',
+                    'w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors',
                     workspace.id === currentWorkspaceId && 'bg-[var(--brand)]/5/50 dark:bg-[var(--brand)]/10/20'
                   )}
                   role="option"
                   aria-selected={workspace.id === currentWorkspaceId}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center shrink-0">
                     {workspace.logo ? (
                       <img src={workspace.logo} alt="" className="w-full h-full rounded-lg object-cover" />
                     ) : (
-                      <span className="text-white text-xs font-bold">
+                      <span className="text-[var(--text-on-brand)] text-xs font-bold">
                         {workspace.name.charAt(0).toUpperCase()}
                       </span>
                     )}
@@ -178,7 +178,7 @@ export function WorkspaceSwitcher({
               {workspaces.length > 1 && (
                 <button
                   onClick={() => { setIsOpen(false); /* navigate to multi-location analytics */ }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-white dark:hover:bg-[var(--surface-hover)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
                 >
                   <BarChart3 className="h-4 w-4 text-[var(--text-tertiary)]" />
                   Vista aggregata
@@ -187,7 +187,7 @@ export function WorkspaceSwitcher({
               {onSettings && (
                 <button
                   onClick={() => { setIsOpen(false); onSettings(); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-white dark:hover:bg-[var(--surface-hover)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
                 >
                   <Settings className="h-4 w-4 text-[var(--text-tertiary)]" />
                   Gestisci sedi
@@ -196,7 +196,7 @@ export function WorkspaceSwitcher({
               {onCreateNew && (
                 <button
                   onClick={() => { setIsOpen(false); onCreateNew(); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--brand)] dark:text-[var(--brand)] hover:bg-[var(--brand)]/5 dark:hover:bg-blue-950/20 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--brand)] dark:text-[var(--brand)] hover:bg-[var(--brand)]/5 dark:hover:bg-[var(--status-info)]/40/20 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   Aggiungi sede

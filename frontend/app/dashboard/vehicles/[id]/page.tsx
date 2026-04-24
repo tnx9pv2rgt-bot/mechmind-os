@@ -100,13 +100,13 @@ const TABS = [
 type TabKey = (typeof TABS)[number]['key'];
 
 const WO_STATUS_MAP: Record<string, { label: string; className: string }> = {
-  DRAFT: { label: 'Bozza', className: 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' },
-  OPEN: { label: 'Aperto', className: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
-  IN_PROGRESS: { label: 'In Lavorazione', className: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' },
-  QC: { label: 'Controllo Qualita', className: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' },
-  COMPLETED: { label: 'Completato', className: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
-  DELIVERED: { label: 'Consegnato', className: 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' },
-  CANCELLED: { label: 'Annullato', className: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+  DRAFT: { label: 'Bozza', className: 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]' },
+  OPEN: { label: 'Aperto', className: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]' },
+  IN_PROGRESS: { label: 'In Lavorazione', className: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  QC: { label: 'Controllo Qualita', className: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)] text-[var(--brand)] dark:text-[var(--brand)]' },
+  COMPLETED: { label: 'Completato', className: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  DELIVERED: { label: 'Consegnato', className: 'bg-[var(--status-success)]/10 dark:bg-[var(--status-success)]/30/40 text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  CANCELLED: { label: 'Annullato', className: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]' },
 };
 
 export default function VehicleDetailPage(): React.ReactElement {
@@ -158,12 +158,12 @@ export default function VehicleDetailPage(): React.ReactElement {
       <div className="min-h-screen">
         <header className="">
           <div className="px-4 sm:px-8 py-5">
-            <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <div className="h-4 w-48 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse mb-4" />
+            <div className="h-8 w-64 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
           </div>
         </header>
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
         </div>
       </div>
     );
@@ -205,21 +205,21 @@ export default function VehicleDetailPage(): React.ReactElement {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center flex-shrink-0">
-                <Car className="h-6 w-6 text-apple-blue" />
+              <div className="w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center flex-shrink-0">
+                <Car className="h-6 w-6 text-[var(--brand)]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <span className="inline-block px-3 py-1.5 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-lg font-mono font-bold text-apple-dark dark:text-[var(--text-primary)] text-sm tracking-wider">
+                  <span className="inline-block px-3 py-1.5 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-lg font-mono font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] text-sm tracking-wider">
                     {formatPlate(vehicle.licensePlate)}
                   </span>
                 </div>
-                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                   {vehicle.make} {vehicle.model} {vehicle.year ? `(${vehicle.year})` : ''}
                   {ownerName && (
                     <>
                       {' — '}
-                      <Link href={`/dashboard/customers/${vehicle.customer?.id}`} className="text-apple-blue hover:underline">
+                      <Link href={`/dashboard/customers/${vehicle.customer?.id}`} className="text-[var(--brand)] hover:underline">
                         {ownerName}
                       </Link>
                     </>
@@ -249,8 +249,8 @@ export default function VehicleDetailPage(): React.ReactElement {
                   onClick={() => setTab(tab.key)}
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
                     isActive
-                      ? 'border-apple-blue text-apple-blue bg-apple-blue/5'
-                      : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                      ? 'border-[var(--brand)] text-[var(--brand)] bg-[var(--brand)]/5'
+                      : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -276,11 +276,11 @@ export default function VehicleDetailPage(): React.ReactElement {
         {activeTab === 'manutenzione' && (
           <div className="space-y-8">
             <div>
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Scadenze e Alert</h2>
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">Scadenze e Alert</h2>
               <MaintenanceAlerts vehicle={vehicle} />
             </div>
             <div>
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Storico Interventi</h2>
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">Storico Interventi</h2>
               <ServiceHistory vehicleId={vehicleId} />
             </div>
           </div>
@@ -375,15 +375,15 @@ function DetailsTab({
     }
   };
 
-  const inputClass = 'w-full h-10 px-3 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue/40';
-  const labelClass = 'block text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1';
+  const inputClass = 'w-full h-10 px-3 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue/40';
+  const labelClass = 'block text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1';
 
   if (isEditing) {
     return (
       <AppleCard hover={false}>
         <AppleCardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Modifica Veicolo</h2>
+            <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Modifica Veicolo</h2>
             <div className="flex gap-2">
               <AppleButton variant="ghost" size="sm" onClick={onCancel} icon={<X className="h-4 w-4" />}>
                 Annulla
@@ -479,17 +479,17 @@ function DetailsTab({
   return (
     <AppleCard hover={false}>
       <AppleCardHeader>
-        <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Informazioni Veicolo</h2>
+        <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Informazioni Veicolo</h2>
       </AppleCardHeader>
       <AppleCardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {fields.map((f) => (
             <div key={f.label}>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-apple-gray dark:text-[var(--text-secondary)]">{f.icon}</span>
-                <span className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider">{f.label}</span>
+                <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{f.icon}</span>
+                <span className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider">{f.label}</span>
               </div>
-              <p className={`text-body font-medium ${f.label === 'Targa' ? 'font-mono font-bold text-apple-dark dark:text-[var(--text-primary)]' : 'text-apple-dark dark:text-[var(--text-primary)]'}`}>
+              <p className={`text-body font-medium ${f.label === 'Targa' ? 'font-mono font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]' : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'}`}>
                 {f.value}
               </p>
             </div>
@@ -498,28 +498,28 @@ function DetailsTab({
 
         {/* Owner info */}
         {vehicle.customer && (
-          <div className="mt-8 pt-6 border-t border-apple-border/20 dark:border-[var(--border-default)]">
-            <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
-              <User className="h-4 w-4 text-apple-gray" />
+          <div className="mt-8 pt-6 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+            <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+              <User className="h-4 w-4 text-[var(--text-tertiary)]" />
               Proprietario
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Nome</p>
-                <Link href={`/dashboard/customers/${vehicle.customer.id}`} className="text-body text-apple-blue hover:underline font-medium">
+                <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Nome</p>
+                <Link href={`/dashboard/customers/${vehicle.customer.id}`} className="text-body text-[var(--brand)] hover:underline font-medium">
                   {[vehicle.customer.firstName, vehicle.customer.lastName].filter(Boolean).join(' ') || '—'}
                 </Link>
               </div>
               {vehicle.customer.email && (
                 <div>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Email</p>
-                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{vehicle.customer.email}</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{vehicle.customer.email}</p>
                 </div>
               )}
               {vehicle.customer.phone && (
                 <div>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Telefono</p>
-                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">{vehicle.customer.phone}</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Telefono</p>
+                  <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{vehicle.customer.phone}</p>
                 </div>
               )}
             </div>
@@ -549,21 +549,21 @@ function WorkOrdersTab({ workOrders }: { workOrders: WorkOrderSummary[] }): Reac
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]">
-                <th className="text-left px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]"># OdL</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] hidden sm:table-cell">Stato</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] hidden md:table-cell">Diagnosi</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Totale</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] hidden sm:table-cell">Data</th>
+              <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]"># OdL</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] hidden sm:table-cell">Stato</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] hidden md:table-cell">Diagnosi</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Totale</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] hidden sm:table-cell">Data</th>
               </tr>
             </thead>
             <tbody>
               {workOrders.map((wo) => {
-                const status = WO_STATUS_MAP[wo.status] || { label: wo.status, className: 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' };
+                const status = WO_STATUS_MAP[wo.status] || { label: wo.status, className: 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]' };
                 return (
-                  <tr key={wo.id} className="border-b border-apple-border/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors">
+                  <tr key={wo.id} className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors">
                     <td className="px-4 py-3">
-                      <Link href={`/dashboard/work-orders/${wo.id}`} className="text-body text-apple-blue hover:underline font-medium">
+                      <Link href={`/dashboard/work-orders/${wo.id}`} className="text-body text-[var(--brand)] hover:underline font-medium">
                         {wo.woNumber}
                       </Link>
                     </td>
@@ -572,13 +572,13 @@ function WorkOrdersTab({ workOrders }: { workOrders: WorkOrderSummary[] }): Reac
                         {status.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-body text-apple-gray dark:text-[var(--text-secondary)] hidden md:table-cell max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hidden md:table-cell max-w-[200px] truncate">
                       {wo.diagnosis || '—'}
                     </td>
-                    <td className="px-4 py-3 text-right text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                    <td className="px-4 py-3 text-right text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       {formatCurrency(wo.totalCost)}
                     </td>
-                    <td className="px-4 py-3 text-right text-footnote text-apple-gray dark:text-[var(--text-secondary)] hidden sm:table-cell">
+                    <td className="px-4 py-3 text-right text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hidden sm:table-cell">
                       {formatDate(wo.createdAt)}
                     </td>
                   </tr>
@@ -618,16 +618,16 @@ function InspectionsTab({ inspections, vehicleId }: { inspections: InspectionSum
             <AppleCardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{insp.inspectionNumber}</p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                  <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{insp.inspectionNumber}</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                     {formatDate(insp.createdAt)}
                     {insp.overallCondition && ` — Condizione: ${insp.overallCondition}`}
                   </p>
                 </div>
                 <span className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${
                   insp.status === 'COMPLETED'
-                    ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                    : 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300'
+                    ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]'
+                    : 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]'
                 }`}>
                   {insp.status === 'COMPLETED' ? 'Completata' : 'In corso'}
                 </span>
@@ -663,10 +663,10 @@ function OBDTab({ data }: { data?: OBDData | null }): React.ReactElement {
       <AppleCard hover={false}>
         <AppleCardContent>
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-2.5 w-2.5 rounded-full bg-apple-green animate-pulse" />
-            <span className="text-body font-medium text-apple-green">Dispositivo connesso</span>
+            <div className="h-2.5 w-2.5 rounded-full bg-[var(--status-success)] animate-pulse" />
+            <span className="text-body font-medium text-[var(--status-success)]">Dispositivo connesso</span>
             {data.lastReading && (
-              <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] ml-2">
+              <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ml-2">
                 Ultimo aggiornamento: {formatDate(data.lastReading)}
               </span>
             )}
@@ -675,10 +675,10 @@ function OBDTab({ data }: { data?: OBDData | null }): React.ReactElement {
           {readings.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {readings.map((r) => (
-                <div key={r.label} className="p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider">{r.label}</p>
-                  <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)] mt-1">
-                    {r.value} <span className="text-body font-normal text-apple-gray">{r.unit}</span>
+                <div key={r.label} className="p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]">
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider">{r.label}</p>
+                  <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1">
+                    {r.value} <span className="text-body font-normal text-[var(--text-tertiary)]">{r.unit}</span>
                   </p>
                 </div>
               ))}
@@ -690,10 +690,10 @@ function OBDTab({ data }: { data?: OBDData | null }): React.ReactElement {
       {data.dtcCodes && data.dtcCodes.length > 0 && (
         <AppleCard hover={false}>
           <AppleCardContent>
-            <h3 className="text-body font-semibold text-apple-red mb-3">Codici errore (DTC)</h3>
+            <h3 className="text-body font-semibold text-[var(--status-error)] mb-3">Codici errore (DTC)</h3>
             <div className="flex flex-wrap gap-2">
               {data.dtcCodes.map((code) => (
-                <span key={code} className="px-3 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-lg font-mono text-body">
+                <span key={code} className="px-3 py-1 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)] rounded-lg font-mono text-body">
                   {code}
                 </span>
               ))}

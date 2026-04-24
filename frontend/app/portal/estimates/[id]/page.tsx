@@ -88,17 +88,17 @@ export default function PortalEstimatePage() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)]'>
-        <Loader2 className='h-8 w-8 animate-spin text-blue-500' />
+      <div className='flex items-center justify-center min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]'>
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--status-info)]' />
       </div>
     );
   }
 
   if (error || !estimate) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)] p-8 text-center'>
-        <AlertCircle className='h-12 w-12 text-gray-400 dark:text-[var(--text-secondary)] mb-4' />
-        <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>{error || 'Preventivo non trovato'}</p>
+      <div className='flex flex-col items-center justify-center min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] p-8 text-center'>
+        <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4' />
+        <p className='text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]'>{error || 'Preventivo non trovato'}</p>
       </div>
     );
   }
@@ -106,15 +106,15 @@ export default function PortalEstimatePage() {
   // Already responded
   if (actionDone === 'ACCEPTED') {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)] p-8 text-center'>
+      <div className='flex flex-col items-center justify-center min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] p-8 text-center'>
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className='bg-white dark:bg-[var(--surface-elevated)] rounded-3xl p-8 max-w-md shadow-xl'
+          className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-3xl p-8 max-w-md shadow-xl'
         >
-          <CheckCircle className='h-16 w-16 text-green-500 mx-auto mb-4' />
-          <h2 className='text-2xl font-bold text-gray-900 dark:text-[var(--text-primary)] mb-2'>Grazie!</h2>
-          <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>
+          <CheckCircle className='h-16 w-16 text-[var(--status-success)] mx-auto mb-4' />
+          <h2 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>Grazie!</h2>
+          <p className='text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]'>
             L&apos;officina è stata avvisata e ti contatterà per fissare l&apos;appuntamento.
           </p>
         </motion.div>
@@ -124,17 +124,17 @@ export default function PortalEstimatePage() {
 
   if (actionDone === 'REJECTED') {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)] p-8 text-center'>
+      <div className='flex flex-col items-center justify-center min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] p-8 text-center'>
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className='bg-white dark:bg-[var(--surface-elevated)] rounded-3xl p-8 max-w-md shadow-xl'
+          className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-3xl p-8 max-w-md shadow-xl'
         >
-          <XCircle className='h-16 w-16 text-gray-400 mx-auto mb-4' />
-          <h2 className='text-2xl font-bold text-gray-900 dark:text-[var(--text-primary)] mb-2'>
+          <XCircle className='h-16 w-16 text-[var(--text-tertiary)] mx-auto mb-4' />
+          <h2 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
             Preventivo rifiutato
           </h2>
-          <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>
+          <p className='text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]'>
             Abbiamo registrato la tua scelta. L&apos;officina potrebbe contattarti per discutere
             alternative.
           </p>
@@ -147,9 +147,9 @@ export default function PortalEstimatePage() {
   const isAlreadyHandled = estimate.status !== 'SENT';
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-[var(--surface-tertiary)]'>
+    <div className='min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)]'>
       {/* Header */}
-      <header className='bg-white dark:bg-[var(--surface-secondary)] border-b border-gray-200 dark:border-[var(--border-default)]'>
+      <header className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-secondary)] border-b border-[var(--border-default)] dark:border-[var(--border-default)]'>
         <div className='max-w-3xl mx-auto px-6 py-6'>
           <div className='flex items-center gap-4'>
             {estimate.shopLogo && (
@@ -160,10 +160,10 @@ export default function PortalEstimatePage() {
               />
             )}
             <div>
-              <h1 className='text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]'>
+              <h1 className='text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {estimate.shopName || 'Officina'}
               </h1>
-              <p className='text-sm text-gray-500 dark:text-[var(--text-secondary)]'>
+              <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Preventivo {estimate.number}
               </p>
             </div>
@@ -180,39 +180,39 @@ export default function PortalEstimatePage() {
         />
 
         {/* Vehicle Info */}
-        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+        <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
           <div className='flex items-center gap-3 mb-2'>
-            <Car className='h-5 w-5 text-blue-500' />
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)]'>
+            <Car className='h-5 w-5 text-[var(--status-info)]' />
+            <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Preventivo per il tuo veicolo
             </h2>
           </div>
-          <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>
+          <p className='text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]'>
             {estimate.vehiclePlate} — {estimate.vehicleMake} {estimate.vehicleModel}
           </p>
         </div>
 
         {/* Lines */}
-        <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
-          <h3 className='font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
-            <FileText className='h-4 w-4 text-gray-400 dark:text-[var(--text-secondary)]' />
+        <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+          <h3 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+            <FileText className='h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
             Dettaglio lavori
           </h3>
           <div className='space-y-3'>
             {(estimate.lines || []).map(line => (
               <div
                 key={line.id}
-                className='flex justify-between items-start py-2 border-b border-gray-100 dark:border-[var(--border-default)] last:border-0'
+                className='flex justify-between items-start py-2 border-b border-[var(--border-default)] dark:border-[var(--border-default)] last:border-0'
               >
                 <div className='flex-1'>
-                  <p className='text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]'>
+                  <p className='text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {line.description}
                   </p>
-                  <p className='text-xs text-gray-500 dark:text-[var(--text-secondary)]'>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     {line.quantity} x {formatCurrency(line.unitPrice)} (IVA {line.taxRate}%)
                   </p>
                 </div>
-                <p className='text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)] ml-4'>
+                <p className='text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] ml-4'>
                   {formatCurrency(line.total || line.quantity * line.unitPrice)}
                 </p>
               </div>
@@ -220,26 +220,26 @@ export default function PortalEstimatePage() {
           </div>
 
           {/* Totals */}
-          <div className='mt-6 pt-4 border-t border-gray-200 dark:border-[var(--border-default)] space-y-2'>
+          <div className='mt-6 pt-4 border-t border-[var(--border-default)] dark:border-[var(--border-default)] space-y-2'>
             <div className='flex justify-between text-sm'>
-              <span className='text-gray-500 dark:text-[var(--text-secondary)]'>Subtotale</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Subtotale</span>
               <span className='font-medium dark:text-[var(--text-primary)]'>{formatCurrency(estimate.subtotal)}</span>
             </div>
             {estimate.discount > 0 && (
               <div className='flex justify-between text-sm'>
-                <span className='text-gray-500 dark:text-[var(--text-secondary)]'>Sconto</span>
-                <span className='font-medium text-red-500'>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Sconto</span>
+                <span className='font-medium text-[var(--status-error)]'>
                   -{formatCurrency(estimate.discount)}
                 </span>
               </div>
             )}
             <div className='flex justify-between text-sm'>
-              <span className='text-gray-500 dark:text-[var(--text-secondary)]'>IVA</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>IVA</span>
               <span className='font-medium dark:text-[var(--text-primary)]'>{formatCurrency(estimate.taxAmount)}</span>
             </div>
-            <div className='flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-[var(--border-default)]'>
-              <span className='text-gray-900 dark:text-[var(--text-primary)]'>Totale</span>
-              <span className='text-gray-900 dark:text-[var(--text-primary)]'>
+            <div className='flex justify-between text-lg font-bold pt-2 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
+              <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Totale</span>
+              <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formatCurrency(estimate.total)}
               </span>
             </div>
@@ -248,11 +248,11 @@ export default function PortalEstimatePage() {
 
         {/* Notes */}
         {estimate.notes && (
-          <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
-            <h3 className='font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-2'>
+          <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm'>
+            <h3 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Note dell&apos;officina
             </h3>
-            <p className='text-sm text-gray-600 dark:text-[var(--text-tertiary)] whitespace-pre-wrap'>
+            <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] whitespace-pre-wrap'>
               {estimate.notes}
             </p>
           </div>
@@ -263,8 +263,8 @@ export default function PortalEstimatePage() {
           <div
             className={`rounded-2xl p-4 text-center text-sm ${
               isExpired
-                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                ? 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]'
+                : 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]'
             }`}
           >
             {isExpired
@@ -281,7 +281,7 @@ export default function PortalEstimatePage() {
                 <button
                   onClick={() => handleAction('accept')}
                   disabled={actionLoading}
-                  className='flex-1 bg-green-500 hover:bg-green-600 text-white text-lg font-semibold py-4 px-6 rounded-2xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2'
+                  className='flex-1 bg-[var(--status-success-subtle)]0 hover:bg-[var(--status-success)] text-[var(--text-on-brand)] text-lg font-semibold py-4 px-6 rounded-2xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2'
                 >
                   {actionLoading ? (
                     <Loader2 className='h-5 w-5 animate-spin' />
@@ -293,14 +293,14 @@ export default function PortalEstimatePage() {
                 <button
                   onClick={() => setShowRejectForm(true)}
                   disabled={actionLoading}
-                  className='flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-[var(--border-default)] dark:hover:bg-[var(--surface-active)] text-gray-700 dark:text-[var(--text-secondary)] text-lg font-semibold py-4 px-6 rounded-2xl transition-colors disabled:opacity-50'
+                  className='flex-1 bg-[var(--border-default)] hover:bg-[var(--border-strong)] dark:bg-[var(--border-default)] dark:hover:bg-[var(--surface-active)] text-[var(--text-secondary)] dark:text-[var(--text-secondary)] text-lg font-semibold py-4 px-6 rounded-2xl transition-colors disabled:opacity-50'
                 >
                   Rifiuta
                 </button>
               </div>
             ) : (
-              <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm space-y-4'>
-                <h3 className='font-semibold text-gray-900 dark:text-[var(--text-primary)]'>
+              <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 shadow-sm space-y-4'>
+                <h3 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Motivo del rifiuto (opzionale)
                 </h3>
                 <textarea
@@ -308,13 +308,13 @@ export default function PortalEstimatePage() {
                   onChange={e => setRejectReason(e.target.value)}
                   rows={3}
                   placeholder='Scrivi qui il motivo...'
-                  className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[var(--border-default)] bg-gray-50 dark:bg-[var(--surface-elevated)] text-sm dark:text-[var(--text-primary)] resize-none'
+                  className='w-full px-4 py-3 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-sm dark:text-[var(--text-primary)] resize-none'
                 />
                 <div className='flex gap-3'>
                   <button
                     onClick={() => handleAction('reject')}
                     disabled={actionLoading}
-                    className='flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2'
+                    className='flex-1 bg-[var(--status-error-subtle)]0 hover:bg-[var(--status-error)] text-[var(--text-on-brand)] font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2'
                   >
                     {actionLoading ? (
                       <Loader2 className='h-4 w-4 animate-spin' />
@@ -325,7 +325,7 @@ export default function PortalEstimatePage() {
                   </button>
                   <button
                     onClick={() => setShowRejectForm(false)}
-                    className='px-6 py-3 rounded-xl border border-gray-200 dark:border-[var(--border-default)] text-gray-600 dark:text-[var(--text-tertiary)] font-medium'
+                    className='px-6 py-3 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] font-medium'
                   >
                     Annulla
                   </button>
@@ -336,8 +336,8 @@ export default function PortalEstimatePage() {
         )}
 
         {isAlreadyHandled && (
-          <div className='bg-gray-100 dark:bg-[var(--surface-elevated)] rounded-2xl p-6 text-center'>
-            <p className='text-gray-600 dark:text-[var(--text-tertiary)]'>
+          <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 text-center'>
+            <p className='text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]'>
               Questo preventivo è già stato{' '}
               {estimate.status === 'ACCEPTED'
                 ? 'approvato'

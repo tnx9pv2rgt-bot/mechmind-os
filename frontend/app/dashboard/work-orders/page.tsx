@@ -56,67 +56,67 @@ type WorkOrderStatus = 'ALL' | 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'QC' | 'COMPLE
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
   DRAFT: {
-    color: 'text-gray-700 dark:text-gray-300',
-    bg: 'bg-gray-200 dark:bg-gray-700',
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+    bg: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]',
     label: 'Bozza',
   },
   OPEN: {
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
     label: 'Aperto',
   },
   IN_PROGRESS: {
-    color: 'text-yellow-700 dark:text-yellow-300',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
     label: 'In Lavorazione',
   },
   QC: {
-    color: 'text-purple-700 dark:text-purple-300',
-    bg: 'bg-purple-100 dark:bg-purple-900/40',
+    color: 'text-[var(--brand)] dark:text-[var(--brand)]',
+    bg: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]',
     label: 'Controllo Qualita',
   },
   COMPLETED: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
     label: 'Completato',
   },
   DELIVERED: {
-    color: 'text-cyan-700 dark:text-cyan-300',
-    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info)]/10 dark:bg-[var(--status-info)]/30/40',
     label: 'Consegnato',
   },
   CANCELLED: {
-    color: 'text-red-700 dark:text-red-300',
-    bg: 'bg-red-100 dark:bg-red-900/40',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
     label: 'Annullato',
   },
   PENDING: {
-    color: 'text-yellow-700 dark:text-yellow-300',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
     label: 'In Attesa',
   },
   WAITING_PARTS: {
-    color: 'text-orange-700 dark:text-orange-300',
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
     label: 'Attesa Ricambi',
   },
   READY: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
     label: 'Pronto',
   },
   INVOICED: {
-    color: 'text-cyan-700 dark:text-cyan-300',
-    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info)]/10 dark:bg-[var(--status-info)]/30/40',
     label: 'Fatturato',
   },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  LOW: { label: 'Bassa', color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-200 dark:bg-gray-700' },
-  NORMAL: { label: 'Normale', color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/40' },
-  HIGH: { label: 'Alta', color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-100 dark:bg-orange-900/40' },
-  URGENT: { label: 'Urgente', color: 'text-red-700 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/40' },
+  LOW: { label: 'Bassa', color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]', bg: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]' },
+  NORMAL: { label: 'Normale', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' },
+  HIGH: { label: 'Alta', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]' },
+  URGENT: { label: 'Urgente', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]' },
 };
 
 const statusOptions: { value: WorkOrderStatus; label: string }[] = [
@@ -246,25 +246,25 @@ export default function WorkOrdersPage(): React.ReactElement {
       label: 'Totale OdL',
       value: String(total),
       icon: ClipboardList,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Aperti',
       value: String(openCount),
       icon: AlertCircle,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'In Lavorazione',
       value: String(inProgressCount),
       icon: Clock,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Completati',
       value: String(completedCount),
       icon: CheckCircle,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
@@ -274,8 +274,8 @@ export default function WorkOrdersPage(): React.ReactElement {
       <header className=''>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ordini di Lavoro</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ordini di Lavoro</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci le lavorazioni della tua officina
             </p>
           </div>
@@ -307,13 +307,13 @@ export default function WorkOrdersPage(): React.ReactElement {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -326,7 +326,7 @@ export default function WorkOrdersPage(): React.ReactElement {
             <AppleCardContent>
               <div className='flex flex-col sm:flex-row gap-4'>
                 <div className='relative flex-1'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <Input
                     placeholder='Cerca per numero OdL, cliente, targa...'
                     aria-label='Cerca ordini di lavoro'
@@ -336,11 +336,11 @@ export default function WorkOrdersPage(): React.ReactElement {
                   />
                 </div>
                 <div className='relative'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                   <select
                     value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value as WorkOrderStatus); setPage(1); }}
-                    className='h-10 pl-10 pr-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                    className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {statusOptions.map(opt => (
                       <option key={opt.value} value={opt.value}>
@@ -358,15 +358,15 @@ export default function WorkOrdersPage(): React.ReactElement {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Ordini di Lavoro
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {error ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare gli ordini di lavoro
                   </p>
                   <AppleButton
@@ -379,12 +379,12 @@ export default function WorkOrdersPage(): React.ReactElement {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : workOrders.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessun ordine di lavoro. Crea il primo ordine.
                   </p>
                   <AppleButton
@@ -399,14 +399,14 @@ export default function WorkOrdersPage(): React.ReactElement {
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
                     <thead>
-                      <tr className='border-b border-apple-border/20 dark:border-[var(--border-default)]'>
-                        <th className='text-left py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>N. OdL</th>
-                        <th className='text-left py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Cliente / Veicolo</th>
-                        <th className='text-center py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Priorità</th>
-                        <th className='text-center py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Stato</th>
-                        <th className='text-right py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Importo</th>
-                        <th className='text-right py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Data</th>
-                        <th className='text-right py-3 px-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Azioni</th>
+                      <tr className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
+                        <th className='text-left py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>N. OdL</th>
+                        <th className='text-left py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Cliente / Veicolo</th>
+                        <th className='text-center py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Priorità</th>
+                        <th className='text-center py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
+                        <th className='text-right py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Importo</th>
+                        <th className='text-right py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Data</th>
+                        <th className='text-right py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Azioni</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -418,19 +418,19 @@ export default function WorkOrdersPage(): React.ReactElement {
                         return (
                           <tr
                             key={wo.id}
-                            className='border-b border-apple-border/10 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors cursor-pointer'
+                            className='border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors cursor-pointer'
                             onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
                           >
                             <td className='py-3.5 px-3'>
-                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {wo.woNumber || `#${wo.id.slice(0, 8)}`}
                               </p>
                             </td>
                             <td className='py-3.5 px-3'>
-                              <p className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {wo.customerName || 'Cliente'}
                               </p>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {wo.vehiclePlate}{wo.vehicleMake ? ` · ${wo.vehicleMake} ${wo.vehicleModel || ''}` : ''}
                               </p>
                             </td>
@@ -445,12 +445,12 @@ export default function WorkOrdersPage(): React.ReactElement {
                               </span>
                             </td>
                             <td className='py-3.5 px-3 text-right'>
-                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] tabular-nums'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] tabular-nums'>
                                 {formatCurrency(wo.totalCost)}
                               </p>
                             </td>
                             <td className='py-3.5 px-3 text-right'>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] tabular-nums'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] tabular-nums'>
                                 {new Date(wo.createdAt).toLocaleDateString('it-IT')}
                               </p>
                             </td>

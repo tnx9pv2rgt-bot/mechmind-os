@@ -122,13 +122,13 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
               initial='hidden'
               animate='visible'
               exit='exit'
-              className='bg-white/90 backdrop-blur-2xl rounded-[28px] shadow-apple-xl border border-white/50 overflow-hidden'
+              className='bg-[var(--surface-secondary)]/90 backdrop-blur-2xl rounded-[28px] shadow-apple-xl border border-[var(--border-default)]/50 overflow-hidden'
             >
               {/* Header con liquid glass effect */}
               <div className='relative overflow-hidden'>
-                <div className='absolute inset-0 bg-gradient-to-br from-apple-blue/10 via-apple-purple/5 to-transparent' />
-                <div className='absolute -top-20 -right-20 w-40 h-40 bg-apple-blue/20 rounded-full blur-3xl' />
-                <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-apple-purple/20 rounded-full blur-3xl' />
+                <div className='absolute inset-0 bg-gradient-to-br from-[var(--brand)]/10 via-apple-purple/5 to-transparent' />
+                <div className='absolute -top-20 -right-20 w-40 h-40 bg-[var(--brand)]/20 rounded-full blur-3xl' />
+                <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-[var(--brand)]/20 rounded-full blur-3xl' />
 
                 <DialogHeader className='relative p-8 pb-4'>
                   <div className='flex items-center gap-4'>
@@ -136,15 +136,15 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                      className='w-14 h-14 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center shadow-apple'
+                      className='w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center shadow-apple'
                     >
-                      <FileText className='h-7 w-7 text-white' />
+                      <FileText className='h-7 w-7 text-[var(--text-on-brand)]' />
                     </motion.div>
                     <div>
-                      <DialogTitle className='text-title-1 font-semibold text-apple-dark'>
+                      <DialogTitle className='text-title-1 font-semibold text-[var(--text-primary)]'>
                         Nuova Fattura
                       </DialogTitle>
-                      <DialogDescription className='text-body text-apple-gray mt-1'>
+                      <DialogDescription className='text-body text-[var(--text-tertiary)] mt-1'>
                         Crea una nuova fattura per i tuoi clienti
                       </DialogDescription>
                     </div>
@@ -163,7 +163,7 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
               variants={successVariants}
               initial='hidden'
               animate='visible'
-              className='bg-white/95 backdrop-blur-2xl rounded-[28px] shadow-apple-xl border border-white/50 p-12 text-center'
+              className='bg-[var(--surface-secondary)]/95 backdrop-blur-2xl rounded-[28px] shadow-apple-xl border border-[var(--border-default)]/50 p-12 text-center'
             >
               {/* Success animation */}
               <motion.div variants={successItemVariants} className='relative mx-auto mb-8'>
@@ -176,9 +176,9 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
                     damping: 15,
                     delay: 0.1,
                   }}
-                  className='w-24 h-24 rounded-full bg-gradient-to-br from-apple-green to-emerald-500 flex items-center justify-center mx-auto shadow-apple-lg'
+                  className='w-24 h-24 rounded-full bg-gradient-to-br from-apple-green to-[var(--status-success)] flex items-center justify-center mx-auto shadow-apple-lg'
                 >
-                  <CheckCircle2 className='h-12 w-12 text-white' />
+                  <CheckCircle2 className='h-12 w-12 text-[var(--text-on-brand)]' />
                 </motion.div>
 
                 {/* Confetti effect */}
@@ -219,14 +219,14 @@ export function InvoiceDialog({ open, onOpenChange, onSuccess }: InvoiceDialogPr
 
               <motion.h3
                 variants={successItemVariants}
-                className='text-title-1 font-semibold text-apple-dark mb-2'
+                className='text-title-1 font-semibold text-[var(--text-primary)] mb-2'
               >
                 Fattura Creata!
               </motion.h3>
 
-              <motion.p variants={successItemVariants} className='text-body text-apple-gray mb-6'>
+              <motion.p variants={successItemVariants} className='text-body text-[var(--text-tertiary)] mb-6'>
                 La fattura{' '}
-                <span className='font-semibold text-apple-dark font-mono'>
+                <span className='font-semibold text-[var(--text-primary)] font-mono'>
                   {createdInvoiceNumber}
                 </span>{' '}
                 è stata creata con successo

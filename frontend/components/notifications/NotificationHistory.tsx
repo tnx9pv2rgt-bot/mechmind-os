@@ -70,11 +70,11 @@ const channelIcons = {
 };
 
 const statusConfig = {
-  PENDING: { color: 'bg-yellow-500', icon: Clock, label: 'In attesa' },
-  SENT: { color: 'bg-blue-500', icon: Send, label: 'Inviato' },
-  DELIVERED: { color: 'bg-green-500', icon: CheckCircle, label: 'Consegnato' },
-  FAILED: { color: 'bg-red-500', icon: XCircle, label: 'Fallito' },
-  READ: { color: 'bg-purple-500', icon: CheckCircle, label: 'Letto' },
+  PENDING: { color: 'bg-[var(--status-warning)]', icon: Clock, label: 'In attesa' },
+  SENT: { color: 'bg-[var(--status-info)]', icon: Send, label: 'Inviato' },
+  DELIVERED: { color: 'bg-[var(--status-success)]', icon: CheckCircle, label: 'Consegnato' },
+  FAILED: { color: 'bg-[var(--status-error)]', icon: XCircle, label: 'Fallito' },
+  READ: { color: 'bg-[var(--brand)]', icon: CheckCircle, label: 'Letto' },
 };
 
 const typeLabels: Record<string, string> = {
@@ -179,7 +179,7 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
     return (
       <Card>
         <CardContent className='p-6'>
-          <div className='text-center text-red-500'>Errore nel caricamento delle notifiche</div>
+          <div className='text-center text-[var(--status-error)]'>Errore nel caricamento delle notifiche</div>
         </CardContent>
       </Card>
     );
@@ -198,7 +198,7 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
         <div className='flex flex-wrap gap-3 mb-4'>
           <div className='flex-1 min-w-[200px]'>
             <div className='relative'>
-              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
               <Input
                 placeholder='Cerca notifiche...'
                 value={searchQuery}
@@ -240,9 +240,9 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
         {/* Notifications List */}
         <div className='space-y-2'>
           {isLoading ? (
-            <div className='text-center py-8 text-gray-500'>Caricamento...</div>
+            <div className='text-center py-8 text-[var(--text-tertiary)]'>Caricamento...</div>
           ) : filteredNotifications.length === 0 ? (
-            <div className='text-center py-8 text-gray-500'>Nessuna notifica trovata</div>
+            <div className='text-center py-8 text-[var(--text-tertiary)]'>Nessuna notifica trovata</div>
           ) : (
             filteredNotifications.map((notification: Notification) => {
               const ChannelIcon = channelIcons[notification.channel];
@@ -252,11 +252,11 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
               return (
                 <div
                   key={notification.id}
-                  className='flex items-start gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer'
+                  className='flex items-start gap-3 p-3 rounded-lg border hover:bg-[var(--surface-secondary)] transition-colors cursor-pointer'
                   onClick={() => setSelectedNotification(notification)}
                 >
                   <div className='flex flex-col items-center gap-1'>
-                    <ChannelIcon className='h-5 w-5 text-gray-500' />
+                    <ChannelIcon className='h-5 w-5 text-[var(--text-tertiary)]' />
                     <StatusIcon
                       className={`h-4 w-4 ${statusConfigItem.color.replace('bg-', 'text-')}`}
                     />
@@ -266,15 +266,15 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
                       <Badge variant='outline' className='text-xs'>
                         {typeLabels[notification.type] || notification.type}
                       </Badge>
-                      <span className='text-xs text-gray-500'>
+                      <span className='text-xs text-[var(--text-tertiary)]'>
                         {format(parseISO(notification.createdAt), 'dd/MM/yyyy HH:mm', {
                           locale: it,
                         })}
                       </span>
                     </div>
-                    <p className='text-sm text-gray-700 truncate'>{notification.message}</p>
+                    <p className='text-sm text-[var(--text-secondary)] truncate'>{notification.message}</p>
                     {notification.error && (
-                      <p className='text-xs text-red-500 mt-1'>Errore: {notification.error}</p>
+                      <p className='text-xs text-[var(--status-error)] mt-1'>Errore: {notification.error}</p>
                     )}
                   </div>
                   <div className='flex items-center gap-1'>
@@ -303,7 +303,7 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
                       disabled={deleteMutation.isPending}
                       aria-label='Elimina notifica'
                     >
-                      <Trash2 className='h-4 w-4 text-red-500' />
+                      <Trash2 className='h-4 w-4 text-[var(--status-error)]' />
                     </Button>
                   </div>
                 </div>
@@ -324,7 +324,7 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
               <ChevronLeft className='h-4 w-4 mr-1' />
               Precedente
             </Button>
-            <span className='text-sm text-gray-500'>
+            <span className='text-sm text-[var(--text-tertiary)]'>
               Pagina {page + 1} di {totalPages}
             </span>
             <Button
@@ -351,15 +351,15 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
             <div className='space-y-4'>
               <div className='grid grid-cols-2 gap-4 text-sm'>
                 <div>
-                  <span className='text-gray-500'>ID:</span>
+                  <span className='text-[var(--text-secondary)]'>ID:</span>
                   <p className='font-mono'>{selectedNotification.id}</p>
                 </div>
                 <div>
-                  <span className='text-gray-500'>Tipo:</span>
+                  <span className='text-[var(--text-secondary)]'>Tipo:</span>
                   <p>{typeLabels[selectedNotification.type] || selectedNotification.type}</p>
                 </div>
                 <div>
-                  <span className='text-gray-500'>Canale:</span>
+                  <span className='text-[var(--text-secondary)]'>Canale:</span>
                   <p className='flex items-center gap-1'>
                     {React.createElement(channelIcons[selectedNotification.channel], {
                       className: 'h-4 w-4',
@@ -368,35 +368,35 @@ export function NotificationHistory({ customerId, limit = 50 }: NotificationHist
                   </p>
                 </div>
                 <div>
-                  <span className='text-gray-500'>Stato:</span>
+                  <span className='text-[var(--text-secondary)]'>Stato:</span>
                   <Badge className={statusConfig[selectedNotification.status].color}>
                     {statusConfig[selectedNotification.status].label}
                   </Badge>
                 </div>
                 <div>
-                  <span className='text-gray-500'>Tentativi:</span>
+                  <span className='text-[var(--text-secondary)]'>Tentativi:</span>
                   <p>
                     {selectedNotification.retries} / {selectedNotification.maxRetries}
                   </p>
                 </div>
                 {selectedNotification.messageId && (
                   <div>
-                    <span className='text-gray-500'>Message ID:</span>
+                    <span className='text-[var(--text-secondary)]'>Message ID:</span>
                     <p className='font-mono text-xs'>{selectedNotification.messageId}</p>
                   </div>
                 )}
               </div>
               <div>
-                <span className='text-gray-500'>Messaggio:</span>
-                <p className='mt-1 p-3 bg-gray-50 rounded text-sm whitespace-pre-wrap'>
+                <span className='text-[var(--text-secondary)]'>Messaggio:</span>
+                <p className='mt-1 p-3 bg-[var(--surface-secondary)] rounded text-sm whitespace-pre-wrap'>
                   {selectedNotification.message}
                 </p>
               </div>
               {selectedNotification.metadata &&
                 Object.keys(selectedNotification.metadata).length > 0 && (
                   <div>
-                    <span className='text-gray-500'>Metadati:</span>
-                    <pre className='mt-1 p-3 bg-gray-50 rounded text-xs overflow-auto'>
+                    <span className='text-[var(--text-secondary)]'>Metadati:</span>
+                    <pre className='mt-1 p-3 bg-[var(--surface-secondary)] rounded text-xs overflow-auto'>
                       {JSON.stringify(selectedNotification.metadata, null, 2)}
                     </pre>
                   </div>

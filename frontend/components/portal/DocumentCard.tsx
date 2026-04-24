@@ -32,32 +32,32 @@ const documentTypeConfig: Record<DocumentType, {
   invoice: {
     label: 'Fattura',
     icon: Receipt,
-    color: 'text-apple-blue',
-    bgColor: 'bg-blue-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
   },
   receipt: {
     label: 'Ricevuta',
     icon: FileText,
-    color: 'text-apple-green',
-    bgColor: 'bg-green-50',
+    color: 'text-[var(--status-success)]',
+    bgColor: 'bg-[var(--status-success-subtle)]',
   },
   inspection_report: {
     label: 'Report Ispezione',
     icon: FileCheck,
-    color: 'text-apple-purple',
-    bgColor: 'bg-purple-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--brand-subtle)]',
   },
   warranty_claim: {
     label: 'Reclamo Garanzia',
     icon: Shield,
-    color: 'text-apple-orange',
-    bgColor: 'bg-orange-50',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/5',
   },
   maintenance_record: {
     label: 'Registro Manutenzione',
     icon: FileSpreadsheet,
-    color: 'text-apple-gray',
-    bgColor: 'bg-gray-100',
+    color: 'text-[var(--text-tertiary)]',
+    bgColor: 'bg-[var(--surface-secondary)]',
   },
 }
 
@@ -68,32 +68,32 @@ const documentTypeConfig: Record<DocumentType, {
 const statusConfig = {
   draft: {
     label: 'Bozza',
-    color: 'text-apple-gray',
-    bgColor: 'bg-gray-100',
+    color: 'text-[var(--text-tertiary)]',
+    bgColor: 'bg-[var(--surface-secondary)]',
     icon: Clock,
   },
   issued: {
     label: 'Emesso',
-    color: 'text-apple-blue',
-    bgColor: 'bg-blue-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
     icon: FileText,
   },
   paid: {
     label: 'Pagato',
-    color: 'text-apple-green',
-    bgColor: 'bg-green-50',
+    color: 'text-[var(--status-success)]',
+    bgColor: 'bg-[var(--status-success-subtle)]',
     icon: CheckCircle,
   },
   overdue: {
     label: 'Scaduto',
-    color: 'text-apple-red',
-    bgColor: 'bg-red-50',
+    color: 'text-[var(--status-error)]',
+    bgColor: 'bg-[var(--status-error-subtle)]',
     icon: AlertCircle,
   },
   cancelled: {
     label: 'Annullato',
-    color: 'text-apple-gray',
-    bgColor: 'bg-gray-100',
+    color: 'text-[var(--text-tertiary)]',
+    bgColor: 'bg-[var(--surface-secondary)]',
     icon: XCircle,
   },
 }
@@ -177,17 +177,17 @@ export function DocumentCard({
                     {status.label}
                   </span>
                 </div>
-                <p className="font-medium text-apple-dark text-sm truncate">
+                <p className="font-medium text-[var(--text-primary)] text-sm truncate">
                   {document.title}
                 </p>
-                <p className="text-xs text-apple-gray">
+                <p className="text-xs text-[var(--text-tertiary)]">
                   {document.documentNumber} • {formattedDate}
                 </p>
               </div>
 
               {document.amount !== undefined && (
                 <div className="text-right">
-                  <p className="font-semibold text-apple-dark text-sm">
+                  <p className="font-semibold text-[var(--text-primary)] text-sm">
                     €{document.amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -226,16 +226,16 @@ export function DocumentCard({
                       {status.label}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-apple-dark">
+                  <h3 className="font-semibold text-[var(--text-primary)]">
                     {document.title}
                   </h3>
-                  <p className="text-sm text-apple-gray">{document.documentNumber}</p>
+                  <p className="text-sm text-[var(--text-tertiary)]">{document.documentNumber}</p>
                 </div>
 
                 {document.amount !== undefined && (
                   <div className="text-right">
-                    <p className="text-sm text-apple-gray">Importo</p>
-                    <p className="font-semibold text-apple-dark text-lg">
+                    <p className="text-sm text-[var(--text-tertiary)]">Importo</p>
+                    <p className="font-semibold text-[var(--text-primary)] text-lg">
                       €{document.amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -244,18 +244,18 @@ export function DocumentCard({
 
               {/* Description */}
               {document.description && (
-                <p className="text-sm text-apple-gray mb-3">
+                <p className="text-sm text-[var(--text-tertiary)] mb-3">
                   {document.description}
                 </p>
               )}
 
               {/* Meta */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-apple-gray mb-4">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-tertiary)] mb-4">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
                   Emesso: {formattedDate}
                 </span>
-                <span className="px-2 py-0.5 bg-apple-light-gray rounded text-xs">
+                <span className="px-2 py-0.5 bg-[var(--surface-secondary)] rounded text-xs">
                   {formatFileType(document.fileType)}
                 </span>
                 <span className="text-xs">
@@ -264,7 +264,7 @@ export function DocumentCard({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-3 border-t border-apple-border/30">
+              <div className="flex items-center gap-2 pt-3 border-t border-[var(--border-default)]/30">
                 <AppleButton
                   variant="primary"
                   size="sm"
@@ -312,8 +312,8 @@ export function DocumentList({
   if (documents.length === 0) {
     return (
       <div className="text-center py-12">
-        <FileText className="h-12 w-12 mx-auto text-apple-gray/30 mb-4" />
-        <p className="text-apple-gray">{emptyMessage}</p>
+        <FileText className="h-12 w-12 mx-auto text-[var(--text-tertiary)]/30 mb-4" />
+        <p className="text-[var(--text-tertiary)]">{emptyMessage}</p>
       </div>
     )
   }

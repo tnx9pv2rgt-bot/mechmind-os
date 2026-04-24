@@ -138,7 +138,7 @@ export function CommandPalette(): React.ReactElement {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] bg-[var(--surface-primary)]/50 backdrop-blur-sm"
         onClick={close}
         aria-hidden="true"
       />
@@ -146,7 +146,7 @@ export function CommandPalette(): React.ReactElement {
       {/* Dialog */}
       <div className="fixed inset-0 z-[10000] flex items-start justify-center pt-[20vh]">
         <Command
-          className="w-full max-w-lg bg-white dark:bg-[var(--surface-primary)] rounded-2xl shadow-2xl border border-[var(--border-default)] dark:border-[var(--border-default)] overflow-hidden"
+          className="w-full max-w-lg bg-[var(--surface-primary)] rounded-2xl shadow-2xl border border-[var(--border-default)] overflow-hidden"
           shouldFilter
           loop
         >
@@ -179,7 +179,7 @@ export function CommandPalette(): React.ReactElement {
                   key={item.id}
                   value={`${item.label} ${item.keywords?.join(' ') ?? ''}`}
                   onSelect={() => handleSelect(item.href)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] cursor-pointer data-[selected=true]:bg-[var(--brand)]/5 dark:data-[selected=true]:bg-blue-950/30 data-[selected=true]:text-[var(--brand)] dark:data-[selected=true]:text-[var(--brand)] transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] cursor-pointer data-[selected=true]:bg-[var(--brand-subtle)] data-[selected=true]:text-[var(--brand)] transition-colors"
                 >
                   <item.icon className="h-4 w-4 shrink-0 opacity-60" />
                   <span>{item.label}</span>
@@ -194,9 +194,9 @@ export function CommandPalette(): React.ReactElement {
                   key={item.id}
                   value={`${item.label} ${item.keywords?.join(' ') ?? ''}`}
                   onSelect={() => handleSelect(item.href)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] cursor-pointer data-[selected=true]:bg-[var(--brand)]/5 dark:data-[selected=true]:bg-blue-950/30 data-[selected=true]:text-[var(--brand)] dark:data-[selected=true]:text-[var(--brand)] transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] cursor-pointer data-[selected=true]:bg-[var(--brand-subtle)] data-[selected=true]:text-[var(--brand)] transition-colors"
                 >
-                  <item.icon className="h-4 w-4 shrink-0 text-green-500" />
+                  <item.icon className="h-4 w-4 shrink-0 text-[var(--status-success)]" />
                   <span>{item.label}</span>
                 </Command.Item>
               ))}
@@ -207,26 +207,26 @@ export function CommandPalette(): React.ReactElement {
           <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--border-default)] bg-[var(--surface-hover)] dark:bg-[var(--surface-active)]">
             <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
               <span className="flex items-center gap-1">
-                <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">↑↓</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">↑↓</kbd>
                 naviga
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">↵</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">↵</kbd>
                 seleziona
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">esc</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">esc</kbd>
                 chiudi
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-              <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">N</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">N</kbd>
               <span>OdL</span>
-              <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">C</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">C</kbd>
               <span>Cliente</span>
-              <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">F</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">F</kbd>
               <span>Fattura</span>
-              <kbd className="px-1 py-0.5 rounded bg-gray-200 dark:bg-[var(--surface-hover)] text-[10px] font-medium">/</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] font-medium">/</kbd>
               <span>Cerca</span>
             </div>
           </div>

@@ -41,7 +41,7 @@ export function StepIndicator({
                 {/* Outer ring for current step */}
                 {isCurrent && (
                   <motion.div
-                    className="absolute h-10 w-10 rounded-full border-2 border-white/40"
+                    className="absolute h-10 w-10 rounded-full border-2 border-[var(--border-default)]/40"
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
@@ -52,8 +52,8 @@ export function StepIndicator({
                 <motion.div
                   className={[
                     'relative z-10 flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-300',
-                    isCompleted ? 'bg-white text-[var(--text-primary)]' : '',
-                    isCurrent ? 'bg-white text-[var(--text-primary)]' : '',
+                    isCompleted ? 'bg-[var(--surface-secondary)] text-[var(--text-primary)]' : '',
+                    isCurrent ? 'bg-[var(--surface-secondary)] text-[var(--text-primary)]' : '',
                     isFuture ? 'bg-[var(--border-default)] text-[var(--text-tertiary)]' : '',
                   ].join(' ')}
                   layout
@@ -84,7 +84,7 @@ export function StepIndicator({
               {index < steps.length - 1 && (
                 <div className="relative mx-1 h-0.5 w-8 overflow-hidden rounded-full bg-[var(--border-default)] sm:w-12">
                   <motion.div
-                    className="absolute inset-y-0 left-0 bg-white"
+                    className="absolute inset-y-0 left-0 bg-[var(--surface-secondary)]"
                     initial={false}
                     animate={{ width: step < currentStep ? '100%' : '0%' }}
                     transition={{ duration: 0.4, ease: 'easeInOut' }}

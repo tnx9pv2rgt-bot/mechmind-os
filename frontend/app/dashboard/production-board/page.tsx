@@ -61,28 +61,28 @@ interface ProductionBoardData {
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   queued: {
     label: 'In attesa',
-    color: 'text-apple-dark dark:text-[var(--text-primary)]',
-    bg: 'bg-apple-light-gray dark:bg-[var(--surface-active)]',
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-active)]',
   },
   in_progress: {
     label: 'In corso',
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
   },
   paused: {
     label: 'In pausa',
-    color: 'text-amber-700 dark:text-amber-300',
-    bg: 'bg-amber-100 dark:bg-amber-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
   },
   completed: {
     label: 'Completato',
-    color: 'text-apple-green dark:text-apple-green',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
   },
   overdue: {
     label: 'In ritardo',
-    color: 'text-apple-red dark:text-apple-red',
-    bg: 'bg-red-100 dark:bg-red-900/40',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
   },
 };
 
@@ -160,12 +160,12 @@ export default function ProductionBoardPage() {
       <div>
         <header className="">
           <div className="px-8 py-5">
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Production Board</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">Gestione postazioni in tempo reale</p>
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Production Board</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">Gestione postazioni in tempo reale</p>
           </div>
         </header>
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
         </div>
       </div>
     );
@@ -179,16 +179,16 @@ export default function ProductionBoardPage() {
       <div>
         <header className="">
           <div className="px-8 py-5">
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Production Board</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">Gestione postazioni in tempo reale</p>
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Production Board</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">Gestione postazioni in tempo reale</p>
           </div>
         </header>
         <div className="p-8">
           <AppleCard hover={false}>
             <AppleCardContent>
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   Errore nel caricamento
                 </p>
                 <AppleButton
@@ -215,16 +215,16 @@ export default function ProductionBoardPage() {
       <div>
         <header className="">
           <div className="px-8 py-5">
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Production Board</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">Gestione postazioni in tempo reale</p>
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Production Board</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">Gestione postazioni in tempo reale</p>
           </div>
         </header>
         <div className="p-8">
           <AppleCard hover={false}>
             <AppleCardContent>
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Wrench className="h-12 w-12 text-apple-gray/40 mb-4" />
-                <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                <Wrench className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   Nessun dato disponibile
                 </p>
               </div>
@@ -238,10 +238,10 @@ export default function ProductionBoardPage() {
   const { bays, unassignedJobs, kpis } = data;
 
   const statCards = [
-    { label: 'Completati oggi', value: kpis.completed.toString(), icon: CheckCircle2, color: 'bg-apple-green' },
-    { label: 'In corso', value: kpis.inProgress.toString(), icon: Play, color: 'bg-apple-blue' },
-    { label: 'In attesa', value: kpis.queued.toString(), icon: Clock, color: 'bg-apple-orange' },
-    { label: 'Revenue oggi', value: formatCurrency(kpis.revenueToday), icon: Euro, color: 'bg-apple-green' },
+    { label: 'Completati oggi', value: kpis.completed.toString(), icon: CheckCircle2, color: 'bg-[var(--status-success)]' },
+    { label: 'In corso', value: kpis.inProgress.toString(), icon: Play, color: 'bg-[var(--brand)]' },
+    { label: 'In attesa', value: kpis.queued.toString(), icon: Clock, color: 'bg-[var(--status-warning)]' },
+    { label: 'Revenue oggi', value: formatCurrency(kpis.revenueToday), icon: Euro, color: 'bg-[var(--status-success)]' },
   ];
 
   // ---------------------------------------------------------------------------
@@ -253,8 +253,8 @@ export default function ProductionBoardPage() {
       <header className="">
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Production Board</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Production Board</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Gestione postazioni in tempo reale
             </p>
           </div>
@@ -285,13 +285,13 @@ export default function ProductionBoardPage() {
                 <AppleCardContent>
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className="h-5 w-5 text-white" />
+                      <stat.icon className="h-5 w-5 text-[var(--text-on-brand)]" />
                     </div>
                   </div>
-                  <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+                  <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {stat.value}
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{stat.label}</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -303,7 +303,7 @@ export default function ProductionBoardPage() {
           <motion.div variants={listItemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className="text-title-2 font-semibold text-apple-orange flex items-center gap-2">
+                <h2 className="text-title-2 font-semibold text-[var(--status-warning)] flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Lavori non assegnati ({unassignedJobs.length})
                 </h2>
@@ -362,10 +362,10 @@ function BayColumn({
 
   const bayStatusColor =
     bay.status === 'available'
-      ? 'bg-apple-green'
+      ? 'bg-[var(--status-success)]'
       : bay.status === 'occupied'
-        ? 'bg-apple-blue'
-        : 'bg-apple-gray';
+        ? 'bg-[var(--brand)]'
+        : 'bg-[var(--text-tertiary)]';
 
   return (
     <div
@@ -387,12 +387,12 @@ function BayColumn({
         }`}
       >
         {/* Bay Header */}
-        <div className="px-4 py-3 border-b border-apple-border/20 dark:border-[var(--border-default)]/50 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full ${bayStatusColor}`} />
-            <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">{bay.name}</h3>
+            <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{bay.name}</h3>
           </div>
-          <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+          <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
             {bay.jobs.length} {bay.jobs.length === 1 ? 'lavoro' : 'lavori'}
           </span>
         </div>
@@ -400,7 +400,7 @@ function BayColumn({
         {/* Jobs in bay */}
         <div className="p-3 space-y-2">
           {bay.jobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-apple-gray dark:text-[var(--text-secondary)]">
+            <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
               <Wrench className="w-6 h-6 mb-2 opacity-50" />
               <p className="text-footnote">Postazione libera</p>
             </div>
@@ -460,34 +460,34 @@ function JobCardComponent({ job, compact = false }: { job: JobCard; compact?: bo
     Date.now() - new Date(job.startedAt).getTime() > job.estimatedMinutes * 60_000 * 0.8;
 
   const timeColor = isOverdue
-    ? 'text-apple-red'
+    ? 'text-[var(--status-error)]'
     : isBehind
-      ? 'text-apple-orange'
-      : 'text-apple-green';
+      ? 'text-[var(--status-warning)]'
+      : 'text-[var(--status-success)]';
 
   return (
     <div
-      className="rounded-2xl border border-apple-border/20 dark:border-[var(--border-default)]/50 p-3 bg-white dark:bg-[var(--surface-primary)]
-                  hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-all duration-300 cursor-grab active:cursor-grabbing"
+      className="rounded-2xl border border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 p-3 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]
+                  hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-all duration-300 cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Car className="w-3.5 h-3.5 text-apple-gray flex-shrink-0" />
-            <span className="text-body font-bold text-apple-dark dark:text-[var(--text-primary)] truncate">
+            <Car className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
+            <span className="text-body font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate">
               {job.vehiclePlate}
             </span>
             <span className={`text-footnote font-semibold px-2 py-0.5 rounded-full ${config.bg} ${config.color}`}>
               {config.label}
             </span>
           </div>
-          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1 truncate">
+          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1 truncate">
             {job.serviceDescription}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+      <div className="flex items-center justify-between mt-2 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         <div className="flex items-center gap-1 truncate">
           <User className="w-3 h-3 flex-shrink-0" />
           <span className="truncate">
@@ -505,7 +505,7 @@ function JobCardComponent({ job, compact = false }: { job: JobCard; compact?: bo
       </div>
 
       {job.technician && (
-        <div className="flex items-center gap-1 mt-1.5 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+        <div className="flex items-center gap-1 mt-1.5 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
           <Wrench className="w-3 h-3 flex-shrink-0" />
           <span className="truncate">{job.technician}</span>
         </div>

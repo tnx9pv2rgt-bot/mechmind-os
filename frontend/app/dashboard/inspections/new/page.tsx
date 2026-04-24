@@ -124,18 +124,18 @@ export default function NewInspectionPage() {
           <Breadcrumb items={[{ label: 'Ispezioni', href: '/dashboard/inspections' }, { label: 'Nuova Ispezione' }]} />
           <div className='flex items-center justify-between mt-2'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Nuova Ispezione
               </h1>
-              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                 Wizard 7 step - AI + Blockchain
               </p>
             </div>
             <div className='flex items-center gap-2'>
-              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Step</span>
-              <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>{step}</span>
-              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>/</span>
-              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>{totalSteps}</span>
+              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Step</span>
+              <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{step}</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>/</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{totalSteps}</span>
             </div>
           </div>
         </div>
@@ -145,9 +145,9 @@ export default function NewInspectionPage() {
         {/* Progress Bar */}
         <AppleCard hover={false}>
           <AppleCardContent>
-            <div className='h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
+            <div className='h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-apple-blue'
+                className='h-full bg-[var(--brand)]'
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
@@ -162,19 +162,19 @@ export default function NewInspectionPage() {
                   onClick={() => s.num < step && setStep(s.num)}
                   className={`flex items-center gap-2 transition-all ${
                     s.num === step
-                      ? 'text-apple-dark dark:text-[var(--text-primary)] cursor-default'
+                      ? 'text-[var(--text-primary)] dark:text-[var(--text-primary)] cursor-default'
                       : s.num < step
-                        ? 'text-apple-blue hover:opacity-70 cursor-pointer hover:scale-105'
-                        : 'text-apple-gray dark:text-[var(--text-secondary)] cursor-not-allowed'
+                        ? 'text-[var(--brand)] hover:opacity-70 cursor-pointer hover:scale-105'
+                        : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] cursor-not-allowed'
                   }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                       s.num === step
-                        ? 'bg-apple-blue text-white'
+                        ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
                         : s.num < step
-                          ? 'bg-apple-green text-white'
-                          : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'
+                          ? 'bg-[var(--status-success)] text-[var(--text-on-brand)]'
+                          : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                     }`}
                   >
                     {s.num < step ? <CheckCircle className='h-4 w-4' /> : s.num}
@@ -198,14 +198,14 @@ export default function NewInspectionPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
-                  <div className='w-12 h-12 rounded-2xl bg-apple-blue/10 flex items-center justify-center'>
-                    <Car className='w-6 h-6 text-apple-blue' />
+                  <div className='w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                    <Car className='w-6 h-6 text-[var(--brand)]' />
                   </div>
                   <div>
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Dati Veicolo
                     </h2>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Inserisci i dati del veicolo da ispezionare
                     </p>
                   </div>
@@ -217,7 +217,7 @@ export default function NewInspectionPage() {
                     <div className='space-y-2'>
                       <label
                         htmlFor='plate'
-                        className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         Targa
                       </label>
@@ -226,12 +226,12 @@ export default function NewInspectionPage() {
                         placeholder='AB123CD'
                         {...register('plate')}
                       />
-                      {errors.plate && <p className='text-footnote text-apple-red mt-1'>{errors.plate.message}</p>}
+                      {errors.plate && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.plate.message}</p>}
                     </div>
                     <div className='space-y-2'>
                       <label
                         htmlFor='vehicle'
-                        className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         Veicolo
                       </label>
@@ -241,13 +241,13 @@ export default function NewInspectionPage() {
                         {...register('vehicle')}
                       />
                       {errors.vehicle && (
-                        <p className='text-footnote text-apple-red mt-1'>{errors.vehicle.message}</p>
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.vehicle.message}</p>
                       )}
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <label htmlFor='customer' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <label htmlFor='customer' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Cliente
                     </label>
                     <Input
@@ -256,12 +256,12 @@ export default function NewInspectionPage() {
                       {...register('customer')}
                     />
                     {errors.customer && (
-                      <p className='text-footnote text-apple-red mt-1'>{errors.customer.message}</p>
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.customer.message}</p>
                     )}
                   </div>
 
                   <div className='space-y-2'>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Tipo Ispezione</label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Tipo Ispezione</label>
                     <div className='flex flex-wrap gap-2'>
                       {['PRE_PURCHASE', 'PERIODIC', 'PRE_SALE', 'WARRANTY', 'ACCIDENT'].map(
                         type => (
@@ -270,8 +270,8 @@ export default function NewInspectionPage() {
                             variant={formData.type === type ? 'default' : 'outline'}
                             className={`cursor-pointer px-4 py-2 text-sm rounded-full ${
                               formData.type === type
-                                ? 'bg-apple-blue text-white border-apple-blue'
-                                : 'text-apple-gray dark:text-[var(--text-secondary)] bg-transparent border-apple-border/20 dark:border-[var(--border-default)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+                                ? 'bg-[var(--brand)] text-[var(--text-on-brand)] border-[var(--brand)]'
+                                : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] bg-transparent border-[var(--border-default)]/20 dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                             }`}
                             role='button'
                             tabIndex={0}
@@ -303,16 +303,16 @@ export default function NewInspectionPage() {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className='text-center py-12'>
-                  <div className='w-16 h-16 rounded-2xl bg-apple-blue/10 flex items-center justify-center mx-auto mb-4'>
+                  <div className='w-16 h-16 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center mx-auto mb-4'>
                     {(() => {
                       const Icon = steps[step - 1].icon;
-                      return <Icon className='w-8 h-8 text-apple-blue' />;
+                      return <Icon className='w-8 h-8 text-[var(--brand)]' />;
                     })()}
                   </div>
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                     {steps[step - 1].label}
                   </h3>
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md mx-auto'>
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] max-w-md mx-auto'>
                     Questa sezione include {steps[step - 1].label.toLowerCase()} inspection con AI
                     detection, foto e annotazioni.
                   </p>

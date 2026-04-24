@@ -73,16 +73,16 @@ interface CatalogSearchResponse {
 // Availability Config
 // =============================================================================
 const availabilityConfig: Record<string, { label: string; colorClass: string; icon: React.ComponentType<{ className?: string }> }> = {
-  IN_STOCK: { label: 'Disponibile', colorClass: 'text-apple-green', icon: CheckCircle2 },
-  LOW_STOCK: { label: 'Pochi rimasti', colorClass: 'text-apple-orange', icon: Clock },
-  OUT_OF_STOCK: { label: 'Esaurito', colorClass: 'text-apple-red', icon: XCircle },
-  ON_ORDER: { label: 'In ordine', colorClass: 'text-apple-blue', icon: Truck },
+  IN_STOCK: { label: 'Disponibile', colorClass: 'text-[var(--status-success)]', icon: CheckCircle2 },
+  LOW_STOCK: { label: 'Pochi rimasti', colorClass: 'text-[var(--status-warning)]', icon: Clock },
+  OUT_OF_STOCK: { label: 'Esaurito', colorClass: 'text-[var(--status-error)]', icon: XCircle },
+  ON_ORDER: { label: 'In ordine', colorClass: 'text-[var(--brand)]', icon: Truck },
 };
 
 // =============================================================================
 // Input class
 // =============================================================================
-const inputClassName = 'w-full px-3 py-2.5 rounded-xl border text-sm min-h-[44px] bg-white dark:bg-[var(--surface-elevated)] border-apple-border/30 dark:border-[var(--border-default)]/50 text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray/50 dark:placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:ring-2 focus:ring-apple-blue/30 focus:border-apple-blue transition-colors';
+const inputClassName = 'w-full px-3 py-2.5 rounded-xl border text-sm min-h-[44px] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border-[var(--border-default)]/30 dark:border-[var(--border-default)]/50 text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]/50 dark:placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:ring-2 focus:ring-apple-blue/30 focus:border-[var(--brand)] transition-colors';
 
 // =============================================================================
 // Main Page
@@ -151,8 +151,8 @@ export default function PartsCatalogPage(): React.ReactElement {
               </AppleButton>
             </Link>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Catalogo Ricambi Multi-Fornitore</h1>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">Cerca e confronta ricambi da pi&ugrave; fornitori</p>
+              <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Catalogo Ricambi Multi-Fornitore</h1>
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">Cerca e confronta ricambi da pi&ugrave; fornitori</p>
             </div>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function PartsCatalogPage(): React.ReactElement {
               <AppleCardContent className="space-y-3">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                     <input
                       type="text"
                       placeholder="Cerca per nome ricambio, codice OEM..."
@@ -176,7 +176,7 @@ export default function PartsCatalogPage(): React.ReactElement {
                     />
                   </div>
                   <div className="relative sm:w-64">
-                    <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+                    <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                     <input
                       type="text"
                       placeholder="Veicolo (marca/modello/targa)"
@@ -199,9 +199,9 @@ export default function PartsCatalogPage(): React.ReactElement {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="flex flex-col sm:flex-row gap-3 p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] border border-apple-border/20 dark:border-[var(--border-default)]/50"
+                    className="flex flex-col sm:flex-row gap-3 p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] border border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50"
                   >
-                    <label className="flex items-center gap-2 text-footnote min-h-[44px] cursor-pointer text-apple-gray dark:text-[var(--text-secondary)]">
+                    <label className="flex items-center gap-2 text-footnote min-h-[44px] cursor-pointer text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       <input
                         type="checkbox"
                         checked={inStockOnly}
@@ -211,7 +211,7 @@ export default function PartsCatalogPage(): React.ReactElement {
                       Solo disponibili
                     </label>
                     <div className="flex-1">
-                      <label className="text-footnote font-medium mb-1 block text-apple-gray dark:text-[var(--text-secondary)]">Prezzo min</label>
+                      <label className="text-footnote font-medium mb-1 block text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Prezzo min</label>
                       <input
                         type="number"
                         placeholder="0"
@@ -221,7 +221,7 @@ export default function PartsCatalogPage(): React.ReactElement {
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="text-footnote font-medium mb-1 block text-apple-gray dark:text-[var(--text-secondary)]">Prezzo max</label>
+                      <label className="text-footnote font-medium mb-1 block text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Prezzo max</label>
                       <input
                         type="number"
                         placeholder="1000"
@@ -231,7 +231,7 @@ export default function PartsCatalogPage(): React.ReactElement {
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="text-footnote font-medium mb-1 block text-apple-gray dark:text-[var(--text-secondary)]">Marca</label>
+                      <label className="text-footnote font-medium mb-1 block text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Marca</label>
                       <input
                         type="text"
                         placeholder="Es. Bosch, Brembo..."
@@ -262,26 +262,26 @@ export default function PartsCatalogPage(): React.ReactElement {
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className="flex flex-col items-center justify-center py-16 gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center">
-                      <Search className="w-6 h-6 text-apple-blue" />
+                    <div className="w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center">
+                      <Search className="w-6 h-6 text-[var(--brand)]" />
                     </div>
-                    <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">Inserisci almeno 2 caratteri per cercare</p>
-                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Cerca per nome ricambio, codice OEM o marca</p>
+                    <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Inserisci almeno 2 caratteri per cercare</p>
+                    <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Cerca per nome ricambio, codice OEM o marca</p>
                   </div>
                 </AppleCardContent>
               </AppleCard>
             ) : isLoading ? (
               <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
               </div>
             ) : error ? (
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className="flex flex-col items-center justify-center py-16 gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-apple-red/10 flex items-center justify-center">
-                      <AlertCircle className="w-6 h-6 text-apple-red" />
+                    <div className="w-12 h-12 rounded-xl bg-[var(--status-error)]/10 flex items-center justify-center">
+                      <AlertCircle className="w-6 h-6 text-[var(--status-error)]" />
                     </div>
-                    <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">Errore nella ricerca</p>
+                    <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Errore nella ricerca</p>
                     <AppleButton
                       variant="secondary"
                       size="sm"
@@ -305,7 +305,7 @@ export default function PartsCatalogPage(): React.ReactElement {
               </AppleCard>
             ) : (
               <div className="space-y-4">
-                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{data?.meta?.total ?? parts.length} risultati trovati</p>
+                <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{data?.meta?.total ?? parts.length} risultati trovati</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {parts.map(part => {
                     const isExpanded = expandedPart === part.id;
@@ -315,38 +315,38 @@ export default function PartsCatalogPage(): React.ReactElement {
                         {/* Part Header */}
                         <AppleCardContent>
                           <div className="flex items-start gap-3">
-                            <div className="w-16 h-16 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center flex-shrink-0">
-                              <Package className="w-6 h-6 text-apple-gray dark:text-[var(--text-secondary)]" />
+                            <div className="w-16 h-16 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center flex-shrink-0">
+                              <Package className="w-6 h-6 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-body font-semibold truncate text-apple-dark dark:text-[var(--text-primary)]">{part.name}</h3>
+                              <h3 className="text-body font-semibold truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">{part.name}</h3>
                               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <span className="text-footnote px-1.5 py-0.5 rounded-lg bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]">
+                                <span className="text-footnote px-1.5 py-0.5 rounded-lg bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                   OEM: {part.oemNumber}
                                 </span>
                                 {part.brand && (
-                                  <span className="text-footnote flex items-center gap-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                                  <span className="text-footnote flex items-center gap-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                     <Tag className="w-3 h-3" /> {part.brand}
                                   </span>
                                 )}
                               </div>
                               {part.compatible && (
-                                <span className="inline-flex items-center gap-1 mt-2 text-footnote px-2 py-0.5 rounded-full bg-green-100/60 dark:bg-green-900/20 text-apple-green">
+                                <span className="inline-flex items-center gap-1 mt-2 text-footnote px-2 py-0.5 rounded-full bg-[var(--status-success-subtle)]/60 dark:bg-[var(--status-success-subtle)] text-[var(--status-success)]">
                                   <CheckCircle2 className="w-3 h-3" /> Compatibile
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center justify-between mt-3 pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
+                          <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
                             <div>
                               {bestPrice !== null && (
-                                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
-                                  Da <span className="font-bold text-body text-apple-dark dark:text-[var(--text-primary)]">
+                                <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                                  Da <span className="font-bold text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                     {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(bestPrice)}
                                   </span>
                                 </p>
                               )}
-                              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{part.suppliers.length} fornitor{part.suppliers.length === 1 ? 'e' : 'i'}</p>
+                              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{part.suppliers.length} fornitor{part.suppliers.length === 1 ? 'e' : 'i'}</p>
                             </div>
                             <AppleButton
                               variant="ghost"
@@ -361,16 +361,16 @@ export default function PartsCatalogPage(): React.ReactElement {
 
                         {/* Supplier Comparison */}
                         {isExpanded && part.suppliers.length > 0 && (
-                          <div className="border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
+                          <div className="border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
                             <div className="overflow-x-auto">
                               <table className="w-full">
                                 <thead>
-                                  <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]/50">
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Fornitore</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Prezzo</th>
-                                    <th className="px-4 py-2 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Disponibilit&agrave;</th>
-                                    <th className="px-4 py-2 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Tempi</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Azione</th>
+                                  <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Fornitore</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Prezzo</th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Disponibilit&agrave;</th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Tempi</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Azione</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -383,18 +383,18 @@ export default function PartsCatalogPage(): React.ReactElement {
                                       return (
                                         <tr
                                           key={supplier.supplierId}
-                                          className={idx < part.suppliers.length - 1 ? 'border-b border-apple-border/20 dark:border-[var(--border-default)]/50' : ''}
+                                          className={idx < part.suppliers.length - 1 ? 'border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50' : ''}
                                         >
                                           <td className="px-4 py-2.5">
-                                            <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{supplier.supplierName}</span>
+                                            <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{supplier.supplierName}</span>
                                             {idx === 0 && (
-                                              <span className="ml-2 text-footnote px-1.5 py-0.5 rounded-full bg-green-100/60 dark:bg-green-900/20 text-apple-green">
+                                              <span className="ml-2 text-footnote px-1.5 py-0.5 rounded-full bg-[var(--status-success-subtle)]/60 dark:bg-[var(--status-success-subtle)] text-[var(--status-success)]">
                                                 Miglior prezzo
                                               </span>
                                             )}
                                           </td>
                                           <td className="px-4 py-2.5 text-right">
-                                            <span className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                                            <span className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                               {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(supplier.price)}
                                             </span>
                                           </td>
@@ -404,7 +404,7 @@ export default function PartsCatalogPage(): React.ReactElement {
                                             </span>
                                           </td>
                                           <td className="px-4 py-2.5 text-center">
-                                            <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                                            <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                               {supplier.deliveryDays === 0 ? 'Immediato' : `${supplier.deliveryDays} gg`}
                                             </span>
                                           </td>

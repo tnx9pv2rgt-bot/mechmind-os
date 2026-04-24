@@ -49,7 +49,7 @@ function BillingSuccessContent() {
   }, [sessionId])
 
   return (
-    <div className="min-h-screen bg-apple-light-gray dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -62,18 +62,18 @@ function BillingSuccessContent() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4"
+              className="mx-auto w-16 h-16 bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 rounded-full flex items-center justify-center mb-4"
             >
               {isLoading ? (
-                <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+                <Loader2 className="w-8 h-8 text-[var(--status-success)] animate-spin" />
               ) : (
-                <CheckCircle className="w-8 h-8 text-green-600" />
+                <CheckCircle className="w-8 h-8 text-[var(--status-success)]" />
               )}
             </motion.div>
-            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+            <h1 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {isLoading ? 'Verifica in corso...' : 'Abbonamento Attivato!'}
             </h1>
-            <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-2">
+            <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-2">
               {isLoading 
                 ? 'Stiamo confermando il tuo pagamento...'
                 : 'Grazie per aver scelto MechMind OS. Il tuo abbonamento è ora attivo.'
@@ -88,22 +88,22 @@ function BillingSuccessContent() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]/50 rounded-xl"
+                  className="p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)]/50 rounded-xl"
                 >
-                  <h3 className="text-footnote font-semibold text-apple-gray dark:text-[var(--text-secondary)] uppercase mb-2">
+                  <h3 className="text-footnote font-semibold text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase mb-2">
                     Cosa succede ora?
                   </h3>
-                  <ul className="space-y-2 text-body text-apple-dark dark:text-[var(--text-primary)]">
+                  <ul className="space-y-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-[var(--status-success)] mt-0.5">✓</span>
                       Riceverai una email di conferma con i dettagli
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-[var(--status-success)] mt-0.5">✓</span>
                       Puoi iniziare subito a usare tutte le funzionalità
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-[var(--status-success)] mt-0.5">✓</span>
                       Gestisci il tuo abbonamento dalla dashboard
                     </li>
                   </ul>
@@ -133,9 +133,9 @@ function BillingSuccessContent() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="p-4 bg-red-50 dark:bg-red-950/30 rounded-xl"
+                className="p-4 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]/30 rounded-xl"
               >
-                <p className="text-body text-red-700">{error}</p>
+                <p className="text-body text-[var(--status-error)]">{error}</p>
                 <AppleButton 
                   variant="secondary" 
                   className="mt-4 w-full"
@@ -155,11 +155,11 @@ function BillingSuccessContent() {
 export default function BillingSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-apple-light-gray dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4">
         <AppleCard>
           <AppleCardHeader className="text-center">
-            <Loader2 className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
-            <h1 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">Caricamento...</h1>
+            <Loader2 className="w-8 h-8 text-[var(--status-success)] animate-spin mx-auto mb-4" />
+            <h1 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Caricamento...</h1>
           </AppleCardHeader>
         </AppleCard>
       </div>

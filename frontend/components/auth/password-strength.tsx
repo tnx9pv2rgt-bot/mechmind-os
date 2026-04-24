@@ -12,7 +12,7 @@ const SCORE_CONFIG: Record<number, { label: string; color: string; bgColor: stri
   1: { label: 'Debole', color: 'text-[var(--text-tertiary)]', bgColor: 'bg-[var(--text-tertiary)]' },
   2: { label: 'Discreta', color: 'text-[var(--text-secondary)]', bgColor: 'bg-[var(--text-secondary)]' },
   3: { label: 'Buona', color: 'text-[var(--text-primary)]', bgColor: 'bg-[var(--text-primary)]' },
-  4: { label: 'Forte', color: 'text-white', bgColor: 'bg-white' },
+  4: { label: 'Forte', color: 'text-[var(--text-on-brand)]', bgColor: 'bg-[var(--surface-primary)]' },
 };
 
 const TOTAL_SEGMENTS = 10;

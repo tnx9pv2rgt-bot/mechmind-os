@@ -81,23 +81,23 @@ function FormSkeleton() {
     <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
       {/* Header skeleton */}
       <div className="space-y-2">
-        <div className="h-8 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-8 w-1/3 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
+        <div className="h-4 w-1/2 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
       </div>
       
       {/* Form fields skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="space-y-2">
-            <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <div className="h-4 w-24 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
+            <div className="h-10 w-full bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
           </div>
         ))}
       </div>
       
       {/* Submit button skeleton */}
       <div className="flex justify-end pt-4">
-        <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-12 w-32 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
       </div>
     </div>
   )
@@ -120,19 +120,19 @@ async function CustomerFormServer({ geoData }: { geoData: GeoData }) {
     >
       {/* Server-rendered form header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           Nuovo Cliente
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
           Inserisci i dati del nuovo cliente. 
           {geoData.isEU && (
-            <span className="ml-1 text-blue-600 dark:text-blue-400">
+            <span className="ml-1 text-[var(--status-info)] dark:text-[var(--status-info)]">
               I dati saranno trattati in conformità al GDPR.
             </span>
           )}
         </p>
         {geoData.city && (
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">
             Località rilevata: {geoData.city}, {geoData.country}
           </p>
         )}
@@ -161,11 +161,11 @@ export default async function NewCustomerServerPage() {
   const geoData = await getGeoData()
   
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900">
+    <main className="min-h-screen bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--surface-secondary)] dark:from-[var(--surface-primary)] dark:to-[var(--surface-primary)]">
       {/* Skip Link for accessibility */}
       <a 
         href="#main-form-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-[var(--status-info)] text-[var(--text-on-brand)] px-4 py-2 rounded z-50"
       >
         Vai al contenuto principale
       </a>
@@ -177,7 +177,7 @@ export default async function NewCustomerServerPage() {
       </div>
       
       {/* SEO-friendly footer content */}
-      <footer className="mt-auto py-6 text-center text-sm text-gray-500">
+      <footer className="mt-auto py-6 text-center text-sm text-[var(--text-tertiary)]">
         <p>
           MechMind OS v10 - Gestionale Automotive Professionale
           {geoData.timezone && ` • ${geoData.timezone}`}

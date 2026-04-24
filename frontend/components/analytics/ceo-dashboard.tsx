@@ -81,7 +81,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
               className={cn(
                 'px-3 py-1.5 text-xs font-medium rounded-md transition-all',
                 period === p
-                  ? 'bg-white dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)] shadow-sm'
+                  ? 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)] shadow-sm'
                   : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]'
               )}
             >
@@ -100,7 +100,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
           change={m.revenue.change}
           changeLabel="vs periodo prec."
           icon={DollarSign}
-          iconColor="text-green-500"
+          iconColor="text-[var(--status-success)]"
           loading={isLoading}
         />
         <StatCard
@@ -118,7 +118,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
           value={m.workOrders.completed}
           format="number"
           icon={Wrench}
-          iconColor="text-purple-500"
+          iconColor="text-[var(--brand)]"
           loading={isLoading}
         />
         <StatCard
@@ -126,7 +126,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
           value={m.bookings.today}
           format="number"
           icon={Calendar}
-          iconColor="text-amber-500"
+          iconColor="text-[var(--status-warning)]"
           loading={isLoading}
         />
       </div>
@@ -134,7 +134,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
       {/* Secondary Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Cash Flow */}
-        <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] p-5">
+        <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Cash Flow</h3>
             <Activity className="h-4 w-4 text-[var(--text-tertiary)]" />
@@ -142,19 +142,19 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ArrowUpRight className="h-4 w-4 text-green-500" />
+                <ArrowUpRight className="h-4 w-4 text-[var(--status-success)]" />
                 <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Entrate</span>
               </div>
-              <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+              <span className="text-sm font-semibold text-[var(--status-success)] dark:text-[var(--status-success)]">
                 {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(m.cashFlow.in)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ArrowDownRight className="h-4 w-4 text-red-500" />
+                <ArrowDownRight className="h-4 w-4 text-[var(--status-error)]" />
                 <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Uscite</span>
               </div>
-              <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+              <span className="text-sm font-semibold text-[var(--status-error)] dark:text-[var(--status-error)]">
                 {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(m.cashFlow.out)}
               </span>
             </div>
@@ -163,7 +163,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
                 <span className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Netto</span>
                 <span className={cn(
                   'text-sm font-bold',
-                  m.cashFlow.net >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  m.cashFlow.net >= 0 ? 'text-[var(--status-success)] dark:text-[var(--status-success)]' : 'text-[var(--status-error)] dark:text-[var(--status-error)]'
                 )}>
                   {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(m.cashFlow.net)}
                 </span>
@@ -173,7 +173,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
         </div>
 
         {/* Funnel */}
-        <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] p-5">
+        <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Funnel Conversione</h3>
             <BarChart3 className="h-4 w-4 text-[var(--text-tertiary)]" />
@@ -194,7 +194,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
                 </div>
                 <div className="h-2 bg-[var(--surface-hover)] dark:bg-[var(--surface-elevated)] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] rounded-full transition-all duration-500"
                     style={{ width: `${step.conversion}%` }}
                   />
                 </div>
@@ -204,7 +204,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
         </div>
 
         {/* Efficiency Metrics */}
-        <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] p-5">
+        <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Efficienza</h3>
             <Zap className="h-4 w-4 text-[var(--text-tertiary)]" />
@@ -222,7 +222,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
                 <div
                   className={cn(
                     'h-full rounded-full transition-all duration-500',
-                    m.utilizationRate > 80 ? 'bg-green-500' : m.utilizationRate > 50 ? 'bg-amber-500' : 'bg-red-500'
+                    m.utilizationRate > 80 ? 'bg-[var(--status-success)]' : m.utilizationRate > 50 ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-error)]'
                   )}
                   style={{ width: `${m.utilizationRate}%` }}
                 />
@@ -259,7 +259,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
               </div>
               <span className={cn(
                 'text-sm font-semibold',
-                m.bookings.noShowRate > 10 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                m.bookings.noShowRate > 10 ? 'text-[var(--status-error)] dark:text-[var(--status-error)]' : 'text-[var(--status-success)] dark:text-[var(--status-success)]'
               )}>
                 {m.bookings.noShowRate}%
               </span>
@@ -273,7 +273,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
               </div>
               <span className={cn(
                 'text-sm font-semibold',
-                m.customers.churnRate > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                m.customers.churnRate > 15 ? 'text-[var(--status-error)] dark:text-[var(--status-error)]' : 'text-[var(--status-success)] dark:text-[var(--status-success)]'
               )}>
                 {m.customers.churnRate}%
               </span>
@@ -283,7 +283,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
       </div>
 
       {/* Top Services */}
-      <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] overflow-hidden">
+      <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
           <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Servizi Top per Ricavo</h3>
           <PieChart className="h-4 w-4 text-[var(--text-tertiary)]" />
@@ -292,7 +292,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
           {(m.topServices.length > 0 ? m.topServices : [
             { name: 'Caricamento...', revenue: 0, count: 0, margin: 0 },
           ]).map((service, i) => (
-            <div key={service.name} className="flex items-center justify-between px-5 py-3 hover:bg-white/50 dark:hover:bg-[var(--surface-hover)]/50 transition-colors">
+            <div key={service.name} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50 transition-colors">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-[var(--text-tertiary)] w-5">{i + 1}</span>
                 <span className="text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]">{service.name}</span>
@@ -300,7 +300,7 @@ export function CeoDashboard({ metrics, isLoading = false }: CeoDashboardProps):
               <div className="flex items-center gap-6">
                 <span className="text-xs text-[var(--text-secondary)]">{service.count} ordini</span>
                 <span className="text-xs text-[var(--text-secondary)]">
-                  Margine: <span className={service.margin > 40 ? 'text-green-600 font-medium' : 'text-[var(--text-secondary)]'}>{service.margin}%</span>
+                  Margine: <span className={service.margin > 40 ? 'text-[var(--status-success)] font-medium' : 'text-[var(--text-secondary)]'}>{service.margin}%</span>
                 </span>
                 <span className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] w-24 text-right">
                   {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(service.revenue)}

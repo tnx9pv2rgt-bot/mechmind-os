@@ -21,12 +21,12 @@ interface HistoryEntry {
 
 function EventTypeBadge({ type }: { type: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    SERVICE: { label: 'Tagliando', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' },
-    REPAIR: { label: 'Riparazione', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' },
-    INSPECTION: { label: 'Controllo', className: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300' },
-    RECALL: { label: 'Richiamo', className: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' },
-    ACCIDENT: { label: 'Incidente', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300' },
-    OTHER: { label: 'Altro', className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+    SERVICE: { label: 'Tagliando', className: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]' },
+    REPAIR: { label: 'Riparazione', className: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:bg-[var(--status-warning)]/20 dark:text-[var(--status-warning)]' },
+    INSPECTION: { label: 'Controllo', className: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]' },
+    RECALL: { label: 'Richiamo', className: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]' },
+    ACCIDENT: { label: 'Incidente', className: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/20 dark:text-[var(--status-warning)]' },
+    OTHER: { label: 'Altro', className: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)]' },
   };
 
   const config = map[type] ?? map.OTHER;
@@ -45,7 +45,7 @@ function SourceBadge({ source }: { source: string }) {
     MANUAL: 'Manuale',
   };
   return (
-    <span className="text-xs text-apple-gray dark:text-[var(--text-secondary)] bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] px-2 py-0.5 rounded">
+    <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] px-2 py-0.5 rounded">
       {labels[source] ?? source}
     </span>
   );
@@ -61,8 +61,8 @@ function HistoryCard({ entry, isLast }: { entry: HistoryEntry; isLast: boolean }
         <div className="absolute left-5 top-12 bottom-0 w-px bg-apple-border/30 dark:bg-[var(--border-default)]" />
       )}
       <div className="flex gap-4">
-        <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-apple-blue/10">
-          <Wrench className="h-5 w-5 text-apple-blue" />
+        <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand)]/10">
+          <Wrench className="h-5 w-5 text-[var(--brand)]" />
         </div>
         <div className="flex-1 pb-6">
           <AppleCard hover={false}>
@@ -72,20 +72,20 @@ function HistoryCard({ entry, isLast }: { entry: HistoryEntry; isLast: boolean }
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <EventTypeBadge type={entry.eventType} />
                     <SourceBadge source={entry.source} />
-                    <span className="text-xs text-apple-gray dark:text-[var(--text-secondary)]">
+                    <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       {formatDate(entry.eventDate)}
                     </span>
                   </div>
-                  <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mt-1">
+                  <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1">
                     {entry.description}
                   </p>
-                  <div className="flex flex-wrap gap-4 mt-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                  <div className="flex flex-wrap gap-4 mt-2 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     {entry.shopName && <span>📍 {entry.shopName}</span>}
                     {entry.mileage != null && <span>🔢 {entry.mileage.toLocaleString('it-IT')} km</span>}
                   </div>
                 </div>
                 {costEur != null && (
-                  <span className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] whitespace-nowrap">
+                  <span className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] whitespace-nowrap">
                     {costEur.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
                   </span>
                 )}
@@ -94,16 +94,16 @@ function HistoryCard({ entry, isLast }: { entry: HistoryEntry; isLast: boolean }
               {entry.mileage != null && (
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  className="mt-2 flex items-center gap-1 text-xs font-medium text-apple-blue hover:text-apple-blue/80 transition-colors"
+                  className="mt-2 flex items-center gap-1 text-xs font-medium text-[var(--brand)] hover:text-[var(--brand)]/80 transition-colors"
                 >
                   {expanded ? <><ChevronUp className="h-3 w-3" /> Meno</> : <><ChevronDown className="h-3 w-3" /> Dettagli</>}
                 </button>
               )}
 
               {expanded && (
-                <div className="mt-3 pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)] text-footnote text-apple-gray dark:text-[var(--text-secondary)] space-y-1">
-                  <p>Chilometraggio: <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">{entry.mileage?.toLocaleString('it-IT')} km</span></p>
-                  {entry.shopName && <p>Officina: <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">{entry.shopName}</span></p>}
+                <div className="mt-3 pt-3 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] space-y-1">
+                  <p>Chilometraggio: <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{entry.mileage?.toLocaleString('it-IT')} km</span></p>
+                  {entry.shopName && <p>Officina: <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{entry.shopName}</span></p>}
                 </div>
               )}
             </AppleCardContent>
@@ -127,7 +127,7 @@ export function ServiceHistory({ vehicleId }: ServiceHistoryProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
       </div>
     );
   }
@@ -135,8 +135,8 @@ export function ServiceHistory({ vehicleId }: ServiceHistoryProps) {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <AlertCircle className="h-10 w-10 text-apple-red/40 mb-3" />
-        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Impossibile caricare lo storico</p>
+        <AlertCircle className="h-10 w-10 text-[var(--status-error)]/40 mb-3" />
+        <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Impossibile caricare lo storico</p>
         <AppleButton variant="ghost" className="mt-3" onClick={() => mutate()}>Riprova</AppleButton>
       </div>
     );
@@ -147,9 +147,9 @@ export function ServiceHistory({ vehicleId }: ServiceHistoryProps) {
   if (entries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FileText className="h-12 w-12 text-apple-gray/40 mb-4" />
-        <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">Nessuno storico</p>
-        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+        <FileText className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+        <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Nessuno storico</p>
+        <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
           Gli interventi completati appariranno qui automaticamente.
         </p>
       </div>
@@ -164,22 +164,22 @@ export function ServiceHistory({ vehicleId }: ServiceHistoryProps) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <AppleCard hover={false}>
           <AppleCardContent>
-            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Interventi</p>
-            <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)] mt-1">{entries.length}</p>
+            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Interventi</p>
+            <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1">{entries.length}</p>
           </AppleCardContent>
         </AppleCard>
         <AppleCard hover={false}>
           <AppleCardContent>
-            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Spesa Totale</p>
-            <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)] mt-1">
+            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Spesa Totale</p>
+            <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1">
               {totalEur.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
             </p>
           </AppleCardContent>
         </AppleCard>
         <AppleCard hover={false}>
           <AppleCardContent>
-            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Media/Intervento</p>
-            <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)] mt-1">
+            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Media/Intervento</p>
+            <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1">
               {(entries.length > 0 ? totalEur / entries.length : 0).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
             </p>
           </AppleCardContent>

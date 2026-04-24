@@ -128,10 +128,10 @@ export function TOTPInput({
               'h-12 w-10 rounded-lg border-2 text-center text-xl font-bold',
               'transition-all duration-200',
               'focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20',
-              'dark:bg-gray-800 dark:text-white',
+              'dark:bg-[var(--surface-primary)] dark:text-[var(--text-on-brand)]',
               error 
-                ? 'border-red-500 bg-red-50 dark:border-red-500 dark:bg-red-900/20' 
-                : 'border-gray-300 dark:border-gray-700',
+                ? 'border-[var(--status-error)] bg-[var(--status-error-subtle)] dark:border-[var(--status-error)] dark:bg-[var(--status-error-subtle)]' 
+                : 'border-[var(--border-default)] dark:border-[var(--border-default)]',
               disabled && 'cursor-not-allowed opacity-50'
             )}
             aria-label={`Digit ${index + 1}`}
@@ -141,12 +141,12 @@ export function TOTPInput({
       </div>
       
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">
+        <p className="text-sm text-[var(--status-error)] dark:text-[var(--status-error)]">
           {error}
         </p>
       )}
       
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
         Inserisci il codice a {length} cifre
       </p>
     </div>

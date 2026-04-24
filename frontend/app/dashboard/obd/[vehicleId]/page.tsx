@@ -73,10 +73,10 @@ const cardVariants = {
 };
 
 const SEVERITY_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
-  low: { label: 'Basso', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
-  medium: { label: 'Medio', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  high: { label: 'Alto', bg: 'bg-orange-100 dark:bg-orange-900/40', color: 'text-orange-700 dark:text-orange-300' },
-  critical: { label: 'Critico', bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-red-700 dark:text-red-300' },
+  low: { label: 'Basso', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  medium: { label: 'Medio', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  high: { label: 'Alto', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  critical: { label: 'Critico', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
 };
 
 export default function OBDVehicleDetailPage() {
@@ -150,7 +150,7 @@ export default function OBDVehicleDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -158,8 +158,8 @@ export default function OBDVehicleDetailPage() {
   if (hasError) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center p-8'>
-        <AlertCircle className='h-12 w-12 text-apple-red/60 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>Dati OBD non disponibili</p>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/60 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>Dati OBD non disponibili</p>
         <Link href='/dashboard/obd'>
           <AppleButton variant='secondary'>Torna a OBD</AppleButton>
         </Link>
@@ -180,15 +180,15 @@ export default function OBDVehicleDetailPage() {
           />
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <div className='w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
-                <Car className='h-5 w-5 text-apple-purple' />
+              <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                <Car className='h-5 w-5 text-[var(--brand)]' />
               </div>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>{vehicleName}</h1>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{vehicleName}</h1>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body'>
                   {vehiclePlate && `Targa: ${vehiclePlate} - `}Diagnostica OBD-II
                   {liveData?.connected && (
-                    <span className='ml-2 text-footnote px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-apple-green dark:text-green-300'>
+                    <span className='ml-2 text-footnote px-2 py-0.5 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]'>
                       Connesso
                     </span>
                   )}
@@ -210,8 +210,8 @@ export default function OBDVehicleDetailPage() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 rounded-lg text-body font-medium transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-apple-blue text-white'
-                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+                    ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                    : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                 }`}
               >
                 {tab.label}
@@ -227,24 +227,24 @@ export default function OBDVehicleDetailPage() {
           <>
             <motion.div className='grid grid-cols-2 md:grid-cols-5 gap-4' variants={containerVariants}>
               {[
-                { label: 'RPM Motore', value: liveData?.rpm, unit: 'rpm', icon: Gauge, color: 'from-apple-blue to-blue-600' },
-                { label: 'Velocità', value: liveData?.speed, unit: 'km/h', icon: Activity, color: 'from-apple-green to-emerald-600' },
-                { label: 'Temp. Motore', value: liveData?.coolantTemp, unit: '\u00B0C', icon: Thermometer, color: 'from-apple-orange to-amber-600' },
-                { label: 'Carico Motore', value: liveData?.engineLoad, unit: '%', icon: Activity, color: 'from-apple-purple to-violet-600' },
-                { label: 'Tensione Batteria', value: liveData?.batteryVoltage, unit: 'V', icon: Zap, color: 'from-yellow-500 to-amber-600' },
+                { label: 'RPM Motore', value: liveData?.rpm, unit: 'rpm', icon: Gauge, color: 'from-[var(--brand)] to-[var(--status-info)]' },
+                { label: 'Velocità', value: liveData?.speed, unit: 'km/h', icon: Activity, color: 'from-apple-green to-[var(--status-success)]' },
+                { label: 'Temp. Motore', value: liveData?.coolantTemp, unit: '\u00B0C', icon: Thermometer, color: 'from-apple-orange to-[var(--status-warning)]' },
+                { label: 'Carico Motore', value: liveData?.engineLoad, unit: '%', icon: Activity, color: 'from-apple-purple to-[var(--brand)]' },
+                { label: 'Tensione Batteria', value: liveData?.batteryVoltage, unit: 'V', icon: Zap, color: 'from-[var(--status-warning)] to-[var(--status-warning)]' },
               ].map(item => (
                 <motion.div key={item.label} variants={cardVariants}>
                   <AppleCard>
                     <AppleCardContent>
                       <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-3`}>
-                        <item.icon className='h-5 w-5 text-white' />
+                        <item.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                       </div>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{item.label}</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{item.label}</p>
                       <div className='flex items-baseline gap-1'>
-                        <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {item.value != null ? String(item.value) : '--'}
                         </p>
-                        <span className='text-caption text-apple-gray dark:text-[var(--text-secondary)]'>{item.unit}</span>
+                        <span className='text-caption text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{item.unit}</span>
                       </div>
                     </AppleCardContent>
                   </AppleCard>
@@ -254,13 +254,13 @@ export default function OBDVehicleDetailPage() {
 
             {!liveData?.connected && (
               <motion.div variants={cardVariants}>
-                <AppleCard className='bg-apple-orange/5 border-apple-orange/20'>
+                <AppleCard className='bg-[var(--status-warning)]/5 border-apple-orange/20'>
                   <AppleCardContent className='text-center py-8'>
-                    <AlertTriangle className='h-8 w-8 text-apple-orange mx-auto mb-3' />
-                    <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <AlertTriangle className='h-8 w-8 text-[var(--status-warning)] mx-auto mb-3' />
+                    <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Dispositivo non connesso
                     </p>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                       I dati live non sono disponibili. Verifica la connessione del dispositivo OBD.
                     </p>
                   </AppleCardContent>
@@ -277,8 +277,8 @@ export default function OBDVehicleDetailPage() {
               <AppleCardHeader>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
-                    <AlertTriangle className='h-5 w-5 text-apple-red' />
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <AlertTriangle className='h-5 w-5 text-[var(--status-error)]' />
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Codici di Errore ({activeDTCs.length} attivi)
                     </h2>
                   </div>
@@ -298,12 +298,12 @@ export default function OBDVehicleDetailPage() {
               <AppleCardContent>
                 {dtcLoading ? (
                   <div className='flex items-center justify-center py-12'>
-                    <Loader2 className='h-6 w-6 animate-spin text-apple-blue' />
+                    <Loader2 className='h-6 w-6 animate-spin text-[var(--brand)]' />
                   </div>
                 ) : dtcCodes.length === 0 ? (
                   <div className='text-center py-12'>
-                    <CheckCircle className='h-8 w-8 text-apple-green mx-auto mb-3' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <CheckCircle className='h-8 w-8 text-[var(--status-success)] mx-auto mb-3' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessun codice di errore. Il veicolo è in buone condizioni.
                     </p>
                   </div>
@@ -314,17 +314,17 @@ export default function OBDVehicleDetailPage() {
                       return (
                         <div
                           key={tc.id}
-                          className={`flex items-center justify-between p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]/50 ${tc.resolved ? 'opacity-50' : ''}`}
+                          className={`flex items-center justify-between p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]/50 ${tc.resolved ? 'opacity-50' : ''}`}
                         >
                           <div className='flex items-center gap-4'>
-                            <div className='w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center'>
-                              <span className='text-body font-bold text-apple-red dark:text-red-400'>{tc.code}</span>
+                            <div className='w-12 h-12 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] flex items-center justify-center'>
+                              <span className='text-body font-bold text-[var(--status-error)] dark:text-[var(--status-error)]'>{tc.code}</span>
                             </div>
                             <div>
-                              <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{tc.description}</p>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{tc.description}</p>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 Rilevato: {new Date(tc.detectedAt).toLocaleDateString('it-IT')}
-                                {tc.resolved && <span className='ml-2 text-apple-green'>Risolto</span>}
+                                {tc.resolved && <span className='ml-2 text-[var(--status-success)]'>Risolto</span>}
                               </p>
                             </div>
                           </div>
@@ -348,8 +348,8 @@ export default function OBDVehicleDetailPage() {
               <AppleCardHeader>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
-                    <Clock className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <Clock className='h-5 w-5 text-[var(--brand)]' />
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Storico Letture
                     </h2>
                   </div>
@@ -365,8 +365,8 @@ export default function OBDVehicleDetailPage() {
                         onClick={() => setDateRange(r.value)}
                         className={`px-3 py-1 rounded-lg text-footnote font-medium transition-colors ${
                           dateRange === r.value
-                            ? 'bg-apple-blue text-white'
-                            : 'text-apple-gray hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+                            ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                            : 'text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                         }`}
                       >
                         {r.label}
@@ -378,12 +378,12 @@ export default function OBDVehicleDetailPage() {
               <AppleCardContent>
                 {historyLoading ? (
                   <div className='flex items-center justify-center py-12'>
-                    <Loader2 className='h-6 w-6 animate-spin text-apple-blue' />
+                    <Loader2 className='h-6 w-6 animate-spin text-[var(--brand)]' />
                   </div>
                 ) : history.length === 0 ? (
                   <div className='text-center py-12'>
-                    <Clock className='h-8 w-8 text-apple-gray/40 mx-auto mb-3' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <Clock className='h-8 w-8 text-[var(--text-tertiary)]/40 mx-auto mb-3' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessuno storico disponibile per il periodo selezionato.
                     </p>
                   </div>
@@ -391,7 +391,7 @@ export default function OBDVehicleDetailPage() {
                   <div className='space-y-6'>
                     {/* RPM Chart */}
                     <div>
-                      <h3 className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2'>RPM Motore</h3>
+                      <h3 className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2'>RPM Motore</h3>
                       <div className='h-48'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <LineChart data={history}>
@@ -415,7 +415,7 @@ export default function OBDVehicleDetailPage() {
 
                     {/* Temperature Chart */}
                     <div>
-                      <h3 className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2'>Temperatura Motore</h3>
+                      <h3 className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2'>Temperatura Motore</h3>
                       <div className='h-48'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <LineChart data={history}>
@@ -439,7 +439,7 @@ export default function OBDVehicleDetailPage() {
 
                     {/* Battery Chart */}
                     <div>
-                      <h3 className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-2'>Tensione Batteria</h3>
+                      <h3 className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2'>Tensione Batteria</h3>
                       <div className='h-48'>
                         <ResponsiveContainer width='100%' height='100%'>
                           <LineChart data={history}>

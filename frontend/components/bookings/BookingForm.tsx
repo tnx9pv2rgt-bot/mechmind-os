@@ -235,12 +235,12 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className='w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6'
+                className='w-20 h-20 rounded-full bg-[var(--status-success-subtle)] flex items-center justify-center mb-6'
               >
-                <CheckCircle2 className='w-10 h-10 text-green-600' />
+                <CheckCircle2 className='w-10 h-10 text-[var(--status-success)]' />
               </motion.div>
-              <h3 className='text-xl font-semibold text-gray-900 mb-2'>Prenotazione confermata!</h3>
-              <p className='text-gray-500'>L&apos;appuntamento è stato creato con successo.</p>
+              <h3 className='text-xl font-semibold text-[var(--text-primary)] mb-2'>Prenotazione confermata!</h3>
+              <p className='text-[var(--text-secondary)]'>L&apos;appuntamento è stato creato con successo.</p>
             </motion.div>
           ) : (
             <motion.div
@@ -256,14 +256,14 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                   name='customerId'
                   render={({ field }) => (
                     <FormItem className='space-y-2'>
-                      <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                        <User className='w-4 h-4 text-blue-500' />
+                      <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                        <User className='w-4 h-4 text-[var(--status-info)]' />
                         Cliente *
                       </FormLabel>
                       <div className='relative'>
                         {!field.value ? (
                           <div className='relative'>
-                            <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                            <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                             <input
                               type='text'
                               placeholder='Cerca cliente per nome o telefono...'
@@ -273,7 +273,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                                 setShowCustomerDropdown(true);
                               }}
                               onFocus={() => setShowCustomerDropdown(true)}
-                              className='w-full h-14 pl-12 pr-4 rounded-2xl bg-white/60 border border-gray-200/50 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all duration-300 outline-none text-gray-900 placeholder:text-gray-400'
+                              className='w-full h-14 pl-12 pr-4 rounded-2xl bg-[var(--surface-secondary)]/60 border border-[var(--border-default)]/50 focus:bg-[var(--surface-secondary)] focus:border-[var(--status-info)]/40 focus:ring-4 focus:ring-[var(--status-info)]/10 transition-all duration-300 outline-none text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]'
                               autoFocus
                             />
                             {customerSearch && (
@@ -283,22 +283,22 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                                   setCustomerSearch('');
                                   setShowCustomerDropdown(true);
                                 }}
-                                className='absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors'
+                                className='absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--border-default)] hover:bg-[var(--border-strong)] flex items-center justify-center transition-colors'
                               >
-                                <X className='w-3 h-3 text-gray-500' />
+                                <X className='w-3 h-3 text-[var(--text-tertiary)]' />
                               </button>
                             )}
                           </div>
                         ) : (
-                          <div className='flex items-center gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200'>
-                            <div className='w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold'>
+                          <div className='flex items-center gap-3 p-4 rounded-2xl bg-[var(--status-info-subtle)] border border-[var(--status-info)]/30'>
+                            <div className='w-10 h-10 rounded-full bg-[var(--status-info-subtle)]0 flex items-center justify-center text-[var(--text-on-brand)] font-semibold'>
                               {mockCustomers.find(c => c.id === field.value)?.name.charAt(0)}
                             </div>
                             <div className='flex-1'>
-                              <p className='font-medium text-gray-900'>
+                              <p className='font-medium text-[var(--text-primary)]'>
                                 {mockCustomers.find(c => c.id === field.value)?.name}
                               </p>
-                              <p className='text-sm text-gray-500'>
+                              <p className='text-sm text-[var(--text-tertiary)]'>
                                 {mockCustomers.find(c => c.id === field.value)?.phone}
                               </p>
                             </div>
@@ -309,9 +309,9 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                                 setCustomerSearch('');
                                 setShowCustomerDropdown(true);
                               }}
-                              className='p-2 rounded-full hover:bg-blue-100 transition-colors'
+                              className='p-2 rounded-full hover:bg-[var(--status-info-subtle)] transition-colors'
                             >
-                              <X className='w-4 h-4 text-blue-500' />
+                              <X className='w-4 h-4 text-[var(--status-info)]' />
                             </button>
                           </div>
                         )}
@@ -322,10 +322,10 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
-                              className='absolute z-50 left-0 right-0 mt-2 bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl max-h-64 overflow-y-auto'
+                              className='absolute z-50 left-0 right-0 mt-2 bg-[var(--surface-secondary)]/90 backdrop-blur-xl rounded-2xl border border-[var(--border-default)]/50 shadow-2xl max-h-64 overflow-y-auto'
                             >
                               {filteredCustomers.length === 0 ? (
-                                <div className='p-4 text-center text-gray-500'>
+                                <div className='p-4 text-center text-[var(--text-tertiary)]'>
                                   Nessun cliente trovato
                                 </div>
                               ) : (
@@ -338,14 +338,14 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                                       setShowCustomerDropdown(false);
                                       setCustomerSearch('');
                                     }}
-                                    className='w-full flex items-center gap-3 p-4 hover:bg-blue-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl'
+                                    className='w-full flex items-center gap-3 p-4 hover:bg-[var(--status-info-subtle)] transition-colors first:rounded-t-2xl last:rounded-b-2xl'
                                   >
-                                    <div className='w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold'>
+                                    <div className='w-10 h-10 rounded-full bg-gradient-to-br from-[var(--status-info)] to-[var(--status-info)] flex items-center justify-center text-[var(--text-on-brand)] font-semibold'>
                                       {customer.name.charAt(0)}
                                     </div>
                                     <div className='text-left'>
-                                      <p className='font-medium text-gray-900'>{customer.name}</p>
-                                      <p className='text-sm text-gray-500'>{customer.phone}</p>
+                                      <p className='font-medium text-[var(--text-primary)]'>{customer.name}</p>
+                                      <p className='text-sm text-[var(--text-tertiary)]'>{customer.phone}</p>
                                     </div>
                                   </button>
                                 ))
@@ -354,7 +354,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                           )}
                         </AnimatePresence>
                       </div>
-                      <FormMessage className='text-sm text-red-500 flex items-center gap-1' />
+                      <FormMessage className='text-sm text-[var(--status-error)] flex items-center gap-1' />
                     </FormItem>
                   )}
                 />
@@ -375,29 +375,29 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                       name='vehicleId'
                       render={({ field }) => (
                         <FormItem className='space-y-2'>
-                          <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                            <Car className='w-4 h-4 text-indigo-500' />
+                          <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                            <Car className='w-4 h-4 text-[var(--brand)]' />
                             Veicolo
                           </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className='h-14 rounded-2xl bg-white/60 border-gray-200/50 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-300'>
+                              <SelectTrigger className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-[var(--border-default)]/50 focus:bg-[var(--surface-secondary)] focus:border-[var(--brand)]/40 focus:ring-4 focus:ring-[var(--brand)]/10 transition-all duration-300'>
                                 <SelectValue placeholder='Seleziona un veicolo (opzionale)' />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className='bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl'>
+                            <SelectContent className='bg-[var(--surface-secondary)]/90 backdrop-blur-xl rounded-2xl border border-[var(--border-default)]/50 shadow-2xl'>
                               {customerVehicles.map(vehicle => (
                                 <SelectItem
                                   key={vehicle.id}
                                   value={vehicle.id}
-                                  className='rounded-xl focus:bg-indigo-50'
+                                  className='rounded-xl focus:bg-[var(--brand)]/5'
                                 >
                                   <div className='flex items-center gap-3'>
-                                    <span className='font-mono text-sm bg-gray-100 px-2 py-1 rounded'>
+                                    <span className='font-mono text-sm bg-[var(--surface-secondary)] px-2 py-1 rounded'>
                                       {vehicle.plate}
                                     </span>
                                     <span>{vehicle.model}</span>
-                                    <span className='text-gray-400'>({vehicle.year})</span>
+                                    <span className='text-[var(--text-tertiary)]'>({vehicle.year})</span>
                                   </div>
                                 </SelectItem>
                               ))}
@@ -418,8 +418,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                   name='serviceType'
                   render={({ field }) => (
                     <FormItem className='space-y-2'>
-                      <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                        <Wrench className='w-4 h-4 text-purple-500' />
+                      <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                        <Wrench className='w-4 h-4 text-[var(--brand)]' />
                         Tipo di Servizio *
                       </FormLabel>
                       <div className='grid grid-cols-3 gap-2'>
@@ -431,15 +431,15 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                             className={cn(
                               'flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300',
                               field.value === value
-                                ? 'border-purple-400 bg-purple-50 shadow-lg shadow-purple-100'
-                                : 'border-gray-200/50 bg-white/40 hover:bg-white/60 hover:border-purple-200'
+                                ? 'border-[var(--brand)]/40 bg-[var(--brand)]/5 shadow-lg shadow-purple-100'
+                                : 'border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/40 hover:bg-[var(--surface-secondary)]/60 hover:border-[var(--brand)]/20'
                             )}
                           >
                             <span className='text-2xl'>{serviceTypeIcons[value]}</span>
                             <span
                               className={cn(
                                 'text-xs font-medium',
-                                field.value === value ? 'text-purple-700' : 'text-gray-600'
+                                field.value === value ? 'text-[var(--brand)]' : 'text-[var(--text-secondary)]'
                               )}
                             >
                               {label}
@@ -466,8 +466,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                     name='date'
                     render={({ field }) => (
                       <FormItem className='space-y-2'>
-                        <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                          <Calendar className='w-4 h-4 text-green-500' />
+                        <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                          <Calendar className='w-4 h-4 text-[var(--status-success)]' />
                           Data *
                         </FormLabel>
                         <FormControl>
@@ -475,7 +475,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                             <Input
                               type='date'
                               min={getTodayString()}
-                              className='h-14 rounded-2xl bg-white/60 border-gray-200/50 focus:bg-white focus:border-green-400 focus:ring-4 focus:ring-green-100 transition-all duration-300'
+                              className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-[var(--border-default)]/50 focus:bg-[var(--surface-secondary)] focus:border-[var(--status-success)]/40 focus:ring-4 focus:ring-[var(--status-success)]/10 transition-all duration-300'
                               {...field}
                               value={
                                 field.value instanceof Date
@@ -507,23 +507,23 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                     name='timeSlot'
                     render={({ field }) => (
                       <FormItem className='space-y-2'>
-                        <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                          <Clock className='w-4 h-4 text-orange-500' />
+                        <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                          <Clock className='w-4 h-4 text-[var(--status-warning)]' />
                           Ora *
                         </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className='h-14 rounded-2xl bg-white/60 border-gray-200/50 focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 transition-all duration-300'>
+                            <SelectTrigger className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-[var(--border-default)]/50 focus:bg-[var(--surface-secondary)] focus:border-[var(--status-warning)]/40 focus:ring-4 focus:ring-[var(--status-warning)]/10 transition-all duration-300'>
                               <SelectValue placeholder='--:--' />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className='bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl max-h-48'>
+                          <SelectContent className='bg-[var(--surface-secondary)]/90 backdrop-blur-xl rounded-2xl border border-[var(--border-default)]/50 shadow-2xl max-h-48'>
                             <div className='grid grid-cols-3 gap-1 p-2'>
                               {timeSlots.map(time => (
                                 <SelectItem
                                   key={time}
                                   value={time}
-                                  className='rounded-xl focus:bg-orange-50 justify-center'
+                                  className='rounded-xl focus:bg-[var(--status-warning)]/5 justify-center'
                                 >
                                   {time}
                                 </SelectItem>
@@ -545,30 +545,30 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                   name='mechanicId'
                   render={({ field }) => (
                     <FormItem className='space-y-2'>
-                      <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                        <UserCircle className='w-4 h-4 text-pink-500' />
+                      <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                        <UserCircle className='w-4 h-4 text-[var(--status-warning)]' />
                         Meccanico Assegnato
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className='h-14 rounded-2xl bg-white/60 border-gray-200/50 focus:bg-white focus:border-pink-400 focus:ring-4 focus:ring-pink-100 transition-all duration-300'>
+                          <SelectTrigger className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-[var(--border-default)]/50 focus:bg-[var(--surface-secondary)] focus:border-[var(--status-warning)]/40 focus:ring-4 focus:ring-[var(--status-warning)]/10 transition-all duration-300'>
                             <SelectValue placeholder='Seleziona un meccanico (opzionale)' />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className='bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl'>
+                        <SelectContent className='bg-[var(--surface-secondary)]/90 backdrop-blur-xl rounded-2xl border border-[var(--border-default)]/50 shadow-2xl'>
                           {mockMechanics.map(mechanic => (
                             <SelectItem
                               key={mechanic.id}
                               value={mechanic.id}
-                              className='rounded-xl focus:bg-pink-50'
+                              className='rounded-xl focus:bg-[var(--status-warning)]/5'
                             >
                               <div className='flex items-center gap-3'>
-                                <div className='w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center text-white text-sm font-semibold'>
+                                <div className='w-8 h-8 rounded-full bg-gradient-to-br from-[var(--status-warning)] to-[var(--status-warning)] flex items-center justify-center text-[var(--text-on-brand)] text-sm font-semibold'>
                                   {mechanic.name.charAt(0)}
                                 </div>
                                 <div>
                                   <p className='font-medium'>{mechanic.name}</p>
-                                  <p className='text-xs text-gray-500'>{mechanic.specialty}</p>
+                                  <p className='text-xs text-[var(--text-tertiary)]'>{mechanic.specialty}</p>
                                 </div>
                               </div>
                             </SelectItem>
@@ -588,10 +588,10 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                   name='duration'
                   render={({ field }) => (
                     <FormItem className='space-y-3'>
-                      <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                        <Hourglass className='w-4 h-4 text-cyan-500' />
+                      <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                        <Hourglass className='w-4 h-4 text-[var(--status-info)]' />
                         Durata Stimata
-                        <span className='ml-auto text-cyan-600 font-medium bg-cyan-50 px-3 py-1 rounded-full'>
+                        <span className='ml-auto text-[var(--status-info)] font-medium bg-[var(--status-info)]/5 px-3 py-1 rounded-full'>
                           {formatDuration(field.value)}
                         </span>
                       </FormLabel>
@@ -604,12 +604,12 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                             step={15}
                             value={field.value}
                             onChange={e => field.onChange(Number(e.target.value))}
-                            className='w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100'
+                            className='w-full h-2 bg-[var(--border-default)] rounded-full appearance-none cursor-pointer accent-cyan-500 focus:outline-none focus:ring-4 focus:ring-[var(--status-info)]/10'
                             style={{
                               background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${((field.value - 30) / (480 - 30)) * 100}%, #e5e7eb ${((field.value - 30) / (480 - 30)) * 100}%, #e5e7eb 100%)`,
                             }}
                           />
-                          <div className='flex justify-between text-xs text-gray-400 mt-2'>
+                          <div className='flex justify-between text-xs text-[var(--text-tertiary)] mt-2'>
                             <span>30min</span>
                             <span>2h</span>
                             <span>4h</span>
@@ -631,17 +631,17 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                   name='notes'
                   render={({ field }) => (
                     <FormItem className='space-y-2'>
-                      <FormLabel className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                        <FileText className='w-4 h-4 text-gray-500' />
+                      <FormLabel className='text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2'>
+                        <FileText className='w-4 h-4 text-[var(--text-tertiary)]' />
                         Note
-                        <span className='text-xs text-gray-400 font-normal'>
+                        <span className='text-xs text-[var(--text-tertiary)] font-normal'>
                           ({field.value?.length || 0}/500)
                         </span>
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder='Aggiungi note o richieste speciali...'
-                          className='min-h-[100px] rounded-2xl bg-white/60 border-gray-200/50 focus:bg-white focus:border-gray-400 focus:ring-4 focus:ring-gray-100 transition-all duration-300 resize-none'
+                          className='min-h-[100px] rounded-2xl bg-[var(--surface-secondary)]/60 border-[var(--border-default)]/50 focus:bg-[var(--surface-secondary)] focus:border-[var(--border-default)] focus:ring-4 focus:ring-[var(--border-default)]/20 transition-all duration-300 resize-none'
                           {...field}
                         />
                       </FormControl>
@@ -671,7 +671,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                   </AppleButton>
                   <AppleButton
                     type='submit'
-                    className='flex-[2] h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all duration-300'
+                    className='flex-[2] h-14 rounded-2xl bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] hover:from-[var(--status-info)] hover:to-[var(--brand)] shadow-lg shadow-blue-500/25 transition-all duration-300'
                     loading={status === 'loading'}
                     disabled={!form.formState.isValid}
                   >
@@ -685,9 +685,9 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                     )}
                   </AppleButton>
                 </div>
-                <p className='text-center text-xs text-gray-400 mt-3'>
+                <p className='text-center text-xs text-[var(--text-tertiary)] mt-3'>
                   Premi{' '}
-                  <kbd className='px-2 py-0.5 bg-gray-100 rounded text-gray-600 font-mono'>
+                  <kbd className='px-2 py-0.5 bg-[var(--surface-secondary)] rounded text-[var(--text-secondary)] font-mono'>
                     ⌘ + Enter
                   </kbd>{' '}
                   per confermare

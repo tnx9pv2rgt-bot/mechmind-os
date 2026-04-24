@@ -133,8 +133,8 @@ export default function NewPartPage() {
               className='min-w-[44px]'
             />
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuovo Ricambio</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuovo Ricambio</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Aggiungi un nuovo ricambio al magazzino
               </p>
             </div>
@@ -153,51 +153,51 @@ export default function NewPartPage() {
           <motion.div variants={cardVariants} className='mb-6'>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Informazioni Base
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Nome *
                     </label>
                     <Input placeholder='Es. Pastiglie freno anteriori' {...register('name')} />
-                    {errors.name && <p className='text-footnote text-apple-red mt-1'>{errors.name.message}</p>}
+                    {errors.name && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.name.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       SKU *
                     </label>
                     <Input placeholder='Es. BRK-PAD-001' {...register('sku')} className='font-mono' />
-                    {errors.sku && <p className='text-footnote text-apple-red mt-1'>{errors.sku.message}</p>}
+                    {errors.sku && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.sku.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Codice OE
                     </label>
                     <Input placeholder='Es. 34116860016' {...register('partNumber')} className='font-mono' />
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Marca
                     </label>
                     <Input placeholder='Es. Brembo' {...register('brand')} />
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Categoria
                     </label>
                     <Input placeholder='Es. Freni' {...register('category')} />
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Fornitore
                     </label>
                     <select
                       {...register('supplierId')}
-                      className='w-full h-10 px-3 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                      className='w-full h-10 px-3 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                     >
                       <option value=''>Seleziona fornitore...</option>
                       {suppliers.map(s => (
@@ -214,42 +214,42 @@ export default function NewPartPage() {
           <motion.div variants={cardVariants} className='mb-6'>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Prezzi e Magazzino
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Prezzo Acquisto
                     </label>
                     <Input type='number' step='0.01' min='0' {...register('costPrice', { valueAsNumber: true })} />
-                    {errors.costPrice && <p className='text-footnote text-apple-red mt-1'>{errors.costPrice.message}</p>}
+                    {errors.costPrice && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.costPrice.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Prezzo Vendita
                     </label>
                     <Input type='number' step='0.01' min='0' {...register('retailPrice', { valueAsNumber: true })} />
-                    {errors.retailPrice && <p className='text-footnote text-apple-red mt-1'>{errors.retailPrice.message}</p>}
+                    {errors.retailPrice && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.retailPrice.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Quantità Iniziale
                     </label>
                     <Input type='number' min='0' step='1' {...register('currentStock', { valueAsNumber: true })} />
-                    {errors.currentStock && <p className='text-footnote text-apple-red mt-1'>{errors.currentStock.message}</p>}
+                    {errors.currentStock && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.currentStock.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Scorta Minima
                     </label>
                     <Input type='number' min='0' step='1' {...register('minStockLevel', { valueAsNumber: true })} />
-                    {errors.minStockLevel && <p className='text-footnote text-apple-red mt-1'>{errors.minStockLevel.message}</p>}
+                    {errors.minStockLevel && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.minStockLevel.message}</p>}
                   </div>
                   <div>
-                    <label className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block'>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
                       Posizione Magazzino
                     </label>
                     <Input placeholder='Es. Scaffale A-3' {...register('location')} />
@@ -263,7 +263,7 @@ export default function NewPartPage() {
           <motion.div variants={cardVariants} className='mb-6'>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Note
                 </h2>
               </AppleCardHeader>
@@ -272,7 +272,7 @@ export default function NewPartPage() {
                   {...register('notes')}
                   rows={3}
                   placeholder='Note aggiuntive sul ricambio...'
-                  className='w-full rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
+                  className='w-full rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                 />
               </AppleCardContent>
             </AppleCard>
@@ -280,9 +280,9 @@ export default function NewPartPage() {
 
           {/* Error */}
           {submitError && (
-            <div className='flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 mb-6'>
-              <AlertCircle className='h-4 w-4 text-red-500 flex-shrink-0' />
-              <p className='text-footnote text-apple-red dark:text-red-300'>{submitError}</p>
+            <div className='flex items-center gap-2 p-3 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/30 mb-6'>
+              <AlertCircle className='h-4 w-4 text-[var(--status-error)] flex-shrink-0' />
+              <p className='text-footnote text-[var(--status-error)] dark:text-[var(--status-error)]'>{submitError}</p>
             </div>
           )}
 

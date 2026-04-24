@@ -51,16 +51,16 @@ export function EmptyState({
             className={cn(
               'mx-auto flex h-20 w-20 items-center justify-center rounded-2xl',
               variant === 'first-time'
-                ? 'bg-blue-50 dark:bg-blue-950/40'
-                : 'bg-gray-100 dark:bg-gray-800'
+                ? 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]'
+                : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]'
             )}
           >
             <DisplayIcon
               className={cn(
                 'h-10 w-10',
                 variant === 'first-time'
-                  ? 'text-apple-blue'
-                  : 'text-gray-400 dark:text-gray-500'
+                  ? 'text-[var(--brand)]'
+                  : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
               )}
               strokeWidth={1.5}
             />
@@ -70,10 +70,10 @@ export function EmptyState({
 
       {/* Text area */}
       <div className="max-w-md">
-        <h3 className="text-title-3 font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {title}
         </h3>
-        <p className="mt-2 text-body text-gray-500 dark:text-gray-400">
+        <p className="mt-2 text-body text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
           {description}
         </p>
 

@@ -111,24 +111,24 @@ interface WorkOrderDetail {
 const STATUS_PIPELINE = ['DRAFT', 'OPEN', 'IN_PROGRESS', 'QC', 'COMPLETED', 'DELIVERED'] as const;
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
-  DRAFT: { label: 'Bozza', bg: 'bg-gray-200 dark:bg-gray-700', color: 'text-gray-700 dark:text-gray-300' },
-  OPEN: { label: 'Aperto', bg: 'bg-blue-100 dark:bg-blue-900/40', color: 'text-blue-700 dark:text-blue-300' },
-  IN_PROGRESS: { label: 'In Lavorazione', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  QC: { label: 'Controllo Qualita', bg: 'bg-purple-100 dark:bg-purple-900/40', color: 'text-purple-700 dark:text-purple-300' },
-  COMPLETED: { label: 'Completato', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
-  DELIVERED: { label: 'Consegnato', bg: 'bg-teal-100 dark:bg-teal-900/40', color: 'text-teal-700 dark:text-teal-300' },
-  CANCELLED: { label: 'Annullato', bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-red-700 dark:text-red-300' },
-  PENDING: { label: 'In Attesa', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  WAITING_PARTS: { label: 'Attesa Ricambi', bg: 'bg-orange-100 dark:bg-orange-900/40', color: 'text-orange-700 dark:text-orange-300' },
-  READY: { label: 'Pronto', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
-  INVOICED: { label: 'Fatturato', bg: 'bg-teal-100 dark:bg-teal-900/40', color: 'text-teal-700 dark:text-teal-300' },
+  DRAFT: { label: 'Bozza', bg: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]', color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]' },
+  OPEN: { label: 'Aperto', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]' },
+  IN_PROGRESS: { label: 'In Lavorazione', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  QC: { label: 'Controllo Qualita', bg: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]', color: 'text-[var(--brand)] dark:text-[var(--brand)]' },
+  COMPLETED: { label: 'Completato', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  DELIVERED: { label: 'Consegnato', bg: 'bg-[var(--status-success)]/10 dark:bg-[var(--status-success)]/30/40', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  CANCELLED: { label: 'Annullato', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+  PENDING: { label: 'In Attesa', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  WAITING_PARTS: { label: 'Attesa Ricambi', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  READY: { label: 'Pronto', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  INVOICED: { label: 'Fatturato', bg: 'bg-[var(--status-success)]/10 dark:bg-[var(--status-success)]/30/40', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
-  LOW: { label: 'Bassa', className: 'text-apple-gray' },
-  NORMAL: { label: 'Normale', className: 'text-apple-blue' },
-  HIGH: { label: 'Alta', className: 'text-apple-orange' },
-  URGENT: { label: 'Urgente', className: 'text-apple-red font-bold' },
+  LOW: { label: 'Bassa', className: 'text-[var(--text-tertiary)]' },
+  NORMAL: { label: 'Normale', className: 'text-[var(--brand)]' },
+  HIGH: { label: 'Alta', className: 'text-[var(--status-warning)]' },
+  URGENT: { label: 'Urgente', className: 'text-[var(--status-error)] font-bold' },
 };
 
 const FUEL_LEVEL_OPTIONS = [
@@ -314,12 +314,12 @@ export default function WorkOrderDetailPage(): React.ReactElement {
       <div className="min-h-screen">
         <header>
           <div className="px-4 sm:px-8 py-5">
-            <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <div className="h-4 w-48 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse mb-4" />
+            <div className="h-8 w-64 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded animate-pulse" />
           </div>
         </header>
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
         </div>
       </div>
     );
@@ -364,7 +364,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
+                <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   OdL #{wo.woNumber || wo.id.slice(0, 8)}
                 </h1>
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase ${sc.bg} ${sc.color}`}>
@@ -374,7 +374,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   {priority.label}
                 </span>
               </div>
-              <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+              <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                 {wo.vehicleMake} {wo.vehicleModel} {wo.vehiclePlate ? `- ${formatPlate(wo.vehiclePlate)}` : ''}
                 {wo.customerName ? ` | ${wo.customerName}` : ''}
               </p>
@@ -436,15 +436,15 @@ export default function WorkOrderDetailPage(): React.ReactElement {
               return (
                 <div key={step} className="flex items-center">
                   {i > 0 && (
-                    <div className={`w-6 h-0.5 ${isCompleted ? 'bg-apple-green' : 'bg-apple-border/20 dark:bg-[var(--border-default)]'}`} />
+                    <div className={`w-6 h-0.5 ${isCompleted ? 'bg-[var(--status-success)]' : 'bg-apple-border/20 dark:bg-[var(--border-default)]'}`} />
                   )}
                   <div
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${
                       isCurrent
                         ? `${stepConfig.bg} ${stepConfig.color} ring-2 ring-offset-1 ring-apple-blue dark:ring-offset-[var(--surface-primary)]`
                         : isCompleted
-                          ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                          : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'
+                          ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]'
+                          : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                     }`}
                   >
                     {isCompleted ? (
@@ -470,8 +470,8 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   onClick={() => setTab(tab.key)}
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
                     isActive
-                      ? 'border-apple-blue text-apple-blue bg-apple-blue/5'
-                      : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                      ? 'border-[var(--brand)] text-[var(--brand)] bg-[var(--brand)]/5'
+                      : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -501,19 +501,19 @@ export default function WorkOrderDetailPage(): React.ReactElement {
             <div className="sticky top-4 space-y-4">
               <AppleCard hover={false}>
                 <AppleCardContent>
-                  <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Riepilogo Costi</h3>
+                  <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">Riepilogo Costi</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between text-body">
-                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">Manodopera</span>
-                      <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">{formatCurrency(laborTotal)}</span>
+                      <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Manodopera</span>
+                      <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{formatCurrency(laborTotal)}</span>
                     </div>
                     <div className="flex justify-between text-body">
-                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">Ricambi</span>
-                      <span className="font-medium text-apple-dark dark:text-[var(--text-primary)]">{formatCurrency(partsTotal)}</span>
+                      <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ricambi</span>
+                      <span className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{formatCurrency(partsTotal)}</span>
                     </div>
-                    <div className="border-t border-apple-border/20 dark:border-[var(--border-default)] pt-3 flex justify-between">
-                      <span className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]">Totale</span>
-                      <span className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]">{formatCurrency(grandTotal)}</span>
+                    <div className="border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] pt-3 flex justify-between">
+                      <span className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Totale</span>
+                      <span className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{formatCurrency(grandTotal)}</span>
                     </div>
                   </div>
                 </AppleCardContent>
@@ -523,13 +523,13 @@ export default function WorkOrderDetailPage(): React.ReactElement {
               {wo.customerName && (
                 <AppleCard hover={false}>
                   <AppleCardContent>
-                    <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3 flex items-center gap-2">
-                      <User className="h-4 w-4 text-apple-gray" />
+                    <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                      <User className="h-4 w-4 text-[var(--text-tertiary)]" />
                       Cliente
                     </h3>
-                    <p className="text-body text-apple-dark dark:text-[var(--text-primary)] font-medium">{wo.customerName}</p>
-                    {wo.customerPhone && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">{wo.customerPhone}</p>}
-                    {wo.customerEmail && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{wo.customerEmail}</p>}
+                    <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] font-medium">{wo.customerName}</p>
+                    {wo.customerPhone && <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">{wo.customerPhone}</p>}
+                    {wo.customerEmail && <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{wo.customerEmail}</p>}
                   </AppleCardContent>
                 </AppleCard>
               )}
@@ -537,16 +537,16 @@ export default function WorkOrderDetailPage(): React.ReactElement {
               {wo.vehiclePlate && (
                 <AppleCard hover={false}>
                   <AppleCardContent>
-                    <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3 flex items-center gap-2">
-                      <Car className="h-4 w-4 text-apple-gray" />
+                    <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                      <Car className="h-4 w-4 text-[var(--text-tertiary)]" />
                       Veicolo
                     </h3>
-                    <p className="font-mono font-bold text-body text-apple-dark dark:text-[var(--text-primary)]">{formatPlate(wo.vehiclePlate)}</p>
-                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                    <p className="font-mono font-bold text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">{formatPlate(wo.vehiclePlate)}</p>
+                    <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                       {wo.vehicleMake} {wo.vehicleModel} {wo.vehicleYear ? `(${wo.vehicleYear})` : ''}
                     </p>
                     {wo.mileageIn && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                         Km ingresso: {wo.mileageIn.toLocaleString('it-IT')}
                       </p>
                     )}
@@ -560,23 +560,23 @@ export default function WorkOrderDetailPage(): React.ReactElement {
 
       {/* Check-in Modal */}
       {showCheckIn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-5 border-b border-apple-border/20 dark:border-[var(--border-default)]">
-              <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-                <LogIn className="h-5 w-5 text-apple-blue" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--surface-primary)]/50 backdrop-blur-sm">
+          <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+              <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+                <LogIn className="h-5 w-5 text-[var(--brand)]" />
                 Check-in Veicolo
               </h2>
               <button
                 onClick={() => setShowCheckIn(false)}
-                className="p-1.5 rounded-full text-apple-gray hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)] transition-colors"
+                className="p-1.5 rounded-full text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Chilometraggio ingresso *
                 </label>
                 <Input
@@ -588,13 +588,13 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Livello carburante
                 </label>
                 <select
                   value={checkInForm.fuelLevel}
                   onChange={(e) => setCheckInForm((f) => ({ ...f, fuelLevel: e.target.value }))}
-                  className="w-full h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                  className="w-full h-10 px-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                 >
                   <option value="">— Seleziona —</option>
                   {FUEL_LEVEL_OPTIONS.map((o) => (
@@ -603,7 +603,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                 </select>
               </div>
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Danni preesistenti
                 </label>
                 <textarea
@@ -611,11 +611,11 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   value={checkInForm.damageNotes}
                   onChange={(e) => setCheckInForm((f) => ({ ...f, damageNotes: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
                 />
               </div>
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Oggetti nel veicolo
                 </label>
                 <Input
@@ -625,7 +625,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-5 border-t border-apple-border/20 dark:border-[var(--border-default)]">
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
               <AppleButton variant="secondary" onClick={() => setShowCheckIn(false)}>
                 Annulla
               </AppleButton>
@@ -643,23 +643,23 @@ export default function WorkOrderDetailPage(): React.ReactElement {
 
       {/* Check-out Modal */}
       {showCheckOut && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-5 border-b border-apple-border/20 dark:border-[var(--border-default)]">
-              <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-                <LogOut className="h-5 w-5 text-apple-green" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--surface-primary)]/50 backdrop-blur-sm">
+          <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+              <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+                <LogOut className="h-5 w-5 text-[var(--status-success)]" />
                 Check-out Veicolo
               </h2>
               <button
                 onClick={() => setShowCheckOut(false)}
-                className="p-1.5 rounded-full text-apple-gray hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)] transition-colors"
+                className="p-1.5 rounded-full text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Chilometraggio uscita *
                 </label>
                 <Input
@@ -671,13 +671,13 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Livello carburante *
                 </label>
                 <select
                   value={checkOutForm.fuelLevel}
                   onChange={(e) => setCheckOutForm((f) => ({ ...f, fuelLevel: e.target.value }))}
-                  className="w-full h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                  className="w-full h-10 px-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                 >
                   <option value="">— Seleziona —</option>
                   {FUEL_LEVEL_OPTIONS.map((o) => (
@@ -686,7 +686,7 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                 </select>
               </div>
               <div>
-                <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Note riconsegna
                 </label>
                 <textarea
@@ -694,11 +694,11 @@ export default function WorkOrderDetailPage(): React.ReactElement {
                   value={checkOutForm.notes}
                   onChange={(e) => setCheckOutForm((f) => ({ ...f, notes: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-primary)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue resize-none"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-5 border-t border-apple-border/20 dark:border-[var(--border-default)]">
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
               <AppleButton variant="secondary" onClick={() => setShowCheckOut(false)}>
                 Annulla
               </AppleButton>
@@ -724,27 +724,27 @@ function DetailsTab({ wo }: { wo: WorkOrderDetail }): React.ReactElement {
       {/* Diagnosis & Request */}
       <AppleCard hover={false}>
         <AppleCardContent>
-          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-apple-gray" />
+          <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-[var(--text-tertiary)]" />
             Diagnosi e Richiesta
           </h3>
           <div className="space-y-4">
             <div>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Diagnosi</p>
-              <p className="text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Diagnosi</p>
+              <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
                 {wo.diagnosis || 'Nessuna diagnosi inserita'}
               </p>
             </div>
             <div>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Richiesta del cliente</p>
-              <p className="text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Richiesta del cliente</p>
+              <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
                 {wo.customerRequest || 'Nessuna richiesta specificata'}
               </p>
             </div>
             {wo.notes && (
               <div>
-                <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Note</p>
-                <p className="text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
+                <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Note</p>
+                <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] p-3 rounded-xl">
                   {wo.notes}
                 </p>
               </div>
@@ -756,19 +756,19 @@ function DetailsTab({ wo }: { wo: WorkOrderDetail }): React.ReactElement {
       {/* Assignment */}
       <AppleCard hover={false}>
         <AppleCardContent>
-          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Assegnazione</h3>
+          <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">Assegnazione</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Tecnico</p>
-              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{wo.technicianName || 'Non assegnato'}</p>
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Tecnico</p>
+              <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{wo.technicianName || 'Non assegnato'}</p>
             </div>
             <div>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Ore stimate</p>
-              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{wo.estimatedHours != null ? `${wo.estimatedHours} h` : '—'}</p>
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Ore stimate</p>
+              <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{wo.estimatedHours != null ? `${wo.estimatedHours} h` : '—'}</p>
             </div>
             <div>
-              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Ore effettive</p>
-              <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{wo.actualHours != null ? `${wo.actualHours} h` : '—'}</p>
+              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider mb-1">Ore effettive</p>
+              <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{wo.actualHours != null ? `${wo.actualHours} h` : '—'}</p>
             </div>
           </div>
         </AppleCardContent>
@@ -820,8 +820,8 @@ function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string;
     <AppleCard hover={false}>
       <AppleCardContent>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-            <Clock className="h-4 w-4 text-apple-gray" />
+          <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+            <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
             Lavorazioni
           </h3>
           <AppleButton
@@ -835,11 +835,11 @@ function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string;
         </div>
 
         {laborItems.length === 0 ? (
-          <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] text-center py-8">Nessuna voce di manodopera</p>
+          <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center py-8">Nessuna voce di manodopera</p>
         ) : (
           <div className="space-y-3">
             {laborItems.map((item) => (
-              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]">
                 <Input
                   placeholder="Descrizione"
                   value={item.description}
@@ -854,7 +854,7 @@ function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string;
                     onChange={(e) => updateItem(item.id, 'hours', Number(e.target.value))}
                     className="w-20 h-9 text-sm text-center"
                   />
-                  <span className="text-footnote text-apple-gray">x</span>
+                  <span className="text-footnote text-[var(--text-tertiary)]">x</span>
                   <Input
                     type="number"
                     placeholder="EUR/h"
@@ -862,14 +862,14 @@ function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string;
                     onChange={(e) => updateItem(item.id, 'costPerHour', Number(e.target.value))}
                     className="w-24 h-9 text-sm text-center"
                   />
-                  <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] w-20 text-right">
+                  <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] w-20 text-right">
                     {formatCurrency(item.hours * item.costPerHour)}
                   </span>
                   <AppleButton
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(item.id)}
-                    className="text-apple-gray hover:text-apple-red"
+                    className="text-[var(--text-tertiary)] hover:text-[var(--status-error)]"
                     aria-label="Rimuovi"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -880,8 +880,8 @@ function LaborTab({ items, woId, onMutate }: { items: LaborItem[]; woId: string;
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)] flex items-center justify-between">
-          <span className="text-body font-medium text-apple-gray dark:text-[var(--text-secondary)]">Totale Manodopera: {formatCurrency(total)}</span>
+        <div className="mt-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] flex items-center justify-between">
+          <span className="text-body font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Totale Manodopera: {formatCurrency(total)}</span>
           <AppleButton
             onClick={save}
             loading={saving}
@@ -938,8 +938,8 @@ function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; 
     <AppleCard hover={false}>
       <AppleCardContent>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-            <Package className="h-4 w-4 text-apple-gray" />
+          <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+            <Package className="h-4 w-4 text-[var(--text-tertiary)]" />
             Ricambi
           </h3>
           <AppleButton
@@ -953,11 +953,11 @@ function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; 
         </div>
 
         {partItems.length === 0 ? (
-          <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] text-center py-8">Nessun ricambio inserito</p>
+          <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center py-8">Nessun ricambio inserito</p>
         ) : (
           <div className="space-y-3">
             {partItems.map((item) => (
-              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]">
                 <Input
                   placeholder="Nome ricambio"
                   value={item.name}
@@ -972,7 +972,7 @@ function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; 
                     onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
                     className="w-20 h-9 text-sm text-center"
                   />
-                  <span className="text-footnote text-apple-gray">x</span>
+                  <span className="text-footnote text-[var(--text-tertiary)]">x</span>
                   <Input
                     type="number"
                     placeholder="EUR"
@@ -980,14 +980,14 @@ function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; 
                     onChange={(e) => updateItem(item.id, 'unitCost', Number(e.target.value))}
                     className="w-24 h-9 text-sm text-center"
                   />
-                  <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)] w-20 text-right">
+                  <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] w-20 text-right">
                     {formatCurrency(item.quantity * item.unitCost)}
                   </span>
                   <AppleButton
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(item.id)}
-                    className="text-apple-gray hover:text-apple-red"
+                    className="text-[var(--text-tertiary)] hover:text-[var(--status-error)]"
                     aria-label="Rimuovi"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -998,8 +998,8 @@ function PartsTab({ items, woId, onMutate }: { items: PartItem[]; woId: string; 
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)] flex items-center justify-between">
-          <span className="text-body font-medium text-apple-gray dark:text-[var(--text-secondary)]">Totale Ricambi: {formatCurrency(total)}</span>
+        <div className="mt-4 pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] flex items-center justify-between">
+          <span className="text-body font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Totale Ricambi: {formatCurrency(total)}</span>
           <AppleButton
             onClick={save}
             loading={saving}
@@ -1074,7 +1074,7 @@ function TimerTab({ entries, woId, onMutate }: { entries: TimeEntry[]; woId: str
       <AppleCard hover={false}>
         <AppleCardContent>
           <div className="text-center py-4">
-            <p className="text-6xl font-mono font-bold text-apple-dark dark:text-[var(--text-primary)] mb-6">
+            <p className="text-6xl font-mono font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-6">
               {formatTimer(elapsed)}
             </p>
             <div className="flex items-center justify-center gap-3">
@@ -1094,7 +1094,7 @@ function TimerTab({ entries, woId, onMutate }: { entries: TimeEntry[]; woId: str
                   disabled={timerAction !== null}
                   loading={timerAction === 'stop'}
                   icon={<Square className="h-4 w-4" />}
-                  className="!bg-apple-red !text-white hover:!bg-red-600"
+                  className="!bg-[var(--status-error)] !text-[var(--text-on-brand)] hover:!bg-[var(--status-error)]"
                 >
                   Ferma
                 </AppleButton>
@@ -1108,21 +1108,21 @@ function TimerTab({ entries, woId, onMutate }: { entries: TimeEntry[]; woId: str
       {entries.length > 0 && (
         <AppleCard hover={false}>
           <AppleCardContent>
-            <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4">Registro Tempi</h3>
+            <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4">Registro Tempi</h3>
             <div className="space-y-2">
               {entries.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between py-2 border-b border-apple-border/10 dark:border-[var(--border-default)]/50 last:border-b-0">
+                <div key={entry.id} className="flex items-center justify-between py-2 border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 last:border-b-0">
                   <div>
-                    <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                    <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       {formatDateTime(entry.start)}
                       {entry.end ? ` → ${formatDateTime(entry.end)}` : ' (in corso)'}
                     </p>
                     {entry.technicianName && (
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{entry.technicianName}</p>
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{entry.technicianName}</p>
                     )}
                   </div>
                   {entry.duration != null && (
-                    <span className="text-body font-mono font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                    <span className="text-body font-mono font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       {formatTimer(entry.duration * 60)}
                     </span>
                   )}
@@ -1152,7 +1152,7 @@ function PhotosTab({ photos }: { photos: string[] }): React.ReactElement {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {photos.map((url, i) => (
-        <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-apple-border/20 dark:border-[var(--border-default)] bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+        <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]">
           <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
         </div>
       ))}
@@ -1176,8 +1176,8 @@ function AuditTab({ entries }: { entries: AuditEntry[] }): React.ReactElement {
   return (
     <AppleCard hover={false}>
       <AppleCardContent>
-        <h3 className="text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
-          <History className="h-4 w-4 text-apple-gray" />
+        <h3 className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2">
+          <History className="h-4 w-4 text-[var(--text-tertiary)]" />
           Storico Attivita
         </h3>
         <div className="relative pl-6">
@@ -1185,17 +1185,17 @@ function AuditTab({ entries }: { entries: AuditEntry[] }): React.ReactElement {
           <div className="space-y-4">
             {entries.map((entry) => (
               <div key={entry.id} className="relative">
-                <div className="absolute -left-4 top-1 w-3 h-3 rounded-full bg-apple-blue border-2 border-white dark:border-[var(--surface-elevated)]" />
+                <div className="absolute -left-4 top-1 w-3 h-3 rounded-full bg-[var(--brand)] border-2 border-[var(--border-default)] dark:border-[var(--surface-elevated)]" />
                 <div>
-                  <p className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                  <p className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {entry.action}
                     {entry.fromStatus && entry.toStatus && (
-                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">
+                      <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         {' '}({STATUS_CONFIG[entry.fromStatus]?.label || entry.fromStatus} → {STATUS_CONFIG[entry.toStatus]?.label || entry.toStatus})
                       </span>
                     )}
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-0.5">
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5">
                     {formatDateTime(entry.createdAt)}
                     {entry.userName && ` — ${entry.userName}`}
                   </p>

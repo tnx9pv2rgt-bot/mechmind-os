@@ -130,7 +130,7 @@ export function A11yModal({
 
   const modal = (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 ${backdropAnimation}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--surface-primary)]/50 ${backdropAnimation}`}
       onClick={handleOverlayClick}
       role="presentation"
     >
@@ -142,7 +142,7 @@ export function A11yModal({
         aria-describedby={describedById || (description ? descriptionId : undefined)}
         className={`
           relative w-full ${sizeClasses[size]}
-          bg-background rounded-lg shadow-lg
+          bg-[var(--surface-primary)] rounded-lg shadow-lg
           outline-none
           ${animationClass}
           ${className}
@@ -158,8 +158,8 @@ export function A11yModal({
             onClick={onClose}
             className="
               p-2 rounded-md
-              hover:bg-accent hover:text-accent-foreground
-              focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+              hover:bg-[var(--brand)] hover:text-accent-foreground
+              focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
             "
             aria-label={t('actions:close')}
           >
@@ -237,9 +237,9 @@ export function ConfirmDialog({
   const { t } = useTranslation(['common', 'a11y']);
 
   const variantClasses = {
-    danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-    warning: 'bg-warning text-warning-foreground hover:bg-warning/90',
-    info: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    danger: 'bg-[var(--status-error)] text-[var(--status-error)]-foreground hover:bg-[var(--status-error)]/90',
+    warning: 'bg-[var(--status-warning)] text-warning-foreground hover:bg-[var(--status-warning)]/90',
+    info: 'bg-[var(--brand)] text-[var(--text-on-brand)] hover:bg-[var(--brand)]/90',
   };
 
   return (
@@ -252,9 +252,9 @@ export function ConfirmDialog({
             onClick={onClose}
             className="
               px-4 py-2 rounded-md
-              border border-input bg-background
-              hover:bg-accent hover:text-accent-foreground
-              focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+              border border-input bg-[var(--surface-primary)]
+              hover:bg-[var(--brand)] hover:text-accent-foreground
+              focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
             "
           >
             {cancelText || t('common:actions.cancel')}
@@ -266,7 +266,7 @@ export function ConfirmDialog({
             }}
             className={`
               px-4 py-2 rounded-md
-              focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+              focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
               ${variantClasses[variant]}
             `}
             autoFocus
@@ -276,7 +276,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-foreground">{message}</p>
+      <p className="text-[var(--text-primary)]">{message}</p>
     </A11yModal>
   );
 }

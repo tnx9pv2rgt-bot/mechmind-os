@@ -138,8 +138,8 @@ export default function LocationsPage() {
       <header>
         <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Sedi</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>Gestisci le tue sedi</p>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Sedi</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>Gestisci le tue sedi</p>
           </div>
           <div className='flex items-center gap-3'>
             <AppleButton variant='primary' icon={<Plus className='h-4 w-4' />} onClick={() => openDialog()}>
@@ -153,18 +153,18 @@ export default function LocationsPage() {
         {/* Stats Overview */}
         <motion.div className='grid grid-cols-2 lg:grid-cols-4 gap-bento' variants={containerVariants}>
           {[
-            { label: 'Sedi Totali', value: String(locations.length), icon: Building2, color: 'bg-apple-blue' },
+            { label: 'Sedi Totali', value: String(locations.length), icon: Building2, color: 'bg-[var(--brand)]' },
             {
               label: 'Fatturato Totale',
               value: `\u20AC${(locations.reduce((s, l) => s + l.revenue.month, 0) / 1000).toFixed(1)}k`,
               icon: Euro,
-              color: 'bg-apple-green',
+              color: 'bg-[var(--status-success)]',
             },
             {
               label: 'Tecnici',
               value: String(locations.reduce((s, l) => s + l.technicians, 0)),
               icon: Users,
-              color: 'bg-apple-purple',
+              color: 'bg-[var(--brand)]',
             },
             {
               label: 'Veicoli/gg',
@@ -175,7 +175,7 @@ export default function LocationsPage() {
                 )
               ),
               icon: Car,
-              color: 'bg-apple-orange',
+              color: 'bg-[var(--status-warning)]',
             },
           ].map(stat => (
             <motion.div key={stat.label} variants={statsCardVariants}>
@@ -183,13 +183,13 @@ export default function LocationsPage() {
                 <AppleCardContent>
                   <div className='flex items-center justify-between mb-3'>
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -217,13 +217,13 @@ export default function LocationsPage() {
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className='relative'>
-                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                     <input
                       placeholder='Cerca sede per nome o citta...'
                       aria-label='Cerca sedi'
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className='w-full pl-10 pr-4 h-10 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+                      className='w-full pl-10 pr-4 h-10 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
                     />
                   </div>
                 </AppleCardContent>
@@ -233,14 +233,14 @@ export default function LocationsPage() {
             {/* Locations Grid */}
             {isLoading ? (
               <div className='flex items-center justify-center py-12'>
-                <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
               </div>
             ) : loadError ? (
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Impossibile caricare le sedi
                     </p>
                     <AppleButton
@@ -257,8 +257,8 @@ export default function LocationsPage() {
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <Building2 className='h-12 w-12 text-apple-gray/40 mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <Building2 className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessuna sede trovata. Aggiungi la prima sede per iniziare.
                     </p>
                   </div>
@@ -287,21 +287,21 @@ export default function LocationsPage() {
                         >
                           <div className='flex items-start justify-between mb-4'>
                             <div className='flex items-center gap-3'>
-                              <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                                <Building2 className='h-6 w-6 text-apple-blue' />
+                              <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                                <Building2 className='h-6 w-6 text-[var(--brand)]' />
                               </div>
                               <div>
-                                <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                   {location.name}
                                 </h3>
-                                <p className='text-footnote flex items-center gap-1 text-apple-gray dark:text-[var(--text-secondary)]'>
+                                <p className='text-footnote flex items-center gap-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                   <MapPin className='h-3 w-3' />
                                   {location.city}
                                 </p>
                               </div>
                             </div>
                             <div
-                              className={`w-2 h-2 rounded-full ${location.isActive ? 'bg-apple-green' : 'bg-apple-gray'}`}
+                              className={`w-2 h-2 rounded-full ${location.isActive ? 'bg-[var(--status-success)]' : 'bg-[var(--text-tertiary)]'}`}
                             />
                           </div>
 
@@ -314,10 +314,10 @@ export default function LocationsPage() {
                             ].map(rev => (
                               <div
                                 key={rev.label}
-                                className='text-center p-2 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                                className='text-center p-2 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                               >
-                                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{rev.label}</p>
-                                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{rev.label}</p>
+                                <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                   {rev.value}
                                 </p>
                               </div>
@@ -327,20 +327,20 @@ export default function LocationsPage() {
                           {/* Car Count */}
                           <div className='flex items-center gap-4 mb-4'>
                             <div className='flex items-center gap-2'>
-                              <Car className='h-4 w-4 text-apple-blue' />
-                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <Car className='h-4 w-4 text-[var(--brand)]' />
+                              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {location.carCount.inService} in servizio
                               </span>
                             </div>
                             <div className='flex items-center gap-2'>
-                              <Star className='h-4 w-4 text-apple-orange' />
-                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <Star className='h-4 w-4 text-[var(--status-warning)]' />
+                              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {location.satisfaction} &#9733;
                               </span>
                             </div>
                           </div>
 
-                          <div className='pt-4 border-t border-apple-border/20 dark:border-[var(--border-default)]/50 flex gap-2'>
+                          <div className='pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 flex gap-2'>
                             <AppleButton
                               variant='ghost'
                               size='sm'
@@ -384,14 +384,14 @@ export default function LocationsPage() {
                   <AppleCardContent>
                     <div className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6'>
                       <div className='flex items-center gap-4'>
-                        <div className='w-16 h-16 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                          <Building2 className='h-8 w-8 text-apple-blue' />
+                        <div className='w-16 h-16 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                          <Building2 className='h-8 w-8 text-[var(--brand)]' />
                         </div>
                         <div>
-                          <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                          <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {selectedLocation.name}
                           </h2>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {selectedLocation.address}
                           </p>
                         </div>
@@ -410,12 +410,12 @@ export default function LocationsPage() {
                       ].map(item => (
                         <div
                           key={item.label}
-                          className='p-4 rounded-2xl text-center bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'
+                          className='p-4 rounded-2xl text-center bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                         >
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                             {item.label}
                           </p>
-                          <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                          <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {item.value}
                           </p>
                         </div>
@@ -433,7 +433,7 @@ export default function LocationsPage() {
           <motion.div variants={listItemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Confronto Performance
                 </h2>
               </AppleCardHeader>
@@ -442,17 +442,17 @@ export default function LocationsPage() {
                   {locations.map((location, index) => (
                     <motion.div
                       key={location.id}
-                      className='p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                      className='p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                       variants={listItemVariants}
                       custom={index}
                       whileHover={{ scale: 1.005, x: 4 }}
                       transition={{ duration: 0.2 }}
                     >
                       <div className='flex items-center justify-between mb-3'>
-                        <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {location.name}
                         </h3>
-                        <span className='text-body font-semibold text-apple-blue'>
+                        <span className='text-body font-semibold text-[var(--brand)]'>
                           {'\u20AC'}{location.revenue.month.toLocaleString()}/mese
                         </span>
                       </div>
@@ -464,10 +464,10 @@ export default function LocationsPage() {
                           { label: 'Tecnici', value: location.technicians.toString() },
                         ].map(stat => (
                           <div key={stat.label}>
-                            <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {stat.label}
                             </p>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {stat.value}
                             </p>
                           </div>
@@ -486,14 +486,14 @@ export default function LocationsPage() {
           <motion.div variants={listItemVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Magazzino Condiviso
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <Wrench className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md'>
+                  <Wrench className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] max-w-md'>
                     Visualizza e trasferisci ricambi tra le tue sedi in tempo reale.
                   </p>
                   <AppleButton variant='ghost' className='mt-4'>

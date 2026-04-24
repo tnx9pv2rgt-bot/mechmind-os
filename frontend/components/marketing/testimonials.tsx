@@ -70,7 +70,7 @@ export default function Testimonials(): React.ReactElement {
               <motion.div
                 key={step.step}
                 variants={cardVariants}
-                className="rounded-2xl bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:bg-[var(--surface-elevated)]"
+                className="rounded-2xl bg-[var(--surface-secondary)] p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:bg-[var(--surface-elevated)]"
               >
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-secondary)] text-lg font-bold text-[var(--text-primary)] dark:bg-[var(--surface-active)]">
                   {step.step}

@@ -66,15 +66,15 @@ const DefaultStepComponent: React.FC<{
   onBack: () => void;
 }> = ({ stepId, onNext }) => (
   <div className="flex flex-col items-center justify-center py-12">
-    <h2 className="text-2xl font-bold text-gray-800 mb-4">
+    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
       Step: {stepId}
     </h2>
-    <p className="text-gray-600 mb-6">
+    <p className="text-[var(--text-secondary)] mb-6">
       Componente non configurato per questo step.
     </p>
     <button
       onClick={onNext}
-      className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+      className="px-6 py-2 bg-[var(--status-info-subtle)]0 text-[var(--text-on-brand)] rounded-lg hover:bg-[var(--status-info)] transition-colors"
     >
       Continua
     </button>
@@ -163,7 +163,7 @@ export const ConditionalStepRenderer: React.FC<ConditionalStepRendererProps> = (
   if (activeSteps.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-red-500">Nessuno step configurato</p>
+        <p className="text-[var(--status-error)]">Nessuno step configurato</p>
       </div>
     );
   }

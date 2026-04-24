@@ -63,19 +63,19 @@ interface FirDetail {
 function getStatusConfig(status: string): { label: string; colorClass: string; bgClass: string } {
   switch (status) {
     case 'DRAFT':
-      return { label: 'Bozza', colorClass: 'text-[var(--text-tertiary)]', bgClass: 'bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]' };
+      return { label: 'Bozza', colorClass: 'text-[var(--text-tertiary)]', bgClass: 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)]' };
     case 'VIDIMATED':
-      return { label: 'Vidimato', colorClass: 'text-blue-400', bgClass: 'bg-blue-400/20' };
+      return { label: 'Vidimato', colorClass: 'text-[var(--status-info)]', bgClass: 'bg-[var(--status-info)]/20' };
     case 'IN_TRANSIT':
-      return { label: 'In Transito', colorClass: 'text-amber-500', bgClass: 'bg-amber-500/20' };
+      return { label: 'In Transito', colorClass: 'text-[var(--status-warning)]', bgClass: 'bg-[var(--status-warning)]/50/20' };
     case 'DELIVERED':
-      return { label: 'Consegnato', colorClass: 'text-green-400', bgClass: 'bg-green-400/20' };
+      return { label: 'Consegnato', colorClass: 'text-[var(--status-success)]', bgClass: 'bg-[var(--status-success)]/20' };
     case 'CONFIRMED':
-      return { label: 'Confermato', colorClass: 'text-emerald-500', bgClass: 'bg-emerald-500/20' };
+      return { label: 'Confermato', colorClass: 'text-[var(--status-success)]', bgClass: 'bg-[var(--status-success)]/50/20' };
     case 'CANCELLED':
-      return { label: 'Annullato', colorClass: 'text-red-400', bgClass: 'bg-red-400/20' };
+      return { label: 'Annullato', colorClass: 'text-[var(--status-error)]', bgClass: 'bg-[var(--status-error)]/20' };
     default:
-      return { label: status, colorClass: 'text-[var(--text-tertiary)]', bgClass: 'bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]' };
+      return { label: status, colorClass: 'text-[var(--text-tertiary)]', bgClass: 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)]' };
   }
 }
 
@@ -109,7 +109,7 @@ function VidimateDialog({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -134,7 +134,7 @@ function VidimateDialog({
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl transition-colors hover:bg-white/5"
+              className="p-2 rounded-xl transition-colors hover:bg-[var(--surface-secondary)]/5"
               aria-label="Chiudi"
             >
               <X className="h-5 w-5 text-[var(--text-tertiary)]" />
@@ -153,7 +153,7 @@ function VidimateDialog({
               value={vivifirCode}
               onChange={(e) => setVivifirCode(e.target.value)}
               placeholder="Es. VVF-2026-XXXXX"
-              className="w-full h-11 px-3 rounded-xl text-body font-mono focus:outline-none focus:border-white/30 transition-colors bg-white/[0.06] dark:bg-white/[0.06] border border-[var(--border-default)] text-[var(--text-primary)]"
+              className="w-full h-11 px-3 rounded-xl text-body font-mono focus:outline-none focus:border-[var(--border-default)]/30 transition-colors bg-[var(--surface-secondary)]/[0.06] dark:bg-[var(--surface-secondary)]/[0.06] border border-[var(--border-default)] text-[var(--text-primary)]"
             />
           </div>
 
@@ -313,7 +313,7 @@ export default function FirDetailPage({
             variant="primary"
             onClick={() => setVidimateOpen(true)}
             icon={<Stamp className="h-4 w-4" />}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-[var(--status-info-subtle)]0 hover:bg-[var(--status-info)] text-[var(--text-on-brand)]"
           >
             Vidima (ViViFir)
           </AppleButton>
@@ -324,7 +324,7 @@ export default function FirDetailPage({
             variant="primary"
             onClick={() => handleStatusUpdate('IN_TRANSIT')}
             icon={<Send className="h-4 w-4" />}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
+            className="bg-[var(--status-warning)]/50 hover:bg-[var(--status-warning)] text-[var(--text-on-brand)]"
           >
             Avvia Trasporto
           </AppleButton>
@@ -335,7 +335,7 @@ export default function FirDetailPage({
             variant="primary"
             onClick={() => handleStatusUpdate('DELIVERED')}
             icon={<MapPin className="h-4 w-4" />}
-            className="bg-green-500 hover:bg-green-600 text-white"
+            className="bg-[var(--status-success-subtle)]0 hover:bg-[var(--status-success)] text-[var(--text-on-brand)]"
           >
             Conferma Consegna
           </AppleButton>
@@ -346,7 +346,7 @@ export default function FirDetailPage({
             variant="primary"
             onClick={() => handleStatusUpdate('CONFIRMED')}
             icon={<CheckCircle className="h-4 w-4" />}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="bg-[var(--status-success)]/50 hover:bg-[var(--status-success)] text-[var(--text-on-brand)]"
           >
             Conferma (4a Copia)
           </AppleButton>
@@ -380,7 +380,7 @@ export default function FirDetailPage({
                 ]}
               />
               <div className="flex items-center gap-3">
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)] font-mono'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)] font-mono'>
                   {fir.firNumber}
                 </h1>
                 <span
@@ -389,13 +389,13 @@ export default function FirDetailPage({
                   {statusConfig.label}
                 </span>
                 {fir.hazardous && (
-                  <span className="text-footnote font-bold px-2.5 py-1 rounded-full flex items-center gap-1 bg-yellow-400/20 text-yellow-400">
+                  <span className="text-footnote font-bold px-2.5 py-1 rounded-full flex items-center gap-1 bg-[var(--status-warning)]/20 text-[var(--status-warning)]">
                     <AlertTriangle className="h-3 w-3" />
                     Pericoloso
                   </span>
                 )}
               </div>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Creato il {new Date(fir.createdAt).toLocaleDateString('it-IT', {
                   day: '2-digit',
                   month: 'long',
@@ -430,7 +430,7 @@ export default function FirDetailPage({
           {/* Waste Details */}
           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Package className="h-5 w-5 text-blue-400" />
+              <Package className="h-5 w-5 text-[var(--status-info)]" />
               <h2 className="text-title-2 font-medium text-[var(--text-primary)]">
                 Dati Rifiuto
               </h2>
@@ -448,7 +448,7 @@ export default function FirDetailPage({
           {/* Producer */}
           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <FileText className="h-5 w-5 text-green-400" />
+              <FileText className="h-5 w-5 text-[var(--status-success)]" />
               <h2 className="text-title-2 font-medium text-[var(--text-primary)]">
                 Produttore
               </h2>
@@ -463,7 +463,7 @@ export default function FirDetailPage({
           {/* Transporter */}
           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Truck className="h-5 w-5 text-amber-500" />
+              <Truck className="h-5 w-5 text-[var(--status-warning)]" />
               <h2 className="text-title-2 font-medium text-[var(--text-primary)]">
                 Trasportatore
               </h2>
@@ -479,7 +479,7 @@ export default function FirDetailPage({
           {/* Destination */}
           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <MapPin className="h-5 w-5 text-red-400" />
+              <MapPin className="h-5 w-5 text-[var(--status-error)]" />
               <h2 className="text-title-2 font-medium text-[var(--text-primary)]">
                 Destinazione
               </h2>

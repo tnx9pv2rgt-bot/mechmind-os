@@ -37,7 +37,7 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
-        <h2 className="text-xl font-normal text-white">Cosa ti serve di più?</h2>
+        <h2 className="text-xl font-normal text-[var(--text-on-brand)]">Cosa ti serve di più?</h2>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Scegli massimo {MAX_SELECTIONS}</p>
       </div>
 
@@ -60,14 +60,14 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
               className={[
                 'relative flex min-h-[90px] flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all duration-200',
                 isSelected
-                  ? 'border-white/60 bg-white/10'
+                  ? 'border-[var(--border-default)]/60 bg-[var(--surface-secondary)]/10'
                   : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
               {isSelected && (
                 <motion.div
-                  className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white"
+                  className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--surface-secondary)]"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 25 }}
@@ -77,8 +77,8 @@ export function PrioritiesStep({ selected, onToggle }: PrioritiesStepProps): Rea
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{priority.icon}</span>
-              <span className={['text-[13px] font-medium leading-tight', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
+              <span className={isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-secondary)]'}>{priority.icon}</span>
+              <span className={['text-[13px] font-medium leading-tight', isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-primary)]'].join(' ')}>
                 {priority.name}
               </span>
             </motion.button>

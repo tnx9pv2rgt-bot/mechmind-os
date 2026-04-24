@@ -162,10 +162,10 @@ export function NotificationList({
   if (isLoading) {
     return (
       <div className='space-y-4'>
-        {title && <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>}
+        {title && <h2 className='text-lg font-semibold text-[var(--text-primary)]'>{title}</h2>}
         <div className='space-y-3'>
           {[...Array(3)].map((_, i) => (
-            <div key={i} className='h-24 bg-gray-100 animate-pulse rounded-xl' />
+            <div key={i} className='h-24 bg-[var(--surface-secondary)] animate-pulse rounded-xl' />
           ))}
         </div>
       </div>
@@ -175,9 +175,9 @@ export function NotificationList({
   if (isError) {
     return (
       <div className='text-center py-12'>
-        <AlertCircle className='w-12 h-12 text-red-500 mx-auto mb-4' />
-        <h3 className='text-lg font-semibold text-gray-900 mb-2'>Errore nel caricamento</h3>
-        <p className='text-gray-600 mb-4'>Impossibile caricare le notifiche. Riprova più tardi.</p>
+        <AlertCircle className='w-12 h-12 text-[var(--status-error)] mx-auto mb-4' />
+        <h3 className='text-lg font-semibold text-[var(--text-primary)] mb-2'>Errore nel caricamento</h3>
+        <p className='text-[var(--text-secondary)] mb-4'>Impossibile caricare le notifiche. Riprova più tardi.</p>
         <Button onClick={() => refetch()} variant='outline'>
           <RefreshCw className='w-4 h-4 mr-2' />
           Riprova
@@ -190,7 +190,7 @@ export function NotificationList({
     <div className='space-y-4'>
       {/* Header */}
       <div className='flex items-center justify-between'>
-        <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>
+        <h2 className='text-lg font-semibold text-[var(--text-primary)]'>{title}</h2>
         <Button
           variant='ghost'
           size='icon'
@@ -206,7 +206,7 @@ export function NotificationList({
       {showFilters && (
         <div className='flex flex-wrap gap-3'>
           <div className='relative flex-1 min-w-[200px]'>
-            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]' />
             <Input
               placeholder='Cerca notifiche...'
               value={searchQuery}
@@ -282,9 +282,9 @@ export function NotificationList({
               animate={{ opacity: 1 }}
               className='text-center py-12'
             >
-              <Inbox className='w-12 h-12 text-gray-300 mx-auto mb-4' />
-              <h3 className='text-lg font-medium text-gray-900 mb-1'>Nessuna notifica</h3>
-              <p className='text-gray-500'>Non ci sono notifiche da visualizzare.</p>
+              <Inbox className='w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-4' />
+              <h3 className='text-lg font-medium text-[var(--text-primary)] mb-1'>Nessuna notifica</h3>
+              <p className='text-[var(--text-secondary)]'>Non ci sono notifiche da visualizzare.</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -293,7 +293,7 @@ export function NotificationList({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className='flex items-center justify-between pt-4 border-t'>
-          <p className='text-sm text-gray-500'>
+          <p className='text-sm text-[var(--text-tertiary)]'>
             Pagina {page} di {totalPages}
           </p>
           <div className='flex items-center gap-2'>

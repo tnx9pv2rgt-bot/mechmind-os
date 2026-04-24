@@ -82,7 +82,7 @@ export default function PortalDocumentsPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
@@ -93,10 +93,10 @@ export default function PortalDocumentsPage() {
     return (
       <PortalPageWrapper title='Documenti' customer={customer || undefined}>
         <div className='text-center py-16'>
-          <p className='text-apple-red mb-4'>{error}</p>
+          <p className='text-[var(--status-error)] mb-4'>{error}</p>
           <button
             onClick={() => mutate()}
-            className='text-apple-blue hover:underline'
+            className='text-[var(--brand)] hover:underline'
           >
             Riprova
           </button>
@@ -114,12 +114,12 @@ export default function PortalDocumentsPage() {
       {/* Search */}
       <div className='mb-6'>
         <div className='relative'>
-          <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
           <Input
             placeholder='Cerca per numero documento o titolo...'
             value={searchQuery}
             onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
-            className='pl-12 h-12 rounded-xl bg-white dark:bg-[var(--surface-elevated)]'
+            className='pl-12 h-12 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]'
             aria-label='Cerca documenti'
           />
         </div>
@@ -142,8 +142,8 @@ export default function PortalDocumentsPage() {
               px-4 py-2 rounded-xl text-sm font-medium transition-all
               ${
                 activeTab === tab.key
-                  ? 'bg-apple-blue text-white shadow-apple'
-                  : 'bg-white dark:bg-[var(--surface-elevated)] text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] shadow-apple'
+                  ? 'bg-[var(--brand)] text-[var(--text-on-brand)] shadow-apple'
+                  : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] shadow-apple'
               }
             `}
           >

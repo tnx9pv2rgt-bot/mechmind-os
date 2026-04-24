@@ -76,33 +76,33 @@ const statusConfig: Record<
 > = {
   SUBMITTED: {
     label: 'Inviato',
-    color: 'text-blue-700 dark:text-blue-300',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
     icon: <FileText className='h-5 w-5' />,
-    bgColor: 'bg-blue-100 dark:bg-blue-900/40',
+    bgColor: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
   },
   UNDER_REVIEW: {
     label: 'In Revisione',
-    color: 'text-amber-700 dark:text-amber-300',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
     icon: <Clock className='h-5 w-5' />,
-    bgColor: 'bg-amber-100 dark:bg-amber-900/40',
+    bgColor: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
   },
   APPROVED: {
     label: 'Approvato',
-    color: 'text-green-700 dark:text-green-300',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
     icon: <CheckCircle2 className='h-5 w-5' />,
-    bgColor: 'bg-green-100 dark:bg-green-900/40',
+    bgColor: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
   },
   REJECTED: {
     label: 'Rifiutato',
-    color: 'text-red-700 dark:text-red-300',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
     icon: <XCircle className='h-5 w-5' />,
-    bgColor: 'bg-red-100 dark:bg-red-900/40',
+    bgColor: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
   },
   PAID: {
     label: 'Pagato',
-    color: 'text-purple-700 dark:text-purple-300',
+    color: 'text-[var(--brand)] dark:text-[var(--brand)]',
     icon: <DollarSign className='h-5 w-5' />,
-    bgColor: 'bg-purple-100 dark:bg-purple-900/40',
+    bgColor: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]',
   },
 };
 
@@ -229,7 +229,7 @@ export default function ClaimDetailPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -239,11 +239,11 @@ export default function ClaimDetailPage() {
       <div className='min-h-screen flex items-center justify-center p-8'>
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
-            <AlertCircle className='w-12 h-12 text-apple-red/40 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <AlertCircle className='w-12 h-12 text-[var(--status-error)]/40 mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Reclamo non trovato
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Il reclamo richiesto non esiste o e stato rimosso.
             </p>
           </AppleCardContent>
@@ -282,10 +282,10 @@ export default function ClaimDetailPage() {
                 <span className='sr-only'>Indietro</span>
               </AppleButton>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Dettaglio Reclamo
                 </h1>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                   Inviato il {formatDate(claim.submittedDate)}
                 </p>
               </div>
@@ -331,7 +331,7 @@ export default function ClaimDetailPage() {
                       <span className={status.color}>{status.icon}</span>
                     </div>
                     <div>
-                      <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Stato Reclamo</h2>
+                      <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato Reclamo</h2>
                       <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bgColor} ${status.color} mt-1 inline-block`}>
                         {status.label}
                       </span>
@@ -341,9 +341,9 @@ export default function ClaimDetailPage() {
                 <AppleCardContent className='space-y-6'>
                   {/* Amounts */}
                   <div className='grid grid-cols-2 gap-4'>
-                    <div className='bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] rounded-xl p-4'>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-1'>Costo Stimato</p>
-                      <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] rounded-xl p-4'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>Costo Stimato</p>
+                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(claim.amount ?? 0)}
                       </p>
                     </div>
@@ -351,12 +351,12 @@ export default function ClaimDetailPage() {
 
                   {/* Description */}
                   <div className='space-y-2'>
-                    <div className='flex items-center gap-2 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <div className='flex items-center gap-2 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       <MessageSquare className='h-4 w-4' />
                       <span>Descrizione del Problema</span>
                     </div>
-                    <div className='bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] p-4 rounded-xl'>
-                      <p className='text-body text-apple-dark dark:text-[var(--text-primary)] whitespace-pre-wrap'>
+                    <div className='bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] p-4 rounded-xl'>
+                      <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] whitespace-pre-wrap'>
                         {claim.description}
                       </p>
                     </div>
@@ -365,7 +365,7 @@ export default function ClaimDetailPage() {
                   {/* Evidence */}
                   {claim.evidencePhotos && claim.evidencePhotos.length > 0 && (
                     <div className='space-y-2'>
-                      <div className='flex items-center gap-2 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <div className='flex items-center gap-2 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         <Eye className='h-4 w-4' />
                         <span>Foto Prove ({claim.evidencePhotos.length})</span>
                       </div>
@@ -373,7 +373,7 @@ export default function ClaimDetailPage() {
                         {claim.evidencePhotos.map((url, index) => (
                           <div
                             key={index}
-                            className='aspect-video rounded-xl overflow-hidden bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] border border-apple-border/20 dark:border-[var(--border-default)]/50'
+                            className='aspect-video rounded-xl overflow-hidden bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] border border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'
                           >
                             <img
                               src={url}
@@ -395,8 +395,8 @@ export default function ClaimDetailPage() {
                 <AppleCard hover={false}>
                   <AppleCardHeader>
                     <div className='flex items-center gap-3'>
-                      <Clock className='h-5 w-5 text-apple-blue' />
-                      <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <Clock className='h-5 w-5 text-[var(--brand)]' />
+                      <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Storico Reclamo
                       </h2>
                     </div>
@@ -404,12 +404,12 @@ export default function ClaimDetailPage() {
                   <AppleCardContent className='space-y-4'>
                     {claim.reviewedDate && (
                       <div className='flex items-start gap-3'>
-                        <div className='w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center'>
-                          <User className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+                        <div className='w-10 h-10 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] flex items-center justify-center'>
+                          <User className='h-4 w-4 text-[var(--status-info)] dark:text-[var(--status-info)]' />
                         </div>
                         <div>
-                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>Revisionato</p>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Revisionato</p>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             il {formatDate(claim.reviewedDate)}
                           </p>
                         </div>
@@ -417,12 +417,12 @@ export default function ClaimDetailPage() {
                     )}
                     {claim.resolvedDate && (
                       <div className='flex items-start gap-3'>
-                        <div className='w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center'>
-                          <CheckCircle2 className='h-4 w-4 text-apple-green' />
+                        <div className='w-10 h-10 rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] flex items-center justify-center'>
+                          <CheckCircle2 className='h-4 w-4 text-[var(--status-success)]' />
                         </div>
                         <div>
-                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>Risolto</p>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Risolto</p>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             il {formatDate(claim.resolvedDate)}
                           </p>
                         </div>
@@ -440,31 +440,31 @@ export default function ClaimDetailPage() {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Informazioni Garanzia</h2>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Informazioni Garanzia</h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-3'>
                   {claim.warranty?.vehicle && (
                     <>
                       <div className='flex justify-between'>
-                        <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Veicolo</span>
-                        <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Veicolo</span>
+                        <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {claim.warranty.vehicle.make} {claim.warranty.vehicle.model}
                         </span>
                       </div>
-                      <div className='border-t border-apple-border/20 dark:border-[var(--border-default)]/50' />
+                      <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50' />
                     </>
                   )}
                   <div className='flex justify-between'>
-                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Fornitore</span>
-                    <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{claim.warranty?.provider}</span>
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Fornitore</span>
+                    <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{claim.warranty?.provider}</span>
                   </div>
                   <div className='flex justify-between'>
-                    <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Copertura Max</span>
-                    <span className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Copertura Max</span>
+                    <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(claim.warranty?.maxCoverage || 0)}
                     </span>
                   </div>
-                  <div className='border-t border-apple-border/20 dark:border-[var(--border-default)]/50' />
+                  <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50' />
                   <AppleButton
                     variant='secondary'
                     className='w-full'
@@ -498,20 +498,20 @@ export default function ClaimDetailPage() {
                 className={cn(
                   'p-4 rounded-xl border-2 text-center transition-all min-h-[44px]',
                   reviewDecision === 'APPROVE'
-                    ? 'border-apple-green bg-green-50 dark:bg-green-900/20'
-                    : 'border-apple-border/30 dark:border-[var(--border-default)] hover:border-apple-green/50'
+                    ? 'border-apple-green bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]'
+                    : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:border-apple-green/50'
                 )}
               >
                 <Check
                   className={cn(
                     'h-6 w-6 mx-auto mb-2',
-                    reviewDecision === 'APPROVE' ? 'text-apple-green' : 'text-apple-gray'
+                    reviewDecision === 'APPROVE' ? 'text-[var(--status-success)]' : 'text-[var(--text-tertiary)]'
                   )}
                 />
                 <p
                   className={cn(
                     'font-medium',
-                    reviewDecision === 'APPROVE' ? 'text-apple-green' : 'text-apple-dark dark:text-[var(--text-primary)]'
+                    reviewDecision === 'APPROVE' ? 'text-[var(--status-success)]' : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                   )}
                 >
                   Approva
@@ -522,20 +522,20 @@ export default function ClaimDetailPage() {
                 className={cn(
                   'p-4 rounded-xl border-2 text-center transition-all min-h-[44px]',
                   reviewDecision === 'REJECT'
-                    ? 'border-apple-red bg-red-50 dark:bg-red-900/20'
-                    : 'border-apple-border/30 dark:border-[var(--border-default)] hover:border-apple-red/50'
+                    ? 'border-[var(--status-error)] bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
+                    : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:border-[var(--status-error)]/50'
                 )}
               >
                 <X
                   className={cn(
                     'h-6 w-6 mx-auto mb-2',
-                    reviewDecision === 'REJECT' ? 'text-apple-red' : 'text-apple-gray'
+                    reviewDecision === 'REJECT' ? 'text-[var(--status-error)]' : 'text-[var(--text-tertiary)]'
                   )}
                 />
                 <p
                   className={cn(
                     'font-medium',
-                    reviewDecision === 'REJECT' ? 'text-apple-red' : 'text-apple-dark dark:text-[var(--text-primary)]'
+                    reviewDecision === 'REJECT' ? 'text-[var(--status-error)]' : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                   )}
                 >
                   Rifiuta
@@ -546,7 +546,7 @@ export default function ClaimDetailPage() {
             {/* Approved Amount (only for approve) */}
             {reviewDecision === 'APPROVE' && (
               <div className='space-y-2'>
-                <Label htmlFor='approvedAmount' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                <Label htmlFor='approvedAmount' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Importo Approvato (EUR)
                 </Label>
                 <Input
@@ -559,7 +559,7 @@ export default function ClaimDetailPage() {
                   onChange={e => setApprovedAmount(e.target.value)}
                   className='h-11 rounded-xl'
                 />
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Max: {formatCurrency(claim.warranty?.maxCoverage || 0)}
                 </p>
               </div>
@@ -567,7 +567,7 @@ export default function ClaimDetailPage() {
 
             {/* Review Notes */}
             <div className='space-y-2'>
-              <Label htmlFor='notes' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <Label htmlFor='notes' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Note di Revisione
               </Label>
               <Textarea
@@ -590,7 +590,7 @@ export default function ClaimDetailPage() {
               disabled={
                 !reviewDecision || (reviewDecision === 'APPROVE' && !approvedAmount) || isReviewing
               }
-              className={cn(reviewDecision === 'REJECT' && 'bg-red-600 hover:bg-red-700')}
+              className={cn(reviewDecision === 'REJECT' && 'bg-[var(--status-error)] hover:bg-[var(--status-error)]')}
             >
               {isReviewing ? <Loader2 className='w-4 h-4 animate-spin mr-2' /> : null}
               Conferma

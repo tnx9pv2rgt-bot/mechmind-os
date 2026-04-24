@@ -375,7 +375,7 @@ export default function PortalSettingsPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
@@ -393,10 +393,10 @@ export default function PortalSettingsPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className='mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-2xl flex items-center gap-3'
+          className='mb-6 p-4 bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] border border-[var(--status-success)]/30 dark:border-[var(--status-success)]/50 rounded-2xl flex items-center gap-3'
         >
-          <CheckCircle className='h-5 w-5 text-apple-green flex-shrink-0' />
-          <p className='text-sm text-apple-green font-medium'>Modifiche salvate con successo!</p>
+          <CheckCircle className='h-5 w-5 text-[var(--status-success)] flex-shrink-0' />
+          <p className='text-sm text-[var(--status-success)] font-medium'>Modifiche salvate con successo!</p>
         </motion.div>
       )}
 
@@ -428,8 +428,8 @@ export default function PortalSettingsPage() {
         <TabsContent value='profile'>
           <AppleCard>
             <AppleCardHeader>
-              <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                <User className='h-5 w-5 text-apple-blue' />
+              <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <User className='h-5 w-5 text-[var(--brand)]' />
                 Informazioni Personali
               </h2>
             </AppleCardHeader>
@@ -444,7 +444,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {profileErrors.firstName && (
-                    <p className='text-xs text-apple-red'>{profileErrors.firstName}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{profileErrors.firstName}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
@@ -456,7 +456,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {profileErrors.lastName && (
-                    <p className='text-xs text-apple-red'>{profileErrors.lastName}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{profileErrors.lastName}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
@@ -469,7 +469,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {profileErrors.email && (
-                    <p className='text-xs text-apple-red'>{profileErrors.email}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{profileErrors.email}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
@@ -482,7 +482,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {profileErrors.phone && (
-                    <p className='text-xs text-apple-red'>{profileErrors.phone}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{profileErrors.phone}</p>
                   )}
                 </div>
               </div>
@@ -503,7 +503,7 @@ export default function PortalSettingsPage() {
         <TabsContent value='vehicles'>
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
-              <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 I tuoi veicoli
               </h2>
               <AppleButton
@@ -520,14 +520,14 @@ export default function PortalSettingsPage() {
               <AppleCard>
                 <AppleCardHeader>
                   <div className='flex items-center justify-between'>
-                    <h3 className='text-base font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <h3 className='text-base font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Nuovo Veicolo
                     </h3>
                     <button
                       onClick={() => setShowAddVehicle(false)}
-                      className='p-1 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)]'
+                      className='p-1 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
                     >
-                      <X className='h-4 w-4 text-apple-gray' />
+                      <X className='h-4 w-4 text-[var(--text-tertiary)]' />
                     </button>
                   </div>
                 </AppleCardHeader>
@@ -542,7 +542,7 @@ export default function PortalSettingsPage() {
                         placeholder='es. Fiat'
                         className='h-12 rounded-xl'
                       />
-                      {vehicleErrors.make && <p className='text-xs text-apple-red'>{vehicleErrors.make}</p>}
+                      {vehicleErrors.make && <p className='text-xs text-[var(--status-error)]'>{vehicleErrors.make}</p>}
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='v-model'>Modello *</Label>
@@ -553,7 +553,7 @@ export default function PortalSettingsPage() {
                         placeholder='es. Panda'
                         className='h-12 rounded-xl'
                       />
-                      {vehicleErrors.model && <p className='text-xs text-apple-red'>{vehicleErrors.model}</p>}
+                      {vehicleErrors.model && <p className='text-xs text-[var(--status-error)]'>{vehicleErrors.model}</p>}
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='v-year'>Anno *</Label>
@@ -564,7 +564,7 @@ export default function PortalSettingsPage() {
                         onChange={e => setVehicleForm({ ...vehicleForm, year: parseInt(e.target.value) || 0 })}
                         className='h-12 rounded-xl'
                       />
-                      {vehicleErrors.year && <p className='text-xs text-apple-red'>{vehicleErrors.year}</p>}
+                      {vehicleErrors.year && <p className='text-xs text-[var(--status-error)]'>{vehicleErrors.year}</p>}
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='v-plate'>Targa *</Label>
@@ -575,7 +575,7 @@ export default function PortalSettingsPage() {
                         placeholder='es. AB123CD'
                         className='h-12 rounded-xl'
                       />
-                      {vehicleErrors.licensePlate && <p className='text-xs text-apple-red'>{vehicleErrors.licensePlate}</p>}
+                      {vehicleErrors.licensePlate && <p className='text-xs text-[var(--status-error)]'>{vehicleErrors.licensePlate}</p>}
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='v-vin'>VIN (opzionale)</Label>
@@ -608,8 +608,8 @@ export default function PortalSettingsPage() {
                             onClick={() => setVehicleForm({ ...vehicleForm, fuelType: ft })}
                             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                               vehicleForm.fuelType === ft
-                                ? 'bg-apple-blue text-white'
-                                : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)]'
+                                ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                                : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                             }`}
                           >
                             {fuelTypeLabels[ft]}
@@ -638,11 +638,11 @@ export default function PortalSettingsPage() {
             {vehicles.length === 0 && !showAddVehicle ? (
               <AppleCard>
                 <AppleCardContent className='text-center py-12'>
-                  <Car className='h-12 w-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+                  <Car className='h-12 w-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                  <h3 className='text-lg font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                     Nessun veicolo registrato
                   </h3>
-                  <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+                  <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
                     Aggiungi i tuoi veicoli per gestire prenotazioni e manutenzione.
                   </p>
                   <AppleButton
@@ -660,14 +660,14 @@ export default function PortalSettingsPage() {
                     <AppleCardContent className='p-4'>
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center'>
-                            <Car className='h-6 w-6 text-apple-blue' />
+                          <div className='w-12 h-12 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] flex items-center justify-center'>
+                            <Car className='h-6 w-6 text-[var(--brand)]' />
                           </div>
                           <div>
-                            <p className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <p className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {vehicle.make} {vehicle.model} ({vehicle.year})
                             </p>
-                            <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                            <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                               {vehicle.licensePlate}
                               {vehicle.mileage ? ` — ${vehicle.mileage.toLocaleString('it-IT')} km` : ''}
                               {' — '}{fuelTypeLabels[vehicle.fuelType] || vehicle.fuelType}
@@ -677,7 +677,7 @@ export default function PortalSettingsPage() {
                         <AppleButton
                           variant='ghost'
                           size='sm'
-                          className='text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20'
+                          className='text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)]'
                           onClick={() => {
                             setDeleteVehicleId(vehicle.id);
                             setDeleteVehicleOpen(true);
@@ -708,8 +708,8 @@ export default function PortalSettingsPage() {
         <TabsContent value='password'>
           <AppleCard>
             <AppleCardHeader>
-              <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                <Lock className='h-5 w-5 text-apple-blue' />
+              <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                <Lock className='h-5 w-5 text-[var(--brand)]' />
                 Cambia Password
               </h2>
             </AppleCardHeader>
@@ -725,7 +725,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {passwordErrors.current && (
-                    <p className='text-xs text-apple-red'>{passwordErrors.current}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{passwordErrors.current}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
@@ -738,7 +738,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {passwordErrors.new && (
-                    <p className='text-xs text-apple-red'>{passwordErrors.new}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{passwordErrors.new}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
@@ -751,7 +751,7 @@ export default function PortalSettingsPage() {
                     className='h-12 rounded-xl'
                   />
                   {passwordErrors.confirm && (
-                    <p className='text-xs text-apple-red'>{passwordErrors.confirm}</p>
+                    <p className='text-xs text-[var(--status-error)]'>{passwordErrors.confirm}</p>
                   )}
                 </div>
               </div>
@@ -775,8 +775,8 @@ export default function PortalSettingsPage() {
             <AppleCard>
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
-                  <Mail className='h-5 w-5 text-apple-blue' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Mail className='h-5 w-5 text-[var(--brand)]' />
+                  <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Email
                   </h2>
                 </div>
@@ -784,10 +784,10 @@ export default function PortalSettingsPage() {
               <AppleCardContent className='p-6 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Notifiche email
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Ricevi aggiornamenti via email
                     </p>
                   </div>
@@ -802,7 +802,7 @@ export default function PortalSettingsPage() {
                   />
                 </div>
                 {notifications.email.enabled && (
-                  <div className='pl-4 border-l-2 border-apple-border dark:border-[var(--border-default)] space-y-3'>
+                  <div className='pl-4 border-l-2 border-[var(--border-default)] dark:border-[var(--border-default)] space-y-3'>
                     <label className='flex items-center gap-3'>
                       <input
                         type='checkbox'
@@ -813,9 +813,9 @@ export default function PortalSettingsPage() {
                             email: { ...notifications.email, bookingReminders: e.target.checked },
                           })
                         }
-                        className='rounded border-apple-border'
+                        className='rounded border-[var(--border-default)]'
                       />
-                      <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Promemoria prenotazioni
                       </span>
                     </label>
@@ -829,9 +829,9 @@ export default function PortalSettingsPage() {
                             email: { ...notifications.email, maintenanceAlerts: e.target.checked },
                           })
                         }
-                        className='rounded border-apple-border'
+                        className='rounded border-[var(--border-default)]'
                       />
-                      <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Avvisi manutenzione
                       </span>
                     </label>
@@ -845,9 +845,9 @@ export default function PortalSettingsPage() {
                             email: { ...notifications.email, inspectionReports: e.target.checked },
                           })
                         }
-                        className='rounded border-apple-border'
+                        className='rounded border-[var(--border-default)]'
                       />
-                      <span className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Report ispezioni
                       </span>
                     </label>
@@ -860,15 +860,15 @@ export default function PortalSettingsPage() {
             <AppleCard>
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
-                  <Smartphone className='h-5 w-5 text-apple-green' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>SMS</h2>
+                  <Smartphone className='h-5 w-5 text-[var(--status-success)]' />
+                  <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>SMS</h2>
                 </div>
               </AppleCardHeader>
               <AppleCardContent className='p-6 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>Notifiche SMS</p>
-                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Notifiche SMS</p>
+                    <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Ricevi messaggi urgenti
                     </p>
                   </div>
@@ -889,8 +889,8 @@ export default function PortalSettingsPage() {
             <AppleCard>
               <AppleCardHeader>
                 <div className='flex items-center gap-3'>
-                  <MessageCircle className='h-5 w-5 text-apple-green' />
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <MessageCircle className='h-5 w-5 text-[var(--status-success)]' />
+                  <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     WhatsApp
                   </h2>
                 </div>
@@ -898,10 +898,10 @@ export default function PortalSettingsPage() {
               <AppleCardContent className='p-6 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Notifiche WhatsApp
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Ricevi aggiornamenti su WhatsApp
                     </p>
                   </div>
@@ -936,13 +936,13 @@ export default function PortalSettingsPage() {
             {/* Data Export */}
             <AppleCard>
               <AppleCardHeader>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                  <Download className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                  <Download className='h-5 w-5 text-[var(--brand)]' />
                   Esportazione Dati (GDPR)
                 </h2>
               </AppleCardHeader>
               <AppleCardContent className='p-6'>
-                <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+                <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
                   Ai sensi del GDPR, puoi richiedere una copia completa di tutti i tuoi dati personali.
                   Riceverai un link per il download via email.
                 </p>
@@ -960,18 +960,18 @@ export default function PortalSettingsPage() {
             {/* 2FA */}
             <AppleCard>
               <AppleCardHeader>
-                <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                  <Shield className='h-5 w-5 text-apple-blue' />
+                <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                  <Shield className='h-5 w-5 text-[var(--brand)]' />
                   Autenticazione a Due Fattori
                 </h2>
               </AppleCardHeader>
               <AppleCardContent className='p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       2FA non attivo
                     </p>
-                    <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Aggiungi un livello di sicurezza extra
                     </p>
                   </div>
@@ -983,18 +983,18 @@ export default function PortalSettingsPage() {
             </AppleCard>
 
             {/* Delete Account */}
-            <AppleCard className='border-red-200'>
+            <AppleCard className='border-[var(--status-error-subtle)]'>
               <AppleCardHeader>
-                <h2 className='text-lg font-semibold text-apple-red flex items-center gap-2'>
+                <h2 className='text-lg font-semibold text-[var(--status-error)] flex items-center gap-2'>
                   <Trash2 className='h-5 w-5' />
                   Elimina Account
                 </h2>
               </AppleCardHeader>
               <AppleCardContent className='p-6'>
                 <div className='flex items-start gap-4'>
-                  <AlertTriangle className='h-5 w-5 text-apple-red flex-shrink-0 mt-0.5' />
+                  <AlertTriangle className='h-5 w-5 text-[var(--status-error)] flex-shrink-0 mt-0.5' />
                   <div className='flex-1'>
-                    <p className='text-sm text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                    <p className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                       L&apos;eliminazione dell&apos;account è irreversibile. Tutti i tuoi dati
                       verranno cancellati in conformità con il GDPR.
                     </p>
@@ -1012,11 +1012,11 @@ export default function PortalSettingsPage() {
                           }}
                           className='h-12 rounded-xl'
                         />
-                        {deleteError && <p className='text-xs text-apple-red'>{deleteError}</p>}
+                        {deleteError && <p className='text-xs text-[var(--status-error)]'>{deleteError}</p>}
                       </div>
                       <AppleButton
                         variant='ghost'
-                        className='text-apple-red hover:bg-red-50 dark:hover:bg-red-900/20'
+                        className='text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:hover:bg-[var(--status-error-subtle)]'
                         onClick={() => setDeleteAccountOpen(true)}
                         disabled={!deletePassword}
                         loading={isDeleting}

@@ -77,8 +77,8 @@ describe('AIService', () => {
 
     it('should throw AIAnalysisError when model fails to load', async () => {
       const realService = new AIService({ useMock: false })
-      // Simulate model load failure by mocking console
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {
+      // Simulate model load failure by mocking console.info which is called during initialization
+      const consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {
         throw new Error('Model load failed')
       })
 

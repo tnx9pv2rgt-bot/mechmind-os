@@ -151,40 +151,40 @@ function formatCurrency(value: number): string {
 }
 
 const statusBadge: Record<string, { label: string; bg: string }> = {
-  DRAFT: { label: 'Bozza', bg: 'bg-apple-light-gray text-apple-gray dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]' },
+  DRAFT: { label: 'Bozza', bg: 'bg-[var(--surface-secondary)] text-[var(--text-tertiary)] dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]' },
   SENT: {
     label: 'Inviata',
-    bg: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    bg: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]',
   },
   PAID: {
     label: 'Pagata',
-    bg: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    bg: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]',
   },
-  OVERDUE: { label: 'Scaduta', bg: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-  OPEN: { label: 'Aperto', bg: 'bg-apple-light-gray text-apple-gray dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]' },
+  OVERDUE: { label: 'Scaduta', bg: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]' },
+  OPEN: { label: 'Aperto', bg: 'bg-[var(--surface-secondary)] text-[var(--text-tertiary)] dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]' },
   PENDING: {
     label: 'In Attesa',
-    bg: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+    bg: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:bg-[var(--status-warning-subtle)] dark:text-[var(--status-warning)]',
   },
   IN_PROGRESS: {
     label: 'In Lavorazione',
-    bg: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    bg: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]',
   },
   COMPLETED: {
     label: 'Completato',
-    bg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+    bg: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand-subtle)] dark:text-[var(--brand)]',
   },
   INVOICED: {
     label: 'Fatturato',
-    bg: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+    bg: 'bg-[var(--status-success)]/10 text-[var(--status-success)] dark:bg-[var(--status-success)]/30/40 dark:text-[var(--status-success)]',
   },
   confirmed: {
     label: 'Confermato',
-    bg: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    bg: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]',
   },
   cancelled: {
     label: 'Annullato',
-    bg: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    bg: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]',
   },
 };
 
@@ -243,7 +243,7 @@ export default function CustomerDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -252,11 +252,11 @@ export default function CustomerDetailPage() {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
         <div className='text-center'>
-          <AlertCircle className='h-12 w-12 text-apple-gray dark:text-[var(--text-secondary)] mx-auto mb-4' />
-          <h2 className='text-title-2 text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+          <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mx-auto mb-4' />
+          <h2 className='text-title-2 text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
             Cliente non trovato
           </h2>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>{error}</p>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>{error}</p>
           <Link href='/dashboard/customers'>
             <AppleButton variant='secondary'>Torna ai clienti</AppleButton>
           </Link>
@@ -288,19 +288,19 @@ export default function CustomerDetailPage() {
 
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4'>
-              <div className='w-14 h-14 rounded-2xl bg-apple-blue/10 flex items-center justify-center'>
-                <span className='text-title-2 font-bold text-apple-blue'>
+              <div className='w-14 h-14 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                <span className='text-title-2 font-bold text-[var(--brand)]'>
                   {customer.firstName?.[0]}
                   {customer.lastName?.[0]}
                 </span>
               </div>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>{fullName}</h1>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{fullName}</h1>
                 <span
                   className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${
                     customer.customerType === 'AZIENDA'
-                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
-                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      ? 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand-subtle)] dark:text-[var(--brand)]'
+                      : 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]'
                   }`}
                 >
                   {customer.customerType === 'AZIENDA' ? 'Azienda' : 'Persona Fisica'}
@@ -329,7 +329,7 @@ export default function CustomerDetailPage() {
                 size='sm'
                 icon={<Trash2 className='h-4 w-4' />}
                 onClick={() => setDeleteConfirm(true)}
-                className='text-red-500 hover:text-red-600'
+                className='text-[var(--status-error)] hover:text-[var(--status-error)]'
               >
                 Elimina
               </AppleButton>
@@ -339,7 +339,7 @@ export default function CustomerDetailPage() {
       </header>
 
       {/* Tabs */}
-      <div className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 bg-white/60 dark:bg-[var(--surface-primary)]/60'>
+      <div className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-primary)]/60'>
         <div className='px-8 flex gap-1'>
           {tabs.map(tab => (
             <button
@@ -347,8 +347,8 @@ export default function CustomerDetailPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-3 text-footnote font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-apple-blue text-apple-blue'
-                  : 'border-transparent text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                  ? 'border-[var(--brand)] text-[var(--brand)]'
+                  : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
               }`}
             >
               {tab.label}
@@ -369,8 +369,8 @@ export default function CustomerDetailPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                      <User className='h-5 w-5 text-apple-gray' />
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <User className='h-5 w-5 text-[var(--text-tertiary)]' />
                       Dati Personali
                     </h2>
                   </AppleCardHeader>
@@ -397,8 +397,8 @@ export default function CustomerDetailPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                      <Building2 className='h-5 w-5 text-apple-gray' />
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <Building2 className='h-5 w-5 text-[var(--text-tertiary)]' />
                       Dati Fiscali
                     </h2>
                   </AppleCardHeader>
@@ -415,8 +415,8 @@ export default function CustomerDetailPage() {
               <motion.div variants={cardVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                      <Phone className='h-5 w-5 text-apple-gray' />
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <Phone className='h-5 w-5 text-[var(--text-tertiary)]' />
                       Contatti
                     </h2>
                   </AppleCardHeader>
@@ -427,11 +427,11 @@ export default function CustomerDetailPage() {
                       label='Canale preferito'
                       value={customer.preferredContactChannel || '--'}
                     />
-                    <div className='pt-2 border-t border-apple-border/20 dark:border-[var(--border-default)]'>
-                      <p className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1'>
+                    <div className='pt-2 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
+                      <p className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                         Indirizzo
                       </p>
-                      <p className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {customer.address || '--'}
                         {customer.postalCode && `, ${customer.postalCode}`}
                         {customer.city && ` ${customer.city}`}
@@ -446,12 +446,12 @@ export default function CustomerDetailPage() {
               <motion.div variants={cardVariants} className='space-y-6'>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Note
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent>
-                    <p className='text-body text-apple-dark dark:text-[var(--text-primary)] bg-apple-light-gray/50 dark:bg-[var(--surface-elevated)] p-4 rounded-xl'>
+                    <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-elevated)] p-4 rounded-xl'>
                       {customer.notes || 'Nessuna nota.'}
                     </p>
                   </AppleCardContent>
@@ -459,27 +459,27 @@ export default function CustomerDetailPage() {
 
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                      <Shield className='h-5 w-5 text-apple-gray' />
+                    <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <Shield className='h-5 w-5 text-[var(--text-tertiary)]' />
                       Consensi
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent className='space-y-3'>
                     <div className='flex items-center justify-between'>
-                      <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Consenso GDPR
                       </span>
-                      <span className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {customer.gdprConsentAt
                           ? `${new Date(customer.gdprConsentAt).toLocaleDateString('it-IT')} (v${customer.gdprConsentVersion || '1'})`
                           : 'Non fornito'}
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
-                      <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Consenso Marketing
                       </span>
-                      <span className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <span className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {customer.marketingConsentAt
                           ? new Date(customer.marketingConsentAt).toLocaleDateString('it-IT')
                           : 'Non fornito'}
@@ -496,8 +496,8 @@ export default function CustomerDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader className='flex items-center justify-between'>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Car className='h-5 w-5 text-apple-gray' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Car className='h-5 w-5 text-[var(--text-tertiary)]' />
                     Veicoli ({(customer.vehicles || []).length})
                   </h2>
                   <Link href='/dashboard/vehicles/new'>
@@ -509,8 +509,8 @@ export default function CustomerDetailPage() {
                 <AppleCardContent>
                   {(customer.vehicles || []).length === 0 ? (
                     <div className='text-center py-12'>
-                      <Car className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <Car className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessun veicolo associato. Aggiungi il primo veicolo.
                       </p>
                       <Link href='/dashboard/vehicles/new'>
@@ -525,28 +525,28 @@ export default function CustomerDetailPage() {
                         <Link
                           key={v.id}
                           href={`/dashboard/vehicles/${v.id}`}
-                          className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                          className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         >
                           <div className='flex items-center gap-4'>
-                            <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                              <Car className='h-6 w-6 text-apple-blue' />
+                            <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                              <Car className='h-6 w-6 text-[var(--brand)]' />
                             </div>
                             <div>
-                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {v.make} {v.model}
                               </p>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {v.licensePlate} {v.year ? `• ${v.year}` : ''}
                               </p>
                             </div>
                           </div>
                           <div className='flex items-center gap-2'>
                             {v.mileage != null && (
-                              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {v.mileage.toLocaleString('it-IT')} km
                               </span>
                             )}
-                            <ChevronRight className='h-4 w-4 text-apple-gray' />
+                            <ChevronRight className='h-4 w-4 text-[var(--text-tertiary)]' />
                           </div>
                         </Link>
                       ))}
@@ -562,8 +562,8 @@ export default function CustomerDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Clock className='h-5 w-5 text-apple-gray' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Clock className='h-5 w-5 text-[var(--text-tertiary)]' />
                     Storico Interventi
                   </h2>
                 </AppleCardHeader>
@@ -571,8 +571,8 @@ export default function CustomerDetailPage() {
                   {(customer.workOrders || []).length === 0 &&
                   (customer.bookings || []).length === 0 ? (
                     <div className='text-center py-12'>
-                      <Clock className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <Clock className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessun intervento registrato.
                       </p>
                     </div>
@@ -590,17 +590,17 @@ export default function CustomerDetailPage() {
                             <Link
                               key={wo.id}
                               href={`/dashboard/work-orders/${wo.id}`}
-                              className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                              className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                             >
                               <div className='flex items-center gap-4'>
-                                <div className='w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
-                                  <FileText className='h-5 w-5 text-apple-blue' />
+                                <div className='w-10 h-10 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30 flex items-center justify-center'>
+                                  <FileText className='h-5 w-5 text-[var(--brand)]' />
                                 </div>
                                 <div>
-                                  <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                  <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                     Ordine di Lavoro {wo.woNumber}
                                   </p>
-                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                     {new Date(wo.createdAt).toLocaleDateString('it-IT')}
                                   </p>
                                 </div>
@@ -611,7 +611,7 @@ export default function CustomerDetailPage() {
                                 >
                                   {s?.label}
                                 </span>
-                                <span className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                <span className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                   {formatCurrency(wo.totalCost)}
                                 </span>
                               </div>
@@ -630,17 +630,17 @@ export default function CustomerDetailPage() {
                             <Link
                               key={bk.id}
                               href={`/dashboard/bookings/${bk.id}`}
-                              className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                              className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                             >
                               <div className='flex items-center gap-4'>
-                                <div className='w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center'>
-                                  <Clock className='h-5 w-5 text-apple-green' />
+                                <div className='w-10 h-10 rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 flex items-center justify-center'>
+                                  <Clock className='h-5 w-5 text-[var(--status-success)]' />
                                 </div>
                                 <div>
-                                  <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                  <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                     Prenotazione — {bk.serviceName}
                                   </p>
-                                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                     {new Date(bk.scheduledAt).toLocaleDateString('it-IT', {
                                       day: '2-digit',
                                       month: 'long',
@@ -673,26 +673,26 @@ export default function CustomerDetailPage() {
               <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                 <AppleCard hover={false}>
                   <AppleCardContent>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Totale Fatturato
                     </p>
-                    <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {formatCurrency(customer.totalSpent || totalPaid + totalPending)}
                     </p>
                   </AppleCardContent>
                 </AppleCard>
                 <AppleCard hover={false}>
                   <AppleCardContent>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Pagato</p>
-                    <p className='text-title-1 font-bold text-apple-green'>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Pagato</p>
+                    <p className='text-title-1 font-bold text-[var(--status-success)]'>
                       {formatCurrency(totalPaid)}
                     </p>
                   </AppleCardContent>
                 </AppleCard>
                 <AppleCard hover={false}>
                   <AppleCardContent>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>In Sospeso</p>
-                    <p className='text-title-1 font-bold text-apple-orange'>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>In Sospeso</p>
+                    <p className='text-title-1 font-bold text-[var(--status-warning)]'>
                       {formatCurrency(totalPending)}
                     </p>
                   </AppleCardContent>
@@ -701,16 +701,16 @@ export default function CustomerDetailPage() {
 
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Euro className='h-5 w-5 text-apple-gray' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Euro className='h-5 w-5 text-[var(--text-tertiary)]' />
                     Fatture ({(customer.invoices || []).length})
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {(customer.invoices || []).length === 0 ? (
                     <div className='text-center py-12'>
-                      <Euro className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <Euro className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessuna fattura.
                       </p>
                     </div>
@@ -722,17 +722,17 @@ export default function CustomerDetailPage() {
                           <Link
                             key={inv.id}
                             href={`/dashboard/invoices/${inv.id}`}
-                            className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                            className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                           >
                             <div className='flex items-center gap-4'>
-                              <div className='w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center'>
-                                <FileText className='h-5 w-5 text-apple-green' />
+                              <div className='w-10 h-10 rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 flex items-center justify-center'>
+                                <FileText className='h-5 w-5 text-[var(--status-success)]' />
                               </div>
                               <div>
-                                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                                <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                   {inv.number}
                                 </p>
-                                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                   {new Date(inv.createdAt).toLocaleDateString('it-IT')}
                                 </p>
                               </div>
@@ -743,7 +743,7 @@ export default function CustomerDetailPage() {
                               >
                                 {s.label}
                               </span>
-                              <span className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              <span className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {formatCurrency(inv.total)}
                               </span>
                             </div>
@@ -762,15 +762,15 @@ export default function CustomerDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <MessageSquare className='h-5 w-5 text-apple-gray' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <MessageSquare className='h-5 w-5 text-[var(--text-tertiary)]' />
                     Comunicazioni
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   <div className='text-center py-12'>
-                    <MessageSquare className='h-12 w-12 text-apple-gray/40 mx-auto mb-4' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <MessageSquare className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessuna comunicazione registrata.
                     </p>
                   </div>
@@ -810,8 +810,8 @@ export default function CustomerDetailPage() {
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className='flex items-center justify-between'>
-      <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{label}</span>
-      <span className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+      <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{label}</span>
+      <span className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
         {value || '--'}
       </span>
     </div>
@@ -875,15 +875,15 @@ function EditCustomerModal({
   };
 
   return (
-    <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto'>
-      <div className='bg-white dark:bg-[var(--surface-elevated)] rounded-2xl p-6 max-w-2xl w-full mx-4 my-8 shadow-xl max-h-[90vh] overflow-y-auto'>
+    <div className='fixed inset-0 bg-[var(--surface-primary)]/50 flex items-center justify-center z-50 overflow-y-auto'>
+      <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl p-6 max-w-2xl w-full mx-4 my-8 shadow-xl max-h-[90vh] overflow-y-auto'>
         <div className='flex items-center justify-between mb-6'>
-          <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+          <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             Modifica Cliente
           </h3>
           <button
             onClick={onClose}
-            className='p-2 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[var(--surface-active)] text-apple-dark dark:text-[var(--text-primary)] transition-colors'
+            className='p-2 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors'
             aria-label='Chiudi'
           >
             <X className='h-5 w-5' />
@@ -895,17 +895,17 @@ function EditCustomerModal({
             <FormField label='Nome' error={errors.firstName?.message} registerProps={register('firstName')} />
             <FormField label='Cognome' error={errors.lastName?.message} registerProps={register('lastName')} />
             <div className='sm:col-span-2'>
-              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block'>
+              <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block'>
                 Tipo
               </label>
               <select
                 {...register('customerType')}
-                className='w-full h-10 px-3 rounded-lg border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] text-body text-apple-dark dark:text-[var(--text-primary)]'
+                className='w-full h-10 px-3 rounded-lg border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'
               >
                 <option value='PERSONA'>Persona Fisica</option>
                 <option value='AZIENDA'>Azienda</option>
               </select>
-              {errors.customerType && <p className='text-xs text-red-500 mt-1'>{errors.customerType.message}</p>}
+              {errors.customerType && <p className='text-xs text-[var(--status-error)] mt-1'>{errors.customerType.message}</p>}
             </div>
             <FormField label='Codice Fiscale' registerProps={register('codiceFiscale')} />
             <FormField label='Partita IVA' registerProps={register('partitaIva')} />
@@ -923,13 +923,13 @@ function EditCustomerModal({
             <FormField label='Canale preferito' registerProps={register('preferredContactChannel')} />
             <FormField label='Fonte acquisizione' registerProps={register('acquisitionSource')} />
             <div className='sm:col-span-2'>
-              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block'>
+              <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block'>
                 Note
               </label>
               <textarea
                 {...register('notes')}
                 rows={3}
-                className='w-full px-3 py-2 rounded-lg border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] text-body text-apple-dark dark:text-[var(--text-primary)] resize-none'
+                className='w-full px-3 py-2 rounded-lg border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] resize-none'
               />
             </div>
           </div>
@@ -959,14 +959,14 @@ function FormField({
 }) {
   return (
     <div>
-      <label className='text-sm font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block'>
+      <label className='text-sm font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block'>
         {label}
       </label>
       <Input
         {...registerProps}
-        className='h-10 rounded-lg border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] text-sm'
+        className='h-10 rounded-lg border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-sm'
       />
-      {error && <p className='text-xs text-red-500 mt-1'>{error}</p>}
+      {error && <p className='text-xs text-[var(--status-error)] mt-1'>{error}</p>}
     </div>
   );
 }

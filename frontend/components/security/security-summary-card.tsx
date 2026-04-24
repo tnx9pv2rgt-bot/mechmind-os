@@ -51,21 +51,21 @@ export function SecuritySummaryCard({
       icon: <LogIn className="h-4 w-4" />,
       value: summary.totalLogins,
       label: 'Accessi',
-      colorClass: 'text-green-400 bg-green-500/10',
+      colorClass: 'text-[var(--status-success)] bg-[var(--status-success-subtle)]0/10',
     },
     {
       icon: <AlertTriangle className="h-4 w-4" />,
       value: summary.failedAttempts,
       label: 'Tentativi falliti',
       colorClass: summary.failedAttempts > 0
-        ? 'text-red-400 bg-red-500/10'
+        ? 'text-[var(--status-error)] bg-[var(--status-error-subtle)]0/10'
         : 'text-[var(--text-tertiary)] bg-[var(--border-strong)]/50',
     },
     {
       icon: <Monitor className="h-4 w-4" />,
       value: summary.activeDevices,
       label: 'Dispositivi',
-      colorClass: 'text-blue-400 bg-blue-500/10',
+      colorClass: 'text-[var(--status-info)] bg-[var(--status-info-subtle)]0/10',
     },
   ];
 
@@ -86,7 +86,7 @@ export function SecuritySummaryCard({
             <div className={`flex h-8 w-8 items-center justify-center rounded-full ${stat.colorClass}`}>
               {stat.icon}
             </div>
-            <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--text-on-brand)]">{stat.value}</p>
             <p className="text-xs text-[var(--text-tertiary)]">{stat.label}</p>
           </motion.div>
         ))}

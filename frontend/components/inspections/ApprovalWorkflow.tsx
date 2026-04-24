@@ -100,23 +100,23 @@ const SEVERITY_CONFIG: Record<FindingSeverity, {
 }> = {
   Critical: {
     icon: AlertCircle,
-    badgeClass: 'bg-red-100 text-red-800 border-red-300',
-    bgClass: 'bg-red-50',
-    borderClass: 'border-red-200',
+    badgeClass: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] border-[var(--status-error)]/30',
+    bgClass: 'bg-[var(--status-error-subtle)]',
+    borderClass: 'border-[var(--status-error-subtle)]',
     label: 'Critico',
   },
   Warning: {
     icon: AlertTriangle,
-    badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
-    bgClass: 'bg-amber-50',
-    borderClass: 'border-amber-200',
+    badgeClass: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] border-[var(--status-warning)]/30',
+    bgClass: 'bg-[var(--status-warning-subtle)]',
+    borderClass: 'border-[var(--status-warning-subtle)]',
     label: 'Avviso',
   },
   Info: {
     icon: Info,
-    badgeClass: 'bg-blue-100 text-blue-800 border-blue-300',
-    bgClass: 'bg-blue-50',
-    borderClass: 'border-blue-200',
+    badgeClass: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] border-[var(--status-info)]/30',
+    bgClass: 'bg-[var(--status-info-subtle)]',
+    borderClass: 'border-[var(--status-info-subtle)]',
     label: 'Info',
   },
 }
@@ -212,8 +212,8 @@ function SignaturePad({ onSignatureChange, width = 600, height = 200 }: Signatur
     <div className="space-y-3">
       <div
         className={cn(
-          'relative border-2 border-dashed rounded-lg overflow-hidden bg-white',
-          hasSignature ? 'border-gray-300' : 'border-gray-200'
+          'relative border-2 border-dashed rounded-lg overflow-hidden bg-[var(--surface-secondary)]',
+          hasSignature ? 'border-[var(--border-default)]' : 'border-[var(--border-default)]'
         )}
       >
         <canvas
@@ -231,7 +231,7 @@ function SignaturePad({ onSignatureChange, width = 600, height = 200 }: Signatur
         />
         {!hasSignature && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center text-gray-400">
+            <div className="text-center text-[var(--text-tertiary)]">
               <Pen className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <span className="text-sm">Firma qui con mouse o dito</span>
             </div>
@@ -244,7 +244,7 @@ function SignaturePad({ onSignatureChange, width = 600, height = 200 }: Signatur
           variant="outline"
           size="sm"
           onClick={clearSignature}
-          className="text-gray-600"
+          className="text-[var(--text-secondary)]"
         >
           <RefreshCcw className="h-4 w-4 mr-2" />
           Cancella Firma
@@ -274,15 +274,15 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
     <Card
       className={cn(
         'overflow-hidden transition-all border-2',
-        isApproved === true && 'border-green-400 shadow-md',
-        isApproved === false && 'border-gray-300 opacity-75',
+        isApproved === true && 'border-[var(--status-success)]/40 shadow-md',
+        isApproved === false && 'border-[var(--border-default)] opacity-75',
         isApproved === null && severityConfig.borderClass
       )}
     >
       <div className={cn('p-4', severityConfig.bgClass)}>
         <div className="flex gap-4">
           {/* Photo */}
-          <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border bg-white">
+          <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border bg-[var(--surface-secondary)]">
             {finding.photoUrl ? (
               <img
                 src={finding.photoUrl}
@@ -290,7 +290,7 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
+              <div className="w-full h-full flex items-center justify-center text-[var(--text-tertiary)]">
                 <AlertCircle className="h-8 w-8" />
               </div>
             )}
@@ -304,8 +304,8 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
                   <SeverityIcon className="h-3 w-3 mr-1" />
                   {severityConfig.label}
                 </Badge>
-                <h4 className="font-semibold text-gray-900 line-clamp-2">{finding.description}</h4>
-                <p className="text-sm text-gray-500 mt-1">{finding.category}</p>
+                <h4 className="font-semibold text-[var(--text-primary)] line-clamp-2">{finding.description}</h4>
+                <p className="text-sm text-[var(--text-tertiary)] mt-1">{finding.category}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-lg">{formatCurrency(finding.estimatedCost)}</p>
@@ -318,7 +318,7 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
         {finding.technicianNotes && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-3 flex items-center text-sm text-gray-600 hover:text-gray-900"
+            className="mt-3 flex items-center text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             {isExpanded ? (
               <ChevronUp className="h-4 w-4 mr-1" />
@@ -330,15 +330,15 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
         )}
 
         {isExpanded && finding.technicianNotes && (
-          <div className="mt-3 p-3 bg-white/70 rounded-lg text-sm text-gray-700">
-            <p className="font-medium text-gray-900 mb-1">Note del tecnico:</p>
+          <div className="mt-3 p-3 bg-[var(--surface-secondary)]/70 rounded-lg text-sm text-[var(--text-secondary)]">
+            <p className="font-medium text-[var(--text-primary)] mb-1">Note del tecnico:</p>
             {finding.technicianNotes}
           </div>
         )}
       </div>
 
       {/* Approval Actions */}
-      <div className="p-4 bg-white border-t">
+      <div className="p-4 bg-[var(--surface-secondary)] border-t">
         <div className="flex gap-3">
           <Button
             type="button"
@@ -347,7 +347,7 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
             onClick={onApprove}
             className={cn(
               'flex-1',
-              isApproved === true && 'bg-green-600 hover:bg-green-700'
+              isApproved === true && 'bg-[var(--status-success)] hover:bg-[var(--status-success)]'
             )}
           >
             <CheckCircle className="h-4 w-4 mr-2" />
@@ -360,7 +360,7 @@ function FindingCard({ finding, isApproved, onApprove, onReject }: FindingCardPr
             onClick={onReject}
             className={cn(
               'flex-1',
-              isApproved === false && 'bg-gray-600 hover:bg-gray-700'
+              isApproved === false && 'bg-[var(--surface-active)] hover:bg-[var(--surface-active)]'
             )}
           >
             <X className="h-4 w-4 mr-2" />
@@ -400,7 +400,7 @@ function CostSummary({ findings, approvals }: CostSummaryProps) {
   const pendingCount = findings.length - approvedCount - rejectedCount
 
   return (
-    <Card className="bg-gradient-to-br from-gray-50 to-white">
+    <Card className="bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--surface-secondary)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-5 w-5" />
@@ -410,41 +410,41 @@ function CostSummary({ findings, approvals }: CostSummaryProps) {
       <CardContent className="space-y-4">
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-            <p className="text-2xl font-bold text-green-700">{approvedCount}</p>
-            <p className="text-xs text-green-600">Approvati</p>
+          <div className="text-center p-3 bg-[var(--status-success-subtle)] rounded-lg border border-[var(--status-success)]/10">
+            <p className="text-2xl font-bold text-[var(--status-success)]">{approvedCount}</p>
+            <p className="text-xs text-[var(--status-success)]">Approvati</p>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-            <p className="text-2xl font-bold text-gray-700">{rejectedCount}</p>
-            <p className="text-xs text-gray-600">Rifiutati</p>
+          <div className="text-center p-3 bg-[var(--surface-secondary)] rounded-lg border border-[var(--border-default)]">
+            <p className="text-2xl font-bold text-[var(--text-secondary)]">{rejectedCount}</p>
+            <p className="text-xs text-[var(--text-secondary)]">Rifiutati</p>
           </div>
-          <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-100">
-            <p className="text-2xl font-bold text-amber-700">{pendingCount}</p>
-            <p className="text-xs text-amber-600">In attesa</p>
+          <div className="text-center p-3 bg-[var(--status-warning)]/5 rounded-lg border border-[var(--status-warning)]/10">
+            <p className="text-2xl font-bold text-[var(--status-warning)]">{pendingCount}</p>
+            <p className="text-xs text-[var(--status-warning)]">In attesa</p>
           </div>
         </div>
 
         {/* Cost Breakdown */}
         <div className="space-y-2 pt-2 border-t">
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Totale approvato</span>
-            <span className="font-semibold text-green-700 text-lg">
+            <span className="text-[var(--text-secondary)]">Totale approvato</span>
+            <span className="font-semibold text-[var(--status-success)] text-lg">
               {formatCurrency(totalApproved)}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Totale rifiutato</span>
-            <span className="font-semibold text-gray-500">
+            <span className="text-[var(--text-secondary)]">Totale rifiutato</span>
+            <span className="font-semibold text-[var(--text-tertiary)]">
               {formatCurrency(totalRejected)}
             </span>
           </div>
           {totalSavings > 0 && (
             <div className="flex justify-between items-center pt-2 border-t border-dashed">
-              <span className="text-amber-600 font-medium flex items-center gap-1">
+              <span className="text-[var(--status-warning)] font-medium flex items-center gap-1">
                 <Info className="h-4 w-4" />
                 Risparmio
               </span>
-              <span className="font-bold text-amber-600 text-lg">
+              <span className="font-bold text-[var(--status-warning)] text-lg">
                 {formatCurrency(totalSavings)}
               </span>
             </div>
@@ -484,28 +484,28 @@ function SuccessView({
     <div className="max-w-2xl mx-auto space-y-6 py-8">
       {/* Success Header */}
       <div className="text-center space-y-4">
-        <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-          <CheckCircle className="h-10 w-10 text-green-600" />
+        <div className="mx-auto w-20 h-20 bg-[var(--status-success-subtle)] rounded-full flex items-center justify-center">
+          <CheckCircle className="h-10 w-10 text-[var(--status-success)]" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Approvazione Completata!</h2>
-        <p className="text-gray-600 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Approvazione Completata!</h2>
+        <p className="text-[var(--text-secondary)] max-w-md mx-auto">
           La tua approvazione è stata registrata con successo. Riceverai una conferma via email.
         </p>
       </div>
 
       {/* Confirmation Card */}
-      <Card className="border-green-200 bg-green-50/50">
+      <Card className="border-[var(--status-success)]/30 bg-[var(--status-success-subtle)]/50">
         <CardHeader>
           <CardTitle className="text-lg">Dettaglio Approvazione</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500">ID Ispezione</p>
+              <p className="text-[var(--text-tertiary)]">ID Ispezione</p>
               <p className="font-mono font-medium">{approval.inspectionId}</p>
             </div>
             <div>
-              <p className="text-gray-500">Data approvazione</p>
+              <p className="text-[var(--text-tertiary)]">Data approvazione</p>
               <p className="font-medium">
                 {approval.submittedAt.toLocaleDateString('it-IT')}
               </p>
@@ -513,7 +513,7 @@ function SuccessView({
           </div>
 
           <div className="border-t pt-4">
-            <p className="text-sm text-gray-500 mb-2">Interventi approvati ({approvedFindings.length})</p>
+            <p className="text-sm text-[var(--text-tertiary)] mb-2">Interventi approvati ({approvedFindings.length})</p>
             <ul className="space-y-1">
               {approvedFindings.slice(0, 3).map((finding) => (
                 <li key={finding.id} className="flex justify-between text-sm">
@@ -522,7 +522,7 @@ function SuccessView({
                 </li>
               ))}
               {approvedFindings.length > 3 && (
-                <li className="text-sm text-gray-500">
+                <li className="text-sm text-[var(--text-tertiary)]">
                   ...e altri {approvedFindings.length - 3} interventi
                 </li>
               )}
@@ -530,16 +530,16 @@ function SuccessView({
           </div>
 
           <div className="border-t pt-4 flex justify-between items-center">
-            <span className="text-gray-600">Totale approvato</span>
-            <span className="text-2xl font-bold text-green-700">
+            <span className="text-[var(--text-secondary)]">Totale approvato</span>
+            <span className="text-2xl font-bold text-[var(--status-success)]">
               {formatCurrency(approval.totalApproved)}
             </span>
           </div>
 
           {approval.depositAmount > 0 && (
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Acconto versato</span>
-              <span className="font-semibold text-amber-600">
+              <span className="text-[var(--text-secondary)]">Acconto versato</span>
+              <span className="font-semibold text-[var(--status-warning)]">
                 {formatCurrency(approval.depositAmount)}
               </span>
             </div>
@@ -554,7 +554,7 @@ function SuccessView({
             <CardTitle className="text-sm">Firma Digitale</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-lg p-4 bg-white">
+            <div className="border rounded-lg p-4 bg-[var(--surface-secondary)]">
               <img
                 src={approval.signature}
                 alt="Firma cliente"
@@ -698,19 +698,19 @@ export function ApprovalWorkflow({
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900">Approvazione Interventi</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Approvazione Interventi</h1>
         {customerName && (
-          <p className="text-gray-600">Cliente: <span className="font-medium">{customerName}</span></p>
+          <p className="text-[var(--text-secondary)]">Cliente: <span className="font-medium">{customerName}</span></p>
         )}
         {vehicleInfo && (
-          <p className="text-gray-600">Veicolo: <span className="font-medium">{vehicleInfo}</span></p>
+          <p className="text-[var(--text-secondary)]">Veicolo: <span className="font-medium">{vehicleInfo}</span></p>
         )}
-        <p className="text-sm text-gray-500">{shopName}</p>
+        <p className="text-sm text-[var(--text-tertiary)]">{shopName}</p>
       </div>
 
       {/* Error State */}
       {status === 'error' && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+        <div className="p-4 bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 rounded-lg flex items-center gap-3 text-[var(--status-error)]">
           <AlertCircle className="h-5 w-5 flex-shrink-0" />
           <div>
             <p className="font-medium">Si è verificato un errore</p>
@@ -776,11 +776,11 @@ export function ApprovalWorkflow({
             <CardContent className="space-y-4">
               {/* Deposit Amount */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Importo acconto (€)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">€</span>
                   <Input
                     type="number"
                     min="0"
@@ -792,7 +792,7 @@ export function ApprovalWorkflow({
                   />
                 </div>
                 {depositAmount && parseFloat(depositAmount) > totalApproved && (
-                  <p className="text-sm text-amber-600 mt-1">
+                  <p className="text-sm text-[var(--status-warning)] mt-1">
                     L&apos;acconto supera il totale approvato
                   </p>
                 )}
@@ -800,7 +800,7 @@ export function ApprovalWorkflow({
 
               {/* Payment Method */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Metodo di pagamento
                 </label>
                 <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
@@ -832,12 +832,12 @@ export function ApprovalWorkflow({
 
               {/* Stripe Payment Placeholder */}
               {depositAmount && parseFloat(depositAmount) > 0 && paymentMethod === 'card' && (
-                <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                  <div className="flex items-center justify-center gap-2 text-gray-400 mb-3">
+                <div className="p-4 border-2 border-dashed border-[var(--border-default)] rounded-lg bg-[var(--surface-secondary)]">
+                  <div className="flex items-center justify-center gap-2 text-[var(--text-tertiary)] mb-3">
                     <Lock className="h-4 w-4" />
                     <span className="text-sm font-medium">Pagamento sicuro con Stripe</span>
                   </div>
-                  <div className="h-12 bg-white border rounded flex items-center justify-center text-sm text-gray-400">
+                  <div className="h-12 bg-[var(--surface-secondary)] border rounded flex items-center justify-center text-sm text-[var(--text-tertiary)]">
                     <Shield className="h-4 w-4 mr-2" />
                     Stripe Elements placeholder
                   </div>
@@ -847,7 +847,7 @@ export function ApprovalWorkflow({
           </Card>
 
           {/* Terms and Submit */}
-          <Card className={cn(!termsAccepted && 'border-amber-200')}
+          <Card className={cn(!termsAccepted && 'border-[var(--status-warning-subtle)]')}
           >
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
@@ -856,7 +856,7 @@ export function ApprovalWorkflow({
                   checked={termsAccepted}
                   onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 />
-                <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer">
+                <label htmlFor="terms" className="text-sm text-[var(--text-secondary)] cursor-pointer">
                   Dichiaro di aver letto e approvato il preventivo per gli interventi selezionati.
                   Autorizzo l&apos;officina ad eseguire i lavori approvati e comprendo che i costi
                   potrebbero variare in base a ulteriori problematiche riscontrate.
@@ -864,7 +864,7 @@ export function ApprovalWorkflow({
               </div>
 
               {!allItemsDecided && (
-                <p className="text-sm text-amber-600 mt-3 flex items-center gap-1">
+                <p className="text-sm text-[var(--status-warning)] mt-3 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
                   Decidi per tutti gli interventi prima di procedere
                 </p>
@@ -898,15 +898,15 @@ export function ApprovalWorkflow({
             <CostSummary findings={findings} approvals={approvals} />
 
             {/* Help Card */}
-            <Card className="bg-blue-50 border-blue-100">
+            <Card className="bg-[var(--status-info-subtle)] border-[var(--status-info)]/10">
               <CardHeader>
-                <CardTitle className="text-sm text-blue-800">Hai dubbi?</CardTitle>
+                <CardTitle className="text-sm text-[var(--status-info)]">Hai dubbi?</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-blue-700 mb-3">
+                <p className="text-sm text-[var(--status-info)] mb-3">
                   Contatta il nostro team per maggiori informazioni sugli interventi.
                 </p>
-                <Button variant="outline" size="sm" className="w-full border-blue-200">
+                <Button variant="outline" size="sm" className="w-full border-[var(--status-info)]/30">
                   <Mail className="h-4 w-4 mr-2" />
                   Contatta Officina
                 </Button>
@@ -921,7 +921,7 @@ export function ApprovalWorkflow({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
+              <AlertCircle className="h-5 w-5 text-[var(--status-warning)]" />
               Conferma Approvazione
             </DialogTitle>
             <DialogDescription>
@@ -932,19 +932,19 @@ export function ApprovalWorkflow({
           <div className="py-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Interventi approvati</span>
+                <span className="text-[var(--text-secondary)]">Interventi approvati</span>
                 <span className="font-medium">
                   {Object.values(approvals).filter(Boolean).length} su {findings.length}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Totale da pagare</span>
+                <span className="text-[var(--text-secondary)]">Totale da pagare</span>
                 <span className="font-bold text-lg">{formatCurrency(totalApproved)}</span>
               </div>
               {depositAmount && parseFloat(depositAmount) > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Acconto</span>
-                  <span className="font-medium text-amber-600">
+                  <span className="text-[var(--text-secondary)]">Acconto</span>
+                  <span className="font-medium text-[var(--status-warning)]">
                     {formatCurrency(parseFloat(depositAmount))}
                   </span>
                 </div>
@@ -962,7 +962,7 @@ export function ApprovalWorkflow({
             </Button>
             <Button
               onClick={handleConfirmSubmit}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="flex-1 bg-[var(--status-success)] hover:bg-[var(--status-success)]"
             >
               <Check className="h-4 w-4 mr-2" />
               Conferma

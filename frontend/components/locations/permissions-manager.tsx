@@ -310,10 +310,10 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleColors: Record<string, string> = {
-  admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  manager: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  mechanic: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  receptionist: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  admin: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand)]/40/30 dark:text-[var(--brand)]',
+  manager: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40/30 dark:text-[var(--status-info)]',
+  mechanic: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]',
+  receptionist: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success)]/40/30 dark:text-[var(--status-success)]',
 };
 
 export function PermissionsManager({ locations }: PermissionsManagerProps) {
@@ -375,27 +375,27 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
   const getLogIcon = (type: AuditLogEntry['type']) => {
     switch (type) {
       case 'success':
-        return <CheckCircle2 className='h-4 w-4 text-status-ready' />;
+        return <CheckCircle2 className='h-4 w-4 text-[var(--status-success)]' />;
       case 'warning':
-        return <AlertTriangle className='h-4 w-4 text-status-warning' />;
+        return <AlertTriangle className='h-4 w-4 text-[var(--status-warning)]' />;
       case 'error':
-        return <XCircle className='h-4 w-4 text-status-urgent' />;
+        return <XCircle className='h-4 w-4 text-[var(--status-error)]' />;
       default:
-        return <History className='h-4 w-4 text-gray-400' />;
+        return <History className='h-4 w-4 text-[var(--text-tertiary)]' />;
     }
   };
 
   return (
     <div className='space-y-6'>
       {/* Tabs */}
-      <div className='flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 w-fit'>
+      <div className='flex items-center gap-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg border border-[var(--border-default)] dark:border-[var(--border-default)] p-1 w-fit'>
         <button
           onClick={() => setActiveTab('users')}
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'users'
-              ? 'bg-brand-600 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-brand-600 text-[var(--text-on-brand)]'
+              : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
           )}
         >
           <Users className='h-4 w-4' />
@@ -406,8 +406,8 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'roles'
-              ? 'bg-brand-600 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-brand-600 text-[var(--text-on-brand)]'
+              : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
           )}
         >
           <Shield className='h-4 w-4' />
@@ -418,8 +418,8 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'audit'
-              ? 'bg-brand-600 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-brand-600 text-[var(--text-on-brand)]'
+              : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]'
           )}
         >
           <History className='h-4 w-4' />
@@ -434,7 +434,7 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
           <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
             <div className='flex items-center gap-4'>
               <div className='relative'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca utente...'
                   value={searchQuery}
@@ -445,7 +445,7 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
               <select
                 value={selectedLocation}
                 onChange={e => setSelectedLocation(e.target.value)}
-                className='px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
               >
                 <option value='all'>Tutte le sedi</option>
                 {locations.map(loc => (
@@ -473,17 +473,17 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                 <div key={location.id} className='workshop-card overflow-hidden p-0'>
                   <button
                     onClick={() => toggleLocation(location.id)}
-                    className='w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                    className='w-full px-6 py-4 flex items-center justify-between hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50 transition-colors'
                   >
                     <div className='flex items-center gap-3'>
-                      <div className='h-10 w-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center'>
-                        <Building2 className='h-5 w-5 text-brand-600' />
+                      <div className='h-10 w-10 rounded-lg bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center'>
+                        <Building2 className='h-5 w-5 text-[var(--brand)]' />
                       </div>
                       <div className='text-left'>
-                        <h4 className='font-semibold text-gray-900 dark:text-white'>
+                        <h4 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {location.name}
                         </h4>
-                        <p className='text-sm text-gray-500 dark:text-gray-400'>
+                        <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                           {locationUsers.length} utenti assegnati
                         </p>
                       </div>
@@ -493,7 +493,7 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                         {locationUsers.slice(0, 3).map(user => (
                           <div
                             key={user.id}
-                            className='h-8 w-8 rounded-full bg-brand-100 dark:bg-brand-900/30 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-medium text-brand-600'
+                            className='h-8 w-8 rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 border-2 border-[var(--border-default)] dark:border-[var(--border-strong)] flex items-center justify-center text-xs font-medium text-[var(--brand)]'
                           >
                             {user.name
                               .split(' ')
@@ -502,57 +502,57 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                           </div>
                         ))}
                         {locationUsers.length > 3 && (
-                          <div className='h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-medium text-gray-600'>
+                          <div className='h-8 w-8 rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--border-default)] border-2 border-[var(--border-default)] dark:border-[var(--border-strong)] flex items-center justify-center text-xs font-medium text-[var(--text-secondary)]'>
                             +{locationUsers.length - 3}
                           </div>
                         )}
                       </div>
                       {isExpanded ? (
-                        <ChevronDown className='h-5 w-5 text-gray-400' />
+                        <ChevronDown className='h-5 w-5 text-[var(--text-tertiary)]' />
                       ) : (
-                        <ChevronRight className='h-5 w-5 text-gray-400' />
+                        <ChevronRight className='h-5 w-5 text-[var(--text-tertiary)]' />
                       )}
                     </div>
                   </button>
 
                   {isExpanded && (
-                    <div className='border-t border-gray-200 dark:border-gray-700'>
+                    <div className='border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
                       <table className='w-full'>
-                        <thead className='bg-gray-50 dark:bg-gray-800'>
+                        <thead className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]'>
                           <tr>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               Utente
                             </th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               Ruolo
                             </th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               Permessi
                             </th>
-                            <th className='px-6 py-3 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <th className='px-6 py-3 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               Azioni
                             </th>
                           </tr>
                         </thead>
-                        <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                        <tbody className='divide-y divide-[var(--border-default)] dark:divide-gray-700'>
                           {locationUsers.map(user => (
                             <tr
                               key={user.id}
-                              className='hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                              className='hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50'
                             >
                               <td className='px-6 py-4'>
                                 <div className='flex items-center gap-3'>
-                                  <div className='h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-sm font-medium text-brand-600'>
+                                  <div className='h-10 w-10 rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 flex items-center justify-center text-sm font-medium text-[var(--brand)]'>
                                     {user.name
                                       .split(' ')
                                       .map(n => n[0])
                                       .join('')}
                                   </div>
                                   <div>
-                                    <p className='font-medium text-gray-900 dark:text-white'>
+                                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                       {user.name}
                                     </p>
-                                    <p className='text-sm text-gray-500 dark:text-gray-400'>
+                                    <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                                       {user.email}
                                     </p>
                                   </div>
@@ -573,13 +573,13 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                                   {user.permissions.slice(0, 3).map(perm => (
                                     <span
                                       key={perm}
-                                      className='px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded'
+                                      className='px-2 py-0.5 text-xs bg-[var(--surface-secondary)] dark:bg-[var(--border-default)] text-[var(--text-secondary)] dark:text-[var(--text-secondary)] rounded'
                                     >
                                       {allPermissions.find(p => p.id === perm)?.label.split(' ')[0]}
                                     </span>
                                   ))}
                                   {user.permissions.length > 3 && (
-                                    <span className='px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded'>
+                                    <span className='px-2 py-0.5 text-xs bg-[var(--surface-secondary)] dark:bg-[var(--border-default)] text-[var(--text-secondary)] dark:text-[var(--text-secondary)] rounded'>
                                       +{user.permissions.length - 3}
                                     </span>
                                   )}
@@ -593,7 +593,7 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                                     className='h-8 w-8 p-0'
                                     aria-label='Modifica permessi'
                                   >
-                                    <Edit2 className='h-4 w-4 text-gray-400' />
+                                    <Edit2 className='h-4 w-4 text-[var(--text-tertiary)]' />
                                   </Button>
                                   <Button
                                     variant='ghost'
@@ -601,7 +601,7 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                                     className='h-8 w-8 p-0'
                                     aria-label='Rimuovi utente'
                                   >
-                                    <Trash2 className='h-4 w-4 text-status-urgent' />
+                                    <Trash2 className='h-4 w-4 text-[var(--status-error)]' />
                                   </Button>
                                 </div>
                               </td>
@@ -633,8 +633,8 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                   <Shield className='h-6 w-6' />
                 </div>
                 <div>
-                  <h4 className='font-semibold text-gray-900 dark:text-white'>{label}</h4>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>
+                  <h4 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{label}</h4>
+                  <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                     {mockUsers.filter(u => u.role === role).length} utenti
                   </p>
                 </div>
@@ -651,8 +651,8 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
                   })
                   .map(perm => (
                     <div key={perm.id} className='flex items-center gap-2 text-sm'>
-                      <CheckIcon className='h-4 w-4 text-status-ready' />
-                      <span className='text-gray-700 dark:text-gray-300'>{perm.label}</span>
+                      <CheckIcon className='h-4 w-4 text-[var(--status-success)]' />
+                      <span className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{perm.label}</span>
                     </div>
                   ))}
               </div>
@@ -665,8 +665,8 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
       {activeTab === 'audit' && (
         <div className='workshop-card'>
           <div className='flex items-center justify-between mb-6'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
-              <History className='h-5 w-5 text-brand-600' />
+            <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+              <History className='h-5 w-5 text-[var(--brand)]' />
               Log delle Modifiche
             </h3>
             <Button variant='outline' size='sm'>
@@ -678,24 +678,24 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
             {mockAuditLog.map(log => (
               <div
                 key={log.id}
-                className='flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                className='flex items-start gap-4 p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg'
               >
-                <div className='h-10 w-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm'>
+                <div className='h-10 w-10 rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--border-default)] flex items-center justify-center shadow-sm'>
                   {getLogIcon(log.type)}
                 </div>
                 <div className='flex-1'>
                   <div className='flex items-center gap-2'>
-                    <p className='font-medium text-gray-900 dark:text-white'>{log.action}</p>
-                    <span className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{log.action}</p>
+                    <span className='text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'>
                       {formatTimeAgo(log.timestamp)}
                     </span>
                   </div>
-                  <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+                  <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] mt-1'>
                     <span className='font-medium'>{log.user}</span> ha modificato{' '}
                     <span className='font-medium'>{log.target}</span> per{' '}
                     <span className='font-medium'>{log.location}</span>
                   </p>
-                  <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>{log.details}</p>
+                  <p className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] mt-1'>{log.details}</p>
                 </div>
               </div>
             ))}
@@ -705,23 +705,23 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
 
       {/* Assign User Modal (simplified) */}
       {showAssignModal && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2'>
-              <UserPlus className='h-5 w-5 text-brand-600' />
+        <div className='fixed inset-0 bg-[var(--surface-primary)]/50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg shadow-xl max-w-lg w-full p-6'>
+            <h3 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4 flex items-center gap-2'>
+              <UserPlus className='h-5 w-5 text-[var(--brand)]' />
               Assegna Utente a Sede
             </h3>
             <div className='space-y-4'>
               <div>
                 <label
                   htmlFor='assignUser'
-                  className='text-sm text-gray-600 dark:text-gray-400 block mb-2'
+                  className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] block mb-2'
                 >
                   Utente
                 </label>
                 <select
                   id='assignUser'
-                  className='w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                  className='w-full px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                 >
                   <option>Seleziona utente...</option>
                   {mockUsers
@@ -736,13 +736,13 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
               <div>
                 <label
                   htmlFor='assignLocation'
-                  className='text-sm text-gray-600 dark:text-gray-400 block mb-2'
+                  className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] block mb-2'
                 >
                   Sede
                 </label>
                 <select
                   id='assignLocation'
-                  className='w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                  className='w-full px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                 >
                   <option>Seleziona sede...</option>
                   {locations.map(loc => (
@@ -755,13 +755,13 @@ export function PermissionsManager({ locations }: PermissionsManagerProps) {
               <div>
                 <label
                   htmlFor='assignRole'
-                  className='text-sm text-gray-600 dark:text-gray-400 block mb-2'
+                  className='text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)] block mb-2'
                 >
                   Ruolo
                 </label>
                 <select
                   id='assignRole'
-                  className='w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                  className='w-full px-3 py-2 border border-[var(--border-default)] dark:border-[var(--border-default)] rounded-md text-sm bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                 >
                   <option>Seleziona ruolo...</option>
                   {Object.entries(roleLabels).map(([role, label]) => (

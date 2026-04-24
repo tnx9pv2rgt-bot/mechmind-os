@@ -159,15 +159,15 @@ export default function SettingsPage() {
           <div className='flex items-center gap-4'>
             <Link
               href='/dashboard'
-              className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5'
+              className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors hover:bg-[var(--surface-primary)]/5 dark:hover:bg-[var(--surface-secondary)]/5'
             >
-              <ArrowLeft className='h-5 w-5 text-apple-gray dark:text-[var(--text-secondary)]' />
+              <ArrowLeft className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
             </Link>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Impostazioni
               </h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Gestisci le preferenze della tua officina
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function SettingsPage() {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className='rounded-xl text-sm text-[var(--text-secondary)] data-[state=active]:bg-white data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm'
+                className='rounded-xl text-sm text-[var(--text-secondary)] data-[state=active]:bg-[var(--surface-secondary)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm'
               >
                 {tab.label}
               </TabsTrigger>
@@ -203,8 +203,8 @@ export default function SettingsPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center gap-3'>
-                    <Store className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <Store className='h-5 w-5 text-[var(--brand)]' />
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Informazioni Officina
                     </h2>
                   </div>
@@ -213,7 +213,7 @@ export default function SettingsPage() {
                   <div className='space-y-4'>
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                       <div className='space-y-2'>
-                        <label htmlFor='settingsName' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <label htmlFor='settingsName' className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           Nome Officina
                         </label>
                         <Input
@@ -224,11 +224,11 @@ export default function SettingsPage() {
                           className='h-12 rounded-xl'
                         />
                         {settingsErrors.name && (
-                          <p className='text-footnote text-apple-red'>{settingsErrors.name}</p>
+                          <p className='text-footnote text-[var(--status-error)]'>{settingsErrors.name}</p>
                         )}
                       </div>
                       <div className='space-y-2'>
-                        <label htmlFor='settingsEmail' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <label htmlFor='settingsEmail' className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           Email
                         </label>
                         <Input
@@ -239,11 +239,11 @@ export default function SettingsPage() {
                           className='h-12 rounded-xl'
                         />
                         {settingsErrors.email && (
-                          <p className='text-footnote text-apple-red'>{settingsErrors.email}</p>
+                          <p className='text-footnote text-[var(--status-error)]'>{settingsErrors.email}</p>
                         )}
                       </div>
                       <div className='space-y-2'>
-                        <label htmlFor='settingsPhone' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <label htmlFor='settingsPhone' className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           Telefono
                         </label>
                         <Input
@@ -253,11 +253,11 @@ export default function SettingsPage() {
                           className='h-12 rounded-xl'
                         />
                         {settingsErrors.phone && (
-                          <p className='text-footnote text-apple-red'>{settingsErrors.phone}</p>
+                          <p className='text-footnote text-[var(--status-error)]'>{settingsErrors.phone}</p>
                         )}
                       </div>
                       <div className='space-y-2'>
-                        <label htmlFor='settingsVatNumber' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <label htmlFor='settingsVatNumber' className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           Partita IVA
                         </label>
                         <Input
@@ -269,7 +269,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <div className='space-y-2'>
-                      <label htmlFor='settingsAddress' className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <label htmlFor='settingsAddress' className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Indirizzo
                       </label>
                       <Input
@@ -302,8 +302,8 @@ export default function SettingsPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center gap-3'>
-                    <Users className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <Users className='h-5 w-5 text-[var(--brand)]' />
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Membri Team
                     </h2>
                   </div>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                 <AppleCardContent>
                   {settingsLoading ? (
                     <div className='flex items-center justify-center py-12'>
-                      <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                      <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                     </div>
                   ) : (
                     <motion.div
@@ -323,37 +323,37 @@ export default function SettingsPage() {
                       {(settings?.team || []).map((member, index) => (
                         <motion.div
                           key={member.id}
-                          className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                          className='flex items-center justify-between p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                           variants={listItemVariants}
                           custom={index}
                           whileHover={{ scale: 1.005, x: 4 }}
                           transition={{ duration: 0.2 }}
                         >
                           <div className='flex items-center gap-4'>
-                            <div className='w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-apple-blue text-white'>
+                            <div className='w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-[var(--brand)] text-[var(--text-on-brand)]'>
                               {member.name
                                 .split(' ')
                                 .map(n => n[0])
                                 .join('')}
                             </div>
                             <div>
-                              <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {member.name}
                               </p>
-                              <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                 {member.email}
                               </p>
                             </div>
                           </div>
-                          <span className='text-footnote font-medium px-2.5 py-1 rounded-full bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <span className='text-footnote font-medium px-2.5 py-1 rounded-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {member.role}
                           </span>
                         </motion.div>
                       ))}
                       {(!settings?.team || settings.team.length === 0) && (
                         <div className='flex flex-col items-center justify-center py-12 text-center'>
-                          <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                          <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                          <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             Nessun membro del team configurato
                           </p>
                         </div>
@@ -371,8 +371,8 @@ export default function SettingsPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center gap-3'>
-                    <Bell className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <Bell className='h-5 w-5 text-[var(--brand)]' />
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Notifiche
                     </h2>
                   </div>
@@ -387,7 +387,7 @@ export default function SettingsPage() {
                     {notifItems.map((item, index) => (
                       <motion.label
                         key={item.key}
-                        className='flex items-center gap-4 p-4 rounded-2xl cursor-pointer bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                        className='flex items-center gap-4 p-4 rounded-2xl cursor-pointer bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                         variants={listItemVariants}
                         custom={index}
                       >
@@ -399,7 +399,7 @@ export default function SettingsPage() {
                           }
                           className='w-5 h-5 rounded-lg accent-blue-500'
                         />
-                        <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                        <span className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           {item.label}
                         </span>
                       </motion.label>
@@ -436,14 +436,14 @@ export default function SettingsPage() {
                 <AppleCardContent>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
-                      <div className='w-10 h-10 rounded-xl bg-apple-blue flex items-center justify-center'>
-                        <Shield className='h-5 w-5 text-white' />
+                      <div className='w-10 h-10 rounded-xl bg-[var(--brand)] flex items-center justify-center'>
+                        <Shield className='h-5 w-5 text-[var(--text-on-brand)]' />
                       </div>
                       <div>
-                        <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Sicurezza avanzata
                         </p>
-                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           Dispositivi fidati, telefono di recupero, verifica SMS e log attivita
                         </p>
                       </div>
@@ -504,8 +504,8 @@ function PasswordSection() {
       <AppleCard hover={false}>
         <AppleCardHeader>
           <div className='flex items-center gap-3'>
-            <Shield className='h-5 w-5 text-apple-blue' />
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <Shield className='h-5 w-5 text-[var(--brand)]' />
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Cambia Password
             </h2>
           </div>
@@ -513,7 +513,7 @@ function PasswordSection() {
         <AppleCardContent>
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+              <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Password attuale
               </label>
               <Input
@@ -525,7 +525,7 @@ function PasswordSection() {
               />
             </div>
             <div className='space-y-2'>
-              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+              <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Nuova password
               </label>
               <Input
@@ -537,7 +537,7 @@ function PasswordSection() {
               />
             </div>
             <div className='space-y-2'>
-              <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+              <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Conferma password
               </label>
               <Input
@@ -552,8 +552,8 @@ function PasswordSection() {
               <div
                 className={`p-3 rounded-xl text-sm ${
                   message.type === 'success'
-                    ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
-                    : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                    ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)] border border-[var(--status-success)]/30 dark:border-[var(--status-success)]'
+                    : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]'
                 }`}
               >
                 {message.text}
@@ -609,8 +609,8 @@ function MfaSection() {
       <AppleCard hover={false}>
         <AppleCardHeader>
           <div className='flex items-center gap-3'>
-            <Smartphone className='h-5 w-5 text-apple-purple' />
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <Smartphone className='h-5 w-5 text-[var(--brand)]' />
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Autenticazione a due fattori (2FA)
             </h2>
           </div>
@@ -618,28 +618,28 @@ function MfaSection() {
         <AppleCardContent>
           {isLoading ? (
             <div className='flex items-center justify-center py-12'>
-              <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+              <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
             </div>
           ) : mfaStatus?.enabled ? (
-            <div className='flex items-center gap-3 p-4 rounded-xl bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800'>
-              <CheckCircle className='h-5 w-5 text-green-600 dark:text-green-400' />
+            <div className='flex items-center gap-3 p-4 rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] border border-[var(--status-success)]/30 dark:border-[var(--status-success)]'>
+              <CheckCircle className='h-5 w-5 text-[var(--status-success)] dark:text-[var(--status-success)]' />
               <div>
-                <p className='text-body font-medium text-green-700 dark:text-green-300'>
+                <p className='text-body font-medium text-[var(--status-success)] dark:text-[var(--status-success)]'>
                   2FA Attivo
                 </p>
-                <p className='text-footnote text-green-600 dark:text-green-400'>
+                <p className='text-footnote text-[var(--status-success)] dark:text-[var(--status-success)]'>
                   Il tuo account e protetto con autenticazione a due fattori.
                 </p>
               </div>
             </div>
           ) : enrollData ? (
             <div className='space-y-4'>
-              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Scansiona il QR code con la tua app di autenticazione (Google Authenticator, Authy,
                 etc.):
               </p>
               {enrollData.qrCodeUrl && (
-                <div className='flex justify-center p-4 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] border border-apple-border/20 dark:border-[var(--border-default)]'>
+                <div className='flex justify-center p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] border border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                   <Image
                     src={enrollData.qrCodeUrl}
                     alt='QR Code per configurazione autenticazione a due fattori'
@@ -650,16 +650,16 @@ function MfaSection() {
                   />
                 </div>
               )}
-              <div className='p-3 rounded-xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
-                <p className='text-footnote mb-1 text-apple-gray dark:text-[var(--text-secondary)]'>
+              <div className='p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
+                <p className='text-footnote mb-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Chiave manuale
                 </p>
-                <p className='text-body font-mono select-all text-apple-dark dark:text-[var(--text-primary)]'>
+                <p className='text-body font-mono select-all text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {enrollData.secret}
                 </p>
               </div>
               <div className='space-y-2'>
-                <label className='text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]'>
+                <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Codice di verifica (6 cifre)
                 </label>
                 <div className='flex gap-3'>
@@ -680,13 +680,13 @@ function MfaSection() {
                 </div>
               </div>
               {enrollData.backupCodes?.length > 0 && (
-                <div className='p-4 rounded-xl bg-orange-100 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800'>
-                  <p className='text-body font-medium mb-2 text-orange-700 dark:text-orange-300'>
+                <div className='p-4 rounded-xl bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)] border border-[var(--status-warning)]/20 dark:border-[var(--status-warning)]'>
+                  <p className='text-body font-medium mb-2 text-[var(--status-warning)] dark:text-[var(--status-warning)]'>
                     Codici di recupero (salva in un posto sicuro):
                   </p>
                   <div className='grid grid-cols-2 gap-1'>
                     {enrollData.backupCodes.map((code, i) => (
-                      <code key={i} className='text-sm font-mono text-orange-600 dark:text-orange-400'>
+                      <code key={i} className='text-sm font-mono text-[var(--status-warning)] dark:text-[var(--status-warning)]'>
                         {code}
                       </code>
                     ))}
@@ -696,7 +696,7 @@ function MfaSection() {
             </div>
           ) : (
             <div>
-              <p className='text-body mb-4 text-apple-gray dark:text-[var(--text-secondary)]'>
+              <p className='text-body mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 Aggiungi un ulteriore livello di sicurezza al tuo account con l&apos;autenticazione
                 a due fattori.
               </p>
@@ -722,14 +722,14 @@ function PasskeySection() {
       <AppleCard hover={false}>
         <AppleCardHeader>
           <div className='flex items-center gap-3'>
-            <Key className='h-5 w-5 text-apple-green' />
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <Key className='h-5 w-5 text-[var(--status-success)]' />
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Passkey (WebAuthn)
             </h2>
           </div>
         </AppleCardHeader>
         <AppleCardContent>
-          <p className='text-body mb-4 text-apple-gray dark:text-[var(--text-secondary)]'>
+          <p className='text-body mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
             Accedi in modo sicuro con Face ID, Touch ID o la chiave di sicurezza del tuo
             dispositivo.
           </p>
@@ -782,8 +782,8 @@ function DangerZone() {
       <AppleCard hover={false} className='ring-2 ring-apple-red/30'>
         <AppleCardHeader>
           <div className='flex items-center gap-3'>
-            <AlertTriangle className='h-5 w-5 text-apple-red' />
-            <h2 className='text-title-2 font-semibold text-apple-red'>
+            <AlertTriangle className='h-5 w-5 text-[var(--status-error)]' />
+            <h2 className='text-title-2 font-semibold text-[var(--status-error)]'>
               Zona Pericolosa
             </h2>
           </div>
@@ -791,13 +791,13 @@ function DangerZone() {
         <AppleCardContent>
           {!showConfirm ? (
             <div>
-              <p className='text-body mb-4 text-apple-gray dark:text-[var(--text-secondary)]'>
+              <p className='text-body mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                 L&apos;eliminazione dell&apos;account e permanente. Tutti i dati verranno cancellati
                 in conformita con il GDPR.
               </p>
               <AppleButton
                 variant='ghost'
-                className='text-apple-red'
+                className='text-[var(--status-error)]'
                 icon={<Trash2 className='h-4 w-4' />}
                 onClick={() => setShowConfirm(true)}
               >
@@ -806,14 +806,14 @@ function DangerZone() {
             </div>
           ) : (
             <div className='space-y-4'>
-              <div className='p-4 rounded-xl bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800'>
-                <p className='text-body text-red-700 dark:text-red-300'>
+              <div className='p-4 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]'>
+                <p className='text-body text-[var(--status-error)] dark:text-[var(--status-error)]'>
                   Stai per eliminare permanentemente l&apos;account <strong>{user?.email}</strong> e
                   tutti i dati associati. Questa azione non puo essere annullata.
                 </p>
               </div>
               <div className='space-y-2'>
-                <label className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                <label className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Digita <strong>{expectedText}</strong> per confermare
                 </label>
                 <Input
@@ -836,7 +836,7 @@ function DangerZone() {
                 </AppleButton>
                 <AppleButton
                   variant='primary'
-                  className='bg-apple-red hover:bg-red-600'
+                  className='bg-[var(--status-error)] hover:bg-[var(--status-error)]'
                   disabled={!canDelete}
                   loading={isDeleting}
                   icon={<Trash2 className='h-4 w-4' />}
@@ -862,21 +862,21 @@ function BillingSettingsTab() {
       <AppleCard hover={false}>
         <AppleCardHeader>
           <div className='flex items-center gap-3'>
-            <CreditCard className='h-5 w-5 text-apple-blue' />
-            <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+            <CreditCard className='h-5 w-5 text-[var(--brand)]' />
+            <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Piano e Pagamenti
             </h2>
           </div>
         </AppleCardHeader>
         <AppleCardContent>
-          <div className='p-6 rounded-2xl mb-6 bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]'>
-            <p className='text-footnote mb-1 text-apple-gray dark:text-[var(--text-secondary)]'>
+          <div className='p-6 rounded-2xl mb-6 bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
+            <p className='text-footnote mb-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Gestione completa
             </p>
-            <h3 className='text-title-1 font-bold mb-2 text-apple-dark dark:text-[var(--text-primary)]'>
+            <h3 className='text-title-1 font-bold mb-2 text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Fatturazione e Abbonamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Gestisci il tuo piano, metodi di pagamento e visualizza le fatture
             </p>
           </div>

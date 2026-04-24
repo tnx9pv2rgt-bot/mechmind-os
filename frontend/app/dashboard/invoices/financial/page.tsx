@@ -104,7 +104,7 @@ export default function FinancialDashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
       </div>
     );
   }
@@ -112,8 +112,8 @@ export default function FinancialDashboardPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-        <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4">
+        <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+        <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4">
           Impossibile caricare i dati finanziari
         </p>
         <AppleButton variant="ghost" onClick={() => mutate()}>
@@ -131,10 +131,10 @@ export default function FinancialDashboardPage() {
   const topCustomers = financial?.topCustomers || [];
 
   const kpiCards = [
-    { label: 'Fatturato', value: kpi.fatturato, icon: Euro, color: 'bg-apple-blue' },
-    { label: 'Da Incassare', value: kpi.daIncassare, icon: Clock, color: 'bg-apple-orange' },
-    { label: 'Scaduto', value: kpi.scaduto, icon: AlertTriangle, color: 'bg-apple-red' },
-    { label: 'Incassato', value: kpi.incassato, icon: CheckCircle, color: 'bg-apple-green' },
+    { label: 'Fatturato', value: kpi.fatturato, icon: Euro, color: 'bg-[var(--brand)]' },
+    { label: 'Da Incassare', value: kpi.daIncassare, icon: Clock, color: 'bg-[var(--status-warning)]' },
+    { label: 'Scaduto', value: kpi.scaduto, icon: AlertTriangle, color: 'bg-[var(--status-error)]' },
+    { label: 'Incassato', value: kpi.incassato, icon: CheckCircle, color: 'bg-[var(--status-success)]' },
   ];
 
   return (
@@ -151,10 +151,10 @@ export default function FinancialDashboardPage() {
           />
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
+              <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 Report Finanziario
               </h1>
-              <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+              <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
                 Panoramica delle entrate e dei pagamenti
               </p>
             </div>
@@ -168,8 +168,8 @@ export default function FinancialDashboardPage() {
                     onClick={() => setPeriod(opt.value)}
                     className={`rounded-lg transition-all ${
                       period === opt.value
-                        ? 'bg-white dark:bg-[var(--surface-elevated)] shadow-sm font-medium text-apple-dark dark:text-[var(--text-primary)]'
-                        : 'text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)]'
+                        ? 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] shadow-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                        : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {opt.label}
@@ -205,13 +205,13 @@ export default function FinancialDashboardPage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${card.color} flex items-center justify-center`}
                     >
-                      <card.icon className="h-5 w-5 text-white" />
+                      <card.icon className="h-5 w-5 text-[var(--text-on-brand)]" />
                     </div>
                   </div>
-                  <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+                  <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {formatCurrency(card.value)}
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{card.label}</p>
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{card.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -224,8 +224,8 @@ export default function FinancialDashboardPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <TrendingUp className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Andamento Fatturato
                   </h2>
                 </div>
@@ -233,7 +233,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {revenueTrend.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
+                    <div className="flex items-center justify-center h-full text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -256,8 +256,8 @@ export default function FinancialDashboardPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Scadenziario (Aging Report)
                   </h2>
                 </div>
@@ -265,7 +265,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {agingReport.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
+                    <div className="flex items-center justify-center h-full text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -291,8 +291,8 @@ export default function FinancialDashboardPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
-                  <Euro className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <Euro className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Distribuzione Metodi di Pagamento
                   </h2>
                 </div>
@@ -300,7 +300,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {paymentMethodDistribution.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
+                    <div className="flex items-center justify-center h-full text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -334,8 +334,8 @@ export default function FinancialDashboardPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-apple-gray" />
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <TrendingUp className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Cash Flow
                   </h2>
                 </div>
@@ -343,7 +343,7 @@ export default function FinancialDashboardPage() {
               <AppleCardContent>
                 <div className="h-64">
                   {cashFlow.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-apple-gray dark:text-[var(--text-secondary)] text-body">
+                    <div className="flex items-center justify-center h-full text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body">
                       Nessun dato disponibile
                     </div>
                   ) : (
@@ -369,15 +369,15 @@ export default function FinancialDashboardPage() {
         <motion.div variants={itemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 Migliori Clienti per Fatturato
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {topCustomers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Euro className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Euro className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun dato disponibile
                   </p>
                 </div>
@@ -385,14 +385,14 @@ export default function FinancialDashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-apple-border/30 dark:border-[var(--border-default)]">
-                        <th className="text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <tr className="border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)]">
+                        <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           Cliente
                         </th>
-                        <th className="text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <th className="text-right py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           Fatture
                         </th>
-                        <th className="text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <th className="text-right py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           Fatturato
                         </th>
                       </tr>
@@ -401,15 +401,15 @@ export default function FinancialDashboardPage() {
                       {topCustomers.map((customer, i) => (
                         <tr
                           key={i}
-                          className="border-b border-apple-border/10 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
+                          className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
                         >
-                          <td className="py-3 px-4 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                          <td className="py-3 px-4 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {customer.name}
                           </td>
-                          <td className="py-3 px-4 text-body text-right text-apple-gray dark:text-[var(--text-secondary)]">
+                          <td className="py-3 px-4 text-body text-right text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             {customer.invoiceCount}
                           </td>
-                          <td className="py-3 px-4 text-body text-right font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                          <td className="py-3 px-4 text-body text-right font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {formatCurrency(customer.revenue)}
                           </td>
                         </tr>

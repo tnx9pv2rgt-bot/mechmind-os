@@ -213,10 +213,10 @@ export function CustomerFormWithRealtime({
       {/* Header with save status */}
       <div className='flex items-center justify-between mb-6'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)]'>
             {customerId === 'new' ? 'Nuovo Cliente' : 'Modifica Cliente'}
           </h1>
-          <p className='text-gray-500 text-sm mt-1'>I dati vengono salvati automaticamente</p>
+          <p className='text-[var(--text-tertiary)] text-sm mt-1'>I dati vengono salvati automaticamente</p>
         </div>
 
         <SaveStatusIndicator
@@ -237,9 +237,9 @@ export function CustomerFormWithRealtime({
           exit={{ opacity: 0, y: -10 }}
           className='mb-6'
         >
-          <Alert className='bg-green-50 border-green-200'>
-            <CheckCircle2 className='w-4 h-4 text-green-600' />
-            <AlertDescription className='text-green-800'>
+          <Alert className='bg-[var(--status-success-subtle)] border-[var(--status-success)]/30'>
+            <CheckCircle2 className='w-4 h-4 text-[var(--status-success)]' />
+            <AlertDescription className='text-[var(--status-success)]'>
               Cliente salvato con successo!
             </AlertDescription>
           </Alert>
@@ -405,7 +405,7 @@ export function CustomerFormWithRealtime({
                       <textarea
                         {...field}
                         rows={4}
-                        className='w-full px-3 py-2 border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className='w-full px-3 py-2 border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]'
                         placeholder='Note aggiuntive sul cliente...'
                       />
                     </FormControl>
@@ -419,15 +419,15 @@ export function CustomerFormWithRealtime({
 
               {/* Submit Button */}
               <div className='flex items-center justify-between pt-4 border-t'>
-                <div className='text-sm text-gray-500'>
+                <div className='text-sm text-[var(--text-tertiary)]'>
                   {realtimeSave.isOnline ? (
                     <span className='flex items-center gap-1.5'>
-                      <span className='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+                      <span className='w-2 h-2 bg-[var(--status-success-subtle)]0 rounded-full animate-pulse' />
                       Online
                     </span>
                   ) : (
-                    <span className='flex items-center gap-1.5 text-amber-600'>
-                      <span className='w-2 h-2 bg-amber-500 rounded-full' />
+                    <span className='flex items-center gap-1.5 text-[var(--status-warning)]'>
+                      <span className='w-2 h-2 bg-[var(--status-warning)]/50 rounded-full' />
                       Offline · {realtimeSave.pendingChanges} in attesa
                     </span>
                   )}
@@ -451,7 +451,7 @@ export function CustomerFormWithRealtime({
                   >
                     {isSubmitting ? (
                       <>
-                        <span className='w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                        <span className='w-4 h-4 mr-2 border-2 border-[var(--border-default)]/30 border-t-white rounded-full animate-spin' />
                         Invio...
                       </>
                     ) : (

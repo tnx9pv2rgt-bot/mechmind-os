@@ -74,7 +74,7 @@ export function ClaimsList({
       {/* Filters */}
       <div className='flex flex-col sm:flex-row gap-4'>
         <div className='relative flex-1'>
-          <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+          <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
           <Input
             placeholder='Cerca reclami...'
             className='pl-10'
@@ -84,7 +84,7 @@ export function ClaimsList({
           />
         </div>
         <div className='flex items-center gap-2'>
-          <SlidersHorizontal className='h-4 w-4 text-gray-500' />
+          <SlidersHorizontal className='h-4 w-4 text-[var(--text-tertiary)]' />
           <Select
             value={statusFilter}
             onValueChange={value => setStatusFilter(value as ClaimStatus | 'ALL')}
@@ -116,7 +116,7 @@ export function ClaimsList({
 
       {/* Results Count */}
       <div className='flex items-center justify-between'>
-        <p className='text-sm text-gray-600'>
+        <p className='text-sm text-[var(--text-secondary)]'>
           Visualizzazione {filteredClaims.length} di {claims.length} reclami
         </p>
         {searchTerm && (
@@ -135,10 +135,10 @@ export function ClaimsList({
 
       {/* Claims Grid */}
       {filteredClaims.length === 0 ? (
-        <div className='text-center py-12 bg-gray-50 rounded-lg'>
-          <Filter className='h-12 w-12 text-gray-300 mx-auto mb-4' />
-          <h3 className='text-lg font-medium text-gray-900'>Nessun reclamo trovato</h3>
-          <p className='text-sm text-gray-500 mt-1'>
+        <div className='text-center py-12 bg-[var(--surface-secondary)] rounded-lg'>
+          <Filter className='h-12 w-12 text-[var(--text-tertiary)] mx-auto mb-4' />
+          <h3 className='text-lg font-medium text-[var(--text-primary)]'>Nessun reclamo trovato</h3>
+          <p className='text-sm text-[var(--text-tertiary)] mt-1'>
             {searchTerm || statusFilter !== 'ALL'
               ? 'Prova a modificare i filtri'
               : 'Nessun reclamo è stato ancora presentato'}

@@ -87,11 +87,11 @@ function normalizeStatus(status: string): string {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending: { label: 'In attesa', color: '#fbbf24', icon: Clock },
-  confirmed: { label: 'Confermato', color: '#60a5fa', icon: CheckCircle2 },
-  in_progress: { label: 'In corso', color: '#10b981', icon: PlayCircle },
+  pending: { label: 'In attesa', color: 'var(--status-warning)', icon: Clock },
+  confirmed: { label: 'Confermato', color: 'var(--status-info)', icon: CheckCircle2 },
+  in_progress: { label: 'In corso', color: 'var(--status-success)', icon: PlayCircle },
   completed: { label: 'Completato', color: '#a78bfa', icon: CheckCircle2 },
-  cancelled: { label: 'Annullato', color: '#f87171', icon: X },
+  cancelled: { label: 'Annullato', color: 'var(--status-error)', icon: X },
   no_show: { label: 'Non presentato', color: '#666666', icon: UserX },
 };
 
@@ -189,12 +189,12 @@ type ExtendedBooking = {
 } & BookingExtra;
 
 const KANBAN_COLUMNS: { id: string; title: string; color: string }[] = [
-  { id: 'pending', title: 'In Attesa', color: 'bg-amber-500' },
-  { id: 'confirmed', title: 'Confermata', color: 'bg-green-500' },
-  { id: 'in_progress', title: 'In Corso', color: 'bg-blue-500' },
-  { id: 'completed', title: 'Completata', color: 'bg-purple-500' },
-  { id: 'cancelled', title: 'Annullata', color: 'bg-red-500' },
-  { id: 'no_show', title: 'Non Presentato', color: 'bg-gray-400' },
+  { id: 'pending', title: 'In Attesa', color: 'bg-[var(--status-warning)]' },
+  { id: 'confirmed', title: 'Confermata', color: 'bg-[var(--status-success)]' },
+  { id: 'in_progress', title: 'In Corso', color: 'bg-[var(--status-info)]' },
+  { id: 'completed', title: 'Completata', color: 'bg-[var(--brand)]' },
+  { id: 'cancelled', title: 'Annullata', color: 'bg-[var(--status-error)]' },
+  { id: 'no_show', title: 'Non Presentato', color: 'bg-[var(--surface-hover)]' },
 ];
 
 const BUSINESS_HOURS = { start: 7, end: 19 };
@@ -225,13 +225,11 @@ const Sparkline = memo(function Sparkline({ data, color, height = 24 }: { data: 
 // KPI Card (Apple-style)
 // =============================================================================
 const KPI_COLOR_MAP: Record<string, string> = {
-  '#60a5fa': 'bg-apple-blue',
-  '#34d399': 'bg-apple-green',
-  '#fbbf24': 'bg-apple-orange',
-  '#a78bfa': 'bg-apple-purple',
-  '#f87171': 'bg-apple-red',
-  '#10b981': 'bg-apple-green',
-  '#b4b4b4': 'bg-apple-gray',
+  'var(--status-info)': 'bg-[var(--brand)]',
+  'var(--status-success)': 'bg-[var(--status-success)]',
+  'var(--status-warning)': 'bg-[var(--status-warning)]',
+  'var(--status-error)': 'bg-[var(--status-error)]',
+  '#b4b4b4': 'bg-[var(--text-tertiary)]',
 };
 
 const KpiCard = memo(function KpiCard({
@@ -245,29 +243,29 @@ const KpiCard = memo(function KpiCard({
   trend?: number;
   sparkData?: number[];
 }): React.JSX.Element {
-  const bgClass = KPI_COLOR_MAP[color] || 'bg-apple-blue';
+  const bgClass = KPI_COLOR_MAP[color] || 'bg-[var(--brand)]';
   return (
     <AppleCard hover={false}>
       <AppleCardContent>
         <div className="flex items-center justify-between mb-3">
           <div className={`w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center`}>
-            <Icon className="h-5 w-5 text-white" />
+            <Icon className="h-5 w-5 text-[var(--text-on-brand)]" />
           </div>
           {sparkData && <Sparkline data={sparkData} color={color} />}
           {trend !== undefined && !sparkData && (
-            <div className="flex items-center gap-1" style={{ color: trend >= 0 ? '#34d399' : '#f87171' }}>
+            <div className="flex items-center gap-1" style={{ color: trend >= 0 ? 'var(--status-success)' : 'var(--status-error)' }}>
               {trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               <span className="text-[15px] font-medium">{trend > 0 ? '+' : ''}{trend}%</span>
             </div>
           )}
         </div>
         <div className="flex items-baseline gap-1">
-          <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+          <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             {value}
           </p>
-          {suffix && <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{suffix}</span>}
+          {suffix && <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{suffix}</span>}
         </div>
-        <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{label}</p>
+        <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{label}</p>
       </AppleCardContent>
     </AppleCard>
   );
@@ -346,13 +344,13 @@ function BookingDrawer({
               {/* Customer */}
               <div className="rounded-xl border border-[var(--border-default)] p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-[18px] font-semibold bg-[#60a5fa20] text-[#60a5fa]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-[18px] font-semibold bg-[var(--status-info)20] text-[var(--status-info)]">
                     {booking.customerName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <p className="text-[15px] font-medium text-[var(--text-primary)]">{booking.customerName}</p>
                     {booking.customerPhone && (
-                      <a href={`tel:${booking.customerPhone}`} className="text-[16px] hover:underline text-[#60a5fa]">
+                      <a href={`tel:${booking.customerPhone}`} className="text-[16px] hover:underline text-[var(--status-info)]">
                         {booking.customerPhone}
                       </a>
                     )}
@@ -361,11 +359,11 @@ function BookingDrawer({
                 {booking.customerPhone && (
                   <div className="flex gap-2">
                     <a href={`tel:${booking.customerPhone}`}
-                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[16px] font-medium border border-[var(--border-default)] text-[#60a5fa] transition-colors hover:bg-white/5">
+                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[16px] font-medium border border-[var(--border-default)] text-[var(--status-info)] transition-colors hover:bg-[var(--surface-secondary)]/5">
                       <Phone className="h-3.5 w-3.5" /> Chiama
                     </a>
                     <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[16px] font-medium border border-[var(--border-default)] text-[#34d399] transition-colors hover:bg-white/5">
+                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[16px] font-medium border border-[var(--border-default)] text-[var(--status-success)] transition-colors hover:bg-[var(--surface-secondary)]/5">
                       <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                     </a>
                   </div>
@@ -441,7 +439,7 @@ function BookingDrawer({
                       <div key={step.key} className="flex-1 flex flex-col items-center gap-1.5">
                         <div className="w-full h-1.5 rounded-full" style={{
                           backgroundColor: isActive
-                            ? (normalized === 'cancelled' || normalized === 'no_show' ? '#f87171' : '#34d399')
+                            ? (normalized === 'cancelled' || normalized === 'no_show' ? 'var(--status-error)' : 'var(--status-success)')
                             : 'var(--border-default)',
                         }} />
                         <span className={`text-[9px] font-medium text-center ${isCurrent ? 'text-[var(--text-primary)]' : 'text-[#666666]'}`}>
@@ -467,7 +465,7 @@ function BookingDrawer({
                   <AppleButton onClick={() => onStatusChange(booking.id, 'confirmed')}
                     fullWidth
                     icon={<CheckCircle2 className="h-4 w-4" />}
-                    className="h-11 rounded-xl text-[17px] bg-[#34d399] text-black hover:opacity-90">
+                    className="h-11 rounded-xl text-[17px] bg-[var(--status-success)] text-[var(--text-primary)] hover:opacity-90">
                     Conferma Prenotazione
                   </AppleButton>
                 )}
@@ -475,7 +473,7 @@ function BookingDrawer({
                   <AppleButton onClick={() => onStatusChange(booking.id, 'in_progress')}
                     fullWidth
                     icon={<PlayCircle className="h-4 w-4" />}
-                    className="h-11 rounded-xl text-[17px] bg-[#60a5fa] text-white hover:opacity-90">
+                    className="h-11 rounded-xl text-[17px] bg-[var(--status-info)] text-[var(--text-on-brand)] hover:opacity-90">
                     Inizia Lavoro
                   </AppleButton>
                 )}
@@ -483,7 +481,7 @@ function BookingDrawer({
                   <AppleButton onClick={() => onStatusChange(booking.id, 'completed')}
                     fullWidth
                     icon={<CheckCircle2 className="h-4 w-4" />}
-                    className="h-11 rounded-xl text-[17px] bg-[#a78bfa] text-white hover:opacity-90">
+                    className="h-11 rounded-xl text-[17px] bg-[#a78bfa] text-[var(--text-on-brand)] hover:opacity-90">
                     Completa
                   </AppleButton>
                 )}
@@ -498,17 +496,17 @@ function BookingDrawer({
                     <AppleButton variant="ghost" onClick={() => onStatusChange(booking.id, 'cancelled')}
                       fullWidth
                       icon={<X className="h-4 w-4" />}
-                      className="h-10 rounded-xl text-[17px] border-[#f87171] text-[#f87171]">
+                      className="h-10 rounded-xl text-[17px] border-[var(--status-error)] text-[var(--status-error)]">
                       Annulla
                     </AppleButton>
                   </>
                 )}
                 <Link href={`/dashboard/work-orders/new?bookingId=${booking.id}`}
-                  className="w-full h-11 rounded-xl text-[17px] font-medium flex items-center justify-center gap-2 transition-colors hover:bg-white/10 bg-[var(--text-primary)] text-[var(--surface-tertiary)]">
+                  className="w-full h-11 rounded-xl text-[17px] font-medium flex items-center justify-center gap-2 transition-colors hover:bg-[var(--surface-secondary)]/10 bg-[var(--text-primary)] text-[var(--surface-tertiary)]">
                   <ClipboardList className="h-4 w-4" /> Crea Ordine di Lavoro
                 </Link>
                 <Link href={`/dashboard/bookings/${booking.id}`}
-                  className="w-full h-10 rounded-xl text-[17px] font-medium flex items-center justify-center gap-2 border border-[var(--border-default)] text-[var(--text-secondary)] transition-colors hover:bg-white/5">
+                  className="w-full h-10 rounded-xl text-[17px] font-medium flex items-center justify-center gap-2 border border-[var(--border-default)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)]/5">
                   <Eye className="h-4 w-4" /> Vedi Dettaglio Completo
                 </Link>
               </div>
@@ -601,9 +599,9 @@ function TimelineView({
   function getBookingColor(status: string): { bg: string; border: string; text: string } {
     const n = normalizeStatus(status);
     switch (n) {
-      case 'pending': return { bg: 'rgba(251,191,36,0.15)', border: '#fbbf24', text: '#fbbf24' };
-      case 'confirmed': return { bg: 'rgba(96,165,250,0.15)', border: '#60a5fa', text: '#60a5fa' };
-      case 'in_progress': return { bg: 'rgba(16,185,129,0.15)', border: '#10b981', text: '#10b981' };
+      case 'pending': return { bg: 'rgba(251,191,36,0.15)', border: 'var(--status-warning)', text: 'var(--status-warning)' };
+      case 'confirmed': return { bg: 'rgba(96,165,250,0.15)', border: 'var(--status-info)', text: 'var(--status-info)' };
+      case 'in_progress': return { bg: 'rgba(16,185,129,0.15)', border: 'var(--status-success)', text: 'var(--status-success)' };
       case 'completed': return { bg: 'rgba(167,139,250,0.15)', border: '#a78bfa', text: '#a78bfa' };
       default: return { bg: 'rgba(136,136,136,0.15)', border: '#666666', text: '#666666' };
     }
@@ -644,7 +642,7 @@ function TimelineView({
           <div className="flex sticky top-0 z-10 bg-[var(--surface-elevated)]">
             <div className="shrink-0 w-[120px] border-r border-b border-[var(--border-default)] px-3 flex items-center"
               style={{ height: headerHeight }}>
-              <span className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]">Risorsa</span>
+              <span className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Risorsa</span>
             </div>
             {hours.map(h => (
               <div key={h} className="border-r border-b border-[var(--border-default)] flex items-end pb-1 px-2"
@@ -686,7 +684,7 @@ function TimelineView({
                       onClick={() => onBookingClick(booking)}
                       onMouseMove={(e) => handleMouseMove(e, booking)}
                       onMouseLeave={() => setHoveredBooking(null)}
-                      className="absolute top-2 bottom-2 rounded-lg border-l-[3px] px-2 flex items-center gap-2 overflow-hidden cursor-pointer transition-all hover:ring-1 hover:ring-white/20 hover:scale-[1.01] active:scale-[0.99] border-0 min-h-0 p-0"
+                      className="absolute top-2 bottom-2 rounded-lg border-l-[3px] px-2 flex items-center gap-2 overflow-hidden cursor-pointer transition-all hover:ring-1 hover:ring-[var(--border-default)]/20 hover:scale-[1.01] active:scale-[0.99] border-0 min-h-0 p-0"
                       style={{
                         left: pos.left,
                         width: pos.width,
@@ -710,9 +708,9 @@ function TimelineView({
 
               {/* Current time marker */}
               {currentTimePosition > 0 && (
-                <div className="absolute top-0 bottom-0 w-[2px] z-20 pointer-events-none bg-[#f87171]"
+                <div className="absolute top-0 bottom-0 w-[2px] z-20 pointer-events-none bg-[var(--status-error)]"
                   style={{ left: currentTimePosition + 120 }}>
-                  <div className="w-2 h-2 rounded-full -ml-[3px] -mt-1 bg-[#f87171]" />
+                  <div className="w-2 h-2 rounded-full -ml-[3px] -mt-1 bg-[var(--status-error)]" />
                 </div>
               )}
             </div>
@@ -791,7 +789,7 @@ function AgendaView({
 
     return (
       <div
-        className="rounded-xl border border-[var(--border-default)] p-3 cursor-pointer transition-all hover:ring-1 hover:ring-white/10 active:scale-[0.99]"
+        className="rounded-xl border border-[var(--border-default)] p-3 cursor-pointer transition-all hover:ring-1 hover:ring-[var(--border-default)]/10 active:scale-[0.99]"
         onClick={() => onBookingClick(booking)}
         role="button"
         tabIndex={0}
@@ -804,7 +802,7 @@ function AgendaView({
                 {formatTime(booking.scheduledAt)}
               </p>
               {showCountdown && (
-                <p className="text-[9px] font-medium text-[#60a5fa]">
+                <p className="text-[9px] font-medium text-[var(--status-info)]">
                   {formatRelativeTime(booking.scheduledAt)}
                 </p>
               )}
@@ -834,28 +832,28 @@ function AgendaView({
               <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onStatusChange(booking.id, 'confirmed'); }}
                 className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                 title="Conferma" aria-label="Conferma prenotazione">
-                <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
+                <CheckCircle2 className="h-4 w-4 text-[var(--status-success)]" />
               </AppleButton>
             )}
             {normalizeStatus(booking.status) === 'confirmed' && (
               <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onStatusChange(booking.id, 'in_progress'); }}
                 className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                 title="Check-in" aria-label="Check-in">
-                <PlayCircle className="h-4 w-4 text-[#60a5fa]" />
+                <PlayCircle className="h-4 w-4 text-[var(--status-info)]" />
               </AppleButton>
             )}
             {booking.customerPhone && (
               <>
                 <a href={`tel:${booking.customerPhone}`} onClick={e => e.stopPropagation()}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-secondary)]/5 transition-colors"
                   title="Chiama" aria-label="Chiama cliente">
-                  <Phone className="h-3.5 w-3.5 text-[#60a5fa]" />
+                  <Phone className="h-3.5 w-3.5 text-[var(--status-info)]" />
                 </a>
                 <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`}
                   target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-secondary)]/5 transition-colors"
                   title="WhatsApp" aria-label="WhatsApp">
-                  <MessageCircle className="h-3.5 w-3.5 text-[#34d399]" />
+                  <MessageCircle className="h-3.5 w-3.5 text-[var(--status-success)]" />
                 </a>
               </>
             )}
@@ -867,7 +865,7 @@ function AgendaView({
           <div className="mt-2 ml-[72px]">
             <div className="h-1.5 rounded-full overflow-hidden bg-[var(--border-default)]">
               <motion.div
-                className="h-full rounded-full bg-[#10b981]"
+                className="h-full rounded-full bg-[var(--status-success)]"
                 initial={{ width: '0%' }}
                 animate={{ width: `${Math.min(100, ((now.getTime() - new Date(booking.updatedAt).getTime()) / (booking.estimatedDuration * 60000)) * 100)}%` }}
                 transition={{ duration: 1 }}
@@ -895,8 +893,8 @@ function AgendaView({
       {inProgress.length > 0 && (
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full animate-pulse bg-[#10b981]" />
-            <h3 className="text-footnote font-semibold text-apple-green">
+            <div className="w-2 h-2 rounded-full animate-pulse bg-[var(--status-success)]" />
+            <h3 className="text-footnote font-semibold text-[var(--status-success)]">
               In corso adesso ({inProgress.length})
             </h3>
           </div>
@@ -906,7 +904,7 @@ function AgendaView({
 
       {/* Upcoming */}
       <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4 space-y-3">
-        <h3 className="text-footnote font-semibold text-apple-blue">
+        <h3 className="text-footnote font-semibold text-[var(--brand)]">
           Prossimi ({upcoming.length})
         </h3>
         {upcoming.length > 0 ? (
@@ -958,8 +956,8 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }): React.JSX.Element 
   if (hasFilters) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Search className="h-12 w-12 text-apple-gray/40 mb-4" />
-        <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+        <Search className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+        <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
           Nessun risultato. Prova a modificare i filtri di ricerca.
         </p>
         <AppleButton
@@ -974,8 +972,8 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }): React.JSX.Element 
   }
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Calendar className="h-12 w-12 text-apple-gray/40 mb-4" />
-      <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+      <Calendar className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+      <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         Nessuna prenotazione. Crea la prima prenotazione.
       </p>
       <Link href="/dashboard/bookings/new">
@@ -1001,7 +999,7 @@ function ListSkeleton(): React.JSX.Element {
           <div className="w-1 h-12 rounded-full bg-[var(--border-default)]" />
           <div className="flex-1 space-y-2">
             <div className="w-40 h-4 rounded bg-[var(--border-default)]" />
-            <div className="w-56 h-3 rounded bg-white/[0.06]" />
+            <div className="w-56 h-3 rounded bg-[var(--surface-secondary)]/[0.06]" />
           </div>
           <div className="w-16 h-4 rounded bg-[var(--border-default)]" />
         </div>
@@ -1017,7 +1015,7 @@ function TimelineSkeleton(): React.JSX.Element {
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 mb-3">
           <div className="w-20 h-4 rounded bg-[var(--border-default)]" />
-          <div className="flex-1 h-10 rounded-lg bg-white/[0.06]" />
+          <div className="flex-1 h-10 rounded-lg bg-[var(--surface-secondary)]/[0.06]" />
         </div>
       ))}
     </div>
@@ -1028,7 +1026,7 @@ function KanbanSkeleton(): React.JSX.Element {
   return (
     <div className="flex gap-4 overflow-x-auto">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="w-72 shrink-0 rounded-2xl p-4 animate-pulse bg-white/[0.06]">
+        <div key={i} className="w-72 shrink-0 rounded-2xl p-4 animate-pulse bg-[var(--surface-secondary)]/[0.06]">
           <div className="h-4 w-24 rounded mb-4 bg-[var(--border-default)]" />
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, j) => (
@@ -1051,7 +1049,7 @@ function AgendaSkeleton(): React.JSX.Element {
         <div key={i} className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] p-4">
           <div className="h-4 w-32 rounded mb-3 bg-[var(--border-default)]" />
           {Array.from({ length: 2 }).map((_, j) => (
-            <div key={j} className="h-16 rounded-xl mb-2 bg-white/[0.06]" />
+            <div key={j} className="h-16 rounded-xl mb-2 bg-[var(--surface-secondary)]/[0.06]" />
           ))}
         </div>
       ))}
@@ -1274,12 +1272,12 @@ export default function BookingsPage(): React.JSX.Element {
 
   // KPI cards data
   const kpiCards = [
-    { label: 'Oggi', value: todayCount, icon: Calendar, color: '#60a5fa', trend: undefined },
-    { label: 'Tasso Conferma', value: `${confirmRate}`, suffix: '%', icon: CheckCircle2, color: '#34d399', sparkData: [60, 65, 72, 68, 75, 80, confirmRate] },
-    { label: 'In Attesa', value: pendingCount, icon: Clock, color: '#fbbf24', trend: undefined },
+    { label: 'Oggi', value: todayCount, icon: Calendar, color: 'var(--status-info)', trend: undefined },
+    { label: 'Tasso Conferma', value: `${confirmRate}`, suffix: '%', icon: CheckCircle2, color: 'var(--status-success)', sparkData: [60, 65, 72, 68, 75, 80, confirmRate] },
+    { label: 'In Attesa', value: pendingCount, icon: Clock, color: 'var(--status-warning)', trend: undefined },
     { label: 'Revenue Oggi', value: formatCurrency(todayRevenue), icon: BarChart3, color: '#a78bfa', trend: undefined },
-    { label: 'No-Show', value: `${noShowRate}`, suffix: '%', icon: UserX, color: '#f87171', trend: noShowRate > 5 ? noShowRate : -noShowRate },
-    { label: 'In Corso', value: inProgressCount, icon: PlayCircle, color: '#10b981', trend: undefined },
+    { label: 'No-Show', value: `${noShowRate}`, suffix: '%', icon: UserX, color: 'var(--status-error)', trend: noShowRate > 5 ? noShowRate : -noShowRate },
+    { label: 'In Corso', value: inProgressCount, icon: PlayCircle, color: 'var(--status-success)', trend: undefined },
     { label: 'Completate', value: completedCount, icon: CheckCircle2, color: '#a78bfa', trend: undefined },
     { label: 'Totale', value: totalCount, icon: CalendarDays, color: '#b4b4b4', sparkData: [totalCount * 0.6, totalCount * 0.7, totalCount * 0.8, totalCount * 0.85, totalCount * 0.9, totalCount * 0.95, totalCount] },
   ];
@@ -1292,14 +1290,14 @@ export default function BookingsPage(): React.JSX.Element {
       <header>
         <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Prenotazioni</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Prenotazioni</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Oggi: {todaySummary}
             </p>
           </div>
           <div className="flex items-center gap-3">
             {/* View Toggle */}
-            <div className="inline-flex rounded-xl p-1 bg-white/[0.06]">
+            <div className="inline-flex rounded-xl p-1 bg-[var(--surface-secondary)]/[0.06]">
               {viewModes.map(({ mode, icon: ModeIcon, label }) => (
                 <AppleButton
                   key={mode}
@@ -1383,7 +1381,7 @@ export default function BookingsPage(): React.JSX.Element {
               <div className="flex items-center gap-2">
                 {activeFilterCount > 0 && (
                   <AppleButton variant="ghost" size="sm" onClick={() => { setSearchQuery(''); setSelectedDate(''); setSelectedStatus(''); }}
-                    className="text-[15px] px-2 py-1 rounded-lg min-h-0 border-0 text-[#f87171]"
+                    className="text-[15px] px-2 py-1 rounded-lg min-h-0 border-0 text-[var(--status-error)]"
                     icon={<X className="h-3 w-3" />}>
                     Cancella filtri ({activeFilterCount})
                   </AppleButton>
@@ -1402,7 +1400,7 @@ export default function BookingsPage(): React.JSX.Element {
             {/* Search + filters */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                 <Input
                   placeholder="Cerca per cliente, veicolo o servizio..."
                   aria-label="Cerca prenotazioni"
@@ -1417,13 +1415,13 @@ export default function BookingsPage(): React.JSX.Element {
                   value={selectedDate}
                   onChange={e => { setSelectedDate(e.target.value); if (e.target.value) setQuickFilter('all'); }}
                   aria-label="Filtra per data"
-                  className="h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                  className="h-10 px-3 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                 />
                 <select
                   value={selectedStatus}
                   onChange={e => { setSelectedStatus(e.target.value); if (e.target.value) setQuickFilter('all'); }}
                   aria-label="Filtra per stato"
-                  className="h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer"
+                  className="h-10 px-3 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer"
                 >
                   <option value="">Tutti gli stati</option>
                   <option value="pending">In attesa</option>
@@ -1451,7 +1449,7 @@ export default function BookingsPage(): React.JSX.Element {
                   setSelectedIds(new Set());
                   refetch();
                 }}
-                  className="h-7 px-3 rounded-lg text-[15px] min-h-0 bg-[#34d39920] text-[#34d399] border-0">
+                  className="h-7 px-3 rounded-lg text-[15px] min-h-0 bg-[var(--status-success)20] text-[var(--status-success)] border-0">
                   Conferma tutti
                 </AppleButton>
                 <AppleButton variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}
@@ -1480,7 +1478,7 @@ export default function BookingsPage(): React.JSX.Element {
               {viewMode === 'kanban' && (
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Kanban Prenotazioni
                     </h2>
                   </AppleCardHeader>
@@ -1498,7 +1496,7 @@ export default function BookingsPage(): React.JSX.Element {
               {viewMode === 'timeline' && (
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Timeline Giornaliera
                     </h2>
                   </AppleCardHeader>
@@ -1516,7 +1514,7 @@ export default function BookingsPage(): React.JSX.Element {
               {viewMode === 'agenda' && (
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Agenda Reception
                     </h2>
                   </AppleCardHeader>
@@ -1538,13 +1536,13 @@ export default function BookingsPage(): React.JSX.Element {
               {viewMode === 'list' && (
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Elenco Prenotazioni
                     </h2>
                   </AppleCardHeader>
                   <AppleCardContent>
                   {/* Table header */}
-                  <div className="hidden lg:grid grid-cols-12 gap-2 px-4 py-2.5 text-xs font-medium border-b border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]">
+                  <div className="hidden lg:grid grid-cols-12 gap-2 px-4 py-2.5 text-xs font-medium border-b border-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     <div className="col-span-1 flex items-center gap-2">
                       <input type="checkbox" checked={selectedIds.size === bookings.length && bookings.length > 0}
                         onChange={toggleSelectAll}
@@ -1590,7 +1588,7 @@ export default function BookingsPage(): React.JSX.Element {
                         return (
                           <motion.div
                             key={booking.id}
-                            className={`group flex items-center gap-3 px-4 ${padY} rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer ${isSelected ? 'ring-1 ring-apple-blue' : ''}`}
+                            className={`group flex items-center gap-3 px-4 ${padY} rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 cursor-pointer ${isSelected ? 'ring-1 ring-apple-blue' : ''}`}
                             variants={listItemVariants}
                             custom={index}
                             whileHover={{ scale: 1.005, x: 4 }}
@@ -1682,33 +1680,33 @@ export default function BookingsPage(): React.JSX.Element {
                                 <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSingleStatusChange(booking.id, 'confirmed'); }}
                                   className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                                   title="Conferma" aria-label="Conferma">
-                                  <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
+                                  <CheckCircle2 className="h-4 w-4 text-[var(--status-success)]" />
                                 </AppleButton>
                               )}
                               {normalizeStatus(booking.status) === 'confirmed' && (
                                 <AppleButton variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSingleStatusChange(booking.id, 'in_progress'); }}
                                   className="w-8 h-8 rounded-lg min-h-0 p-0 border-0"
                                   title="Check-in" aria-label="Check-in">
-                                  <PlayCircle className="h-4 w-4 text-[#60a5fa]" />
+                                  <PlayCircle className="h-4 w-4 text-[var(--status-info)]" />
                                 </AppleButton>
                               )}
                               {booking.customerPhone && (
                                 <>
                                   <a href={`tel:${booking.customerPhone}`} onClick={e => e.stopPropagation()}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-secondary)]/10 transition-colors"
                                     title="Chiama" aria-label="Chiama">
-                                    <Phone className="h-3.5 w-3.5 text-[#60a5fa]" />
+                                    <Phone className="h-3.5 w-3.5 text-[var(--status-info)]" />
                                   </a>
                                   <a href={`https://wa.me/${booking.customerPhone.replace(/\D/g, '')}`}
                                     target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-secondary)]/10 transition-colors"
                                     title="WhatsApp" aria-label="WhatsApp">
-                                    <MessageCircle className="h-3.5 w-3.5 text-[#34d399]" />
+                                    <MessageCircle className="h-3.5 w-3.5 text-[var(--status-success)]" />
                                   </a>
                                 </>
                               )}
                               <Link href={`/dashboard/work-orders/new?bookingId=${booking.id}`} onClick={e => e.stopPropagation()}>
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-secondary)]/10 transition-colors"
                                   title="Crea OdL" aria-label="Crea Ordine di Lavoro">
                                   <ClipboardList className="h-3.5 w-3.5 text-[#a78bfa]" />
                                 </div>
@@ -1766,7 +1764,7 @@ function SortHeader({
       variant="ghost"
       size="sm"
       onClick={() => onSort(column)}
-      className="flex items-center gap-0.5 min-h-0 p-0 border-0 rounded-none !text-apple-dark dark:!text-[var(--text-primary)] hover:opacity-70"
+      className="flex items-center gap-0.5 min-h-0 p-0 border-0 rounded-none !text-[var(--text-primary)] dark:!text-[var(--text-primary)] hover:opacity-70"
     >
       {label}
       {isActive && (dir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
@@ -1780,8 +1778,8 @@ function SortHeader({
 function ErrorState({ onRetry }: { onRetry: () => void }): React.JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-      <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+      <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+      <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         Impossibile caricare le prenotazioni
       </p>
       <AppleButton

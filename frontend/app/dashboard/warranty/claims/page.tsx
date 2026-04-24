@@ -97,31 +97,31 @@ export default function ClaimsPage() {
       label: 'Totale Reclami',
       value: String(claims.length),
       icon: FileText,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Inviati',
       value: String(claims.filter(c => c.status === 'SUBMITTED').length),
       icon: Send,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'In Revisione',
       value: String(claims.filter(c => c.status === 'UNDER_REVIEW').length),
       icon: Clock,
-      color: 'bg-apple-orange',
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'Approvati',
       value: String(claims.filter(c => c.status === 'APPROVED').length),
       icon: CheckCircle,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Pagati',
       value: String(claims.filter(c => c.status === 'PAID').length),
       icon: DollarSign,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
@@ -131,8 +131,8 @@ export default function ClaimsPage() {
       <header className=''>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Reclami Garanzia</h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Reclami Garanzia</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci e revisiona tutti i reclami
             </p>
           </div>
@@ -162,13 +162,13 @@ export default function ClaimsPage() {
                 <AppleCardContent>
                   <div className='flex items-center justify-between mb-3'>
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -180,8 +180,8 @@ export default function ClaimsPage() {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
-                <FileText className='h-5 w-5 text-apple-blue' />
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <FileText className='h-5 w-5 text-[var(--brand)]' />
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Tutti i Reclami
                 </h2>
               </div>
@@ -189,8 +189,8 @@ export default function ClaimsPage() {
             <AppleCardContent>
               {claimsError ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare i reclami
                   </p>
                   <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>
@@ -199,12 +199,12 @@ export default function ClaimsPage() {
                 </div>
               ) : isLoading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
                 </div>
               ) : claims.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Nessun reclamo. Crea il primo reclamo.
                   </p>
                   <AppleButton

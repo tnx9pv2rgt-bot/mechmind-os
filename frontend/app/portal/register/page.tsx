@@ -156,13 +156,13 @@ export default function PortalRegisterPage() {
           animate={{ opacity: 1, y: 0 }}
           className='text-center mb-8'
         >
-          <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
-            <Car className='h-10 w-10 text-white' />
+          <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center mx-auto mb-4'>
+            <Car className='h-10 w-10 text-[var(--text-on-brand)]' />
           </div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             Crea il tuo account
           </h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
             Inizia a gestire i tuoi veicoli
           </p>
         </motion.div>
@@ -172,20 +172,20 @@ export default function PortalRegisterPage() {
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step >= 1
-                ? 'bg-apple-blue text-white'
-                : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-500 dark:text-[var(--text-secondary)]'
+                ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                : 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
             }`}
           >
             {step > 1 ? <CheckCircle className='h-4 w-4' /> : '1'}
           </div>
           <div
-            className={`w-12 h-0.5 ${step > 1 ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[var(--border-default)]'}`}
+            className={`w-12 h-0.5 ${step > 1 ? 'bg-[var(--brand)]' : 'bg-[var(--border-default)] dark:bg-[var(--border-default)]'}`}
           />
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step >= 2
-                ? 'bg-apple-blue text-white'
-                : 'bg-gray-200 dark:bg-[var(--border-default)] text-gray-500 dark:text-[var(--text-secondary)]'
+                ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                : 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
             }`}
           >
             2
@@ -204,10 +204,10 @@ export default function PortalRegisterPage() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className='mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-3'
+                  className='mb-6 p-4 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/50 rounded-xl flex items-center gap-3'
                 >
-                  <AlertCircle className='h-5 w-5 text-apple-red flex-shrink-0' />
-                  <p className='text-sm text-apple-red'>{error}</p>
+                  <AlertCircle className='h-5 w-5 text-[var(--status-error)] flex-shrink-0' />
+                  <p className='text-sm text-[var(--status-error)]'>{error}</p>
                 </motion.div>
               )}
 
@@ -219,7 +219,7 @@ export default function PortalRegisterPage() {
                       <div className='space-y-2'>
                         <Label htmlFor='firstName'>Nome</Label>
                         <div className='relative'>
-                          <User className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                          <User className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                           <Input
                             id='firstName'
                             placeholder='Mario'
@@ -230,7 +230,7 @@ export default function PortalRegisterPage() {
                           />
                         </div>
                         {fieldErrors.firstName && (
-                          <p className='text-xs text-apple-red'>{fieldErrors.firstName}</p>
+                          <p className='text-xs text-[var(--status-error)]'>{fieldErrors.firstName}</p>
                         )}
                       </div>
                       <div className='space-y-2'>
@@ -246,7 +246,7 @@ export default function PortalRegisterPage() {
                           />
                         </div>
                         {fieldErrors.lastName && (
-                          <p className='text-xs text-apple-red'>{fieldErrors.lastName}</p>
+                          <p className='text-xs text-[var(--status-error)]'>{fieldErrors.lastName}</p>
                         )}
                       </div>
                     </div>
@@ -255,7 +255,7 @@ export default function PortalRegisterPage() {
                     <div className='space-y-2'>
                       <Label htmlFor='email'>Email</Label>
                       <div className='relative'>
-                        <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                        <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
                           id='email'
                           type='email'
@@ -267,7 +267,7 @@ export default function PortalRegisterPage() {
                         />
                       </div>
                       {fieldErrors.email && (
-                        <p className='text-xs text-apple-red'>{fieldErrors.email}</p>
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.email}</p>
                       )}
                     </div>
 
@@ -275,7 +275,7 @@ export default function PortalRegisterPage() {
                     <div className='space-y-2'>
                       <Label htmlFor='phone'>Telefono</Label>
                       <div className='relative'>
-                        <Phone className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                        <Phone className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
                           id='phone'
                           type='tel'
@@ -287,7 +287,7 @@ export default function PortalRegisterPage() {
                         />
                       </div>
                       {fieldErrors.phone && (
-                        <p className='text-xs text-apple-red'>{fieldErrors.phone}</p>
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.phone}</p>
                       )}
                     </div>
 
@@ -308,7 +308,7 @@ export default function PortalRegisterPage() {
                     <div className='space-y-2'>
                       <Label htmlFor='password'>Password</Label>
                       <div className='relative'>
-                        <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                        <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
                           id='password'
                           type={showPassword ? 'text' : 'password'}
@@ -321,7 +321,7 @@ export default function PortalRegisterPage() {
                         <button
                           type='button'
                           onClick={() => setShowPassword(!showPassword)}
-                          className='absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark p-1 min-w-[24px] min-h-[24px] flex items-center justify-center'
+                          className='absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 min-w-[24px] min-h-[24px] flex items-center justify-center'
                           aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                         >
                           {showPassword ? (
@@ -331,11 +331,11 @@ export default function PortalRegisterPage() {
                           )}
                         </button>
                       </div>
-                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Minimo 8 caratteri
                       </p>
                       {fieldErrors.password && (
-                        <p className='text-xs text-apple-red'>{fieldErrors.password}</p>
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.password}</p>
                       )}
                     </div>
 
@@ -343,7 +343,7 @@ export default function PortalRegisterPage() {
                     <div className='space-y-2'>
                       <Label htmlFor='confirmPassword'>Conferma Password</Label>
                       <div className='relative'>
-                        <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                        <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
                           id='confirmPassword'
                           type={showPassword ? 'text' : 'password'}
@@ -357,14 +357,14 @@ export default function PortalRegisterPage() {
                         />
                       </div>
                       {fieldErrors.confirmPassword && (
-                        <p className='text-xs text-apple-red'>{fieldErrors.confirmPassword}</p>
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.confirmPassword}</p>
                       )}
                     </div>
 
                     {/* GDPR Consent */}
                     <div className='space-y-2'>
-                      <div className='flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl'>
-                        <Shield className='h-5 w-5 text-apple-blue flex-shrink-0 mt-0.5' />
+                      <div className='flex items-start gap-3 p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl'>
+                        <Shield className='h-5 w-5 text-[var(--brand)] flex-shrink-0 mt-0.5' />
                         <div className='flex-1'>
                           <div className='flex items-start gap-3'>
                             <Checkbox
@@ -376,10 +376,10 @@ export default function PortalRegisterPage() {
                             />
                             <Label
                               htmlFor='gdpr'
-                              className='text-sm text-apple-dark dark:text-[var(--text-primary)] cursor-pointer'
+                              className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] cursor-pointer'
                             >
                               Accetto l&apos;{' '}
-                              <Link href='/privacy' className='text-apple-blue hover:underline'>
+                              <Link href='/privacy' className='text-[var(--brand)] hover:underline'>
                                 informativa sulla privacy
                               </Link>{' '}
                               e il trattamento dei dati personali (GDPR)
@@ -388,7 +388,7 @@ export default function PortalRegisterPage() {
                         </div>
                       </div>
                       {fieldErrors.gdprConsent && (
-                        <p className='text-xs text-apple-red'>{fieldErrors.gdprConsent}</p>
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.gdprConsent}</p>
                       )}
                     </div>
 
@@ -403,7 +403,7 @@ export default function PortalRegisterPage() {
                       />
                       <Label
                         htmlFor='marketing'
-                        className='text-sm text-apple-gray dark:text-[var(--text-secondary)] cursor-pointer'
+                        className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] cursor-pointer'
                       >
                         Voglio ricevere offerte e novità (facoltativo)
                       </Label>
@@ -427,12 +427,12 @@ export default function PortalRegisterPage() {
               </form>
 
               {/* Login Link */}
-              <div className='mt-6 pt-6 border-t border-apple-border/30 dark:border-[var(--border-default)]/30 text-center'>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-sm'>
+              <div className='mt-6 pt-6 border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)]/30 text-center'>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-sm'>
                   Hai già un account?{' '}
                   <Link
                     href='/portal/login'
-                    className='text-apple-blue font-medium hover:underline'
+                    className='text-[var(--brand)] font-medium hover:underline'
                   >
                     Accedi
                   </Link>
@@ -450,7 +450,7 @@ export default function PortalRegisterPage() {
         >
           <Link
             href='/'
-            className='text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors'
+            className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
           >
             ← Torna al sito principale
           </Link>

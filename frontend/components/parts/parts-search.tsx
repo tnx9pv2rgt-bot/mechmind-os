@@ -90,14 +90,14 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
     switch (status) {
       case 'in_stock':
         return (
-          <Badge className='bg-green-100 text-green-800'>
+          <Badge className='bg-[var(--status-success-subtle)] text-[var(--status-success)]'>
             <CheckCircle className='h-3 w-3 mr-1' />
             {quantity} disp.
           </Badge>
         );
       case 'low_stock':
         return (
-          <Badge className='bg-yellow-100 text-yellow-800'>
+          <Badge className='bg-[var(--status-warning)]/20 text-[var(--status-warning)]'>
             <AlertCircle className='h-3 w-3 mr-1' />
             {quantity} rimasti
           </Badge>
@@ -118,18 +118,18 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
     <div className='space-y-6'>
       {/* Vehicle Context */}
       {vehicleInfo && (
-        <Card className='bg-blue-50 border-blue-200'>
+        <Card className='bg-[var(--status-info-subtle)] border-[var(--status-info)]/30'>
           <CardContent className='p-4 flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <Car className='h-8 w-8 text-blue-600' />
+              <Car className='h-8 w-8 text-[var(--status-info)]' />
               <div>
                 <p className='font-medium'>
                   {vehicleInfo.make} {vehicleInfo.model} ({vehicleInfo.year})
                 </p>
-                <p className='text-sm text-gray-500'>VIN: {vehicleInfo.vin || 'Non disponibile'}</p>
+                <p className='text-sm text-[var(--text-tertiary)]'>VIN: {vehicleInfo.vin || 'Non disponibile'}</p>
               </div>
             </div>
-            <Badge variant='outline' className='bg-white'>
+            <Badge variant='outline' className='bg-[var(--surface-primary)]'>
               Ricerca compatibile
             </Badge>
           </CardContent>
@@ -152,7 +152,7 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
 
             <div className='flex gap-2'>
               <div className='flex-1 relative'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                 <Input
                   className='pl-10'
                   placeholder={
@@ -190,7 +190,7 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
             </CardHeader>
             <CardContent className='space-y-4'>
               <div>
-                <p className='text-xs font-medium text-gray-500 mb-2'>CATEGORIA</p>
+                <p className='text-xs font-medium text-[var(--text-tertiary)] mb-2'>CATEGORIA</p>
                 <div className='space-y-1'>
                   {Object.entries(CATEGORY_ICONS).map(([cat, icon]) => (
                     <button
@@ -200,7 +200,7 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
                       }
                       className={cn(
                         'w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors',
-                        selectedCategory === cat ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'
+                        selectedCategory === cat ? 'bg-[var(--status-info-subtle)] text-[var(--status-info)]' : 'hover:bg-[var(--surface-secondary)]'
                       )}
                     >
                       <span>{icon}</span>
@@ -213,7 +213,7 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
               <Separator />
 
               <div>
-                <p className='text-xs font-medium text-gray-500 mb-2'>FORNITORI</p>
+                <p className='text-xs font-medium text-[var(--text-tertiary)] mb-2'>FORNITORI</p>
                 <div className='space-y-1'>
                   {['autodoc', 'misterauto', 'bosch'].map(supplier => (
                     <label key={supplier} className='flex items-center gap-2 text-sm'>
@@ -230,7 +230,7 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
         {/* Results List */}
         <div className='col-span-9 space-y-4'>
           <div className='flex items-center justify-between'>
-            <p className='text-sm text-gray-500'>{results.length} risultati trovati</p>
+            <p className='text-sm text-[var(--text-tertiary)]'>{results.length} risultati trovati</p>
             <Button variant='ghost' size='sm'>
               <ArrowUpDown className='h-4 w-4 mr-2' />
               Ordina per prezzo
@@ -242,8 +242,8 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
               <CardContent className='p-4'>
                 <div className='flex gap-4'>
                   {/* Image Placeholder */}
-                  <div className='w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0'>
-                    <Package className='h-8 w-8 text-gray-400' />
+                  <div className='w-24 h-24 bg-[var(--surface-secondary)] rounded-lg flex items-center justify-center flex-shrink-0'>
+                    <Package className='h-8 w-8 text-[var(--text-tertiary)]' />
                   </div>
 
                   {/* Info */}
@@ -251,30 +251,30 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
                     <div className='flex items-start justify-between'>
                       <div>
                         <h3 className='font-medium text-lg'>{part.name}</h3>
-                        <p className='text-sm text-gray-500'>{part.description}</p>
+                        <p className='text-sm text-[var(--text-tertiary)]'>{part.description}</p>
 
                         <div className='flex items-center gap-3 mt-2'>
                           <Badge variant='outline'>{part.brand}</Badge>
                           <Badge variant='secondary'>{part.supplier}</Badge>
                           {part.ratings.count > 0 && (
-                            <span className='text-sm text-yellow-600'>
+                            <span className='text-sm text-[var(--status-warning)]'>
                               ★ {part.ratings.average} ({part.ratings.count})
                             </span>
                           )}
                         </div>
 
                         {part.oemNumbers.length > 0 && (
-                          <div className='mt-2 text-xs text-gray-500'>
+                          <div className='mt-2 text-xs text-[var(--text-tertiary)]'>
                             OEM: {part.oemNumbers.join(', ')}
                           </div>
                         )}
                       </div>
 
                       <div className='text-right'>
-                        <p className='text-2xl font-bold text-blue-600'>
+                        <p className='text-2xl font-bold text-[var(--status-info)]'>
                           €{part.price.gross.toFixed(2)}
                         </p>
-                        <p className='text-xs text-gray-500'>IVA incl.</p>
+                        <p className='text-xs text-[var(--text-tertiary)]'>IVA incl.</p>
                         <div className='mt-2'>
                           {getAvailabilityBadge(
                             part.availability.status,
@@ -285,7 +285,7 @@ export function PartsSearch({ onAddToCart, vehicleId, vehicleInfo }: PartsSearch
                     </div>
 
                     <div className='flex items-center justify-between mt-4 pt-4 border-t'>
-                      <div className='flex items-center gap-4 text-sm text-gray-500'>
+                      <div className='flex items-center gap-4 text-sm text-[var(--text-tertiary)]'>
                         <span>Garanzia: {part.warranty.months} mesi</span>
                         {part.weight > 0 && <span>Peso: {part.weight}kg</span>}
                       </div>

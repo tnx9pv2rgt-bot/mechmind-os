@@ -92,27 +92,27 @@ export function BookingDialog({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="relative rounded-[28px] bg-white/80 backdrop-blur-3xl shadow-apple-lg overflow-hidden"
+          className="relative rounded-[28px] bg-[var(--surface-secondary)] backdrop-blur-3xl shadow-apple-lg overflow-hidden"
         >
           {/* Glassmorphism Background Effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-apple-light-gray/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-secondary)]/40 via-[var(--surface-secondary)]/20 to-apple-light-gray/30 pointer-events-none" />
           
           {/* Header */}
-          <DialogHeader className="relative px-6 pt-6 pb-4 border-b border-apple-border/30">
+          <DialogHeader className="relative px-6 pt-6 pb-4 border-b border-[var(--border-default)]/30">
             <div className="flex items-center gap-3">
               <motion.div 
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-apple-blue/10"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand)]/10"
               >
-                <Calendar className="h-6 w-6 text-apple-blue" />
+                <Calendar className="h-6 w-6 text-[var(--brand)]" />
               </motion.div>
               <div>
-                <DialogTitle className="text-xl font-semibold text-apple-dark">
+                <DialogTitle className="text-xl font-semibold text-[var(--text-primary)]">
                   Nuova Prenotazione
                 </DialogTitle>
-                <DialogDescription className="text-sm text-apple-gray">
+                <DialogDescription className="text-sm text-[var(--text-tertiary)]">
                   Crea una nuova prenotazione servizio
                 </DialogDescription>
               </div>
@@ -176,17 +176,17 @@ export function BookingButton({
       <DialogContent
         className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-0"
       >
-        <div className="relative rounded-[28px] bg-white/90 backdrop-blur-3xl shadow-apple-lg">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-apple-border/30">
+        <div className="relative rounded-[28px] bg-[var(--surface-secondary)]/90 backdrop-blur-3xl shadow-apple-lg">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-[var(--border-default)]/30">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-apple-blue/10">
-                <Calendar className="h-6 w-6 text-apple-blue" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand)]/10">
+                <Calendar className="h-6 w-6 text-[var(--brand)]" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-semibold text-apple-dark">
+                <DialogTitle className="text-xl font-semibold text-[var(--text-primary)]">
                   Nuova Prenotazione
                 </DialogTitle>
-                <DialogDescription className="text-sm text-apple-gray">
+                <DialogDescription className="text-sm text-[var(--text-tertiary)]">
                   Crea una nuova prenotazione servizio
                 </DialogDescription>
               </div>
@@ -227,7 +227,7 @@ export function BookingFormCard({ onBookingCreated, className }: BookingFormCard
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className={cn(
-          'rounded-[28px] bg-white/80 backdrop-blur-3xl p-8 shadow-apple-lg',
+          'rounded-[28px] bg-[var(--surface-secondary)] backdrop-blur-3xl p-8 shadow-apple-lg',
           className
         )}
       >
@@ -236,14 +236,14 @@ export function BookingFormCard({ onBookingCreated, className }: BookingFormCard
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-apple-green/10"
+            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--status-success)]/10"
           >
-            <Calendar className="h-8 w-8 text-apple-green" />
+            <Calendar className="h-8 w-8 text-[var(--status-success)]" />
           </motion.div>
-          <h3 className="text-xl font-semibold text-apple-dark">
+          <h3 className="text-xl font-semibold text-[var(--text-primary)]">
             Prenotazione creata!
           </h3>
-          <p className="mt-1 text-apple-gray">
+          <p className="mt-1 text-[var(--text-tertiary)]">
             La prenotazione è stata salvata con successo.
           </p>
           <AppleButton 
@@ -264,21 +264,21 @@ export function BookingFormCard({ onBookingCreated, className }: BookingFormCard
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
-        'rounded-[28px] bg-white/80 backdrop-blur-3xl shadow-apple-lg overflow-hidden',
+        'rounded-[28px] bg-[var(--surface-secondary)] backdrop-blur-3xl shadow-apple-lg overflow-hidden',
         className
       )}
     >
       {/* Header */}
-      <div className="px-6 pt-6 pb-4 border-b border-apple-border/30">
+      <div className="px-6 pt-6 pb-4 border-b border-[var(--border-default)]/30">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-apple-blue/10">
-            <Calendar className="h-6 w-6 text-apple-blue" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand)]/10">
+            <Calendar className="h-6 w-6 text-[var(--brand)]" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-apple-dark">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               Nuova Prenotazione
             </h2>
-            <p className="text-sm text-apple-gray">
+            <p className="text-sm text-[var(--text-tertiary)]">
               Crea una nuova prenotazione servizio
             </p>
           </div>

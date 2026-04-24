@@ -105,7 +105,7 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
       <HoneypotField name={honeypotName} label='Lascia questo campo vuoto' />
 
       {/* Security badge */}
-      <div className='flex items-center gap-2 text-xs text-muted-foreground mb-4'>
+      <div className='flex items-center gap-2 text-xs text-[var(--text-tertiary)] mb-4'>
         <Shield className='w-4 h-4' />
         <span>Protetto da sicurezza di livello enterprise</span>
       </div>
@@ -134,9 +134,9 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
 
       {/* Success message */}
       {submitSuccess && (
-        <Alert className='bg-green-50 border-green-200'>
-          <CheckCircle className='h-4 w-4 text-green-600' />
-          <AlertDescription className='text-green-800'>
+        <Alert className='bg-[var(--status-success-subtle)] border-[var(--status-success)]/30'>
+          <CheckCircle className='h-4 w-4 text-[var(--status-success)]' />
+          <AlertDescription className='text-[var(--status-success)]'>
             Messaggio inviato con successo! Ti risponderemo al più presto.
           </AlertDescription>
         </Alert>
@@ -195,7 +195,7 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
           rows={5}
           maxLength={5000}
         />
-        <p className='text-xs text-muted-foreground'>{formData.message.length} / 5000 caratteri</p>
+        <p className='text-xs text-[var(--text-tertiary)]'>{formData.message.length} / 5000 caratteri</p>
       </div>
 
       {/* Submit button */}
@@ -212,7 +212,7 @@ export function SecureContactForm({ onSuccess, className }: SecureContactFormPro
 
       {/* reCAPTCHA badge notice */}
       {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-        <p className='text-xs text-muted-foreground text-center'>
+        <p className='text-xs text-[var(--text-tertiary)] text-center'>
           Questo sito è protetto da reCAPTCHA e si applicano la{' '}
           <a href='https://policies.google.com/privacy' className='underline'>
             Privacy Policy

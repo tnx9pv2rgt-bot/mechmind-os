@@ -220,7 +220,7 @@ function MiniCalendar({
               className={`
                 relative flex flex-col items-center justify-center py-[5px] rounded-full text-[12px] transition-all duration-150
                 ${!inMonth ? 'text-[var(--text-tertiary)] opacity-40' : 'text-[var(--text-primary)]'}
-                ${selected ? 'bg-[#007aff] text-white font-semibold shadow-sm' : ''}
+                ${selected ? 'bg-[#007aff] text-[var(--text-on-brand)] font-semibold shadow-sm' : ''}
                 ${today && !selected ? 'text-[#007aff] font-bold' : ''}
                 ${!selected ? 'hover:bg-[var(--surface-hover)]' : ''}
               `}
@@ -253,7 +253,7 @@ function CalendarEventComponent({ event }: { event: CalendarEvent }): React.JSX.
   return (
     <div className="flex items-center gap-1 overflow-hidden h-full px-[2px]">
       {isWorkOrder && (
-        <span className="flex-shrink-0 w-[6px] h-[6px] rounded-full bg-white/70" />
+        <span className="flex-shrink-0 w-[6px] h-[6px] rounded-full bg-[var(--surface-secondary)]/70" />
       )}
       <span className="truncate text-[11px] leading-tight font-medium">
         {event.title}
@@ -594,7 +594,7 @@ export default function CalendarPage(): React.JSX.Element {
   return (
     <div className="min-h-screen">
       {/* ─── Top Bar ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-[var(--surface-primary)]/80 border-b border-[var(--border-default)]">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/80 border-b border-[var(--border-default)]">
         <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           {/* Left: Nav + Title */}
           <div className="flex items-center gap-3">
@@ -646,7 +646,7 @@ export default function CalendarPage(): React.JSX.Element {
                   className={`
                     px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200
                     ${currentView === vb.view
-                      ? 'bg-white dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] shadow-sm'
+                      ? 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] shadow-sm'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }
                   `}
@@ -857,7 +857,7 @@ export default function CalendarPage(): React.JSX.Element {
       </div>
 
       {/* ─── Mobile Stats Bar ────────────────────────────────────────────── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-white/90 dark:bg-[var(--surface-primary)]/90 backdrop-blur-xl border-t border-[var(--border-default)] px-4 py-2">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-[var(--surface-secondary)]/90 dark:bg-[var(--surface-primary)]/90 backdrop-blur-xl border-t border-[var(--border-default)] px-4 py-2">
         <div className="flex items-center justify-around">
           {sidebarStats.map(stat => (
             <div key={stat.label} className="flex items-center gap-2">
@@ -876,13 +876,13 @@ export default function CalendarPage(): React.JSX.Element {
       {/* ─── Quick Add Dialog ────────────────────────────────────────────── */}
       <AnimatePresence>
         {quickAdd.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/40 backdrop-blur-sm p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
             >
               {/* Dialog header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-default)]">
@@ -944,7 +944,7 @@ export default function CalendarPage(): React.JSX.Element {
                         className="pl-10 h-11 rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-tertiary)] text-[var(--text-primary)]"
                       />
                       {searchResults && searchResults.length > 0 && quickAdd.customerSearch.length >= 2 && (
-                        <div className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-[var(--surface-elevated)] rounded-xl shadow-lg border border-[var(--border-default)] max-h-40 overflow-y-auto">
+                        <div className="absolute z-10 left-0 right-0 mt-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-xl shadow-lg border border-[var(--border-default)] max-h-40 overflow-y-auto">
                           {searchResults.map(customer => (
                             <button
                               key={customer.id}

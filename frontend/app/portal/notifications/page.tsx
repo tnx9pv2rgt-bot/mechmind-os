@@ -35,14 +35,14 @@ interface PortalNotification {
 }
 
 const typeIcons: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
-  booking: { icon: Calendar, color: 'text-apple-blue', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  repair: { icon: Wrench, color: 'text-apple-orange', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-  invoice: { icon: CreditCard, color: 'text-apple-green', bg: 'bg-green-50 dark:bg-green-900/20' },
-  estimate: { icon: FileText, color: 'text-apple-purple', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-  warranty: { icon: Shield, color: 'text-apple-blue', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  maintenance: { icon: Clock, color: 'text-apple-red', bg: 'bg-red-50 dark:bg-red-900/20' },
-  message: { icon: MessageCircle, color: 'text-apple-blue', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  system: { icon: Bell, color: 'text-apple-gray', bg: 'bg-gray-100 dark:bg-[var(--surface-hover)]' },
+  booking: { icon: Calendar, color: 'text-[var(--brand)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' },
+  repair: { icon: Wrench, color: 'text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20' },
+  invoice: { icon: CreditCard, color: 'text-[var(--status-success)]', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]' },
+  estimate: { icon: FileText, color: 'text-[var(--brand)]', bg: 'bg-[var(--brand)]/5 dark:bg-[var(--brand)]/40/20' },
+  warranty: { icon: Shield, color: 'text-[var(--brand)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' },
+  maintenance: { icon: Clock, color: 'text-[var(--status-error)]', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]' },
+  message: { icon: MessageCircle, color: 'text-[var(--brand)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' },
+  system: { icon: Bell, color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]' },
 };
 
 function getTimeAgo(dateStr: string): string {
@@ -131,8 +131,8 @@ export default function PortalNotificationsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Notifiche</h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Notifiche</h1>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
             Le tue notifiche e aggiornamenti
           </p>
         </div>
@@ -140,7 +140,7 @@ export default function PortalNotificationsPage(): React.ReactElement {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </div>
@@ -151,14 +151,14 @@ export default function PortalNotificationsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Notifiche</h1>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Notifiche</h1>
         </div>
         <div className='text-center py-16'>
-          <AlertCircle className='h-12 w-12 text-apple-red/40 mx-auto mb-4' />
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+          <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mx-auto mb-4' />
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
             Impossibile caricare le notifiche
           </p>
-          <button onClick={() => mutate()} className='text-apple-blue hover:underline'>
+          <button onClick={() => mutate()} className='text-[var(--brand)] hover:underline'>
             Riprova
           </button>
         </div>
@@ -171,8 +171,8 @@ export default function PortalNotificationsPage(): React.ReactElement {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>Notifiche</h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Notifiche</h1>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
             {unreadCount > 0
               ? `${unreadCount} notific${unreadCount === 1 ? 'a' : 'he'} non lett${unreadCount === 1 ? 'a' : 'e'}`
               : 'Tutte le notifiche lette'}
@@ -195,11 +195,11 @@ export default function PortalNotificationsPage(): React.ReactElement {
       {notifications.length === 0 ? (
         <AppleCard>
           <AppleCardContent className='text-center py-16'>
-            <BellOff className='h-16 w-16 text-apple-gray/30 mx-auto mb-4' />
-            <h3 className='text-lg font-medium text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <BellOff className='h-16 w-16 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+            <h3 className='text-lg font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Nessuna notifica
             </h3>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Le notifiche relative a prenotazioni, riparazioni e fatture appariranno qui.
             </p>
           </AppleCardContent>
@@ -223,7 +223,7 @@ export default function PortalNotificationsPage(): React.ReactElement {
                 <AppleCard
                   className={`transition-all ${
                     isUnread
-                      ? 'border-l-4 border-l-apple-blue bg-blue-50/30 dark:bg-blue-900/10'
+                      ? 'border-l-4 border-l-apple-blue bg-[var(--status-info-subtle)]/30 dark:bg-[var(--status-info)]/40/10'
                       : ''
                   }`}
                 >
@@ -242,24 +242,24 @@ export default function PortalNotificationsPage(): React.ReactElement {
                           <p
                             className={`text-sm ${
                               isUnread
-                                ? 'font-semibold text-apple-dark dark:text-[var(--text-primary)]'
-                                : 'font-medium text-apple-gray dark:text-[var(--text-secondary)]'
+                                ? 'font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                                : 'font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                             }`}
                           >
                             {notification.title}
                           </p>
-                          <span className='text-[11px] text-apple-gray dark:text-[var(--text-secondary)] flex-shrink-0'>
+                          <span className='text-[11px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] flex-shrink-0'>
                             {getTimeAgo(notification.createdAt)}
                           </span>
                         </div>
-                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)] mt-0.5 line-clamp-2'>
+                        <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-0.5 line-clamp-2'>
                           {notification.message}
                         </p>
                       </div>
 
                       {/* Unread dot */}
                       {isUnread && (
-                        <div className='w-2.5 h-2.5 rounded-full bg-apple-blue flex-shrink-0 mt-1.5' />
+                        <div className='w-2.5 h-2.5 rounded-full bg-[var(--brand)] flex-shrink-0 mt-1.5' />
                       )}
                     </div>
                   </AppleCardContent>

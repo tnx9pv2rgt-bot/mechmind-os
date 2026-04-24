@@ -65,11 +65,11 @@ const PLAN_ICONS: Record<string, typeof Sparkles> = {
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  STARTER: 'from-emerald-500 to-teal-600',
-  PROFESSIONAL: 'from-blue-500 to-indigo-600',
-  ENTERPRISE: 'from-purple-500 to-pink-600',
-  TRIAL: 'from-gray-400 to-gray-500',
-  FREE: 'from-slate-400 to-slate-500',
+  STARTER: 'from-[var(--status-success)] to-[var(--status-success)]',
+  PROFESSIONAL: 'from-[var(--status-info)] to-[var(--brand)]',
+  ENTERPRISE: 'from-[var(--brand)] to-[var(--status-warning)]',
+  TRIAL: 'from-[var(--text-secondary)] to-[var(--text-secondary)]',
+  FREE: 'from-[var(--text-secondary)] to-[var(--text-secondary)]',
 };
 
 export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: PricingCardsProps) {
@@ -134,7 +134,7 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
           <span
             className={cn(
               'text-sm font-medium',
-              billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'
+              billingCycle === 'monthly' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
             )}
           >
             Mensile
@@ -146,24 +146,24 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
           <span
             className={cn(
               'text-sm font-medium',
-              billingCycle === 'yearly' ? 'text-gray-900' : 'text-gray-500'
+              billingCycle === 'yearly' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
             )}
           >
             Annuale
           </span>
           {billingCycle === 'yearly' && (
-            <Badge variant='secondary' className='bg-green-100 text-green-800'>
+            <Badge variant='secondary' className='bg-[var(--status-success-subtle)] text-[var(--status-success)]'>
               Risparmia 15%
             </Badge>
           )}
         </div>
 
         {/* AI Addon Toggle */}
-        <div className='flex items-center space-x-3 p-4 bg-purple-50 rounded-lg'>
-          <Sparkles className='w-5 h-5 text-purple-600' />
+        <div className='flex items-center space-x-3 p-4 bg-[var(--brand)]/5 rounded-lg'>
+          <Sparkles className='w-5 h-5 text-[var(--brand)]' />
           <div className='flex-1'>
-            <p className='font-medium text-purple-900'>Add-on Assistente AI</p>
-            <p className='text-sm text-purple-700'>€200/mese - Ispezioni AI e assistente vocale</p>
+            <p className='font-medium text-[var(--brand)]'>Add-on Assistente AI</p>
+            <p className='text-sm text-[var(--brand)]'>€200/mese - Ispezioni AI e assistente vocale</p>
           </div>
           <Switch checked={aiAddon} onCheckedChange={setAiAddon} />
         </div>
@@ -181,24 +181,24 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
               key={plan.id}
               className={cn(
                 'relative flex flex-col transition-all duration-200',
-                isCurrentPlan && 'ring-2 ring-blue-500',
+                isCurrentPlan && 'ring-2 ring-[var(--status-info)]',
                 selectedPlan === plan.id && loading && 'opacity-70'
               )}
             >
               {isCurrentPlan && (
-                <Badge className='absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500'>
+                <Badge className='absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--status-info-subtle)]0'>
                   Piano Attuale
                 </Badge>
               )}
 
               <CardHeader
-                className={cn('text-white rounded-t-lg', 'bg-gradient-to-br', PLAN_COLORS[plan.id])}
+                className={cn('text-[var(--text-on-brand)] rounded-t-lg', 'bg-gradient-to-br', PLAN_COLORS[plan.id])}
               >
                 <div className='flex items-center space-x-3'>
                   <Icon className='w-8 h-8' />
                   <div>
                     <CardTitle className='text-xl'>{plan.nameIt}</CardTitle>
-                    <CardDescription className='text-white/80'>{plan.name}</CardDescription>
+                    <CardDescription className='text-[var(--text-on-brand)]/80'>{plan.name}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -216,39 +216,39 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
                             ? plan.monthlyPriceFormatted
                             : plan.yearlyPriceFormatted}
                         </span>
-                        <span className='text-gray-500'>/mese</span>
+                        <span className='text-[var(--text-secondary)]'>/mese</span>
                       </div>
                       {billingCycle === 'yearly' && (
-                        <p className='text-sm text-green-600 mt-1'>
+                        <p className='text-sm text-[var(--status-success)] mt-1'>
                           Fatturato annualmente (15% di risparmio)
                         </p>
                       )}
                     </>
                   )}
                   {aiAddon && !plan.isCustomPricing && (
-                    <p className='text-sm text-purple-600 mt-2'>+ €200/mese per Add-on AI</p>
+                    <p className='text-sm text-[var(--brand)] mt-2'>+ €200/mese per Add-on AI</p>
                   )}
                 </div>
 
                 {/* Description */}
-                <p className='text-gray-600 mb-6'>{plan.description}</p>
+                <p className='text-[var(--text-secondary)] mb-6'>{plan.description}</p>
 
                 {/* Limits */}
-                <div className='space-y-2 mb-6 p-4 bg-gray-50 rounded-lg'>
+                <div className='space-y-2 mb-6 p-4 bg-[var(--surface-secondary)] rounded-lg'>
                   <div className='flex justify-between text-sm'>
-                    <span className='text-gray-600'>Utenti</span>
+                    <span className='text-[var(--text-secondary)]'>Utenti</span>
                     <span className='font-medium'>{limits.users}</span>
                   </div>
                   <div className='flex justify-between text-sm'>
-                    <span className='text-gray-600'>Sedi</span>
+                    <span className='text-[var(--text-secondary)]'>Sedi</span>
                     <span className='font-medium'>{limits.locations}</span>
                   </div>
                   <div className='flex justify-between text-sm'>
-                    <span className='text-gray-600'>Chiamate API</span>
+                    <span className='text-[var(--text-secondary)]'>Chiamate API</span>
                     <span className='font-medium'>{limits.apiCalls}</span>
                   </div>
                   <div className='flex justify-between text-sm'>
-                    <span className='text-gray-600'>Spazio</span>
+                    <span className='text-[var(--text-secondary)]'>Spazio</span>
                     <span className='font-medium'>{limits.storage}</span>
                   </div>
                 </div>
@@ -264,20 +264,20 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
                     return (
                       <div key={feature.key} className='flex items-center space-x-3'>
                         {included ? (
-                          <Check className='w-5 h-5 text-green-500 flex-shrink-0' />
+                          <Check className='w-5 h-5 text-[var(--status-success)] flex-shrink-0' />
                         ) : showWithAddon ? (
-                          <Check className='w-5 h-5 text-purple-500 flex-shrink-0' />
+                          <Check className='w-5 h-5 text-[var(--brand)] flex-shrink-0' />
                         ) : (
-                          <X className='w-5 h-5 text-gray-300 flex-shrink-0' />
+                          <X className='w-5 h-5 text-[var(--text-tertiary)] flex-shrink-0' />
                         )}
                         <span
                           className={cn(
                             'text-sm',
                             included
-                              ? 'text-gray-700'
+                              ? 'text-[var(--text-primary)]'
                               : showWithAddon
-                                ? 'text-purple-700'
-                                : 'text-gray-400'
+                                ? 'text-[var(--brand)]'
+                                : 'text-[var(--text-tertiary)]'
                           )}
                         >
                           {feature.name}
@@ -315,13 +315,13 @@ export function PricingCards({ plans, currentPlan, onSelectPlan, loading }: Pric
       </div>
 
       {/* Enterprise CTA */}
-      <Card className='bg-gradient-to-r from-purple-600 to-pink-600 text-white'>
+      <Card className='bg-gradient-to-r from-[var(--brand)] to-[var(--status-warning)] text-[var(--text-on-brand)]'>
         <CardContent className='flex flex-col md:flex-row items-center justify-between p-8'>
           <div>
             <h3 className='text-2xl font-bold mb-2'>
               Hai bisogno di una soluzione personalizzata?
             </h3>
-            <p className='text-white/80'>
+            <p className='text-[var(--text-on-brand)]/80'>
               Contatta il nostro team vendite per un piano enterprise su misura per le tue esigenze.
             </p>
           </div>

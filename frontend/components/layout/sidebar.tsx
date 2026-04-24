@@ -262,7 +262,7 @@ export function Sidebar(): React.ReactElement {
         {/* Close button for mobile */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="ml-auto p-1.5 rounded-lg text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)] lg:hidden"
+          className="ml-auto p-1.5 rounded-lg text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)] lg:hidden"
           aria-label="Chiudi menu"
         >
           <X className="h-5 w-5" />
@@ -275,7 +275,7 @@ export function Sidebar(): React.ReactElement {
           onClick={toggleCommandPalette}
           className={cn(
             'flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm transition-colors',
-            'text-[var(--sidebar-text-[var(--text-secondary)])]',
+            'text-[var(--sidebar-text-secondary)]',
             'hover:bg-[var(--sidebar-hover)]',
             !effectiveExpanded && 'justify-center px-0'
           )}
@@ -328,7 +328,7 @@ export function Sidebar(): React.ReactElement {
                         'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
                         active
                           ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text)]'
-                          : 'text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)]',
+                          : 'text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)]',
                         !effectiveExpanded && 'justify-center px-0'
                       )}
                       title={!effectiveExpanded ? item.name : undefined}
@@ -357,7 +357,7 @@ export function Sidebar(): React.ReactElement {
         {/* Notification button */}
         <button
           className={cn(
-            'relative flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)] transition-colors',
+            'relative flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)] transition-colors',
             !effectiveExpanded && 'justify-center px-0'
           )}
           aria-label="Notifiche"
@@ -379,7 +379,7 @@ export function Sidebar(): React.ReactElement {
           <DropdownMenu.Trigger asChild>
             <button
               className={cn(
-                'flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-[var(--text-secondary)])] hover:bg-[var(--sidebar-hover)] transition-colors',
+                'flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-[var(--sidebar-text-secondary)] hover:bg-[var(--sidebar-hover)] transition-colors',
                 !effectiveExpanded && 'justify-center px-0'
               )}
               aria-label="Tema"
@@ -454,7 +454,7 @@ export function Sidebar(): React.ReactElement {
                 )}
               >
                 <p className="text-sm font-medium text-[var(--sidebar-text)] truncate">Utente</p>
-                <p className="text-xs text-[var(--sidebar-text-[var(--text-secondary)])] truncate">Officina</p>
+                <p className="text-xs text-[var(--sidebar-text-secondary)] truncate">Officina</p>
               </div>
             </button>
           </DropdownMenu.Trigger>

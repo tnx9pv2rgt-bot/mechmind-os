@@ -149,7 +149,7 @@ export default function RolesPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -160,11 +160,11 @@ export default function RolesPage() {
       <div className='min-h-screen flex items-center justify-center p-8'>
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
-            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <AlertTriangle className='w-12 h-12 text-[var(--status-error)] mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Impossibile caricare i ruoli.
             </p>
           </AppleCardContent>
@@ -179,8 +179,8 @@ export default function RolesPage() {
         <div className='px-4 sm:px-8 py-5'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Ruoli e Permessi</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ruoli e Permessi</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Configura i ruoli e i permessi di accesso
               </p>
             </div>
@@ -196,7 +196,7 @@ export default function RolesPage() {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* Roles List */}
           <div className='space-y-3'>
-            <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <h3 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Ruoli
             </h3>
             {roles && roles.length > 0 ? (
@@ -211,32 +211,32 @@ export default function RolesPage() {
                     onClick={() => handleSelectRole(role)}
                     className={`w-full text-left p-4 rounded-xl border transition-all min-h-[44px] ${
                       selectedRole?.id === role.id
-                        ? 'border-apple-blue bg-apple-blue/5 dark:bg-apple-blue/10'
-                        : 'border-apple-border/30 dark:border-[var(--border-default)] hover:border-apple-blue/50 bg-white dark:bg-[var(--surface-elevated)]'
+                        ? 'border-[var(--brand)] bg-[var(--brand)]/5 dark:bg-[var(--brand)]/10'
+                        : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:border-[var(--brand)]/50 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]'
                     }`}
                   >
                     <div className='flex items-center justify-between'>
                       <div>
                         <div className='flex items-center gap-2'>
-                          <Shield className='w-4 h-4 text-apple-blue' />
-                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <Shield className='w-4 h-4 text-[var(--brand)]' />
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {role.name}
                           </p>
                           {role.isDefault && (
                             <Badge variant='outline' className='text-xs'>Predefinito</Badge>
                           )}
                         </div>
-                        <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                        <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                           {role.description}
                         </p>
                         <div className='flex items-center gap-1 mt-2'>
-                          <Users className='w-3 h-3 text-apple-gray' />
-                          <span className='text-xs text-apple-gray'>
+                          <Users className='w-3 h-3 text-[var(--text-tertiary)]' />
+                          <span className='text-xs text-[var(--text-tertiary)]'>
                             {role.userCount} {role.userCount === 1 ? 'utente' : 'utenti'}
                           </span>
                         </div>
                       </div>
-                      <ChevronRight className='w-4 h-4 text-apple-gray flex-shrink-0' />
+                      <ChevronRight className='w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0' />
                     </div>
                   </button>
                 </motion.div>
@@ -244,8 +244,8 @@ export default function RolesPage() {
             ) : (
               <AppleCard>
                 <AppleCardContent className='text-center py-8'>
-                  <Shield className='w-10 h-10 text-apple-gray/30 mx-auto mb-3' />
-                  <p className='text-body text-apple-gray'>Nessun ruolo configurato</p>
+                  <Shield className='w-10 h-10 text-[var(--text-tertiary)]/30 mx-auto mb-3' />
+                  <p className='text-body text-[var(--text-tertiary)]'>Nessun ruolo configurato</p>
                 </AppleCardContent>
               </AppleCard>
             )}
@@ -258,10 +258,10 @@ export default function RolesPage() {
                 <AppleCardHeader>
                   <div className='flex items-center justify-between'>
                     <div>
-                      <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Permessi: {selectedRole.name}
                       </h3>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                         {selectedRole.description}
                       </p>
                     </div>
@@ -275,20 +275,20 @@ export default function RolesPage() {
                   <div className='overflow-x-auto'>
                     <table className='w-full'>
                       <thead>
-                        <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
-                          <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <tr className='border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)]'>
+                          <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             Modulo
                           </th>
-                          <th className='text-center py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <th className='text-center py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             Lettura
                           </th>
-                          <th className='text-center py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <th className='text-center py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             Scrittura
                           </th>
-                          <th className='text-center py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <th className='text-center py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             Eliminazione
                           </th>
-                          <th className='text-center py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <th className='text-center py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             Esportazione
                           </th>
                         </tr>
@@ -305,9 +305,9 @@ export default function RolesPage() {
                           return (
                             <tr
                               key={mod.key}
-                              className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50'
+                              className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'
                             >
-                              <td className='py-3 px-4 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                              <td className='py-3 px-4 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                 {mod.label}
                               </td>
                               {(['read', 'write', 'delete', 'export'] as const).map((type) => (
@@ -317,7 +317,7 @@ export default function RolesPage() {
                                       type='checkbox'
                                       checked={perm[type]}
                                       onChange={() => handleTogglePermission(mod.key, type)}
-                                      className='w-5 h-5 rounded border-apple-border text-apple-blue focus:ring-apple-blue cursor-pointer'
+                                      className='w-5 h-5 rounded border-[var(--border-default)] text-[var(--brand)] focus:ring-apple-blue cursor-pointer'
                                     />
                                   </label>
                                 </td>
@@ -333,11 +333,11 @@ export default function RolesPage() {
             ) : (
               <AppleCard>
                 <AppleCardContent className='text-center py-16'>
-                  <Shield className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+                  <Shield className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                  <h3 className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                     Seleziona un ruolo
                   </h3>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Seleziona un ruolo dalla lista per visualizzare e modificare i permessi.
                   </p>
                 </AppleCardContent>
@@ -356,7 +356,7 @@ export default function RolesPage() {
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <label htmlFor='role-name' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='role-name' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Nome
               </label>
               <Input
@@ -368,7 +368,7 @@ export default function RolesPage() {
               />
             </div>
             <div className='space-y-2'>
-              <label htmlFor='role-desc' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='role-desc' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Descrizione
               </label>
               <Input

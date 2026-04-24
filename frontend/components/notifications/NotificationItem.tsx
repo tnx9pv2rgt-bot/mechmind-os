@@ -77,28 +77,28 @@ const channelIcons: Record<NotificationChannel, React.ReactNode> = {
 
 // Type colors
 const typeColors: Record<NotificationType, string> = {
-  [NotificationType.BOOKING_CONFIRMATION]: 'bg-blue-100 text-blue-600',
-  [NotificationType.BOOKING_REMINDER]: 'bg-amber-100 text-amber-600',
-  [NotificationType.BOOKING_CANCELLED]: 'bg-red-100 text-red-600',
-  [NotificationType.INVOICE_READY]: 'bg-green-100 text-green-600',
-  [NotificationType.INSPECTION_COMPLETE]: 'bg-emerald-100 text-emerald-600',
-  [NotificationType.MAINTENANCE_DUE]: 'bg-orange-100 text-orange-600',
-  [NotificationType.VEHICLE_READY]: 'bg-teal-100 text-teal-600',
-  [NotificationType.STATUS_UPDATE]: 'bg-gray-100 text-gray-600',
-  [NotificationType.PAYMENT_REMINDER]: 'bg-yellow-100 text-yellow-600',
-  [NotificationType.WELCOME]: 'bg-purple-100 text-purple-600',
-  [NotificationType.PASSWORD_RESET]: 'bg-indigo-100 text-indigo-600',
-  [NotificationType.CUSTOM]: 'bg-slate-100 text-slate-600',
-  [NotificationType.GDPR_EXPORT_READY]: 'bg-cyan-100 text-cyan-600',
+  [NotificationType.BOOKING_CONFIRMATION]: 'bg-[var(--status-info-subtle)] text-[var(--status-info)]',
+  [NotificationType.BOOKING_REMINDER]: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]',
+  [NotificationType.BOOKING_CANCELLED]: 'bg-[var(--status-error-subtle)] text-[var(--status-error)]',
+  [NotificationType.INVOICE_READY]: 'bg-[var(--status-success-subtle)] text-[var(--status-success)]',
+  [NotificationType.INSPECTION_COMPLETE]: 'bg-[var(--status-success)]/10 text-[var(--status-success)]',
+  [NotificationType.MAINTENANCE_DUE]: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]',
+  [NotificationType.VEHICLE_READY]: 'bg-[var(--status-success)]/10 text-[var(--status-success)]',
+  [NotificationType.STATUS_UPDATE]: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]',
+  [NotificationType.PAYMENT_REMINDER]: 'bg-[var(--status-warning)]/20 text-[var(--status-warning)]',
+  [NotificationType.WELCOME]: 'bg-[var(--brand)]/10 text-[var(--brand)]',
+  [NotificationType.PASSWORD_RESET]: 'bg-[var(--brand)]/10 text-[var(--brand)]',
+  [NotificationType.CUSTOM]: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]',
+  [NotificationType.GDPR_EXPORT_READY]: 'bg-[var(--status-info)]/10 text-[var(--status-info)]',
 };
 
 // Status colors
 const statusColors: Record<NotificationStatus, string> = {
-  [NotificationStatus.PENDING]: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  [NotificationStatus.SENT]: 'bg-blue-100 text-blue-700 border-blue-200',
-  [NotificationStatus.DELIVERED]: 'bg-green-100 text-green-700 border-green-200',
-  [NotificationStatus.FAILED]: 'bg-red-100 text-red-700 border-red-200',
-  [NotificationStatus.CANCELLED]: 'bg-gray-100 text-gray-700 border-gray-200',
+  [NotificationStatus.PENDING]: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] border-[var(--status-warning)]/30',
+  [NotificationStatus.SENT]: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] border-[var(--status-info)]/30',
+  [NotificationStatus.DELIVERED]: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30',
+  [NotificationStatus.FAILED]: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] border-[var(--status-error)]/30',
+  [NotificationStatus.CANCELLED]: 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]',
 };
 
 // Status labels
@@ -179,9 +179,9 @@ export function NotificationItem({
         animate={{ opacity: 1, y: 0 }}
         className={cn(
           'flex items-start gap-3 p-3 rounded-lg border transition-colors',
-          'hover:bg-gray-50',
-          isPending && 'bg-yellow-50/50',
-          isFailed && 'bg-red-50/50'
+          'hover:bg-[var(--surface-secondary)]',
+          isPending && 'bg-[var(--status-warning)]/10/50',
+          isFailed && 'bg-[var(--status-error-subtle)]/50'
         )}
       >
         <div
@@ -195,13 +195,13 @@ export function NotificationItem({
 
         <div className='flex-1 min-w-0'>
           <div className='flex items-center gap-2'>
-            <span className='font-medium text-sm text-gray-900 truncate'>{typeLabels[type]}</span>
+            <span className='font-medium text-sm text-[var(--text-primary)] truncate'>{typeLabels[type]}</span>
             <span className={cn('text-xs px-2 py-0.5 rounded-full border', statusColors[status])}>
               {statusLabels[status]}
             </span>
           </div>
-          <p className='text-sm text-gray-600 mt-1 line-clamp-2'>{message}</p>
-          <div className='flex items-center gap-3 mt-1 text-xs text-gray-500'>
+          <p className='text-sm text-[var(--text-secondary)] mt-1 line-clamp-2'>{message}</p>
+          <div className='flex items-center gap-3 mt-1 text-xs text-[var(--text-tertiary)]'>
             <span className='flex items-center gap-1'>
               {channelIcons[channel]}
               {channelLabels[channel]}
@@ -219,10 +219,10 @@ export function NotificationItem({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         'flex items-start gap-4 p-4 rounded-xl border transition-all',
-        'hover:shadow-md hover:border-gray-300',
-        isPending && 'bg-yellow-50/30 border-yellow-200',
-        isFailed && 'bg-red-50/30 border-red-200',
-        isDelivered && 'bg-green-50/30 border-green-200'
+        'hover:shadow-md hover:border-[var(--border-default)]',
+        isPending && 'bg-[var(--status-warning)]/10/30 border-[var(--status-warning)]/30',
+        isFailed && 'bg-[var(--status-error-subtle)]/30 border-[var(--status-error)]/30',
+        isDelivered && 'bg-[var(--status-success-subtle)]/30 border-[var(--status-success)]/30'
       )}
     >
       {/* Icon */}
@@ -240,7 +240,7 @@ export function NotificationItem({
         {/* Header */}
         <div className='flex items-start justify-between gap-2'>
           <div className='flex items-center gap-2 flex-wrap'>
-            <h3 className='font-semibold text-gray-900'>{typeLabels[type]}</h3>
+            <h3 className='font-semibold text-[var(--text-primary)]'>{typeLabels[type]}</h3>
             <span className={cn('text-xs px-2 py-0.5 rounded-full border', statusColors[status])}>
               {statusLabels[status]}
             </span>
@@ -252,7 +252,7 @@ export function NotificationItem({
                   variant='ghost'
                   size='icon'
                   onClick={() => onRetry(id)}
-                  className='h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-100'
+                  className='h-8 w-8 text-[var(--status-warning)] hover:text-[var(--status-warning)] hover:bg-[var(--status-warning)]/10'
                   title='Riprova'
                   aria-label='Riprova invio'
                 >
@@ -264,7 +264,7 @@ export function NotificationItem({
                   variant='ghost'
                   size='icon'
                   onClick={() => onDelete(id)}
-                  className='h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100'
+                  className='h-8 w-8 text-[var(--status-error)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-subtle)]'
                   title='Elimina'
                   aria-label='Elimina notifica'
                 >
@@ -276,10 +276,10 @@ export function NotificationItem({
         </div>
 
         {/* Message */}
-        <p className='text-gray-700 mt-2 leading-relaxed'>{message}</p>
+        <p className='text-[var(--text-secondary)] mt-2 leading-relaxed'>{message}</p>
 
         {/* Metadata */}
-        <div className='flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500'>
+        <div className='flex flex-wrap items-center gap-4 mt-3 text-sm text-[var(--text-tertiary)]'>
           <span className='flex items-center gap-1.5'>
             {channelIcons[channel]}
             {channelLabels[channel]}
@@ -291,19 +291,19 @@ export function NotificationItem({
             </span>
           )}
           {deliveredAt && (
-            <span className='flex items-center gap-1.5 text-green-600'>
+            <span className='flex items-center gap-1.5 text-[var(--status-success)]'>
               <CheckCircle className='w-4 h-4' />
               Consegnato: {formatDate(deliveredAt)}
             </span>
           )}
           {error && (
-            <span className='flex items-center gap-1.5 text-red-600'>
+            <span className='flex items-center gap-1.5 text-[var(--status-error)]'>
               <AlertCircle className='w-4 h-4' />
               Errore: {error}
             </span>
           )}
           {retries > 0 && (
-            <span className='text-amber-600'>
+            <span className='text-[var(--status-warning)]'>
               Tentativi: {retries}/{maxRetries}
             </span>
           )}

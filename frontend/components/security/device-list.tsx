@@ -175,26 +175,26 @@ export function DeviceList({
             transition={{ delay: index * 0.05 }}
             className={`rounded-2xl border p-4 transition-colors ${
               device.isCurrent
-                ? 'border-white/20 bg-[var(--surface-elevated)]'
+                ? 'border-[var(--border-default)]/20 bg-[var(--surface-elevated)]'
                 : 'border-[var(--border-strong)] bg-[var(--surface-elevated)]'
             }`}
           >
             <div className="flex items-start gap-3">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                device.isTrusted ? 'bg-green-500/10 text-green-400' : 'bg-[var(--border-strong)]/50 text-[var(--text-secondary)]'
+                device.isTrusted ? 'bg-[var(--status-success-subtle)]0/10 text-[var(--status-success)]' : 'bg-[var(--border-strong)]/50 text-[var(--text-secondary)]'
               }`}>
                 {getDeviceIcon(device.deviceName)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium text-[var(--text-on-brand)]">
                     {device.deviceName}
                   </p>
                   <span className="text-xs text-[var(--text-tertiary)]">
                     {device.browser}
                   </span>
                   {device.isCurrent && (
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white">
+                    <span className="rounded-full bg-[var(--surface-secondary)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--text-on-brand)]">
                       Questo dispositivo
                     </span>
                   )}
@@ -203,7 +203,7 @@ export function DeviceList({
                   {device.location} &middot; Ultimo accesso: {formatDate(device.lastActivity)}
                 </p>
                 {device.isTrusted && device.trustedUntil ? (
-                  <p className="mt-1 flex items-center gap-1 text-xs text-green-400">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-[var(--status-success)]">
                     <Shield className="h-3 w-3" />
                     Fidato fino al: {formatTrustedUntil(device.trustedUntil)}
                   </p>
@@ -221,7 +221,7 @@ export function DeviceList({
                         type="button"
                         onClick={() => setConfirmUntrust(device.id)}
                         disabled={actionLoading === device.id}
-                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
+                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-default)]/30 hover:text-[var(--text-on-brand)] disabled:opacity-50"
                       >
                         {actionLoading === device.id ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -234,7 +234,7 @@ export function DeviceList({
                         type="button"
                         onClick={() => setConfirmCompromised(device.id)}
                         disabled={actionLoading === device.id}
-                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-red-500/30 px-4 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-500/50 hover:bg-red-500/5 disabled:opacity-50"
+                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--status-error)]/30 px-4 py-2 text-xs font-medium text-[var(--status-error)] transition-colors hover:border-[var(--status-error)]/50 hover:bg-[var(--status-error-subtle)]0/5 disabled:opacity-50"
                       >
                         <AlertTriangle className="h-3 w-3" />
                         Segnala compromesso
@@ -245,7 +245,7 @@ export function DeviceList({
                       type="button"
                       onClick={() => handleTrust(device.id)}
                       disabled={actionLoading === device.id}
-                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-green-500/30 hover:text-green-400 disabled:opacity-50"
+                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--status-success)]/30 hover:text-[var(--status-success)] disabled:opacity-50"
                     >
                       {actionLoading === device.id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -267,7 +267,7 @@ export function DeviceList({
           type="button"
           onClick={() => setConfirmUntrustAll(true)}
           disabled={actionLoading === 'all'}
-          className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-red-500/30 px-4 py-3 text-sm font-medium text-red-400 transition-colors hover:border-red-500/50 hover:bg-red-500/5 disabled:opacity-50"
+          className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--status-error)]/30 px-4 py-3 text-sm font-medium text-[var(--status-error)] transition-colors hover:border-[var(--status-error)]/50 hover:bg-[var(--status-error-subtle)]0/5 disabled:opacity-50"
         >
           {actionLoading === 'all' ? (
             <Loader2 className="h-4 w-4 animate-spin" />

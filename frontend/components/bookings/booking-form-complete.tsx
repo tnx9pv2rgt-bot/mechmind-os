@@ -495,13 +495,13 @@ export function BookingFormComplete() {
           <Breadcrumb items={[{ label: 'Prenotazioni', href: '/dashboard/bookings' }, { label: 'Nuova Prenotazione' }]} />
           <div className='flex items-center justify-between mt-2'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Nuova Prenotazione
               </h1>
-              <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mt-1 flex items-center gap-2'>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1 flex items-center gap-2'>
                 Crea un nuovo appuntamento per il cliente
                 {hasDraft && (
-                  <span className='text-xs text-apple-green flex items-center gap-1'>
+                  <span className='text-xs text-[var(--status-success)] flex items-center gap-1'>
                     <Check className='h-3 w-3' />
                     Bozza salvata
                   </span>
@@ -509,12 +509,12 @@ export function BookingFormComplete() {
               </p>
             </div>
             <div className='flex items-center gap-2'>
-              <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Step</span>
-              <span className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Step</span>
+              <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {currentStep}
               </span>
-              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>/</span>
-              <span className='text-apple-gray dark:text-[var(--text-secondary)]'>{totalSteps}</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>/</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{totalSteps}</span>
             </div>
           </div>
         </div>
@@ -523,9 +523,9 @@ export function BookingFormComplete() {
       <div className='p-8 max-w-4xl mx-auto space-y-6'>
         {/* Progress Bar */}
         <div className='pt-2'>
-          <div className='relative h-2 bg-apple-light-gray dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
+          <div className='relative h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
             <motion.div
-              className='h-full bg-apple-blue rounded-full'
+              className='h-full bg-[var(--brand)] rounded-full'
               initial={{ width: 0 }}
               animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
               transition={{ duration: 0.5 }}
@@ -537,7 +537,7 @@ export function BookingFormComplete() {
                 key={step}
                 style={{ left: `${(step / totalSteps) * 100}%` }}
                 className={`absolute -translate-x-1/2 text-xs font-medium ${
-                  step <= currentStep ? 'text-apple-blue' : 'text-[var(--text-tertiary)]'
+                  step <= currentStep ? 'text-[var(--brand)]' : 'text-[var(--text-tertiary)]'
                 }`}
               >
                 {step}
@@ -695,7 +695,7 @@ function Step1CustomerVehicle({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-white'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Informazioni Cliente e Veicolo
         </h2>
         <p className='text-[var(--text-tertiary)] text-sm'>
@@ -705,7 +705,7 @@ function Step1CustomerVehicle({
 
       {/* Customer Search */}
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
-        <Label className='text-sm font-medium text-white mb-3 block'>
+        <Label className='text-sm font-medium text-[var(--text-on-brand)] mb-3 block'>
           Cerca Cliente
         </Label>
         <div className='relative'>
@@ -719,7 +719,7 @@ function Step1CustomerVehicle({
             onFocus={() => setShowCustomerDropdown(true)}
             placeholder='Cerca per nome, telefono o email...'
             aria-label='Cerca cliente per nome, telefono o email'
-            className='pl-12 h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
+            className='pl-12 h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
           />
 
           {/* Dropdown */}
@@ -737,14 +737,14 @@ function Step1CustomerVehicle({
                     onClick={() => selectCustomer(customer)}
                     className='w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--surface-active)] transition-colors text-left'
                   >
-                    <div className='w-10 h-10 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-semibold'>
+                    <div className='w-10 h-10 rounded-full bg-[var(--brand)] flex items-center justify-center text-[var(--text-on-brand)] font-semibold'>
                       {customer.name
                         .split(' ')
                         .map(n => n[0])
                         .join('')}
                     </div>
                     <div className='flex-1'>
-                      <p className='font-medium text-white'>
+                      <p className='font-medium text-[var(--text-on-brand)]'>
                         {customer.name}
                       </p>
                       <p className='text-sm text-[var(--text-tertiary)]'>
@@ -768,7 +768,7 @@ function Step1CustomerVehicle({
           <span>
             Oppure{' '}
             <button
-              className='text-white hover:underline'
+              className='text-[var(--text-on-brand)] hover:underline'
               onClick={() => setShowCustomerDropdown(false)}
             >
               clicca per nuovo cliente
@@ -786,7 +786,7 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='customerName'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Nome e Cognome *
               </Label>
@@ -809,7 +809,7 @@ function Step1CustomerVehicle({
                     id='customerName-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.customerName.message as string}
                   </p>
@@ -826,7 +826,7 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='customerPhone'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Telefono *
               </Label>
@@ -849,7 +849,7 @@ function Step1CustomerVehicle({
                     id='customerPhone-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.customerPhone.message as string}
                   </p>
@@ -866,7 +866,7 @@ function Step1CustomerVehicle({
             <div className='col-span-2'>
               <Label
                 htmlFor='customerEmail'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Email *
               </Label>
@@ -890,7 +890,7 @@ function Step1CustomerVehicle({
                     id='customerEmail-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.customerEmail.message as string}
                   </p>
@@ -904,7 +904,7 @@ function Step1CustomerVehicle({
       {/* Vehicle Section */}
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='mb-6'>
-          <h3 className='font-semibold text-white'>Dati Veicolo</h3>
+          <h3 className='font-semibold text-[var(--text-on-brand)]'>Dati Veicolo</h3>
           <p className='text-sm text-[var(--text-tertiary)]'>
             Inserisci la targa per decodifica automatica
           </p>
@@ -918,7 +918,7 @@ function Step1CustomerVehicle({
               <div className='flex-1'>
                 <Label
                   htmlFor='licensePlate'
-                  className='text-sm font-medium text-white mb-2 block'
+                  className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
                 >
                   Targa *
                 </Label>
@@ -960,8 +960,8 @@ function Step1CustomerVehicle({
             animate={{ opacity: 1, height: 'auto' }}
             className='bg-[var(--surface-active)] rounded-2xl p-5 mb-6'
           >
-            <h4 className='font-semibold text-white mb-3 flex items-center gap-2'>
-              <Check className='w-5 h-5 text-green-500' />
+            <h4 className='font-semibold text-[var(--text-on-brand)] mb-3 flex items-center gap-2'>
+              <Check className='w-5 h-5 text-[var(--status-success)]' />
               Dati Veicolo Decodificati
             </h4>
             <div className='grid grid-cols-2 gap-4 text-sm'>
@@ -996,7 +996,7 @@ function Step1CustomerVehicle({
             control={control}
             render={({ field }) => (
               <div>
-                <Label htmlFor='vehicleMake' className='text-sm font-medium text-white mb-2 block'>
+                <Label htmlFor='vehicleMake' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
                   Marca *
                 </Label>
                 <Input
@@ -1009,7 +1009,7 @@ function Step1CustomerVehicle({
                   className='h-[52px] rounded-full'
                 />
                 {errors.vehicleMake && (
-                  <p role='alert' className='text-red-500 text-sm mt-1'>
+                  <p role='alert' className='text-[var(--status-error)] text-sm mt-1'>
                     {errors.vehicleMake.message as string}
                   </p>
                 )}
@@ -1021,7 +1021,7 @@ function Step1CustomerVehicle({
             control={control}
             render={({ field }) => (
               <div>
-                <Label htmlFor='vehicleModel' className='text-sm font-medium text-white mb-2 block'>
+                <Label htmlFor='vehicleModel' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
                   Modello *
                 </Label>
                 <Input
@@ -1034,7 +1034,7 @@ function Step1CustomerVehicle({
                   className='h-[52px] rounded-full'
                 />
                 {errors.vehicleModel && (
-                  <p role='alert' className='text-red-500 text-sm mt-1'>
+                  <p role='alert' className='text-[var(--status-error)] text-sm mt-1'>
                     {errors.vehicleModel.message as string}
                   </p>
                 )}
@@ -1046,7 +1046,7 @@ function Step1CustomerVehicle({
             control={control}
             render={({ field }) => (
               <div>
-                <Label htmlFor='vehicleYear' className='text-sm font-medium text-white mb-2 block'>
+                <Label htmlFor='vehicleYear' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
                   Anno
                 </Label>
                 <Input
@@ -1068,7 +1068,7 @@ function Step1CustomerVehicle({
             control={control}
             render={({ field }) => (
               <div>
-                <Label htmlFor='vehicleColor' className='text-sm font-medium text-white mb-2 block'>
+                <Label htmlFor='vehicleColor' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
                   Colore
                 </Label>
                 <Input
@@ -1086,7 +1086,7 @@ function Step1CustomerVehicle({
             control={control}
             render={({ field }) => (
               <div className='sm:col-span-2'>
-                <Label htmlFor='vehicleVin' className='text-sm font-medium text-white mb-2 block'>
+                <Label htmlFor='vehicleVin' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
                   VIN
                 </Label>
                 <Input
@@ -1109,7 +1109,7 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='vehicleKm'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Km attuali (opzionale)
               </Label>
@@ -1167,14 +1167,14 @@ function Step2AppointmentDetails({
     color: string;
     desc: string;
   }> = [
-    { value: 'routine', label: 'Routine', color: 'bg-green-500', desc: 'Nessuna urgenza' },
+    { value: 'routine', label: 'Routine', color: 'bg-[var(--status-success)]', desc: 'Nessuna urgenza' },
     {
       value: 'semi-urgent',
       label: 'Semi-Urgente',
-      color: 'bg-yellow-500',
+      color: 'bg-[var(--status-warning)]',
       desc: 'Da fare entro 7 giorni',
     },
-    { value: 'urgent', label: 'Urgente', color: 'bg-red-500', desc: 'Entro 48 ore' },
+    { value: 'urgent', label: 'Urgente', color: 'bg-[var(--status-error)]', desc: 'Entro 48 ore' },
   ];
 
   const serviceTypeLabels: Record<string, string> = {
@@ -1212,7 +1212,7 @@ function Step2AppointmentDetails({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-white'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Dettagli Appuntamento
         </h2>
         <p className='text-[var(--text-tertiary)] text-sm'>
@@ -1224,7 +1224,7 @@ function Step2AppointmentDetails({
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <Label
           htmlFor='serviceType'
-          className='text-sm font-medium text-white mb-4 block'
+          className='text-sm font-medium text-[var(--text-on-brand)] mb-4 block'
         >
           Tipo Intervento *
         </Label>
@@ -1260,7 +1260,7 @@ function Step2AppointmentDetails({
           >
             <Label
               htmlFor='serviceSubtype'
-              className='text-sm font-medium text-white mb-2 block'
+              className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
             >
               Sotto-categoria
             </Label>
@@ -1291,7 +1291,7 @@ function Step2AppointmentDetails({
 
       {/* Urgency */}
       <div>
-        <Label className='text-sm font-medium text-white mb-3 block'>
+        <Label className='text-sm font-medium text-[var(--text-on-brand)] mb-3 block'>
           Livello di Urgenza *
         </Label>
         <div className='grid grid-cols-3 gap-3'>
@@ -1301,12 +1301,12 @@ function Step2AppointmentDetails({
               onClick={() => setValue('urgency', option.value)}
               className={`p-4 rounded-2xl border transition-all text-left bg-[var(--surface-elevated)] ${
                 watch('urgency') === option.value
-                  ? 'border-green-500'
+                  ? 'border-[var(--status-success)]'
                   : 'border-[var(--border-strong)] hover:border-[var(--border-default)]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full ${option.color} mb-2`} />
-              <div className='font-medium text-white'>{option.label}</div>
+              <div className='font-medium text-[var(--text-on-brand)]'>{option.label}</div>
               <div className='text-xs text-[var(--text-tertiary)] mt-1'>{option.desc}</div>
             </button>
           ))}
@@ -1315,10 +1315,10 @@ function Step2AppointmentDetails({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className='mt-3 p-3 bg-[var(--surface-elevated)] border border-red-500/30 rounded-xl flex items-start gap-2'
+            className='mt-3 p-3 bg-[var(--surface-elevated)] border border-[var(--status-error)]/30 rounded-xl flex items-start gap-2'
           >
-            <AlertTriangle className='w-5 h-5 text-red-500 flex-shrink-0 mt-0.5' />
-            <p className='text-sm text-red-400'>
+            <AlertTriangle className='w-5 h-5 text-[var(--status-error)] flex-shrink-0 mt-0.5' />
+            <p className='text-sm text-[var(--status-error)]'>
               Per interventi urgenti mostreremo solo gli slot disponibili nelle prossime 48 ore.
             </p>
           </motion.div>
@@ -1330,7 +1330,7 @@ function Step2AppointmentDetails({
         <div className='flex items-center justify-between mb-3'>
           <Label
             htmlFor='description'
-            className='text-sm font-medium text-white'
+            className='text-sm font-medium text-[var(--text-on-brand)]'
           >
             Descrizione / Richiesta Cliente *
           </Label>
@@ -1338,13 +1338,13 @@ function Step2AppointmentDetails({
             onClick={toggleRecording}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${
               isRecording
-                ? 'bg-[var(--text-primary)]/10 text-white animate-pulse'
+                ? 'bg-[var(--text-primary)]/10 text-[var(--text-on-brand)] animate-pulse'
                 : 'bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-[var(--surface-active)]'
             }`}
           >
             {isRecording ? (
               <>
-                <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse' />
+                <div className='w-2 h-2 bg-[var(--status-error-subtle)]0 rounded-full animate-pulse' />
                 <Mic className='w-4 h-4' />
                 {recordingTime}s
               </>
@@ -1369,7 +1369,7 @@ function Step2AppointmentDetails({
                 aria-required='true'
                 aria-invalid={!!errors.description}
                 aria-describedby={errors.description ? 'description-error' : undefined}
-                className='min-h-[120px] rounded-2xl resize-none bg-[var(--surface-elevated)] border border-[var(--border-strong)] text-white placeholder-[var(--text-tertiary)] px-5 py-3 outline-none'
+                className='min-h-[120px] rounded-2xl resize-none bg-[var(--surface-elevated)] border border-[var(--border-strong)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] px-5 py-3 outline-none'
                 placeholder='Descrivi il problema o la richiesta del cliente...'
               />
               <div className='flex justify-between mt-2'>
@@ -1379,7 +1379,7 @@ function Step2AppointmentDetails({
                       id='description-error'
                       role='alert'
                       aria-live='assertive'
-                      className='text-red-500 text-sm'
+                      className='text-[var(--status-error)] text-sm'
                     >
                       {errors.description.message as string}
                     </p>
@@ -1400,8 +1400,8 @@ function Step2AppointmentDetails({
             className='mt-4 p-4 bg-[var(--surface-active)] rounded-xl'
           >
             <div className='flex items-center gap-2 mb-2'>
-              <Volume2 className='w-4 h-4 text-white' />
-              <span className='text-sm font-medium text-white'>
+              <Volume2 className='w-4 h-4 text-[var(--text-on-brand)]' />
+              <span className='text-sm font-medium text-[var(--text-on-brand)]'>
                 Nota vocale trascritta
               </span>
             </div>
@@ -1419,7 +1419,7 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='date'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Data *
               </Label>
@@ -1442,7 +1442,7 @@ function Step2AppointmentDetails({
                     id='date-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.date.message as string}
                   </p>
@@ -1459,7 +1459,7 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='time'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Ora *
               </Label>
@@ -1482,7 +1482,7 @@ function Step2AppointmentDetails({
                     id='time-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.time.message as string}
                   </p>
@@ -1496,10 +1496,10 @@ function Step2AppointmentDetails({
       {/* Duration */}
       <div>
         <div className='flex items-center justify-between mb-3'>
-          <Label className='text-sm font-medium text-white'>
+          <Label className='text-sm font-medium text-[var(--text-on-brand)]'>
             Durata Prevista
           </Label>
-          <span className='text-lg font-semibold text-white'>
+          <span className='text-lg font-semibold text-[var(--text-on-brand)]'>
             {watch('duration')} min
           </span>
         </div>
@@ -1532,14 +1532,14 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='technicianId'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Tecnico Assegnato
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='technicianId'
-                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
+                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
                 >
                   <SelectValue placeholder='Seleziona tecnico' />
                 </SelectTrigger>
@@ -1548,7 +1548,7 @@ function Step2AppointmentDetails({
                     technicians.map(tech => (
                       <SelectItem key={tech.id} value={tech.id}>
                         <div className='flex items-center gap-2'>
-                          <span className='w-6 h-6 rounded-full bg-[var(--brand)] text-white text-xs flex items-center justify-center'>
+                          <span className='w-6 h-6 rounded-full bg-[var(--brand)] text-[var(--text-on-brand)] text-xs flex items-center justify-center'>
                             {tech.name
                               .split(' ')
                               .map(n => n[0])
@@ -1581,14 +1581,14 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='liftPosition'
-                className='text-sm font-medium text-white mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Posto Rialzo
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='liftPosition'
-                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-white placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
+                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
                 >
                   <SelectValue placeholder='Seleziona posto' />
                 </SelectTrigger>
@@ -1625,7 +1625,7 @@ function Step3Notifications({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-white'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Promemoria e Notifiche
         </h2>
         <p className='text-[var(--text-tertiary)] text-sm'>
@@ -1637,7 +1637,7 @@ function Step3Notifications({
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-white'>Email</h3>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>Email</h3>
             <p className='text-sm text-[var(--text-tertiary)]'>
               Invia promemoria via email
             </p>
@@ -1667,7 +1667,7 @@ function Step3Notifications({
                       onClick={() => field.onChange(hours)}
                       className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
                           : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
@@ -1685,7 +1685,7 @@ function Step3Notifications({
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-white'>SMS</h3>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>SMS</h3>
             <p className='text-sm text-[var(--text-tertiary)]'>Invia promemoria via SMS</p>
           </div>
           <Controller
@@ -1713,7 +1713,7 @@ function Step3Notifications({
                       onClick={() => field.onChange(hours)}
                       className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
                           : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
@@ -1731,7 +1731,7 @@ function Step3Notifications({
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-white'>WhatsApp</h3>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>WhatsApp</h3>
             <p className='text-sm text-[var(--text-tertiary)]'>
               Invia promemoria via WhatsApp
             </p>
@@ -1754,7 +1754,7 @@ function Step3Notifications({
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-white'>Richiedi Conferma</h3>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>Richiedi Conferma</h3>
             <p className='text-sm text-[var(--text-tertiary)]'>
               Doppio opt-in per confermare l&apos;appuntamento
             </p>
@@ -1791,7 +1791,7 @@ function Step3Notifications({
                       onClick={() => field.onChange(channel)}
                       className={`px-4 py-2 rounded-xl border capitalize transition-colors ${
                         field.value === channel
-                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
                           : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
@@ -1833,7 +1833,7 @@ function Step4Capacity({
       <Dialog open={showWaitlistModal} onOpenChange={setShowWaitlistModal}>
         <DialogContent className='bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'>
           <DialogHeader>
-            <DialogTitle className='text-white'>Lista d&apos;Attesa</DialogTitle>
+            <DialogTitle className='text-[var(--text-on-brand)]'>Lista d&apos;Attesa</DialogTitle>
             <DialogDescription className='text-[var(--text-tertiary)]'>
               Il cliente verrà aggiunto alla lista d&apos;attesa per questa fascia oraria. Riceverà
               una notifica automatica appena si libera uno slot.
@@ -1843,7 +1843,7 @@ function Step4Capacity({
             <Button
               variant='outline'
               onClick={() => setShowWaitlistModal(false)}
-              className='rounded-full border-[var(--border-strong)] text-white hover:bg-white/5'
+              className='rounded-full border-[var(--border-strong)] text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
             >
               Annulla
             </Button>
@@ -1864,7 +1864,7 @@ function Step4Capacity({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-white'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Gestione Capacità Produttiva
         </h2>
         <p className='text-[var(--text-tertiary)] text-sm'>
@@ -1877,19 +1877,19 @@ function Step4Capacity({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className='bg-[var(--surface-elevated)] border border-red-500/30 rounded-2xl p-5 flex items-start gap-3'
+          className='bg-[var(--surface-elevated)] border border-[var(--status-error)]/30 rounded-2xl p-5 flex items-start gap-3'
         >
-          <AlertTriangle className='w-6 h-6 text-red-500 flex-shrink-0' />
+          <AlertTriangle className='w-6 h-6 text-[var(--status-error)] flex-shrink-0' />
           <div>
-            <h4 className='font-semibold text-red-400'>Nessuno slot disponibile</h4>
-            <p className='text-sm text-red-400/80 mt-1'>
+            <h4 className='font-semibold text-[var(--status-error)]'>Nessuno slot disponibile</h4>
+            <p className='text-sm text-[var(--status-error)]/80 mt-1'>
               Non ci sono slot liberi per la data selezionata. Puoi aggiungere il cliente alla lista
               d&apos;attesa.
             </p>
             <Button
               onClick={() => setShowWaitlistModal(true)}
               variant='outline'
-              className='mt-3 rounded-full border border-[var(--border-strong)] text-white hover:bg-white/5'
+              className='mt-3 rounded-full border border-[var(--border-strong)] text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
             >
               <Plus className='w-4 h-4 mr-2' />
               Aggiungi a Lista d&apos;Attesa
@@ -1901,12 +1901,12 @@ function Step4Capacity({
       {/* Available Slots */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <Label className='text-sm font-medium text-white'>
+          <Label className='text-sm font-medium text-[var(--text-on-brand)]'>
             Slot Disponibili Suggeriti
           </Label>
           <Badge
             variant='outline'
-            className='text-xs border-[var(--border-strong)] text-white'
+            className='text-xs border-[var(--border-strong)] text-[var(--text-on-brand)]'
           >
             {filteredSlots.length} opzioni
           </Badge>
@@ -1929,14 +1929,14 @@ function Step4Capacity({
                 <div>
                   <div>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold text-white'>
+                      <span className='font-semibold text-[var(--text-on-brand)]'>
                         {new Date(slot.start).toLocaleTimeString('it-IT', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </span>
                       {slot.isOptimal && (
-                        <Badge className='bg-green-500 text-white text-xs'>
+                        <Badge className='bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)] text-xs'>
                           <Star className='w-3 h-3 mr-1' />
                           Ottimale
                         </Badge>
@@ -1951,14 +1951,14 @@ function Step4Capacity({
                 </div>
                 {slot.capacityPercentage > 0 && (
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-white'>Capacità</div>
+                    <div className='text-sm font-medium text-[var(--text-on-brand)]'>Capacità</div>
                     <div
                       className={`text-sm ${
                         slot.capacityPercentage > 80
-                          ? 'text-red-500'
+                          ? 'text-[var(--status-error)]'
                           : slot.capacityPercentage > 50
-                            ? 'text-amber-500'
-                            : 'text-green-500'
+                            ? 'text-[var(--status-warning)]'
+                            : 'text-[var(--status-success)]'
                       }`}
                     >
                       {slot.capacityPercentage}%
@@ -1971,14 +1971,14 @@ function Step4Capacity({
         </div>
 
         {errors.selectedSlotId && (
-          <p className='text-red-500 text-sm mt-2'>{errors.selectedSlotId.message as string}</p>
+          <p className='text-[var(--status-error)] text-sm mt-2'>{errors.selectedSlotId.message as string}</p>
         )}
       </div>
 
       {/* Buffer Time */}
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='mb-4'>
-          <h3 className='font-semibold text-white'>Buffer Time</h3>
+          <h3 className='font-semibold text-[var(--text-on-brand)]'>Buffer Time</h3>
           <p className='text-sm text-[var(--text-tertiary)]'>
             Tempo di pulizia/setup dopo l&apos;appuntamento
           </p>
@@ -1995,7 +1995,7 @@ function Step4Capacity({
                   onClick={() => field.onChange(minutes)}
                   className={`flex-1 py-3 rounded-full border transition-colors ${
                     field.value === minutes
-                      ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-white'
+                      ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
                       : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                   }`}
                 >
@@ -2055,7 +2055,7 @@ function Step5AIFeatures({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-white'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Funzionalità AI e Smart
         </h2>
         <p className='text-[var(--text-tertiary)] text-sm'>
@@ -2066,11 +2066,11 @@ function Step5AIFeatures({
       {/* Preventive Services */}
       <div className='bg-[var(--surface-active)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center gap-2 mb-4'>
-          <Shield className='w-5 h-5 text-white' />
-          <h3 className='font-semibold text-white'>
+          <Shield className='w-5 h-5 text-[var(--text-on-brand)]' />
+          <h3 className='font-semibold text-[var(--text-on-brand)]'>
             Servizi Preventivi Suggeriti
           </h3>
-          <Badge className='bg-[var(--surface-active)] text-white border border-[var(--border-strong)]'>
+          <Badge className='bg-[var(--surface-active)] text-[var(--text-on-brand)] border border-[var(--border-strong)]'>
             AI Powered
           </Badge>
         </div>
@@ -2098,30 +2098,30 @@ function Step5AIFeatures({
                     }`}
                   >
                     {selectedServices.includes(service.id) && (
-                      <Check className='w-3 h-3 text-white' />
+                      <Check className='w-3 h-3 text-[var(--text-on-brand)]' />
                     )}
                   </div>
                   <div>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold text-white'>
+                      <span className='font-semibold text-[var(--text-on-brand)]'>
                         {service.title}
                       </span>
                       <Badge
                         className={`text-xs ${
                           service.priority === 'high'
-                            ? 'bg-[var(--text-primary)]/10 text-white border border-[var(--border-strong)]'
+                            ? 'bg-[var(--text-primary)]/10 text-[var(--text-on-brand)] border border-[var(--border-strong)]'
                             : service.priority === 'medium'
-                              ? 'bg-[var(--text-primary)]/5 text-white border border-[var(--border-strong)]'
-                              : 'bg-[var(--surface-active)] text-white border border-[var(--border-strong)]'
+                              ? 'bg-[var(--text-primary)]/5 text-[var(--text-on-brand)] border border-[var(--border-strong)]'
+                              : 'bg-[var(--surface-active)] text-[var(--text-on-brand)] border border-[var(--border-strong)]'
                         }`}
                       >
                         {service.priority}
                       </Badge>
                     </div>
-                    <p className='text-sm text-white mt-1'>
+                    <p className='text-sm text-[var(--text-on-brand)] mt-1'>
                       {service.reason}
                     </p>
-                    <div className='flex items-center gap-3 mt-2 text-xs text-white'>
+                    <div className='flex items-center gap-3 mt-2 text-xs text-[var(--text-on-brand)]'>
                       <span>Stima: €{service.estimatedCost}</span>
                       <span>•</span>
                       <span>Confidenza: {service.aiConfidence}%</span>
@@ -2129,7 +2129,7 @@ function Step5AIFeatures({
                   </div>
                 </div>
                 <div className='text-right'>
-                  <div className='font-semibold text-white'>
+                  <div className='font-semibold text-[var(--text-on-brand)]'>
                     €{service.estimatedCost}
                   </div>
                 </div>
@@ -2141,8 +2141,8 @@ function Step5AIFeatures({
 
       {/* Cost Summary */}
       <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
-        <h3 className='font-semibold text-white mb-4 flex items-center gap-2'>
-          <Zap className='w-5 h-5 text-white' />
+        <h3 className='font-semibold text-[var(--text-on-brand)] mb-4 flex items-center gap-2'>
+          <Zap className='w-5 h-5 text-[var(--text-on-brand)]' />
           Stima Costi
         </h3>
 
@@ -2151,7 +2151,7 @@ function Step5AIFeatures({
             <span className='text-[var(--text-tertiary)]'>
               Mano d&apos;opera ({watch('duration')} min @ €85/h)
             </span>
-            <span className='font-medium text-white'>
+            <span className='font-medium text-[var(--text-on-brand)]'>
               €{baseLaborCost.toFixed(2)}
             </span>
           </div>
@@ -2161,7 +2161,7 @@ function Step5AIFeatures({
               <span className='text-[var(--text-tertiary)]'>
                 Servizi preventivi ({selectedServices.length})
               </span>
-              <span className='font-medium text-white'>
+              <span className='font-medium text-[var(--text-on-brand)]'>
                 +€{preventiveCost.toFixed(2)}
               </span>
             </div>
@@ -2169,10 +2169,10 @@ function Step5AIFeatures({
 
           <div className='border-t border-[var(--border-strong)] pt-3'>
             <div className='flex items-center justify-between'>
-              <span className='font-semibold text-white'>
+              <span className='font-semibold text-[var(--text-on-brand)]'>
                 Totale Stimato
               </span>
-              <span className='text-2xl font-bold text-white'>
+              <span className='text-2xl font-bold text-[var(--text-on-brand)]'>
                 €{totalEstimatedCost.toFixed(2)}
               </span>
             </div>
@@ -2185,12 +2185,12 @@ function Step5AIFeatures({
 
       {/* AI Summary */}
       <div className='bg-[var(--surface-active)] rounded-2xl p-6 border border-[var(--border-strong)]'>
-        <h3 className='font-semibold text-white mb-4 flex items-center gap-2'>
-          <Sparkles className='w-5 h-5 text-white' />
+        <h3 className='font-semibold text-[var(--text-on-brand)] mb-4 flex items-center gap-2'>
+          <Sparkles className='w-5 h-5 text-[var(--text-on-brand)]' />
           Riepilogo AI
         </h3>
 
-        <div className='space-y-2 text-sm text-white'>
+        <div className='space-y-2 text-sm text-[var(--text-on-brand)]'>
           <p>
             <strong>Cliente:</strong> {watch('customerName')}
           </p>
@@ -2247,12 +2247,12 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring' }}
-          className='w-32 h-32 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-8'
+          className='w-32 h-32 rounded-full bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] flex items-center justify-center mb-8'
         >
-          <Check className='w-16 h-16 text-white' />
+          <Check className='w-16 h-16 text-[var(--text-on-brand)]' />
         </motion.div>
 
-        <h2 className='text-3xl font-bold text-white mb-4'>
+        <h2 className='text-3xl font-bold text-[var(--text-on-brand)] mb-4'>
           Prenotazione Creata!
         </h2>
         <p className='text-[var(--text-tertiary)] mb-8 max-w-md'>
@@ -2262,7 +2262,7 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
 
         <div className='bg-[var(--surface-active)] rounded-2xl p-6 mb-8'>
           <p className='text-sm text-[var(--text-tertiary)] mb-2'>Numero Prenotazione</p>
-          <p className='text-3xl font-mono font-bold text-white'>
+          <p className='text-3xl font-mono font-bold text-[var(--text-on-brand)]'>
             {bookingNumber}
           </p>
         </div>

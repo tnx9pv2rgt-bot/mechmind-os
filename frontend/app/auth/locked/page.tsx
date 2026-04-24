@@ -63,12 +63,12 @@ export default function LockedPage(): React.ReactElement {
         className="text-center space-y-6"
       >
         {/* Lock icon */}
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
           <span className="text-3xl text-[var(--text-secondary)]">⚠</span>
         </div>
 
         <div className="space-y-3">
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Account bloccato
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[340px] mx-auto" role="alert">
@@ -87,7 +87,7 @@ export default function LockedPage(): React.ReactElement {
               animate={{ scale: 1 }}
               className="inline-flex items-center justify-center rounded-2xl border border-[var(--border-strong)] px-8 py-4"
             >
-              <span className="text-[32px] font-semibold font-mono text-white tabular-nums">
+              <span className="text-[32px] font-semibold font-mono text-[var(--text-on-brand)] tabular-nums">
                 {formatTime(minutes, seconds)}
               </span>
             </motion.div>
@@ -117,7 +117,7 @@ export default function LockedPage(): React.ReactElement {
             </p>
             <Link
               href="/auth"
-              className="inline-flex items-center gap-1 min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors"
+              className="inline-flex items-center gap-1 min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors"
             >
               &larr; Torna al login
             </Link>

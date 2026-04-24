@@ -169,10 +169,10 @@ export default function NewVehiclePage(): React.ReactElement {
           ]} />
           <div className='flex items-center justify-between mt-2'>
             <div className='flex items-center gap-3'>
-              <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                <Car className='h-5 w-5 text-apple-blue' />
+              <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                <Car className='h-5 w-5 text-[var(--brand)]' />
               </div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuovo Veicolo</h1>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuovo Veicolo</h1>
             </div>
             <AppleButton
               variant='ghost'
@@ -196,62 +196,62 @@ export default function NewVehiclePage(): React.ReactElement {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>Dati Veicolo</h2>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Dati Veicolo</h2>
               </AppleCardHeader>
               <AppleCardContent>
                 <div className='space-y-4'>
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label htmlFor='targa' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Targa *</label>
+                      <label htmlFor='targa' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Targa *</label>
                       <Input id='targa' {...register('targa')} placeholder='AB123CD' />
-                      {errors.targa && <p className='text-footnote text-apple-red mt-1'>{errors.targa.message}</p>}
+                      {errors.targa && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.targa.message}</p>}
                     </div>
                     <div>
-                      <label htmlFor='vin' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>VIN</label>
+                      <label htmlFor='vin' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>VIN</label>
                       <Input id='vin' {...register('vin')} placeholder='17 caratteri' />
-                      {errors.vin && <p className='text-footnote text-apple-red mt-1'>{errors.vin.message}</p>}
+                      {errors.vin && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.vin.message}</p>}
                     </div>
                   </div>
 
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label htmlFor='marca' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Marca *</label>
+                      <label htmlFor='marca' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Marca *</label>
                       <Input id='marca' {...register('marca')} placeholder='es. Fiat' />
-                      {errors.marca && <p className='text-footnote text-apple-red mt-1'>{errors.marca.message}</p>}
+                      {errors.marca && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.marca.message}</p>}
                     </div>
                     <div>
-                      <label htmlFor='modello' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Modello *</label>
+                      <label htmlFor='modello' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Modello *</label>
                       <Input id='modello' {...register('modello')} placeholder='es. Panda' />
-                      {errors.modello && <p className='text-footnote text-apple-red mt-1'>{errors.modello.message}</p>}
+                      {errors.modello && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.modello.message}</p>}
                     </div>
                   </div>
 
                   <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                     <div>
-                      <label htmlFor='anno' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Anno *</label>
+                      <label htmlFor='anno' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Anno *</label>
                       <Input id='anno' type='number' {...register('anno')} />
-                      {errors.anno && <p className='text-footnote text-apple-red mt-1'>{errors.anno.message}</p>}
+                      {errors.anno && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.anno.message}</p>}
                     </div>
                     <div>
-                      <label htmlFor='colore' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Colore</label>
+                      <label htmlFor='colore' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Colore</label>
                       <Input id='colore' {...register('colore')} placeholder='es. Bianco' />
                     </div>
                     <div>
-                      <label htmlFor='carburante' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Carburante *</label>
-                      <select id='carburante' {...register('carburante')} className='h-10 w-full rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'>
+                      <label htmlFor='carburante' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Carburante *</label>
+                      <select id='carburante' {...register('carburante')} className='h-10 w-full rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'>
                         <option value=''>Seleziona...</option>
                         {FUEL_OPTIONS.map((f) => (
                           <option key={f} value={f}>{f}</option>
                         ))}
                       </select>
-                      {errors.carburante && <p className='text-footnote text-apple-red mt-1'>{errors.carburante.message}</p>}
+                      {errors.carburante && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.carburante.message}</p>}
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor='km' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Chilometraggio</label>
+                    <label htmlFor='km' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Chilometraggio</label>
                     <Input id='km' type='number' {...register('km')} placeholder='es. 85000' />
-                    {errors.km && <p className='text-footnote text-apple-red mt-1'>{errors.km.message}</p>}
+                    {errors.km && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.km.message}</p>}
                   </div>
                 </div>
               </AppleCardContent>
@@ -262,14 +262,14 @@ export default function NewVehiclePage(): React.ReactElement {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                  <User className='h-4 w-4 text-apple-gray' />
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                  <User className='h-4 w-4 text-[var(--text-tertiary)]' />
                   Proprietario *
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 <div className='relative'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <input
                     type='text'
                     value={customerSearch}
@@ -283,38 +283,38 @@ export default function NewVehiclePage(): React.ReactElement {
                     }}
                     onFocus={() => setShowDropdown(true)}
                     placeholder='Cerca per nome o email...'
-                    className='w-full h-10 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-secondary)] pl-10 pr-4 focus:outline-none'
+                    className='w-full h-10 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-secondary)] pl-10 pr-4 focus:outline-none'
                     autoComplete='off'
                   />
                   {searchLoading && (
-                    <Loader2 className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-apple-gray' />
+                    <Loader2 className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[var(--text-tertiary)]' />
                   )}
 
                   {/* Dropdown */}
                   {showDropdown && customerResults.length > 0 && !selectedCustomer && (
-                    <div className='absolute z-50 w-full mt-1 bg-white dark:bg-[var(--surface-elevated)] border border-apple-border/20 dark:border-[var(--border-default)] rounded-2xl shadow-apple max-h-48 overflow-y-auto'>
+                    <div className='absolute z-50 w-full mt-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)]/20 dark:border-[var(--border-default)] rounded-2xl shadow-apple max-h-48 overflow-y-auto'>
                       {customerResults.map((c) => (
                         <button
                           key={c.id}
                           type='button'
                           onClick={() => selectCustomer(c)}
-                          className='w-full text-left px-4 py-3 hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)] transition-colors min-h-[44px]'
+                          className='w-full text-left px-4 py-3 hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)] transition-colors min-h-[44px]'
                         >
-                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {[c.firstName, c.lastName].filter(Boolean).join(' ') || 'Cliente senza nome'}
                           </p>
-                          {c.email && <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{c.email}</p>}
+                          {c.email && <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{c.email}</p>}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 {selectedCustomer && (
-                  <p className='text-footnote text-apple-green mt-2'>
+                  <p className='text-footnote text-[var(--status-success)] mt-2'>
                     Proprietario selezionato: {[selectedCustomer.firstName, selectedCustomer.lastName].filter(Boolean).join(' ')}
                   </p>
                 )}
-                {errors.customerId && <p className='text-footnote text-apple-red mt-1'>{errors.customerId.message}</p>}
+                {errors.customerId && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.customerId.message}</p>}
               </AppleCardContent>
             </AppleCard>
           </motion.div>

@@ -102,10 +102,10 @@ export function MFAVerifyPageClient(): React.ReactElement {
         className="space-y-6"
       >
         <div className="text-center mb-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10 mb-4">
-            <span className="text-2xl text-white">🛡</span>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10 mb-4">
+            <span className="text-2xl text-[var(--text-on-brand)]">🛡</span>
           </div>
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Verifica a due fattori
           </h1>
           <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -193,7 +193,7 @@ export function MFAVerifyPageClient(): React.ReactElement {
               setCode('');
               setBackupCode('');
             }}
-            className="text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[44px]"
+            className="text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[44px]"
           >
             {useBackupCode ? 'Usa codice authenticator' : 'Usa codice di backup'}
           </button>

@@ -184,7 +184,7 @@ export function PerformanceMetrics({
     return (
       <button
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 right-4 z-50 bg-gray-800 text-white px-3 py-2 rounded-lg text-xs opacity-50 hover:opacity-100 transition-opacity"
+        className="fixed bottom-4 right-4 z-50 bg-[var(--surface-primary)] text-[var(--text-on-brand)] px-3 py-2 rounded-lg text-xs opacity-50 hover:opacity-100 transition-opacity"
       >
         Show Metrics
       </button>
@@ -193,10 +193,10 @@ export function PerformanceMetrics({
 
   // Rating colors
   const getRating = (value: number | null, thresholds: { good: number; poor: number }) => {
-    if (value === null) return 'text-gray-500'
-    if (value <= thresholds.good) return 'text-green-500'
-    if (value <= thresholds.poor) return 'text-yellow-500'
-    return 'text-red-500'
+    if (value === null) return 'text-[var(--text-secondary)]'
+    if (value <= thresholds.good) return 'text-[var(--status-success)]'
+    if (value <= thresholds.poor) return 'text-[var(--status-warning)]'
+    return 'text-[var(--status-error)]'
   }
 
   const formatMs = (value: number | null) => {
@@ -213,12 +213,12 @@ export function PerformanceMetrics({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-gray-900 text-white p-4 rounded-lg shadow-xl max-w-sm">
+    <div className="fixed bottom-4 right-4 z-50 bg-[var(--surface-primary)] text-[var(--text-on-brand)] p-4 rounded-lg shadow-xl max-w-sm">
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-bold text-sm">Performance Metrics</h3>
         <button
           onClick={() => setIsVisible(false)}
-          className="text-gray-400 hover:text-white text-xs"
+          className="text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] text-xs"
         >
           ✕
         </button>
@@ -259,7 +259,7 @@ export function PerformanceMetrics({
         
         {showDetails && (
           <>
-            <hr className="border-gray-700 my-2" />
+            <hr className="border-[var(--border-strong)] my-2" />
             <div className="flex justify-between">
               <span>FCP (First Contentful Paint)</span>
               <span className={getRating(metrics.fcpTime, { good: 1800, poor: 3000 })}>
@@ -290,7 +290,7 @@ export function PerformanceMetrics({
         )}
       </div>
       
-      <div className="mt-3 text-xs text-gray-500">
+      <div className="mt-3 text-xs text-[var(--text-tertiary)]">
         Press Shift+P to toggle
       </div>
     </div>

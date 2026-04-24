@@ -89,13 +89,13 @@ function OfflineBanner({ pendingChanges, onRetry }: OfflineBannerProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className={cn(
-        'bg-amber-50 border-b border-amber-200',
+        'bg-[var(--status-warning)]/5 border-b border-[var(--status-warning)]/30',
         'px-4 py-3 flex items-center justify-between'
       )}
     >
       <div className="flex items-center gap-2">
-        <WifiOff className="w-4 h-4 text-amber-600" />
-        <span className="text-sm text-amber-800">
+        <WifiOff className="w-4 h-4 text-[var(--status-warning)]" />
+        <span className="text-sm text-[var(--status-warning)]">
           Sei offline. {pendingChanges > 0 && (
             <span className="font-medium">
               {pendingChanges} modifiche in attesa.
@@ -107,7 +107,7 @@ function OfflineBanner({ pendingChanges, onRetry }: OfflineBannerProps) {
       {onRetry && (
         <button
           onClick={onRetry}
-          className="text-sm font-medium text-amber-700 hover:text-amber-900"
+          className="text-sm font-medium text-[var(--status-warning)] hover:text-[var(--status-warning)]"
         >
           Riprova
         </button>
@@ -134,7 +134,7 @@ function SavedToast({ visible }: SavedToastProps) {
           exit={{ opacity: 0, scale: 0.9 }}
           className={cn(
             'fixed top-4 right-4 z-50',
-            'bg-green-500 text-white',
+            'bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)]',
             'px-4 py-2 rounded-lg shadow-lg',
             'flex items-center gap-2'
           )}
@@ -249,7 +249,7 @@ export function RealtimeFormWrapper({
       {showHeader && (
         <div className="flex items-center justify-between px-4 py-3 border-b">
           {title && (
-            <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">{title}</h1>
           )}
           <SaveStatusIndicator 
             status={saveStatus}

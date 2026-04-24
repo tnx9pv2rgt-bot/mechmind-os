@@ -200,8 +200,8 @@ export default function CustomerImportPage(): React.ReactElement {
           />
           <div className='flex items-center justify-between mt-2'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Importa Clienti</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Importa Clienti</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Carica un file CSV per importare clienti in blocco
               </p>
             </div>
@@ -230,21 +230,21 @@ export default function CustomerImportPage(): React.ReactElement {
                   onClick={() => fileInputRef.current?.click()}
                   className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-colors ${
                     dragOver
-                      ? 'border-apple-blue bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-apple-border dark:border-[var(--border-default)] hover:border-apple-blue hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)]'
+                      ? 'border-[var(--brand)] bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]'
+                      : 'border-[var(--border-default)] dark:border-[var(--border-default)] hover:border-[var(--brand)] hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)]'
                   }`}
                   role='button'
                   tabIndex={0}
                   aria-label='Carica file CSV'
                 >
-                  <Upload className='h-12 w-12 mx-auto mb-4 text-apple-gray dark:text-[var(--text-secondary)]' />
-                  <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+                  <Upload className='h-12 w-12 mx-auto mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                     Trascina il file CSV qui
                   </h3>
-                  <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
                     oppure clicca per selezionare un file
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Formato supportato: .csv (separatore: virgola, punto e virgola o tabulazione)
                   </p>
                   <input
@@ -274,10 +274,10 @@ export default function CustomerImportPage(): React.ReactElement {
             <AppleCard>
               <AppleCardContent className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <FileSpreadsheet className='h-8 w-8 text-apple-green' />
+                  <FileSpreadsheet className='h-8 w-8 text-[var(--status-success)]' />
                   <div>
-                    <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{file.name}</p>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{file.name}</p>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       {csvRows.length} righe trovate - {csvHeaders.length} colonne
                     </p>
                   </div>
@@ -300,25 +300,25 @@ export default function CustomerImportPage(): React.ReactElement {
             {/* Column Mapping */}
             <AppleCard>
               <AppleCardContent>
-                <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                <h3 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                   Mappatura Colonne
                 </h3>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
                   Associa ogni colonna del CSV al campo corrispondente del cliente
                 </p>
                 <div className='space-y-3'>
                   {csvHeaders.map((header) => (
                     <div key={header} className='flex items-center gap-4'>
-                      <span className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] w-40 truncate'>
+                      <span className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] w-40 truncate'>
                         {header}
                       </span>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>&rarr;</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>&rarr;</span>
                       <select
                         value={columnMapping[header] || '_skip'}
                         onChange={(e) =>
                           setColumnMapping((prev) => ({ ...prev, [header]: e.target.value }))
                         }
-                        className='flex-1 h-10 px-3 rounded-lg border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-hover)] text-body text-apple-dark dark:text-[var(--text-primary)]'
+                        className='flex-1 h-10 px-3 rounded-lg border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                       >
                         {CUSTOMER_FIELDS.map((f) => (
                           <option key={f.key} value={f.key}>
@@ -335,17 +335,17 @@ export default function CustomerImportPage(): React.ReactElement {
             {/* Preview */}
             <AppleCard>
               <AppleCardContent>
-                <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-4'>
+                <h3 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-4'>
                   Anteprima (prime 5 righe)
                 </h3>
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
                     <thead>
-                      <tr className='border-b border-apple-border/20 dark:border-[var(--border-default)]'>
+                      <tr className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
                         {csvHeaders.map((h) => (
                           <th
                             key={h}
-                            className='px-3 py-2 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'
+                            className='px-3 py-2 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                           >
                             {h}
                           </th>
@@ -356,12 +356,12 @@ export default function CustomerImportPage(): React.ReactElement {
                       {csvRows.slice(0, 5).map((row, i) => (
                         <tr
                           key={i}
-                          className='border-b border-apple-border/10 dark:border-[var(--border-default)] last:border-0'
+                          className='border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)] last:border-0'
                         >
                           {csvHeaders.map((h) => (
                             <td
                               key={h}
-                              className='px-3 py-2 text-apple-dark dark:text-[var(--text-primary)] truncate max-w-[200px]'
+                              className='px-3 py-2 text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate max-w-[200px]'
                             >
                               {row[h] || '-'}
                             </td>
@@ -397,9 +397,9 @@ export default function CustomerImportPage(): React.ReactElement {
 
             {/* Progress Bar */}
             {isImporting && (
-              <div className='w-full bg-apple-light-gray dark:bg-[var(--surface-active)] rounded-full h-3'>
+              <div className='w-full bg-[var(--surface-secondary)] dark:bg-[var(--surface-active)] rounded-full h-3'>
                 <div
-                  className='bg-apple-blue h-3 rounded-full transition-all duration-300'
+                  className='bg-[var(--brand)] h-3 rounded-full transition-all duration-300'
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -417,23 +417,23 @@ export default function CustomerImportPage(): React.ReactElement {
             <AppleCard>
               <AppleCardContent className='text-center py-8'>
                 {importResult.errors === 0 ? (
-                  <CheckCircle className='h-16 w-16 text-apple-green mx-auto mb-4' />
+                  <CheckCircle className='h-16 w-16 text-[var(--status-success)] mx-auto mb-4' />
                 ) : importResult.imported === 0 ? (
-                  <XCircle className='h-16 w-16 text-apple-red mx-auto mb-4' />
+                  <XCircle className='h-16 w-16 text-[var(--status-error)] mx-auto mb-4' />
                 ) : (
-                  <AlertCircle className='h-16 w-16 text-apple-orange mx-auto mb-4' />
+                  <AlertCircle className='h-16 w-16 text-[var(--status-warning)] mx-auto mb-4' />
                 )}
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                   Importazione Completata
                 </h2>
                 <div className='flex items-center justify-center gap-8 mt-4'>
                   <div>
-                    <p className='text-title-1 font-bold text-apple-green' style={{ fontVariantNumeric: 'tabular-nums' }}>{importResult.imported}</p>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Importati</p>
+                    <p className='text-title-1 font-bold text-[var(--status-success)]' style={{ fontVariantNumeric: 'tabular-nums' }}>{importResult.imported}</p>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Importati</p>
                   </div>
                   <div>
-                    <p className='text-title-1 font-bold text-apple-red' style={{ fontVariantNumeric: 'tabular-nums' }}>{importResult.errors}</p>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Errori</p>
+                    <p className='text-title-1 font-bold text-[var(--status-error)]' style={{ fontVariantNumeric: 'tabular-nums' }}>{importResult.errors}</p>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Errori</p>
                   </div>
                 </div>
               </AppleCardContent>
@@ -442,12 +442,12 @@ export default function CustomerImportPage(): React.ReactElement {
             {importResult.details.length > 0 && (
               <AppleCard>
                 <AppleCardContent>
-                  <h3 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-3'>
+                  <h3 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3'>
                     Dettaglio Errori
                   </h3>
                   <div className='max-h-60 overflow-y-auto space-y-1'>
                     {importResult.details.map((detail, i) => (
-                      <p key={i} className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p key={i} className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         {detail}
                       </p>
                     ))}

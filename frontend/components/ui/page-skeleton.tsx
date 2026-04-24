@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 
 function Bone({ className, style }: { className?: string; style?: React.CSSProperties }): React.ReactElement {
-  return <div className={cn('bg-gray-200 dark:bg-[var(--surface-hover)] rounded animate-pulse', className)} style={style} />;
+  return <div className={cn('bg-[var(--border-default)] dark:bg-[var(--surface-hover)] rounded animate-pulse', className)} style={style} />;
 }
 
 /** Skeleton for a list/table page */
@@ -32,7 +32,7 @@ export function TablePageSkeleton(): React.ReactElement {
       <Bone className="h-10 w-full max-w-sm rounded-lg" />
       {/* Table */}
       <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] overflow-hidden">
-        <div className="bg-white/50 dark:bg-[var(--surface-primary)]/50 px-4 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
+        <div className="bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/50 px-4 py-3 border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
           <div className="flex gap-8">
             {Array.from({ length: 5 }).map((_, i) => (
               <Bone key={i} className="h-4 w-20" />

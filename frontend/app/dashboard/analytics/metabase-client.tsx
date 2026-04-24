@@ -133,12 +133,12 @@ async function fetchMetabaseConfig(): Promise<MetabaseConfigResponse> {
 function DashboardSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="h-8 bg-apple-light-gray/50 rounded-lg w-1/3" />
-      <div className="h-64 bg-apple-light-gray/50 rounded-2xl" />
+      <div className="h-8 bg-[var(--surface-secondary)]/50 rounded-lg w-1/3" />
+      <div className="h-64 bg-[var(--surface-secondary)]/50 rounded-2xl" />
       <div className="grid grid-cols-3 gap-4">
-        <div className="h-32 bg-apple-light-gray/50 rounded-xl" />
-        <div className="h-32 bg-apple-light-gray/50 rounded-xl" />
-        <div className="h-32 bg-apple-light-gray/50 rounded-xl" />
+        <div className="h-32 bg-[var(--surface-secondary)]/50 rounded-xl" />
+        <div className="h-32 bg-[var(--surface-secondary)]/50 rounded-xl" />
+        <div className="h-32 bg-[var(--surface-secondary)]/50 rounded-xl" />
       </div>
     </div>
   )
@@ -152,16 +152,16 @@ interface ErrorDisplayProps {
 
 function ErrorDisplay({ error, onRetry }: ErrorDisplayProps) {
   return (
-    <Alert variant="destructive" className="border-red-200 bg-red-50/50">
-      <AlertCircle className="h-5 w-5 text-red-500" />
-      <AlertTitle className="text-red-700">Errore caricamento dashboard</AlertTitle>
-      <AlertDescription className="text-red-600">
+    <Alert variant="destructive" className="border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]/50">
+      <AlertCircle className="h-5 w-5 text-[var(--status-error)]" />
+      <AlertTitle className="text-[var(--status-error)]">Errore caricamento dashboard</AlertTitle>
+      <AlertDescription className="text-[var(--status-error)]">
         <p className="mb-4">{error.message}</p>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={onRetry}
-          className="border-red-200 hover:bg-red-100"
+          className="border-[var(--status-error)]/30 hover:bg-[var(--status-error-subtle)]"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
           Riprova
@@ -174,10 +174,10 @@ function ErrorDisplay({ error, onRetry }: ErrorDisplayProps) {
 // Not configured display
 function NotConfiguredDisplay() {
   return (
-    <Alert className="border-amber-200 bg-amber-50/50">
-      <Settings className="h-5 w-5 text-amber-500" />
-      <AlertTitle className="text-amber-700">Metabase non configurato</AlertTitle>
-      <AlertDescription className="text-amber-600">
+    <Alert className="border-[var(--status-warning)]/30 bg-[var(--status-warning)]/5/50">
+      <Settings className="h-5 w-5 text-[var(--status-warning)]" />
+      <AlertTitle className="text-[var(--status-warning)]">Metabase non configurato</AlertTitle>
+      <AlertDescription className="text-[var(--status-warning)]">
         <p className="mb-4">
           Il sistema di Business Intelligence Metabase non è ancora configurato. 
           Contatta l&apos;amministratore per abilitare i dashboard analytics.
@@ -332,14 +332,14 @@ export function MetabaseClient({
           <AppleCardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center">
-                  <dashboardConfig.icon className="h-5 w-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center">
+                  <dashboardConfig.icon className="h-5 w-5 text-[var(--text-on-brand)]" />
                 </div>
                 <div>
-                  <h3 className="text-title-2 font-semibold text-apple-dark">
+                  <h3 className="text-title-2 font-semibold text-[var(--text-primary)]">
                     {dashboardConfig.name}
                   </h3>
-                  <p className="text-footnote text-apple-gray">
+                  <p className="text-footnote text-[var(--text-tertiary)]">
                     {dashboardConfig.description}
                   </p>
                 </div>
@@ -349,7 +349,7 @@ export function MetabaseClient({
                   variant="outline"
                   size="sm"
                   onClick={handleRefresh}
-                  className="border-apple-border hover:bg-apple-light-gray"
+                  className="border-[var(--border-default)] hover:bg-[var(--surface-secondary)]"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
@@ -357,7 +357,7 @@ export function MetabaseClient({
                   variant="outline"
                   size="sm"
                   onClick={handleOpenExternal}
-                  className="border-apple-border hover:bg-apple-light-gray"
+                  className="border-[var(--border-default)] hover:bg-[var(--surface-secondary)]"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
@@ -368,7 +368,7 @@ export function MetabaseClient({
                     const elem = document.getElementById('metabase-iframe-container')
                     elem?.requestFullscreen()
                   }}
-                  className="border-apple-border hover:bg-apple-light-gray"
+                  className="border-[var(--border-default)] hover:bg-[var(--surface-secondary)]"
                 >
                   <Maximize2 className="h-4 w-4" />
                 </Button>
@@ -385,18 +385,18 @@ export function MetabaseClient({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10 bg-white flex items-center justify-center rounded-2xl"
+              className="absolute inset-0 z-10 bg-[var(--surface-secondary)] flex items-center justify-center rounded-2xl"
             >
               <div className="text-center">
-                <Loader2 className="h-10 w-10 text-apple-blue animate-spin mx-auto mb-4" />
-                <p className="text-body text-apple-gray">Caricamento dashboard...</p>
+                <Loader2 className="h-10 w-10 text-[var(--brand)] animate-spin mx-auto mb-4" />
+                <p className="text-body text-[var(--text-tertiary)]">Caricamento dashboard...</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {loadError && (
-          <div className="absolute inset-0 z-10 bg-white flex items-center justify-center rounded-2xl">
+          <div className="absolute inset-0 z-10 bg-[var(--surface-secondary)] flex items-center justify-center rounded-2xl">
             <ErrorDisplay 
               error={new Error(loadError)} 
               onRetry={handleRefresh} 
@@ -404,7 +404,7 @@ export function MetabaseClient({
           </div>
         )}
 
-        <div className="rounded-2xl overflow-hidden bg-white">
+        <div className="rounded-2xl overflow-hidden bg-[var(--surface-secondary)]">
           {iframeUrl && (
             <iframe
               src={iframeUrl}
@@ -455,8 +455,8 @@ export function MetabaseDashboardSelector({
                   className={`
                     px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
                     ${isActive 
-                      ? 'bg-apple-blue text-white shadow-lg shadow-apple-blue/25' 
-                      : 'bg-apple-light-gray/50 text-apple-gray hover:bg-apple-light-gray hover:text-apple-dark'
+                      ? 'bg-[var(--brand)] text-[var(--text-on-brand)] shadow-lg shadow-apple-blue/25' 
+                      : 'bg-[var(--surface-secondary)]/50 text-[var(--text-tertiary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]'
                     }
                   `}
                 >

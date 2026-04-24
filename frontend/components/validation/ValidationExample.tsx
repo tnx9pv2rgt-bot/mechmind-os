@@ -57,10 +57,10 @@ export function ValidationExample() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           Validazione Multi-Layer
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <p className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)] mt-2">
           Esempio di validazione in stile Stripe con verifica real-time via API esterne.
         </p>
       </div>
@@ -110,7 +110,7 @@ export function ValidationExample() {
         <motion.button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg
+          className="w-full py-3 px-4 bg-[var(--status-info)] hover:bg-[var(--status-info)] text-[var(--text-on-brand)] font-medium rounded-lg
                      transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                      flex items-center justify-center gap-2"
           whileHover={{ scale: 1.01 }}
@@ -118,7 +118,7 @@ export function ValidationExample() {
         >
           {isSubmitting ? (
             <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[var(--border-default)]/30 border-t-white rounded-full animate-spin" />
               Validazione in corso...
             </>
           ) : (
@@ -133,19 +133,19 @@ export function ValidationExample() {
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 rounded-lg flex items-start gap-3 ${
               submitResult.success
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] border border-[var(--status-success)]/30 dark:border-[var(--status-success)]'
+                : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]'
             }`}
           >
             {submitResult.success ? (
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-[var(--status-success)] dark:text-[var(--status-success)] flex-shrink-0 mt-0.5" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-[var(--status-error)] dark:text-[var(--status-error)] flex-shrink-0 mt-0.5" />
             )}
             <p className={`text-sm ${
               submitResult.success
-                ? 'text-green-800 dark:text-green-200'
-                : 'text-red-800 dark:text-red-200'
+                ? 'text-[var(--status-success)] dark:text-[var(--status-success)]'
+                : 'text-[var(--status-error)] dark:text-[var(--status-error)]'
             }`}>
               {submitResult.message}
             </p>
@@ -154,45 +154,45 @@ export function ValidationExample() {
       </form>
 
       {/* Debug Info */}
-      <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+      <div className="mt-8 p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] rounded-lg">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3">
           Stato Validazione (Debug)
         </h3>
         <div className="space-y-2 text-xs font-mono">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Email valida:</span>
-            <span className={emailValidation?.valid ? 'text-green-600' : 'text-red-600'}>
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Email valida:</span>
+            <span className={emailValidation?.valid ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}>
               {emailValidation?.valid ? 'Sì' : 'No'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Email deliverable:</span>
-            <span className="text-gray-800 dark:text-gray-200">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Email deliverable:</span>
+            <span className="text-[var(--text-primary)] dark:text-[var(--text-tertiary)]">
               {emailValidation?.deliverable || 'unknown'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">VAT valida:</span>
-            <span className={vatValidation?.valid ? 'text-green-600' : 'text-red-600'}>
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">VAT valida:</span>
+            <span className={vatValidation?.valid ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}>
               {vatValidation?.valid ? 'Sì' : 'No'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">VAT Luhn valid:</span>
-            <span className={vatValidation?.luhnValid ? 'text-green-600' : 'text-red-600'}>
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">VAT Luhn valid:</span>
+            <span className={vatValidation?.luhnValid ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}>
               {vatValidation?.luhnValid ? 'Sì' : 'No'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Indirizzo selezionato:</span>
-            <span className="text-gray-800 dark:text-gray-200">
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Indirizzo selezionato:</span>
+            <span className="text-[var(--text-primary)] dark:text-[var(--text-tertiary)]">
               {addressDetails ? 'Sì' : 'No'}
             </span>
           </div>
           {companyData?.name && (
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-gray-600 dark:text-gray-400">Azienda:</span>
-              <span className="text-gray-800 dark:text-gray-200 ml-2">{companyData.name}</span>
+            <div className="pt-2 border-t border-[var(--border-default)] dark:border-[var(--border-default)]">
+              <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Azienda:</span>
+              <span className="text-[var(--text-primary)] dark:text-[var(--text-tertiary)] ml-2">{companyData.name}</span>
             </div>
           )}
         </div>

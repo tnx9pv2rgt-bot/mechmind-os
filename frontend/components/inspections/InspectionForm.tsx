@@ -476,7 +476,7 @@ export function InspectionForm({
         <div className='mb-8 space-y-4'>
           <div className='flex items-center justify-between'>
             <div>
-              <h1 className='text-title-2 font-semibold text-white'>Ispezione Veicolo</h1>
+              <h1 className='text-title-2 font-semibold text-[var(--text-on-brand)]'>Ispezione Veicolo</h1>
               <p className='text-body text-[var(--text-tertiary)]'>
                 Passo {currentStep} di {totalSteps}: {STEP_LABELS[currentStep - 1]}
               </p>
@@ -492,9 +492,9 @@ export function InspectionForm({
                 key={label}
                 className={`hidden sm:block ${
                   index + 1 === currentStep
-                    ? 'font-medium text-white'
+                    ? 'font-medium text-[var(--text-on-brand)]'
                     : index + 1 < currentStep
-                      ? 'text-white'
+                      ? 'text-[var(--text-on-brand)]'
                       : ''
                 }`}
               >
@@ -545,7 +545,7 @@ export function InspectionForm({
                 type='button'
                 onClick={handleSaveDraft}
                 disabled={isLoading}
-                className='gap-2 rounded-full h-[52px] border border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'
+                className='gap-2 rounded-full h-[52px] border border-[var(--border-strong)] bg-transparent text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
               >
                 <Save className='h-4 w-4' />
                 Salva Bozza
@@ -557,7 +557,7 @@ export function InspectionForm({
                     type='button'
                     onClick={handleBack}
                     disabled={isLoading}
-                    className='gap-2 rounded-full h-[52px] border border-[var(--border-strong)] bg-transparent text-white hover:bg-white/5'
+                    className='gap-2 rounded-full h-[52px] border border-[var(--border-strong)] bg-transparent text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
                   >
                     <ChevronLeft className='h-4 w-4' />
                     Indietro
@@ -569,7 +569,7 @@ export function InspectionForm({
                     type='button'
                     onClick={handleNext}
                     disabled={isLoading}
-                    className='gap-2 rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
+                    className='gap-2 rounded-full h-[52px] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
                   >
                     Avanti
                     <ChevronRight className='h-4 w-4' />
@@ -578,7 +578,7 @@ export function InspectionForm({
                   <Button
                     type='submit'
                     disabled={isLoading}
-                    className='gap-2 rounded-full h-[52px] bg-white text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
+                    className='gap-2 rounded-full h-[52px] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:bg-[var(--surface-active)]'
                   >
                     <Send className='h-4 w-4' />
                     Invia Ispezione
@@ -623,7 +623,7 @@ function StepHeaderInfo({
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Car className='h-5 w-5 text-white' />
+            <Car className='h-5 w-5 text-[var(--text-on-brand)]' />
             Selezione Veicolo
           </CardTitle>
           <CardDescription>Cerca per VIN, targa o nome veicolo</CardDescription>
@@ -669,7 +669,7 @@ function StepHeaderInfo({
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Activity className='h-5 w-5 text-white' />
+            <Activity className='h-5 w-5 text-[var(--text-on-brand)]' />
             Dettagli Ispezione
           </CardTitle>
         </CardHeader>
@@ -732,7 +732,7 @@ function StepHeaderInfo({
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <MapPin className='h-5 w-5 text-white' />
+            <MapPin className='h-5 w-5 text-[var(--text-on-brand)]' />
             Posizione
           </CardTitle>
           <CardDescription>Le coordinate GPS vengono acquisite automaticamente</CardDescription>
@@ -810,7 +810,7 @@ function StepExteriorInspection({
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Camera className='h-5 w-5 text-white' />
+            <Camera className='h-5 w-5 text-[var(--text-on-brand)]' />
             Documentazione Fotografica
           </CardTitle>
           <CardDescription>
@@ -819,7 +819,7 @@ function StepExteriorInspection({
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          <div className='border-2 border-dashed border-[var(--border-strong)] rounded-2xl p-8 text-center hover:border-white/30 transition-colors'>
+          <div className='border-2 border-dashed border-[var(--border-strong)] rounded-2xl p-8 text-center hover:border-[var(--border-default)]/30 transition-colors'>
             <Upload className='h-8 w-8 mx-auto mb-4 text-[var(--text-tertiary)]' />
             <p className='text-sm text-[var(--text-tertiary)] mb-2'>Trascina le foto o clicca per sfogliare</p>
             <Input
@@ -847,12 +847,12 @@ function StepExteriorInspection({
                   <button
                     type='button'
                     onClick={() => removePhoto(index)}
-                    className='absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity'
+                    className='absolute top-2 right-2 p-1 bg-[var(--status-error-subtle)]0 text-[var(--text-on-brand)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity'
                   >
                     <X className='h-4 w-4' />
                   </button>
                   {form.watch('exterior.photos')[index]?.aiDetectedDamage && (
-                    <Badge className='absolute bottom-2 left-2 bg-orange-500'>
+                    <Badge className='absolute bottom-2 left-2 bg-[var(--status-warning)]/50'>
                       Danno Rilevato da AI
                     </Badge>
                   )}
@@ -866,7 +866,7 @@ function StepExteriorInspection({
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Video className='h-5 w-5 text-white' />
+            <Video className='h-5 w-5 text-[var(--text-on-brand)]' />
             Video 360° Walkaround
           </CardTitle>
         </CardHeader>
@@ -881,9 +881,9 @@ function StepExteriorInspection({
             {isRecordingVideo ? 'Ferma Registrazione' : 'Avvia Registrazione 360°'}
           </Button>
           {isRecordingVideo && (
-            <div className='mt-4 p-4 bg-red-50 rounded-lg border border-red-200'>
-              <p className='text-sm text-red-600 flex items-center gap-2'>
-                <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse' />
+            <div className='mt-4 p-4 bg-[var(--status-error-subtle)] rounded-lg border border-[var(--status-error)]/30'>
+              <p className='text-sm text-[var(--status-error)] flex items-center gap-2'>
+                <div className='w-2 h-2 bg-[var(--status-error-subtle)]0 rounded-full animate-pulse' />
                 Registrazione in corso... Cammina lentamente intorno al veicolo.
               </p>
             </div>
@@ -947,7 +947,7 @@ function StepInteriorInspection() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Gauge className='h-5 w-5 text-white' />
+            <Gauge className='h-5 w-5 text-[var(--text-on-brand)]' />
             Lettura Contachilometri
           </CardTitle>
         </CardHeader>
@@ -1074,9 +1074,9 @@ function StepSensoryInspection({ moldRiskLevel }: { moldRiskLevel: MoldRiskLevel
   const smokeDetected = form.watch('sensory.odors.smokeDetected');
 
   const moldRiskColors: Record<MoldRiskLevel, string> = {
-    [MoldRiskLevel.LOW]: 'bg-green-600 text-white',
-    [MoldRiskLevel.MEDIUM]: 'bg-orange-500 text-white',
-    [MoldRiskLevel.HIGH]: 'bg-red-600 text-white',
+    [MoldRiskLevel.LOW]: 'bg-[var(--status-success)] text-[var(--text-on-brand)]',
+    [MoldRiskLevel.MEDIUM]: 'bg-[var(--status-warning)]/50 text-[var(--text-on-brand)]',
+    [MoldRiskLevel.HIGH]: 'bg-[var(--status-error)] text-[var(--text-on-brand)]',
   };
 
   const moldRiskMessages: Record<MoldRiskLevel, string> = {
@@ -1105,7 +1105,7 @@ function StepSensoryInspection({ moldRiskLevel }: { moldRiskLevel: MoldRiskLevel
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Droplets className='h-5 w-5 text-white' />
+            <Droplets className='h-5 w-5 text-[var(--text-on-brand)]' />
             Misurazione Umidit&agrave;
           </CardTitle>
         </CardHeader>
@@ -1142,7 +1142,7 @@ function StepSensoryInspection({ moldRiskLevel }: { moldRiskLevel: MoldRiskLevel
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Wind className='h-5 w-5 text-white' />
+            <Wind className='h-5 w-5 text-[var(--text-on-brand)]' />
             Rilevamento Odori
           </CardTitle>
         </CardHeader>
@@ -1244,7 +1244,7 @@ function StepSensoryInspection({ moldRiskLevel }: { moldRiskLevel: MoldRiskLevel
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Thermometer className='h-5 w-5 text-white' />
+            <Thermometer className='h-5 w-5 text-[var(--text-on-brand)]' />
             Sistema AC
           </CardTitle>
         </CardHeader>
@@ -1352,7 +1352,7 @@ function StepEngineMechanical() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Droplets className='h-5 w-5 text-white' />
+            <Droplets className='h-5 w-5 text-[var(--text-on-brand)]' />
             Livelli Fluidi
           </CardTitle>
         </CardHeader>
@@ -1388,7 +1388,7 @@ function StepEngineMechanical() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Wrench className='h-5 w-5 text-white' />
+            <Wrench className='h-5 w-5 text-[var(--text-on-brand)]' />
             Condizione Cinghie
           </CardTitle>
         </CardHeader>
@@ -1444,7 +1444,7 @@ function StepEngineMechanical() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Battery className='h-5 w-5 text-white' />
+            <Battery className='h-5 w-5 text-[var(--text-on-brand)]' />
             Test Batteria
           </CardTitle>
         </CardHeader>
@@ -1542,7 +1542,7 @@ function StepTiresSuspension() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Circle className='h-5 w-5 text-white' />
+            <Circle className='h-5 w-5 text-[var(--text-on-brand)]' />
             Ispezione Pneumatici
           </CardTitle>
         </CardHeader>
@@ -1618,7 +1618,7 @@ function StepTiresSuspension() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Activity className='h-5 w-5 text-white' />
+            <Activity className='h-5 w-5 text-[var(--text-on-brand)]' />
             Controllo Sospensioni
           </CardTitle>
         </CardHeader>
@@ -1757,10 +1757,10 @@ function StepElectronicsOBD() {
   const obdCodes = form.watch('electronics.obdCodes') || [];
 
   const severityColors = {
-    info: 'bg-blue-100 text-blue-800',
-    minor: 'bg-yellow-100 text-yellow-800',
-    major: 'bg-orange-100 text-orange-800',
-    critical: 'bg-red-100 text-red-800',
+    info: 'bg-[var(--status-info-subtle)] text-[var(--status-info)]',
+    minor: 'bg-[var(--status-warning)]/20 text-[var(--status-warning)]',
+    major: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]',
+    critical: 'bg-[var(--status-error-subtle)] text-[var(--status-error)]',
   };
 
   return (
@@ -1768,7 +1768,7 @@ function StepElectronicsOBD() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Cpu className='h-5 w-5 text-white' />
+            <Cpu className='h-5 w-5 text-[var(--text-on-brand)]' />
             Codici Diagnostici OBD-II
           </CardTitle>
           <CardDescription>
@@ -1840,7 +1840,7 @@ function StepElectronicsOBD() {
             </div>
           ) : (
             <div className='text-center py-8 text-[var(--text-tertiary)]'>
-              <CheckCircle className='h-8 w-8 mx-auto mb-2 text-green-400' />
+              <CheckCircle className='h-8 w-8 mx-auto mb-2 text-[var(--status-success)]' />
               <p>Nessun codice OBD registrato</p>
               <p className='text-sm'>I sistemi del veicolo sembrano funzionare normalmente</p>
             </div>
@@ -1867,7 +1867,7 @@ function StepElectronicsOBD() {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Zap className='h-5 w-5 text-white' />
+            <Zap className='h-5 w-5 text-[var(--text-on-brand)]' />
             Controllo Elettronica
           </CardTitle>
         </CardHeader>

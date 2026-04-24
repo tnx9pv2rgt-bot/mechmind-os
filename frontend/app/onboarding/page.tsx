@@ -33,7 +33,7 @@ const stepVariants = {
 
 const btnPrimary = [
   'flex h-[44px] items-center justify-center gap-1 rounded-full',
-  'bg-white px-6 text-[14px] font-medium text-[var(--text-primary)]',
+  'bg-[var(--surface-secondary)] px-6 text-[14px] font-medium text-[var(--text-primary)]',
   'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:cursor-not-allowed disabled:opacity-50',
 ].join(' ');
@@ -41,7 +41,7 @@ const btnPrimary = [
 const btnSecondary = [
   'flex h-[44px] items-center justify-center gap-1 rounded-full',
   'border border-[var(--text-tertiary)] px-5 text-[14px] font-medium text-[var(--text-secondary)]',
-  'transition-colors hover:border-[var(--text-tertiary)] hover:text-white',
+  'transition-colors hover:border-[var(--text-tertiary)] hover:text-[var(--text-on-brand)]',
 ].join(' ');
 
 export default function OnboardingPage(): React.ReactElement {
@@ -109,7 +109,7 @@ export default function OnboardingPage(): React.ReactElement {
               <div className="flex items-center">
                 <button
                   onClick={handleSkip}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-white/10 min-h-[44px] min-w-[44px]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)]/10 min-h-[44px] min-w-[44px]"
                   aria-label="Salta"
                   type="button"
                 >
@@ -123,7 +123,7 @@ export default function OnboardingPage(): React.ReactElement {
               <div className="flex flex-col items-stretch gap-5 px-6 pb-4">
                 {/* Title */}
                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-                  <h1 className="text-2xl font-normal text-white">
+                  <h1 className="text-2xl font-normal text-[var(--text-on-brand)]">
                     Raccontaci della tua officina
                   </h1>
                   <p className="mt-1 text-[14px] text-[var(--text-secondary)]">

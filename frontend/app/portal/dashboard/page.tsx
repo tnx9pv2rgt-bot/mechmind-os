@@ -95,7 +95,7 @@ export default function PortalDashboardPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalLayout>
@@ -106,10 +106,10 @@ export default function PortalDashboardPage() {
     return (
       <PortalLayout customer={customer || undefined}>
         <div className='p-8 text-center'>
-          <p className='text-apple-red mb-4'>{error}</p>
+          <p className='text-[var(--status-error)] mb-4'>{error}</p>
           <button
             onClick={() => mutate()}
-            className='text-apple-blue hover:underline'
+            className='text-[var(--brand)] hover:underline'
           >
             Riprova
           </button>
@@ -146,10 +146,10 @@ export default function PortalDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className='mb-6 sm:mb-8'
         >
-          <h1 className='text-2xl sm:text-3xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+          <h1 className='text-2xl sm:text-3xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             {welcomeMessage}
           </h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
             Ecco cosa c&apos;è di nuovo con i tuoi veicoli
           </p>
         </motion.div>
@@ -165,12 +165,12 @@ export default function PortalDashboardPage() {
           <AppleCard>
             <AppleCardContent className='p-4'>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center'>
-                  <Calendar className='h-5 w-5 text-apple-blue' />
+                <div className='w-10 h-10 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] flex items-center justify-center'>
+                  <Calendar className='h-5 w-5 text-[var(--brand)]' />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Prossimo appuntamento</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)] truncate'>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] truncate'>Prossimo appuntamento</p>
+                  <p className='font-semibold text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate'>
                     {nextBookingDate || 'Nessuno'}
                   </p>
                 </div>
@@ -182,12 +182,12 @@ export default function PortalDashboardPage() {
           <AppleCard>
             <AppleCardContent className='p-4'>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center'>
-                  <Wrench className='h-5 w-5 text-apple-orange' />
+                <div className='w-10 h-10 rounded-xl bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20 flex items-center justify-center'>
+                  <Wrench className='h-5 w-5 text-[var(--status-warning)]' />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Riparazioni in corso</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] truncate'>Riparazioni in corso</p>
+                  <p className='font-semibold text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {activeRepairsCount}
                   </p>
                 </div>
@@ -201,16 +201,16 @@ export default function PortalDashboardPage() {
               <div className='flex items-center gap-3'>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                   unpaidInvoicesCount > 0
-                    ? 'bg-red-50 dark:bg-red-900/20'
-                    : 'bg-green-50 dark:bg-green-900/20'
+                    ? 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
+                    : 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]'
                 }`}>
                   <Euro className={`h-5 w-5 ${
-                    unpaidInvoicesCount > 0 ? 'text-apple-red' : 'text-apple-green'
+                    unpaidInvoicesCount > 0 ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]'
                   }`} />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Fatture da pagare</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] truncate'>Fatture da pagare</p>
+                  <p className='font-semibold text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {unpaidInvoicesCount > 0
                       ? `${unpaidInvoicesCount} (${unpaidInvoicesTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })})`
                       : 'Nessuna'}
@@ -226,16 +226,16 @@ export default function PortalDashboardPage() {
               <div className='flex items-center gap-3'>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                   overdueMaintenanceCount > 0
-                    ? 'bg-red-50 dark:bg-red-900/20'
-                    : 'bg-green-50 dark:bg-green-900/20'
+                    ? 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
+                    : 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]'
                 }`}>
                   <AlertCircle className={`h-5 w-5 ${
-                    overdueMaintenanceCount > 0 ? 'text-apple-red' : 'text-apple-green'
+                    overdueMaintenanceCount > 0 ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]'
                   }`} />
                 </div>
                 <div className='min-w-0'>
-                  <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)] truncate'>Manutenzione scaduta</p>
-                  <p className='font-semibold text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] truncate'>Manutenzione scaduta</p>
+                  <p className='font-semibold text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {overdueMaintenanceCount > 0 ? `${overdueMaintenanceCount} scadut${overdueMaintenanceCount === 1 ? 'a' : 'e'}` : 'Tutto ok'}
                   </p>
                 </div>
@@ -252,7 +252,7 @@ export default function PortalDashboardPage() {
           className='grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 sm:mb-8'
         >
           <Link href='/portal/bookings/new'>
-            <div className='p-4 bg-apple-blue text-white rounded-2xl hover:shadow-apple-lg transition-all cursor-pointer group'>
+            <div className='p-4 bg-[var(--brand)] text-[var(--text-on-brand)] rounded-2xl hover:shadow-apple-lg transition-all cursor-pointer group'>
               <Calendar className='h-6 w-6 mb-2 opacity-80' />
               <p className='font-medium text-sm'>Prenota</p>
               <p className='text-xs opacity-70'>Appuntamento</p>
@@ -261,31 +261,31 @@ export default function PortalDashboardPage() {
           </Link>
 
           <Link href='/portal/documents'>
-            <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
-              <FileText className='h-6 w-6 mb-2 text-apple-blue' />
-              <p className='font-medium text-sm text-apple-dark dark:text-[var(--text-primary)]'>Documenti</p>
-              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Fatture e report</p>
-              <ArrowRight className='h-4 w-4 mt-2 text-apple-blue opacity-0 group-hover:opacity-100 transition-opacity' />
+            <div className='p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
+              <FileText className='h-6 w-6 mb-2 text-[var(--brand)]' />
+              <p className='font-medium text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Documenti</p>
+              <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Fatture e report</p>
+              <ArrowRight className='h-4 w-4 mt-2 text-[var(--brand)] opacity-0 group-hover:opacity-100 transition-opacity' />
             </div>
           </Link>
 
           <Link href='/portal/maintenance'>
-            <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
-              <Wrench className='h-6 w-6 mb-2 text-apple-orange' />
-              <p className='font-medium text-sm text-apple-dark dark:text-[var(--text-primary)]'>
+            <div className='p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
+              <Wrench className='h-6 w-6 mb-2 text-[var(--status-warning)]' />
+              <p className='font-medium text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Manutenzione
               </p>
-              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Scadenze</p>
-              <ArrowRight className='h-4 w-4 mt-2 text-apple-orange opacity-0 group-hover:opacity-100 transition-opacity' />
+              <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Scadenze</p>
+              <ArrowRight className='h-4 w-4 mt-2 text-[var(--status-warning)] opacity-0 group-hover:opacity-100 transition-opacity' />
             </div>
           </Link>
 
           <a href='tel:+390212345678' className='block'>
-            <div className='p-4 bg-white dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
-              <Phone className='h-6 w-6 mb-2 text-apple-green' />
-              <p className='font-medium text-sm text-apple-dark dark:text-[var(--text-primary)]'>Contatta</p>
-              <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Assistenza</p>
-              <ArrowRight className='h-4 w-4 mt-2 text-apple-green opacity-0 group-hover:opacity-100 transition-opacity' />
+            <div className='p-4 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-apple hover:shadow-apple-hover transition-all cursor-pointer group'>
+              <Phone className='h-6 w-6 mb-2 text-[var(--status-success)]' />
+              <p className='font-medium text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Contatta</p>
+              <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Assistenza</p>
+              <ArrowRight className='h-4 w-4 mt-2 text-[var(--status-success)] opacity-0 group-hover:opacity-100 transition-opacity' />
             </div>
           </a>
         </motion.div>
@@ -302,12 +302,12 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.2 }}
               >
                 <div className='flex items-center justify-between mb-3'>
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Prossima Prenotazione
                   </h2>
                   <Link
                     href='/portal/bookings'
-                    className='text-sm text-apple-blue hover:underline flex items-center gap-1'
+                    className='text-sm text-[var(--brand)] hover:underline flex items-center gap-1'
                   >
                     Tutte <ChevronRight className='h-4 w-4' />
                   </Link>
@@ -324,12 +324,12 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.3 }}
               >
                 <div className='flex items-center justify-between mb-3'>
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Manutenzione in Scadenza
                   </h2>
                   <Link
                     href='/portal/maintenance'
-                    className='text-sm text-apple-blue hover:underline flex items-center gap-1'
+                    className='text-sm text-[var(--brand)] hover:underline flex items-center gap-1'
                   >
                     Tutte <ChevronRight className='h-4 w-4' />
                   </Link>
@@ -346,12 +346,12 @@ export default function PortalDashboardPage() {
                 transition={{ delay: 0.4 }}
               >
                 <div className='flex items-center justify-between mb-3'>
-                  <h2 className='text-lg font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Ultima Ispezione
                   </h2>
                   <Link
                     href='/portal/inspections'
-                    className='text-sm text-apple-blue hover:underline flex items-center gap-1'
+                    className='text-sm text-[var(--brand)] hover:underline flex items-center gap-1'
                   >
                     Tutte <ChevronRight className='h-4 w-4' />
                   </Link>
@@ -373,14 +373,14 @@ export default function PortalDashboardPage() {
                 <AppleCardContent className='p-5'>
                   <div className='flex items-center justify-between mb-4'>
                     <div className='flex items-center gap-3'>
-                      <div className='w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center'>
-                        <Shield className='h-6 w-6 text-apple-green' />
+                      <div className='w-12 h-12 rounded-2xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] flex items-center justify-center'>
+                        <Shield className='h-6 w-6 text-[var(--status-success)]' />
                       </div>
                       <div>
-                        <h2 className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <h2 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Garanzie Attive
                         </h2>
-                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {data.warrantyStatus.total} polizze totali
                         </p>
                       </div>
@@ -393,23 +393,23 @@ export default function PortalDashboardPage() {
                   </div>
 
                   <div className='grid grid-cols-3 gap-3'>
-                    <div className='text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl'>
-                      <p className='text-2xl font-bold text-apple-green'>
+                    <div className='text-center p-3 bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] rounded-xl'>
+                      <p className='text-2xl font-bold text-[var(--status-success)]'>
                         {data.warrantyStatus.active}
                       </p>
-                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Attive</p>
+                      <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Attive</p>
                     </div>
-                    <div className='text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl'>
-                      <p className='text-2xl font-bold text-apple-orange'>
+                    <div className='text-center p-3 bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/20 rounded-xl'>
+                      <p className='text-2xl font-bold text-[var(--status-warning)]'>
                         {data.warrantyStatus.expiringSoon}
                       </p>
-                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>In scadenza</p>
+                      <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>In scadenza</p>
                     </div>
-                    <div className='text-center p-3 bg-gray-100 dark:bg-[var(--surface-hover)] rounded-xl'>
-                      <p className='text-2xl font-bold text-apple-gray'>
+                    <div className='text-center p-3 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-xl'>
+                      <p className='text-2xl font-bold text-[var(--text-tertiary)]'>
                         {data.warrantyStatus.expired}
                       </p>
-                      <p className='text-xs text-apple-gray dark:text-[var(--text-secondary)]'>Scadute</p>
+                      <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Scadute</p>
                     </div>
                   </div>
                 </AppleCardContent>
@@ -426,14 +426,14 @@ export default function PortalDashboardPage() {
                 <AppleCardContent className='p-5'>
                   <div className='flex items-center justify-between mb-4'>
                     <div className='flex items-center gap-3'>
-                      <div className='w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center'>
-                        <Car className='h-6 w-6 text-apple-blue' />
+                      <div className='w-12 h-12 rounded-2xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] flex items-center justify-center'>
+                        <Car className='h-6 w-6 text-[var(--brand)]' />
                       </div>
                       <div>
-                        <h2 className='font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <h2 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           I tuoi veicoli
                         </h2>
-                        <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {(() => {
                             const vehicles = extractVehicles(data);
                             if (vehicles.length === 0) return 'Nessun veicolo registrato';
@@ -449,8 +449,8 @@ export default function PortalDashboardPage() {
                     if (vehicles.length === 0) {
                       return (
                         <div className='flex flex-col items-center justify-center py-8 text-center'>
-                          <Car className='h-10 w-10 text-apple-gray/40 dark:text-[var(--text-secondary)]/40 mb-3' />
-                          <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                          <Car className='h-10 w-10 text-[var(--text-tertiary)]/40 dark:text-[var(--text-secondary)]/40 mb-3' />
+                          <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             Nessun veicolo registrato
                           </p>
                         </div>
@@ -459,16 +459,16 @@ export default function PortalDashboardPage() {
                     return (
                       <div className='space-y-3'>
                         {vehicles.map((vehicle) => (
-                          <div key={vehicle.id} className='p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-2xl'>
+                          <div key={vehicle.id} className='p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-2xl'>
                             <div className='flex items-center gap-4'>
-                              <div className='w-14 h-14 rounded-xl bg-white dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
-                                <Car className='h-7 w-7 text-apple-gray' />
+                              <div className='w-14 h-14 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
+                                <Car className='h-7 w-7 text-[var(--text-tertiary)]' />
                               </div>
                               <div className='flex-1'>
-                                <p className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                                <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                                   {vehicle.make} {vehicle.model}
                                 </p>
-                                <p className='text-sm text-apple-gray dark:text-[var(--text-secondary)]'>
+                                <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                   {vehicle.licensePlate} {vehicle.mileage ? `\u2022 ${vehicle.mileage.toLocaleString('it-IT')} km` : ''}
                                 </p>
                               </div>
@@ -488,18 +488,18 @@ export default function PortalDashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <AppleCard className='bg-gradient-to-br from-apple-blue to-apple-purple'>
-                <AppleCardContent className='p-5 text-white'>
+              <AppleCard className='bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)]'>
+                <AppleCardContent className='p-5 text-[var(--text-on-brand)]'>
                   <div className='flex items-start justify-between'>
                     <div>
                       <h2 className='font-semibold text-lg mb-1'>Serve aiuto?</h2>
-                      <p className='text-white/80 text-sm mb-4'>
+                      <p className='text-[var(--text-on-brand)]/80 text-sm mb-4'>
                         Il nostro team è disponibile per assisterti
                       </p>
                       <div className='flex gap-2'>
                         <a
                           href='tel:+390212345678'
-                          className='inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-xl text-sm font-medium hover:bg-white/30 transition-colors'
+                          className='inline-flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)]/20 rounded-xl text-sm font-medium hover:bg-[var(--surface-secondary)]/30 transition-colors'
                         >
                           <Phone className='h-4 w-4' />
                           Chiama
@@ -508,14 +508,14 @@ export default function PortalDashboardPage() {
                           href='https://wa.me/390212345678'
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-xl text-sm font-medium hover:bg-white/30 transition-colors'
+                          className='inline-flex items-center gap-2 px-4 py-2 bg-[var(--surface-secondary)]/20 rounded-xl text-sm font-medium hover:bg-[var(--surface-secondary)]/30 transition-colors'
                         >
                           <MessageCircle className='h-4 w-4' />
                           WhatsApp
                         </a>
                       </div>
                     </div>
-                    <div className='w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center'>
+                    <div className='w-16 h-16 rounded-2xl bg-[var(--surface-secondary)]/20 flex items-center justify-center'>
                       <MessageCircle className='h-8 w-8' />
                     </div>
                   </div>

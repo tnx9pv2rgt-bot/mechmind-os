@@ -68,13 +68,13 @@ export function ExitIntent(): React.ReactElement {
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-[var(--surface-primary)]/50 backdrop-blur-sm"
             onClick={handleClose}
             aria-hidden="true"
           />
 
           <motion.div
-            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[var(--surface-elevated)]"
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-[var(--surface-secondary)] shadow-2xl dark:bg-[var(--surface-elevated)]"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -115,7 +115,7 @@ export function ExitIntent(): React.ReactElement {
 
                     <button
                       type="submit"
-                      className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--border-default)] bg-white px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
+                      className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-secondary)] px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-secondary)] active:scale-[0.97] dark:border-[var(--border-default)] dark:bg-[var(--surface-elevated)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-active)]"
                     >
                       Scarica la guida gratis &rarr;
                     </button>
@@ -125,7 +125,7 @@ export function ExitIntent(): React.ReactElement {
                         type="checkbox"
                         checked={marketingConsent}
                         onChange={(e) => setMarketingConsent(e.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-[var(--border-default)] text-[var(--text-primary)] focus:ring-[#0d0d0d]/20 dark:focus:ring-white/20"
+                        className="mt-1 h-4 w-4 rounded border-[var(--border-default)] text-[var(--text-primary)] focus:ring-[#0d0d0d]/20 dark:focus:ring-[var(--border-default)]/20"
                       />
                       <span className="text-xs text-[var(--text-secondary)]">
                         Accetto di ricevere aggiornamenti da MechMind (max 2 email/mese)
@@ -143,8 +143,8 @@ export function ExitIntent(): React.ReactElement {
                 </>
               ) : (
                 <div className="py-8 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0d0d0d]/5 dark:bg-white/10">
-                    <svg className="h-6 w-6 text-[var(--text-primary)] dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0d0d0d]/5 dark:bg-[var(--surface-secondary)]/10">
+                    <svg className="h-6 w-6 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>

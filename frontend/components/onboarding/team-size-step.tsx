@@ -35,7 +35,7 @@ export function TeamSizeStep({ selected, onSelect }: TeamSizeStepProps): React.R
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="text-center">
-        <h2 className="text-xl font-normal text-white">Quanto è grande il tuo team?</h2>
+        <h2 className="text-xl font-normal text-[var(--text-on-brand)]">Quanto è grande il tuo team?</h2>
         <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Adatteremo funzionalità e permessi</p>
       </div>
 
@@ -58,14 +58,14 @@ export function TeamSizeStep({ selected, onSelect }: TeamSizeStepProps): React.R
               className={[
                 'relative flex min-h-[64px] items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
                 isSelected
-                  ? 'border-white/60 bg-white/10'
+                  ? 'border-[var(--border-default)]/60 bg-[var(--surface-secondary)]/10'
                   : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
               {isSelected && (
                 <motion.div
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-4 w-4 items-center justify-center rounded-full bg-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--surface-secondary)]"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 25 }}
@@ -75,9 +75,9 @@ export function TeamSizeStep({ selected, onSelect }: TeamSizeStepProps): React.R
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-white' : 'text-[var(--text-secondary)]'}>{size.icon}</span>
+              <span className={isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-secondary)]'}>{size.icon}</span>
               <div>
-                <span className={['text-[14px] font-medium', isSelected ? 'text-white' : 'text-[var(--text-primary)]'].join(' ')}>
+                <span className={['text-[14px] font-medium', isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-primary)]'].join(' ')}>
                   {size.name}
                 </span>
                 <p className="text-[12px] text-[var(--text-tertiary)]">{size.description}</p>

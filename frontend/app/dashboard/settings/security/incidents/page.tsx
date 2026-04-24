@@ -100,10 +100,10 @@ async function fetcher<T>(url: string): Promise<T> {
 }
 
 const SEVERITY_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
-  LOW: { label: 'Bassa', bg: 'bg-blue-100 dark:bg-blue-900/40', color: 'text-blue-700 dark:text-blue-300' },
-  MEDIUM: { label: 'Media', bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  HIGH: { label: 'Alta', bg: 'bg-orange-100 dark:bg-orange-900/40', color: 'text-orange-700 dark:text-orange-300' },
-  CRITICAL: { label: 'Critica', bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-red-700 dark:text-red-300' },
+  LOW: { label: 'Bassa', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]' },
+  MEDIUM: { label: 'Media', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  HIGH: { label: 'Alta', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  CRITICAL: { label: 'Critica', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -116,12 +116,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_CONFIG: Record<string, { bg: string; color: string }> = {
-  DETECTED: { bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-red-700 dark:text-red-300' },
-  INVESTIGATING: { bg: 'bg-yellow-100 dark:bg-yellow-900/40', color: 'text-yellow-700 dark:text-yellow-300' },
-  CONTAINED: { bg: 'bg-blue-100 dark:bg-blue-900/40', color: 'text-blue-700 dark:text-blue-300' },
-  RESOLVED: { bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-green-700 dark:text-green-300' },
-  REPORTED_ACN: { bg: 'bg-purple-100 dark:bg-purple-900/40', color: 'text-purple-700 dark:text-purple-300' },
-  CLOSED: { bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]', color: 'text-apple-gray dark:text-[var(--text-secondary)]' },
+  DETECTED: { bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+  INVESTIGATING: { bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  CONTAINED: { bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]' },
+  RESOLVED: { bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  REPORTED_ACN: { bg: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]', color: 'text-[var(--brand)] dark:text-[var(--brand)]' },
+  CLOSED: { bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]', color: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' },
 };
 
 const NEXT_STATUS: Record<string, string> = {
@@ -205,12 +205,12 @@ function Nis2TimelineBadge({ incident }: { incident: SecurityIncident }): React.
   const fullOverdue = elapsed > 72 * 60 * 60 * 1000;
 
   if (incident.status === 'REPORTED_ACN' || incident.status === 'CLOSED') {
-    return <span className='text-footnote font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'>Segnalato</span>;
+    return <span className='text-footnote font-semibold px-2.5 py-1 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]'>Segnalato</span>;
   }
 
   if (fullOverdue) {
     return (
-      <span className='inline-flex items-center gap-1 text-footnote font-semibold px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'>
+      <span className='inline-flex items-center gap-1 text-footnote font-semibold px-2.5 py-1 rounded-full bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]'>
         <AlertTriangle className='h-3 w-3' />
         {hours}h - Report 72h scaduto
       </span>
@@ -219,7 +219,7 @@ function Nis2TimelineBadge({ incident }: { incident: SecurityIncident }): React.
 
   if (earlyOverdue) {
     return (
-      <span className='inline-flex items-center gap-1 text-footnote font-semibold px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300'>
+      <span className='inline-flex items-center gap-1 text-footnote font-semibold px-2.5 py-1 rounded-full bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]'>
         <Clock className='h-3 w-3' />
         {hours}h - Allarme 24h scaduto
       </span>
@@ -227,7 +227,7 @@ function Nis2TimelineBadge({ incident }: { incident: SecurityIncident }): React.
   }
 
   return (
-    <span className='inline-flex items-center gap-1 text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+    <span className='inline-flex items-center gap-1 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
       <Clock className='h-3 w-3' />
       {hours}h trascorse
     </span>
@@ -248,11 +248,11 @@ function ComplianceChecklist({ data }: { data: ComplianceData }): React.ReactEle
       {checks.map((c) => (
         <div key={c.label} className='flex items-center gap-3'>
           {c.ok ? (
-            <CheckCircle2 className='h-5 w-5 text-apple-green shrink-0' />
+            <CheckCircle2 className='h-5 w-5 text-[var(--status-success)] shrink-0' />
           ) : (
-            <XCircle className='h-5 w-5 text-apple-red shrink-0' />
+            <XCircle className='h-5 w-5 text-[var(--status-error)] shrink-0' />
           )}
-          <span className={`text-body ${c.ok ? 'text-apple-gray dark:text-[var(--text-secondary)]' : 'text-apple-red font-medium'}`}>
+          <span className={`text-body ${c.ok ? 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' : 'text-[var(--status-error)] font-medium'}`}>
             {c.label}
           </span>
         </div>
@@ -348,7 +348,7 @@ function CreateIncidentDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className='space-y-4 py-4'>
           <div className='space-y-2'>
-            <label htmlFor='inc-title' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+            <label htmlFor='inc-title' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Titolo *
             </label>
             <Input
@@ -360,7 +360,7 @@ function CreateIncidentDialog({
             />
           </div>
           <div className='space-y-2'>
-            <label htmlFor='inc-desc' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+            <label htmlFor='inc-desc' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Descrizione *
             </label>
             <textarea
@@ -368,20 +368,20 @@ function CreateIncidentDialog({
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               rows={3}
-              className='w-full rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 py-2 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
+              className='w-full rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 py-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
               placeholder='Descrizione dettagliata dell&apos;incidente'
             />
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <label htmlFor='inc-severity' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='inc-severity' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Gravita
               </label>
               <select
                 id='inc-severity'
                 value={form.severity}
                 onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}
-                className='w-full h-11 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                className='w-full h-11 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
               >
                 <option value='LOW'>Bassa</option>
                 <option value='MEDIUM'>Media</option>
@@ -390,14 +390,14 @@ function CreateIncidentDialog({
               </select>
             </div>
             <div className='space-y-2'>
-              <label htmlFor='inc-type' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='inc-type' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Tipo
               </label>
               <select
                 id='inc-type'
                 value={form.incidentType}
                 onChange={(e) => setForm((f) => ({ ...f, incidentType: e.target.value }))}
-                className='w-full h-11 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] px-3 text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                className='w-full h-11 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
               >
                 <option value='data_breach'>Violazione dati</option>
                 <option value='unauthorized_access'>Accesso non autorizzato</option>
@@ -410,7 +410,7 @@ function CreateIncidentDialog({
             </div>
           </div>
           <div className='space-y-2'>
-            <label htmlFor='inc-date' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+            <label htmlFor='inc-date' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Data/ora rilevamento
             </label>
             <Input
@@ -422,7 +422,7 @@ function CreateIncidentDialog({
             />
           </div>
           <div className='space-y-2'>
-            <label htmlFor='inc-systems' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+            <label htmlFor='inc-systems' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Sistemi interessati (separati da virgola)
             </label>
             <Input
@@ -435,7 +435,7 @@ function CreateIncidentDialog({
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <label htmlFor='inc-users' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='inc-users' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Utenti interessati
               </label>
               <Input
@@ -454,9 +454,9 @@ function CreateIncidentDialog({
                   type='checkbox'
                   checked={form.dataBreached}
                   onChange={(e) => setForm((f) => ({ ...f, dataBreached: e.target.checked }))}
-                  className='w-4 h-4 rounded border-apple-border text-apple-blue focus:ring-apple-blue'
+                  className='w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand)] focus:ring-apple-blue'
                 />
-                <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>Violazione dati personali</span>
+                <span className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Violazione dati personali</span>
               </label>
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function SecurityIncidentsPage(): React.ReactElement {
   if (isLoading && incidents.length === 0) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -566,16 +566,16 @@ export default function SecurityIncidentsPage(): React.ReactElement {
             <div className='flex items-center gap-3'>
               <Link
                 href='/dashboard/settings/security'
-                className='inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-apple-gray dark:text-[var(--text-secondary)] transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+                className='inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                 aria-label='Torna a sicurezza'
               >
                 <ArrowLeft className='h-5 w-5' />
               </Link>
               <div>
-                <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Incidenti di sicurezza
                 </h1>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                   Gestione incidenti NIS2 - Segnalazione 24h/72h ad ACN
                 </p>
               </div>
@@ -606,25 +606,25 @@ export default function SecurityIncidentsPage(): React.ReactElement {
               label: 'Totale incidenti',
               value: String(dashboard?.total ?? 0),
               icon: Shield,
-              color: 'bg-apple-blue',
+              color: 'bg-[var(--brand)]',
             },
             {
               label: 'Incidenti aperti',
               value: String(compliance?.openIncidents ?? 0),
               icon: AlertTriangle,
-              color: 'bg-apple-orange',
+              color: 'bg-[var(--status-warning)]',
             },
             {
               label: 'Tempo medio risoluzione',
               value: dashboard?.avgResolutionTimeHours != null ? `${dashboard.avgResolutionTimeHours}h` : '-',
               icon: Clock,
-              color: 'bg-apple-purple',
+              color: 'bg-[var(--brand)]',
             },
             {
               label: 'Conformita NIS2',
               value: `${compliance?.complianceScore ?? 0}/100`,
               icon: CheckCircle2,
-              color: (compliance?.complianceScore ?? 0) >= 75 ? 'bg-apple-green' : (compliance?.complianceScore ?? 0) >= 50 ? 'bg-apple-orange' : 'bg-apple-red',
+              color: (compliance?.complianceScore ?? 0) >= 75 ? 'bg-[var(--status-success)]' : (compliance?.complianceScore ?? 0) >= 50 ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-error)]',
             },
           ].map(stat => (
             <motion.div key={stat.label} variants={statsCardVariants}>
@@ -632,13 +632,13 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                 <AppleCardContent>
                   <div className='flex items-center justify-between mb-3'>
                     <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -648,11 +648,11 @@ export default function SecurityIncidentsPage(): React.ReactElement {
         {/* NIS2 Alerts */}
         {dashboard?.nis2Alerts && dashboard.nis2Alerts.length > 0 && (
           <motion.div variants={listItemVariants}>
-            <AppleCard hover={false} className='border-apple-red/30'>
+            <AppleCard hover={false} className='border-[var(--status-error)]/30'>
               <AppleCardContent>
                 <div className='flex items-center gap-2 mb-3'>
-                  <AlertTriangle className='h-5 w-5 text-apple-red' />
-                  <h3 className='text-title-3 font-semibold text-apple-red'>
+                  <AlertTriangle className='h-5 w-5 text-[var(--status-error)]' />
+                  <h3 className='text-title-3 font-semibold text-[var(--status-error)]'>
                     Scadenze NIS2 in pericolo ({dashboard.nis2Alerts.length})
                   </h3>
                 </div>
@@ -662,10 +662,10 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                     .map((alert) => (
                       <div
                         key={alert.incidentId}
-                        className='flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/20'
+                        className='flex items-center justify-between p-3 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
                       >
-                        <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>{alert.title}</span>
-                        <span className={`text-footnote font-medium ${alert.fullReportOverdue ? 'text-apple-red' : 'text-apple-orange'}`}>
+                        <span className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{alert.title}</span>
+                        <span className={`text-footnote font-medium ${alert.fullReportOverdue ? 'text-[var(--status-error)]' : 'text-[var(--status-warning)]'}`}>
                           {alert.hoursElapsed}h trascorse - {alert.fullReportOverdue ? 'Report 72h scaduto!' : 'Allarme 24h scaduto'}
                         </span>
                       </div>
@@ -687,7 +687,7 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className='h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-sm text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer text-body'
+                      className='h-10 px-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer text-body'
                     >
                       <option value=''>Tutti gli stati</option>
                       {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -697,7 +697,7 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                     <select
                       value={severityFilter}
                       onChange={(e) => setSeverityFilter(e.target.value)}
-                      className='h-10 px-3 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-sm text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer text-body'
+                      className='h-10 px-3 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer text-body'
                     >
                       <option value=''>Tutte le gravita</option>
                       {Object.entries(SEVERITY_LABELS).map(([k, v]) => (
@@ -714,8 +714,8 @@ export default function SecurityIncidentsPage(): React.ReactElement {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center gap-3'>
-                    <Shield className='h-5 w-5 text-apple-blue' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <Shield className='h-5 w-5 text-[var(--brand)]' />
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Incidenti ({incidents.length})
                     </h2>
                   </div>
@@ -723,11 +723,11 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                 <AppleCardContent>
                   {incidents.length === 0 ? (
                     <div className='flex flex-col items-center justify-center py-12 text-center'>
-                      <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessun incidente registrato
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                         Gli incidenti di sicurezza appariranno qui
                       </p>
                     </div>
@@ -744,7 +744,7 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                         return (
                           <motion.div
                             key={inc.id}
-                            className='p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                            className='p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
                             variants={listItemVariants}
                             custom={index}
                             whileHover={{ scale: 1.005, x: 4 }}
@@ -760,26 +760,26 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                                     {STATUS_LABELS[inc.status]}
                                   </span>
                                   {inc.dataBreached && (
-                                    <span className='text-footnote font-semibold px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'>
+                                    <span className='text-footnote font-semibold px-2.5 py-1 rounded-full bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]'>
                                       Dati violati
                                     </span>
                                   )}
                                 </div>
-                                <p className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] truncate'>
+                                <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate'>
                                   {inc.title}
                                 </p>
-                                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1 line-clamp-2'>
+                                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1 line-clamp-2'>
                                   {inc.description}
                                 </p>
                               </div>
                             </div>
 
-                            <div className='flex items-center justify-between mt-3 pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)]/50'>
+                            <div className='flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'>
                               <div className='flex items-center gap-4 flex-wrap'>
-                                <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                   {INCIDENT_TYPE_LABELS[inc.incidentType] ?? inc.incidentType}
                                 </span>
-                                <span className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                                <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                                   Rilevato: {formatDate(inc.detectedAt)}
                                 </span>
                                 <Nis2TimelineBadge incident={inc} />
@@ -818,8 +818,8 @@ export default function SecurityIncidentsPage(): React.ReactElement {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <div className='flex items-center gap-3'>
-                    <CheckCircle2 className='h-5 w-5 text-apple-green' />
-                    <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                    <CheckCircle2 className='h-5 w-5 text-[var(--status-success)]' />
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       Checklist conformita NIS2
                     </h2>
                   </div>
@@ -829,7 +829,7 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                     <ComplianceChecklist data={compliance} />
                   ) : (
                     <div className='flex justify-center py-4'>
-                      <Loader2 className='h-5 w-5 animate-spin text-apple-blue' />
+                      <Loader2 className='h-5 w-5 animate-spin text-[var(--brand)]' />
                     </div>
                   )}
                 </AppleCardContent>
@@ -842,8 +842,8 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                 <AppleCard hover={false}>
                   <AppleCardHeader>
                     <div className='flex items-center gap-3'>
-                      <Activity className='h-5 w-5 text-apple-orange' />
-                      <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <Activity className='h-5 w-5 text-[var(--status-warning)]' />
+                      <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         Distribuzione per gravita
                       </h2>
                     </div>
@@ -857,7 +857,7 @@ export default function SecurityIncidentsPage(): React.ReactElement {
                             <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${sevCfg.bg} ${sevCfg.color}`}>
                               {SEVERITY_LABELS[sev]}
                             </span>
-                            <span className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>{count}</span>
+                            <span className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{count}</span>
                           </div>
                         );
                       })}
@@ -869,23 +869,23 @@ export default function SecurityIncidentsPage(): React.ReactElement {
 
             {/* Info Box */}
             <motion.div variants={listItemVariants}>
-              <AppleCard hover={false} className='border-apple-blue/20'>
+              <AppleCard hover={false} className='border-[var(--brand)]/20'>
                 <AppleCardContent>
                   <div className='flex items-start gap-3'>
-                    <AlertCircle className='h-5 w-5 text-apple-blue shrink-0 mt-0.5' />
+                    <AlertCircle className='h-5 w-5 text-[var(--brand)] shrink-0 mt-0.5' />
                     <div>
-                      <h3 className='text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+                      <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                         Scadenze NIS2
                       </h3>
-                      <ul className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] space-y-1'>
+                      <ul className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] space-y-1'>
                         <li>
-                          <strong className='text-apple-orange'>24 ore</strong> - Allarme preliminare ad ACN
+                          <strong className='text-[var(--status-warning)]'>24 ore</strong> - Allarme preliminare ad ACN
                         </li>
                         <li>
-                          <strong className='text-apple-red'>72 ore</strong> - Report completo ad ACN
+                          <strong className='text-[var(--status-error)]'>72 ore</strong> - Report completo ad ACN
                         </li>
                         <li>
-                          <strong className='text-apple-dark dark:text-[var(--text-primary)]'>1 mese</strong> - Report finale con analisi causa radice
+                          <strong className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>1 mese</strong> - Report finale con analisi causa radice
                         </li>
                       </ul>
                     </div>

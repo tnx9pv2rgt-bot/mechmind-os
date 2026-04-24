@@ -37,7 +37,7 @@ export function PrintableDocument({
       <div className='no-print mb-4 flex gap-2'>
         <button
           onClick={() => window.print()}
-          className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium'
+          className='px-4 py-2 bg-[var(--status-info)] text-[var(--text-on-brand)] rounded-lg hover:bg-[var(--status-info)] transition-colors text-sm font-medium'
         >
           Stampa
         </button>
@@ -52,7 +52,7 @@ export function PrintableDocument({
             )}
             <h2 className='text-lg font-bold'>{tenant.ragioneSociale}</h2>
             {tenant.address && (
-              <p className='text-sm text-gray-600'>
+              <p className='text-sm text-[var(--text-secondary)]'>
                 {tenant.address}
                 {tenant.postalCode && `, ${tenant.postalCode}`}
                 {tenant.city && ` ${tenant.city}`}
@@ -60,14 +60,14 @@ export function PrintableDocument({
               </p>
             )}
             {tenant.partitaIva && (
-              <p className='text-sm text-gray-600'>P.IVA: {tenant.partitaIva}</p>
+              <p className='text-sm text-[var(--text-secondary)]'>P.IVA: {tenant.partitaIva}</p>
             )}
-            {tenant.phone && <p className='text-sm text-gray-600'>Tel: {tenant.phone}</p>}
+            {tenant.phone && <p className='text-sm text-[var(--text-secondary)]'>Tel: {tenant.phone}</p>}
           </div>
           <div className='text-right'>
             <h1 className='text-2xl font-bold'>{title}</h1>
-            {documentNumber && <p className='text-sm text-gray-600'>N. {documentNumber}</p>}
-            {date && <p className='text-sm text-gray-600'>Data: {date}</p>}
+            {documentNumber && <p className='text-sm text-[var(--text-secondary)]'>N. {documentNumber}</p>}
+            {date && <p className='text-sm text-[var(--text-secondary)]'>Data: {date}</p>}
           </div>
         </div>
 

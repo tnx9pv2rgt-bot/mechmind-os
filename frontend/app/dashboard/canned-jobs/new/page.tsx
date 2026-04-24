@@ -17,7 +17,7 @@ export default function NewCannedJobPage() {
 
   return (
     <div className='flex items-center justify-center h-96'>
-      <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+      <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
     </div>
   );
 }

@@ -16,10 +16,10 @@ export default function AuthError({
   return (
     <AuthSplitLayout>
       <div className="text-center space-y-5">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-          <span className="text-2xl text-white">⚠</span>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
+          <span className="text-2xl text-[var(--text-on-brand)]">⚠</span>
         </div>
-        <h1 className="text-[28px] font-normal text-white tracking-tight">
+        <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
           Errore di autenticazione
         </h1>
         <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed" role="alert">

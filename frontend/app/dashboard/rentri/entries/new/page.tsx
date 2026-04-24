@@ -81,7 +81,7 @@ const cardVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
-const inputClass = 'w-full h-10 px-3 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue';
+const inputClass = 'w-full h-10 px-3 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue';
 const selectClass = `${inputClass} appearance-none cursor-pointer`;
 
 // =============================================================================
@@ -140,11 +140,11 @@ function CerCodeSearch({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+      <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
         Codice CER *
       </label>
       {value ? (
-        <div className={`flex items-center gap-2 h-10 px-3 rounded-md text-body border ${error ? 'border-red-400' : 'border-apple-border dark:border-[var(--border-default)]'} bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)]`}>
+        <div className={`flex items-center gap-2 h-10 px-3 rounded-md text-body border ${error ? 'border-[var(--status-error)]/40' : 'border-[var(--border-default)] dark:border-[var(--border-default)]'} bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)]`}>
           <span className="font-mono font-medium">
             {value}
           </span>
@@ -155,17 +155,17 @@ function CerCodeSearch({
               setSearchTerm('');
               setDebouncedTerm('');
             }}
-            className="ml-auto p-1 rounded-lg hover:bg-apple-light-gray dark:hover:bg-white/10 transition-colors"
+            className="ml-auto p-1 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-secondary)]/10 transition-colors"
             aria-label="Rimuovi codice CER"
           >
-            <X className="h-4 w-4 text-apple-gray dark:text-[var(--text-secondary)]" />
+            <X className="h-4 w-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
           </button>
         </div>
       ) : (
         <>
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]"
             />
             <input
               placeholder="Cerca codice CER o descrizione..."
@@ -175,22 +175,22 @@ function CerCodeSearch({
                 setIsOpen(true);
               }}
               onFocus={() => setIsOpen(true)}
-              className={`${inputClass} pl-10 ${error ? 'border-red-400' : ''}`}
+              className={`${inputClass} pl-10 ${error ? 'border-[var(--status-error)]/40' : ''}`}
             />
             {cerLoading && (
               <Loader2
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-apple-blue"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[var(--brand)]"
               />
             )}
           </div>
 
           {isOpen && results.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] shadow-apple dark:shadow-xl max-h-60 overflow-y-auto">
+            <div className="absolute z-50 w-full mt-1 rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] shadow-apple dark:shadow-xl max-h-60 overflow-y-auto">
               {results.map((cer) => (
                 <button
                   key={cer.code}
                   type="button"
-                  className="w-full text-left px-4 py-3 transition-colors flex items-start gap-3 border-b border-apple-border/30 dark:border-[var(--border-default)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-active)]"
+                  className="w-full text-left px-4 py-3 transition-colors flex items-start gap-3 border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-active)]"
                   onClick={() => {
                     onSelect(cer);
                     setIsOpen(false);
@@ -199,17 +199,17 @@ function CerCodeSearch({
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-footnote font-mono font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <span className="text-footnote font-mono font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         {cer.code}
                       </span>
                       {cer.hazardous && (
-                        <span className="text-footnote font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 bg-yellow-100 dark:bg-yellow-400/20 text-yellow-700 dark:text-yellow-400">
+                        <span className="text-footnote font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/20 text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                           <AlertTriangle className="h-3 w-3" />
                           Pericoloso
                         </span>
                       )}
                     </div>
-                    <p className="text-footnote mt-0.5 text-apple-gray dark:text-[var(--text-secondary)]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       {cer.description}
                     </p>
                   </div>
@@ -220,7 +220,7 @@ function CerCodeSearch({
         </>
       )}
       {error && (
-        <p className="text-footnote mt-1 text-apple-red">
+        <p className="text-footnote mt-1 text-[var(--status-error)]">
           {error}
         </p>
       )}
@@ -318,10 +318,10 @@ export default function NewRentriEntryPage() {
                   { label: 'Nuova Registrazione' },
                 ]}
               />
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Nuova Registrazione Rifiuto
               </h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Compila il modulo per registrare un nuovo carico o scarico
               </p>
             </div>
@@ -340,8 +340,8 @@ export default function NewRentriEntryPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2">
-                  <Recycle className="h-5 w-5 text-apple-green" />
+                <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2">
+                  <Recycle className="h-5 w-5 text-[var(--status-success)]" />
                   Tipo Registrazione
                 </h2>
               </AppleCardHeader>
@@ -359,9 +359,9 @@ export default function NewRentriEntryPage() {
                           className={`flex-1 h-14 rounded-xl text-body font-medium transition-all border flex items-center justify-center gap-2 ${
                             field.value === t
                               ? t === 'CARICO'
-                                ? 'bg-green-50 dark:bg-green-400/20 border-green-500 dark:border-green-400 text-green-700 dark:text-green-400'
-                                : 'bg-red-50 dark:bg-red-400/20 border-red-500 dark:border-red-400 text-red-700 dark:text-red-400'
-                              : 'bg-white dark:bg-transparent border-apple-border dark:border-[var(--border-default)] text-apple-gray dark:text-[var(--text-secondary)]'
+                                ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/20 border-[var(--status-success)] dark:border-[var(--status-success)]/40 text-[var(--status-success)] dark:text-[var(--status-success)]'
+                                : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error)]/20 border-[var(--status-error)] dark:border-[var(--status-error)] text-[var(--status-error)] dark:text-[var(--status-error)]'
+                              : 'bg-[var(--surface-secondary)] dark:bg-transparent border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                           }`}
                         >
                           {t === 'CARICO' ? 'Carico (ingresso)' : 'Scarico (uscita)'}
@@ -371,7 +371,7 @@ export default function NewRentriEntryPage() {
                   )}
                 />
                 {errors.type && (
-                  <p className="text-footnote mt-2 text-apple-red">
+                  <p className="text-footnote mt-2 text-[var(--status-error)]">
                     {errors.type.message}
                   </p>
                 )}
@@ -383,7 +383,7 @@ export default function NewRentriEntryPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   Dati Rifiuto
                 </h2>
               </AppleCardHeader>
@@ -398,13 +398,13 @@ export default function NewRentriEntryPage() {
 
                 {/* Hazardous Warning */}
                 {watchHazardous && (
-                  <div className="rounded-xl px-4 py-3 flex items-center gap-3 bg-yellow-50 dark:bg-yellow-400/10 border border-yellow-300 dark:border-yellow-400/25">
-                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                  <div className="rounded-xl px-4 py-3 flex items-center gap-3 bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]/40/25">
+                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-[var(--status-warning)] dark:text-[var(--status-warning)]" />
                     <div>
-                      <p className="text-footnote font-medium text-yellow-700 dark:text-yellow-400">
+                      <p className="text-footnote font-medium text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                         Rifiuto Pericoloso
                       </p>
-                      <p className="text-footnote text-apple-orange dark:text-[var(--text-tertiary)]">
+                      <p className="text-footnote text-[var(--status-warning)] dark:text-[var(--text-tertiary)]">
                         Questo codice CER e classificato come rifiuto pericoloso. Rispettare le normative specifiche per lo stoccaggio e il trasporto.
                       </p>
                     </div>
@@ -413,7 +413,7 @@ export default function NewRentriEntryPage() {
 
                 {/* Date */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                     Data *
                   </label>
                   <input
@@ -422,7 +422,7 @@ export default function NewRentriEntryPage() {
                     className={inputClass}
                   />
                   {errors.date && (
-                    <p className="text-footnote mt-1 text-apple-red">
+                    <p className="text-footnote mt-1 text-[var(--status-error)]">
                       {errors.date.message}
                     </p>
                   )}
@@ -431,7 +431,7 @@ export default function NewRentriEntryPage() {
                 {/* Quantity + Unit */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                       Quantita (kg) *
                     </label>
                     <input
@@ -443,13 +443,13 @@ export default function NewRentriEntryPage() {
                       className={inputClass}
                     />
                     {errors.quantity && (
-                      <p className="text-footnote mt-1 text-apple-red">
+                      <p className="text-footnote mt-1 text-[var(--status-error)]">
                         {errors.quantity.message}
                       </p>
                     )}
                   </div>
                   <div>
-                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                       Unita
                     </label>
                     <select
@@ -468,7 +468,7 @@ export default function NewRentriEntryPage() {
                 {/* Physical State + Hazard Class */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                       Stato fisico
                     </label>
                     <select
@@ -486,7 +486,7 @@ export default function NewRentriEntryPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                    <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                       Classe pericolo
                     </label>
                     <input
@@ -499,7 +499,7 @@ export default function NewRentriEntryPage() {
 
                 {/* Origin */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                     {watchType === 'CARICO' ? 'Origine' : 'Destinazione'}
                   </label>
                   <input
@@ -511,20 +511,20 @@ export default function NewRentriEntryPage() {
 
                 {/* Notes */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                     Note
                   </label>
                   <textarea
                     {...register('notes')}
                     placeholder="Note aggiuntive..."
                     rows={3}
-                    className='w-full rounded-xl border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
+                    className='w-full rounded-xl border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray/60 dark:placeholder-[var(--text-tertiary)] px-4 py-3 outline-none text-body resize-none focus:ring-2 focus:ring-apple-blue'
                   />
                 </div>
 
                 {/* Work Order Link (optional) */}
                 <div>
-                  <label className="text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1 block">
+                  <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">
                     Collegamento ordine di lavoro (opzionale)
                   </label>
                   <input

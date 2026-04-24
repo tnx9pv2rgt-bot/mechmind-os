@@ -184,7 +184,7 @@ export default function WebhooksPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -195,11 +195,11 @@ export default function WebhooksPage() {
       <div className='min-h-screen flex items-center justify-center p-8'>
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
-            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <AlertTriangle className='w-12 h-12 text-[var(--status-error)] mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Impossibile caricare i webhook.
             </p>
           </AppleCardContent>
@@ -214,8 +214,8 @@ export default function WebhooksPage() {
         <div className='px-4 sm:px-8 py-5'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Webhook</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Webhook</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Configura i webhook per ricevere notifiche in tempo reale
               </p>
             </div>
@@ -231,8 +231,8 @@ export default function WebhooksPage() {
         <AppleCard>
           <AppleCardHeader>
             <div className='flex items-center gap-3'>
-              <Webhook className='h-5 w-5 text-apple-blue' />
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <Webhook className='h-5 w-5 text-[var(--brand)]' />
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Webhook configurati ({webhooks?.length || 0})
               </h2>
             </div>
@@ -246,20 +246,20 @@ export default function WebhooksPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className='p-4 rounded-xl border border-apple-border/30 dark:border-[var(--border-default)] hover:border-apple-blue/30 transition-all'
+                    className='p-4 rounded-xl border border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:border-[var(--brand)]/30 transition-all'
                   >
                     <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-center gap-2 mb-1'>
                           {webhook.active ? (
-                            <ToggleRight className='w-4 h-4 text-apple-green flex-shrink-0' />
+                            <ToggleRight className='w-4 h-4 text-[var(--status-success)] flex-shrink-0' />
                           ) : (
-                            <ToggleLeft className='w-4 h-4 text-apple-gray flex-shrink-0' />
+                            <ToggleLeft className='w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0' />
                           )}
-                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] truncate'>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] truncate'>
                             {webhook.url}
                           </p>
-                          <Badge className={`border-0 ${webhook.active ? 'bg-green-100 dark:bg-green-900/30 text-apple-green' : 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'}`}>
+                          <Badge className={`border-0 ${webhook.active ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 text-[var(--status-success)]' : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'}`}>
                             {webhook.active ? 'Attivo' : 'Inattivo'}
                           </Badge>
                         </div>
@@ -275,7 +275,7 @@ export default function WebhooksPage() {
                             </Badge>
                           )}
                         </div>
-                        <div className='flex items-center gap-4 mt-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <div className='flex items-center gap-4 mt-2 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {webhook.lastDeliveryAt && (
                             <span className='flex items-center gap-1'>
                               <Clock className='w-3 h-3' />
@@ -283,7 +283,7 @@ export default function WebhooksPage() {
                             </span>
                           )}
                           {webhook.failureCount > 0 && (
-                            <span className='flex items-center gap-1 text-apple-red'>
+                            <span className='flex items-center gap-1 text-[var(--status-error)]'>
                               <XCircle className='w-3 h-3' />
                               {webhook.failureCount} errori
                             </span>
@@ -302,7 +302,7 @@ export default function WebhooksPage() {
                         <AppleButton
                           variant='ghost'
                           size='sm'
-                          className='min-w-[44px] min-h-[44px] text-apple-red'
+                          className='min-w-[44px] min-h-[44px] text-[var(--status-error)]'
                           onClick={() => {
                             setSelectedWebhook(webhook);
                             setShowDeleteDialog(true);
@@ -317,11 +317,11 @@ export default function WebhooksPage() {
               </div>
             ) : (
               <div className='text-center py-12'>
-                <Webhook className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+                <Webhook className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                <h3 className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                   Nessun webhook configurato
                 </h3>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Crea il primo webhook per ricevere notifiche in tempo reale.
                 </p>
               </div>
@@ -341,7 +341,7 @@ export default function WebhooksPage() {
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <label htmlFor='webhook-url' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='webhook-url' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 URL Endpoint
               </label>
               <Input
@@ -352,12 +352,12 @@ export default function WebhooksPage() {
                 className='h-11 rounded-xl'
               />
               {form.formState.errors.url && (
-                <p className='text-footnote text-apple-red'>{form.formState.errors.url.message}</p>
+                <p className='text-footnote text-[var(--status-error)]'>{form.formState.errors.url.message}</p>
               )}
             </div>
 
             <div className='space-y-2'>
-              <label htmlFor='webhook-secret' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+              <label htmlFor='webhook-secret' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Secret (opzionale)
               </label>
               <Input
@@ -369,23 +369,23 @@ export default function WebhooksPage() {
             </div>
 
             <div className='space-y-2'>
-              <p className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Eventi</p>
+              <p className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Eventi</p>
               {form.formState.errors.events && (
-                <p className='text-footnote text-apple-red'>{form.formState.errors.events.message}</p>
+                <p className='text-footnote text-[var(--status-error)]'>{form.formState.errors.events.message}</p>
               )}
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto'>
                 {EVENTS.map((event) => (
                   <label
                     key={event.value}
-                    className='flex items-center gap-2 p-2 rounded-lg hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)] cursor-pointer min-h-[44px]'
+                    className='flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)] cursor-pointer min-h-[44px]'
                   >
                     <input
                       type='checkbox'
                       checked={selectedEvents.includes(event.value)}
                       onChange={() => toggleEvent(event.value)}
-                      className='w-4 h-4 rounded border-apple-border text-apple-blue focus:ring-apple-blue'
+                      className='w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand)] focus:ring-apple-blue'
                     />
-                    <span className='text-body text-apple-dark dark:text-[var(--text-primary)]'>{event.label}</span>
+                    <span className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{event.label}</span>
                   </label>
                 ))}
               </div>
@@ -413,9 +413,9 @@ export default function WebhooksPage() {
           {selectedWebhook && (
             <div className='space-y-4 py-4'>
               <div className='space-y-2'>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>URL</p>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>URL</p>
                 <div className='flex items-center gap-2'>
-                  <p className='text-body text-apple-dark dark:text-[var(--text-primary)] font-mono text-sm break-all'>
+                  <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] font-mono text-sm break-all'>
                     {selectedWebhook.url}
                   </p>
                   <AppleButton
@@ -430,7 +430,7 @@ export default function WebhooksPage() {
               </div>
 
               <div className='space-y-2'>
-                <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Eventi</p>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Eventi</p>
                 <div className='flex flex-wrap gap-1'>
                   {selectedWebhook.events.map((e) => (
                     <Badge key={e} variant='outline' className='text-xs'>
@@ -442,31 +442,31 @@ export default function WebhooksPage() {
 
               {deliveryLog.length > 0 && (
                 <div className='space-y-2'>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Ultimi invii</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Ultimi invii</p>
                   <div className='space-y-2 max-h-60 overflow-y-auto'>
                     {deliveryLog.map((log) => (
                       <div
                         key={log.id}
-                        className='flex items-center justify-between p-3 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-lg'
+                        className='flex items-center justify-between p-3 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-lg'
                       >
                         <div className='flex items-center gap-2'>
                           {log.success ? (
-                            <CheckCircle className='w-4 h-4 text-apple-green' />
+                            <CheckCircle className='w-4 h-4 text-[var(--status-success)]' />
                           ) : (
-                            <XCircle className='w-4 h-4 text-apple-red' />
+                            <XCircle className='w-4 h-4 text-[var(--status-error)]' />
                           )}
                           <div>
-                            <p className='text-sm text-apple-dark dark:text-[var(--text-primary)]'>{log.event}</p>
-                            <p className='text-xs text-apple-gray'>
+                            <p className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{log.event}</p>
+                            <p className='text-xs text-[var(--text-tertiary)]'>
                               {new Date(log.timestamp).toLocaleString('it-IT')}
                             </p>
                           </div>
                         </div>
                         <div className='text-right'>
-                          <Badge variant='outline' className={`text-footnote ${log.success ? 'text-apple-green' : 'text-apple-red'}`}>
+                          <Badge variant='outline' className={`text-footnote ${log.success ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}>
                             {log.statusCode}
                           </Badge>
-                          <p className='text-xs text-apple-gray mt-1'>{log.responseTime}ms</p>
+                          <p className='text-xs text-[var(--text-tertiary)] mt-1'>{log.responseTime}ms</p>
                         </div>
                       </div>
                     ))}
@@ -493,7 +493,7 @@ export default function WebhooksPage() {
             </AppleButton>
             <AppleButton
               onClick={handleDelete}
-              className='bg-red-600 hover:bg-red-700'
+              className='bg-[var(--status-error)] hover:bg-[var(--status-error)]'
               disabled={processing}
             >
               {processing ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Elimina'}

@@ -23,17 +23,17 @@ import { useState } from 'react'
 // ============================================
 
 function getScoreColor(score: number): string {
-  if (score >= 9) return 'text-apple-green'
-  if (score >= 7) return 'text-apple-blue'
-  if (score >= 5) return 'text-apple-orange'
-  return 'text-apple-red'
+  if (score >= 9) return 'text-[var(--status-success)]'
+  if (score >= 7) return 'text-[var(--brand)]'
+  if (score >= 5) return 'text-[var(--status-warning)]'
+  return 'text-[var(--status-error)]'
 }
 
 function getScoreBg(score: number): string {
-  if (score >= 9) return 'bg-green-50'
-  if (score >= 7) return 'bg-blue-50'
-  if (score >= 5) return 'bg-orange-50'
-  return 'bg-red-50'
+  if (score >= 9) return 'bg-[var(--status-success-subtle)]'
+  if (score >= 7) return 'bg-[var(--status-info-subtle)]'
+  if (score >= 5) return 'bg-[var(--status-warning)]/5'
+  return 'bg-[var(--status-error-subtle)]'
 }
 
 function getScoreLabel(score: number): string {
@@ -50,26 +50,26 @@ function getScoreLabel(score: number): string {
 const statusConfig = {
   pending: {
     label: 'In elaborazione',
-    color: 'text-apple-orange',
-    bgColor: 'bg-orange-50',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/5',
     icon: Clock,
   },
   completed: {
     label: 'Completata',
-    color: 'text-apple-blue',
-    bgColor: 'bg-blue-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
     icon: CheckCircle,
   },
   approved: {
     label: 'Approvata',
-    color: 'text-apple-green',
-    bgColor: 'bg-green-50',
+    color: 'text-[var(--status-success)]',
+    bgColor: 'bg-[var(--status-success-subtle)]',
     icon: CheckCircle,
   },
   declined: {
     label: 'Rifiutata',
-    color: 'text-apple-red',
-    bgColor: 'bg-red-50',
+    color: 'text-[var(--status-error)]',
+    bgColor: 'bg-[var(--status-error-subtle)]',
     icon: XCircle,
   },
 }
@@ -127,7 +127,7 @@ export function InspectionCard({
                 <span className={`text-2xl font-bold ${scoreColor}`}>
                   {inspection.score.toFixed(1)}
                 </span>
-                <span className="text-[10px] text-apple-gray uppercase tracking-wider">Score</span>
+                <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">Score</span>
               </div>
 
               <div className="flex-1 min-w-0">
@@ -137,10 +137,10 @@ export function InspectionCard({
                     {status.label}
                   </span>
                 </div>
-                <p className="font-medium text-apple-dark truncate">
+                <p className="font-medium text-[var(--text-primary)] truncate">
                   {inspection.vehicle?.make} {inspection.vehicle?.model}
                 </p>
-                <p className="text-xs text-apple-gray">
+                <p className="text-xs text-[var(--text-tertiary)]">
                   {formattedDate} • {inspection.technicianName}
                 </p>
               </div>
@@ -166,7 +166,7 @@ export function InspectionCard({
                 <span className={`text-3xl font-bold ${scoreColor}`}>
                   {inspection.score.toFixed(1)}
                 </span>
-                <span className="text-xs text-apple-gray mt-0.5">/ 10</span>
+                <span className="text-xs text-[var(--text-tertiary)] mt-0.5">/ 10</span>
               </div>
 
               <div>
@@ -176,35 +176,35 @@ export function InspectionCard({
                     {status.label}
                   </span>
                 </div>
-                <h3 className="font-semibold text-apple-dark text-lg">
+                <h3 className="font-semibold text-[var(--text-primary)] text-lg">
                   {inspection.vehicle?.make} {inspection.vehicle?.model}
                 </h3>
-                <p className="text-sm text-apple-gray">
+                <p className="text-sm text-[var(--text-tertiary)]">
                   {inspection.vehicle?.licensePlate} • {inspection.vehicle?.year}
                 </p>
               </div>
             </div>
 
             <div className="text-right hidden sm:block">
-              <p className="text-sm text-apple-gray">{getScoreLabel(inspection.score)}</p>
+              <p className="text-sm text-[var(--text-tertiary)]">{getScoreLabel(inspection.score)}</p>
             </div>
           </div>
 
           {/* Summary */}
-          <div className="mb-4 p-4 bg-apple-light-gray/50 rounded-2xl">
-            <p className="text-sm text-apple-dark leading-relaxed">
+          <div className="mb-4 p-4 bg-[var(--surface-secondary)]/50 rounded-2xl">
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed">
               {inspection.summary}
             </p>
           </div>
 
           {/* Details */}
           <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-            <div className="flex items-center gap-2 text-apple-dark">
-              <Calendar className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 text-[var(--text-primary)]">
+              <Calendar className="h-4 w-4 text-[var(--brand)]" />
               <span>{formattedDate}</span>
             </div>
-            <div className="flex items-center gap-2 text-apple-dark">
-              <FileText className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 text-[var(--text-primary)]">
+              <FileText className="h-4 w-4 text-[var(--brand)]" />
               <span>{inspection.findings?.length || 0} risultanze</span>
             </div>
           </div>
@@ -213,14 +213,14 @@ export function InspectionCard({
           {inspection.photos && inspection.photos.length > 0 && !imageError && (
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-2">
-                <Camera className="h-4 w-4 text-apple-gray" />
-                <span className="text-sm text-apple-gray">{inspection.photos.length} foto</span>
+                <Camera className="h-4 w-4 text-[var(--text-tertiary)]" />
+                <span className="text-sm text-[var(--text-tertiary)]">{inspection.photos.length} foto</span>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {inspection.photos.slice(0, 4).map((photo, index) => (
                   <div 
                     key={photo.id} 
-                    className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-gray-100"
+                    className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-[var(--surface-secondary)]"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -230,8 +230,8 @@ export function InspectionCard({
                       onError={() => setImageError(true)}
                     />
                     {index === 3 && inspection.photos.length > 4 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white font-medium">+{inspection.photos.length - 4}</span>
+                      <div className="absolute inset-0 bg-[var(--surface-primary)]/50 flex items-center justify-center">
+                        <span className="text-[var(--text-on-brand)] font-medium">+{inspection.photos.length - 4}</span>
                       </div>
                     )}
                   </div>
@@ -241,7 +241,7 @@ export function InspectionCard({
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-apple-border/30">
+          <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-[var(--border-default)]/30">
             <AppleButton
               variant="primary"
               size="sm"
@@ -312,8 +312,8 @@ export function InspectionList({
   if (inspections.length === 0) {
     return (
       <div className="text-center py-12">
-        <FileText className="h-12 w-12 mx-auto text-apple-gray/30 mb-4" />
-        <p className="text-apple-gray">{emptyMessage}</p>
+        <FileText className="h-12 w-12 mx-auto text-[var(--text-tertiary)]/30 mb-4" />
+        <p className="text-[var(--text-tertiary)]">{emptyMessage}</p>
       </div>
     )
   }

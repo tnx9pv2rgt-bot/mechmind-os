@@ -121,9 +121,9 @@ type ProgramFormData = z.infer<typeof programSchema>;
 // Status Config
 // =============================================================================
 const memberStatusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  ACTIVE: { label: 'Attivo', color: 'text-green-700 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/40' },
-  PAUSED: { label: 'In pausa', color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/40' },
-  CANCELLED: { label: 'Cancellato', color: 'text-red-700 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/40' },
+  ACTIVE: { label: 'Attivo', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]' },
+  PAUSED: { label: 'In pausa', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]' },
+  CANCELLED: { label: 'Cancellato', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]' },
 };
 
 // =============================================================================
@@ -166,7 +166,7 @@ function ProgramFormModal({
   const { fields, append, remove } = useFieldArray({ control, name: 'benefits' });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--surface-primary)]/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -174,8 +174,8 @@ function ProgramFormModal({
         className="w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         <AppleCard hover={false}>
-          <div className="flex items-center justify-between px-6 py-4 border-b border-apple-border/20 dark:border-[var(--border-default)]/50">
-            <h2 className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
+            <h2 className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {initialData ? 'Modifica Programma' : 'Nuovo Programma'}
             </h2>
             <AppleButton variant="ghost" size="sm" onClick={onClose} icon={<X className="w-5 h-5" />} />
@@ -184,41 +184,41 @@ function ProgramFormModal({
             <AppleCardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Nome programma</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Nome programma</label>
                   <input
                     {...register('name')}
-                    className="w-full px-3 py-2.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                    className="w-full px-3 py-2.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                     placeholder="Es. Gold, Premium..."
                   />
-                  {errors.name && <p className="text-footnote mt-1 text-apple-red">{errors.name.message}</p>}
+                  {errors.name && <p className="text-footnote mt-1 text-[var(--status-error)]">{errors.name.message}</p>}
                 </div>
                 <div>
-                  <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Descrizione</label>
+                  <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Descrizione</label>
                   <textarea
                     {...register('description')}
                     rows={2}
-                    className="w-full px-3 py-2.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                    className="w-full px-3 py-2.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                     placeholder="Descrivi il programma..."
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Prezzo mensile</label>
+                    <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Prezzo mensile</label>
                     <input
                       type="number"
                       step="0.01"
                       {...register('priceMonthly')}
-                      className="w-full px-3 py-2.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                      className="w-full px-3 py-2.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                     />
-                    {errors.priceMonthly && <p className="text-footnote mt-1 text-apple-red">{errors.priceMonthly.message}</p>}
+                    {errors.priceMonthly && <p className="text-footnote mt-1 text-[var(--status-error)]">{errors.priceMonthly.message}</p>}
                   </div>
                   <div>
-                    <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)] mb-1 block">Prezzo annuale</label>
+                    <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block">Prezzo annuale</label>
                     <input
                       type="number"
                       step="0.01"
                       {...register('priceYearly')}
-                      className="w-full px-3 py-2.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                      className="w-full px-3 py-2.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                     />
                   </div>
                 </div>
@@ -226,7 +226,7 @@ function ProgramFormModal({
                 {/* Benefits */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-footnote font-medium text-apple-gray dark:text-[var(--text-secondary)]">Benefici</label>
+                    <label className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Benefici</label>
                     <AppleButton
                       type="button"
                       variant="text"
@@ -238,22 +238,22 @@ function ProgramFormModal({
                     </AppleButton>
                   </div>
                   {errors.benefits && typeof errors.benefits.message === 'string' && (
-                    <p className="text-footnote mb-2 text-apple-red">{errors.benefits.message}</p>
+                    <p className="text-footnote mb-2 text-[var(--status-error)]">{errors.benefits.message}</p>
                   )}
                   <div className="space-y-3">
                     {fields.map((field, index) => (
-                      <div key={field.id} className="p-3 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-2">
+                      <div key={field.id} className="p-3 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 grid grid-cols-2 gap-2">
                             <input
                               {...register(`benefits.${index}.type`)}
                               placeholder="Tipo (es. sconto, servizio)"
-                              className="w-full px-2 py-1.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                              className="w-full px-2 py-1.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                             />
                             <input
                               {...register(`benefits.${index}.description`)}
                               placeholder="Descrizione beneficio"
-                              className="w-full px-2 py-1.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                              className="w-full px-2 py-1.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                             />
                           </div>
                           {fields.length > 1 && (
@@ -263,25 +263,25 @@ function ProgramFormModal({
                               size="sm"
                               onClick={() => remove(index)}
                               icon={<Trash2 className="w-3 h-3" />}
-                              className="text-apple-red"
+                              className="text-[var(--status-error)]"
                             />
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Max/mese</label>
+                            <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Max/mese</label>
                             <input
                               type="number"
                               {...register(`benefits.${index}.maxPerMonth`)}
-                              className="w-full px-2 py-1.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                              className="w-full px-2 py-1.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                             />
                           </div>
                           <div>
-                            <label className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Sconto %</label>
+                            <label className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Sconto %</label>
                             <input
                               type="number"
                               {...register(`benefits.${index}.discountPercent`)}
-                              className="w-full px-2 py-1.5 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                              className="w-full px-2 py-1.5 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] min-h-[44px] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                             />
                           </div>
                         </div>
@@ -290,7 +290,7 @@ function ProgramFormModal({
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
+                <div className="flex justify-end gap-3 pt-3 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
                   <AppleButton type="button" variant="ghost" onClick={onClose}>
                     Annulla
                   </AppleButton>
@@ -407,8 +407,8 @@ export default function MembershipsPage(): React.ReactElement {
       <header>
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Programmi Membership</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Programmi Membership</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Gestisci i programmi di abbonamento e i membri
             </p>
           </div>
@@ -454,14 +454,14 @@ export default function MembershipsPage(): React.ReactElement {
           <motion.div variants={listItemVariants}>
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
               </div>
             ) : error ? (
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Errore nel caricamento</p>
+                    <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Errore nel caricamento</p>
                     <AppleButton
                       variant="ghost"
                       className="mt-4"
@@ -477,9 +477,9 @@ export default function MembershipsPage(): React.ReactElement {
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Crown className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessun programma creato</p>
-                    <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                    <Crown className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Nessun programma creato</p>
+                    <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                       Crea il tuo primo programma membership
                     </p>
                     <AppleButton
@@ -500,8 +500,8 @@ export default function MembershipsPage(): React.ReactElement {
                       <AppleCardContent>
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <Crown className="w-5 h-5 text-apple-purple" />
-                            <h3 className="text-body font-bold text-apple-dark dark:text-[var(--text-primary)]">{program.name}</h3>
+                            <Crown className="w-5 h-5 text-[var(--brand)]" />
+                            <h3 className="text-body font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{program.name}</h3>
                           </div>
                           <button
                             onClick={() => handleToggleActive(program)}
@@ -509,24 +509,24 @@ export default function MembershipsPage(): React.ReactElement {
                             className="min-w-[44px] min-h-[44px] flex items-center justify-center"
                           >
                             {togglingIds.has(program.id) ? (
-                              <Loader2 className="w-5 h-5 animate-spin text-apple-gray" />
+                              <Loader2 className="w-5 h-5 animate-spin text-[var(--text-tertiary)]" />
                             ) : program.isActive ? (
-                              <ToggleRight className="w-6 h-6 text-apple-green" />
+                              <ToggleRight className="w-6 h-6 text-[var(--status-success)]" />
                             ) : (
-                              <ToggleLeft className="w-6 h-6 text-apple-gray" />
+                              <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)]" />
                             )}
                           </button>
                         </div>
                         {program.description && (
-                          <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-3">{program.description}</p>
+                          <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-3">{program.description}</p>
                         )}
                         <div className="flex items-baseline gap-2 mb-4">
-                          <span className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+                          <span className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(program.priceMonthly)}
                           </span>
-                          <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">/mese</span>
+                          <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">/mese</span>
                           {program.priceYearly && program.priceYearly > 0 && (
-                            <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] ml-2">
+                            <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ml-2">
                               ({new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(program.priceYearly)}/anno)
                             </span>
                           )}
@@ -534,16 +534,16 @@ export default function MembershipsPage(): React.ReactElement {
                         <div className="space-y-2 mb-4">
                           {program.benefits.map((benefit, idx) => (
                             <div key={idx} className="flex items-start gap-2">
-                              <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-apple-green" />
+                              <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[var(--status-success)]" />
                               <div>
-                                <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{benefit.description}</span>
+                                <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{benefit.description}</span>
                                 {(benefit.maxPerMonth || benefit.discountPercent) && (
                                   <div className="flex gap-2 mt-0.5">
                                     {benefit.maxPerMonth && benefit.maxPerMonth > 0 && (
-                                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Max {benefit.maxPerMonth}/mese</span>
+                                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Max {benefit.maxPerMonth}/mese</span>
                                     )}
                                     {benefit.discountPercent && benefit.discountPercent > 0 && (
-                                      <span className="text-footnote text-apple-purple">-{benefit.discountPercent}%</span>
+                                      <span className="text-footnote text-[var(--brand)]">-{benefit.discountPercent}%</span>
                                     )}
                                   </div>
                                 )}
@@ -551,12 +551,12 @@ export default function MembershipsPage(): React.ReactElement {
                             </div>
                           ))}
                         </div>
-                        <div className="flex items-center gap-2 pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
-                          <Users className="w-3.5 h-3.5 text-apple-gray" />
-                          <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{program.activeMembers} membri attivi</span>
+                        <div className="flex items-center gap-2 pt-3 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
+                          <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+                          <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{program.activeMembers} membri attivi</span>
                         </div>
                       </AppleCardContent>
-                      <div className="flex border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
+                      <div className="flex border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
                         <AppleButton
                           variant="text"
                           size="sm"
@@ -580,7 +580,7 @@ export default function MembershipsPage(): React.ReactElement {
                         <AppleButton
                           variant="text"
                           size="sm"
-                          className="rounded-none text-apple-red"
+                          className="rounded-none text-[var(--status-error)]"
                           icon={<Trash2 className="w-3 h-3" />}
                           onClick={() => setShowDeleteConfirm(program.id)}
                         />
@@ -602,7 +602,7 @@ export default function MembershipsPage(): React.ReactElement {
                 <select
                   value={selectedProgramId ?? ''}
                   onChange={e => setSelectedProgramId(e.target.value || null)}
-                  className="w-full h-10 px-4 rounded-md border border-apple-border/30 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
+                  className="w-full h-10 px-4 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue"
                 >
                   <option value="">Seleziona programma</option>
                   {programs.map(p => (
@@ -616,8 +616,8 @@ export default function MembershipsPage(): React.ReactElement {
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Users className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                    <Users className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Seleziona un programma per vedere i membri
                     </p>
                   </div>
@@ -625,14 +625,14 @@ export default function MembershipsPage(): React.ReactElement {
               </AppleCard>
             ) : membersLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
               </div>
             ) : members.length === 0 ? (
               <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Users className="h-12 w-12 text-apple-gray/40 mb-4" />
-                    <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">Nessun membro iscritto</p>
+                    <Users className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Nessun membro iscritto</p>
                   </div>
                 </AppleCardContent>
               </AppleCard>
@@ -643,21 +643,21 @@ export default function MembershipsPage(): React.ReactElement {
                   <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]/50">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Cliente</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Stato</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Data iscrizione</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Utilizzi</th>
+                        <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Cliente</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Stato</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Data iscrizione</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Utilizzi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {members.map(member => {
                           const status = memberStatusConfig[member.status] ?? memberStatusConfig.ACTIVE;
                           return (
-                            <tr key={member.id} className="border-b border-apple-border/10 dark:border-[var(--border-default)]/30">
+                            <tr key={member.id} className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/30">
                               <td className="px-4 py-3">
-                                <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{member.customerName}</p>
-                                {member.email && <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{member.email}</p>}
+                                <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{member.customerName}</p>
+                                {member.email && <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{member.email}</p>}
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}>
@@ -665,10 +665,10 @@ export default function MembershipsPage(): React.ReactElement {
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">{new Date(member.startDate).toLocaleDateString('it-IT')}</span>
+                                <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{new Date(member.startDate).toLocaleDateString('it-IT')}</span>
                               </td>
                               <td className="px-4 py-3 text-right">
-                                <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{member.redemptionsUsed}</span>
+                                <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{member.redemptionsUsed}</span>
                               </td>
                             </tr>
                           );
@@ -681,14 +681,14 @@ export default function MembershipsPage(): React.ReactElement {
                     {members.map(member => {
                       const status = memberStatusConfig[member.status] ?? memberStatusConfig.ACTIVE;
                       return (
-                        <div key={member.id} className="p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-2">
+                        <div key={member.id} className="p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] space-y-2">
                           <div className="flex items-center justify-between">
-                            <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{member.customerName}</p>
+                            <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{member.customerName}</p>
                             <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}>
                               {status.label}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                          <div className="flex items-center justify-between text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             <span>Iscritto: {new Date(member.startDate).toLocaleDateString('it-IT')}</span>
                             <span>Utilizzi: {member.redemptionsUsed}</span>
                           </div>
@@ -718,7 +718,7 @@ export default function MembershipsPage(): React.ReactElement {
       {/* Delete Confirm Dialog */}
       <AnimatePresence>
         {showDeleteConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--surface-primary)]/50 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -727,8 +727,8 @@ export default function MembershipsPage(): React.ReactElement {
             >
               <AppleCard hover={false}>
                 <AppleCardContent>
-                  <h3 className="text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)] mb-2">Elimina programma</h3>
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4">
+                  <h3 className="text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2">Elimina programma</h3>
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4">
                     Sei sicuro di voler eliminare questo programma? Questa azione non puo essere annullata.
                   </p>
                   <div className="flex justify-end gap-3">
@@ -739,7 +739,7 @@ export default function MembershipsPage(): React.ReactElement {
                       onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
                       disabled={deletingId === showDeleteConfirm}
                       loading={deletingId === showDeleteConfirm}
-                      className="bg-red-500 hover:bg-red-600 text-white"
+                      className="bg-[var(--status-error-subtle)]0 hover:bg-[var(--status-error)] text-[var(--text-on-brand)]"
                     >
                       Elimina
                     </AppleButton>

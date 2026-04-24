@@ -81,17 +81,17 @@ export function CookieBanner() {
         exit={{ y: 100, opacity: 0 }}
         className='fixed bottom-0 left-0 right-0 z-50 p-4'
       >
-        <div className='max-w-4xl mx-auto bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 p-6'>
+        <div className='max-w-4xl mx-auto bg-[var(--surface-secondary)]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[var(--border-default)]/50 p-6'>
           {!showDetails ? (
             <div className='flex flex-col sm:flex-row items-center gap-4'>
               <div className='flex items-center gap-3 flex-1'>
-                <div className='w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center'>
-                  <Cookie className='w-5 h-5 text-blue-600' />
+                <div className='w-10 h-10 rounded-full bg-[var(--status-info-subtle)] flex items-center justify-center'>
+                  <Cookie className='w-5 h-5 text-[var(--status-info)]' />
                 </div>
-                <p className='text-sm text-gray-600'>
+                <p className='text-sm text-[var(--text-secondary)]'>
                   Usiamo cookie per migliorare la tua esperienza, analizzare il traffico e
                   personalizzare i contenuti.
-                  <a href='#' className='text-blue-600 hover:underline ml-1'>
+                  <a href='#' className='text-[var(--status-info)] hover:underline ml-1'>
                     Scopri di più
                   </a>
                 </p>
@@ -113,11 +113,11 @@ export function CookieBanner() {
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
                 <h3 className='text-lg font-semibold flex items-center gap-2'>
-                  <Shield className='w-5 h-5 text-blue-600' />
+                  <Shield className='w-5 h-5 text-[var(--status-info)]' />
                   Gestione consensi
                 </h3>
                 <button onClick={() => setShowDetails(false)} aria-label='Chiudi gestione consensi'>
-                  <X className='w-5 h-5 text-gray-400 hover:text-gray-600' />
+                  <X className='w-5 h-5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]' />
                 </button>
               </div>
 
@@ -194,7 +194,7 @@ function ConsentRow({
     <div
       className={cn(
         'flex items-start gap-3 p-3 rounded-lg',
-        disabled ? 'bg-gray-50' : 'hover:bg-gray-50'
+        disabled ? 'bg-[var(--surface-secondary)]' : 'hover:bg-[var(--surface-secondary)]'
       )}
     >
       <Checkbox
@@ -205,7 +205,7 @@ function ConsentRow({
       />
       <div className='flex-1'>
         <p className='font-medium text-sm'>{title}</p>
-        <p className='text-xs text-gray-500'>{description}</p>
+        <p className='text-xs text-[var(--text-tertiary)]'>{description}</p>
       </div>
     </div>
   );

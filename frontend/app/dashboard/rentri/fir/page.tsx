@@ -67,19 +67,19 @@ const listItemVariants = {
 function getStatusConfig(status: string): { label: string; color: string; bg: string } {
   switch (status) {
     case 'DRAFT':
-      return { label: 'Bozza', color: 'text-apple-dark dark:text-[var(--text-secondary)]', bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]' };
+      return { label: 'Bozza', color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]', bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]' };
     case 'VIDIMATED':
-      return { label: 'Vidimato', color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/40' };
+      return { label: 'Vidimato', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' };
     case 'IN_TRANSIT':
-      return { label: 'In Transito', color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-100 dark:bg-orange-900/40' };
+      return { label: 'In Transito', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]' };
     case 'DELIVERED':
-      return { label: 'Consegnato', color: 'text-green-700 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/40' };
+      return { label: 'Consegnato', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]' };
     case 'CONFIRMED':
-      return { label: 'Confermato', color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-100 dark:bg-emerald-900/40' };
+      return { label: 'Confermato', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]', bg: 'bg-[var(--status-success)]/10 dark:bg-[var(--status-success)]/30/40' };
     case 'CANCELLED':
-      return { label: 'Annullato', color: 'text-red-700 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/40' };
+      return { label: 'Annullato', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]' };
     default:
-      return { label: status, color: 'text-apple-dark dark:text-[var(--text-secondary)]', bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]' };
+      return { label: status, color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]', bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]' };
   }
 }
 
@@ -122,10 +122,10 @@ export default function FirListPage() {
                 { label: 'FIR' },
               ]}
             />
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Formulari (FIR)
             </h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Formulari di identificazione rifiuti per il trasporto
             </p>
           </div>
@@ -150,10 +150,10 @@ export default function FirListPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Formulari
                 {!isLoading && (
-                  <span className="ml-2 text-apple-gray dark:text-[var(--text-secondary)]">
+                  <span className="ml-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     ({totalRecords})
                   </span>
                 )}
@@ -162,8 +162,8 @@ export default function FirListPage() {
             <AppleCardContent>
               {error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i formulari
                   </p>
                   <AppleButton variant="ghost" className="mt-4" onClick={() => mutate()}>
@@ -172,12 +172,12 @@ export default function FirListPage() {
                 </div>
               ) : isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : records.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FileText className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <FileText className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun formulario trovato
                   </p>
                   <AppleButton
@@ -196,7 +196,7 @@ export default function FirListPage() {
                   animate="visible"
                 >
                   {/* Table Header */}
-                  <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                  <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     <div className="col-span-2">N. FIR</div>
                     <div className="col-span-1">Data</div>
                     <div className="col-span-1">CER</div>
@@ -212,7 +212,7 @@ export default function FirListPage() {
                     return (
                       <motion.div
                         key={fir.id}
-                        className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 items-center cursor-pointer group"
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 items-center cursor-pointer group"
                         variants={listItemVariants}
                         custom={index}
                         whileHover={{ scale: 1.005, x: 4 }}
@@ -224,22 +224,22 @@ export default function FirListPage() {
                           if (e.key === 'Enter') router.push(`/dashboard/rentri/fir/${fir.id}`);
                         }}
                       >
-                        <div className="lg:col-span-2 text-body font-mono font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                        <div className="lg:col-span-2 text-body font-mono font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {fir.firNumber}
                         </div>
-                        <div className="lg:col-span-1 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                        <div className="lg:col-span-1 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           {new Date(fir.date).toLocaleDateString('it-IT')}
                         </div>
-                        <div className="lg:col-span-1 text-body font-mono text-apple-dark dark:text-[var(--text-primary)]">
+                        <div className="lg:col-span-1 text-body font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {fir.cerCode}
                         </div>
-                        <div className="lg:col-span-1 text-body text-apple-dark dark:text-[var(--text-primary)] tabular-nums">
+                        <div className="lg:col-span-1 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] tabular-nums">
                           {fir.quantity.toLocaleString('it-IT')} {fir.unit || 'kg'}
                         </div>
-                        <div className="lg:col-span-2 text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]">
+                        <div className="lg:col-span-2 text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           {fir.transporterName || '—'}
                         </div>
-                        <div className="lg:col-span-2 text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]">
+                        <div className="lg:col-span-2 text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           {fir.destinationName || '—'}
                         </div>
                         <div className="lg:col-span-2">
@@ -250,7 +250,7 @@ export default function FirListPage() {
                           </span>
                         </div>
                         <div className="lg:col-span-1 flex justify-end">
-                          <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-apple-gray dark:text-[var(--text-secondary)]" />
+                          <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                         </div>
                       </motion.div>
                     );

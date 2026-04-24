@@ -97,13 +97,13 @@ export function OptimizedImage({
     return (
       <div
         className={cn(
-          'bg-gray-100 dark:bg-gray-800 flex items-center justify-center',
+          'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)] flex items-center justify-center',
           fill ? 'w-full h-full' : '',
           containerClassName
         )}
         style={!fill ? { width, height } : undefined}
       >
-        <div className='text-gray-400 dark:text-gray-600 text-center p-4'>
+        <div className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center p-4'>
           <svg
             className='w-8 h-8 mx-auto mb-2'
             fill='none'
@@ -133,7 +133,7 @@ export function OptimizedImage({
       {!isLoaded && (
         <div
           className={cn(
-            'absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse',
+            'absolute inset-0 bg-[var(--border-default)] dark:bg-[var(--border-default)] animate-pulse',
             fill ? 'w-full h-full' : ''
           )}
           style={!fill ? { width, height } : undefined}

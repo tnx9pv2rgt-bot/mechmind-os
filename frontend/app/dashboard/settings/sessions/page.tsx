@@ -40,11 +40,11 @@ interface SessionInfo {
 function DeviceIcon({ type }: { type: string }) {
   switch (type) {
     case 'phone':
-      return <Smartphone className="h-8 w-8 text-apple-blue" />;
+      return <Smartphone className="h-8 w-8 text-[var(--brand)]" />;
     case 'tablet':
-      return <Tablet className="h-8 w-8 text-apple-purple" />;
+      return <Tablet className="h-8 w-8 text-[var(--brand)]" />;
     default:
-      return <Monitor className="h-8 w-8 text-apple-gray dark:text-[var(--text-secondary)]" />;
+      return <Monitor className="h-8 w-8 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />;
   }
 }
 
@@ -138,8 +138,8 @@ export default function SessionsPage() {
       {/* Header */}
       <header className="">
         <div className="px-8 py-5">
-          <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Sessioni attive</h1>
-          <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+          <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Sessioni attive</h1>
+          <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
             Dispositivi collegati al tuo account
           </p>
         </div>
@@ -153,9 +153,9 @@ export default function SessionsPage() {
       >
         {/* Security notice */}
         <motion.div variants={listItemVariants}>
-          <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-            <Shield className="mt-0.5 h-5 w-5 shrink-0 text-apple-blue" />
-            <p className="text-body text-blue-800 dark:text-blue-200">
+          <div className="flex items-start gap-3 rounded-2xl border border-[var(--status-info)]/30 bg-[var(--status-info-subtle)] p-4 dark:border-[var(--status-info)] dark:bg-[var(--status-info-subtle)]">
+            <Shield className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand)]" />
+            <p className="text-body text-[var(--status-info)] dark:text-[var(--status-info)]">
               Se noti un dispositivo che non riconosci, disconnettilo immediatamente e cambia la password.
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function SessionsPage() {
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
           </div>
         )}
 
@@ -174,8 +174,8 @@ export default function SessionsPage() {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]" role="alert">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" role="alert">
                     Errore nel caricamento delle sessioni
                   </p>
                 </div>
@@ -187,18 +187,18 @@ export default function SessionsPage() {
         {/* Current session */}
         {currentSession && (
           <motion.div variants={listItemVariants}>
-            <h2 className="mb-3 text-footnote font-medium uppercase tracking-wider text-apple-gray dark:text-[var(--text-secondary)]">
+            <h2 className="mb-3 text-footnote font-medium uppercase tracking-wider text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
               Sessione corrente
             </h2>
-            <AppleCard hover={false} className="ring-2 ring-green-200 dark:ring-green-800">
+            <AppleCard hover={false} className="ring-2 ring-[var(--status-success)]/20 dark:ring-[var(--status-success)]">
               <AppleCardContent>
                 <div className="flex items-center gap-4">
                   <DeviceIcon type={currentSession.deviceType} />
                   <div className="flex-1">
-                    <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                    <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       {currentSession.deviceName}
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       {currentSession.ipAddress && (
                         <span className="flex items-center gap-1">
                           <Globe className="h-3.5 w-3.5" />
@@ -211,7 +211,7 @@ export default function SessionsPage() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">
+                  <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]">
                     Attiva
                   </span>
                 </div>
@@ -224,7 +224,7 @@ export default function SessionsPage() {
         {otherSessions.length > 0 && (
           <motion.div variants={listItemVariants}>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-footnote font-medium uppercase tracking-wider text-apple-gray dark:text-[var(--text-secondary)]">
+              <h2 className="text-footnote font-medium uppercase tracking-wider text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                 Altri dispositivi ({otherSessions.length})
               </h2>
               <AppleButton
@@ -233,7 +233,7 @@ export default function SessionsPage() {
                 onClick={() => revokeAllMutation.mutate()}
                 disabled={revokeAllMutation.isPending}
                 loading={revokeAllMutation.isPending}
-                className="text-red-600 dark:text-red-400"
+                className="text-[var(--status-error)] dark:text-[var(--status-error)]"
               >
                 Disconnetti tutti
               </AppleButton>
@@ -246,10 +246,10 @@ export default function SessionsPage() {
                     <div className="flex items-center gap-4">
                       <DeviceIcon type={session.deviceType} />
                       <div className="flex-1">
-                        <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                        <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {session.deviceName}
                         </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           {session.city && session.country && (
                             <span>{session.city}, {session.country}</span>
                           )}
@@ -275,7 +275,7 @@ export default function SessionsPage() {
                         }}
                         disabled={revoking === session.id}
                         loading={revoking === session.id}
-                        className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                        className="text-[var(--status-error)] dark:text-[var(--status-error)] border-[var(--status-error)]/30 dark:border-[var(--status-error)]"
                       >
                         Disconnetti
                       </AppleButton>
@@ -293,11 +293,11 @@ export default function SessionsPage() {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Shield className="h-10 w-10 text-apple-green mb-3" />
-                  <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                  <Shield className="h-10 w-10 text-[var(--status-success)] mb-3" />
+                  <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Nessun altro dispositivo collegato
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                     Il tuo account e attivo solo su questo dispositivo
                   </p>
                 </div>

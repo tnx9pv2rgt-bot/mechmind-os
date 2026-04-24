@@ -21,8 +21,8 @@ export default function NewWorkflowPage(): React.ReactElement {
               onClick={() => router.push('/dashboard/workflows')}
             />
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Nuovo Workflow</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuovo Workflow</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Definisci trigger e azioni per automatizzare le operazioni
               </p>
             </div>

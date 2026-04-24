@@ -186,7 +186,7 @@ export default function KioskPage(): React.ReactElement {
 
   return (
     <div
-      className="fixed inset-0 bg-gray-950 text-white flex flex-col overflow-hidden select-none"
+      className="fixed inset-0 bg-[var(--surface-primary)] text-[var(--text-on-brand)] flex flex-col overflow-hidden select-none"
       onTouchStart={resetInactivity}
     >
       {/* Main Content */}
@@ -209,10 +209,10 @@ export default function KioskPage(): React.ReactElement {
                   setStep('phone');
                   setPhoneNumber('');
                 }}
-                className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-gray-800 hover:bg-gray-700 active:bg-gray-600 border-2 border-gray-700 hover:border-indigo-500 transition-all min-h-[140px]"
+                className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-[var(--surface-primary)] hover:bg-[var(--surface-active)] active:bg-[var(--surface-active)] border-2 border-[var(--border-strong)] hover:border-[var(--brand)] transition-all min-h-[140px]"
                 style={{ minHeight: '140px' }}
               >
-                <Phone className="h-12 w-12 text-indigo-400" />
+                <Phone className="h-12 w-12 text-[var(--brand)]" />
                 <span className="text-xl font-semibold">
                   Numero di telefono
                 </span>
@@ -223,10 +223,10 @@ export default function KioskPage(): React.ReactElement {
                   setStep('plate');
                   setPlateNumber('');
                 }}
-                className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-gray-800 hover:bg-gray-700 active:bg-gray-600 border-2 border-gray-700 hover:border-emerald-500 transition-all min-h-[140px]"
+                className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-[var(--surface-primary)] hover:bg-[var(--surface-active)] active:bg-[var(--surface-active)] border-2 border-[var(--border-strong)] hover:border-[var(--status-success)] transition-all min-h-[140px]"
                 style={{ minHeight: '140px' }}
               >
-                <Car className="h-12 w-12 text-emerald-400" />
+                <Car className="h-12 w-12 text-[var(--status-success)]" />
                 <span className="text-xl font-semibold">Targa veicolo</span>
               </button>
             </div>
@@ -238,7 +238,7 @@ export default function KioskPage(): React.ReactElement {
           <div className="text-center space-y-6 max-w-sm w-full">
             <button
               onClick={() => setStep('welcome')}
-              className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[64px] px-4"
+              className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[64px] px-4"
             >
               <ArrowLeft className="h-6 w-6" />
               <span className="text-lg">Indietro</span>
@@ -246,7 +246,7 @@ export default function KioskPage(): React.ReactElement {
 
             <h2 className="text-3xl font-bold">Il tuo numero</h2>
 
-            <div className="bg-gray-800 rounded-2xl px-6 py-4 text-3xl font-mono tracking-wider min-h-[64px] flex items-center justify-center border-2 border-gray-700">
+            <div className="bg-[var(--surface-primary)] rounded-2xl px-6 py-4 text-3xl font-mono tracking-wider min-h-[64px] flex items-center justify-center border-2 border-[var(--border-strong)]">
               {phoneNumber || (
                 <span className="text-[var(--text-secondary)]">+39 ...</span>
               )}
@@ -261,8 +261,8 @@ export default function KioskPage(): React.ReactElement {
                     onClick={() => handleNumpadPress(key)}
                     className={`flex items-center justify-center rounded-xl text-2xl font-semibold transition-all active:scale-95 ${
                       key === 'DEL'
-                        ? 'bg-red-900/50 hover:bg-red-800/50 text-red-300'
-                        : 'bg-gray-800 hover:bg-gray-700'
+                        ? 'bg-[var(--status-error)]/40/50 hover:bg-[var(--status-error)]/50 text-[var(--status-error)]'
+                        : 'bg-[var(--surface-primary)] hover:bg-[var(--surface-active)]'
                     }`}
                     style={{ minHeight: '64px' }}
                   >
@@ -279,7 +279,7 @@ export default function KioskPage(): React.ReactElement {
             <button
               onClick={handleSearch}
               disabled={isSearching || phoneNumber.length < 6}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-[var(--text-secondary)] text-xl font-semibold transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-3 rounded-2xl bg-[var(--brand)] hover:bg-[var(--brand)]/50 disabled:bg-[var(--surface-active)] disabled:text-[var(--text-secondary)] text-xl font-semibold transition-all active:scale-[0.98]"
               style={{ minHeight: '64px' }}
             >
               {isSearching ? (
@@ -297,7 +297,7 @@ export default function KioskPage(): React.ReactElement {
           <div className="text-center space-y-6 max-w-md w-full">
             <button
               onClick={() => setStep('welcome')}
-              className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[64px] px-4"
+              className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[64px] px-4"
             >
               <ArrowLeft className="h-6 w-6" />
               <span className="text-lg">Indietro</span>
@@ -313,14 +313,14 @@ export default function KioskPage(): React.ReactElement {
               }
               placeholder="ES. AB123CD"
               autoFocus
-              className="w-full bg-gray-800 rounded-2xl px-6 py-4 text-3xl font-mono tracking-[0.3em] text-center border-2 border-gray-700 focus:border-emerald-500 focus:outline-none placeholder-gray-600 uppercase"
+              className="w-full bg-[var(--surface-primary)] rounded-2xl px-6 py-4 text-3xl font-mono tracking-[0.3em] text-center border-2 border-[var(--border-strong)] focus:border-[var(--status-success)] focus:outline-none placeholder-gray-600 uppercase"
               style={{ minHeight: '64px' }}
             />
 
             <button
               onClick={handleSearch}
               disabled={isSearching || plateNumber.length < 4}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-[var(--text-secondary)] text-xl font-semibold transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-3 rounded-2xl bg-[var(--status-success)] hover:bg-[var(--status-success)]/50 disabled:bg-[var(--surface-active)] disabled:text-[var(--text-secondary)] text-xl font-semibold transition-all active:scale-[0.98]"
               style={{ minHeight: '64px' }}
             >
               {isSearching ? (
@@ -338,7 +338,7 @@ export default function KioskPage(): React.ReactElement {
           <div className="text-center space-y-8 max-w-md w-full">
             <button
               onClick={() => setStep('welcome')}
-              className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-white transition-colors min-h-[64px] px-4"
+              className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[64px] px-4"
             >
               <ArrowLeft className="h-6 w-6" />
               <span className="text-lg">Indietro</span>
@@ -346,7 +346,7 @@ export default function KioskPage(): React.ReactElement {
 
             <h2 className="text-3xl font-bold">Prenotazione trovata</h2>
 
-            <div className="bg-gray-800 rounded-2xl p-6 space-y-4 border-2 border-gray-700 text-left">
+            <div className="bg-[var(--surface-primary)] rounded-2xl p-6 space-y-4 border-2 border-[var(--border-strong)] text-left">
               <div className="flex items-center gap-3">
                 <Car className="h-6 w-6 text-[var(--text-tertiary)]" />
                 <div>
@@ -383,7 +383,7 @@ export default function KioskPage(): React.ReactElement {
             <button
               onClick={handleCheckIn}
               disabled={isCheckingIn}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl bg-green-600 hover:bg-green-500 disabled:bg-gray-700 text-2xl font-bold transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-3 rounded-2xl bg-[var(--status-success)] hover:bg-[var(--status-success-subtle)]0 disabled:bg-[var(--surface-active)] text-2xl font-bold transition-all active:scale-[0.98]"
               style={{ minHeight: '80px' }}
             >
               {isCheckingIn ? (
@@ -400,18 +400,18 @@ export default function KioskPage(): React.ReactElement {
         {step === 'success' && (
           <div className="text-center space-y-8 max-w-md w-full">
             <div className="relative">
-              <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-green-600/20 animate-pulse">
-                <CheckCircle className="h-20 w-20 text-green-400" />
+              <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-[var(--status-success)]/20 animate-pulse">
+                <CheckCircle className="h-20 w-20 text-[var(--status-success)]" />
               </div>
             </div>
 
             <div>
-              <h2 className="text-4xl font-bold text-green-400 mb-4">
+              <h2 className="text-4xl font-bold text-[var(--status-success)] mb-4">
                 Check-in completato!
               </h2>
               <p className="text-2xl text-[var(--text-tertiary)]">
                 Tempo stimato:{' '}
-                <span className="font-bold text-white">
+                <span className="font-bold text-[var(--text-on-brand)]">
                   {estimatedMinutes} minuti
                 </span>
               </p>
@@ -426,12 +426,12 @@ export default function KioskPage(): React.ReactElement {
 
       {/* Shop Status Bar */}
       {shopStatus && (
-        <div className="bg-[var(--surface-primary)] border-t border-gray-800 px-6 py-3 flex items-center justify-between text-sm">
+        <div className="bg-[var(--surface-primary)] border-t border-[var(--border-strong)] px-6 py-3 flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-[var(--text-tertiary)]" />
             <span className="text-[var(--text-tertiary)]">
               Postazioni occupate:{' '}
-              <span className="text-white font-semibold">
+              <span className="text-[var(--text-on-brand)] font-semibold">
                 {shopStatus.baysOccupied}/{shopStatus.baysTotal}
               </span>
             </span>
@@ -440,7 +440,7 @@ export default function KioskPage(): React.ReactElement {
             <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
             <span className="text-[var(--text-tertiary)]">
               Attesa stimata:{' '}
-              <span className="text-white font-semibold">
+              <span className="text-[var(--text-on-brand)] font-semibold">
                 {shopStatus.estimatedWaitMinutes} min
               </span>
             </span>

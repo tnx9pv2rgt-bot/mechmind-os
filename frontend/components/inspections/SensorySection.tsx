@@ -113,17 +113,17 @@ const MOLD_LOCATIONS: { value: MoldLocation; label: string; icon: React.ReactNod
 ]
 
 const FILTER_CONDITION_OPTIONS: { value: FilterCondition; label: string; color: string }[] = [
-  { value: FilterCondition.GOOD, label: 'Buono', color: 'text-green-600 bg-green-50 border-green-200' },
-  { value: FilterCondition.FAIR, label: 'Discreto', color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
-  { value: FilterCondition.POOR, label: 'Scarso', color: 'text-orange-600 bg-orange-50 border-orange-200' },
-  { value: FilterCondition.REPLACEMENT_NEEDED, label: 'Da Sostituire', color: 'text-red-600 bg-red-50 border-red-200' },
+  { value: FilterCondition.GOOD, label: 'Buono', color: 'text-[var(--status-success)] bg-[var(--status-success-subtle)] border-[var(--status-success)]/30' },
+  { value: FilterCondition.FAIR, label: 'Discreto', color: 'text-[var(--status-warning)] bg-[var(--status-warning)]/10 border-[var(--status-warning)]/30' },
+  { value: FilterCondition.POOR, label: 'Scarso', color: 'text-[var(--status-warning)] bg-[var(--status-warning)]/5 border-[var(--status-warning)]/20' },
+  { value: FilterCondition.REPLACEMENT_NEEDED, label: 'Da Sostituire', color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)] border-[var(--status-error)]/30' },
 ]
 
 const BLOCKAGE_OPTIONS: { value: BlockageSeverity; label: string; color: string }[] = [
-  { value: BlockageSeverity.NONE, label: 'Nessuno', color: 'text-green-600' },
-  { value: BlockageSeverity.MINOR, label: 'Lieve', color: 'text-yellow-600' },
-  { value: BlockageSeverity.MODERATE, label: 'Moderato', color: 'text-orange-600' },
-  { value: BlockageSeverity.SEVERE, label: 'Grave', color: 'text-red-600' },
+  { value: BlockageSeverity.NONE, label: 'Nessuno', color: 'text-[var(--status-success)]' },
+  { value: BlockageSeverity.MINOR, label: 'Lieve', color: 'text-[var(--status-warning)]' },
+  { value: BlockageSeverity.MODERATE, label: 'Moderato', color: 'text-[var(--status-warning)]' },
+  { value: BlockageSeverity.SEVERE, label: 'Grave', color: 'text-[var(--status-error)]' },
 ]
 
 // =============================================================================
@@ -133,24 +133,24 @@ const BLOCKAGE_OPTIONS: { value: BlockageSeverity; label: string; color: string 
 function getHumidityColor(humidity: number): { bg: string; text: string; bar: string; label: string } {
   if (humidity < 50) {
     return {
-      bg: 'bg-green-50',
-      text: 'text-green-700',
-      bar: 'bg-gradient-to-r from-green-400 to-green-500',
+      bg: 'bg-[var(--status-success-subtle)]',
+      text: 'text-[var(--status-success)]',
+      bar: 'bg-gradient-to-r from-[var(--status-success)] to-[var(--status-success)]',
       label: 'Ottimale',
     }
   }
   if (humidity <= 70) {
     return {
-      bg: 'bg-yellow-50',
-      text: 'text-yellow-700',
-      bar: 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+      bg: 'bg-[var(--status-warning)]/10',
+      text: 'text-[var(--status-warning)]',
+      bar: 'bg-gradient-to-r from-[var(--status-warning)] to-[var(--status-warning)]',
       label: 'Elevata',
     }
   }
   return {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    bar: 'bg-gradient-to-r from-red-400 to-red-500',
+    bg: 'bg-[var(--status-error-subtle)]',
+    text: 'text-[var(--status-error)]',
+    bar: 'bg-gradient-to-r from-[var(--status-error)] to-[var(--status-error)]',
     label: 'Critica',
   }
 }
@@ -159,24 +159,24 @@ function getMoldRiskColor(level: MoldRiskLevel): { bg: string; text: string; bor
   switch (level) {
     case MoldRiskLevel.LOW:
       return {
-        bg: 'bg-green-50',
-        text: 'text-green-700',
-        border: 'border-green-200',
-        icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+        bg: 'bg-[var(--status-success-subtle)]',
+        text: 'text-[var(--status-success)]',
+        border: 'border-[var(--status-success-subtle)]',
+        icon: <CheckCircle2 className="h-5 w-5 text-[var(--status-success)]" />,
       }
     case MoldRiskLevel.MEDIUM:
       return {
-        bg: 'bg-yellow-50',
-        text: 'text-yellow-700',
-        border: 'border-yellow-200',
-        icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />,
+        bg: 'bg-[var(--status-warning)]/10',
+        text: 'text-[var(--status-warning)]',
+        border: 'border-[var(--status-warning)]/30',
+        icon: <AlertTriangle className="h-5 w-5 text-[var(--status-warning)]" />,
       }
     case MoldRiskLevel.HIGH:
       return {
-        bg: 'bg-red-50',
-        text: 'text-red-700',
-        border: 'border-red-200',
-        icon: <ShieldAlert className="h-5 w-5 text-red-600" />,
+        bg: 'bg-[var(--status-error-subtle)]',
+        text: 'text-[var(--status-error)]',
+        border: 'border-[var(--status-error-subtle)]',
+        icon: <ShieldAlert className="h-5 w-5 text-[var(--status-error)]" />,
       }
   }
 }
@@ -214,12 +214,12 @@ function HumidityGauge({ value }: { value: number }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-600">Livello Umidità</span>
+        <span className="text-sm font-medium text-[var(--text-secondary)]">Livello Umidità</span>
         <Badge variant="outline" className={cn('font-medium', colors.text, colors.bg)}>
           {colors.label}
         </Badge>
       </div>
-      <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
+      <div className="relative h-4 bg-[var(--surface-secondary)] rounded-full overflow-hidden">
         <motion.div
           className={cn('absolute inset-y-0 left-0 rounded-full', colors.bar)}
           initial={{ width: 0 }}
@@ -228,14 +228,14 @@ function HumidityGauge({ value }: { value: number }) {
         />
         {/* Markers */}
         <div className="absolute inset-0 flex">
-          <div className="w-1/2 border-r border-white/50" />
-          <div className="w-[20%] border-r border-white/50" />
+          <div className="w-1/2 border-r border-[var(--border-default)]/50" />
+          <div className="w-[20%] border-r border-[var(--border-default)]/50" />
         </div>
       </div>
-      <div className="flex justify-between text-xs text-gray-400">
+      <div className="flex justify-between text-xs text-[var(--text-tertiary)]">
         <span>0%</span>
-        <span className="text-green-500">50%</span>
-        <span className="text-yellow-500">70%</span>
+        <span className="text-[var(--status-success)]">50%</span>
+        <span className="text-[var(--status-warning)]">70%</span>
         <span>100%</span>
       </div>
     </div>
@@ -255,14 +255,14 @@ interface MoistureInputProps {
 
 function MoistureInput({ label, value, onChange, icon }: MoistureInputProps) {
   const getColorClass = (val: number) => {
-    if (val < 30) return 'border-green-200 focus:border-green-400 focus:ring-green-400/20'
-    if (val < 60) return 'border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20'
-    return 'border-red-200 focus:border-red-400 focus:ring-red-400/20'
+    if (val < 30) return 'border-[var(--status-success)]/30 focus:border-[var(--status-success)]/40 focus:ring-[var(--status-success)]/20'
+    if (val < 60) return 'border-[var(--status-warning)]/30 focus:border-[var(--status-warning)]/40 focus:ring-[var(--status-warning)]/20'
+    return 'border-[var(--status-error)]/30 focus:border-[var(--status-error)]/40 focus:ring-[var(--status-error)]/20'
   }
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+      <label className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
         {icon}
         {label}
       </label>
@@ -279,13 +279,13 @@ function MoistureInput({ label, value, onChange, icon }: MoistureInputProps) {
           )}
           placeholder="0"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary)]">%</span>
       </div>
-      <div className="h-1 rounded-full overflow-hidden bg-gray-100">
+      <div className="h-1 rounded-full overflow-hidden bg-[var(--surface-secondary)]">
         <div
           className={cn(
             'h-full transition-all duration-300',
-            value < 30 ? 'bg-green-400' : value < 60 ? 'bg-yellow-400' : 'bg-red-400'
+            value < 30 ? 'bg-[var(--status-success)]' : value < 60 ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-error)]'
           )}
           style={{ width: `${Math.min(value, 100)}%` }}
         />
@@ -349,21 +349,21 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-          <Droplets className="h-5 w-5 text-white" />
+      <div className="flex items-center gap-3 pb-4 border-b border-[var(--border-default)]">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--status-info)] flex items-center justify-center">
+          <Droplets className="h-5 w-5 text-[var(--text-on-brand)]" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Ispezione Sensoriale</h2>
-          <p className="text-sm text-gray-500">Rilevamento umidità e odori</p>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Ispezione Sensoriale</h2>
+          <p className="text-sm text-[var(--text-tertiary)]">Rilevamento umidità e odori</p>
         </div>
       </div>
 
       {/* Humidity Measurement */}
-      <Card className="border-gray-200/60 shadow-sm">
+      <Card className="border-[var(--border-default)]/60 shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <Thermometer className="h-4 w-4 text-blue-500" />
+            <Thermometer className="h-4 w-4 text-[var(--status-info)]" />
             <CardTitle className="text-base font-semibold">Misurazione Umidità</CardTitle>
           </div>
           <CardDescription>Inserisci il livello di umidità interna rilevato</CardDescription>
@@ -408,10 +408,10 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
       </Card>
 
       {/* Moisture Detection */}
-      <Card className="border-gray-200/60 shadow-sm">
+      <Card className="border-[var(--border-default)]/60 shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <Waves className="h-4 w-4 text-cyan-500" />
+            <Waves className="h-4 w-4 text-[var(--status-info)]" />
             <CardTitle className="text-base font-semibold">Rilevamento Umidità</CardTitle>
           </div>
           <CardDescription>Livelli di umidità rilevati nei vari punti del veicolo</CardDescription>
@@ -421,7 +421,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             {/* Carpet Moisture */}
             <MoistureInput
               label="Tappeti"
-              icon={<Car className="h-4 w-4 text-gray-400" />}
+              icon={<Car className="h-4 w-4 text-[var(--text-tertiary)]" />}
               value={formValues.carpetMoisture}
               onChange={(val) => setValue('carpetMoisture', val, { shouldDirty: true })}
             />
@@ -429,7 +429,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             {/* Door Moisture - 4 doors */}
             <MoistureInput
               label="Porta Anteriore SX"
-              icon={<Car className="h-4 w-4 text-gray-400" />}
+              icon={<Car className="h-4 w-4 text-[var(--text-tertiary)]" />}
               value={formValues.doorMoisture.fl}
               onChange={(val) =>
                 setValue('doorMoisture', { ...formValues.doorMoisture, fl: val }, { shouldDirty: true })
@@ -437,7 +437,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             />
             <MoistureInput
               label="Porta Anteriore DX"
-              icon={<Car className="h-4 w-4 text-gray-400" />}
+              icon={<Car className="h-4 w-4 text-[var(--text-tertiary)]" />}
               value={formValues.doorMoisture.fr}
               onChange={(val) =>
                 setValue('doorMoisture', { ...formValues.doorMoisture, fr: val }, { shouldDirty: true })
@@ -445,7 +445,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             />
             <MoistureInput
               label="Porta Posteriore SX"
-              icon={<Car className="h-4 w-4 text-gray-400" />}
+              icon={<Car className="h-4 w-4 text-[var(--text-tertiary)]" />}
               value={formValues.doorMoisture.rl}
               onChange={(val) =>
                 setValue('doorMoisture', { ...formValues.doorMoisture, rl: val }, { shouldDirty: true })
@@ -453,7 +453,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             />
             <MoistureInput
               label="Porta Posteriore DX"
-              icon={<Car className="h-4 w-4 text-gray-400" />}
+              icon={<Car className="h-4 w-4 text-[var(--text-tertiary)]" />}
               value={formValues.doorMoisture.rr}
               onChange={(val) =>
                 setValue('doorMoisture', { ...formValues.doorMoisture, rr: val }, { shouldDirty: true })
@@ -463,7 +463,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             {/* Trunk Moisture */}
             <MoistureInput
               label="Bagagliaio"
-              icon={<Car className="h-4 w-4 text-gray-400" />}
+              icon={<Car className="h-4 w-4 text-[var(--text-tertiary)]" />}
               value={formValues.trunkMoisture}
               onChange={(val) => setValue('trunkMoisture', val, { shouldDirty: true })}
             />
@@ -472,10 +472,10 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
       </Card>
 
       {/* Odor Detection */}
-      <Card className="border-gray-200/60 shadow-sm">
+      <Card className="border-[var(--border-default)]/60 shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <Flower2 className="h-4 w-4 text-purple-500" />
+            <Flower2 className="h-4 w-4 text-[var(--brand)]" />
             <CardTitle className="text-base font-semibold">Rilevamento Odori</CardTitle>
           </div>
           <CardDescription>Verifica la presenza di odori anomali all&apos;interno del veicolo</CardDescription>
@@ -486,13 +486,13 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             control={control}
             name="smokeDetected"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-gray-50/50 transition-colors">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className="space-y-1 leading-none flex-1">
                   <FormLabel className="flex items-center gap-2 cursor-pointer">
-                    <Cigarette className="h-4 w-4 text-gray-400" />
+                    <Cigarette className="h-4 w-4 text-[var(--text-tertiary)]" />
                     Odore di fumo rilevato
                   </FormLabel>
                   <FormDescription>Presenza di odore di tabacco nell&apos;abitacolo</FormDescription>
@@ -513,7 +513,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                   control={control}
                   name="smokeIntensity"
                   render={({ field }) => (
-                    <FormItem className="pl-7 border-l-2 border-gray-100 ml-4">
+                    <FormItem className="pl-7 border-l-2 border-[var(--border-default)] ml-4">
                       <FormLabel>Intensità odore fumo (1-10)</FormLabel>
                       <FormControl>
                         <div className="space-y-3">
@@ -525,21 +525,21 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                             step={1}
                           />
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-400">Leggero</span>
+                            <span className="text-xs text-[var(--text-tertiary)]">Leggero</span>
                             <Badge
                               variant="outline"
                               className={cn(
                                 'font-semibold',
                                 field.value <= 3
-                                  ? 'bg-green-50 text-green-700 border-green-200'
+                                  ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30'
                                   : field.value <= 7
-                                    ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                    : 'bg-red-50 text-red-700 border-red-200'
+                                    ? 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] border-[var(--status-warning)]/30'
+                                    : 'bg-[var(--status-error-subtle)] text-[var(--status-error)] border-[var(--status-error)]/30'
                               )}
                             >
                               {field.value}/10
                             </Badge>
-                            <span className="text-xs text-gray-400">Intenso</span>
+                            <span className="text-xs text-[var(--text-tertiary)]">Intenso</span>
                           </div>
                         </div>
                       </FormControl>
@@ -557,13 +557,13 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             control={control}
             name="petSmellDetected"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-gray-50/50 transition-colors">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className="space-y-1 leading-none flex-1">
                   <FormLabel className="flex items-center gap-2 cursor-pointer">
-                    <Dog className="h-4 w-4 text-gray-400" />
+                    <Dog className="h-4 w-4 text-[var(--text-tertiary)]" />
                     Odore di animali rilevato
                   </FormLabel>
                   <FormDescription>Presenza di odore di animali domestici</FormDescription>
@@ -584,7 +584,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                   control={control}
                   name="petType"
                   render={({ field }) => (
-                    <FormItem className="pl-7 border-l-2 border-gray-100 ml-4">
+                    <FormItem className="pl-7 border-l-2 border-[var(--border-default)] ml-4">
                       <FormLabel>Tipo di animale (opzionale)</FormLabel>
                       <FormControl>
                         <Input
@@ -607,16 +607,16 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             control={control}
             name="moldDetected"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-gray-50/50 transition-colors">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className="space-y-1 leading-none flex-1">
-                  <FormLabel className="flex items-center gap-2 cursor-pointer text-red-600">
+                  <FormLabel className="flex items-center gap-2 cursor-pointer text-[var(--status-error)]">
                     <AlertTriangle className="h-4 w-4" />
                     Odore di muffa rilevato
                   </FormLabel>
-                  <FormDescription className="text-red-600/70">
+                  <FormDescription className="text-[var(--status-error)]/70">
                     Indica potenziale proliferazione di muffa - richiede attenzione
                   </FormDescription>
                 </div>
@@ -632,7 +632,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="pl-7 border-l-2 border-gray-100 ml-4 space-y-3">
+                <div className="pl-7 border-l-2 border-[var(--border-default)] ml-4 space-y-3">
                   <FormLabel>Posizioni dove è stata rilevata la muffa</FormLabel>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {MOLD_LOCATIONS.map((location) => {
@@ -645,8 +645,8 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                           className={cn(
                             'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all',
                             isSelected
-                              ? 'bg-red-50 border-red-200 text-red-700'
-                              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                              ? 'bg-[var(--status-error-subtle)] border-[var(--status-error)]/30 text-[var(--status-error)]'
+                              : 'bg-[var(--surface-secondary)] border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]'
                           )}
                         >
                           {location.icon}
@@ -668,13 +668,13 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             control={control}
             name="mustySmell"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-gray-50/50 transition-colors">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className="space-y-1 leading-none flex-1">
                   <FormLabel className="flex items-center gap-2 cursor-pointer">
-                    <Droplets className="h-4 w-4 text-gray-400" />
+                    <Droplets className="h-4 w-4 text-[var(--text-tertiary)]" />
                     Odore di chiuso/muffa leggera
                   </FormLabel>
                   <FormDescription>
@@ -692,7 +692,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <Gauge className="h-4 w-4 text-gray-400" />
+                  <Gauge className="h-4 w-4 text-[var(--text-tertiary)]" />
                   Odore di benzina
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -703,10 +703,10 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="normal">
-                      <span className="text-green-600">Normale (assente o lieve)</span>
+                      <span className="text-[var(--status-success)]">Normale (assente o lieve)</span>
                     </SelectItem>
                     <SelectItem value="strong">
-                      <span className="text-red-600">Forte (anomalia rilevata)</span>
+                      <span className="text-[var(--status-error)]">Forte (anomalia rilevata)</span>
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -720,7 +720,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
       </Card>
 
       {/* AC System Check */}
-      <Card className="border-gray-200/60 shadow-sm">
+      <Card className="border-[var(--border-default)]/60 shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Wind className="h-4 w-4 text-sky-500" />
@@ -734,7 +734,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             control={control}
             name="acDrainFlowing"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-gray-50/50 transition-colors">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
@@ -755,7 +755,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-gray-400" />
+                  <AlertTriangle className="h-4 w-4 text-[var(--text-tertiary)]" />
                   Livello di ostruzione
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -783,7 +783,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
+                  <Filter className="h-4 w-4 text-[var(--text-tertiary)]" />
                   Stato filtro abitacolo
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -813,7 +813,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <Flower2 className="h-4 w-4 text-gray-400" />
+                  <Flower2 className="h-4 w-4 text-[var(--text-tertiary)]" />
                   Odore aria condizionata
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -824,19 +824,19 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="fresh">
-                      <span className="text-green-600 flex items-center gap-2">
+                      <span className="text-[var(--status-success)] flex items-center gap-2">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Fresca/Pulita
                       </span>
                     </SelectItem>
                     <SelectItem value="musty">
-                      <span className="text-yellow-600 flex items-center gap-2">
+                      <span className="text-[var(--status-warning)] flex items-center gap-2">
                         <Info className="h-3.5 w-3.5" />
                         Di chiuso
                       </span>
                     </SelectItem>
                     <SelectItem value="mold">
-                      <span className="text-red-600 flex items-center gap-2">
+                      <span className="text-[var(--status-error)] flex items-center gap-2">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         Di muffa
                       </span>
@@ -869,10 +869,10 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
               variant="outline"
               className={cn(
                 'text-sm font-bold px-3 py-1',
-                moldRisk === MoldRiskLevel.LOW && 'bg-green-100 text-green-800 border-green-300',
+                moldRisk === MoldRiskLevel.LOW && 'bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30',
                 moldRisk === MoldRiskLevel.MEDIUM &&
-                  'bg-yellow-100 text-yellow-800 border-yellow-300',
-                moldRisk === MoldRiskLevel.HIGH && 'bg-red-100 text-red-800 border-red-300'
+                  'bg-[var(--status-warning)]/20 text-[var(--status-warning)] border-[var(--status-warning)]/30',
+                moldRisk === MoldRiskLevel.HIGH && 'bg-[var(--status-error-subtle)] text-[var(--status-error)] border-[var(--status-error)]/30'
               )}
             >
               {moldRisk}
@@ -890,7 +890,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                 animate={{ height: 'auto', opacity: 1, y: 0 }}
                 exit={{ height: 0, opacity: 0, y: -10 }}
               >
-                <Alert variant="destructive" className="border-red-300 bg-red-100/50">
+                <Alert variant="destructive" className="border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]/50">
                   <ShieldAlert className="h-5 w-5" />
                   <AlertTitle className="font-semibold">Attenzione Richiesta</AlertTitle>
                   <AlertDescription className="text-sm">
@@ -909,7 +909,7 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
 
           {/* Risk Factors Summary */}
           <div className="pt-2">
-            <p className="text-xs font-medium text-gray-500 mb-2">Fattori di rischio rilevati:</p>
+            <p className="text-xs font-medium text-[var(--text-tertiary)] mb-2">Fattori di rischio rilevati:</p>
             <div className="flex flex-wrap gap-2">
               {formValues.humidity > 50 && (
                 <Badge variant="secondary" className="text-xs">
@@ -917,27 +917,27 @@ export function SensorySection({ form, onCalculateRisk }: SensorySectionProps) {
                 </Badge>
               )}
               {formValues.moldDetected && (
-                <Badge variant="secondary" className="text-xs bg-red-100 text-red-700">
+                <Badge variant="secondary" className="text-xs bg-[var(--status-error-subtle)] text-[var(--status-error)]">
                   Odore muffa
                 </Badge>
               )}
               {formValues.mustySmell && (
-                <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700">
+                <Badge variant="secondary" className="text-xs bg-[var(--status-warning-subtle)] text-[var(--status-warning)]">
                   Odore chiuso
                 </Badge>
               )}
               {formValues.acSmell === 'mold' && (
-                <Badge variant="secondary" className="text-xs bg-red-100 text-red-700">
+                <Badge variant="secondary" className="text-xs bg-[var(--status-error-subtle)] text-[var(--status-error)]">
                   AC: odore muffa
                 </Badge>
               )}
               {formValues.acBlockage !== BlockageSeverity.NONE && (
-                <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
+                <Badge variant="secondary" className="text-xs bg-[var(--status-warning)]/10 text-[var(--status-warning)]">
                   AC: ostruzione {formValues.acBlockage.toLowerCase()}
                 </Badge>
               )}
               {formValues.humidity <= 50 && !formValues.moldDetected && !formValues.mustySmell && (
-                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                <Badge variant="secondary" className="text-xs bg-[var(--status-success-subtle)] text-[var(--status-success)]">
                   Nessun fattore critico
                 </Badge>
               )}

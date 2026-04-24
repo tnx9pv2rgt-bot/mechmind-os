@@ -187,58 +187,58 @@ export const CustomerFormWithAnalytics: React.FC = () => {
         return (
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Nome *</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Nome *</label>
               <input
                 type='text'
                 value={formData.nome}
                 onChange={e => handleChange('nome', e.target.value)}
                 onFocus={() => handleFieldFocus('nome')}
                 className={`w-full px-4 py-2 rounded-xl border ${
-                  errors.nome ? 'border-red-500' : 'border-gray-200'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  errors.nome ? 'border-[var(--status-error)]' : 'border-[var(--border-default)]'
+                } focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]`}
                 placeholder='Mario'
               />
-              {errors.nome && <span className='text-sm text-red-500'>{errors.nome}</span>}
+              {errors.nome && <span className='text-sm text-[var(--status-error)]'>{errors.nome}</span>}
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Cognome *</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Cognome *</label>
               <input
                 type='text'
                 value={formData.cognome}
                 onChange={e => handleChange('cognome', e.target.value)}
                 onFocus={() => handleFieldFocus('cognome')}
                 className={`w-full px-4 py-2 rounded-xl border ${
-                  errors.cognome ? 'border-red-500' : 'border-gray-200'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  errors.cognome ? 'border-[var(--status-error)]' : 'border-[var(--border-default)]'
+                } focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]`}
                 placeholder='Rossi'
               />
-              {errors.cognome && <span className='text-sm text-red-500'>{errors.cognome}</span>}
+              {errors.cognome && <span className='text-sm text-[var(--status-error)]'>{errors.cognome}</span>}
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Email *</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Email *</label>
               <input
                 type='email'
                 value={formData.email}
                 onChange={e => handleChange('email', e.target.value)}
                 onFocus={() => handleFieldFocus('email')}
                 className={`w-full px-4 py-2 rounded-xl border ${
-                  errors.email ? 'border-red-500' : 'border-gray-200'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  errors.email ? 'border-[var(--status-error)]' : 'border-[var(--border-default)]'
+                } focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]`}
                 placeholder='mario.rossi@esempio.it'
               />
-              {errors.email && <span className='text-sm text-red-500'>{errors.email}</span>}
+              {errors.email && <span className='text-sm text-[var(--status-error)]'>{errors.email}</span>}
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Telefono</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Telefono</label>
               <input
                 type='tel'
                 value={formData.telefono}
                 onChange={e => handleChange('telefono', e.target.value)}
                 onFocus={() => handleFieldFocus('telefono')}
-                className='w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                className='w-full px-4 py-2 rounded-xl border border-[var(--border-default)] focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]'
                 placeholder='+39 123 456 7890'
               />
             </div>
@@ -249,29 +249,29 @@ export const CustomerFormWithAnalytics: React.FC = () => {
         return (
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Nome Azienda *</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Nome Azienda *</label>
               <input
                 type='text'
                 value={formData.azienda}
                 onChange={e => handleChange('azienda', e.target.value)}
                 onFocus={() => handleFieldFocus('azienda')}
                 className={`w-full px-4 py-2 rounded-xl border ${
-                  errors.azienda ? 'border-red-500' : 'border-gray-200'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  errors.azienda ? 'border-[var(--status-error)]' : 'border-[var(--border-default)]'
+                } focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]`}
                 placeholder='Azienda S.r.l.'
               />
-              {errors.azienda && <span className='text-sm text-red-500'>{errors.azienda}</span>}
+              {errors.azienda && <span className='text-sm text-[var(--status-error)]'>{errors.azienda}</span>}
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Settore *</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Settore *</label>
               <select
                 value={formData.settore}
                 onChange={e => handleChange('settore', e.target.value)}
                 onFocus={() => handleFieldFocus('settore')}
                 className={`w-full px-4 py-2 rounded-xl border ${
-                  errors.settore ? 'border-red-500' : 'border-gray-200'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  errors.settore ? 'border-[var(--status-error)]' : 'border-[var(--border-default)]'
+                } focus:outline-none focus:ring-2 focus:ring-[var(--status-info)]`}
               >
                 <option value=''>Seleziona settore</option>
                 <option value='tecnologia'>Tecnologia</option>
@@ -280,17 +280,17 @@ export const CustomerFormWithAnalytics: React.FC = () => {
                 <option value='commercio'>Commercio</option>
                 <option value='altro'>Altro</option>
               </select>
-              {errors.settore && <span className='text-sm text-red-500'>{errors.settore}</span>}
+              {errors.settore && <span className='text-sm text-[var(--status-error)]'>{errors.settore}</span>}
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Note</label>
+              <label className='block text-sm font-medium text-[var(--text-secondary)] mb-1'>Note</label>
               <textarea
                 value={formData.note}
                 onChange={e => handleChange('note', e.target.value)}
                 onFocus={() => handleFieldFocus('note')}
                 rows={3}
-                className='w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none'
+                className='w-full px-4 py-2 rounded-xl border border-[var(--border-default)] focus:outline-none focus:ring-2 focus:ring-[var(--status-info)] resize-none'
                 placeholder='Note aggiuntive...'
               />
             </div>
@@ -300,40 +300,40 @@ export const CustomerFormWithAnalytics: React.FC = () => {
       case 3:
         return (
           <div className='space-y-4'>
-            <h3 className='font-medium text-gray-800'>Riepilogo dati</h3>
+            <h3 className='font-medium text-[var(--text-primary)]'>Riepilogo dati</h3>
 
-            <div className='bg-gray-50 rounded-xl p-4 space-y-2'>
+            <div className='bg-[var(--surface-secondary)] rounded-xl p-4 space-y-2'>
               <div className='flex justify-between'>
-                <span className='text-gray-500'>Nome:</span>
+                <span className='text-[var(--text-secondary)]'>Nome:</span>
                 <span className='font-medium'>
                   {formData.nome} {formData.cognome}
                 </span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-500'>Email:</span>
+                <span className='text-[var(--text-secondary)]'>Email:</span>
                 <span className='font-medium'>{formData.email}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-500'>Telefono:</span>
+                <span className='text-[var(--text-secondary)]'>Telefono:</span>
                 <span className='font-medium'>{formData.telefono || 'Non fornito'}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-500'>Azienda:</span>
+                <span className='text-[var(--text-secondary)]'>Azienda:</span>
                 <span className='font-medium'>{formData.azienda}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-gray-500'>Settore:</span>
+                <span className='text-[var(--text-secondary)]'>Settore:</span>
                 <span className='font-medium capitalize'>{formData.settore}</span>
               </div>
               {formData.note && (
-                <div className='pt-2 border-t border-gray-200'>
-                  <span className='text-gray-500'>Note:</span>
+                <div className='pt-2 border-t border-[var(--border-default)]'>
+                  <span className='text-[var(--text-secondary)]'>Note:</span>
                   <p className='mt-1 text-sm'>{formData.note}</p>
                 </div>
               )}
             </div>
 
-            <p className='text-sm text-gray-500'>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Cliccando su &ldquo;{content.cta}&rdquo; accetti i termini di servizio e la privacy
               policy.
             </p>
@@ -347,29 +347,29 @@ export const CustomerFormWithAnalytics: React.FC = () => {
 
   // Container: 900×900px glassmorphism
   return (
-    <div className='flex items-center justify-center min-h-screen bg-gray-100 p-4'>
+    <div className='flex items-center justify-center min-h-screen bg-[var(--surface-secondary)] p-4'>
       {/* Main Form Container - Design System */}
-      <div className='w-[900px] h-[900px] bg-white/80 backdrop-blur-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col'>
+      <div className='w-[900px] h-[900px] bg-[var(--surface-secondary)] backdrop-blur-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col'>
         {/* Header */}
-        <div className='p-8 border-b border-gray-200/50'>
+        <div className='p-8 border-b border-[var(--border-default)]/50'>
           {/* A/B Test Headline */}
           <div className='text-center mb-6'>
-            <span className='inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full mb-3'>
+            <span className='inline-block px-3 py-1 bg-[var(--status-info-subtle)] text-[var(--status-info)] text-xs font-medium rounded-full mb-3'>
               Variante {variant}
             </span>
-            <h1 className='text-2xl font-bold text-gray-800'>{content.headline}</h1>
-            <p className='text-gray-500 mt-2'>{content.description}</p>
+            <h1 className='text-2xl font-bold text-[var(--text-primary)]'>{content.headline}</h1>
+            <p className='text-[var(--text-tertiary)] mt-2'>{content.description}</p>
           </div>
 
           {/* Progress Bar */}
           <div className='max-w-md mx-auto'>
-            <div className='flex items-center justify-between text-sm text-gray-500 mb-2'>
+            <div className='flex items-center justify-between text-sm text-[var(--text-tertiary)] mb-2'>
               <span>Step {step} di 3</span>
               <span>{Math.round((step / 3) * 100)}%</span>
             </div>
-            <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+            <div className='h-2 bg-[var(--border-default)] rounded-full overflow-hidden'>
               <div
-                className='h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500'
+                className='h-full bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] rounded-full transition-all duration-500'
                 style={{ width: `${(step / 3) * 100}%` }}
               />
             </div>
@@ -380,12 +380,12 @@ export const CustomerFormWithAnalytics: React.FC = () => {
         <div className='flex-1 p-8 overflow-y-auto'>{renderStep()}</div>
 
         {/* Footer Actions */}
-        <div className='p-8 border-t border-gray-200/50'>
+        <div className='p-8 border-t border-[var(--border-default)]/50'>
           <div className='flex justify-between'>
             <button
               onClick={handleBack}
               disabled={step === 1}
-              className='px-6 py-3 rounded-xl text-gray-600 font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+              className='px-6 py-3 rounded-xl text-[var(--text-secondary)] font-medium hover:bg-[var(--surface-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             >
               Indietro
             </button>
@@ -393,14 +393,14 @@ export const CustomerFormWithAnalytics: React.FC = () => {
             {step < 3 ? (
               <button
                 onClick={handleNext}
-                className='px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/25'
+                className='px-8 py-3 bg-[var(--status-info)] text-[var(--text-on-brand)] rounded-xl font-medium hover:bg-[var(--status-info)] transition-colors shadow-lg shadow-blue-500/25'
               >
                 Avanti
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
-                className='px-8 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors shadow-lg shadow-green-500/25'
+                className='px-8 py-3 bg-[var(--status-success)] text-[var(--text-on-brand)] rounded-xl font-medium hover:bg-[var(--status-success)] transition-colors shadow-lg shadow-green-500/25'
               >
                 {content.cta}
               </button>

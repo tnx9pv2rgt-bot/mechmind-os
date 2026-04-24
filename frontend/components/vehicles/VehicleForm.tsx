@@ -98,18 +98,18 @@ const slideUpVariants = {
 };
 
 const fuelIcons: Record<string, React.ReactNode> = {
-  benzina: <Droplets className='h-4 w-4 text-amber-500' />,
-  diesel: <Wind className='h-4 w-4 text-gray-600' />,
-  elettrico: <Battery className='h-4 w-4 text-green-500' />,
-  ibrido: <Zap className='h-4 w-4 text-blue-500' />,
+  benzina: <Droplets className='h-4 w-4 text-[var(--status-warning)]' />,
+  diesel: <Wind className='h-4 w-4 text-[var(--text-secondary)]' />,
+  elettrico: <Battery className='h-4 w-4 text-[var(--status-success)]' />,
+  ibrido: <Zap className='h-4 w-4 text-[var(--status-info)]' />,
   gpl: <FlameIcon />,
-  metano: <Wind className='h-4 w-4 text-cyan-500' />,
+  metano: <Wind className='h-4 w-4 text-[var(--status-info)]' />,
 };
 
 function FlameIcon() {
   return (
     <svg
-      className='h-4 w-4 text-orange-500'
+      className='h-4 w-4 text-[var(--status-warning)]'
       viewBox='0 0 24 24'
       fill='currentColor'
       aria-hidden='true'
@@ -203,17 +203,17 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
   };
 
   return (
-    <AppleCard className='bg-white/70 backdrop-blur-3xl rounded-3xl overflow-hidden'>
-      <AppleCardHeader className='border-b border-gray-100/50'>
+    <AppleCard className='bg-[var(--surface-secondary)]/70 backdrop-blur-3xl rounded-3xl overflow-hidden'>
+      <AppleCardHeader className='border-b border-[var(--border-default)]/50'>
         <div className='flex items-center gap-3'>
-          <div className='w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center'>
-            <Car className='h-5 w-5 text-white' />
+          <div className='w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] flex items-center justify-center'>
+            <Car className='h-5 w-5 text-[var(--text-on-brand)]' />
           </div>
           <div>
-            <h2 className='text-lg font-semibold text-gray-900'>
+            <h2 className='text-lg font-semibold text-[var(--text-primary)]'>
               {initialData ? 'Modifica Veicolo' : 'Nuovo Veicolo'}
             </h2>
-            <p className='text-sm text-gray-500'>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               {initialData ? 'Aggiorna i dati del veicolo' : 'Inserisci i dati del nuovo veicolo'}
             </p>
           </div>
@@ -230,7 +230,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                 name='customerId'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-gray-700'>
+                    <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
                       Proprietario *
                     </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -238,10 +238,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         <SelectTrigger
                           aria-required='true'
                           aria-label='Seleziona proprietario'
-                          className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                          className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                         >
                           <div className='flex items-center gap-2'>
-                            <User className='h-4 w-4 text-gray-400' />
+                            <User className='h-4 w-4 text-[var(--text-tertiary)]' />
                             <SelectValue placeholder='Seleziona proprietario' />
                           </div>
                         </SelectTrigger>
@@ -265,7 +265,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                       </SelectContent>
                     </Select>
                     <div className='min-h-[20px]'>
-                      <FormMessage className='text-xs text-red-500' />
+                      <FormMessage className='text-xs text-[var(--status-error)]' />
                     </div>
                   </FormItem>
                 )}
@@ -279,10 +279,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                 name='licensePlate'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-gray-700'>Targa *</FormLabel>
+                    <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Targa *</FormLabel>
                     <FormControl>
                       <div className='relative'>
-                        <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                        <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                         <Input
                           {...field}
                           placeholder='AB123CD'
@@ -290,14 +290,14 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                           autoComplete='off'
                           aria-required='true'
                           onChange={e => handlePlateChange(e, field.onChange)}
-                          className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all uppercase tracking-wider font-medium'
+                          className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all uppercase tracking-wider font-medium'
                         />
                       </div>
                     </FormControl>
                     <div className='min-h-[20px]'>
-                      <FormMessage className='text-xs text-red-500' />
+                      <FormMessage className='text-xs text-[var(--status-error)]' />
                     </div>
-                    <p className='text-xs text-gray-400 mt-1'>Formato: AB123CD</p>
+                    <p className='text-xs text-[var(--text-tertiary)] mt-1'>Formato: AB123CD</p>
                   </FormItem>
                 )}
               />
@@ -311,21 +311,21 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='make'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-gray-700'>Marca *</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Marca *</FormLabel>
                       <FormControl>
                         <div className='relative'>
-                          <Car className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                          <Car className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                           <Input
                             {...field}
                             placeholder='Fiat'
                             autoComplete='off'
                             aria-required='true'
-                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                            className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                           />
                         </div>
                       </FormControl>
                       <div className='min-h-[20px]'>
-                        <FormMessage className='text-xs text-red-500' />
+                        <FormMessage className='text-xs text-[var(--status-error)]' />
                       </div>
                     </FormItem>
                   )}
@@ -338,18 +338,18 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='model'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-gray-700'>Modello *</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Modello *</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           placeholder='Panda'
                           autoComplete='off'
                           aria-required='true'
-                          className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                          className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                         />
                       </FormControl>
                       <div className='min-h-[20px]'>
-                        <FormMessage className='text-xs text-red-500' />
+                        <FormMessage className='text-xs text-[var(--status-error)]' />
                       </div>
                     </FormItem>
                   )}
@@ -365,10 +365,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='year'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-gray-700'>Anno</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Anno</FormLabel>
                       <FormControl>
                         <div className='relative'>
-                          <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                          <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                           <Input
                             {...field}
                             type='number'
@@ -379,12 +379,12 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                             onChange={e =>
                               field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                             }
-                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                            className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                           />
                         </div>
                       </FormControl>
                       <div className='min-h-[20px]'>
-                        <FormMessage className='text-xs text-red-500' />
+                        <FormMessage className='text-xs text-[var(--status-error)]' />
                       </div>
                     </FormItem>
                   )}
@@ -397,17 +397,17 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='color'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-gray-700'>Colore</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Colore</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           placeholder='Bianco'
                           autoComplete='off'
-                          className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                          className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                         />
                       </FormControl>
                       <div className='min-h-[20px]'>
-                        <FormMessage className='text-xs text-red-500' />
+                        <FormMessage className='text-xs text-[var(--status-error)]' />
                       </div>
                     </FormItem>
                   )}
@@ -422,19 +422,19 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                 name='vin'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-gray-700'>
+                    <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
                       VIN (Numero di Telaio)
                     </FormLabel>
                     <FormControl>
                       <div className='relative flex gap-2'>
                         <div className='relative flex-1'>
-                          <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                          <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                           <Input
                             {...field}
                             placeholder='ZFA31200001234567'
                             maxLength={17}
                             autoComplete='off'
-                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all uppercase tracking-wider font-mono'
+                            className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all uppercase tracking-wider font-mono'
                           />
                         </div>
                         <AppleButton
@@ -459,7 +459,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                       </div>
                     </FormControl>
                     <div className='min-h-[20px]'>
-                      <FormMessage className='text-xs text-red-500' />
+                      <FormMessage className='text-xs text-[var(--status-error)]' />
                     </div>
 
                     {/* VIN Lookup Result */}
@@ -469,9 +469,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className='mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100'
+                          className='mt-2 p-3 rounded-xl bg-[var(--status-success)]/5 border border-[var(--status-success)]/10'
                         >
-                          <div className='flex items-center gap-2 text-emerald-700 text-sm font-medium'>
+                          <div className='flex items-center gap-2 text-[var(--status-success)] text-sm font-medium'>
                             <Sparkles className='h-4 w-4' />
                             <span>Dati recuperati automaticamente</span>
                           </div>
@@ -482,9 +482,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className='mt-2 p-3 rounded-xl bg-amber-50 border border-amber-100'
+                          className='mt-2 p-3 rounded-xl bg-[var(--status-warning)]/5 border border-[var(--status-warning)]/10'
                         >
-                          <div className='flex items-center gap-2 text-amber-700 text-sm'>
+                          <div className='flex items-center gap-2 text-[var(--status-warning)] text-sm'>
                             <AlertCircle className='h-4 w-4' />
                             <span>VIN valido ma non trovato nel database</span>
                           </div>
@@ -504,12 +504,12 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='mileage'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-gray-700'>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
                         Chilometraggio
                       </FormLabel>
                       <FormControl>
                         <div className='relative'>
-                          <Gauge className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                          <Gauge className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                           <Input
                             {...field}
                             type='number'
@@ -519,12 +519,12 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                             onChange={e =>
                               field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                             }
-                            className='h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                            className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                           />
                         </div>
                       </FormControl>
                       <div className='min-h-[20px]'>
-                        <FormMessage className='text-xs text-red-500' />
+                        <FormMessage className='text-xs text-[var(--status-error)]' />
                       </div>
                     </FormItem>
                   )}
@@ -537,17 +537,17 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='fuelType'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-gray-700'>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
                         Carburante
                       </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger
                             aria-label='Seleziona carburante'
-                            className='h-14 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+                            className='h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all'
                           >
                             <div className='flex items-center gap-2'>
-                              <Fuel className='h-4 w-4 text-gray-400' />
+                              <Fuel className='h-4 w-4 text-[var(--text-tertiary)]' />
                               <SelectValue placeholder='Seleziona' />
                             </div>
                           </SelectTrigger>
@@ -568,7 +568,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         </SelectContent>
                       </Select>
                       <div className='min-h-[20px]'>
-                        <FormMessage className='text-xs text-red-500' />
+                        <FormMessage className='text-xs text-[var(--status-error)]' />
                       </div>
                     </FormItem>
                   )}
@@ -583,16 +583,16 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 aria-expanded={showAdvanced}
                 aria-controls='advanced-fields'
-                className='flex items-center justify-between w-full py-3 px-4 rounded-2xl bg-white/40 hover:bg-white/60 transition-colors'
+                className='flex items-center justify-between w-full py-3 px-4 rounded-2xl bg-[var(--surface-secondary)]/40 hover:bg-[var(--surface-secondary)]/60 transition-colors'
               >
                 <div className='flex items-center gap-2'>
-                  <FileText className='h-4 w-4 text-gray-500' />
-                  <span className='text-sm font-medium text-gray-700'>Dati Tecnici Avanzati</span>
+                  <FileText className='h-4 w-4 text-[var(--text-tertiary)]' />
+                  <span className='text-sm font-medium text-[var(--text-secondary)]'>Dati Tecnici Avanzati</span>
                 </div>
                 {showAdvanced ? (
-                  <ChevronUp className='h-4 w-4 text-gray-400' />
+                  <ChevronUp className='h-4 w-4 text-[var(--text-tertiary)]' />
                 ) : (
-                  <ChevronDown className='h-4 w-4 text-gray-400' />
+                  <ChevronDown className='h-4 w-4 text-[var(--text-tertiary)]' />
                 )}
               </button>
             </motion.div>
@@ -614,7 +614,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='engineSize'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-gray-600'>Cilindrata (L)</FormLabel>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>Cilindrata (L)</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -627,7 +627,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                                     e.target.value ? parseFloat(e.target.value) : undefined
                                   )
                                 }
-                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                                className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                               />
                             </FormControl>
                           </FormItem>
@@ -639,7 +639,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='powerKw'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-gray-600'>Potenza (kW)</FormLabel>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>Potenza (kW)</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -651,7 +651,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                                     e.target.value ? parseInt(e.target.value) : undefined
                                   )
                                 }
-                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                                className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                               />
                             </FormControl>
                           </FormItem>
@@ -665,13 +665,13 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='lastServiceDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-gray-600'>Ultimo Service</FormLabel>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>Ultimo Service</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
                                 type='date'
                                 autoComplete='off'
-                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                                className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                               />
                             </FormControl>
                           </FormItem>
@@ -683,7 +683,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='nextServiceDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-gray-600'>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>
                               Prossimo Service
                             </FormLabel>
                             <FormControl>
@@ -691,7 +691,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                                 {...field}
                                 type='date'
                                 autoComplete='off'
-                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                                className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                               />
                             </FormControl>
                           </FormItem>
@@ -705,7 +705,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='registrationDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-gray-600'>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>
                               Data Immatricolazione
                             </FormLabel>
                             <FormControl>
@@ -713,7 +713,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                                 {...field}
                                 type='date'
                                 autoComplete='off'
-                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                                className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                               />
                             </FormControl>
                           </FormItem>
@@ -725,7 +725,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='insuranceExpiry'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-gray-600'>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>
                               Scadenza Assicurazione
                             </FormLabel>
                             <FormControl>
@@ -733,7 +733,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                                 {...field}
                                 type='date'
                                 autoComplete='off'
-                                className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                                className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                               />
                             </FormControl>
                           </FormItem>
@@ -747,7 +747,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                       name='revisionExpiry'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className='text-sm text-gray-600'>
+                          <FormLabel className='text-sm text-[var(--text-secondary)]'>
                             Scadenza Revisione
                           </FormLabel>
                           <FormControl>
@@ -755,10 +755,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                               {...field}
                               type='date'
                               autoComplete='off'
-                              className='h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900'
+                              className='h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)]'
                             />
                           </FormControl>
-                          <p className='text-xs text-gray-400'>
+                          <p className='text-xs text-[var(--text-tertiary)]'>
                             Riceverai un alert 30 giorni prima della scadenza
                           </p>
                         </FormItem>
@@ -776,7 +776,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                 name='notes'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-gray-700'>
+                    <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
                       Note (opzionale)
                     </FormLabel>
                     <FormControl>
@@ -785,11 +785,11 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         placeholder='Note aggiuntive sul veicolo...'
                         rows={3}
                         autoComplete='off'
-                        className='rounded-2xl bg-white/60 border-0 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none'
+                        className='rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-success)]/20 transition-all resize-none'
                       />
                     </FormControl>
                     <div className='min-h-[20px]'>
-                      <FormMessage className='text-xs text-red-500' />
+                      <FormMessage className='text-xs text-[var(--status-error)]' />
                     </div>
                   </FormItem>
                 )}
@@ -805,7 +805,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className='flex items-center gap-2 p-4 rounded-2xl bg-red-50 text-red-600 text-sm'
+                  className='flex items-center gap-2 p-4 rounded-2xl bg-[var(--status-error-subtle)] text-[var(--status-error)] text-sm'
                 >
                   <AlertCircle className='h-4 w-4 flex-shrink-0' />
                   <span>{errorMessage || 'Si è verificato un errore. Riprova.'}</span>
@@ -822,7 +822,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className='flex items-center gap-2 p-4 rounded-2xl bg-green-50 text-green-600 text-sm'
+                  className='flex items-center gap-2 p-4 rounded-2xl bg-[var(--status-success-subtle)] text-[var(--status-success)] text-sm'
                 >
                   <Check className='h-4 w-4 flex-shrink-0' />
                   <span>Veicolo salvato con successo!</span>
@@ -851,7 +851,7 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
               <AppleButton
                 type='submit'
                 disabled={status === 'loading' || status === 'success'}
-                className='flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium shadow-lg shadow-emerald-500/25'
+                className='flex-1 h-12 rounded-2xl bg-gradient-to-r from-[var(--status-success)] to-[var(--status-success)] hover:from-[var(--status-success)] hover:to-[var(--status-success)] text-[var(--text-on-brand)] font-medium shadow-lg shadow-emerald-500/25'
               >
                 {status === 'loading' ? (
                   <Loader2 className='h-5 w-5 animate-spin' />

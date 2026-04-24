@@ -34,22 +34,22 @@ interface WarrantyCardProps {
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   ACTIVE: {
     label: 'Attiva',
-    color: 'bg-green-100 text-green-800 border-green-200',
+    color: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30',
     icon: <CheckCircle2 className='h-4 w-4' />,
   },
   EXPIRING_SOON: {
     label: 'In Scadenza',
-    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    color: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] border-[var(--status-warning)]/30',
     icon: <AlertTriangle className='h-4 w-4' />,
   },
   EXPIRED: {
     label: 'Scaduta',
-    color: 'bg-red-100 text-red-800 border-red-200',
+    color: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] border-[var(--status-error)]/30',
     icon: <XCircle className='h-4 w-4' />,
   },
   VOID: {
     label: 'Annullata',
-    color: 'bg-gray-100 text-gray-800 border-gray-200',
+    color: 'bg-[var(--surface-secondary)] text-[var(--text-primary)] border-[var(--border-default)]',
     icon: <XCircle className='h-4 w-4' />,
   },
 };
@@ -57,19 +57,19 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 const typeConfig: Record<string, { label: string; color: string }> = {
   MANUFACTURER: {
     label: 'Produttore',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-[var(--status-info-subtle)] text-[var(--status-info)]',
   },
   EXTENDED: {
     label: 'Estesa',
-    color: 'bg-purple-100 text-purple-800',
+    color: 'bg-[var(--brand)]/10 text-[var(--brand)]',
   },
   DEALER: {
     label: 'Concessionario',
-    color: 'bg-teal-100 text-teal-800',
+    color: 'bg-[var(--status-success)]/10 text-[var(--status-success)]',
   },
   AS_IS: {
     label: 'Come-&Egrave;',
-    color: 'bg-gray-100 text-gray-800',
+    color: 'bg-[var(--surface-secondary)] text-[var(--text-primary)]',
   },
 };
 
@@ -114,7 +114,7 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-all hover:shadow-md hover:border-gray-300',
+        'cursor-pointer transition-all hover:shadow-md hover:border-[var(--border-default)]',
         onClick && 'hover:translate-y-[-2px]',
         className
       )}
@@ -139,37 +139,37 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
               className={cn(
                 'p-2 rounded-lg',
                 warranty.status === WarrantyStatus.ACTIVE
-                  ? 'bg-green-50'
+                  ? 'bg-[var(--status-success-subtle)]'
                   : warranty.status === WarrantyStatus.EXPIRING_SOON
-                    ? 'bg-amber-50'
+                    ? 'bg-[var(--status-warning-subtle)]'
                     : warranty.status === WarrantyStatus.EXPIRED
-                      ? 'bg-red-50'
-                      : 'bg-gray-50'
+                      ? 'bg-[var(--status-error-subtle)]'
+                      : 'bg-[var(--surface-secondary)]'
               )}
             >
               <Shield
                 className={cn(
                   'h-5 w-5',
                   warranty.status === WarrantyStatus.ACTIVE
-                    ? 'text-green-600'
+                    ? 'text-[var(--status-success)]'
                     : warranty.status === WarrantyStatus.EXPIRING_SOON
-                      ? 'text-amber-600'
+                      ? 'text-[var(--status-warning)]'
                       : warranty.status === WarrantyStatus.EXPIRED
-                        ? 'text-red-600'
-                        : 'text-gray-600'
+                        ? 'text-[var(--status-error)]'
+                        : 'text-[var(--text-secondary)]'
                 )}
               />
             </div>
             <div>
-              <h3 className='font-semibold text-gray-900'>
+              <h3 className='font-semibold text-[var(--text-primary)]'>
                 {warranty.vehicle
                   ? `${warranty.vehicle.make} ${warranty.vehicle.model} ${warranty.vehicle.year}`
                   : 'Garanzia Veicolo'}
               </h3>
-              <p className='text-sm text-gray-500'>{String(w.provider ?? '')}</p>
+              <p className='text-sm text-[var(--text-tertiary)]'>{String(w.provider ?? '')}</p>
             </div>
           </div>
-          <ChevronRight className='h-5 w-5 text-gray-400' />
+          <ChevronRight className='h-5 w-5 text-[var(--text-tertiary)]' />
         </div>
       </CardHeader>
 
@@ -186,11 +186,11 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
         {/* Progress */}
         <div className='space-y-2'>
           <div className='flex items-center justify-between text-sm'>
-            <span className='text-gray-600'>Periodo Copertura</span>
-            <span className='font-medium text-gray-900'>{progress}% trascorso</span>
+            <span className='text-[var(--text-secondary)]'>Periodo Copertura</span>
+            <span className='font-medium text-[var(--text-primary)]'>{progress}% trascorso</span>
           </div>
           <Progress value={progress} className='h-2' />
-          <div className='flex items-center justify-between text-xs text-gray-500'>
+          <div className='flex items-center justify-between text-xs text-[var(--text-tertiary)]'>
             <span>{formatDate(warranty.startDate)}</span>
             <span>{formatDate(warranty.expirationDate)}</span>
           </div>
@@ -202,10 +202,10 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
             className={cn(
               'flex items-center gap-2 p-3 rounded-lg text-sm',
               daysRemaining <= 30
-                ? 'bg-red-50 text-red-700'
+                ? 'bg-[var(--status-error-subtle)] text-[var(--status-error)]'
                 : daysRemaining <= 60
-                  ? 'bg-amber-50 text-amber-700'
-                  : 'bg-green-50 text-green-700'
+                  ? 'bg-[var(--status-warning)]/5 text-[var(--status-warning)]'
+                  : 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
             )}
           >
             <Calendar className='h-4 w-4' />
@@ -217,25 +217,25 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
 
         {/* Coverage Info */}
         <div className='grid grid-cols-2 gap-3'>
-          <div className='bg-gray-50 rounded-lg p-3'>
-            <div className='flex items-center gap-2 text-xs text-gray-600 mb-1'>
+          <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+            <div className='flex items-center gap-2 text-xs text-[var(--text-secondary)] mb-1'>
               <Euro className='h-3 w-3' />
               <span>Rimanente</span>
             </div>
-            <div className='font-semibold text-gray-900'>{formatCurrency(remainingCoverage)}</div>
-            <div className='text-xs text-gray-500'>di {formatCurrency(maxCoverage)}</div>
+            <div className='font-semibold text-[var(--text-primary)]'>{formatCurrency(remainingCoverage)}</div>
+            <div className='text-xs text-[var(--text-tertiary)]'>di {formatCurrency(maxCoverage)}</div>
           </div>
-          <div className='bg-gray-50 rounded-lg p-3'>
-            <div className='flex items-center gap-2 text-xs text-gray-600 mb-1'>
+          <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+            <div className='flex items-center gap-2 text-xs text-[var(--text-secondary)] mb-1'>
               <Gauge className='h-3 w-3' />
               <span>Copertura</span>
             </div>
-            <div className='font-semibold text-gray-900'>
+            <div className='font-semibold text-[var(--text-primary)]'>
               {warranty.mileageLimit
                 ? `${warranty.mileageLimit.toLocaleString()} km`
                 : 'Illimitato'}
             </div>
-            <div className='text-xs text-gray-500'>
+            <div className='text-xs text-[var(--text-tertiary)]'>
               Franchigia:{' '}
               {formatCurrency((w.deductible as number) ?? warranty.deductibleAmount ?? 0)}
             </div>
@@ -244,12 +244,12 @@ export function WarrantyCard({ warranty, onClick, className }: WarrantyCardProps
 
         {/* Claims Summary */}
         {totalClaims > 0 && (
-          <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
-            <span className='text-sm text-gray-600'>
+          <div className='flex items-center justify-between pt-2 border-t border-[var(--border-default)]'>
+            <span className='text-sm text-[var(--text-secondary)]'>
               {totalClaims} reclam{totalClaims !== 1 ? 'i' : 'o'} presentat
               {totalClaims !== 1 ? 'i' : 'o'}
             </span>
-            <span className='text-sm text-gray-900'>
+            <span className='text-sm text-[var(--text-primary)]'>
               {approvedClaims} approvat{approvedClaims !== 1 ? 'i' : 'o'}
             </span>
           </div>

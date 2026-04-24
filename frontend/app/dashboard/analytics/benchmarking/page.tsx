@@ -93,24 +93,24 @@ function getPercentileColor(percentile: number): {
 } {
   if (percentile >= 75)
     return {
-      text: 'text-green-700 dark:text-green-300',
-      bg: 'bg-green-100 dark:bg-green-900/40',
+      text: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+      bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
     };
   if (percentile >= 50)
     return {
-      text: 'text-yellow-700 dark:text-yellow-300',
-      bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+      text: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+      bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
     };
   return {
-    text: 'text-red-700 dark:text-red-300',
-    bg: 'bg-red-100 dark:bg-red-900/40',
+    text: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
   };
 }
 
 function getComparisonColor(yourValue: number, industryAvg: number): string {
-  if (yourValue > industryAvg * 1.05) return 'text-apple-green';
-  if (yourValue < industryAvg * 0.95) return 'text-apple-red';
-  return 'text-apple-orange';
+  if (yourValue > industryAvg * 1.05) return 'text-[var(--status-success)]';
+  if (yourValue < industryAvg * 0.95) return 'text-[var(--status-error)]';
+  return 'text-[var(--status-warning)]';
 }
 
 // ─── Animations ──────────────────────────────────────────────────────────────
@@ -175,17 +175,17 @@ export default function BenchmarkingPage(): React.ReactElement {
       <header>
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Benchmarking</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Benchmarking</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Confronta le performance della tua officina con la media del settore
             </p>
           </div>
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none" />
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none" />
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="h-10 pl-10 pr-4 rounded-md border border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer"
+              className="h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer"
             >
               {monthOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -209,8 +209,8 @@ export default function BenchmarkingPage(): React.ReactElement {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i dati di benchmarking
                   </p>
                   <AppleButton
@@ -226,18 +226,18 @@ export default function BenchmarkingPage(): React.ReactElement {
           </motion.div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
           </div>
         ) : metrics.length === 0 ? (
           <motion.div variants={listItemVariants}>
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <BarChart3 className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <BarChart3 className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun dato disponibile per il periodo selezionato
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                     I dati vengono elaborati mensilmente
                   </p>
                 </div>
@@ -264,28 +264,28 @@ export default function BenchmarkingPage(): React.ReactElement {
                       <AppleCardContent>
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] flex items-center justify-center text-apple-gray dark:text-[var(--text-secondary)]">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] flex items-center justify-center text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               {metricIcons[metric.key] ?? (
                                 <BarChart3 className="h-5 w-5" />
                               )}
                             </div>
-                            <p className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                            <p className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {metricLabels[metric.key] ?? metric.label}
                             </p>
                           </div>
                           {metric.trend === 'up' ? (
-                            <TrendingUp className="h-4 w-4 text-apple-green" />
+                            <TrendingUp className="h-4 w-4 text-[var(--status-success)]" />
                           ) : metric.trend === 'down' ? (
-                            <TrendingDown className="h-4 w-4 text-apple-red" />
+                            <TrendingDown className="h-4 w-4 text-[var(--status-error)]" />
                           ) : (
-                            <Minus className="h-4 w-4 text-apple-gray" />
+                            <Minus className="h-4 w-4 text-[var(--text-tertiary)]" />
                           )}
                         </div>
 
                         {/* Values */}
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           <div>
-                            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-0.5">
+                            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-0.5">
                               Il tuo valore
                             </p>
                             <p className={`text-title-2 font-bold ${compColor}`}>
@@ -293,10 +293,10 @@ export default function BenchmarkingPage(): React.ReactElement {
                             </p>
                           </div>
                           <div>
-                            <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-0.5">
+                            <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-0.5">
                               Media settore
                             </p>
-                            <p className="text-title-2 font-bold text-apple-gray dark:text-[var(--text-secondary)]">
+                            <p className="text-title-2 font-bold text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               {formatMetricValue(metric.industryAvg, metric.unit)}
                             </p>
                           </div>
@@ -305,7 +305,7 @@ export default function BenchmarkingPage(): React.ReactElement {
                         {/* Percentile gauge */}
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                            <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               Percentile
                             </span>
                             <span
@@ -314,14 +314,14 @@ export default function BenchmarkingPage(): React.ReactElement {
                               {getPercentileLabel(metric.percentile)}
                             </span>
                           </div>
-                          <div className="h-2 rounded-full bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] overflow-hidden">
+                          <div className="h-2 rounded-full bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-700 ${
                                 metric.percentile >= 75
-                                  ? 'bg-green-500'
+                                  ? 'bg-[var(--status-success)]'
                                   : metric.percentile >= 50
-                                    ? 'bg-yellow-500'
-                                    : 'bg-red-500'
+                                    ? 'bg-[var(--status-warning)]'
+                                    : 'bg-[var(--status-error)]'
                               }`}
                               style={{ width: `${metric.percentile}%` }}
                             />
@@ -339,8 +339,8 @@ export default function BenchmarkingPage(): React.ReactElement {
               <motion.div variants={listItemVariants}>
                 <AppleCard hover={false}>
                   <AppleCardHeader>
-                    <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
-                      <Lightbulb className="inline h-5 w-5 mr-2 text-yellow-500" />
+                    <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                      <Lightbulb className="inline h-5 w-5 mr-2 text-[var(--status-warning)]" />
                       Suggerimenti per migliorare
                     </h2>
                   </AppleCardHeader>
@@ -348,10 +348,10 @@ export default function BenchmarkingPage(): React.ReactElement {
                     <div className="space-y-3">
                       {tips.map((tip, i) => {
                         const impactColors: Record<string, string> = {
-                          high: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+                          high: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)] border-[var(--status-error)]/30 dark:border-[var(--status-error)]',
                           medium:
-                            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
-                          low: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+                            'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/40/30 text-[var(--status-warning)] dark:text-[var(--status-warning)] border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]',
+                          low: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30 text-[var(--status-info)] dark:text-[var(--status-info)] border-[var(--status-info)]/30 dark:border-[var(--status-info)]',
                         };
                         const impactLabels: Record<string, string> = {
                           high: 'Impatto alto',

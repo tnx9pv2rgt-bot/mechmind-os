@@ -208,12 +208,12 @@ function KpiCard({ title, value, change, icon: Icon, sparkData, sparkColor, href
                 >
                   <span style={{ color: sparkColor }}><Icon className="h-4.5 w-4.5" /></span>
                 </div>
-                <span className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                <span className="text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   {title}
                 </span>
               </div>
               <ChevronRight
-                className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]"
+                className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
               />
             </div>
 
@@ -224,7 +224,7 @@ function KpiCard({ title, value, change, icon: Icon, sparkData, sparkColor, href
               ) : (
                 <p className="text-[28px] font-bold tracking-tight text-[var(--text-primary)] dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
                   <AnimatedValue value={value} />
-                  {suffix && <span className="text-[13px] font-medium ml-1.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">{suffix}</span>}
+                  {suffix && <span className="text-[13px] font-medium ml-1.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{suffix}</span>}
                 </p>
               )}
             </div>
@@ -244,7 +244,7 @@ function KpiCard({ title, value, change, icon: Icon, sparkData, sparkColor, href
                   >
                     {isPositive ? '+' : ''}{change}%
                   </span>
-                  <span className="text-[11px] text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">vs mese prec.</span>
+                  <span className="text-[11px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">vs mese prec.</span>
                 </div>
               ) : <div />}
               <div className="w-16 h-6 opacity-50 group-hover:opacity-100 transition-opacity">
@@ -402,7 +402,7 @@ function WorkflowKanban({ workOrders, isLoading }: { workOrders: Array<{ status:
                     <span style={{ color: col.color }}><ColIcon className="h-4 w-4" /></span>
                   </div>
                   <p className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{col.count}</p>
-                  <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">{col.label}</p>
+                  <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{col.label}</p>
                 </>
               )}
             </div>
@@ -485,7 +485,7 @@ function FinancialWidget({ revenue, unpaidAmount, overdueAmount, grossMargin, ca
                   </span>
                 </div>
                 <p className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
-                <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">{m.label}</p>
+                <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{m.label}</p>
               </>
             )}
           </div>
@@ -655,7 +655,7 @@ export default function DashboardPage(): React.ReactElement {
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: 'var(--status-success)' }}
               />
-              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])] text-body'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body'>
                 {tenantName} &middot;{' '}
                 <span suppressHydrationWarning>
                   {new Date().toLocaleDateString('it-IT', {
@@ -849,18 +849,18 @@ export default function DashboardPage(): React.ReactElement {
                     <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Andamento Fatturato
                     </h2>
-                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Questo mese vs precedente
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
                       <div className="w-3 h-[2px] rounded-full bg-apple-dark dark:bg-[var(--text-primary)]" />
-                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Corrente</span>
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Corrente</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3 h-[2px] rounded-full opacity-40 bg-[var(--surface-hover)]" />
-                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Precedente</span>
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Precedente</span>
                     </div>
                   </div>
                 </div>
@@ -878,7 +878,7 @@ export default function DashboardPage(): React.ReactElement {
                     <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Pipeline Lavori
                     </h2>
-                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Distribuzione ordini attivi
                     </p>
                   </div>
@@ -926,7 +926,7 @@ export default function DashboardPage(): React.ReactElement {
                 ) : recentWorkOrders.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <AlertCircle className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
-                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Nessun ordine recente</p>
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Nessun ordine recente</p>
                     <Link href="/dashboard/work-orders/new">
                       <AppleButton variant="ghost" className="mt-4" icon={<Plus className="h-4 w-4" />}>
                         Crea OdL
@@ -948,7 +948,7 @@ export default function DashboardPage(): React.ReactElement {
                             <p className="text-body font-semibold truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {wo.customerName || 'N/D'}
                             </p>
-                            <p className="text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                            <p className="text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               {wo.vehiclePlate && <><Car className="h-3 w-3 inline mr-1" />{wo.vehiclePlate}</>}
                               {!wo.vehiclePlate && (wo.orderNumber || `#${wo.id.slice(0, 6)}`)}
                             </p>
@@ -965,7 +965,7 @@ export default function DashboardPage(): React.ReactElement {
                             </span>
                           </div>
                           <ChevronRight
-                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]"
+                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
                           />
                         </div>
                       </Link>
@@ -999,7 +999,7 @@ export default function DashboardPage(): React.ReactElement {
                 ) : todayBookings.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <AlertCircle className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
-                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">Nessuna prenotazione oggi</p>
+                    <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Nessuna prenotazione oggi</p>
                     <Link href="/dashboard/bookings/new">
                       <AppleButton variant="ghost" className="mt-4" icon={<Plus className="h-4 w-4" />}>
                         Nuova prenotazione
@@ -1033,7 +1033,7 @@ export default function DashboardPage(): React.ReactElement {
                             <p className="text-body font-semibold truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {booking.customerName}
                             </p>
-                            <p className="text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                            <p className="text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               {booking.vehiclePlate}
                               {booking.vehicleBrand ? ` · ${booking.vehicleBrand}` : ''}
                               {' · '}
@@ -1041,7 +1041,7 @@ export default function DashboardPage(): React.ReactElement {
                             </p>
                           </div>
                           <ChevronRight
-                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]"
+                            className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
                           />
                         </motion.div>
                       </Link>
@@ -1061,7 +1061,7 @@ export default function DashboardPage(): React.ReactElement {
                     <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                       Finanze
                     </h2>
-                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                    <p className="text-footnote mt-0.5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       Riepilogo finanziario
                     </p>
                   </div>
@@ -1107,7 +1107,7 @@ export default function DashboardPage(): React.ReactElement {
                           <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {alert.message}
                           </p>
-                          <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                          <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             {formatDate(alert.createdAt)}
                           </p>
                         </div>
@@ -1130,7 +1130,7 @@ export default function DashboardPage(): React.ReactElement {
                         <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           Tutto sotto controllo
                         </p>
-                        <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                        <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           Nessun avviso critico. La tua officina funziona alla perfezione.
                         </p>
                       </div>
@@ -1149,7 +1149,7 @@ export default function DashboardPage(): React.ReactElement {
                         <p className="text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {greeting}, {user?.name || 'Utente'}
                         </p>
-                        <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-[var(--text-secondary)])]">
+                        <p className="text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           Gestisci prenotazioni, clienti e veicoli dalla tua dashboard.
                         </p>
                       </div>

@@ -145,10 +145,10 @@ export default function CustomersPage(): React.ReactElement {
       <header className="">
         <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               Clienti
             </h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               {isLoading ? 'Caricamento...' : `${total} clienti totali`}
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function CustomersPage(): React.ReactElement {
             <AppleCardContent>
               <div className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                   <Input
                     type="text"
                     placeholder="Cerca clienti per nome, email o telefono..."
@@ -217,19 +217,19 @@ export default function CustomersPage(): React.ReactElement {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 Elenco Clienti
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i clienti
                   </p>
                   <AppleButton
@@ -242,8 +242,8 @@ export default function CustomersPage(): React.ReactElement {
                 </div>
               ) : filteredCustomers.length === 0 && !debouncedSearch ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Users className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Users className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun cliente ancora. Aggiungi il primo cliente per iniziare.
                   </p>
                   <Link href="/dashboard/customers/new/step1">
@@ -254,8 +254,8 @@ export default function CustomersPage(): React.ReactElement {
                 </div>
               ) : filteredCustomers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Search className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Search className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun cliente trovato per &quot;{debouncedSearch}&quot;
                   </p>
                   <AppleButton
@@ -276,13 +276,13 @@ export default function CustomersPage(): React.ReactElement {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-left border-b border-apple-border/20 dark:border-[var(--border-default)]">
-                          <th className="px-4 sm:px-6 py-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Nome</th>
-                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden md:table-cell text-apple-dark dark:text-[var(--text-primary)]">Email</th>
-                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden lg:table-cell text-apple-dark dark:text-[var(--text-primary)]">Telefono</th>
-                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden sm:table-cell text-apple-dark dark:text-[var(--text-primary)]">Veicoli</th>
-                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden xl:table-cell text-apple-dark dark:text-[var(--text-primary)]">Ultimo Servizio</th>
-                          <th className="px-4 sm:px-6 py-4 text-xs font-medium text-right text-apple-dark dark:text-[var(--text-primary)]">Azioni</th>
+                        <tr className="text-left border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Nome</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden md:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Email</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden lg:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Telefono</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden sm:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Veicoli</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden xl:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Ultimo Servizio</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium text-right text-[var(--text-primary)] dark:text-[var(--text-primary)]">Azioni</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -295,22 +295,22 @@ export default function CustomersPage(): React.ReactElement {
                             <motion.tr
                               key={customer.id}
                               variants={listItemVariants}
-                              className="border-b border-apple-border/10 dark:border-[var(--border-default)] last:border-0 transition-colors cursor-pointer group hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-active)]"
+                              className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)] last:border-0 transition-colors cursor-pointer group hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-active)]"
                             >
                               <td className="px-4 sm:px-6 py-4">
                                 <Link
                                   href={`/dashboard/customers/${customer.id}`}
                                   className="flex items-center gap-3"
                                 >
-                                  <div className="w-10 h-10 rounded-full bg-apple-blue/10 flex items-center justify-center text-sm font-medium flex-shrink-0 text-apple-blue">
+                                  <div className="w-10 h-10 rounded-full bg-[var(--brand)]/10 flex items-center justify-center text-sm font-medium flex-shrink-0 text-[var(--brand)]">
                                     {initials}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-body font-medium truncate text-apple-dark dark:text-[var(--text-primary)]">
+                                    <p className="text-body font-medium truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                       {fullName}
                                     </p>
                                     {customer.loyaltyTier && (
-                                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                         {customer.loyaltyTier}
                                       </span>
                                     )}
@@ -318,24 +318,24 @@ export default function CustomersPage(): React.ReactElement {
                                 </Link>
                               </td>
                               <td className="px-4 sm:px-6 py-4 hidden md:table-cell">
-                                <div className="flex items-center gap-2 truncate text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                                <div className="flex items-center gap-2 truncate text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                   <Mail className="h-4 w-4 flex-shrink-0" />
                                   <span className="truncate">{customer.email || 'N/D'}</span>
                                 </div>
                               </td>
                               <td className="px-4 sm:px-6 py-4 hidden lg:table-cell">
-                                <div className="flex items-center gap-2 text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                                <div className="flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                   <Phone className="h-4 w-4 flex-shrink-0" />
                                   <span>{customer.phone ? formatPhone(customer.phone) : 'N/D'}</span>
                                 </div>
                               </td>
                               <td
-                                className="px-4 sm:px-6 py-4 text-center hidden sm:table-cell text-body text-apple-dark dark:text-[var(--text-primary)]"
+                                className="px-4 sm:px-6 py-4 text-center hidden sm:table-cell text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                                 style={{ fontVariantNumeric: 'tabular-nums' }}
                               >
                                 {vehicleCount}
                               </td>
-                              <td className="px-4 sm:px-6 py-4 hidden xl:table-cell text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                              <td className="px-4 sm:px-6 py-4 hidden xl:table-cell text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                 {customer.updatedAt ? timeAgo(customer.updatedAt) : 'Mai'}
                               </td>
                               <td className="px-4 sm:px-6 py-4 text-right">
@@ -356,14 +356,14 @@ export default function CustomersPage(): React.ReactElement {
                                         className="fixed inset-0 z-40"
                                         onClick={() => setOpenMenuId(null)}
                                       />
-                                      <div className="absolute right-0 top-full mt-1 z-50 rounded-xl shadow-apple border border-apple-border/20 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] py-1 min-w-[180px]">
+                                      <div className="absolute right-0 top-full mt-1 z-50 rounded-xl shadow-apple border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] py-1 min-w-[180px]">
                                         <button
                                           type="button"
                                           onClick={() => {
                                             setOpenMenuId(null);
                                             router.push(`/dashboard/customers/${customer.id}`);
                                           }}
-                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-apple-dark dark:text-[var(--text-primary)] transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]"
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
                                         >
                                           <Eye className="h-4 w-4" />
                                           Vedi dettaglio
@@ -374,7 +374,7 @@ export default function CustomersPage(): React.ReactElement {
                                             setOpenMenuId(null);
                                             router.push(`/dashboard/customers/${customer.id}?tab=anagrafica&edit=true`);
                                           }}
-                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-apple-dark dark:text-[var(--text-primary)] transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]"
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
                                         >
                                           <Pencil className="h-4 w-4" />
                                           Modifica
@@ -388,19 +388,19 @@ export default function CustomersPage(): React.ReactElement {
                                               onError: () => toast.error('Errore durante l\'export'),
                                             });
                                           }}
-                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-apple-dark dark:text-[var(--text-primary)] transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]"
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
                                         >
                                           <Download className="h-4 w-4" />
                                           Esporta dati (GDPR)
                                         </button>
-                                        <div className="my-1 border-t border-apple-border/20 dark:border-[var(--border-default)]" />
+                                        <div className="my-1 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]" />
                                         <button
                                           type="button"
                                           onClick={() => {
                                             setOpenMenuId(null);
                                             setDeleteTarget({ id: customer.id, name: fullName });
                                           }}
-                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-apple-red transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]"
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--status-error)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
                                         >
                                           <Trash2 className="h-4 w-4" />
                                           Elimina

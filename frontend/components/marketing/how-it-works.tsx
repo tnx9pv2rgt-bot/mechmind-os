@@ -8,19 +8,19 @@ const steps = [
     number: '1',
     title: 'Registrati',
     description: 'Email, nome, password. 30 secondi.',
-    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white',
+    color: 'bg-[#0d0d0d]/5 dark:bg-[var(--surface-secondary)]/10 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]',
   },
   {
     number: '2',
     title: 'Rispondi a 4 domande',
     description: 'Tipo, team, provenienza, priorità. 60 secondi.',
-    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white',
+    color: 'bg-[#0d0d0d]/5 dark:bg-[var(--surface-secondary)]/10 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]',
   },
   {
     number: '3',
     title: 'Gestisci l\'officina',
     description: 'Dashboard pronta, configurata per te.',
-    color: 'bg-[#0d0d0d]/5 dark:bg-white/10 text-[var(--text-primary)] dark:text-white',
+    color: 'bg-[#0d0d0d]/5 dark:bg-[var(--surface-secondary)]/10 text-[var(--text-primary)] dark:text-[var(--text-on-brand)]',
   },
 ] as const;
 

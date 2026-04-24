@@ -419,16 +419,16 @@ export function FormWithAnalytics() {
             <div
               key={step.id}
               className={`flex items-center ${
-                index <= currentStep ? 'text-blue-600' : 'text-gray-400'
+                index <= currentStep ? 'text-[var(--status-info)]' : 'text-[var(--text-tertiary)]'
               }`}
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   index < currentStep
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--status-info)] text-[var(--text-on-brand)]'
                     : index === currentStep
-                    ? 'bg-blue-100 text-blue-600 border-2 border-blue-600'
-                    : 'bg-gray-100 text-gray-400'
+                    ? 'bg-[var(--status-info-subtle)] text-[var(--status-info)] border-2 border-[var(--status-info)]'
+                    : 'bg-[var(--surface-secondary)] text-[var(--text-tertiary)]'
                 }`}
               >
                 {index < currentStep ? '✓' : index + 1}
@@ -437,9 +437,9 @@ export function FormWithAnalytics() {
             </div>
           ))}
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-[var(--border-default)] rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            className="bg-[var(--status-info)] h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
           />
         </div>
@@ -447,14 +447,14 @@ export function FormWithAnalytics() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">{STEPS[currentStep].title}</h2>
           {renderStepContent()}
         </div>
 
         {/* Errori */}
         {submitError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 text-[var(--status-error)] px-4 py-3 rounded">
             {submitError}
           </div>
         )}
@@ -465,7 +465,7 @@ export function FormWithAnalytics() {
             type="button"
             onClick={handlePrevStep}
             disabled={currentStep === 0}
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 border border-[var(--border-default)] rounded-lg hover:bg-[var(--surface-secondary)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Indietro
           </button>
@@ -474,7 +474,7 @@ export function FormWithAnalytics() {
             <button
               type="button"
               onClick={handleNextStep}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2 bg-[var(--status-info)] text-[var(--text-on-brand)] rounded-lg hover:bg-[var(--status-info)]"
             >
               Avanti
             </button>
@@ -482,7 +482,7 @@ export function FormWithAnalytics() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              className="px-6 py-2 bg-[var(--status-success)] text-[var(--text-on-brand)] rounded-lg hover:bg-[var(--status-success)] disabled:opacity-50"
             >
               {isSubmitting ? 'Invio in corso...' : buttonText}
             </button>
@@ -515,9 +515,9 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
         {label}
-        {required && <span className="text-red-500">*</span>}
+        {required && <span className="text-[var(--status-error)]">*</span>}
       </label>
       <input
         type={type}
@@ -526,12 +526,12 @@ function FormField({
         placeholder={placeholder}
         className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
           error
-            ? 'border-red-500 focus:ring-red-500'
-            : 'border-gray-300 focus:ring-blue-500'
+            ? 'border-[var(--status-error)] focus:ring-[var(--status-error)]'
+            : 'border-[var(--border-default)] focus:ring-[var(--status-info)]'
         }`}
       />
-      {helpText && <p className="text-sm text-gray-500 mt-1">{helpText}</p>}
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+      {helpText && <p className="text-sm text-[var(--text-tertiary)] mt-1">{helpText}</p>}
+      {error && <p className="text-sm text-[var(--status-error)] mt-1">{error}</p>}
     </div>
   );
 }
@@ -560,10 +560,10 @@ function CheckboxField({
         />
         <span className="text-sm">
           {label}
-          {required && <span className="text-red-500">*</span>}
+          {required && <span className="text-[var(--status-error)]">*</span>}
         </span>
       </label>
-      {error && <p className="text-sm text-red-500 mt-1 ml-6">{error}</p>}
+      {error && <p className="text-sm text-[var(--status-error)] mt-1 ml-6">{error}</p>}
     </div>
   );
 }

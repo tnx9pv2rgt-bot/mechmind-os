@@ -66,22 +66,22 @@ interface CampaignDetail {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
-  DRAFT: { label: 'Bozza', bg: 'bg-apple-light-gray dark:bg-[var(--surface-elevated)]', color: 'text-apple-dark dark:text-[var(--text-primary)]' },
-  SCHEDULED: { label: 'Pianificata', bg: 'bg-blue-100 dark:bg-blue-900/40', color: 'text-blue-700 dark:text-blue-300' },
-  IN_PROGRESS: { label: 'In Corso', bg: 'bg-orange-100 dark:bg-orange-900/40', color: 'text-orange-700 dark:text-orange-300' },
-  COMPLETED: { label: 'Completata', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-apple-green dark:text-green-300' },
-  CANCELLED: { label: 'Annullata', bg: 'bg-red-100 dark:bg-red-900/40', color: 'text-apple-red dark:text-red-300' },
-  SENT: { label: 'Inviata', bg: 'bg-green-100 dark:bg-green-900/40', color: 'text-apple-green dark:text-green-300' },
+  DRAFT: { label: 'Bozza', bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]', color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]' },
+  SCHEDULED: { label: 'Pianificata', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]' },
+  IN_PROGRESS: { label: 'In Corso', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  COMPLETED: { label: 'Completata', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
+  CANCELLED: { label: 'Annullata', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+  SENT: { label: 'Inviata', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
 };
 
 const DELIVERY_STATUS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'In attesa', color: 'text-apple-gray dark:text-[var(--text-secondary)]' },
-  SENT: { label: 'Inviato', color: 'text-apple-blue' },
-  DELIVERED: { label: 'Consegnato', color: 'text-apple-green' },
-  OPENED: { label: 'Aperto', color: 'text-apple-orange' },
-  CLICKED: { label: 'Cliccato', color: 'text-apple-purple' },
-  BOUNCED: { label: 'Rimbalzato', color: 'text-apple-red' },
-  FAILED: { label: 'Fallito', color: 'text-apple-red' },
+  PENDING: { label: 'In attesa', color: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' },
+  SENT: { label: 'Inviato', color: 'text-[var(--brand)]' },
+  DELIVERED: { label: 'Consegnato', color: 'text-[var(--status-success)]' },
+  OPENED: { label: 'Aperto', color: 'text-[var(--status-warning)]' },
+  CLICKED: { label: 'Cliccato', color: 'text-[var(--brand)]' },
+  BOUNCED: { label: 'Rimbalzato', color: 'text-[var(--status-error)]' },
+  FAILED: { label: 'Fallito', color: 'text-[var(--status-error)]' },
 };
 
 const containerVariants = {
@@ -187,7 +187,7 @@ export default function CampaignDetailPage() {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -195,8 +195,8 @@ export default function CampaignDetailPage() {
   if (error || !campaign) {
     return (
       <div className='flex flex-col items-center justify-center min-h-[60vh] text-center'>
-        <AlertCircle className='h-12 w-12 text-apple-red/40 mb-4' />
-        <p className='text-body text-apple-gray dark:text-[var(--text-secondary)] mb-4'>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
           Campagna non trovata
         </p>
         <Link href='/dashboard/marketing'>
@@ -227,7 +227,7 @@ export default function CampaignDetailPage() {
           />
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>{campaign.name}</h1>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{campaign.name}</h1>
               <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${statusCfg.bg} ${statusCfg.color}`}>
                 {statusCfg.label}
               </span>
@@ -257,8 +257,8 @@ export default function CampaignDetailPage() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 rounded-lg text-body font-medium transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-apple-blue text-white'
-                    : 'text-apple-gray dark:text-[var(--text-secondary)] hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+                    ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                    : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                 }`}
               >
                 {tab.label}
@@ -274,20 +274,20 @@ export default function CampaignDetailPage() {
             {/* Stats Cards */}
             <motion.div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4' variants={containerVariants}>
               {[
-                { label: 'Tipo', value: campaign.type, icon: Mail, color: 'bg-apple-blue' },
-                { label: 'Destinatari', value: String(campaign.recipientCount), icon: Users, color: 'bg-apple-purple' },
-                { label: 'Inviati', value: String(campaign.sentCount), icon: Send, color: 'bg-apple-green' },
-                { label: 'Tasso Apertura', value: `${openRate}%`, icon: Eye, color: 'bg-apple-orange' },
-                { label: 'Tasso Click', value: `${clickRate}%`, icon: MousePointerClick, color: 'bg-apple-red' },
+                { label: 'Tipo', value: campaign.type, icon: Mail, color: 'bg-[var(--brand)]' },
+                { label: 'Destinatari', value: String(campaign.recipientCount), icon: Users, color: 'bg-[var(--brand)]' },
+                { label: 'Inviati', value: String(campaign.sentCount), icon: Send, color: 'bg-[var(--status-success)]' },
+                { label: 'Tasso Apertura', value: `${openRate}%`, icon: Eye, color: 'bg-[var(--status-warning)]' },
+                { label: 'Tasso Click', value: `${clickRate}%`, icon: MousePointerClick, color: 'bg-[var(--status-error)]' },
               ].map(stat => (
                 <motion.div key={stat.label} variants={cardVariants}>
                   <AppleCard hover={false}>
                     <AppleCardContent>
                       <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-                        <stat.icon className='h-5 w-5 text-white' />
+                        <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                       </div>
-                      <p className='text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]'>{stat.value}</p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{stat.value}</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                     </AppleCardContent>
                   </AppleCard>
                 </motion.div>
@@ -298,20 +298,20 @@ export default function CampaignDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <FileText className='h-5 w-5 text-apple-gray' /> Dettagli
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <FileText className='h-5 w-5 text-[var(--text-tertiary)]' /> Dettagli
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-3'>
                   {campaign.subject && (
                     <div className='flex justify-between text-body'>
-                      <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Oggetto</span>
-                      <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{campaign.subject}</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Oggetto</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{campaign.subject}</span>
                     </div>
                   )}
                   <div className='flex justify-between text-body'>
-                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Data invio</span>
-                    <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Data invio</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {campaign.sentAt
                         ? new Date(campaign.sentAt).toLocaleString('it-IT')
                         : campaign.scheduledAt
@@ -320,14 +320,14 @@ export default function CampaignDetailPage() {
                     </span>
                   </div>
                   <div className='flex justify-between text-body'>
-                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Data creazione</span>
-                    <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Data creazione</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {new Date(campaign.createdAt).toLocaleDateString('it-IT')}
                     </span>
                   </div>
                   <div className='flex justify-between text-body'>
-                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Conversioni</span>
-                    <span className='font-medium text-apple-dark dark:text-[var(--text-primary)]'>{campaign.conversions || 0}</span>
+                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Conversioni</span>
+                    <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{campaign.conversions || 0}</span>
                   </div>
                 </AppleCardContent>
               </AppleCard>
@@ -339,20 +339,20 @@ export default function CampaignDetailPage() {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Contenuto della Campagna
                 </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 {campaign.subject && (
                   <div className='mb-4'>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-1'>Oggetto</p>
-                    <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{campaign.subject}</p>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>Oggetto</p>
+                    <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{campaign.subject}</p>
                   </div>
                 )}
                 <div>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)] mb-2'>Corpo del messaggio</p>
-                  <div className='p-6 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl text-body text-apple-dark dark:text-[var(--text-primary)] whitespace-pre-wrap'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2'>Corpo del messaggio</p>
+                  <div className='p-6 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] whitespace-pre-wrap'>
                     {campaign.body || campaign.template || 'Nessun contenuto disponibile'}
                   </div>
                 </div>
@@ -366,8 +366,8 @@ export default function CampaignDetailPage() {
             <AppleCard hover={false}>
               <AppleCardHeader>
                 <div className='flex items-center gap-2'>
-                  <Users className='h-5 w-5 text-apple-blue' />
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Users className='h-5 w-5 text-[var(--brand)]' />
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Destinatari ({campaign.recipients?.length || campaign.recipientCount})
                   </h2>
                 </div>
@@ -375,8 +375,8 @@ export default function CampaignDetailPage() {
               <AppleCardContent>
                 {!campaign.recipients || campaign.recipients.length === 0 ? (
                   <div className='text-center py-12'>
-                    <UserCheck className='h-8 w-8 text-apple-gray/40 mx-auto mb-3' />
-                    <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <UserCheck className='h-8 w-8 text-[var(--text-tertiary)]/40 mx-auto mb-3' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       Nessun destinatario disponibile
                     </p>
                   </div>
@@ -384,28 +384,28 @@ export default function CampaignDetailPage() {
                   <div className='overflow-x-auto'>
                     <table className='w-full text-body'>
                       <thead>
-                        <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
-                          <th className='text-left py-2 px-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Nome</th>
-                          <th className='text-left py-2 px-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Email</th>
-                          <th className='text-left py-2 px-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Stato</th>
-                          <th className='text-left py-2 px-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Aperto</th>
-                          <th className='text-left py-2 px-2 text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>Cliccato</th>
+                        <tr className='border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)]'>
+                          <th className='text-left py-2 px-2 text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nome</th>
+                          <th className='text-left py-2 px-2 text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Email</th>
+                          <th className='text-left py-2 px-2 text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
+                          <th className='text-left py-2 px-2 text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Aperto</th>
+                          <th className='text-left py-2 px-2 text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Cliccato</th>
                         </tr>
                       </thead>
                       <tbody>
                         {campaign.recipients.map(r => {
                           const ds = DELIVERY_STATUS[r.deliveryStatus] || DELIVERY_STATUS.PENDING;
                           return (
-                            <tr key={r.id} className='border-b border-apple-border/10 dark:border-[var(--border-default)]/30'>
-                              <td className='py-2 px-2 text-apple-dark dark:text-[var(--text-primary)]'>{r.name}</td>
-                              <td className='py-2 px-2 text-apple-gray'>{r.email}</td>
+                            <tr key={r.id} className='border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/30'>
+                              <td className='py-2 px-2 text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{r.name}</td>
+                              <td className='py-2 px-2 text-[var(--text-tertiary)]'>{r.email}</td>
                               <td className='py-2 px-2'>
                                 <span className={`text-footnote font-medium ${ds.color}`}>{ds.label}</span>
                               </td>
-                              <td className='py-2 px-2 text-apple-gray'>
+                              <td className='py-2 px-2 text-[var(--text-tertiary)]'>
                                 {r.openedAt ? new Date(r.openedAt).toLocaleString('it-IT') : '-'}
                               </td>
-                              <td className='py-2 px-2 text-apple-gray'>
+                              <td className='py-2 px-2 text-[var(--text-tertiary)]'>
                                 {r.clickedAt ? new Date(r.clickedAt).toLocaleString('it-IT') : '-'}
                               </td>
                             </tr>
@@ -426,8 +426,8 @@ export default function CampaignDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <BarChart3 className='h-5 w-5 text-apple-blue' /> Tasso Apertura nel Tempo
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <BarChart3 className='h-5 w-5 text-[var(--brand)]' /> Tasso Apertura nel Tempo
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
@@ -445,8 +445,8 @@ export default function CampaignDetailPage() {
                     </div>
                   ) : (
                     <div className='text-center py-12'>
-                      <Clock className='h-8 w-8 text-apple-gray/40 mx-auto mb-3' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <Clock className='h-8 w-8 text-[var(--text-tertiary)]/40 mx-auto mb-3' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Dati statistici non ancora disponibili
                       </p>
                     </div>
@@ -459,8 +459,8 @@ export default function CampaignDetailPage() {
             <motion.div variants={cardVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <MousePointerClick className='h-5 w-5 text-apple-purple' /> Distribuzione Click
+                  <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <MousePointerClick className='h-5 w-5 text-[var(--brand)]' /> Distribuzione Click
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
@@ -478,8 +478,8 @@ export default function CampaignDetailPage() {
                     </div>
                   ) : (
                     <div className='text-center py-12'>
-                      <MousePointerClick className='h-8 w-8 text-apple-gray/40 mx-auto mb-3' />
-                      <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <MousePointerClick className='h-8 w-8 text-[var(--text-tertiary)]/40 mx-auto mb-3' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Nessun click registrato
                       </p>
                     </div>

@@ -214,26 +214,26 @@ export const AIAssistantPanel = memo(function AIAssistantPanel({
   const getIcon = (type: Suggestion['type']) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className='w-5 h-5 text-green-500' />;
+        return <CheckCircle className='w-5 h-5 text-[var(--status-success)]' />;
       case 'warning':
-        return <AlertCircle className='w-5 h-5 text-amber-500' />;
+        return <AlertCircle className='w-5 h-5 text-[var(--status-warning)]' />;
       case 'tip':
-        return <Lightbulb className='w-5 h-5 text-blue-500' />;
+        return <Lightbulb className='w-5 h-5 text-[var(--status-info)]' />;
       default:
-        return <Sparkles className='w-5 h-5 text-purple-500' />;
+        return <Sparkles className='w-5 h-5 text-[var(--brand)]' />;
     }
   };
 
   const getBgColor = (type: Suggestion['type']) => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 border-green-200';
+        return 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30';
       case 'warning':
-        return 'bg-amber-50 border-amber-200';
+        return 'bg-[var(--status-warning)]/5 border-[var(--status-warning)]/30';
       case 'tip':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-[var(--status-info-subtle)] border-[var(--status-info)]/30';
       default:
-        return 'bg-purple-50 border-purple-200';
+        return 'bg-[var(--brand)]/5 border-[var(--brand)]/20';
     }
   };
 
@@ -256,7 +256,7 @@ export const AIAssistantPanel = memo(function AIAssistantPanel({
       >
         <Sparkles className='w-5 h-5' />
         {suggestions.length > 0 && (
-          <span className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center'>
+          <span className='absolute -top-1 -right-1 w-5 h-5 bg-[var(--status-error-subtle)]0 text-[var(--text-on-brand)] text-xs rounded-full flex items-center justify-center'>
             {suggestions.length}
           </span>
         )}
@@ -270,22 +270,22 @@ export const AIAssistantPanel = memo(function AIAssistantPanel({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 100, scale: 0.9 }}
             transition={{ duration: 0.2 }}
-            className='bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/50 overflow-hidden'
+            className='bg-[var(--surface-secondary)]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-[var(--border-default)]/50 overflow-hidden'
           >
             {/* Header */}
-            <div className='flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-b border-gray-100'>
+            <div className='flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[var(--brand)]/10 to-[var(--status-info)]/10 border-b border-[var(--border-default)]'>
               <div className='flex items-center gap-2'>
-                <Sparkles className='w-5 h-5 text-purple-500' />
-                <span className='font-semibold text-gray-800'>Assistente AI</span>
+                <Sparkles className='w-5 h-5 text-[var(--brand)]' />
+                <span className='font-semibold text-[var(--text-primary)]'>Assistente AI</span>
               </div>
               <div className='flex items-center gap-1'>
-                {isAnalyzing && <Loader2 className='w-4 h-4 text-gray-400 animate-spin' />}
+                {isAnalyzing && <Loader2 className='w-4 h-4 text-[var(--text-tertiary)] animate-spin' />}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className='p-1 hover:bg-gray-100 rounded-full transition-colors'
+                  className='p-1 hover:bg-[var(--surface-secondary)] rounded-full transition-colors'
                   aria-label='Chiudi assistente'
                 >
-                  <X className='w-4 h-4 text-gray-500' />
+                  <X className='w-4 h-4 text-[var(--text-tertiary)]' />
                 </button>
               </div>
             </div>
@@ -293,7 +293,7 @@ export const AIAssistantPanel = memo(function AIAssistantPanel({
             {/* Suggestions */}
             <div className='p-4 space-y-3 max-h-[400px] overflow-y-auto'>
               {suggestions.length === 0 && !isAnalyzing ? (
-                <p className='text-center text-gray-400 text-sm py-4'>
+                <p className='text-center text-[var(--text-tertiary)] text-sm py-4'>
                   Nessun suggerimento al momento
                 </p>
               ) : (
@@ -308,8 +308,8 @@ export const AIAssistantPanel = memo(function AIAssistantPanel({
                     <div className='flex gap-3'>
                       <div className='flex-shrink-0 mt-0.5'>{getIcon(suggestion.type)}</div>
                       <div className='flex-1 min-w-0'>
-                        <h4 className='font-medium text-gray-900 mb-1'>{suggestion.title}</h4>
-                        <p className='text-gray-600 leading-relaxed'>{suggestion.message}</p>
+                        <h4 className='font-medium text-[var(--text-primary)] mb-1'>{suggestion.title}</h4>
+                        <p className='text-[var(--text-secondary)] leading-relaxed'>{suggestion.message}</p>
                         {suggestion.action && (
                           <Button
                             onClick={() => handleApply(suggestion)}
@@ -323,7 +323,7 @@ export const AIAssistantPanel = memo(function AIAssistantPanel({
                       </div>
                       <button
                         onClick={() => handleDismiss(suggestion.id)}
-                        className='flex-shrink-0 text-gray-400 hover:text-gray-600'
+                        className='flex-shrink-0 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                         aria-label='Ignora suggerimento'
                       >
                         <X className='w-4 h-4' />

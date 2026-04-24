@@ -28,7 +28,7 @@ function buildSmoothPath(points: [number, number][]): string {
 
 export function SparklineMini({
   data,
-  color = '#60a5fa',
+  color = 'var(--status-info)',
   width = 100,
   height = 32,
   showDot = false,

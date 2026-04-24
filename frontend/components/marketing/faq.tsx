@@ -51,7 +51,7 @@ function FaqItem({
       <button
         type="button"
         onClick={onToggle}
-        className="flex min-h-[44px] w-full items-center justify-between py-5 text-left transition-colors hover:text-[var(--text-primary)] dark:hover:text-white"
+        className="flex min-h-[44px] w-full items-center justify-between py-5 text-left transition-colors hover:text-[var(--text-primary)] dark:hover:text-[var(--text-on-brand)]"
         aria-expanded={isOpen}
       >
         <span className="pr-4 text-base font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
@@ -107,7 +107,7 @@ export function Faq(): React.ReactElement {
 
         {/* Accordion */}
         <motion.div
-          className="mx-auto mt-12 max-w-3xl rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:bg-[var(--surface-elevated)] sm:p-8"
+          className="mx-auto mt-12 max-w-3xl rounded-2xl bg-[var(--surface-secondary)] p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:bg-[var(--surface-elevated)] sm:p-8"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}

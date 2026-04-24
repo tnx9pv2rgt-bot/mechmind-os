@@ -58,7 +58,7 @@ export function ComparisonTable(): React.ReactElement {
           {/* Header row */}
           <div className="grid grid-cols-2">
             <div className="px-6 py-4" style={{ background: '#3a2020' }}>
-              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#ef4444' }}>
+              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--status-error)' }}>
                 Senza
               </span>
             </div>
@@ -82,7 +82,7 @@ export function ComparisonTable(): React.ReactElement {
                 className="flex items-start gap-3 border-b px-6 py-4 sm:border-b-0 sm:border-r"
                 style={{ background: '#333333', borderColor: '#404040' }}
               >
-                <span className="mt-0.5 shrink-0" style={{ color: '#ef4444' }}>✗</span>
+                <span className="mt-0.5 shrink-0" style={{ color: 'var(--status-error)' }}>✗</span>
                 <span className="text-sm" style={{ color: '#a1a1a6' }}>{row.without}</span>
               </div>
               {/* With MechMind */}

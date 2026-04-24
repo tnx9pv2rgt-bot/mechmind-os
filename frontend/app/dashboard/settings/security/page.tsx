@@ -231,16 +231,16 @@ export default function SecuritySettingsPage(): React.ReactElement {
           <div className='flex items-center gap-3'>
             <Link
               href='/dashboard/settings'
-              className='inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-apple-gray dark:text-[var(--text-secondary)] transition-colors hover:bg-apple-light-gray/50 dark:hover:bg-[var(--surface-hover)]'
+              className='inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
               aria-label='Torna alle impostazioni'
             >
               <ArrowLeft className='h-5 w-5' />
             </Link>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Sicurezza
               </h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Gestisci dispositivi, verifica SMS e attivita del tuo account
               </p>
             </div>
@@ -260,14 +260,14 @@ export default function SecuritySettingsPage(): React.ReactElement {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-apple-green/10 flex items-center justify-center'>
-                  <Shield className='h-5 w-5 text-apple-green' />
+                <div className='w-10 h-10 rounded-xl bg-[var(--status-success)]/10 flex items-center justify-center'>
+                  <Shield className='h-5 w-5 text-[var(--status-success)]' />
                 </div>
                 <div>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Dispositivi fidati
                   </h2>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     I dispositivi fidati saltano la verifica 2FA
                   </p>
                 </div>
@@ -291,14 +291,14 @@ export default function SecuritySettingsPage(): React.ReactElement {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                  <Smartphone className='h-5 w-5 text-apple-blue' />
+                <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                  <Smartphone className='h-5 w-5 text-[var(--brand)]' />
                 </div>
                 <div>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Telefono di recupero
                   </h2>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Usato come ultimo metodo per recuperare l&apos;accesso al tuo account
                   </p>
                 </div>
@@ -307,7 +307,7 @@ export default function SecuritySettingsPage(): React.ReactElement {
             <AppleCardContent>
               {phoneLoading ? (
                 <div className='flex items-center justify-center py-8'>
-                  <Loader2 className='h-6 w-6 animate-spin text-apple-blue' />
+                  <Loader2 className='h-6 w-6 animate-spin text-[var(--brand)]' />
                 </div>
               ) : (
                 <RecoveryPhoneSetup
@@ -328,14 +328,14 @@ export default function SecuritySettingsPage(): React.ReactElement {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-apple-orange/10 flex items-center justify-center'>
-                  <MessageSquare className='h-5 w-5 text-apple-orange' />
+                <div className='w-10 h-10 rounded-xl bg-[var(--status-warning)]/10 flex items-center justify-center'>
+                  <MessageSquare className='h-5 w-5 text-[var(--status-warning)]' />
                 </div>
                 <div>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Verifica SMS
                   </h2>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Ricevi un codice via SMS quando accedi da un dispositivo non fidato
                   </p>
                 </div>
@@ -343,19 +343,19 @@ export default function SecuritySettingsPage(): React.ReactElement {
             </AppleCardHeader>
             <AppleCardContent>
               <div className='space-y-4'>
-                <div className='flex items-start gap-2 rounded-xl bg-apple-orange/5 dark:bg-apple-orange/10 px-4 py-3'>
-                  <AlertCircle className='mt-0.5 h-4 w-4 shrink-0 text-apple-orange' />
-                  <p className='text-footnote text-apple-orange'>
+                <div className='flex items-start gap-2 rounded-xl bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/10 px-4 py-3'>
+                  <AlertCircle className='mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]' />
+                  <p className='text-footnote text-[var(--status-warning)]'>
                     Meno sicuro dell&apos;app authenticator. Consigliato solo come fallback.
                   </p>
                 </div>
 
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                    <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                       {phoneStatus?.smsOtpEnabled ? 'Attiva' : 'Disattiva'}
                     </p>
-                    <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                       {phoneStatus?.isVerified
                         ? 'Telefono di recupero verificato'
                         : 'Richiede un telefono di recupero verificato'}
@@ -367,7 +367,7 @@ export default function SecuritySettingsPage(): React.ReactElement {
                     disabled={smsToggleLoading || phoneLoading}
                     className={`relative inline-flex h-8 w-14 min-h-[44px] min-w-[56px] items-center rounded-full transition-colors focus:outline-none ${
                       phoneStatus?.smsOtpEnabled
-                        ? 'bg-apple-green'
+                        ? 'bg-[var(--status-success)]'
                         : 'bg-apple-border dark:bg-[var(--border-default)]'
                     } disabled:opacity-50`}
                     role='switch'
@@ -376,11 +376,11 @@ export default function SecuritySettingsPage(): React.ReactElement {
                   >
                     {smsToggleLoading ? (
                       <span className='absolute inset-0 flex items-center justify-center'>
-                        <Loader2 className='h-4 w-4 animate-spin text-white' />
+                        <Loader2 className='h-4 w-4 animate-spin text-[var(--text-on-brand)]' />
                       </span>
                     ) : (
                       <span
-                        className={`inline-block h-6 w-6 rounded-full bg-white shadow-lg transition-transform ${
+                        className={`inline-block h-6 w-6 rounded-full bg-[var(--surface-secondary)] shadow-lg transition-transform ${
                           phoneStatus?.smsOtpEnabled ? 'translate-x-7' : 'translate-x-1'
                         }`}
                       />
@@ -397,14 +397,14 @@ export default function SecuritySettingsPage(): React.ReactElement {
           <AppleCard hover={false}>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-apple-purple/10 flex items-center justify-center'>
-                  <ClipboardList className='h-5 w-5 text-apple-purple' />
+                <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                  <ClipboardList className='h-5 w-5 text-[var(--brand)]' />
                 </div>
                 <div>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Attivita di sicurezza
                   </h2>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Cronologia degli accessi e delle modifiche alla sicurezza
                   </p>
                 </div>

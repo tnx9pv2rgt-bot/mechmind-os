@@ -119,22 +119,22 @@ export default function AdminSubscriptionsPage() {
 
   const getPlanBadge = (plan: string) => {
     const colors: Record<string, string> = {
-      FREE: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
-      STARTER: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-      PROFESSIONAL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      ENTERPRISE: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-      TRIAL: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+      FREE: 'bg-[var(--surface-secondary)] text-[var(--text-primary)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-tertiary)]',
+      STARTER: 'bg-[var(--status-success)]/10 text-[var(--status-success)] dark:bg-[var(--status-success)]/30/30 dark:text-[var(--status-success)]',
+      PROFESSIONAL: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40/30 dark:text-[var(--status-info)]',
+      ENTERPRISE: 'bg-[var(--brand)]/10 text-[var(--brand)] dark:bg-[var(--brand)]/40/30 dark:text-[var(--brand)]',
+      TRIAL: 'bg-[var(--status-warning)]/20 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]',
     };
     return <Badge className={`${colors[plan] || colors.FREE} border-0`}>{plan}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-      TRIAL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      SUSPENDED: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-      CANCELLED: 'bg-apple-light-gray text-apple-gray dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]',
-      PAST_DUE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+      ACTIVE: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success)]/40/30 dark:text-[var(--status-success)]',
+      TRIAL: 'bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:bg-[var(--status-info)]/40/30 dark:text-[var(--status-info)]',
+      SUSPENDED: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)] dark:bg-[var(--status-warning)]/40/30 dark:text-[var(--status-warning)]',
+      CANCELLED: 'bg-[var(--surface-secondary)] text-[var(--text-tertiary)] dark:bg-[var(--surface-hover)] dark:text-[var(--text-secondary)]',
+      PAST_DUE: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error)]/40/30 dark:text-[var(--status-error)]',
     };
     return <Badge className={`${colors[status] || colors.ACTIVE} border-0`}>{status}</Badge>;
   };
@@ -143,7 +143,7 @@ export default function AdminSubscriptionsPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -154,11 +154,11 @@ export default function AdminSubscriptionsPage() {
       <div className='min-h-screen flex items-center justify-center p-8'>
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
-            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <AlertTriangle className='w-12 h-12 text-[var(--status-error)] mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Impossibile caricare i dati dei tenant.
             </p>
           </AppleCardContent>
@@ -171,8 +171,8 @@ export default function AdminSubscriptionsPage() {
     <div className='min-h-screen'>
       <header>
         <div className='px-4 sm:px-8 py-5'>
-          <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Gestione Abbonamenti</h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+          <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Gestione Abbonamenti</h1>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
             Amministrazione tenant e statistiche revenue
           </p>
         </div>
@@ -186,12 +186,12 @@ export default function AdminSubscriptionsPage() {
               <AppleCard>
                 <AppleCardContent>
                   <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center'>
-                      <TrendingUp className='w-5 h-5 text-green-600' />
+                    <div className='w-10 h-10 bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30 rounded-xl flex items-center justify-center'>
+                      <TrendingUp className='w-5 h-5 text-[var(--status-success)]' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>MRR</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>MRR</p>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         &euro;{stats.mrr.toLocaleString('it-IT')}
                       </p>
                     </div>
@@ -204,12 +204,12 @@ export default function AdminSubscriptionsPage() {
               <AppleCard>
                 <AppleCardContent>
                   <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center'>
-                      <Building2 className='w-5 h-5 text-blue-600' />
+                    <div className='w-10 h-10 bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30 rounded-xl flex items-center justify-center'>
+                      <Building2 className='w-5 h-5 text-[var(--status-info)]' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>ARR</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>ARR</p>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         &euro;{stats.arr.toLocaleString('it-IT')}
                       </p>
                     </div>
@@ -222,12 +222,12 @@ export default function AdminSubscriptionsPage() {
               <AppleCard>
                 <AppleCardContent>
                   <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center'>
-                      <ArrowDownRight className='w-5 h-5 text-red-600' />
+                    <div className='w-10 h-10 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] rounded-xl flex items-center justify-center'>
+                      <ArrowDownRight className='w-5 h-5 text-[var(--status-error)]' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Churn Rate</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Churn Rate</p>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {stats.churnRate.toFixed(1)}%
                       </p>
                     </div>
@@ -240,12 +240,12 @@ export default function AdminSubscriptionsPage() {
               <AppleCard>
                 <AppleCardContent>
                   <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center'>
-                      <UserPlus className='w-5 h-5 text-purple-600' />
+                    <div className='w-10 h-10 bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30 rounded-xl flex items-center justify-center'>
+                      <UserPlus className='w-5 h-5 text-[var(--brand)]' />
                     </div>
                     <div>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>Nuove iscrizioni</p>
-                      <p className='text-title-2 font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nuove iscrizioni</p>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {stats.newSignups}
                       </p>
                     </div>
@@ -261,7 +261,7 @@ export default function AdminSubscriptionsPage() {
           <AppleCardContent>
             <div className='flex flex-col sm:flex-row gap-3'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-apple-gray' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]' />
                 <Input
                   placeholder='Cerca tenant...'
                   value={searchQuery}
@@ -304,7 +304,7 @@ export default function AdminSubscriptionsPage() {
         <AppleCard>
           <AppleCardHeader>
             <div className='flex items-center justify-between'>
-              <h2 className='text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Tenant ({filteredTenants.length})
               </h2>
               <AppleButton variant='ghost' size='sm' onClick={() => mutate()}>
@@ -317,31 +317,31 @@ export default function AdminSubscriptionsPage() {
               <div className='overflow-x-auto'>
                 <table className='w-full'>
                   <thead>
-                    <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Nome</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Piano</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Stato</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>MRR</th>
-                      <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Registrazione</th>
-                      <th className='text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>Azioni</th>
+                    <tr className='border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)]'>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nome</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Piano</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>MRR</th>
+                      <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Registrazione</th>
+                      <th className='text-right py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredTenants.map((tenant) => (
                       <tr
                         key={tenant.id}
-                        className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
+                        className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                       >
                         <td className='py-3 px-4'>
-                          <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>{tenant.name}</p>
-                          <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>{tenant.slug}</p>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{tenant.name}</p>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{tenant.slug}</p>
                         </td>
                         <td className='py-3 px-4'>{getPlanBadge(tenant.plan)}</td>
                         <td className='py-3 px-4'>{getStatusBadge(tenant.status)}</td>
-                        <td className='py-3 px-4 text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                        <td className='py-3 px-4 text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           &euro;{tenant.mrr.toLocaleString('it-IT')}
                         </td>
-                        <td className='py-3 px-4 text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                        <td className='py-3 px-4 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {new Date(tenant.createdAt).toLocaleDateString('it-IT')}
                         </td>
                         <td className='py-3 px-4 text-right'>
@@ -368,8 +368,8 @@ export default function AdminSubscriptionsPage() {
               </div>
             ) : (
               <div className='text-center py-12'>
-                <Users className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+                <Users className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Nessun tenant trovato con i filtri selezionati.
                 </p>
               </div>
@@ -393,7 +393,7 @@ export default function AdminSubscriptionsPage() {
           <div className='space-y-4 py-4'>
             {actionType === 'plan' && (
               <div className='space-y-2'>
-                <label htmlFor='plan-select' className='text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                <label htmlFor='plan-select' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Piano
                 </label>
                 <Select value={newPlan} onValueChange={setNewPlan}>
@@ -415,7 +415,7 @@ export default function AdminSubscriptionsPage() {
                 <>
                   <AppleButton
                     variant='ghost'
-                    className='text-orange-600'
+                    className='text-[var(--status-warning)]'
                     onClick={() => setActionType('suspend')}
                   >
                     <Ban className='w-4 h-4 mr-2' />
@@ -423,7 +423,7 @@ export default function AdminSubscriptionsPage() {
                   </AppleButton>
                   <AppleButton
                     variant='ghost'
-                    className='text-red-600'
+                    className='text-[var(--status-error)]'
                     onClick={() => setActionType('cancel')}
                   >
                     <XCircle className='w-4 h-4 mr-2' />
@@ -434,8 +434,8 @@ export default function AdminSubscriptionsPage() {
             </div>
 
             {actionType !== 'plan' && (
-              <div className='p-4 bg-red-50 dark:bg-red-900/20 rounded-xl'>
-                <p className='text-body text-apple-red dark:text-red-300'>
+              <div className='p-4 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] rounded-xl'>
+                <p className='text-body text-[var(--status-error)] dark:text-[var(--status-error)]'>
                   {actionType === 'suspend'
                     ? "Il tenant verr\u00e0 sospeso e non potr\u00e0 accedere alla piattaforma."
                     : "L'abbonamento verr\u00e0 cancellato definitivamente."}
@@ -452,7 +452,7 @@ export default function AdminSubscriptionsPage() {
               variant='primary'
               onClick={handleAction}
               disabled={processing}
-              className={actionType !== 'plan' ? 'bg-red-600 hover:bg-red-700' : ''}
+              className={actionType !== 'plan' ? 'bg-[var(--status-error)] hover:bg-[var(--status-error)]' : ''}
             >
               {processing ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Conferma'}
             </AppleButton>

@@ -1,56 +1,53 @@
-# CLAUDE.md — MechMind OS v10
+## COMANDI
+- Backend (porta 3002): `cd backend && npm run start:dev`
+- Type check: `cd backend && npx tsc --noEmit`
+- Lint: `cd backend && npm run lint`
+- Backend test: `cd backend && npx jest --forceExit`
+- Frontend (porta 3000): `cd frontend && npm run dev`
+- Frontend test: `cd frontend && npx jest --coverage`
+- Frontend test modulo: `npx jest --coverage --collectCoverageFrom='app/dashboard/MODULO/**/*.tsx'`
+- Frontend test single: `npx jest --testPathPattern=nome`
+- Docker: `docker compose up -d postgres redis`
 
-## Identita'
-Lead AI engineer di MechMind OS, SaaS multi-tenant per officine meccaniche italiane.
-Stack: NestJS 10 + Prisma 5.22 + PostgreSQL 15 + Redis 7 | Next.js 14 + TailwindCSS + Radix UI.
-
-## Regole Non-Negoziabili
-- OGNI query Prisma → `where: { tenantId }`. MAI senza filtro tenant.
-- PII → SOLO via EncryptionService (AES-256-CBC). MAI in chiaro nel DB.
-- Booking → advisory lock + SERIALIZABLE. No race condition.
-- Webhook → SEMPRE verifica firma. MAI fidarsi del payload.
-- State machine → `validateTransition()` per entita' con status.
-- JWT con `jti` per revocabilita'. MAI secret hardcoded.
+## REGOLE NON NEGOZIABILI
+- TenantId: OGNI query Prisma DEVE avere `where: { tenantId }`. MAI senza.
+- PII: SOLO via EncryptionService (AES-256-CBC). MAI in chiaro.
+- Booking: advisory lock + SERIALIZABLE. No race condition.
+- Webhook: SEMPRE verifica firma. MAI fidarsi.
+- State machine: `validateTransition()` per status.
+- JWT: con `jti` per revocabilità. MAI secret hardcoded.
 - TDD: test PRIMA, minimo 1 test per endpoint.
-- Errori (500/404/warning) = BUG. Fixa subito, non minimizzare MAI.
+- Errori 500/404/warning = BUG. Fixa subito, MAI minimizzare.
 
-## Anti-Mock — Hook-Enforced
-- Route API frontend (`app/api/*/route.ts`) → SOLO proxy al backend NestJS reale
-- Backend non risponde → errore 502, MAI dati finti
+## ANTI-MOCK
+- Route API frontend (`app/api/*/route.ts`) → SOLO proxy al backend reale.
+- Backend non risponde → errore 502, MAI dati finti.
 - Endpoint mancante → CREALO nel backend. Pattern: `proxyToNestJS({ backendPath: 'v1/[resource]' })`
 
-## Come Lavorare
-- Fine task: `npx tsc --noEmit && npm run lint && npx jest --forceExit`
-- Backend modificato: curl endpoint, verifica 200.
-- UI tutta in italiano. Dark mode + responsive. Touch target 44px.
-- react-hook-form + Zod, SWR, toast (sonner), AlertDialog (Radix).
-- Controller: DTO + @ApiProperty + @ApiTags. Service: domain exceptions.
-- BullMQ per async (email, SMS, campagne, GDPR).
+## PERFORMANCE
+- **Turbopack** abilitato (`next dev --turbo`).
+- **Prisma**: usa `select` esplicito. Evita `include` su tutto.
+- **Redis**: BullMQ, cache, rate limiting.
+- **Lazy loading** per route dashboard non critiche.
+- **Bundle analysis** con `@next/bundle-analyzer`.
 
-## Comandi
-```bash
-cd backend && npm run start:dev    # Backend (porta 3002)
-cd backend && npx tsc --noEmit     # Type check
-cd backend && npm run lint         # Lint
-cd backend && npx jest --forceExit # Test
-cd frontend && npm run dev         # Frontend (porta 3000)
-docker compose up -d postgres redis
-```
+## MODELLO DI LAVORO CLAUDE CODE (ottimizzazione costi)
+- **Routing modelli**: Sub-agent Haiku per grep, find, analisi coverage, parsing JSON (output ≤3 righe). Sonnet per scrittura test complessi.
+- **Output minimo**: Vietati "Sure!", "I'll help", riepiloghi. ✅ / ❌ / ⚠️.
+- **Gestione contesto**: Usa `/compact focus on [modulo]` prima di task pesanti. Dopo modulo completato, esegui `/clear`.
+- **Target coverage moduli P0**: statements ≥80%, branches ≥75%.
+- **Output accettabile**: `{"modulo":"Work Orders","statements":"95%","branches":"80%","esito":"SUCCESSO"}`
 
-## Punti Fragili
-1. CommonModule (PrismaService/EncryptionService) — SPOF, tutto dipende da qui
-2. RLS Policies — errore = data leak cross-tenant (GDPR)
-3. ENCRYPTION_KEY — cambio = PII illeggibili, nessun recovery
-4. Redis — SPOF per BullMQ/cache/pub-sub, down = sistema degradato
-5. Booking concurrency — advisory lock, modifiche incaute = deadlock
+## PUNTI FRAGILI (SPOF)
+1. CommonModule (PrismaService/EncryptionService) — SPOF, tutto dipende da qui.
+2. RLS Policies — errore = data leak cross-tenant (GDPR).
+3. ENCRYPTION_KEY — cambio = PII illeggibili.
+4. Redis — SPOF per BullMQ/cache/pub-sub.
+5. Booking concurrency — advisory lock.
 
-## Riferimenti
-- Indice completo documentazione: docs/README.md
-- Catalogo errori per modulo: docs/09-ERROR-CATALOG.md
+## RIFERIMENTI
+- Indice documentazione: docs/README.md
+- Catalogo errori: docs/09-ERROR-CATALOG.md
 - Mappa dipendenze service: docs/11-DEPENDENCY-MAP.md
-- Architettura completa + numeri: docs/architecture/overview.md
 - Workflow PR: docs/12-PR-WORKFLOW-EXAMPLE.md
-- Glossario dominio officina: docs/05-DOMAIN-GLOSSARY.md
-
-## Compact Instructions
-Preserve: modified files, test output, current task, architectural decisions, error messages, file paths.
+- Glossario: docs/05-DOMAIN-GLOSSARY.md

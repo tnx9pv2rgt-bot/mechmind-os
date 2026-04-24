@@ -84,15 +84,15 @@ interface TechnicianResponse {
 // Helpers
 // =============================================================================
 function getEfficiencyColor(pct: number): string {
-  if (pct >= 90) return 'text-apple-green';
-  if (pct >= 70) return 'text-apple-orange';
-  return 'text-apple-red';
+  if (pct >= 90) return 'text-[var(--status-success)]';
+  if (pct >= 70) return 'text-[var(--status-warning)]';
+  return 'text-[var(--status-error)]';
 }
 
 function getEfficiencyBg(pct: number): string {
-  if (pct >= 90) return 'bg-apple-green';
-  if (pct >= 70) return 'bg-apple-orange';
-  return 'bg-apple-red';
+  if (pct >= 90) return 'bg-[var(--status-success)]';
+  if (pct >= 70) return 'bg-[var(--status-warning)]';
+  return 'bg-[var(--status-error)]';
 }
 
 function getTrendIcon(trend: string): React.ComponentType<{ className?: string }> {
@@ -102,9 +102,9 @@ function getTrendIcon(trend: string): React.ComponentType<{ className?: string }
 }
 
 function getTrendColor(trend: string): string {
-  if (trend === 'UP') return 'text-apple-green';
-  if (trend === 'DOWN') return 'text-apple-red';
-  return 'text-apple-gray';
+  if (trend === 'UP') return 'text-[var(--status-success)]';
+  if (trend === 'DOWN') return 'text-[var(--status-error)]';
+  return 'text-[var(--text-tertiary)]';
 }
 
 // =============================================================================
@@ -152,19 +152,19 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
       label: 'Revenue totale',
       value: new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(kpis.totalRevenue),
       icon: Euro,
-      color: 'bg-apple-green',
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Ore fatturate',
       value: kpis.totalHoursBilled.toFixed(0),
       icon: Clock,
-      color: 'bg-apple-blue',
+      color: 'bg-[var(--brand)]',
     },
     {
       label: 'Lavori completati',
       value: String(kpis.totalJobsCompleted),
       icon: Wrench,
-      color: 'bg-apple-purple',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
@@ -174,8 +174,8 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
       <header>
         <div className="px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Efficienza Tecnici</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Efficienza Tecnici</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Metriche di performance e produttivita
             </p>
           </div>
@@ -202,15 +202,15 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
           </div>
         ) : error ? (
           <motion.div variants={listItemVariants}>
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Errore nel caricamento dei dati
                   </p>
                   <AppleButton
@@ -230,11 +230,11 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Users className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Users className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun dato tecnico disponibile
                   </p>
-                  <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)] mt-1">
+                  <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
                     I dati appariranno quando ci saranno lavori completati
                   </p>
                 </div>
@@ -254,13 +254,13 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                     <AppleCardContent>
                       <div className="flex items-center justify-between mb-3">
                         <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                          <stat.icon className="h-5 w-5 text-white" />
+                          <stat.icon className="h-5 w-5 text-[var(--text-on-brand)]" />
                         </div>
                       </div>
-                      <p className="text-title-1 font-bold text-apple-dark dark:text-[var(--text-primary)]">
+                      <p className="text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         {stat.value}
                       </p>
-                      <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{stat.label}</p>
+                      <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{stat.label}</p>
                     </AppleCardContent>
                   </AppleCard>
                 </motion.div>
@@ -271,8 +271,8 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
-                    <BarChart3 className="w-4 h-4 inline mr-2 text-apple-blue" />
+                  <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                    <BarChart3 className="w-4 h-4 inline mr-2 text-[var(--brand)]" />
                     Ore fatturate vs Ore lavorate
                   </h2>
                 </AppleCardHeader>
@@ -281,34 +281,34 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                     {technicians.map(tech => (
                       <div key={tech.id} className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">{tech.name}</span>
-                          <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                          <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{tech.name}</span>
+                          <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                             {tech.hoursBilled}h / {tech.hoursWorked}h
                           </span>
                         </div>
-                        <div className="relative h-6 rounded-md overflow-hidden bg-apple-light-gray/30 dark:bg-[var(--surface-hover)]">
+                        <div className="relative h-6 rounded-md overflow-hidden bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]">
                           {/* Hours worked (background bar) */}
                           <div
-                            className="absolute inset-y-0 left-0 rounded-md transition-all duration-500 bg-apple-gray/20"
+                            className="absolute inset-y-0 left-0 rounded-md transition-all duration-500 bg-[var(--text-tertiary)]/20"
                             style={{ width: `${(tech.hoursWorked / maxHours) * 100}%` }}
                           />
                           {/* Hours billed (foreground bar) */}
                           <div
-                            className="absolute inset-y-0 left-0 rounded-md transition-all duration-500 bg-apple-blue"
+                            className="absolute inset-y-0 left-0 rounded-md transition-all duration-500 bg-[var(--brand)]"
                             style={{ width: `${(tech.hoursBilled / maxHours) * 100}%` }}
                           />
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-6 mt-4 pt-3 border-t border-apple-border/20 dark:border-[var(--border-default)]/50">
+                  <div className="flex items-center gap-6 mt-4 pt-3 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded bg-apple-blue" />
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Ore fatturate</span>
+                      <div className="w-3 h-3 rounded bg-[var(--brand)]" />
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ore fatturate</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded bg-apple-gray/20" />
-                      <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Ore lavorate</span>
+                      <div className="w-3 h-3 rounded bg-[var(--text-tertiary)]/20" />
+                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ore lavorate</span>
                     </div>
                   </div>
                 </AppleCardContent>
@@ -319,8 +319,8 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
             <motion.div variants={listItemVariants}>
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
-                    <Trophy className="w-4 h-4 inline mr-2 text-yellow-500" />
+                  <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                    <Trophy className="w-4 h-4 inline mr-2 text-[var(--status-warning)]" />
                     Classifica Tecnici
                   </h2>
                 </AppleCardHeader>
@@ -329,15 +329,15 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                   <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]/50">
-                          <th className="px-5 py-3 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)] w-12">#</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Tecnico</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Efficienza</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Revenue</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Lavori</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Ore fatturate</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Trend</th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Obiettivo</th>
+                        <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50">
+                          <th className="px-5 py-3 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] w-12">#</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Tecnico</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Efficienza</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Revenue</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Lavori</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Ore fatturate</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Trend</th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Obiettivo</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -351,22 +351,22 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                           return (
                             <tr
                               key={tech.id}
-                              className="border-b border-apple-border/10 dark:border-[var(--border-default)]/30 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
+                              className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/30 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors"
                             >
                               <td className="px-5 py-3 text-center">
                                 <span
                                   className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-footnote font-bold ${
-                                    idx === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
-                                    : idx === 1 ? 'bg-apple-light-gray dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-secondary)]'
-                                    : idx === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                                    : 'bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-gray dark:text-[var(--text-secondary)]'
+                                    idx === 0 ? 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/40/30 text-[var(--status-warning)] dark:text-[var(--status-warning)]'
+                                    : idx === 1 ? 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-secondary)]'
+                                    : idx === 2 ? 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/40/30 text-[var(--status-warning)] dark:text-[var(--status-warning)]'
+                                    : 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                                   }`}
                                 >
                                   {idx + 1}
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{tech.name}</span>
+                                <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{tech.name}</span>
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`text-body font-bold ${effColor}`}>
@@ -374,15 +374,15 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-right">
-                                <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                                <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                   {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(tech.revenue)}
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-right">
-                                <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">{tech.jobsCompleted}</span>
+                                <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{tech.jobsCompleted}</span>
                               </td>
                               <td className="px-4 py-3 text-right">
-                                <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">{tech.hoursBilled}h</span>
+                                <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{tech.hoursBilled}h</span>
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <TrendIcon className={`w-4 h-4 inline ${trendColor}`} />
@@ -391,19 +391,19 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                                 {goalPct !== null ? (
                                   <div className="w-24 mx-auto">
                                     <div className="flex items-center justify-between text-footnote mb-1">
-                                      <span className="text-apple-gray dark:text-[var(--text-secondary)]">{goalPct.toFixed(0)}%</span>
+                                      <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{goalPct.toFixed(0)}%</span>
                                     </div>
-                                    <div className="h-2 rounded-full overflow-hidden bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]">
+                                    <div className="h-2 rounded-full overflow-hidden bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)]">
                                       <div
                                         className={`h-full rounded-full transition-all duration-500 ${
-                                          goalPct >= 90 ? 'bg-green-500' : goalPct >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                                          goalPct >= 90 ? 'bg-[var(--status-success)]' : goalPct >= 70 ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-error)]'
                                         }`}
                                         style={{ width: `${goalPct}%` }}
                                       />
                                     </div>
                                   </div>
                                 ) : (
-                                  <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">N/D</span>
+                                  <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">N/D</span>
                                 )}
                               </td>
                             </tr>
@@ -425,19 +425,19 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                       return (
                         <div
                           key={tech.id}
-                          className="p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] space-y-3"
+                          className="p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] space-y-3"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span
                                 className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-footnote font-bold ${
-                                  idx === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
-                                  : 'bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-gray'
+                                  idx === 0 ? 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/40/30 text-[var(--status-warning)] dark:text-[var(--status-warning)]'
+                                  : 'bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)]'
                                 }`}
                               >
                                 {idx + 1}
                               </span>
-                              <span className="text-body font-medium text-apple-dark dark:text-[var(--text-primary)]">{tech.name}</span>
+                              <span className="text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{tech.name}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className={`text-body font-bold ${effColor}`}>{tech.efficiencyPercent.toFixed(1)}%</span>
@@ -446,28 +446,28 @@ export default function TechnicianEfficiencyPage(): React.ReactElement {
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Revenue</p>
-                              <p className="text-footnote text-apple-dark dark:text-[var(--text-primary)]">{new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(tech.revenue)}</p>
+                              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Revenue</p>
+                              <p className="text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">{new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(tech.revenue)}</p>
                             </div>
                             <div>
-                              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Lavori</p>
-                              <p className="text-footnote text-apple-dark dark:text-[var(--text-primary)]">{tech.jobsCompleted}</p>
+                              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Lavori</p>
+                              <p className="text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">{tech.jobsCompleted}</p>
                             </div>
                             <div>
-                              <p className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">Ore fatt.</p>
-                              <p className="text-footnote text-apple-dark dark:text-[var(--text-primary)]">{tech.hoursBilled}h</p>
+                              <p className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Ore fatt.</p>
+                              <p className="text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">{tech.hoursBilled}h</p>
                             </div>
                           </div>
                           {goalPct !== null && (
                             <div>
                               <div className="flex items-center justify-between text-footnote mb-1">
-                                <span className="text-apple-gray dark:text-[var(--text-secondary)]">Obiettivo</span>
-                                <span className="text-apple-gray dark:text-[var(--text-secondary)]">{goalPct.toFixed(0)}%</span>
+                                <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Obiettivo</span>
+                                <span className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{goalPct.toFixed(0)}%</span>
                               </div>
-                              <div className="h-2 rounded-full overflow-hidden bg-apple-light-gray/50 dark:bg-[var(--surface-hover)]">
+                              <div className="h-2 rounded-full overflow-hidden bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)]">
                                 <div
                                   className={`h-full rounded-full transition-all ${
-                                    goalPct >= 90 ? 'bg-green-500' : goalPct >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                                    goalPct >= 90 ? 'bg-[var(--status-success)]' : goalPct >= 70 ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-error)]'
                                   }`}
                                   style={{ width: `${goalPct}%` }}
                                 />

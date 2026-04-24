@@ -76,12 +76,12 @@ function VehicleExpiryBadges({ vehicle }: { vehicle: Vehicle }) {
   const tax = expiryWarning(vehicle.taxExpiry);
 
   const alerts = [
-    revision === 'expired' && { label: 'Revisione scaduta', color: 'text-red-600 dark:text-red-400' },
-    revision === 'soon' && { label: 'Revisione in scadenza', color: 'text-orange-500 dark:text-orange-400' },
-    insurance === 'expired' && { label: 'Assicurazione scaduta', color: 'text-red-600 dark:text-red-400' },
-    insurance === 'soon' && { label: 'Assicurazione in scadenza', color: 'text-orange-500 dark:text-orange-400' },
-    tax === 'expired' && { label: 'Bollo scaduto', color: 'text-red-600 dark:text-red-400' },
-    tax === 'soon' && { label: 'Bollo in scadenza', color: 'text-orange-500 dark:text-orange-400' },
+    revision === 'expired' && { label: 'Revisione scaduta', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+    revision === 'soon' && { label: 'Revisione in scadenza', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+    insurance === 'expired' && { label: 'Assicurazione scaduta', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+    insurance === 'soon' && { label: 'Assicurazione in scadenza', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+    tax === 'expired' && { label: 'Bollo scaduto', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+    tax === 'soon' && { label: 'Bollo in scadenza', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
   ].filter(Boolean) as { label: string; color: string }[];
 
   if (alerts.length === 0) return null;
@@ -91,7 +91,7 @@ function VehicleExpiryBadges({ vehicle }: { vehicle: Vehicle }) {
   return (
     <span
       title={alerts.map(a => a.label).join(' • ')}
-      className={`inline-flex items-center gap-1 ml-1 ${hasExpired ? 'text-red-600 dark:text-red-400' : 'text-orange-500 dark:text-orange-400'}`}
+      className={`inline-flex items-center gap-1 ml-1 ${hasExpired ? 'text-[var(--status-error)] dark:text-[var(--status-error)]' : 'text-[var(--status-warning)] dark:text-[var(--status-warning)]'}`}
     >
       <AlertTriangle className="h-3.5 w-3.5" />
       <span className="text-[11px] font-semibold">{alerts.length}</span>
@@ -213,8 +213,8 @@ export default function VehiclesPage(): React.ReactElement {
       <header>
         <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">Veicoli</h1>
-            <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Veicoli</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Gestisci il parco veicoli dei tuoi clienti
             </p>
           </div>
@@ -237,15 +237,15 @@ export default function VehiclesPage(): React.ReactElement {
         {/* Expiry Banner */}
         {expiringSummary && expiringSummary.total > 0 && (
           <motion.div variants={listItemVariants}>
-            <div className="rounded-xl border border-orange-300/50 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-900/10 p-4">
+            <div className="rounded-xl border border-[var(--status-warning)]/30/50 dark:border-[var(--status-warning)]/30 bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/10 p-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex items-center gap-2 flex-1">
-                  <ShieldAlert className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                  <ShieldAlert className="h-5 w-5 text-[var(--status-warning)] dark:text-[var(--status-warning)] flex-shrink-0" />
                   <div>
-                    <p className="text-body font-semibold text-orange-800 dark:text-orange-300">
+                    <p className="text-body font-semibold text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                       {expiringSummary.total} {expiringSummary.total === 1 ? 'veicolo con scadenze' : 'veicoli con scadenze'} nei prossimi 60 giorni
                     </p>
-                    <p className="text-footnote text-orange-700/70 dark:text-orange-400/70 mt-0.5">
+                    <p className="text-footnote text-[var(--status-warning)]/70 dark:text-[var(--status-warning)]/70 mt-0.5">
                       {[
                         expiringSummary.revision > 0 && `Revisione: ${expiringSummary.revision}`,
                         expiringSummary.insurance > 0 && `Assicurazione: ${expiringSummary.insurance}`,
@@ -270,7 +270,7 @@ export default function VehiclesPage(): React.ReactElement {
             <AppleCardContent>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                   <Input
                     type="text"
                     placeholder="Cerca per targa, marca, modello..."
@@ -281,12 +281,12 @@ export default function VehiclesPage(): React.ReactElement {
                   />
                 </div>
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none" />
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none" />
                   <select
                     value={fuelFilter}
                     onChange={(e) => { setFuelFilter(e.target.value); setPage(1); }}
                     aria-label="Filtra per carburante"
-                    className="h-10 pl-10 pr-4 rounded-md border border-apple-border/50 dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-body text-apple-dark dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer min-w-[180px]"
+                    className="h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer min-w-[180px]"
                   >
                     {FUEL_TYPES.map((ft) => (
                       <option key={ft.value} value={ft.value}>{ft.label}</option>
@@ -302,19 +302,19 @@ export default function VehiclesPage(): React.ReactElement {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className="text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 Elenco Veicoli
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i veicoli
                   </p>
                   <AppleButton
@@ -327,8 +327,8 @@ export default function VehiclesPage(): React.ReactElement {
                 </div>
               ) : vehicles.length === 0 && !debouncedSearch && !fuelFilter ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Car className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Car className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun veicolo registrato. Aggiungi il primo veicolo per iniziare.
                   </p>
                   <Link href="/dashboard/vehicles/new">
@@ -339,8 +339,8 @@ export default function VehiclesPage(): React.ReactElement {
                 </div>
               ) : vehicles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Search className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Search className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Nessun veicolo trovato per &quot;{debouncedSearch || fuelFilter}&quot;
                   </p>
                   <AppleButton
@@ -361,14 +361,14 @@ export default function VehiclesPage(): React.ReactElement {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-apple-border/20 dark:border-[var(--border-default)]">
-                          <th className="text-left px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Targa</th>
-                          <th className="text-left px-4 py-3 text-xs font-medium hidden sm:table-cell text-apple-dark dark:text-[var(--text-primary)]">Marca / Modello</th>
-                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-apple-dark dark:text-[var(--text-primary)]">Anno</th>
-                          <th className="text-left px-4 py-3 text-xs font-medium hidden lg:table-cell text-apple-dark dark:text-[var(--text-primary)]">Carburante</th>
-                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-apple-dark dark:text-[var(--text-primary)]">Proprietario</th>
-                          <th className="text-right px-4 py-3 text-xs font-medium hidden lg:table-cell text-apple-dark dark:text-[var(--text-primary)]">Km</th>
-                          <th className="text-right px-4 py-3 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">Azioni</th>
+                        <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+                          <th className="text-left px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Targa</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden sm:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Marca / Modello</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Anno</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden lg:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Carburante</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Proprietario</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium hidden lg:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Km</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Azioni</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -376,42 +376,42 @@ export default function VehiclesPage(): React.ReactElement {
                           <motion.tr
                             key={vehicle.id}
                             variants={listItemVariants}
-                            className="border-b border-apple-border/10 dark:border-[var(--border-default)] last:border-b-0 transition-colors hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-active)]"
+                            className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)] last:border-b-0 transition-colors hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-active)]"
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                <span className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] text-apple-dark dark:text-[var(--text-primary)]">
+                                <span className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                   {formatPlate(vehicle.licensePlate)}
                                 </span>
                                 <VehicleExpiryBadges vehicle={vehicle} />
                               </div>
-                              <span className="block sm:hidden text-footnote mt-1 text-apple-gray dark:text-[var(--text-secondary)]">
+                              <span className="block sm:hidden text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                 {vehicle.make} {vehicle.model}
                               </span>
                             </td>
-                            <td className="px-4 py-3 hidden sm:table-cell text-body text-apple-dark dark:text-[var(--text-primary)]">
+                            <td className="px-4 py-3 hidden sm:table-cell text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                               {vehicle.make} {vehicle.model}
                             </td>
-                            <td className="px-4 py-3 hidden md:table-cell text-body text-apple-gray dark:text-[var(--text-secondary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            <td className="px-4 py-3 hidden md:table-cell text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                               {vehicle.year || '\u2014'}
                             </td>
-                            <td className="px-4 py-3 hidden lg:table-cell text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                            <td className="px-4 py-3 hidden lg:table-cell text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                               {vehicle.fuelType || '\u2014'}
                             </td>
                             <td className="px-4 py-3 hidden md:table-cell">
                               {vehicle.customer ? (
                                 <Link
                                   href={`/dashboard/customers/${vehicle.customer.id}`}
-                                  className="text-body text-apple-blue hover:underline"
+                                  className="text-body text-[var(--brand)] hover:underline"
                                 >
                                   {getOwnerName(vehicle)}
                                 </Link>
                               ) : (
-                                <span className="text-body text-apple-gray dark:text-[var(--text-secondary)]">{'\u2014'}</span>
+                                <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{'\u2014'}</span>
                               )}
                             </td>
                             <td
-                              className="px-4 py-3 text-right hidden lg:table-cell text-body text-apple-gray dark:text-[var(--text-secondary)]"
+                              className="px-4 py-3 text-right hidden lg:table-cell text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
                               style={{ fontVariantNumeric: 'tabular-nums' }}
                             >
                               {vehicle.mileage ? formatNumber(vehicle.mileage) : '\u2014'}

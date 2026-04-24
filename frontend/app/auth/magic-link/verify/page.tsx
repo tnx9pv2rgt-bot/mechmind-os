@@ -54,8 +54,8 @@ function MagicLinkVerifyContent(): React.ReactElement {
     <div className="text-center space-y-5">
       {status === 'verifying' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Verifica in corso...
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -70,10 +70,10 @@ function MagicLinkVerifyContent(): React.ReactElement {
           animate={{ opacity: 1, scale: 1 }}
           className="space-y-4"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-            <span className="text-2xl text-white">✓</span>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
+            <span className="text-2xl text-[var(--text-on-brand)]">✓</span>
           </div>
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Accesso effettuato!
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
@@ -88,10 +88,10 @@ function MagicLinkVerifyContent(): React.ReactElement {
           animate={{ opacity: 1, scale: 1 }}
           className="space-y-5"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
             <span className="text-2xl text-[var(--text-secondary)]">✕</span>
           </div>
-          <h1 className="text-[28px] font-normal text-white tracking-tight">
+          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
             Link non valido
           </h1>
           <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed" role="alert">{error}</p>
@@ -103,7 +103,7 @@ function MagicLinkVerifyContent(): React.ReactElement {
           </button>
           <Link
             href="/auth"
-            className="inline-flex items-center min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-white transition-colors"
+            className="inline-flex items-center min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors"
           >
             Torna al login
           </Link>
@@ -119,7 +119,7 @@ export default function MagicLinkVerifyPage(): React.ReactElement {
       <Suspense
         fallback={
           <div className="text-center space-y-4">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
             <p className="text-[15px] text-[var(--text-secondary)]">Caricamento...</p>
           </div>
         }

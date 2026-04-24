@@ -79,18 +79,18 @@ export function ExitIntentModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.2 }}
-          className='bg-white rounded-2xl overflow-hidden'
+          className='bg-[var(--surface-secondary)] rounded-2xl overflow-hidden'
         >
           {/* Header con gradiente */}
-          <div className='bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white'>
+          <div className='bg-gradient-to-br from-[var(--status-warning)] to-[var(--status-warning)] p-6 text-[var(--text-on-brand)]'>
             <div className='flex items-start justify-between'>
               <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center'>
+                <div className='w-12 h-12 rounded-xl bg-[var(--surface-secondary)]/20 backdrop-blur-sm flex items-center justify-center'>
                   <AlertTriangle className='w-6 h-6' />
                 </div>
                 <div>
                   <DialogHeader className='space-y-1'>
-                    <DialogTitle className='text-xl font-semibold text-white'>{title}</DialogTitle>
+                    <DialogTitle className='text-xl font-semibold text-[var(--text-on-brand)]'>{title}</DialogTitle>
                   </DialogHeader>
                 </div>
               </div>
@@ -98,7 +98,7 @@ export function ExitIntentModal({
                 variant='ghost'
                 size='icon'
                 onClick={handleClose}
-                className='text-white/80 hover:text-white hover:bg-white/20'
+                className='text-[var(--text-on-brand)]/80 hover:text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/20'
                 aria-label='Chiudi'
               >
                 <X className='w-5 h-5' />
@@ -108,10 +108,10 @@ export function ExitIntentModal({
 
           {/* Content */}
           <div className='p-6 space-y-6'>
-            <DialogDescription className='text-gray-600 text-base'>{subtitle}</DialogDescription>
+            <DialogDescription className='text-[var(--text-secondary)] text-base'>{subtitle}</DialogDescription>
 
             {showExpiryInfo && (
-              <div className='flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-sm text-blue-700'>
+              <div className='flex items-center gap-2 p-3 bg-[var(--status-info-subtle)] rounded-xl text-sm text-[var(--status-info)]'>
                 <Clock className='w-4 h-4 flex-shrink-0' />
                 <span>
                   I tuoi dati rimarranno salvati per <strong>{daysUntilExpiry} giorni</strong>. Puoi
@@ -124,7 +124,7 @@ export function ExitIntentModal({
             <div className='space-y-3'>
               <Button
                 onClick={handleCompleteNow}
-                className='w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium'
+                className='w-full h-12 bg-gradient-to-r from-[var(--status-warning)] to-[var(--status-warning)] hover:from-[var(--status-warning)] hover:to-[var(--status-warning)] text-[var(--text-on-brand)] font-medium'
               >
                 <ArrowRight className='w-4 h-4 mr-2' />
                 {completeButtonText}
@@ -172,20 +172,20 @@ export function ExitIntentInline({
           exit={{ opacity: 0, y: 20 }}
           className='fixed bottom-4 right-4 z-50 max-w-sm'
         >
-          <div className='bg-white rounded-2xl shadow-2xl border border-gray-200 p-5'>
+          <div className='bg-[var(--surface-secondary)] rounded-2xl shadow-2xl border border-[var(--border-default)] p-5'>
             <div className='flex items-start gap-3 mb-4'>
-              <div className='w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0'>
-                <AlertTriangle className='w-5 h-5 text-amber-600' />
+              <div className='w-10 h-10 rounded-full bg-[var(--status-warning)]/10 flex items-center justify-center flex-shrink-0'>
+                <AlertTriangle className='w-5 h-5 text-[var(--status-warning)]' />
               </div>
               <div>
-                <h4 className='font-semibold text-gray-900'>Stai lasciando la pagina?</h4>
-                <p className='text-sm text-gray-500 mt-1'>
+                <h4 className='font-semibold text-[var(--text-primary)]'>Stai lasciando la pagina?</h4>
+                <p className='text-sm text-[var(--text-tertiary)] mt-1'>
                   I tuoi dati sono stati salvati automaticamente.
                 </p>
               </div>
               <button
                 onClick={onDismiss}
-                className='text-gray-400 hover:text-gray-600'
+                className='text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                 aria-label='Chiudi'
               >
                 <X className='w-4 h-4' />
@@ -196,7 +196,7 @@ export function ExitIntentInline({
               <Button
                 size='sm'
                 onClick={onComplete}
-                className='flex-1 bg-amber-500 hover:bg-amber-600'
+                className='flex-1 bg-[var(--status-warning)]/50 hover:bg-[var(--status-warning)]'
               >
                 Completa
               </Button>

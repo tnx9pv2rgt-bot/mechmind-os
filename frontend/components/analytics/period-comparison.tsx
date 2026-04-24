@@ -50,14 +50,14 @@ const FALLBACK_METRICS: ComparisonMetric[] = [
     currentValue: 45280,
     previousValue: 40150,
     format: 'currency',
-    color: '#34d399',
+    color: 'var(--status-success)',
   },
   {
     label: 'OdL Completati',
     currentValue: 128,
     previousValue: 115,
     format: 'number',
-    color: '#60a5fa',
+    color: 'var(--status-info)',
   },
   {
     label: 'Clienti Nuovi',
@@ -71,7 +71,7 @@ const FALLBACK_METRICS: ComparisonMetric[] = [
     currentValue: 354,
     previousValue: 349,
     format: 'currency',
-    color: '#fbbf24',
+    color: 'var(--status-warning)',
   },
 ];
 
@@ -104,9 +104,9 @@ function MetricBar({
     <div ref={ref} className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-white">{metric.label}</span>
+        <span className="text-sm font-medium text-[var(--text-on-brand)]">{metric.label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-[var(--text-on-brand)]">
             {formatValue(metric.currentValue, metric.format)}
           </span>
           {/* Change badge */}
@@ -115,8 +115,8 @@ function MetricBar({
               isNeutral
                 ? 'bg-[var(--surface-active)] text-[var(--text-tertiary)]'
                 : isPositive
-                  ? 'bg-[#34d399]/15 text-[#34d399]'
-                  : 'bg-[#f87171]/15 text-[#f87171]'
+                  ? 'bg-[var(--status-success)]/15 text-[var(--status-success)]'
+                  : 'bg-[var(--status-error)]/15 text-[var(--status-error)]'
             }`}
             aria-label={`Variazione ${change >= 0 ? '+' : ''}${change.toFixed(1)} percento`}
           >
@@ -171,7 +171,7 @@ function MetricBar({
                   : { duration: 0.8, delay: index * 0.1 + 0.15, ease: 'easeOut' }
               }
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--text-on-brand)]">
               {formatValue(metric.currentValue, metric.format)}
             </span>
           </div>

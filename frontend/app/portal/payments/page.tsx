@@ -26,9 +26,9 @@ interface BackendPaymentResponse {
 }
 
 const statusConfig: Record<string, { color: string; label: string }> = {
-  SUCCESS: { color: 'bg-[#34d399]', label: 'Completato' },
-  PENDING: { color: 'bg-[#fbbf24]', label: 'In attesa' },
-  FAILED: { color: 'bg-[#f87171]', label: 'Fallito' },
+  SUCCESS: { color: 'bg-[var(--status-success)]', label: 'Completato' },
+  PENDING: { color: 'bg-[var(--status-warning)]', label: 'In attesa' },
+  FAILED: { color: 'bg-[var(--status-error)]', label: 'Fallito' },
   REFUNDED: { color: 'bg-[var(--text-placeholder)]', label: 'Rimborsato' },
 };
 
@@ -65,13 +65,13 @@ export default function PortalPaymentsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-white'>Pagamenti</h1>
+          <h1 className='text-2xl font-bold text-[var(--text-on-brand)]'>Pagamenti</h1>
         </div>
         <div className='flex items-center justify-center h-64'>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-white border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--border-default)] border-t-transparent rounded-full'
           />
         </div>
       </div>
@@ -82,14 +82,14 @@ export default function PortalPaymentsPage(): React.ReactElement {
     return (
       <div className='space-y-6'>
         <div>
-          <h1 className='text-2xl font-bold text-white'>Pagamenti</h1>
+          <h1 className='text-2xl font-bold text-[var(--text-on-brand)]'>Pagamenti</h1>
         </div>
         <div className='text-center py-16'>
-          <div className='h-12 w-12 rounded-full bg-[#f87171]/10 flex items-center justify-center mx-auto mb-4'>
-            <span className='text-[#f87171]/40 text-xl font-bold'>!</span>
+          <div className='h-12 w-12 rounded-full bg-[var(--status-error)]/10 flex items-center justify-center mx-auto mb-4'>
+            <span className='text-[var(--status-error)]/40 text-xl font-bold'>!</span>
           </div>
           <p className='text-[var(--text-tertiary)] mb-4'>Impossibile caricare i pagamenti</p>
-          <button onClick={() => mutate()} className='text-[#60a5fa] hover:underline'>
+          <button onClick={() => mutate()} className='text-[var(--status-info)] hover:underline'>
             Riprova
           </button>
         </div>
@@ -106,7 +106,7 @@ export default function PortalPaymentsPage(): React.ReactElement {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-2xl font-bold text-white'>Pagamenti</h1>
+        <h1 className='text-2xl font-bold text-[var(--text-on-brand)]'>Pagamenti</h1>
         <p className='text-[var(--text-tertiary)] mt-1'>Storico dei tuoi pagamenti</p>
       </div>
 
@@ -114,11 +114,11 @@ export default function PortalPaymentsPage(): React.ReactElement {
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         <div className='bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'>
           <div className='p-5 flex items-center gap-4'>
-            <div className='w-12 h-12 rounded-2xl bg-[#34d399] flex items-center justify-center text-white font-bold text-lg'>
+            <div className='w-12 h-12 rounded-2xl bg-[var(--status-success)] flex items-center justify-center text-[var(--text-on-brand)] font-bold text-lg'>
               &euro;
             </div>
             <div>
-              <p className='font-semibold text-white'>
+              <p className='font-semibold text-[var(--text-on-brand)]'>
                 {formatCurrency(totalPaid, 'EUR')}
               </p>
               <p className='text-sm text-[var(--text-tertiary)]'>Totale Pagato</p>
@@ -127,11 +127,11 @@ export default function PortalPaymentsPage(): React.ReactElement {
         </div>
         <div className='bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'>
           <div className='p-5 flex items-center gap-4'>
-            <div className='w-12 h-12 rounded-2xl bg-[#60a5fa] flex items-center justify-center text-white font-bold text-lg'>
+            <div className='w-12 h-12 rounded-2xl bg-[var(--status-info)] flex items-center justify-center text-[var(--text-on-brand)] font-bold text-lg'>
               #
             </div>
             <div>
-              <p className='font-semibold text-white'>{payments.length}</p>
+              <p className='font-semibold text-[var(--text-on-brand)]'>{payments.length}</p>
               <p className='text-sm text-[var(--text-tertiary)]'>Totale Transazioni</p>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function PortalPaymentsPage(): React.ReactElement {
       {/* Payments List */}
       <div className='bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'>
         <div className='px-5 pt-5 pb-3'>
-          <h2 className='text-lg font-semibold text-white'>Tutti i pagamenti</h2>
+          <h2 className='text-lg font-semibold text-[var(--text-on-brand)]'>Tutti i pagamenti</h2>
         </div>
         <div className='p-5'>
           {payments.length === 0 ? (
@@ -149,7 +149,7 @@ export default function PortalPaymentsPage(): React.ReactElement {
               <div className='h-12 w-12 rounded-full bg-[var(--surface-active)] flex items-center justify-center mx-auto mb-4'>
                 <span className='text-[var(--text-tertiary)] text-xl font-bold'>PG</span>
               </div>
-              <h3 className='text-lg font-medium text-white mb-2'>Nessun pagamento registrato</h3>
+              <h3 className='text-lg font-medium text-[var(--text-on-brand)] mb-2'>Nessun pagamento registrato</h3>
               <p className='text-[var(--text-tertiary)]'>
                 Quando effettuerai dei pagamenti, li troverai qui.
               </p>
@@ -168,11 +168,11 @@ export default function PortalPaymentsPage(): React.ReactElement {
                     onClick={() => router.push(`/portal/payments/${payment.id}/status`)}
                   >
                     <div className='flex items-center gap-4'>
-                      <div className='w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center'>
-                        <span className='text-xs font-bold text-[#34d399]'>PG</span>
+                      <div className='w-10 h-10 rounded-xl bg-[var(--surface-secondary)]/10 flex items-center justify-center'>
+                        <span className='text-xs font-bold text-[var(--status-success)]'>PG</span>
                       </div>
                       <div>
-                        <p className='font-semibold text-white'>
+                        <p className='font-semibold text-[var(--text-on-brand)]'>
                           Fattura {payment.invoiceNumber}
                         </p>
                         <p className='text-sm text-[var(--text-tertiary)]'>
@@ -182,8 +182,8 @@ export default function PortalPaymentsPage(): React.ReactElement {
                       </div>
                     </div>
                     <div className='flex items-center gap-4'>
-                      <Badge className={`${status.color} text-white text-xs`}>{status.label}</Badge>
-                      <p className='font-semibold text-white min-w-[80px] text-right'>
+                      <Badge className={`${status.color} text-[var(--text-on-brand)] text-xs`}>{status.label}</Badge>
+                      <p className='font-semibold text-[var(--text-on-brand)] min-w-[80px] text-right'>
                         {formatCurrency(payment.amount, payment.currency)}
                       </p>
                     </div>

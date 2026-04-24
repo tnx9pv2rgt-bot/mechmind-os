@@ -83,13 +83,13 @@ export default function PortalLoginPage() {
           animate={{ opacity: 1, y: 0 }}
           className='text-center mb-8'
         >
-          <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4'>
-            <Car className='h-10 w-10 text-white' />
+          <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center mx-auto mb-4'>
+            <Car className='h-10 w-10 text-[var(--text-on-brand)]' />
           </div>
-          <h1 className='text-2xl font-bold text-apple-dark dark:text-[var(--text-primary)]'>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             MechMind Portal
           </h1>
-          <p className='text-apple-gray dark:text-[var(--text-secondary)] mt-1'>Accedi al tuo account cliente</p>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>Accedi al tuo account cliente</p>
         </motion.div>
 
         {/* Login Form */}
@@ -104,21 +104,21 @@ export default function PortalLoginPage() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className='mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-3'
+                  className='mb-6 p-4 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/50 rounded-xl flex items-center gap-3'
                 >
-                  <AlertCircle className='h-5 w-5 text-apple-red flex-shrink-0' />
-                  <p className='text-sm text-apple-red'>{error}</p>
+                  <AlertCircle className='h-5 w-5 text-[var(--status-error)] flex-shrink-0' />
+                  <p className='text-sm text-[var(--status-error)]'>{error}</p>
                 </motion.div>
               )}
 
               <form onSubmit={handleSubmit} className='space-y-5'>
                 {/* Email */}
                 <div className='space-y-2'>
-                  <Label htmlFor='email' className='text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Label htmlFor='email' className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Email
                   </Label>
                   <div className='relative'>
-                    <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                    <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                     <Input
                       id='email'
                       type='email'
@@ -126,21 +126,21 @@ export default function PortalLoginPage() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       autoComplete='email'
-                      className='pl-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                      className='pl-12 h-12 rounded-xl border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--brand)] focus:ring-apple-blue/20'
                     />
                   </div>
                   {fieldErrors.email && (
-                    <p className='text-xs text-apple-red mt-1'>{fieldErrors.email}</p>
+                    <p className='text-xs text-[var(--status-error)] mt-1'>{fieldErrors.email}</p>
                   )}
                 </div>
 
                 {/* Password */}
                 <div className='space-y-2'>
-                  <Label htmlFor='password' className='text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Label htmlFor='password' className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Password
                   </Label>
                   <div className='relative'>
-                    <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+                    <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                     <Input
                       id='password'
                       type={showPassword ? 'text' : 'password'}
@@ -148,29 +148,29 @@ export default function PortalLoginPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       autoComplete='current-password'
-                      className='pl-12 pr-12 h-12 rounded-xl border-apple-border dark:border-[var(--border-default)] bg-white dark:bg-[var(--surface-elevated)] text-apple-dark dark:text-[var(--text-primary)] placeholder:text-apple-gray focus:border-apple-blue focus:ring-apple-blue/20'
+                      className='pl-12 pr-12 h-12 rounded-xl border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--brand)] focus:ring-apple-blue/20'
                     />
                     <button
                       type='button'
                       onClick={() => setShowPassword(!showPassword)}
-                      className='absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark transition-colors p-1 min-w-[24px] min-h-[24px] flex items-center justify-center'
+                      className='absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors p-1 min-w-[24px] min-h-[24px] flex items-center justify-center'
                       aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                     >
                       {showPassword ? <EyeOff className='h-5 w-5' /> : <Eye className='h-5 w-5' />}
                     </button>
                   </div>
                   {fieldErrors.password && (
-                    <p className='text-xs text-apple-red mt-1'>{fieldErrors.password}</p>
+                    <p className='text-xs text-[var(--status-error)] mt-1'>{fieldErrors.password}</p>
                   )}
                 </div>
 
                 {/* Forgot Password */}
                 <div className='flex items-center justify-between text-sm'>
                   <label className='flex items-center gap-2 cursor-pointer'>
-                    <input type='checkbox' className='rounded border-apple-border' />
-                    <span className='text-apple-gray dark:text-[var(--text-secondary)]'>Ricordami</span>
+                    <input type='checkbox' className='rounded border-[var(--border-default)]' />
+                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Ricordami</span>
                   </label>
-                  <Link href='/portal/reset-password' className='text-apple-blue hover:underline'>
+                  <Link href='/portal/reset-password' className='text-[var(--brand)] hover:underline'>
                     Password dimenticata?
                   </Link>
                 </div>
@@ -189,12 +189,12 @@ export default function PortalLoginPage() {
               </form>
 
               {/* Register Link */}
-              <div className='mt-6 pt-6 border-t border-apple-border/30 dark:border-[var(--border-default)]/30 text-center'>
-                <p className='text-apple-gray dark:text-[var(--text-secondary)] text-sm'>
+              <div className='mt-6 pt-6 border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)]/30 text-center'>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-sm'>
                   Non hai un account?{' '}
                   <Link
                     href='/portal/register'
-                    className='text-apple-blue font-medium hover:underline'
+                    className='text-[var(--brand)] font-medium hover:underline'
                   >
                     Registrati
                   </Link>
@@ -213,7 +213,7 @@ export default function PortalLoginPage() {
         >
           <Link
             href='/'
-            className='text-sm text-apple-gray dark:text-[var(--text-secondary)] hover:text-apple-dark dark:hover:text-[var(--text-primary)] transition-colors'
+            className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
           >
             ← Torna al sito principale
           </Link>

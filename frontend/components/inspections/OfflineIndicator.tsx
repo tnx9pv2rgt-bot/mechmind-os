@@ -121,12 +121,12 @@ function ConnectionStatusBadge({
     return (
       <Badge
         variant="default"
-        className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200 gap-1.5"
+        className="bg-[var(--status-success-subtle)] text-[var(--status-success)] hover:bg-[var(--status-success-subtle)] border-[var(--status-success)]/30 gap-1.5"
       >
         <Wifi className="w-3 h-3" />
         <span>Online</span>
         {pendingCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 bg-green-200 rounded-full text-xs">
+          <span className="ml-1 px-1.5 py-0.5 bg-[var(--status-success)]/20 rounded-full text-xs">
             {pendingCount}
           </span>
         )}
@@ -137,12 +137,12 @@ function ConnectionStatusBadge({
   return (
     <Badge
       variant="destructive"
-      className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200 gap-1.5"
+      className="bg-[var(--status-error-subtle)] text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] border-[var(--status-error)]/30 gap-1.5"
     >
       <WifiOff className="w-3 h-3" />
       <span>Offline</span>
       {pendingCount > 0 && (
-        <span className="ml-1 px-1.5 py-0.5 bg-red-200 rounded-full text-xs">
+        <span className="ml-1 px-1.5 py-0.5 bg-[var(--status-error)]/20 rounded-full text-xs">
           {pendingCount}
         </span>
       )}
@@ -165,7 +165,7 @@ function PendingSyncBadge({ count }: { count: number }) {
     >
       <Badge
         variant="secondary"
-        className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 gap-1.5"
+        className="bg-[var(--status-warning-subtle)] text-[var(--status-warning)] hover:bg-[var(--status-warning)]/10 border-[var(--status-warning)]/30 gap-1.5"
       >
         <Cloud className="w-3 h-3" />
         <span>{count} in attesa</span>
@@ -193,14 +193,14 @@ function SyncProgress({
       exit={{ opacity: 0, y: -10 }}
       className="w-full space-y-2"
     >
-      <div className="flex items-center gap-2 text-sm text-blue-700">
+      <div className="flex items-center gap-2 text-sm text-[var(--status-info)]">
         <RefreshCw className="w-4 h-4 animate-spin" />
         <span className="font-medium">
           Sincronizzazione in corso... ({processedItems}/{totalItems})
         </span>
       </div>
       <Progress value={progress} className="h-2 w-full" />
-      <p className="text-xs text-blue-600">
+      <p className="text-xs text-[var(--status-info)]">
         {Math.round(progress)}% completato
       </p>
     </motion.div>
@@ -222,16 +222,16 @@ function SyncSuccessMessage({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg"
+      className="flex items-center gap-3 p-3 bg-[var(--status-success-subtle)] border border-[var(--status-success)]/30 rounded-lg"
     >
-      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-        <CheckCircle2 className="w-4 h-4 text-green-600" />
+      <div className="w-8 h-8 rounded-full bg-[var(--status-success-subtle)] flex items-center justify-center flex-shrink-0">
+        <CheckCircle2 className="w-4 h-4 text-[var(--status-success)]" />
       </div>
       <div className="flex-1">
-        <p className="text-sm font-medium text-green-900">
+        <p className="text-sm font-medium text-[var(--status-success)]">
           Sincronizzazione completata!
         </p>
-        <p className="text-xs text-green-700">
+        <p className="text-xs text-[var(--status-success)]">
           {result.successful} elementi sincronizzati
           {result.failed > 0 && `, ${result.failed} falliti`}
           {result.conflicts > 0 && `, ${result.conflicts} conflitti risolti`}
@@ -242,7 +242,7 @@ function SyncSuccessMessage({
           size="sm"
           variant="ghost"
           onClick={onDismiss}
-          className="h-8 px-2 text-green-700 hover:bg-green-100"
+          className="h-8 px-2 text-[var(--status-success)] hover:bg-[var(--status-success-subtle)]"
         >
           Chiudi
         </Button>
@@ -266,16 +266,16 @@ function SyncErrorMessage({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg"
+      className="flex items-center gap-3 p-3 bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 rounded-lg"
     >
-      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-        <AlertCircle className="w-4 h-4 text-red-600" />
+      <div className="w-8 h-8 rounded-full bg-[var(--status-error-subtle)] flex items-center justify-center flex-shrink-0">
+        <AlertCircle className="w-4 h-4 text-[var(--status-error)]" />
       </div>
       <div className="flex-1">
-        <p className="text-sm font-medium text-red-900">
+        <p className="text-sm font-medium text-[var(--status-error)]">
           Errore di sincronizzazione
         </p>
-        <p className="text-xs text-red-700">
+        <p className="text-xs text-[var(--status-error)]">
           {failedCount} elementi non sono stati sincronizzati
         </p>
       </div>
@@ -283,7 +283,7 @@ function SyncErrorMessage({
         size="sm"
         variant="outline"
         onClick={onRetry}
-        className="h-8 border-red-300 text-red-700 hover:bg-red-100"
+        className="h-8 border-[var(--status-error)]/30 text-[var(--status-error)] hover:bg-[var(--status-error-subtle)]"
       >
         <RefreshCw className="w-3.5 h-3.5 mr-1" />
         Riprova
@@ -297,7 +297,7 @@ function SyncErrorMessage({
  */
 function LastSyncTime({ timestamp }: { timestamp: number | null }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
       <Clock className="w-3 h-3" />
       <span>Ultima sincronizzazione: {formatTimeAgo(timestamp)}</span>
     </div>
@@ -380,7 +380,7 @@ function MinimalVariant({
   if (syncState.isSyncing) {
     return (
       <div
-        className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
+        className="inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--status-info-subtle)] text-[var(--status-info)] rounded text-xs"
         title="Sincronizzazione in corso..."
       >
         <RefreshCw className="w-3 h-3 animate-spin" />
@@ -393,7 +393,7 @@ function MinimalVariant({
   if (!online) {
     return (
       <div
-        className="inline-flex items-center gap-1.5 px-2 py-1 bg-red-100 text-red-700 rounded text-xs cursor-pointer hover:bg-red-200 transition-colors"
+        className="inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--status-error-subtle)] text-[var(--status-error)] rounded text-xs cursor-pointer hover:bg-[var(--status-error)]/20 transition-colors"
         title={`${pendingCount} elementi in attesa`}
       >
         <WifiOff className="w-3 h-3" />
@@ -407,7 +407,7 @@ function MinimalVariant({
     return (
       <button
         onClick={onSync}
-        className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs hover:bg-amber-200 transition-colors"
+        className="inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--status-warning-subtle)] text-[var(--status-warning)] rounded text-xs hover:bg-[var(--status-warning)]/20 transition-colors"
         title={`${pendingCount} elementi da sincronizzare`}
       >
         <CloudOff className="w-3 h-3" />
@@ -419,7 +419,7 @@ function MinimalVariant({
   // Online - synced
   return (
     <div
-      className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-100 text-green-700 rounded text-xs"
+      className="inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--status-success-subtle)] text-[var(--status-success)] rounded text-xs"
       title="Sincronizzato"
     >
       <Cloud className="w-3 h-3" />
@@ -452,7 +452,7 @@ function BannerVariant({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="w-full bg-blue-50 border-b border-blue-200 px-4 py-3"
+        className="w-full bg-[var(--status-info-subtle)] border-b border-[var(--status-info)]/30 px-4 py-3"
       >
         <div className="max-w-7xl mx-auto">
           <SyncProgress
@@ -472,7 +472,7 @@ function BannerVariant({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="w-full bg-green-50 border-b border-green-200 px-4 py-3"
+        className="w-full bg-[var(--status-success-subtle)] border-b border-[var(--status-success)]/30 px-4 py-3"
       >
         <div className="max-w-7xl mx-auto">
           <SyncSuccessMessage
@@ -491,7 +491,7 @@ function BannerVariant({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="w-full bg-red-50 border-b border-red-200 px-4 py-3"
+        className="w-full bg-[var(--status-error-subtle)] border-b border-[var(--status-error)]/30 px-4 py-3"
       >
         <div className="max-w-7xl mx-auto">
           <SyncErrorMessage
@@ -510,23 +510,23 @@ function BannerVariant({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="w-full bg-red-50 border-b border-red-200 px-4 py-3"
+        className="w-full bg-[var(--status-error-subtle)] border-b border-[var(--status-error)]/30 px-4 py-3"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <WifiOff className="w-5 h-5 text-red-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--status-error-subtle)] flex items-center justify-center">
+              <WifiOff className="w-5 h-5 text-[var(--status-error)]" />
             </div>
             <div>
-              <h3 className="font-medium text-red-900">Sei offline</h3>
-              <p className="text-sm text-red-700">
+              <h3 className="font-medium text-[var(--status-error)]">Sei offline</h3>
+              <p className="text-sm text-[var(--status-error)]">
                 Connessione persa. I tuoi dati sono al sicuro e verranno sincronizzati automaticamente quando tornerai online.
               </p>
             </div>
           </div>
           
           {pendingCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 rounded-full text-sm text-red-700">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--status-error-subtle)] rounded-full text-sm text-[var(--status-error)]">
               <UploadCloud className="w-4 h-4" />
               <span>{pendingCount} in attesa</span>
             </div>
@@ -543,16 +543,16 @@ function BannerVariant({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="w-full bg-amber-50 border-b border-amber-200 px-4 py-3"
+        className="w-full bg-[var(--status-warning)]/5 border-b border-[var(--status-warning)]/30 px-4 py-3"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <CloudOff className="w-5 h-5 text-amber-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--status-warning)]/10 flex items-center justify-center">
+              <CloudOff className="w-5 h-5 text-[var(--status-warning)]" />
             </div>
             <div>
-              <h3 className="font-medium text-amber-900">Dati in attesa</h3>
-              <p className="text-sm text-amber-700">
+              <h3 className="font-medium text-[var(--status-warning)]">Dati in attesa</h3>
+              <p className="text-sm text-[var(--status-warning)]">
                 {pendingCount} elementi in coda. Verranno inviati automaticamente.
               </p>
             </div>
@@ -563,7 +563,7 @@ function BannerVariant({
               size="sm"
               variant="outline"
               onClick={onSync}
-              className="border-amber-300 text-amber-700 hover:bg-amber-100"
+              className="border-[var(--status-warning)]/30 text-[var(--status-warning)] hover:bg-[var(--status-warning)]/10"
             >
               <RefreshCw className="w-4 h-4 mr-1" />
               Sincronizza ora
@@ -580,12 +580,12 @@ function BannerVariant({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="w-full bg-green-50 border-b border-green-200 px-4 py-2"
+      className="w-full bg-[var(--status-success-subtle)] border-b border-[var(--status-success)]/30 px-4 py-2"
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 text-sm text-green-700">
+      <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 text-sm text-[var(--status-success)]">
         <CheckCircle2 className="w-4 h-4" />
         <span>Tutti i dati sono sincronizzati</span>
-        <span className="text-green-600">•</span>
+        <span className="text-[var(--status-success)]">•</span>
         <LastSyncTime timestamp={syncState.lastSyncTime} />
       </div>
     </motion.div>
@@ -830,7 +830,7 @@ export function OfflineIndicator({
 export function FixedOfflineIndicator(props: Omit<OfflineIndicatorProps, 'variant'>) {
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 min-w-[280px]">
+      <div className="bg-[var(--surface-secondary)] rounded-xl shadow-lg border border-[var(--border-default)] p-4 min-w-[280px]">
         <OfflineIndicator {...props} variant="badge" />
       </div>
     </div>

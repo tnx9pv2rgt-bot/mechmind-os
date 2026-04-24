@@ -131,10 +131,10 @@ export default function BillingPage() {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { icon: typeof CheckCircle; bg: string; text: string; label: string }> = {
-      paid: { icon: CheckCircle, bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', label: 'Pagata' },
-      open: { icon: Clock, bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', label: 'In Attesa' },
-      uncollectible: { icon: XCircle, bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', label: 'Fallita' },
-      void: { icon: XCircle, bg: 'bg-apple-light-gray dark:bg-[var(--surface-hover)]', text: 'text-apple-gray dark:text-[var(--text-secondary)]', label: 'Annullata' },
+      paid: { icon: CheckCircle, bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30', text: 'text-[var(--status-success)] dark:text-[var(--status-success)]', label: 'Pagata' },
+      open: { icon: Clock, bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning)]/40/30', text: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', label: 'In Attesa' },
+      uncollectible: { icon: XCircle, bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', text: 'text-[var(--status-error)] dark:text-[var(--status-error)]', label: 'Fallita' },
+      void: { icon: XCircle, bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]', text: 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]', label: 'Annullata' },
     };
     return configs[status] || configs.open;
   };
@@ -145,7 +145,7 @@ export default function BillingPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='w-8 h-8 animate-spin text-apple-blue' />
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
@@ -156,11 +156,11 @@ export default function BillingPage() {
       <div className='min-h-screen flex items-center justify-center p-8'>
         <AppleCard className='max-w-md w-full'>
           <AppleCardContent className='text-center py-12'>
-            <AlertTriangle className='w-12 h-12 text-red-400 mx-auto mb-4' />
-            <h3 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)] mb-2'>
+            <AlertTriangle className='w-12 h-12 text-[var(--status-error)] mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
               Errore di caricamento
             </h3>
-            <p className='text-body text-apple-gray dark:text-[var(--text-secondary)]'>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Impossibile caricare lo storico fatture.
             </p>
           </AppleCardContent>
@@ -176,8 +176,8 @@ export default function BillingPage() {
         <div className='px-4 sm:px-8 py-5'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
-              <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>Fatturazione</h1>
-              <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Fatturazione</h1>
+              <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 Gestisci pagamenti e storico fatture
               </p>
             </div>
@@ -194,43 +194,43 @@ export default function BillingPage() {
           <AppleCard>
             <AppleCardHeader>
               <div className='flex items-center gap-3'>
-                <CreditCard className='h-5 w-5 text-apple-blue' />
-                <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                <CreditCard className='h-5 w-5 text-[var(--brand)]' />
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   Metodo di Pagamento
                 </h2>
               </div>
             </AppleCardHeader>
             <AppleCardContent>
               {paymentMethod ? (
-                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-apple-light-gray/50 dark:bg-[var(--surface-hover)] rounded-xl'>
+                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl'>
                   <div className='flex items-center gap-4'>
-                    <div className='w-14 h-10 bg-gradient-to-r from-gray-700 to-gray-900 rounded-lg flex items-center justify-center'>
-                      <CreditCard className='w-6 h-6 text-white' />
+                    <div className='w-14 h-10 bg-gradient-to-r from-[var(--surface-active)] to-[var(--surface-primary)] rounded-lg flex items-center justify-center'>
+                      <CreditCard className='w-6 h-6 text-[var(--text-on-brand)]' />
                     </div>
                     <div>
-                      <p className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] capitalize'>
+                      <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] capitalize'>
                         {paymentMethod.brand} &bull;&bull;&bull;&bull; {paymentMethod.last4}
                       </p>
-                      <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                         Scade {paymentMethod.expMonth}/{paymentMethod.expYear}
                       </p>
                     </div>
                   </div>
                   <div className='flex items-center gap-3'>
-                    <CheckCircle className='w-5 h-5 text-apple-green' />
+                    <CheckCircle className='w-5 h-5 text-[var(--status-success)]' />
                     <AppleButton variant='secondary' size='sm' onClick={handleManagePayment} disabled={processing}>
                       Modifica
                     </AppleButton>
                   </div>
                 </div>
               ) : (
-                <div className='flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl'>
-                  <AlertCircle className='w-5 h-5 text-yellow-600 flex-shrink-0' />
+                <div className='flex items-center gap-3 p-4 bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/20 rounded-xl'>
+                  <AlertCircle className='w-5 h-5 text-[var(--status-warning)] flex-shrink-0' />
                   <div className='flex-1'>
-                    <p className='text-body font-medium text-yellow-800 dark:text-yellow-300'>
+                    <p className='text-body font-medium text-[var(--status-warning)] dark:text-[var(--status-warning)]'>
                       Nessun metodo di pagamento configurato
                     </p>
-                    <p className='text-footnote text-yellow-600 dark:text-yellow-400'>
+                    <p className='text-footnote text-[var(--status-warning)] dark:text-[var(--status-warning)]'>
                       Aggiungi un metodo di pagamento per attivare il tuo abbonamento.
                     </p>
                   </div>
@@ -249,8 +249,8 @@ export default function BillingPage() {
             <AppleCardHeader>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <Receipt className='h-5 w-5 text-apple-blue' />
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                  <Receipt className='h-5 w-5 text-[var(--brand)]' />
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Storico Fatture
                   </h2>
                 </div>
@@ -267,20 +267,20 @@ export default function BillingPage() {
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
                     <thead>
-                      <tr className='border-b border-apple-border/30 dark:border-[var(--border-default)]'>
-                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                      <tr className='border-b border-[var(--border-default)]/30 dark:border-[var(--border-default)]'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Data
                         </th>
-                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Numero
                         </th>
-                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Importo
                         </th>
-                        <th className='text-left py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <th className='text-left py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           Stato
                         </th>
-                        <th className='text-right py-3 px-4 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                        <th className='text-right py-3 px-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                           PDF
                         </th>
                       </tr>
@@ -295,15 +295,15 @@ export default function BillingPage() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.03 }}
-                            className='border-b border-apple-border/20 dark:border-[var(--border-default)]/50 hover:bg-apple-light-gray/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
+                            className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
                           >
-                            <td className='py-3 px-4 text-body text-apple-dark dark:text-[var(--text-primary)]'>
+                            <td className='py-3 px-4 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {new Date(invoice.date).toLocaleDateString('it-IT')}
                             </td>
-                            <td className='py-3 px-4 text-body font-medium text-apple-dark dark:text-[var(--text-primary)]'>
+                            <td className='py-3 px-4 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               #{invoice.number}
                             </td>
-                            <td className='py-3 px-4 text-body font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+                            <td className='py-3 px-4 text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               &euro;{(invoice.amount / 100).toFixed(2).replace('.', ',')}
                             </td>
                             <td className='py-3 px-4'>
@@ -318,12 +318,12 @@ export default function BillingPage() {
                                   href={invoice.pdfUrl}
                                   target='_blank'
                                   rel='noopener noreferrer'
-                                  className='inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-apple-light-gray dark:hover:bg-[var(--surface-hover)] transition-colors min-w-[44px] min-h-[44px]'
+                                  className='inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)] transition-colors min-w-[44px] min-h-[44px]'
                                 >
-                                  <Download className='w-4 h-4 text-apple-gray' />
+                                  <Download className='w-4 h-4 text-[var(--text-tertiary)]' />
                                 </a>
                               ) : (
-                                <span className='text-footnote text-apple-gray'>-</span>
+                                <span className='text-footnote text-[var(--text-tertiary)]'>-</span>
                               )}
                             </td>
                           </motion.tr>
@@ -334,11 +334,11 @@ export default function BillingPage() {
                 </div>
               ) : (
                 <div className='text-center py-12'>
-                  <Receipt className='w-12 h-12 text-apple-gray/30 mx-auto mb-4' />
-                  <h3 className='text-body font-medium text-apple-dark dark:text-[var(--text-primary)] mb-1'>
+                  <Receipt className='w-12 h-12 text-[var(--text-tertiary)]/30 mx-auto mb-4' />
+                  <h3 className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
                     Nessuna fattura
                   </h3>
-                  <p className='text-footnote text-apple-gray dark:text-[var(--text-secondary)]'>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Le fatture appariranno qui dopo il primo pagamento.
                   </p>
                 </div>

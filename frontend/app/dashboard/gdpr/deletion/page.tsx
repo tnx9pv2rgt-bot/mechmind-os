@@ -100,10 +100,10 @@ export default function GdprDeletionPage() {
               Indietro
             </AppleButton>
             <div>
-              <h1 className="text-headline text-apple-dark dark:text-[var(--text-primary)]">
+              <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 Eliminazione Account
               </h1>
-              <p className="text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1">
+              <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
                 Diritto alla cancellazione (Art. 17 GDPR)
               </p>
             </div>
@@ -121,13 +121,13 @@ export default function GdprDeletionPage() {
             <AppleCard hover={false}>
               <AppleCardContent>
                 <div className="text-center space-y-4 py-8">
-                  <div className="w-16 h-16 rounded-full bg-apple-blue flex items-center justify-center mx-auto">
-                    <CheckCircle className="h-8 w-8 text-white" />
+                  <div className="w-16 h-16 rounded-full bg-[var(--brand)] flex items-center justify-center mx-auto">
+                    <CheckCircle className="h-8 w-8 text-[var(--text-on-brand)]" />
                   </div>
-                  <h3 className="text-headline font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <h3 className="text-headline font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Richiesta Ricevuta
                   </h3>
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)] max-w-md mx-auto">
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] max-w-md mx-auto">
                     La tua richiesta di eliminazione e stata registrata. Il tuo account sara
                     eliminato entro 30 giorni. Durante questo periodo puoi annullare la richiesta
                     accedendo al tuo account.
@@ -152,13 +152,13 @@ export default function GdprDeletionPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="flex items-start gap-4 p-5 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                <AlertTriangle className="h-6 w-6 text-apple-red flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-4 p-5 rounded-2xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]">
+                <AlertTriangle className="h-6 w-6 text-[var(--status-error)] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-body font-semibold text-red-800 dark:text-red-300 mb-1">
+                  <h3 className="text-body font-semibold text-[var(--status-error)] dark:text-[var(--status-error)] mb-1">
                     Questa azione e irreversibile
                   </h3>
-                  <p className="text-body text-apple-red dark:text-apple-red">
+                  <p className="text-body text-[var(--status-error)] dark:text-[var(--status-error)]">
                     Una volta confermata, tutti i tuoi dati personali saranno eliminati
                     permanentemente dopo un periodo di grazia di 30 giorni. Non sara possibile
                     recuperare i dati dopo l&apos;eliminazione.
@@ -175,7 +175,7 @@ export default function GdprDeletionPage() {
             >
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Cosa verra eliminato
                   </h2>
                 </AppleCardHeader>
@@ -186,11 +186,11 @@ export default function GdprDeletionPage() {
                       return (
                         <div
                           key={item.label}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-red-50/50 dark:bg-red-900/10"
+                          className="flex items-center gap-3 p-3 rounded-xl bg-[var(--status-error-subtle)]/50 dark:bg-[var(--status-error)]/40/10"
                         >
-                          <XCircle className="h-4 w-4 text-apple-red flex-shrink-0" />
-                          <ItemIcon className="h-4 w-4 text-apple-gray flex-shrink-0" />
-                          <span className="text-body text-apple-dark dark:text-[var(--text-primary)]">
+                          <XCircle className="h-4 w-4 text-[var(--status-error)] flex-shrink-0" />
+                          <ItemIcon className="h-4 w-4 text-[var(--text-tertiary)] flex-shrink-0" />
+                          <span className="text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                             {item.label}
                           </span>
                         </div>
@@ -209,21 +209,21 @@ export default function GdprDeletionPage() {
             >
               <AppleCard hover={false}>
                 <AppleCardHeader>
-                  <h2 className="text-title-3 font-semibold text-apple-dark dark:text-[var(--text-primary)]">
+                  <h2 className="text-title-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     Conferma Eliminazione
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   <div className="space-y-5">
                     {error && (
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                        <AlertCircle className="h-4 w-4 text-apple-red flex-shrink-0" />
-                        <p className="text-body text-red-700 dark:text-red-300">{error}</p>
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]">
+                        <AlertCircle className="h-4 w-4 text-[var(--status-error)] flex-shrink-0" />
+                        <p className="text-body text-[var(--status-error)] dark:text-[var(--status-error)]">{error}</p>
                       </div>
                     )}
 
                     <div>
-                      <Label className="mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                      <Label className="mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                         Password attuale
                       </Label>
                       <Input
@@ -237,8 +237,8 @@ export default function GdprDeletionPage() {
                     </div>
 
                     <div>
-                      <Label className="mb-1.5 block text-footnote font-medium text-apple-dark dark:text-[var(--text-primary)]">
-                        Digita <span className="font-bold text-apple-red">ELIMINA</span> per confermare
+                      <Label className="mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                        Digita <span className="font-bold text-[var(--status-error)]">ELIMINA</span> per confermare
                       </Label>
                       <Input
                         value={confirmation}
@@ -246,21 +246,21 @@ export default function GdprDeletionPage() {
                         placeholder="Digita ELIMINA"
                         className={`rounded-xl ${
                           confirmation.length > 0 && !isConfirmValid
-                            ? 'border-red-300 focus:ring-red-200'
+                            ? 'border-[var(--status-error)]/30 focus:ring-[var(--status-error)]/20'
                             : ''
                         }`}
                         autoComplete="off"
                       />
                       {confirmation.length > 0 && !isConfirmValid && (
-                        <p className="text-footnote text-apple-red mt-1">
+                        <p className="text-footnote text-[var(--status-error)] mt-1">
                           Devi digitare esattamente &quot;ELIMINA&quot;
                         </p>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
-                      <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                      <p className="text-footnote text-amber-700 dark:text-amber-300">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/10 border border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]">
+                      <AlertTriangle className="h-4 w-4 text-[var(--status-warning)] flex-shrink-0" />
+                      <p className="text-footnote text-[var(--status-warning)] dark:text-[var(--status-warning)]">
                         Periodo di grazia: 30 giorni. Puoi annullare la richiesta accedendo al tuo
                         account entro questo periodo.
                       </p>
@@ -271,7 +271,7 @@ export default function GdprDeletionPage() {
                       disabled={!canSubmit}
                       loading={submitting}
                       icon={<Trash2 className="h-4 w-4" />}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                      className="w-full bg-[var(--status-error)] hover:bg-[var(--status-error)] text-[var(--text-on-brand)] disabled:opacity-50"
                     >
                       Elimina il mio Account
                     </AppleButton>

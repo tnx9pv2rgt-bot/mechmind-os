@@ -144,10 +144,10 @@ export default function RentriEntriesPage() {
                 { label: 'Registro' },
               ]}
             />
-            <h1 className='text-headline text-apple-dark dark:text-[var(--text-primary)]'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
               Registro Carico/Scarico
             </h1>
-            <p className='text-apple-gray dark:text-[var(--text-secondary)] text-body mt-1'>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Registro cronologico carico e scarico rifiuti
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function RentriEntriesPage() {
             <AppleCardContent>
               <div className="flex gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                   <Input
                     placeholder="Cerca per codice CER, descrizione..."
                     aria-label="Cerca registrazioni"
@@ -191,7 +191,7 @@ export default function RentriEntriesPage() {
                 >
                   Filtri
                   {hasActiveFilters && (
-                    <span className="w-5 h-5 rounded-full text-footnote font-bold flex items-center justify-center bg-apple-blue text-white ml-1">
+                    <span className="w-5 h-5 rounded-full text-footnote font-bold flex items-center justify-center bg-[var(--brand)] text-[var(--text-on-brand)] ml-1">
                       !
                     </span>
                   )}
@@ -231,10 +231,10 @@ export default function RentriEntriesPage() {
                         setDateFrom(e.target.value);
                         setPage(1);
                       }}
-                      className="h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]"
+                      className="h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                       aria-label="Data da"
                     />
-                    <span className="text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                    <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       —
                     </span>
                     <input
@@ -244,7 +244,7 @@ export default function RentriEntriesPage() {
                         setDateTo(e.target.value);
                         setPage(1);
                       }}
-                      className="h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-[var(--surface-elevated)] border border-apple-border dark:border-[var(--border-default)] text-apple-dark dark:text-[var(--text-primary)]"
+                      className="h-10 px-3 rounded-xl text-body focus:outline-none focus:ring-2 focus:ring-apple-blue bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)] dark:border-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]"
                       aria-label="Data a"
                     />
                   </div>
@@ -269,10 +269,10 @@ export default function RentriEntriesPage() {
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[var(--text-primary)]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Registrazioni
                 {!isLoading && (
-                  <span className="ml-2 text-apple-gray dark:text-[var(--text-secondary)]">
+                  <span className="ml-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     ({totalEntries})
                   </span>
                 )}
@@ -281,8 +281,8 @@ export default function RentriEntriesPage() {
             <AppleCardContent>
               {error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-apple-red/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare le registrazioni
                   </p>
                   <AppleButton variant="ghost" className="mt-4" onClick={() => mutate()}>
@@ -291,12 +291,12 @@ export default function RentriEntriesPage() {
                 </div>
               ) : isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : entries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Recycle className="h-12 w-12 text-apple-gray/40 mb-4" />
-                  <p className="text-body text-apple-gray dark:text-[var(--text-secondary)]">
+                  <Recycle className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     {debouncedSearch
                       ? `Nessun risultato per "${debouncedSearch}"`
                       : 'Nessuna registrazione trovata'}
@@ -317,7 +317,7 @@ export default function RentriEntriesPage() {
                   animate="visible"
                 >
                   {/* Table Header (desktop) */}
-                  <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-apple-dark dark:text-[var(--text-primary)]">
+                  <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     <div className="col-span-1">N.</div>
                     <div className="col-span-2">Data</div>
                     <div className="col-span-1">Tipo</div>
@@ -331,7 +331,7 @@ export default function RentriEntriesPage() {
                   {entries.map((entry, index) => (
                     <motion.div
                       key={entry.id}
-                      className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[var(--surface-hover)] hover:bg-white dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 items-center cursor-pointer group"
+                      className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300 items-center cursor-pointer group"
                       variants={listItemVariants}
                       custom={index}
                       whileHover={{ scale: 1.005, x: 4 }}
@@ -343,13 +343,13 @@ export default function RentriEntriesPage() {
                         if (e.key === 'Enter') router.push(`/dashboard/rentri/entries/${entry.id}`);
                       }}
                     >
-                      <div className="lg:col-span-1 text-footnote font-mono text-apple-gray dark:text-[var(--text-secondary)]">
-                        <span className="lg:hidden text-footnote mr-2 text-apple-gray dark:text-[var(--text-secondary)]">
+                      <div className="lg:col-span-1 text-footnote font-mono text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                        <span className="lg:hidden text-footnote mr-2 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                           N.
                         </span>
                         {entry.entryNumber}
                       </div>
-                      <div className="lg:col-span-2 text-footnote text-apple-gray dark:text-[var(--text-secondary)]">
+                      <div className="lg:col-span-2 text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                         {new Date(entry.date).toLocaleDateString('it-IT', {
                           day: '2-digit',
                           month: 'short',
@@ -360,38 +360,38 @@ export default function RentriEntriesPage() {
                         <span
                           className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
                             entry.type === 'CARICO'
-                              ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                              : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+                              ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]'
+                              : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]'
                           }`}
                         >
                           {entry.type}
                         </span>
                       </div>
                       <div className="lg:col-span-2 flex items-center gap-1">
-                        <span className="text-body font-mono text-apple-dark dark:text-[var(--text-primary)]">
+                        <span className="text-body font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                           {entry.cerCode}
                         </span>
                         {entry.hazardous && (
-                          <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
+                          <AlertTriangle className="h-3.5 w-3.5 text-[var(--status-warning)]" />
                         )}
                       </div>
                       <div
-                        className="lg:col-span-3 text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]"
+                        className="lg:col-span-3 text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
                         title={entry.cerDescription}
                       >
                         {entry.cerDescription}
                       </div>
-                      <div className="lg:col-span-1 text-body font-semibold text-apple-dark dark:text-[var(--text-primary)] tabular-nums">
+                      <div className="lg:col-span-1 text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] tabular-nums">
                         {entry.quantity.toLocaleString('it-IT')} {entry.unit || 'kg'}
                       </div>
                       <div
-                        className="lg:col-span-1 text-footnote truncate text-apple-gray dark:text-[var(--text-secondary)]"
+                        className="lg:col-span-1 text-footnote truncate text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
                         title={entry.type === 'CARICO' ? entry.origin : entry.destination}
                       >
                         {entry.type === 'CARICO' ? (entry.origin || '—') : (entry.destination || '—')}
                       </div>
                       <div className="lg:col-span-1 flex justify-end">
-                        <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-apple-gray dark:text-[var(--text-secondary)]" />
+                        <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                       </div>
                     </motion.div>
                   ))}

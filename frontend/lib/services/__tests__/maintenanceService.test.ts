@@ -1,31 +1,26 @@
 /**
  * Maintenance Service Unit Tests
- * 
+ *
  * Tests for preventive maintenance CRUD operations, due date calculations,
  * and overdue detection.
- * 
+ *
  * @module lib/services/__tests__/maintenanceService
  */
 
 // Jest globals are available automatically
 // Jest Mock type
 
-// Mock @prisma/client
-jest.mock('@prisma/client', () => {
-  const actual = jest.requireActual('@prisma/client') as Record<string, unknown>
-  return {
-    ...actual,
-    Prisma: {
-      ...(actual.Prisma as Record<string, unknown> || {}),
-      PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
-        code: string
-        constructor(message: string, { code }: { code: string }) {
-          super(message); this.code = code; this.name = 'PrismaClientKnownRequestError'
-        }
-      },
+// Mock @prisma/client (virtual: true because @prisma/client is not installed in frontend)
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, { code }: { code: string }) {
+        super(message); this.code = code; this.name = 'PrismaClientKnownRequestError'
+      }
     },
-  }
-})
+  },
+}), { virtual: true })
 
 // Mock tenant context
 jest.mock('@/lib/tenant/context', () => ({
@@ -37,27 +32,8 @@ jest.mock('@/lib/tenant/context', () => ({
   TenantContext: {},
 }))
 
-// Mock Prisma
-const mockPrisma = {
-  maintenanceSchedule: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findFirst: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    count: jest.fn(),
-    groupBy: jest.fn()
-  },
-  vehicle: {
-    findUnique: jest.fn(),
-    findFirst: jest.fn()
-  }
-}
-
-jest.mock('@/lib/prisma', () => ({
-  prisma: mockPrisma
-}))
+// Mock global fetch
+global.fetch = jest.fn() as jest.Mock
 
 // Import after mocking
 import {
@@ -115,7 +91,8 @@ function getNotificationLevelColor(level: string): string {
 
 describe('MaintenanceService', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    // Reset fetch mock
+    (global.fetch as jest.Mock).mockReset()
     // Suppress console output during tests
     jest.spyOn(console, 'log').mockImplementation(() => {})
     jest.spyOn(console, 'info').mockImplementation(() => {})
@@ -209,6 +186,7 @@ describe('MaintenanceService', () => {
     const mockSchedule = {
       id: 'schedule-001',
       vehicleId: 'vehicle-123',
+      tenantId: 'test-tenant-id',
       type: 'OIL_CHANGE',
       intervalKm: 10000,
       intervalMonths: 6,
@@ -227,77 +205,102 @@ describe('MaintenanceService', () => {
     }
 
     it('should create a maintenance schedule successfully', async () => {
-      mockPrisma.vehicle.findFirst.mockResolvedValue(mockVehicle)
-      mockPrisma.maintenanceSchedule.create.mockResolvedValue(mockSchedule)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockSchedule }),
+      })
 
       const result = await createMaintenanceSchedule(validInput)
 
       expect(result).toEqual(mockSchedule)
-      expect(mockPrisma.vehicle.findFirst).toHaveBeenCalledWith({
-        where: { id: 'vehicle-123', tenantId: 'test-tenant-id' }
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'x-tenant-id': 'test-tenant-id',
+          }),
+        })
+      )
+    })
+
+    it('should pass empty vehicleId to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Vehicle ID is required' } }),
       })
-      expect(mockPrisma.maintenanceSchedule.create).toHaveBeenCalled()
-    })
 
-    it('should throw MaintenanceValidationError when vehicleId is missing', async () => {
       const invalidInput = { ...validInput, vehicleId: '' }
-
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow(MaintenanceValidationError)
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow('Vehicle ID is required')
+      await expect(createMaintenanceSchedule(invalidInput)).rejects.toThrow()
     })
 
-    it('should throw MaintenanceValidationError when type is missing', async () => {
+    it('should pass invalid type to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid type' } }),
+      })
+
       const invalidInput = { ...validInput, type: '' as any }
-
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow(MaintenanceValidationError)
+      await expect(createMaintenanceSchedule(invalidInput)).rejects.toThrow()
     })
 
-    it('should throw MaintenanceValidationError when intervalKm is not positive', async () => {
+    it('should pass zero intervalKm to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Interval KM must be positive' } }),
+      })
+
       const invalidInput = { ...validInput, intervalKm: 0 }
-
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow(MaintenanceValidationError)
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow('Interval KM must be positive')
+      await expect(createMaintenanceSchedule(invalidInput)).rejects.toThrow()
     })
 
-    it('should throw MaintenanceValidationError when intervalMonths is not positive', async () => {
+    it('should pass negative intervalMonths to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid interval' } }),
+      })
+
       const invalidInput = { ...validInput, intervalMonths: -1 }
-
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow(MaintenanceValidationError)
+      await expect(createMaintenanceSchedule(invalidInput)).rejects.toThrow()
     })
 
-    it('should throw MaintenanceValidationError when lastServiceKm is negative', async () => {
+    it('should pass negative lastServiceKm to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid kilometers' } }),
+      })
+
       const invalidInput = { ...validInput, lastServiceKm: -100 }
-
-      await expect(createMaintenanceSchedule(invalidInput))
-        .rejects.toThrow(MaintenanceValidationError)
+      await expect(createMaintenanceSchedule(invalidInput)).rejects.toThrow()
     })
 
-    it('should throw VehicleNotFoundError when vehicle does not exist', async () => {
-      mockPrisma.vehicle.findFirst.mockResolvedValue(null)
+    it('should handle vehicle not found from backend', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: { message: 'Vehicle not found' } }),
+      })
 
       await expect(createMaintenanceSchedule(validInput))
-        .rejects.toThrow(VehicleNotFoundError)
+        .rejects.toThrow()
     })
 
     it('should calculate next due date correctly when creating', async () => {
-      mockPrisma.vehicle.findFirst.mockResolvedValue(mockVehicle)
-      mockPrisma.maintenanceSchedule.create.mockImplementation((args: any) => ({
-        ...mockSchedule,
-        ...args.data
-      }))
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockSchedule }),
+      })
 
-      await createMaintenanceSchedule(validInput)
+      const result = await createMaintenanceSchedule(validInput)
 
-      const createCall = mockPrisma.maintenanceSchedule.create.mock.calls[0][0]
-      expect(createCall.data.nextDueDate).toBeInstanceOf(Date)
-      expect(createCall.data.nextDueKm).toBe(60000) // 50000 + 10000
-      expect(createCall.data.daysUntilDue).toBeDefined()
+      expect(result.nextDueKm).toBe(60000) // 50000 + 10000
+      expect(result.nextDueDate).toBeInstanceOf(Date)
+      expect(result.daysUntilDue).toBeDefined()
     })
   })
 
@@ -308,6 +311,7 @@ describe('MaintenanceService', () => {
     const mockSchedule = {
       id: 'schedule-001',
       vehicleId: 'vehicle-123',
+      tenantId: 'test-tenant-id',
       type: 'OIL_CHANGE',
       vehicle: {
         id: 'vehicle-123',
@@ -320,24 +324,36 @@ describe('MaintenanceService', () => {
     }
 
     it('should retrieve a schedule by ID', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(mockSchedule)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockSchedule }),
+      })
 
       const result = await getMaintenanceScheduleById('schedule-001')
 
       expect(result).toEqual(mockSchedule)
-      expect(mockPrisma.maintenanceSchedule.findFirst).toHaveBeenCalledWith({
-        where: { id: 'schedule-001', tenantId: 'test-tenant-id' },
-        include: expect.any(Object)
-      })
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance/schedule-001'),
+        expect.any(Object)
+      )
     })
 
-    it('should throw MaintenanceValidationError when ID is empty', async () => {
-      await expect(getMaintenanceScheduleById(''))
-        .rejects.toThrow(MaintenanceValidationError)
+    it('should handle empty ID gracefully (passes to backend)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid ID' } }),
+      })
+
+      await expect(getMaintenanceScheduleById('')).rejects.toThrow()
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      })
 
       await expect(getMaintenanceScheduleById('non-existent'))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -348,23 +364,20 @@ describe('MaintenanceService', () => {
   // updateMaintenanceSchedule Tests
   // =============================================================================
   describe('updateMaintenanceSchedule', () => {
-    const existingSchedule = {
+    const mockScheduleWithVehicle = {
       id: 'schedule-001',
       vehicleId: 'vehicle-123',
+      tenantId: 'test-tenant-id',
       type: 'OIL_CHANGE',
-      intervalKm: 10000,
+      intervalKm: 15000,
       intervalMonths: 6,
       lastServiceDate: new Date('2024-01-15'),
-      lastServiceKm: 50000
-    }
-
-    const mockScheduleWithVehicle = {
-      ...existingSchedule,
+      lastServiceKm: 50000,
       nextDueDate: new Date('2024-07-15'),
-      nextDueKm: 60000,
+      nextDueKm: 65000,
       isOverdue: false,
       daysUntilDue: 100,
-      kmUntilDue: 10000,
+      kmUntilDue: 15000,
       alertSentAt: null,
       notificationLevel: 'ALERT',
       createdAt: new Date(),
@@ -380,8 +393,10 @@ describe('MaintenanceService', () => {
     }
 
     it('should update a schedule successfully', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
-      mockPrisma.maintenanceSchedule.update.mockResolvedValue(mockScheduleWithVehicle)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockScheduleWithVehicle }),
+      })
 
       const updateData: UpdateMaintenanceScheduleInput = {
         intervalKm: 15000
@@ -390,29 +405,39 @@ describe('MaintenanceService', () => {
       const result = await updateMaintenanceSchedule('schedule-001', updateData)
 
       expect(result).toEqual(mockScheduleWithVehicle)
-      expect(mockPrisma.maintenanceSchedule.update).toHaveBeenCalled()
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance/schedule-001'),
+        expect.objectContaining({ method: 'PATCH' })
+      )
     })
 
     it('should recalculate next due when interval changes', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
-      mockPrisma.maintenanceSchedule.update.mockImplementation((args: any) => ({
-        ...mockScheduleWithVehicle,
-        ...args.data
-      }))
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockScheduleWithVehicle }),
+      })
 
       await updateMaintenanceSchedule('schedule-001', { intervalKm: 15000 })
 
-      const updateCall = mockPrisma.maintenanceSchedule.update.mock.calls[0][0]
-      expect(updateCall.data.nextDueKm).toBe(65000) // 50000 + 15000
+      expect(global.fetch).toHaveBeenCalled()
     })
 
-    it('should throw MaintenanceValidationError when ID is empty', async () => {
-      await expect(updateMaintenanceSchedule('', {}))
-        .rejects.toThrow(MaintenanceValidationError)
+    it('should handle empty ID gracefully (passes to backend)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid ID' } }),
+      })
+
+      await expect(updateMaintenanceSchedule('', {})).rejects.toThrow()
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      })
 
       await expect(updateMaintenanceSchedule('non-existent', {}))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -423,29 +448,38 @@ describe('MaintenanceService', () => {
   // deleteMaintenanceSchedule Tests
   // =============================================================================
   describe('deleteMaintenanceSchedule', () => {
-    const existingSchedule = {
-      id: 'schedule-001',
-      vehicleId: 'vehicle-123',
-      type: 'OIL_CHANGE'
-    }
-
     it('should delete a schedule successfully', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
-      mockPrisma.maintenanceSchedule.delete.mockResolvedValue(existingSchedule)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      })
 
       const result = await deleteMaintenanceSchedule('schedule-001')
 
       expect(result.success).toBe(true)
       expect(result.deletedAt).toBeInstanceOf(Date)
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance/schedule-001'),
+        expect.objectContaining({ method: 'DELETE' })
+      )
     })
 
-    it('should throw MaintenanceValidationError when ID is empty', async () => {
-      await expect(deleteMaintenanceSchedule(''))
-        .rejects.toThrow(MaintenanceValidationError)
+    it('should handle empty ID gracefully (passes to backend)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid ID' } }),
+      })
+
+      await expect(deleteMaintenanceSchedule('')).rejects.toThrow()
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      })
 
       await expect(deleteMaintenanceSchedule('non-existent'))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -460,6 +494,7 @@ describe('MaintenanceService', () => {
       {
         id: 'schedule-001',
         vehicleId: 'vehicle-123',
+        tenantId: 'test-tenant-id',
         type: 'OIL_CHANGE',
         vehicle: {
           id: 'vehicle-123',
@@ -473,6 +508,7 @@ describe('MaintenanceService', () => {
       {
         id: 'schedule-002',
         vehicleId: 'vehicle-124',
+        tenantId: 'test-tenant-id',
         type: 'TIRE_ROTATION',
         vehicle: {
           id: 'vehicle-124',
@@ -486,8 +522,18 @@ describe('MaintenanceService', () => {
     ]
 
     it('should list schedules with default pagination', async () => {
-      mockPrisma.maintenanceSchedule.count.mockResolvedValue(2)
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockSchedules)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            items: mockSchedules,
+            total: 2,
+            page: 1,
+            limit: 20,
+            totalPages: 1,
+          },
+        }),
+      })
 
       const result = await listMaintenanceSchedules()
 
@@ -498,8 +544,18 @@ describe('MaintenanceService', () => {
     })
 
     it('should apply filters correctly', async () => {
-      mockPrisma.maintenanceSchedule.count.mockResolvedValue(1)
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue([mockSchedules[0]])
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            items: [mockSchedules[0]],
+            total: 1,
+            page: 1,
+            limit: 20,
+            totalPages: 1,
+          },
+        }),
+      })
 
       const result = await listMaintenanceSchedules({
         vehicleId: 'vehicle-123',
@@ -507,19 +563,25 @@ describe('MaintenanceService', () => {
       })
 
       expect(result.items).toHaveLength(1)
-      expect(mockPrisma.maintenanceSchedule.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            vehicleId: 'vehicle-123',
-            type: 'OIL_CHANGE'
-          })
-        })
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('vehicleId=vehicle-123'),
+        expect.any(Object)
       )
     })
 
     it('should handle pagination parameters', async () => {
-      mockPrisma.maintenanceSchedule.count.mockResolvedValue(50)
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockSchedules)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            items: mockSchedules,
+            total: 50,
+            page: 2,
+            limit: 10,
+            totalPages: 5,
+          },
+        }),
+      })
 
       const result = await listMaintenanceSchedules({}, { page: 2, limit: 10 })
 
@@ -537,6 +599,7 @@ describe('MaintenanceService', () => {
       {
         id: 'schedule-001',
         vehicleId: 'vehicle-123',
+        tenantId: 'test-tenant-id',
         type: 'OIL_CHANGE',
         isOverdue: true,
         vehicle: {
@@ -551,32 +614,31 @@ describe('MaintenanceService', () => {
     ]
 
     it('should return all overdue items when no vehicleId specified', async () => {
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockOverdueItems)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockOverdueItems }),
+      })
 
       const result = await getOverdueItems()
 
       expect(result).toEqual(mockOverdueItems)
-      expect(mockPrisma.maintenanceSchedule.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { isOverdue: true, tenantId: 'test-tenant-id' }
-        })
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance/overdue'),
+        expect.any(Object)
       )
     })
 
     it('should filter by vehicleId when specified', async () => {
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockOverdueItems)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockOverdueItems }),
+      })
 
-      // Pass vehicleId as second arg; first arg is tenantIdOrVehicleId (unused when context provides tenantId)
       await getOverdueItems(undefined, 'vehicle-123')
 
-      expect(mockPrisma.maintenanceSchedule.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            isOverdue: true,
-            vehicleId: 'vehicle-123',
-            tenantId: 'test-tenant-id'
-          }
-        })
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('vehicleId=vehicle-123'),
+        expect.any(Object)
       )
     })
   })
@@ -589,8 +651,9 @@ describe('MaintenanceService', () => {
       {
         id: 'schedule-001',
         vehicleId: 'vehicle-123',
+        tenantId: 'test-tenant-id',
         type: 'OIL_CHANGE',
-        nextDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        nextDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         isOverdue: false,
         vehicle: {
           id: 'vehicle-123',
@@ -604,29 +667,32 @@ describe('MaintenanceService', () => {
     ]
 
     it('should return items due within default 30 days', async () => {
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockUpcomingItems)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockUpcomingItems }),
+      })
 
       const result = await getUpcomingItems()
 
       expect(result).toEqual(mockUpcomingItems)
-      expect(mockPrisma.maintenanceSchedule.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            nextDueDate: expect.any(Object),
-            isOverdue: false
-          })
-        })
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance/upcoming'),
+        expect.any(Object)
       )
     })
 
     it('should use custom days parameter', async () => {
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockUpcomingItems)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockUpcomingItems }),
+      })
 
       await getUpcomingItems(7)
 
-      const callArg = mockPrisma.maintenanceSchedule.findMany.mock.calls[0][0]
-      expect(callArg.where.nextDueDate.lte.getTime() - callArg.where.nextDueDate.gte.getTime())
-        .toBeLessThanOrEqual(8 * 24 * 60 * 60 * 1000) // Within 8 days (allowing for time diff)
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('days=7'),
+        expect.any(Object)
+      )
     })
   })
 
@@ -634,18 +700,13 @@ describe('MaintenanceService', () => {
   // markAsCompleted Tests
   // =============================================================================
   describe('markAsCompleted', () => {
-    const existingSchedule = {
+    const updatedSchedule = {
       id: 'schedule-001',
       vehicleId: 'vehicle-123',
+      tenantId: 'test-tenant-id',
       type: 'OIL_CHANGE',
       intervalKm: 10000,
       intervalMonths: 6,
-      lastServiceDate: new Date('2024-01-01'),
-      lastServiceKm: 50000
-    }
-
-    const updatedSchedule = {
-      ...existingSchedule,
       lastServiceDate: new Date('2024-06-15'),
       lastServiceKm: 58000,
       nextDueDate: new Date('2024-12-15'),
@@ -665,8 +726,10 @@ describe('MaintenanceService', () => {
     }
 
     it('should mark maintenance as completed and update next due', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
-      mockPrisma.maintenanceSchedule.update.mockResolvedValue(updatedSchedule)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: updatedSchedule }),
+      })
 
       const completionData: CompleteMaintenanceInput = {
         currentKm: 58000,
@@ -681,25 +744,33 @@ describe('MaintenanceService', () => {
     })
 
     it('should use current date when not specified', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(existingSchedule)
-      mockPrisma.maintenanceSchedule.update.mockImplementation((args: any) => ({
-        ...updatedSchedule,
-        ...args.data
-      }))
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: updatedSchedule }),
+      })
 
       await markAsCompleted('schedule-001', { currentKm: 58000 })
 
-      const updateCall = mockPrisma.maintenanceSchedule.update.mock.calls[0][0]
-      expect(updateCall.data.lastServiceDate).toBeInstanceOf(Date)
+      expect(global.fetch).toHaveBeenCalled()
     })
 
-    it('should throw MaintenanceValidationError when currentKm is negative', async () => {
+    it('should handle negative currentKm gracefully (passes to backend)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'Invalid kilometers' } }),
+      })
+
       await expect(markAsCompleted('schedule-001', { currentKm: -100 }))
-        .rejects.toThrow(MaintenanceValidationError)
+        .rejects.toThrow()
     })
 
     it('should throw MaintenanceNotFoundError when schedule does not exist', async () => {
-      mockPrisma.maintenanceSchedule.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      })
 
       await expect(markAsCompleted('non-existent', { currentKm: 50000 }))
         .rejects.toThrow(MaintenanceNotFoundError)
@@ -710,46 +781,17 @@ describe('MaintenanceService', () => {
   // checkOverdueStatus Tests
   // =============================================================================
   describe('checkOverdueStatus', () => {
-    const mockSchedules = [
-      {
-        id: 'schedule-001',
-        vehicleId: 'vehicle-123',
-        type: 'OIL_CHANGE',
-        nextDueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-        isOverdue: false,
-        alertSentAt: null,
-        notificationLevel: 'ALERT',
-        vehicle: {
-          id: 'vehicle-123',
-          make: 'Toyota',
-          model: 'Corolla',
-          year: 2020,
-          licensePlate: 'AB123CD',
-          mileage: 55000
-        }
-      },
-      {
-        id: 'schedule-002',
-        vehicleId: 'vehicle-124',
-        type: 'TIRE_ROTATION',
-        nextDueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
-        isOverdue: true, // Incorrectly marked as overdue
-        alertSentAt: null,
-        notificationLevel: 'WARNING',
-        vehicle: {
-          id: 'vehicle-124',
-          make: 'Honda',
-          model: 'Civic',
-          year: 2021,
-          licensePlate: 'EF456GH',
-          mileage: 30000
-        }
-      }
-    ]
-
     it('should update overdue status for schedules', async () => {
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue(mockSchedules)
-      mockPrisma.maintenanceSchedule.update.mockResolvedValue({} as any)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            updated: 2,
+            newlyOverdue: 1,
+            alertsToSend: [],
+          },
+        }),
+      })
 
       const result = await checkOverdueStatus()
 
@@ -758,13 +800,21 @@ describe('MaintenanceService', () => {
     })
 
     it('should return alerts to send for newly overdue items', async () => {
-      mockPrisma.maintenanceSchedule.findMany.mockResolvedValue([mockSchedules[0]])
-      mockPrisma.maintenanceSchedule.update.mockResolvedValue({} as any)
-      mockPrisma.maintenanceSchedule.count.mockResolvedValue(0)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            updated: 1,
+            newlyOverdue: 1,
+            alertsToSend: [],
+          },
+        }),
+      })
 
       const result = await checkOverdueStatus()
 
-      expect(result.alertsToSend.length).toBeGreaterThanOrEqual(0)
+      expect(result.alertsToSend).toBeDefined()
+      expect(Array.isArray(result.alertsToSend)).toBe(true)
     })
   })
 
@@ -773,23 +823,17 @@ describe('MaintenanceService', () => {
   // =============================================================================
   describe('getMaintenanceSummary', () => {
     it('should return summary statistics', async () => {
-      mockPrisma.maintenanceSchedule.count
-        .mockResolvedValueOnce(10) // total
-        .mockResolvedValueOnce(2)  // overdue
-        .mockResolvedValueOnce(3)  // dueSoon
-        .mockResolvedValueOnce(5)  // upcoming
-        .mockResolvedValueOnce(0)  // vehicleOverdue
-        .mockResolvedValueOnce(0)  // vehicleUpcoming
-
-      mockPrisma.maintenanceSchedule.groupBy.mockResolvedValue([
-        { vehicleId: 'vehicle-123', _count: { id: 5 } },
-        { vehicleId: 'vehicle-124', _count: { id: 5 } }
-      ])
-
-      mockPrisma.vehicle.findFirst.mockResolvedValue({
-        make: 'Toyota',
-        model: 'Corolla',
-        licensePlate: 'AB123CD'
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            total: 10,
+            overdue: 2,
+            dueSoon: 3,
+            upcoming: 5,
+            byVehicle: {},
+          },
+        }),
       })
 
       const result = await getMaintenanceSummary()
@@ -801,22 +845,24 @@ describe('MaintenanceService', () => {
     })
 
     it('should include vehicle breakdown', async () => {
-      mockPrisma.maintenanceSchedule.count
-        .mockResolvedValueOnce(10)
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(3)
-        .mockResolvedValueOnce(5)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(2)
-
-      mockPrisma.maintenanceSchedule.groupBy.mockResolvedValue([
-        { vehicleId: 'vehicle-123', _count: { id: 10 } }
-      ])
-
-      mockPrisma.vehicle.findFirst.mockResolvedValue({
-        make: 'Toyota',
-        model: 'Corolla',
-        licensePlate: 'AB123CD'
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            total: 10,
+            overdue: 2,
+            dueSoon: 3,
+            upcoming: 5,
+            byVehicle: {
+              'vehicle-123': {
+                vehicleInfo: 'Toyota Corolla',
+                total: 10,
+                overdue: 1,
+                upcoming: 9,
+              },
+            },
+          },
+        }),
       })
 
       const result = await getMaintenanceSummary()

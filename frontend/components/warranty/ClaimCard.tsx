@@ -40,33 +40,33 @@ const statusConfig: Record<
 > = {
   SUBMITTED: {
     label: 'Inviato',
-    color: 'text-blue-700',
+    color: 'text-[var(--status-info)]',
     icon: <FileText className='h-4 w-4' />,
-    bgColor: 'bg-blue-50 border-blue-200',
+    bgColor: 'bg-[var(--status-info-subtle)] border-[var(--status-info)]/30',
   },
   UNDER_REVIEW: {
     label: 'In Revisione',
-    color: 'text-amber-700',
+    color: 'text-[var(--status-warning)]',
     icon: <Clock className='h-4 w-4' />,
-    bgColor: 'bg-amber-50 border-amber-200',
+    bgColor: 'bg-[var(--status-warning)]/5 border-[var(--status-warning)]/30',
   },
   APPROVED: {
     label: 'Approvato',
-    color: 'text-green-700',
+    color: 'text-[var(--status-success)]',
     icon: <CheckCircle2 className='h-4 w-4' />,
-    bgColor: 'bg-green-50 border-green-200',
+    bgColor: 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30',
   },
   REJECTED: {
     label: 'Rifiutato',
-    color: 'text-red-700',
+    color: 'text-[var(--status-error)]',
     icon: <XCircle className='h-4 w-4' />,
-    bgColor: 'bg-red-50 border-red-200',
+    bgColor: 'bg-[var(--status-error-subtle)] border-[var(--status-error)]/30',
   },
   PAID: {
     label: 'Pagato',
-    color: 'text-purple-700',
+    color: 'text-[var(--brand)]',
     icon: <DollarSign className='h-4 w-4' />,
-    bgColor: 'bg-purple-50 border-purple-200',
+    bgColor: 'bg-[var(--brand)]/5 border-[var(--brand)]/20',
   },
 };
 
@@ -84,7 +84,7 @@ export function ClaimCard({
     <Card
       className={cn(
         'cursor-pointer transition-all hover:shadow-md',
-        onClick && 'hover:border-gray-300',
+        onClick && 'hover:border-[var(--border-default)]',
         className
       )}
       role={onClick ? 'button' : undefined}
@@ -108,15 +108,15 @@ export function ClaimCard({
               <span className={status.color}>{status.icon}</span>
             </div>
             <div>
-              <h3 className='font-semibold text-gray-900'>
+              <h3 className='font-semibold text-[var(--text-primary)]'>
                 {showVehicle && claim.warranty?.vehicle
                   ? `${claim.warranty.vehicle.make} ${claim.warranty.vehicle.model}`
                   : 'Reclamo Garanzia'}
               </h3>
-              <p className='text-sm text-gray-500'>Inviato il {formatDate(claim.submittedDate)}</p>
+              <p className='text-sm text-[var(--text-tertiary)]'>Inviato il {formatDate(claim.submittedDate)}</p>
             </div>
           </div>
-          <ChevronRight className='h-5 w-5 text-gray-400' />
+          <ChevronRight className='h-5 w-5 text-[var(--text-tertiary)]' />
         </div>
       </CardHeader>
 
@@ -132,25 +132,25 @@ export function ClaimCard({
 
         {/* Amounts */}
         <div className='grid grid-cols-2 gap-3'>
-          <div className='bg-gray-50 rounded-lg p-3'>
-            <div className='text-xs text-gray-600 mb-1'>Costo Stimato</div>
-            <div className='font-semibold text-gray-900'>{formatCurrency(claim.amount)}</div>
+          <div className='bg-[var(--surface-secondary)] rounded-lg p-3'>
+            <div className='text-xs text-[var(--text-secondary)] mb-1'>Costo Stimato</div>
+            <div className='font-semibold text-[var(--text-primary)]'>{formatCurrency(claim.amount)}</div>
           </div>
           {(claim as unknown as Record<string, unknown>).approvedAmount !== null &&
             (claim as unknown as Record<string, unknown>).approvedAmount !== undefined && (
               <div
                 className={cn(
                   'rounded-lg p-3',
-                  claim.status === ClaimStatus.REJECTED ? 'bg-red-50' : 'bg-green-50'
+                  claim.status === ClaimStatus.REJECTED ? 'bg-[var(--status-error-subtle)]' : 'bg-[var(--status-success-subtle)]'
                 )}
               >
-                <div className='text-xs text-gray-600 mb-1'>
+                <div className='text-xs text-[var(--text-secondary)] mb-1'>
                   {claim.status === ClaimStatus.REJECTED ? 'Rifiutato' : 'Importo Approvato'}
                 </div>
                 <div
                   className={cn(
                     'font-semibold',
-                    claim.status === ClaimStatus.REJECTED ? 'text-red-700' : 'text-green-700'
+                    claim.status === ClaimStatus.REJECTED ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]'
                   )}
                 >
                   {claim.status === ClaimStatus.REJECTED
@@ -165,18 +165,18 @@ export function ClaimCard({
 
         {/* Description */}
         <div className='space-y-1'>
-          <div className='flex items-center gap-2 text-xs text-gray-600'>
+          <div className='flex items-center gap-2 text-xs text-[var(--text-secondary)]'>
             <MessageSquare className='h-3 w-3' />
             <span>Descrizione</span>
           </div>
-          <p className='text-sm text-gray-800 line-clamp-2 bg-gray-50 p-2 rounded'>
+          <p className='text-sm text-[var(--text-primary)] line-clamp-2 bg-[var(--surface-secondary)] p-2 rounded'>
             {claim.description}
           </p>
         </div>
 
         {/* Evidence Count */}
         {claim.documents && claim.documents.length > 0 && (
-          <div className='flex items-center gap-2 text-sm text-gray-600'>
+          <div className='flex items-center gap-2 text-sm text-[var(--text-secondary)]'>
             <Eye className='h-4 w-4' />
             <span>
               {claim.documents.length} foto allegat{claim.documents.length !== 1 ? 'e' : 'a'}
@@ -186,17 +186,17 @@ export function ClaimCard({
 
         {/* Review Info */}
         {claim.reviewedDate && (
-          <div className='space-y-2 pt-2 border-t border-gray-100'>
-            <div className='flex items-center gap-2 text-xs text-gray-600'>
+          <div className='space-y-2 pt-2 border-t border-[var(--border-default)]'>
+            <div className='flex items-center gap-2 text-xs text-[var(--text-secondary)]'>
               <User className='h-3 w-3' />
               <span>Revisionato dall&apos;Amministratore</span>
             </div>
-            <div className='flex items-center gap-2 text-xs text-gray-600'>
+            <div className='flex items-center gap-2 text-xs text-[var(--text-secondary)]'>
               <Calendar className='h-3 w-3' />
               <span>Revisionato il {formatDate(claim.reviewedDate)}</span>
             </div>
             {claim.description && (
-              <p className='text-xs text-gray-600 bg-gray-50 p-2 rounded'>
+              <p className='text-xs text-[var(--text-secondary)] bg-[var(--surface-secondary)] p-2 rounded'>
                 <span className='font-medium'>Note:</span> {claim.description}
               </p>
             )}
@@ -205,7 +205,7 @@ export function ClaimCard({
 
         {/* Payment Date */}
         {claim.resolvedDate && (
-          <div className='flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded'>
+          <div className='flex items-center gap-2 text-xs text-[var(--status-success)] bg-[var(--status-success-subtle)] p-2 rounded'>
             <DollarSign className='h-3 w-3' />
             <span>Pagato il {formatDate(claim.resolvedDate)}</span>
           </div>
