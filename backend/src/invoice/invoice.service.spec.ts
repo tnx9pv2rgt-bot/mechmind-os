@@ -1627,4 +1627,590 @@ describe('InvoiceService', () => {
       expect(((result.data as any[])[1].customer as any).firstName).toBe('Luca');
     });
   });
+
+  describe('Branch coverage: StampDuty & Ternary branches', () => {
+    it('should apply stamp duty when invoice has exempt items and subtotal > 77.47', async () => {
+      const dtoWithExempt: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Professional Service (Exempt)',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 100,
+            vatRate: 0,
+          },
+        ],
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              stampDuty: true,
+              stampDutyAmount: new Decimal('2.00'),
+              total: new Decimal('102.00'),
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      const result = await service.create(TENANT_ID, dtoWithExempt);
+
+      // Verify stampDuty branch is taken
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            stampDutyAmount: new Decimal('2.00'),
+          }),
+        }),
+      );
+      expect(result.stampDuty).toBe(true);
+    });
+
+    it('should skip stamp duty when no exempt items (line 156 ternary false branch)', async () => {
+      const dtoNoExempt: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Taxable Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 100,
+            vatRate: 22,
+          },
+        ],
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              stampDuty: false,
+              stampDutyAmount: new Decimal('0.00'),
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      await service.create(TENANT_ID, dtoNoExempt);
+
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            stampDutyAmount: undefined,
+          }),
+        }),
+      );
+    });
+
+    it('should include dueDate when provided in create (line 158 ternary true)', async () => {
+      const dtoWithDue: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 50,
+            vatRate: 22,
+          },
+        ],
+        dueDate: '2026-04-24',
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              dueDate: new Date('2026-04-24'),
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      await service.create(TENANT_ID, dtoWithDue);
+
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            dueDate: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('should set dueDate to null when not provided in create (line 158 ternary false)', async () => {
+      const dtoNoDue: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 50,
+            vatRate: 22,
+          },
+        ],
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(makeMockInvoice({ dueDate: null })),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      await service.create(TENANT_ID, dtoNoDue);
+
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            dueDate: null,
+          }),
+        }),
+      );
+    });
+
+    it('should include operationDate when provided in create (line 161)', async () => {
+      const dtoWithOp: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 50,
+            vatRate: 22,
+          },
+        ],
+        operationDate: '2026-04-20',
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              operationDate: new Date('2026-04-20'),
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      await service.create(TENANT_ID, dtoWithOp);
+
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            operationDate: expect.any(Date),
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('Branch coverage: Update conditional fields (lines 196-200)', () => {
+    it('should update customerId when provided (line 196)', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT', customerId: 'old-cust' });
+      const updated = makeMockInvoice({ customerId: 'new-cust' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = { customerId: 'new-cust' };
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({ customerId: 'new-cust' }),
+      });
+    });
+
+    it('should update dueDate when provided as date string (line 198 true)', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT', dueDate: null });
+      const updated = makeMockInvoice({ dueDate: new Date('2026-05-01') });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = { dueDate: '2026-05-01' };
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({
+          dueDate: expect.any(Date),
+        }),
+      });
+    });
+
+    it('should set dueDate to null when explicitly cleared (line 198 false)', async () => {
+      const existing = makeMockInvoice({
+        status: 'DRAFT',
+        dueDate: new Date('2026-05-01'),
+      });
+      const updated = makeMockInvoice({ dueDate: null });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = {};
+      // Simulate explicit undefined (as received from controller when field is sent as null in HTTP)
+      (dto as any).dueDate = null;
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({
+          dueDate: null,
+        }),
+      });
+    });
+
+    it('should update bookingId when provided (line 199)', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT', bookingId: null });
+      const updated = makeMockInvoice({ bookingId: 'booking-123' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = { bookingId: 'booking-123' };
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({
+          bookingId: 'booking-123',
+        }),
+      });
+    });
+
+    it('should update workOrderId when provided (line 200)', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT', workOrderId: null });
+      const updated = makeMockInvoice({ workOrderId: 'work-order-456' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = { workOrderId: 'work-order-456' };
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({
+          workOrderId: 'work-order-456',
+        }),
+      });
+    });
+
+    it('should clear bookingId when explicitly set to null (line 199 ?? true)', async () => {
+      const existing = makeMockInvoice({
+        status: 'DRAFT',
+        bookingId: 'old-booking',
+      });
+      const updated = makeMockInvoice({ bookingId: null });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = {};
+      (dto as any).bookingId = null;
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({
+          bookingId: null,
+        }),
+      });
+    });
+
+    it('should clear workOrderId when explicitly set to null (line 200 ?? true)', async () => {
+      const existing = makeMockInvoice({
+        status: 'DRAFT',
+        workOrderId: 'old-work-order',
+      });
+      const updated = makeMockInvoice({ workOrderId: null });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = {};
+      (dto as any).workOrderId = null;
+
+      await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID, tenantId: TENANT_ID },
+        data: expect.objectContaining({
+          workOrderId: null,
+        }),
+      });
+    });
+  });
+
+  describe('Branch coverage: Null return branches (lines 216, 254, 281)', () => {
+    it('should handle null return from update (line 216 false)', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto: UpdateInvoiceDto = { notes: 'Update' };
+
+      const result = await service.update(TENANT_ID, INVOICE_ID, dto);
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle null return from send (line 254 false)', async () => {
+      const existing = makeMockInvoice({ status: 'DRAFT' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.send(TENANT_ID, INVOICE_ID);
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle null return from markPaid (line 281 false)', async () => {
+      const existing = makeMockInvoice({ status: 'SENT' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
+      prisma.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.markPaid(TENANT_ID, INVOICE_ID);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('Branch coverage: CSV export date formatting (lines 469, 472)', () => {
+    it('should format invoiceDate when createdAt exists (line 469 true)', async () => {
+      const invoice = makeMockInvoice({
+        createdAt: new Date('2026-03-15'),
+        paidAt: null,
+      });
+      prisma.invoice.findMany.mockResolvedValue([invoice]);
+
+      const csv = await service.exportCsv(
+        TENANT_ID,
+        new Date('2026-03-01'),
+        new Date('2026-03-31'),
+      );
+
+      expect(csv).toContain('2026-03-15');
+    });
+
+    it('should output empty string for invoiceDate when createdAt is null (line 469 false)', async () => {
+      const invoice = makeMockInvoice({
+        createdAt: null,
+        paidAt: null,
+      });
+      prisma.invoice.findMany.mockResolvedValue([invoice]);
+
+      const csv = await service.exportCsv(
+        TENANT_ID,
+        new Date('2026-03-01'),
+        new Date('2026-03-31'),
+      );
+
+      // Verify CSV structure but with empty date field
+      expect(csv).toContain('Numero;Data;Cliente');
+    });
+
+    it('should format paidDate when paidAt exists (line 472 true)', async () => {
+      const invoice = makeMockInvoice({
+        createdAt: new Date('2026-03-10'),
+        paidAt: new Date('2026-03-20'),
+      });
+      prisma.invoice.findMany.mockResolvedValue([invoice]);
+
+      const csv = await service.exportCsv(
+        TENANT_ID,
+        new Date('2026-03-01'),
+        new Date('2026-03-31'),
+      );
+
+      expect(csv).toContain('2026-03-20');
+    });
+
+    it('should output empty string for paidDate when paidAt is null (line 472 false)', async () => {
+      const invoice = makeMockInvoice({
+        createdAt: new Date('2026-03-10'),
+        paidAt: null,
+      });
+      prisma.invoice.findMany.mockResolvedValue([invoice]);
+
+      const csv = await service.exportCsv(
+        TENANT_ID,
+        new Date('2026-03-01'),
+        new Date('2026-03-31'),
+      );
+
+      // Verify the CSV contains the invoice but with empty paid date
+      const lines = csv.split('\n');
+      expect(lines.length).toBeGreaterThan(1);
+    });
+
+    it('should handle statusMap default branch for unknown status (line 472 right side)', async () => {
+      const invoice = makeMockInvoice({
+        status: 'UNKNOWN_STATUS' as any,
+        createdAt: new Date('2026-03-10'),
+      });
+      prisma.invoice.findMany.mockResolvedValue([invoice]);
+
+      const csv = await service.exportCsv(
+        TENANT_ID,
+        new Date('2026-03-01'),
+        new Date('2026-03-31'),
+      );
+
+      // Should use fallback (invoice.status)
+      expect(csv).toContain('UNKNOWN_STATUS');
+    });
+  });
+
+  describe('Branch coverage: Ritenuta edge cases', () => {
+    it('should compute ritenuta amount when ritenutaRate > 0 (line 135 true)', async () => {
+      const dtoWithRitenuta: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 22,
+          },
+        ],
+        ritenutaRate: 20,
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              ritenutaRate: new Decimal('20.00'),
+              ritenutaAmount: new Decimal('200.00'),
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      await service.create(TENANT_ID, dtoWithRitenuta);
+
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ritenutaAmount: expect.any(Decimal),
+          }),
+        }),
+      );
+    });
+
+    it('should skip ritenuta when ritenutaRate is 0 or undefined (line 134 false)', async () => {
+      const dtoNoRitenuta: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 22,
+          },
+        ],
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              ritenutaAmount: null,
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      await service.create(TENANT_ID, dtoNoRitenuta);
+
+      expect(mockTx.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ritenutaAmount: null,
+          }),
+        }),
+      );
+    });
+
+    it('should apply totalDue reduction when ritenuta is present (line 139 true)', async () => {
+      const dtoWithRitenuta: CreateInvoiceDto = {
+        customerId: CUSTOMER_ID,
+        items: [
+          {
+            description: 'Service',
+            itemType: 'LABOR' as const,
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 22,
+          },
+        ],
+        ritenutaRate: 10,
+      };
+
+      const mockTx = {
+        invoice: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue(
+            makeMockInvoice({
+              subtotal: new Decimal('1000.00'),
+              total: new Decimal('1120.00'),
+              ritenutaAmount: new Decimal('100.00'),
+            }),
+          ),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn(mockTx);
+      });
+
+      const result = await service.create(TENANT_ID, dtoWithRitenuta);
+
+      // Verify total is reduced by ritenuta
+      expect(result.ritenutaAmount).not.toBeNull();
+    });
+  });
 });

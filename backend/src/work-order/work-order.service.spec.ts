@@ -2405,7 +2405,7 @@ describe('WorkOrderService - Uncovered Branches', () => {
 
         const mockTx = {
           invoice: {
-            create: jest.fn().mockImplementation(async (args) => {
+            create: jest.fn().mockImplementation(async args => {
               capturedInvoiceData.push(args);
               return {
                 id: 'invoice-1',
