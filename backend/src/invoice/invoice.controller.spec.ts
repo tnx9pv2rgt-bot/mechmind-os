@@ -398,4 +398,54 @@ describe('InvoiceController', () => {
       expect(result).toEqual({ success: true, data: bnplResult });
     });
   });
+
+
+  describe('response wrapping', () => {
+    it('should wrap all responses with success flag', async () => {
+      service.findAll.mockResolvedValue({ data: [], meta: { total: 0, page: 1, limit: 20, pages: 0 } });
+
+      const result = await controller.findAll(TENANT_ID);
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('meta');
+    });
+
+    it('should wrap create response with success', async () => {
+      const invoice = { id: 'inv-1', invoiceNumber: 'INV-0001' };
+      service.create.mockResolvedValue(invoice);
+
+      const result = await controller.create(TENANT_ID, {
+        customerId: 'cust-1',
+        items: [],
+      });
+
+      expect(result).toEqual({ success: true, data: invoice });
+    });
+
+    it('should wrap getStats response', async () => {
+      const stats = { totalRevenue: 1000, invoiceCount: 5 };
+      service.getStats.mockResolvedValue(stats);
+
+      const result = await controller.getStats(TENANT_ID);
+
+      expect(result).toEqual({ success: true, data: stats });
+    });
+
+    it('should send CSV response with proper headers', async () => {
+      service.exportCsv.mockResolvedValue('col1,col2\nval1,val2');
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      await controller.exportCsv(TENANT_ID, '2026-01-01', '2026-12-31', res as any);
+
+      expect(res.set).toHaveBeenCalledWith({
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': expect.stringContaining('attachment'),
+      });
+      expect(res.send).toHaveBeenCalledWith('col1,col2\nval1,val2');
+    });
+  });
 });

@@ -662,4 +662,39 @@ describe('FatturapaService', () => {
       expect(xml).not.toContain('PECDestinatario');
     });
   });
+
+
+  describe('FatturaPA decryption branches', () => {
+    it('should handle customer with no encrypted fields', async () => {
+      const invoice = mockInvoice;
+      invoice.customer = {
+        ...mockCustomer,
+        encryptedFirstName: null,
+        encryptedLastName: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+      prisma.invoice.update.mockResolvedValue(invoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toBeTruthy();
+      expect(encryption.decrypt).not.toHaveBeenCalled();
+    });
+
+    it('should include AZIENDA type in XML when customer is AZIENDA', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: { ...mockCustomer, customerType: 'AZIENDA' },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+      prisma.invoice.update.mockResolvedValue(invoice);
+
+      const xml = await service.generateXml(INVOICE_ID, TENANT_ID);
+
+      expect(xml).toContain('<TipoDocumento>TD01</TipoDocumento>');
+    });
+  });
+
 });
