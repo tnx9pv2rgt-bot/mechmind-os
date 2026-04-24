@@ -146,4 +146,37 @@ describe('AccountingController', () => {
       expect(result).toEqual({ success: true, data: [mockSyncRecord] });
     });
   });
+
+  describe('exportQuickBooks', () => {
+    it('should export invoices in CSV format with correct headers', async () => {
+      const mockQBService = controller['quickBooksService'] as jest.Mocked<QuickBooksService>;
+      const mockCsv = Buffer.from('col1,col2\nval1,val2\n');
+      mockQBService.exportInvoicesForQuickBooks.mockResolvedValue(mockCsv);
+
+      const mockRes = {
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      };
+
+      await controller.exportQuickBooks(TENANT_ID, mockRes as never, '2026-01-01', '2026-03-31');
+
+      expect(mockQBService.exportInvoicesForQuickBooks).toHaveBeenCalledWith(
+        TENANT_ID,
+        new Date('2026-01-01'),
+        new Date('2026-03-31'),
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
+      expect(mockRes.send).toHaveBeenCalledWith(mockCsv);
+    });
+
+    it('should handle export failures', async () => {
+      const mockQBService = controller['quickBooksService'] as jest.Mocked<QuickBooksService>;
+      mockQBService.exportInvoicesForQuickBooks.mockRejectedValueOnce(new Error('Export failed'));
+      const mockRes = { setHeader: jest.fn(), send: jest.fn() };
+
+      await expect(
+        controller.exportQuickBooks(TENANT_ID, mockRes as never, '2026-01-01', '2026-03-31'),
+      ).rejects.toThrow();
+    });
+  });
 });

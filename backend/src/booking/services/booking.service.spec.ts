@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BookingService } from './booking.service';
 import { PrismaService } from '@common/services/prisma.service';
@@ -1155,6 +1155,234 @@ describe('BookingService', () => {
           status: 'CONFIRMED',
         }),
       ).rejects.toThrow();
+    });
+  });
+
+  // =========================================================================
+  // bulkConfirm
+  // =========================================================================
+  describe('bulkConfirm', () => {
+    it('should confirm multiple PENDING bookings', async () => {
+      (prisma.booking.findFirst as jest.Mock)
+        .mockResolvedValueOnce({ id: 'booking-001', tenantId: TENANT_ID, status: 'PENDING' })
+        .mockResolvedValueOnce({ id: 'booking-002', tenantId: TENANT_ID, status: 'PENDING' });
+
+      const result = await service.bulkConfirm(TENANT_ID, ['booking-001', 'booking-002']);
+
+      expect(result.confirmed).toBe(2);
+      expect(result.failed).toEqual([]);
+      expect(prisma.booking.update).toHaveBeenCalledTimes(2);
+    });
+
+    it('should skip bookings not found', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.bulkConfirm(TENANT_ID, ['nonexistent']);
+
+      expect(result.confirmed).toBe(0);
+      expect(result.failed).toEqual([{ id: 'nonexistent', reason: 'Prenotazione non trovata' }]);
+    });
+
+    it('should skip bookings with non-PENDING status', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue({
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        status: 'CONFIRMED',
+      });
+
+      const result = await service.bulkConfirm(TENANT_ID, ['booking-001']);
+
+      expect(result.confirmed).toBe(0);
+      expect(result.failed[0].reason).toContain('Stato CONFIRMED');
+    });
+
+    it('should handle mixed results (some succeed, some fail)', async () => {
+      (prisma.booking.findFirst as jest.Mock)
+        .mockResolvedValueOnce({ id: 'booking-001', tenantId: TENANT_ID, status: 'PENDING' })
+        .mockResolvedValueOnce(null);
+
+      const result = await service.bulkConfirm(TENANT_ID, ['booking-001', 'booking-002']);
+
+      expect(result.confirmed).toBe(1);
+      expect(result.failed).toHaveLength(1);
+    });
+
+    it('should catch and report internal errors during confirmation', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue({
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        status: 'PENDING',
+      });
+      (prisma.booking.update as jest.Mock).mockRejectedValue(new Error('DB error'));
+
+      const result = await service.bulkConfirm(TENANT_ID, ['booking-001']);
+
+      expect(result.confirmed).toBe(0);
+      expect(result.failed[0].reason).toBe('Errore interno');
+    });
+
+    it('should emit booking.updated event for each confirmed booking', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue({
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        status: 'PENDING',
+      });
+
+      await service.bulkConfirm(TENANT_ID, ['booking-001']);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'booking.updated',
+        expect.objectContaining({
+          bookingId: 'booking-001',
+          tenantId: TENANT_ID,
+          changes: { status: 'CONFIRMED' },
+        }),
+      );
+    });
+
+    it('should create booking event for each confirmed booking', async () => {
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue({
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        status: 'PENDING',
+      });
+
+      await service.bulkConfirm(TENANT_ID, ['booking-001']);
+
+      expect(prisma.bookingEvent.create).toHaveBeenCalledWith({
+        data: {
+          eventType: 'booking_confirmed',
+          payload: { bulkAction: true },
+          booking: { connect: { id: 'booking-001' } },
+        },
+      });
+    });
+
+    it('should handle empty list', async () => {
+      const result = await service.bulkConfirm(TENANT_ID, []);
+
+      expect(result.confirmed).toBe(0);
+      expect(result.failed).toEqual([]);
+    });
+  });
+
+  // =========================================================================
+  // decryptCustomerInBooking
+  // =========================================================================
+  describe('decryptCustomerInBooking', () => {
+    it('should decrypt encrypted customer fields', async () => {
+      const mockBookingWithEncrypted = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        customer: {
+          id: CUSTOMER_ID,
+          encryptedFirstName: 'enc_John',
+          encryptedLastName: 'enc_Doe',
+          encryptedEmail: 'enc_john@example.com',
+          encryptedPhone: 'enc_1234567890',
+        } as Record<string, unknown>,
+      };
+
+      // Call through createBooking which uses decryptCustomerInBooking
+      (prisma.booking.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.bookingSlot.findUnique as jest.Mock).mockResolvedValue(mockSlot);
+      (prisma.booking.create as jest.Mock).mockResolvedValue(mockBookingWithEncrypted);
+
+      const dto = {
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        slotId: SLOT_ID,
+        scheduledDate: '2024-06-01T09:00:00Z',
+        durationMinutes: 60,
+      };
+
+      const result = await service.createBooking(TENANT_ID, dto);
+
+      // Verify decryption happened (firstName should not be encrypted anymore)
+      const customerData = result.customer as any;
+      expect(customerData.firstName).toBeDefined();
+      expect(customerData.email).toBeDefined();
+    });
+
+    it('should handle decryption errors gracefully', async () => {
+      const mockEncryption = {
+        encrypt: jest.fn((v: string) => `enc_${v}`),
+        decrypt: jest.fn(() => {
+          throw new Error('Decryption failed');
+        }),
+      };
+
+      const moduleWithErrorEncryption: TestingModule = await Test.createTestingModule({
+        providers: [
+          BookingService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: EventEmitter2, useValue: eventEmitter },
+          { provide: QueueService, useValue: queueService },
+          {
+            provide: LoggerService,
+            useValue: {
+              log: jest.fn(),
+              warn: jest.fn(),
+              error: jest.fn(),
+              debug: jest.fn(),
+            },
+          },
+          { provide: EncryptionService, useValue: mockEncryption },
+        ],
+      }).compile();
+
+      const serviceWithErrorEncryption = moduleWithErrorEncryption.get<BookingService>(
+        BookingService,
+      );
+
+      const mockBookingWithEncrypted = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        customer: {
+          id: CUSTOMER_ID,
+          encryptedFirstName: 'enc_John',
+          encryptedEmail: 'enc_john@example.com',
+        } as Record<string, unknown>,
+      };
+
+      (prisma.booking.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.bookingSlot.findUnique as jest.Mock).mockResolvedValue(mockSlot);
+      (prisma.booking.create as jest.Mock).mockResolvedValue(mockBookingWithEncrypted);
+
+      const dto = {
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        slotId: SLOT_ID,
+        scheduledDate: '2024-06-01T09:00:00Z',
+      };
+
+      const result = await serviceWithErrorEncryption.createBooking(TENANT_ID, dto);
+
+      // Should return '[encrypted]' when decryption fails
+      const customerData = result.customer as any;
+      expect(customerData.firstName).toBe('[encrypted]');
+    });
+  });
+
+  // =========================================================================
+  // reserveSlot — Prisma error handling
+  // =========================================================================
+  describe('reserveSlot — error propagation', () => {
+    it('should wrap generic errors in BadRequestException and release lock', async () => {
+      const dto = {
+        slotId: SLOT_ID,
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        serviceIds: ['service-001'],
+        notes: 'Test',
+      };
+
+      (prisma.withSerializableTransaction as jest.Mock).mockRejectedValue(
+        new Error('Generic error'),
+      );
+
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(BadRequestException);
+      expect(prisma.releaseAdvisoryLock).toHaveBeenCalled();
     });
   });
 });

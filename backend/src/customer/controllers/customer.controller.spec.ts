@@ -140,6 +140,33 @@ describe('CustomerController', () => {
         meta: { total: 1 },
       });
     });
+
+    it('should handle search with email filter', async () => {
+      const expected = { customers: [mockCustomer], total: 1 };
+      customerService.search.mockResolvedValue(expected as never);
+      const query = { name: undefined, email: 'mario@test.com', limit: 10, offset: 0 };
+
+      const result = await controller.searchCustomers(TENANT_ID, query as never);
+
+      expect(customerService.search).toHaveBeenCalledWith(TENANT_ID, {
+        name: undefined,
+        email: 'mario@test.com',
+        limit: 10,
+        offset: 0,
+      });
+      expect(result.data).toEqual(expected.customers);
+    });
+
+    it('should handle search with no results', async () => {
+      const expected = { customers: [], total: 0 };
+      customerService.search.mockResolvedValue(expected as never);
+      const query = { name: 'Nonexistent', email: undefined, limit: 10, offset: 0 };
+
+      const result = await controller.searchCustomers(TENANT_ID, query as never);
+
+      expect(result.meta.total).toBe(0);
+      expect(result.data).toEqual([]);
+    });
   });
 
   describe('getCustomer', () => {
@@ -223,6 +250,104 @@ describe('CustomerController', () => {
 
       expect(vehicleService.delete).toHaveBeenCalledWith(TENANT_ID, 'veh-001');
       expect(result).toEqual({ success: true, message: 'Vehicle deleted successfully' });
+    });
+  });
+
+  // ==================== CSV EXPORT / IMPORT ====================
+
+  describe('exportCustomers', () => {
+    it('should export customers as CSV with correct headers', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      const mockCsv = Buffer.from('firstName,lastName\nMario,Rossi\n');
+      csvService.exportCustomers.mockResolvedValue(mockCsv as never);
+
+      const mockRes = {
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      };
+
+      await controller.exportCustomers(TENANT_ID, mockRes as never);
+
+      expect(csvService.exportCustomers).toHaveBeenCalledWith(TENANT_ID);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Disposition',
+        'attachment; filename="customers.csv"',
+      );
+      expect(mockRes.send).toHaveBeenCalledWith(mockCsv);
+    });
+
+    it('should handle export errors', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      csvService.exportCustomers.mockRejectedValue(new Error('Export failed'));
+
+      const mockRes = { setHeader: jest.fn(), send: jest.fn() };
+
+      await expect(controller.exportCustomers(TENANT_ID, mockRes as never)).rejects.toThrow(
+        'Export failed',
+      );
+    });
+  });
+
+  describe('importCustomers', () => {
+    it('should import customers from CSV', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      const importResult = { imported: 2, errors: [] };
+      csvService.importCustomers.mockResolvedValue(importResult as never);
+
+      const csv = 'firstName,lastName\nMario,Rossi\nLuigi,Bianchi\n';
+      const result = await controller.importCustomers(TENANT_ID, csv);
+
+      expect(csvService.importCustomers).toHaveBeenCalledWith(TENANT_ID, csv);
+      expect(result).toEqual({ success: true, data: importResult });
+    });
+
+    it('should return errors from CSV import', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      const importResult = {
+        imported: 1,
+        errors: [{ row: 2, error: 'Missing lastName' }],
+      };
+      csvService.importCustomers.mockResolvedValue(importResult as never);
+
+      const csv = 'firstName,lastName\nMario,Rossi\nLuigi,\n';
+      const result = await controller.importCustomers(TENANT_ID, csv);
+
+      expect(result.data.errors).toHaveLength(1);
+    });
+  });
+
+  describe('exportVehicles', () => {
+    it('should export vehicles as CSV with correct headers', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      const mockCsv = Buffer.from('make,model,year\nFiat,500,2023\n');
+      csvService.exportVehicles.mockResolvedValue(mockCsv as never);
+
+      const mockRes = {
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      };
+
+      await controller.exportVehicles(TENANT_ID, mockRes as never);
+
+      expect(csvService.exportVehicles).toHaveBeenCalledWith(TENANT_ID);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv; charset=utf-8');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Disposition',
+        'attachment; filename="vehicles.csv"',
+      );
+      expect(mockRes.send).toHaveBeenCalledWith(mockCsv);
+    });
+
+    it('should handle vehicle export errors', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      csvService.exportVehicles.mockRejectedValue(new Error('Export failed'));
+
+      const mockRes = { setHeader: jest.fn(), send: jest.fn() };
+
+      await expect(controller.exportVehicles(TENANT_ID, mockRes as never)).rejects.toThrow(
+        'Export failed',
+      );
     });
   });
 });
