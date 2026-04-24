@@ -156,4 +156,6 @@
 
 ## Log completamenti automatici
 
-<!-- AUTO-LOG: le righe sotto vengono aggiunte automaticamente da /genera-test -->
+| Data | Area | Modulo | Service | Coverage | Stato |
+|------|------|--------|---------|----------|-------|
+<!-- AUTO-LOG: righe aggiunte automaticamente da /genera-test -->

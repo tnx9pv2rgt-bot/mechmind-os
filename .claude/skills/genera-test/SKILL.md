@@ -1,9 +1,10 @@
 ---
 name: genera-test
-description: Genera file .spec.ts completo per un service NestJS usando Anthropic SDK con prompt caching (-90% token dalla seconda run). Usa quando chiesto di generare test, creare spec, o aumentare coverage per un modulo specifico.
+description: Genera .spec.ts per TUTTI i service di un modulo NestJS. PATH B — verifica score ≥70, multi-service, approval gate, caching -90%. Usa quando occorre aumentare coverage modulo completo.
 allowed-tools: ["Bash(node *)","Bash(npx jest *)","Bash(ls *)"]
 disable-model-invocation: true
-argument-hint: "<modulo>"
+effort: low
+argument-hint: "<modulo> [--dry-run] [--force] [--skip-verify]"
 ---
 
 # Genera Test — Anthropic SDK con Prompt Caching
