@@ -244,6 +244,11 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 14:15 | backend | invoice | invoice.service | **93.02% / 80.64%** | ✅ COMPLETATO (TIER_1) |
 | 2026-04-24 14:15 | backend | invoice | fatturapa.service | **100% / 91.08%** | ✅ COMPLETATO (FatturaPA XML, EU tax compliance) |
 | 2026-04-24 14:15 | backend | invoice | **MODULE SUMMARY** | **95.04% / 78.48%** | ✅ **COMPLETATO** (174 test, FatturaPA compliance, PDF generation) |
+| 2026-04-24 15:55 | backend | invoice | invoice.service | **97.67% / 83.87%** | ✅ IMPROVED (+3.23pp: decryption) |
+| 2026-04-24 15:55 | backend | invoice | invoice.controller | **100% / 72.91%** | ⚠️ Error branches |
+| 2026-04-24 15:55 | backend | invoice | bnpl.service | **100% / 86.66%** | ✅ Strong |
+| 2026-04-24 15:55 | backend | invoice | fatturapa.service | **100% / 76.43%** | ⚠️ Variants |
+| 2026-04-24 15:55 | backend | invoice | payment-link.service | **96.42% / 71.42%** | ⚠️ Stripe 
 | 2026-04-24 15:10 | backend | subscription | subscription.service | **100% / 97.67%** | ✅ COMPLETATO (TIER_1 GOLD) |
 | 2026-04-24 15:10 | backend | subscription | feature-access.service | **99.01% / 94.91%** | ✅ COMPLETATO (Recurring billing state machine) |
 | 2026-04-24 15:10 | backend | subscription | **MODULE SUMMARY** | **99.67% / 95.12%** | ✅ **COMPLETATO** (305 test, dunning, metering, upgrade/downgrade) |

@@ -1232,4 +1232,79 @@ describe('InvoiceService', () => {
       );
     });
   });
+
+  describe('decryption branches', () => {
+    it('should skip decryption when no encrypted fields', async () => {
+      const invoice = makeMockInvoice({
+        customer: { id: CUSTOMER_ID, firstName: 'Mario' },
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      await service.findOne(TENANT_ID, INVOICE_ID);
+
+      expect(encryption.decrypt).not.toHaveBeenCalled();
+    });
+
+    it('should decrypt when encryptedFirstName present', async () => {
+      const invoice = makeMockInvoice({
+        customer: {
+          id: CUSTOMER_ID,
+          encryptedFirstName: 'enc-Mario',
+          encryptedEmail: 'enc-m@test.com',
+        },
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      encryption.decrypt.mockImplementation((v: string) => v.replace('enc-', ''));
+
+      const result = await service.findOne(TENANT_ID, INVOICE_ID);
+
+      expect(result.customer.firstName).toBe('Mario');
+      expect(result.customer.email).toBe('m@test.com');
+    });
+
+    it('should handle decryption error', async () => {
+      const invoice = makeMockInvoice({
+        customer: { id: CUSTOMER_ID, encryptedFirstName: 'bad' },
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      encryption.decrypt.mockImplementation(() => {
+        throw new Error();
+      });
+
+      const result = await service.findOne(TENANT_ID, INVOICE_ID);
+
+      expect(result.customer.firstName).toBe('[encrypted]');
+    });
+
+    it('should handle non-string field', async () => {
+      const invoice = makeMockInvoice({
+        customer: { id: CUSTOMER_ID, encryptedFirstName: 123 },
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.findOne(TENANT_ID, INVOICE_ID);
+
+      expect(result.customer.firstName).toBeNull();
+    });
+
+    it('should handle null field', async () => {
+      const invoice = makeMockInvoice({
+        customer: { id: CUSTOMER_ID, encryptedFirstName: null },
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.findOne(TENANT_ID, INVOICE_ID);
+
+      expect(result.customer.firstName).toBeNull();
+    });
+
+    it('should handle null customer', async () => {
+      const invoice = makeMockInvoice({ customer: null });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.findOne(TENANT_ID, INVOICE_ID);
+
+      expect(result.customer).toBeNull();
+    });
+  });
 });

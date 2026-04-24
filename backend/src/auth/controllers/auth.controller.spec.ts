@@ -1658,5 +1658,130 @@ describe('AuthController', () => {
       expect(trustedDeviceService.untrustAllDevices).toHaveBeenCalledWith('user-001');
     });
   });
-});
 
+  // ============== ERROR PATH TESTS (Iteration 2 - Gap Targeting) ==============
+
+  describe('login — Throttle and Rate Limiting', () => {
+    const loginDto = {
+      email: 'test@example.com',
+      password: 'pass123',
+      tenantSlug: 'garage-roma',
+    };
+
+    it('should apply progressive delay when throttle returns delay > 0', async () => {
+      const loginThrottle = module.get(LoginThrottleService) as any;
+      const authService = module.get(AuthService) as any;
+
+      loginThrottle.getDelay.mockResolvedValue({ delay: 2000, attempts: 4 });
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      const mfaService = module.get(MfaService) as any;
+      mfaService.getStatus.mockResolvedValue({ enabled: false } as never);
+      authService.generateTokens.mockResolvedValue(mockTokens as never);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(loginThrottle.getDelay).toHaveBeenCalled();
+    });
+
+    it('should record failed login when credentials invalid', async () => {
+      const loginThrottle = module.get(LoginThrottleService) as any;
+      const authService = module.get(AuthService) as any;
+
+      loginThrottle.getDelay.mockResolvedValue({ delay: 0, attempts: 0 });
+      loginThrottle.recordFailure.mockResolvedValue(5);
+      authService.validateUser.mockResolvedValue(null);
+
+      await expect(controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(loginThrottle.recordFailure).toHaveBeenCalledWith('test@example.com', '127.0.0.1');
+    });
+  });
+
+  describe('login — Risk Assessment', () => {
+    const loginDto = {
+      email: 'test@example.com',
+      password: 'pass123',
+      tenantSlug: 'garage-roma',
+    };
+
+    it('should require MFA when risk level is high', async () => {
+      const riskAssessment = module.get(RiskAssessmentService) as any;
+      const authService = module.get(AuthService) as any;
+      const mfaService = module.get(MfaService) as any;
+
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      authService.generateTwoFactorTempToken.mockResolvedValue('temp-token-xyz' as never);
+      riskAssessment.assessLoginRisk.mockResolvedValue({
+        score: 80,
+        level: 'high',
+        requiresMfa: true,
+        blockLogin: false,
+      } as never);
+      mfaService.getStatus.mockResolvedValue({ enabled: true } as never);
+
+      const result = await controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result).toHaveProperty('tempToken');
+    });
+
+    it('should block login when risk score is critical', async () => {
+      const riskAssessment = module.get(RiskAssessmentService) as any;
+      const authService = module.get(AuthService) as any;
+
+      authService.validateUser.mockResolvedValue(mockUser as never);
+      authService.isAccountLocked.mockResolvedValue({ locked: false } as never);
+      riskAssessment.assessLoginRisk.mockResolvedValue({
+        score: 95,
+        level: 'critical',
+        requiresMfa: true,
+        blockLogin: true,
+      } as never);
+
+      await expect(controller.login(loginDto as never, '127.0.0.1', 'Mozilla/5.0')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('verifyTwoFactor — Error Paths', () => {
+    it('should throw UnauthorizedException when temp token is invalid', async () => {
+      const authService = module.get(AuthService) as any;
+
+      authService.verifyTwoFactorTempToken.mockRejectedValue(
+        new UnauthorizedException('Invalid or expired temp token'),
+      );
+
+      const dto = { tempToken: 'invalid-temp', code: '123456' };
+      await expect(controller.verifyTwoFactor(dto as never, '127.0.0.1')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException when MFA code is invalid', async () => {
+      const authService = module.get(AuthService) as any;
+      const mfaService = module.get(MfaService) as any;
+
+      authService.verifyTwoFactorTempToken.mockResolvedValue('user-001' as never);
+      mfaService.verify.mockRejectedValue(new UnauthorizedException('Invalid TOTP code'));
+
+      const dto = { tempToken: 'temp-123', code: '000000' };
+      await expect(controller.verifyTwoFactor(dto as never, '127.0.0.1')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('createDemoSession — Validation', () => {
+    it('should throw NotFoundException when demo tenant does not exist', async () => {
+      const prismaService = module.get(PrismaService) as any;
+
+      prismaService.tenant.findFirst.mockResolvedValue(null);
+
+      await expect(controller.createDemoSession({} as never)).rejects.toThrow(NotFoundException);
+    });
+  });
+});
