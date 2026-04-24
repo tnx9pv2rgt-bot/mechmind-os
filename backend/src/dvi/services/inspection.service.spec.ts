@@ -280,10 +280,21 @@ describe('InspectionService', () => {
       updateMany: jest.Mock;
     };
     inspectionPhoto: { create: jest.Mock };
+    estimate: {
+      findFirst: jest.Mock;
+      create: jest.Mock;
+    };
   };
   let s3: { upload: jest.Mock; getSignedDownloadUrl: jest.Mock; delete: jest.Mock };
   let notifications: { sendNotification: jest.Mock };
   let configService: { get: jest.Mock };
+  let publicTokenService: {
+    generateToken: jest.Mock;
+    validateToken: jest.Mock;
+    consumeToken: jest.Mock;
+    revokeTokensForEntity: jest.Mock;
+  };
+  let eventEmitter: { emit: jest.Mock };
 
   beforeEach(async () => {
     // -- Prisma mock --
@@ -308,6 +319,10 @@ describe('InspectionService', () => {
         updateMany: jest.fn(),
       },
       inspectionPhoto: {
+        create: jest.fn(),
+      },
+      estimate: {
+        findFirst: jest.fn(),
         create: jest.fn(),
       },
     };
@@ -335,14 +350,16 @@ describe('InspectionService', () => {
       }),
     };
 
-    const mockPublicTokenService = {
+    // -- PublicTokenService mock --
+    publicTokenService = {
       generateToken: jest.fn().mockResolvedValue({ token: 'test-token-123' }),
       validateToken: jest.fn(),
       consumeToken: jest.fn().mockResolvedValue({}),
       revokeTokensForEntity: jest.fn().mockResolvedValue(0),
     };
 
-    const mockEventEmitter = { emit: jest.fn() };
+    // -- EventEmitter mock --
+    eventEmitter = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -351,8 +368,8 @@ describe('InspectionService', () => {
         { provide: ConfigService, useValue: configService },
         { provide: S3Service, useValue: s3 },
         { provide: NotificationsService, useValue: notifications },
-        { provide: PublicTokenService, useValue: mockPublicTokenService },
-        { provide: EventEmitter2, useValue: mockEventEmitter },
+        { provide: PublicTokenService, useValue: publicTokenService },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -2297,6 +2314,531 @@ describe('InspectionService', () => {
       // Act & Assert
       await expect(service.submitCustomerApproval(TENANT_ID, INSPECTION_ID, dto)).rejects.toThrow(
         BadRequestException,
+      );
+    });
+  });
+
+  // ==========================================
+  // Public Token Workflow
+  // ==========================================
+
+  describe('sendToCustomer', () => {
+    it('should generate public token and emit event', async () => {
+      // Arrange
+      const inspection = buildMockInspection();
+      const mockToken = { token: 'public-token-123', tenantId: TENANT_ID };
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (publicTokenService.revokeTokensForEntity as jest.Mock).mockResolvedValue(undefined);
+      (publicTokenService.generateToken as jest.Mock).mockResolvedValue(mockToken);
+
+      // Act
+      const result = await service.sendToCustomer(TENANT_ID, INSPECTION_ID, 'SMS');
+
+      // Assert
+      expect(publicTokenService.revokeTokensForEntity).toHaveBeenCalledWith(TENANT_ID, 'Inspection', INSPECTION_ID);
+      expect(publicTokenService.generateToken).toHaveBeenCalledWith(
+        TENANT_ID,
+        'DVI_REPORT',
+        INSPECTION_ID,
+        'Inspection',
+        72,
+        { channel: 'SMS' },
+      );
+      expect(result.reportUrl).toContain('public-token-123');
+      expect(eventEmitter.emit).toHaveBeenCalledWith('inspection.sentToCustomer', expect.objectContaining({
+        inspectionId: INSPECTION_ID,
+        tenantId: TENANT_ID,
+        channel: 'SMS',
+      }));
+    });
+
+    it('should support EMAIL channel', async () => {
+      // Arrange
+      const inspection = buildMockInspection();
+      const mockToken = { token: 'token-email', tenantId: TENANT_ID };
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (publicTokenService.revokeTokensForEntity as jest.Mock).mockResolvedValue(undefined);
+      (publicTokenService.generateToken as jest.Mock).mockResolvedValue(mockToken);
+
+      // Act
+      const result = await service.sendToCustomer(TENANT_ID, INSPECTION_ID, 'EMAIL');
+
+      // Assert
+      expect(publicTokenService.generateToken).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        { channel: 'EMAIL' },
+      );
+      expect(result.reportUrl).toContain('token-email');
+    });
+
+    it('should support WHATSAPP channel', async () => {
+      // Arrange
+      const inspection = buildMockInspection();
+      const mockToken = { token: 'token-wa', tenantId: TENANT_ID };
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (publicTokenService.revokeTokensForEntity as jest.Mock).mockResolvedValue(undefined);
+      (publicTokenService.generateToken as jest.Mock).mockResolvedValue(mockToken);
+
+      // Act
+      await service.sendToCustomer(TENANT_ID, INSPECTION_ID, 'WHATSAPP');
+
+      // Assert
+      expect(publicTokenService.generateToken).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        { channel: 'WHATSAPP' },
+      );
+    });
+
+    it('should throw NotFoundException when inspection not found', async () => {
+      // Arrange
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.sendToCustomer(TENANT_ID, INSPECTION_ID, 'SMS')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should emit event with customer and vehicle info', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        customerId: 'cust-123',
+        vehicle: buildMockVehicle({ make: 'Fiat', model: '500' }),
+      });
+      const mockToken = { token: 'tok', tenantId: TENANT_ID };
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (publicTokenService.revokeTokensForEntity as jest.Mock).mockResolvedValue(undefined);
+      (publicTokenService.generateToken as jest.Mock).mockResolvedValue(mockToken);
+
+      // Act
+      await service.sendToCustomer(TENANT_ID, INSPECTION_ID, 'SMS');
+
+      // Assert
+      expect(eventEmitter.emit).toHaveBeenCalledWith('inspection.sentToCustomer', {
+        inspectionId: INSPECTION_ID,
+        tenantId: TENANT_ID,
+        customerId: 'cust-123',
+        channel: 'SMS',
+        reportUrl: expect.stringContaining('tok'),
+      });
+    });
+  });
+
+  describe('getByPublicToken', () => {
+    it('should retrieve inspection by public token', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({ customerViewed: false });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      const result = await service.getByPublicToken('public-token-123');
+
+      // Assert
+      expect(publicTokenService.validateToken).toHaveBeenCalledWith('public-token-123');
+      expect(result.id).toBe(INSPECTION_ID);
+      expect(result.status).toBe(InspectionStatus.IN_PROGRESS);
+    });
+
+    it('should mark inspection as customer viewed', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({ customerViewed: false });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspection.update as jest.Mock).mockResolvedValue({
+        ...inspection,
+        customerViewed: true,
+      });
+
+      // Act
+      await service.getByPublicToken('public-token-123');
+
+      // Assert
+      expect(prisma.inspection.update).toHaveBeenCalledWith({
+        where: { id: INSPECTION_ID },
+        data: { customerViewed: true },
+      });
+    });
+
+    it('should NOT call update if already customerViewed', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({ customerViewed: true });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act
+      await service.getByPublicToken('public-token-123');
+
+      // Assert
+      expect(prisma.inspection.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when inspection not found', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.getByPublicToken('invalid-token')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('approveRepairsViaToken', () => {
+    it('should approve findings via public token', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ id: FINDING_ID })],
+      });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.APPROVED }),
+      );
+      (publicTokenService.consumeToken as jest.Mock).mockResolvedValue(undefined);
+
+      // Act
+      await service.approveRepairsViaToken('public-token', [FINDING_ID], []);
+
+      // Assert
+      expect(prisma.inspectionFinding.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [FINDING_ID] } },
+        data: expect.objectContaining({
+          status: FindingStatus.APPROVED,
+          approvedByCustomer: true,
+        }),
+      });
+      expect(prisma.inspection.update).toHaveBeenCalledWith({
+        where: { id: INSPECTION_ID },
+        data: {
+          status: InspectionStatus.APPROVED,
+          approvedAt: expect.any(Date),
+        },
+      });
+      expect(publicTokenService.consumeToken).toHaveBeenCalledWith('public-token');
+    });
+
+    it('should decline findings via public token', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ id: FINDING_ID })],
+      });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.APPROVED }),
+      );
+      (publicTokenService.consumeToken as jest.Mock).mockResolvedValue(undefined);
+
+      // Act
+      await service.approveRepairsViaToken('public-token', [], [FINDING_ID]);
+
+      // Assert
+      expect(prisma.inspectionFinding.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [FINDING_ID] } },
+        data: { status: FindingStatus.DECLINED },
+      });
+    });
+
+    it('should handle mixed approve/decline findings', async () => {
+      // Arrange
+      const finding1 = buildMockFinding({ id: 'finding-1' });
+      const finding2 = buildMockFinding({ id: 'finding-2' });
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({
+        findings: [finding1, finding2],
+      });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.APPROVED }),
+      );
+      (publicTokenService.consumeToken as jest.Mock).mockResolvedValue(undefined);
+
+      // Act
+      await service.approveRepairsViaToken('token', ['finding-1'], ['finding-2']);
+
+      // Assert
+      expect(prisma.inspectionFinding.updateMany).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw BadRequestException when finding does not belong to inspection', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ id: 'finding-valid' })],
+      });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(service.approveRepairsViaToken('token', ['finding-invalid'], [])).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw NotFoundException when inspection not found', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.approveRepairsViaToken('token', [], [])).rejects.toThrow(NotFoundException);
+    });
+
+    it('should emit inspection.repairsApproved event', async () => {
+      // Arrange
+      const mockTokenRecord = { entityId: INSPECTION_ID, tenantId: TENANT_ID };
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ id: FINDING_ID })],
+      });
+      (publicTokenService.validateToken as jest.Mock).mockResolvedValue(mockTokenRecord);
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspectionFinding.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(
+        buildMockInspection({ status: InspectionStatus.APPROVED }),
+      );
+      (publicTokenService.consumeToken as jest.Mock).mockResolvedValue(undefined);
+
+      // Act
+      await service.approveRepairsViaToken('token', [FINDING_ID], []);
+
+      // Assert
+      expect(eventEmitter.emit).toHaveBeenCalledWith('inspection.repairsApproved', {
+        inspectionId: INSPECTION_ID,
+        tenantId: TENANT_ID,
+        approvedFindingIds: [FINDING_ID],
+        declinedFindingIds: [],
+      });
+    });
+  });
+
+  // ==========================================
+  // Estimate Conversion
+  // ==========================================
+
+  describe('createEstimateFromFindings', () => {
+    it('should create estimate from inspection findings', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [
+          buildMockFinding({ id: FINDING_ID, title: 'Brake pads', estimatedCost: '150.00' }),
+        ],
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.estimate.findFirst as jest.Mock).mockResolvedValue(null);
+      const mockEstimate = {
+        id: 'est-001',
+        estimateNumber: `EST-${new Date().getFullYear()}-0001`,
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+        totalCents: 18300,
+        lines: [],
+      };
+      (prisma.estimate.create as jest.Mock).mockResolvedValue(mockEstimate);
+
+      // Act
+      const result = (await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, [FINDING_ID], MECHANIC_ID)) as typeof mockEstimate;
+
+      // Assert
+      expect(prisma.estimate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            tenantId: TENANT_ID,
+            customerId: CUSTOMER_ID,
+            vehicleId: VEHICLE_ID,
+            status: 'DRAFT',
+          }),
+        }),
+      );
+      expect(result.id).toBe('est-001');
+    });
+
+    it('should throw NotFoundException when inspection not found', async () => {
+      // Arrange
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, [FINDING_ID], MECHANIC_ID),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when no findings match', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(
+        service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, [FINDING_ID], MECHANIC_ID),
+      ).rejects.toThrow('No matching findings found');
+    });
+
+    it('should calculate correct estimate number with multiple estimates', async () => {
+      // Arrange
+      const year = new Date().getFullYear();
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ estimatedCost: '100.00' })],
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const lastEst = {
+        estimateNumber: `EST-${year}-0005`,
+      };
+      (prisma.estimate.findFirst as jest.Mock).mockResolvedValue(lastEst);
+      (prisma.estimate.create as jest.Mock).mockResolvedValue({
+        id: 'est',
+        estimateNumber: `EST-${year}-0006`,
+        lines: [],
+      });
+
+      // Act
+      await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, ['f1'], MECHANIC_ID);
+
+      // Assert
+      expect(prisma.estimate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            estimateNumber: `EST-${year}-0006`,
+          }),
+        }),
+      );
+    });
+
+    it('should handle NaN estimate number gracefully (non-numeric suffix)', async () => {
+      // Arrange
+      const year = new Date().getFullYear();
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ estimatedCost: '50.00' })],
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const lastEst = {
+        estimateNumber: `EST-${year}-INVALID`, // Non-numeric suffix
+      };
+      (prisma.estimate.findFirst as jest.Mock).mockResolvedValue(lastEst);
+      (prisma.estimate.create as jest.Mock).mockResolvedValue({
+        id: 'est',
+        estimateNumber: `EST-${year}-0001`, // Should fallback to 1
+        lines: [],
+      });
+
+      // Act
+      await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, ['f1'], MECHANIC_ID);
+
+      // Assert
+      expect(prisma.estimate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            estimateNumber: `EST-${year}-0001`,
+          }),
+        }),
+      );
+    });
+
+    it('should calculate VAT correctly (22%)', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ estimatedCost: '100.00' })], // 10000 cents
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.estimate.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.estimate.create as jest.Mock).mockResolvedValue({
+        id: 'est',
+        lines: [],
+      });
+
+      // Act
+      await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, ['f1'], MECHANIC_ID);
+
+      // Assert
+      expect(prisma.estimate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subtotalCents: 10000, // 100 * 100
+            vatCents: 2200, // 100 * 22
+            totalCents: 12200, // subtotal + vat
+          }),
+        }),
+      );
+    });
+
+    it('should handle zero cost findings', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ estimatedCost: null })], // null cost
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.estimate.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.estimate.create as jest.Mock).mockResolvedValue({
+        id: 'est',
+        lines: [],
+      });
+
+      // Act
+      await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, ['f1'], MECHANIC_ID);
+
+      // Assert
+      expect(prisma.estimate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subtotalCents: 0,
+            vatCents: 0,
+            totalCents: 0,
+          }),
+        }),
+      );
+    });
+
+    it('should include inspection reference in notes', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        findings: [buildMockFinding({ estimatedCost: '100.00' })],
+        customerId: CUSTOMER_ID,
+        vehicleId: VEHICLE_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.estimate.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.estimate.create as jest.Mock).mockResolvedValue({ id: 'est', lines: [] });
+
+      // Act
+      await service.createEstimateFromFindings(TENANT_ID, INSPECTION_ID, ['f1'], MECHANIC_ID);
+
+      // Assert
+      expect(prisma.estimate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            notes: `Generated from inspection ${INSPECTION_ID}`,
+          }),
+        }),
       );
     });
   });

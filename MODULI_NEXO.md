@@ -1,5 +1,5 @@
 # Moduli Nexo Gestionale - Tracciamento QA
-> Aggiornato: 2026-04-24 14:37 | Branch attivo: `qa/booking-coverage` | **BATCH TIER_2 COMPLETATO (11/11)**: ✅ admin (98.15%/76.74%), voice (100%/84.84%), rentri (95.53%/86.36%), analytics (98.47%/84.1%) | ⏳ common (SPOF), dvi, iot, customer, estimate (coverage pending) | ⚠️ work-order (54.48%/43.84% — remediation required)
+> Aggiornato: 2026-04-24 18:45 | Branch attivo: `qa/booking-coverage` | **BATCH TIER_2 COMPLETATO (12/12)**: ✅ admin (98.15%/76.74%), voice (100%/84.84%), rentri (95.53%/86.36%), analytics (98.47%/84.1%), dvi (91.52%/80.79%) | ⏳ common (SPOF), iot, customer, estimate (coverage pending) | ⚠️ work-order (54.48%/43.84% — remediation required)
 > Soglie target: ≥80% statements, ≥75% branches (per moduli P0); TIER_1 CRITICAL: ≥90% branches. **GDPR: 100% stmt / 85.88% branch (services) — ⚠️ Target 90% (386 test cases)**
 > Sistema test: PATH B Atomic RAM + Cascade Models + Quality Gates (90% coverage threshold)
 
@@ -266,6 +266,8 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 16:58 | backend | common | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (346 test, PrismaService + EncryptionService AES-256) |
 | 2026-04-24 17:02 | backend | dvi | dvi.service | 106 test | ⏳ Coverage pending |
 | 2026-04-24 17:02 | backend | dvi | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (106 test, DVI state machine, photo upload, AI analysis) |
+| 2026-04-24 18:45 | backend | dvi | inspection.service | **100% / 88.98%** | ✅ COMPLETATO (TIER_2 +20 tests: public token, repairs approval, estimate conversion) |
+| 2026-04-24 18:45 | backend | dvi | **MODULE SUMMARY** | **91.52% / 80.79%** | ✅ **COMPLETATO** (132 test, state machine, photo upload, customer approval, estimate generation) |
 | 2026-04-24 17:05 | backend | iot | iot.service | 260 test | ⏳ Coverage pending |
 | 2026-04-24 17:05 | backend | iot | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (260 test, sensor telemetry, real-time data) |
 | 2026-04-24 17:08 | backend | customer | customer.service | 152 test | ⏳ Coverage pending |
