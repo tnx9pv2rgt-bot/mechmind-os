@@ -372,20 +372,20 @@ describe('NotificationConsentTrackingService (GDPR)', () => {
     it('should retrieve full consent audit trail', async () => {
       const auditTrail = [
         {
-          id: 'audit-1',
-          customerId: CUSTOMER_ID,
-          consentType: 'GDPR',
-          granted: true,
-          timestamp: new Date('2026-01-01T10:00:00Z'),
-          revokedAt: null,
-        },
-        {
           id: 'audit-2',
           customerId: CUSTOMER_ID,
           consentType: 'MARKETING',
           granted: false,
           timestamp: new Date('2026-02-01T10:00:00Z'),
           revokedAt: new Date('2026-02-01T10:05:00Z'),
+        },
+        {
+          id: 'audit-1',
+          customerId: CUSTOMER_ID,
+          consentType: 'GDPR',
+          granted: true,
+          timestamp: new Date('2026-01-01T10:00:00Z'),
+          revokedAt: null,
         },
       ];
 
