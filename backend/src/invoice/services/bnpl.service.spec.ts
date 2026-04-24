@@ -149,4 +149,64 @@ describe('BnplService', () => {
       expect(prisma.invoice.update).not.toHaveBeenCalled();
     });
   });
+
+  describe('BNPL edge cases', () => {
+    it('should handle DECLINED status without marking PAID', async () => {
+      const invoice = makeMockInvoice({ bnplOrderId: 'order-123' });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.handleBnplWebhook('order-123', 'DECLINED');
+
+      expect(prisma.invoice.update).toHaveBeenCalledWith({
+        where: { id: invoice.id },
+        data: expect.objectContaining({ bnplStatus: 'DECLINED' }),
+      });
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('DECLINED')
+      );
+    });
+
+    it('should log BNPL order creation', async () => {
+      const invoice = makeMockInvoice({ status: 'SENT' });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.createBnplOrder(INVOICE_ID, TENANT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('BNPL order created')
+      );
+    });
+
+    it('should warn when BNPL webhook receives unknown order', async () => {
+      prisma.invoice.findFirst.mockResolvedValue(null);
+      const loggerSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.handleBnplWebhook('unknown-order', 'APPROVED');
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('not found')
+      );
+    });
+
+    it('should set bnplProvider to scalapay', async () => {
+      const invoice = makeMockInvoice({ status: 'SENT' });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+
+      await service.createBnplOrder(INVOICE_ID, TENANT_ID);
+
+      expect(prisma.invoice.update).toHaveBeenCalledWith({
+        where: { id: INVOICE_ID },
+        data: expect.objectContaining({
+          bnplProvider: 'scalapay',
+          bnplStatus: 'PENDING',
+        }),
+      });
+    });
+  });
+
 });
